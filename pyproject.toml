@@ -1,0 +1,89 @@
+[tool.poetry]
+name = "pertpy"
+version = "0.1.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
+description = "Perturbation Analysis in the Scanpy ecosystem."
+authors = ["Lukas Heumos <lukas.heumos@posteo.net>"]
+license = "MIT"
+readme = "README.rst"
+homepage = "https://github.com/theislab/pertpy"
+repository = "https://github.com/theislab/pertpy"
+documentation = "https://pertpy.readthedocs.io"
+packages = [
+    { include = "pertpy" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+click = "^8.0.0"
+rich = "^10.3.0"
+PyYAML = "^5.4.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.3"
+coverage = {extras = ["toml"], version = "^5.3"}
+safety = "^1.9.0"
+mypy = "^0.902"
+typeguard = "^2.12.0"
+xdoctest = {extras = ["colors"], version = "^0.15.0"}
+sphinx = "^4.0.2"
+sphinx-autobuild = "^2021.3.14"
+pre-commit = "^2.11.1"
+flake8 = "^3.8.4"
+black = "^20.8b1"
+flake8-bandit = "^2.1.2"
+flake8-bugbear = "^21.4.3"
+flake8-docstrings = "^1.5.0"
+flake8-rst-docstrings = "^0.2.3"
+pep8-naming = "^0.11.1"
+darglint = "^1.5.8"
+reorder-python-imports = "^2.5.0"
+pre-commit-hooks = "^4.0.1"
+sphinx-rtd-theme = "^0.5.0"
+sphinx-click = "^3.0.0"
+Pygments = "^2.8.1"
+types-pkg-resources = "^0.1.2"
+types-requests = "^0.1.10"
+types-attrs = "^19.1.0"
+sphinx-rtd-dark-mode = "^1.2.2"
+Jinja2 = "^3.0.1"
+
+[tool.poetry.scripts]
+pertpy = "pertpy.__main__:main"
+
+[tool.black]
+line-length = 120
+
+[tool.mypy]
+strict = false
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+ignore_missing_imports = true
+
+[tool.isort]
+multi_line_output=3
+include_trailing_comma=true
+balanced_wrapping=true
+line_length=120
+
+[tool.coverage.paths]
+source = ["pertpy", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["pertpy"]
+
+[tool.coverage.report]
+show_missing = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
