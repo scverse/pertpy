@@ -2,7 +2,7 @@ Contributor Guide
 =================
 
 Thank you for your interest in improving this project.
-This project is open-source under the `MIT license`_ and
+This project is open-source under the `Apache2.0 license`_ and
 highly welcomes contributions in the form of bug reports, feature requests, and pull requests.
 
 Here is a list of important resources for contributors:
@@ -12,7 +12,7 @@ Here is a list of important resources for contributors:
 - `Issue Tracker`_
 - `Code of Conduct`_
 
-.. _MIT license: https://opensource.org/licenses/MIT
+.. _Apache2.0 license: https://opensource.org/licenses/Apache2.0
 .. _Source Code: https://github.com/theislab/pertpy
 .. _Documentation: https://pertpy.readthedocs.io/
 .. _Issue Tracker: https://github.com/theislab/pertpy/issues
