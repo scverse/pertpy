@@ -51,7 +51,7 @@ You can install *pertpy* via pip_ from PyPI_:
 Usage
 -----
 
-Please see the `Command-line Reference <Usage_>`_ for details.
+Please see `Usage <Usage_>`_ for details.
 
 
 Credits
