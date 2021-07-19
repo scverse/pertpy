@@ -1,8 +1,8 @@
 .. include:: ../README.rst
-===========================
-Welcome to pertpy's documentation!
-==========================================================
+   :end-line: 32
 
+Welcome to ehrapy's documentation!
+===================================
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

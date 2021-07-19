@@ -5,9 +5,11 @@ Credits
 Development Lead
 ----------------
 
-* Lukas Heumos <lukas.heumos@posteo.net>
+* Lukas Heumos <lukas.heumos@helmholtz-muenchen.de>
+* Mohammad Lotfollahi <mohammad.lotfollahi@helmholtz-muenchen.de>
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Sergey Rybakov <sergei.rybakov@helmholtz-muenchen.de>
+* Ignacio Ibarra <ignacio.ibarra@helmholtz-muenchen.de>
