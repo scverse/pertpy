@@ -8,7 +8,7 @@ import scanpy as sc
 from os.path import join
 
 # this function loads raw data, written before, probably deprecate
-def mixscape_vignette_crohn(datasetdir='/storage/groups/ml01/workspace/ignacio.ibarra/theislab/pertpy/data') -> AnnData:
+def mixscape_vignette_crohn(datasetdir=None) -> AnnData:
     """\
     Bulk data with conditions ulcerative colitis (UC) and Crohn's disease (CD).
     The study assesses transcriptional profiles in peripheral blood mononuclear
@@ -21,16 +21,18 @@ def mixscape_vignette_crohn(datasetdir='/storage/groups/ml01/workspace/ignacio.i
     blood mononuclear cells"
     J Mol Diagn 8, 51 (2006). PMID:16436634.
     """
+    assert datasetdir is not None
     # filename = settings.datasetdir / 'burczynski06/GDS1615_full.soft.gz'
     filename = join(datasetdir, 'burczynski06/GDS1615_full.soft.gz')
     # url = 'ftp://ftp.ncbi.nlm.nih.gov/geo/datasets/GDS1nnn/GDS1615/soft/GDS1615_full.soft.gz'
     adata = sc.read(filename) # , backup_url=url)
     return adata
 
-def mixscape_vignette_crispr(backup_dir='/storage/groups/ml01/workspace/ignacio.ibarra/theislab/pertpy/data') -> AnnData:
+def mixscape_vignette_crispr(backup_dir=None) -> AnnData:
     """\
     # applying the first processing steps from
     https://satijalab.org/seurat/articles/mixscape_vignette.html
     """
+    assert backup_dir is not None
     adata = anndata.read(join(backup_dir, 'eccite_mixscape_clean.h5ad'))
     return adata
