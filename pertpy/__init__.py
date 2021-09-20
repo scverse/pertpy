@@ -7,9 +7,7 @@ __version__ = "0.1.0"
 
 from pypi_latest import PypiLatest
 
-import pertpy.datasets
 from pertpy.api import data, plot, preprocessing, tools
 
-print("here...")
 pertpy_pypi_latest = PypiLatest("pertpy", __version__)
 pertpy_pypi_latest.check_latest()
