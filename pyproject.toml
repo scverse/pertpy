@@ -25,6 +25,7 @@ click = "^8.0.0"
 rich = "^10.9.0"
 PyYAML = "^5.4.1"
 pypi-latest = "^0.1.0"
+scanpy = "^1.8.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

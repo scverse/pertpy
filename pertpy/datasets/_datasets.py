@@ -6,7 +6,17 @@ from anndata import AnnData
 
 
 # this function loads raw data, written before, probably deprecate
-def mixscape_vignette_crohn(datasetdir=None) -> AnnData:
+def mixscape_vignette_crohn(datasetdir: str = None) -> AnnData:
+    """
+
+    Args:
+        datasetdir:
+
+    Returns:
+
+    """
+
+
     """\
     Bulk data with conditions ulcerative colitis (UC) and Crohn's disease (CD).
     The study assesses transcriptional profiles in peripheral blood mononuclear
