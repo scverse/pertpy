@@ -9,3 +9,4 @@ per-file-ignores = tests/*:S101
                    pertpy/api/*:F401
                    pertpy/api/*/*:F401
                    pertpy/api/*:F403
+		   pertpy/datasets/*:F401
