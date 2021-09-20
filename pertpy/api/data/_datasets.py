@@ -37,11 +37,18 @@ def mixscape_vignette_crohn(datasetdir: str = None) -> AnnData:
     return adata
 
 
-def mixscape_vignette_crispr(backup_dir=None) -> AnnData:
-    """\
-    # applying the first processing steps from
+def mixscape_vignette_crispr(backup_dir: str = None) -> AnnData:
+    """Applying the Mixscape Vignette to the Mixscape dataset.
+
     https://satijalab.org/seurat/articles/mixscape_vignette.html
+
+    Args:
+        backup_dir:
+
+    Returns:
+
     """
     assert backup_dir is not None
     adata = anndata.read(join(backup_dir, "eccite_mixscape_clean.h5ad"))
+
     return adata
