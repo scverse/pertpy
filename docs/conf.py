@@ -110,7 +110,7 @@ def _download_notebooks(org: str, repo: str, raise_exc: bool = False) -> None:
 
 class MaybeMiniGallery(MiniGallery):
     def run(self) -> List[str]:
-        config = self.state.document.settings.env.config
+        config = self.state.document.pertpy_settings.env.config
         backreferences_dir = config.sphinx_gallery_conf["backreferences_dir"]
         obj_list = self.arguments[0].split()
 
