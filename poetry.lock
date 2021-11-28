@@ -1516,11 +1516,11 @@ sphinx = ">=2.0"
 
 [[package]]
 name = "sphinx-gallery"
-version = "0.10.0"
+version = "0.10.1"
 description = "A Sphinx extension that builds an HTML version of any Python script and puts it into an examples gallery."
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 sphinx = ">=1.8.3"
@@ -1935,7 +1935,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.1,<3.10"
-content-hash = "bbc955f6e68cb85539259dade36f07b33092bfb67d35c6f052dfa462ef08479d"
+content-hash = "764a806e57074b7c959d0976f9da7b8670ed5d919f377f955bdbcd202cf7fa0a"
 
 [metadata.files]
 alabaster = [
@@ -3031,7 +3031,7 @@ sphinx-click = [
     {file = "sphinx_click-3.0.2-py3-none-any.whl", hash = "sha256:8529a02bea8cd2cd47daba2f71d7935c727c89d70baabec7fca31af49a0c379f"},
 ]
 sphinx-gallery = [
-    {file = "sphinx-gallery-0.10.0.tar.gz", hash = "sha256:d602663beddf7c2d42771a87afec22054c65105695e955e8d6dc5b654a417921"},
+    {file = "sphinx-gallery-0.10.1.tar.gz", hash = "sha256:953f32b0833b0a689ff33516d0866865fb8601c0626811b95d2e844286d207e4"},
 ]
 sphinx-last-updated-by-git = [
     {file = "sphinx-last-updated-by-git-0.3.0.tar.gz", hash = "sha256:425dbac8eb0cb78f6b14ab9b42345800547a8863d6c7b00c970e9509e2174336"},
