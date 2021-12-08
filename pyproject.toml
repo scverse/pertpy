@@ -29,7 +29,7 @@ pypi-latest = ">=0.1.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
-coverage = {extras = ["toml"], version = "^6.1"}
+coverage = {extras = ["toml"], version = "^6.2"}
 safety = "^1.9.0"
 mypy = "^0.910"
 typeguard = "^2.13.2"
