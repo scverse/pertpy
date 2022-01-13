@@ -21,7 +21,7 @@ nox.options.sessions = (
     "safety",
     "mypy",
     "tests",
-    "xdoctest",
+    # "xdoctest",
     #   "docs-build",  Testing via CI since we cannot install external Python scripts into the nox environment
 )
 
@@ -90,6 +90,7 @@ def precommit(session: Session) -> None:
         "pre-commit",
         "pre-commit-hooks",
         "reorder-python-imports",
+        "pyupgrade",
     )
     session.run("pre-commit", *args)
     if args and args[0] == "install":
