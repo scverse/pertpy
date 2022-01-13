@@ -136,3 +136,8 @@ dmypy.json
 
 # Coala
 *.orig
+
+# Datasets
+*.h5ad
+*.h5md
+*.h5mu
