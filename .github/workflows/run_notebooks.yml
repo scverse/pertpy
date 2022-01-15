@@ -7,10 +7,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                notebook:
-                    [
-                        "docs/tutorials/notebooks/mixscape_analysis.ipynb",
-                    ]
+                notebook: ["docs/tutorials/notebooks/mixscape_analysis.ipynb"]
         steps:
             - uses: actions/checkout@v2
               with:

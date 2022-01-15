@@ -28,7 +28,7 @@ def burczynski_crohn(file_path: str = None) -> AnnData:
 
     return adata
 
-@staticmethod
+
 def burczynski_crispr(file_path: str = None) -> AnnData:
     """Dataset of the Mixscape Vignette.
 

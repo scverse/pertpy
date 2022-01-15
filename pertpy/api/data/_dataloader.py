@@ -36,9 +36,7 @@ def download(  # pragma: no cover
         output_path = tempfile.gettempdir()
 
     download_to_path = (
-        f"{output_path}{output_file_name}"
-        if str(output_path).endswith("/")
-        else f"{output_path}/{output_file_name}"
+        f"{output_path}{output_file_name}" if str(output_path).endswith("/") else f"{output_path}/{output_file_name}"
     )
     if Path(download_to_path).exists():
         warning = f"[bold red]File {download_to_path} already exists!"
