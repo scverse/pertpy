@@ -28,11 +28,21 @@ How to request a feature
 
 Request features on the `Issue Tracker`_.
 
+Getting the code
+----------------
+
+pertpy uses submodules for the tutorials. Hence, the project must be cloned as:
+
+.. code:: console
+
+    $ git clone --recurse-submodules --remote-submodules https://github.com/theislab/pertpy
+
+This will automatically also clone and update the submodules.
 
 How to set up your development environment
 ------------------------------------------
 
-You need Python 3.7+ and the following tools:
+You need Python 3.8+ and the following tools:
 
 - Poetry_
 - Nox_
