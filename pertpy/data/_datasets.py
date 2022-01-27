@@ -1,9 +1,15 @@
+from pathlib import Path
+
+import muon as mu
 import scanpy as sc
 from anndata import AnnData
+from mudata import MuData
 from scanpy import settings
 
+from pertpy.data._dataloader import _download
 
-def burczynski_crohn(file_path: str = None) -> AnnData:
+
+def burczynski_crohn() -> AnnData:
     """Bulk data with conditions ulcerative colitis (UC) and Crohn's disease (CD).
 
     The study assesses transcriptional profiles in peripheral blood mononuclear
@@ -21,15 +27,10 @@ def burczynski_crohn(file_path: str = None) -> AnnData:
     Returns:
         :class:`~anndata.AnnData` object of the Burczynski dataset
     """
-    adata = sc.read(
-        filename=settings.datasetdir + file_path,
-        backup_url="ftp://ftp.ncbi.nlm.nih.gov/geo/datasets/GDS1nnn/GDS1615/soft/GDS1615_full.soft.gz",
-    )
-
-    return adata
+    return sc.datasets.burczynski06()
 
 
-def burczynski_crispr(file_path: str = None) -> AnnData:
+def burczynski_crispr() -> MuData:
     """Dataset of the Mixscape Vignette.
 
     https://satijalab.org/seurat/articles/mixscape_vignette.html
@@ -40,7 +41,17 @@ def burczynski_crispr(file_path: str = None) -> AnnData:
     Returns:
         :class:`~anndata.AnnData` object of the Crispr dataset
     """
-    # TODO Add custom figshare backup URL
-    adata = sc.read(filename=settings.datasetdir + file_path)
+    output_file_name = "burczynski_crispr.h5mu"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/31645901",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        mudata = mu.read(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        mudata = mu.read(output_file_path)
 
-    return adata
+    return mudata

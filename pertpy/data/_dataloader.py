@@ -10,7 +10,7 @@ from rich import print
 from rich.progress import Progress
 
 
-def download(  # pragma: no cover
+def _download(  # pragma: no cover
     url: str,
     output_file_name: str = None,
     output_path: Union[str, Path] = None,
@@ -49,7 +49,7 @@ def download(  # pragma: no cover
     response = requests.get(url, stream=True)
     total = int(response.headers.get("content-length", 0))
 
-    with Progress() as progress:
+    with Progress(refresh_per_second=1500) as progress:
         task = progress.add_task("[red]Downloading...", total=total)
         Path(output_path).mkdir(parents=True, exist_ok=True)
         with open(download_to_path, "wb") as file:

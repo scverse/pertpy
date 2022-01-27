@@ -27,6 +27,8 @@ PyYAML = ">=5.4.1"
 scanpy = ">=1.8.1"
 pypi-latest = ">=0.1.1"
 muon = ">=0.1.2"
+requests = ">=2.27.1"
+ipywidgets = ">=7.6.5"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.2.5"
