@@ -2,10 +2,10 @@ import numpy as np
 import scanpy as sc
 from pynndescent import NNDescent
 from scanpy.tools._utils import _choose_representation
-from scipy.sparse import block_diag, csr_matrix, issparse
+from scipy.sparse import csr_matrix, issparse
 
 
-def pert_sign(adata, pert_key, control, n_neighbors=20, use_rep=None, n_pcs=None, **kwargs):
+def pert_sign(adata, pert_key, control, n_neighbors=20, use_rep=None, n_pcs=None, batch_size=None, **kwargs):
     control_mask = adata.obs[pert_key] == control
 
     X = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
@@ -19,27 +19,34 @@ def pert_sign(adata, pert_key, control, n_neighbors=20, use_rep=None, n_pcs=None
     X_control = adata.X[control_mask]
     X_pert = adata.X[~control_mask]
 
-    is_sparse = issparse(X_pert)
+    n_pert = X_pert.shape[0]
+    n_control = X_control.shape[0]
 
-    batch_size = 200
-    n_pert = indices.shape[0]
+    if batch_size is None:
+        col_indices = np.ravel(indices)
+        row_indices = np.repeat(np.arange(n_pert), n_neighbors)
 
-    for i in range(0, n_pert, batch_size):
-        size = min(i + batch_size, n_pert)
-        select = slice(i, size)
-        batch = np.ravel(indices[select])
+        neigh_matrix = csr_matrix(
+            (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)), shape=(n_pert, n_control)
+        )
+        neigh_matrix /= n_neighbors
 
-        size = size - i
+        X_pert -= neigh_matrix @ X_control
+    else:
+        is_sparse = issparse(X_pert)
+        for i in range(0, n_pert, batch_size):
+            size = min(i + batch_size, n_pert)
+            select = slice(i, size)
+            batch = np.ravel(indices[select])
 
-        # sparse is very slow
-        means_batch = X_control[batch].toarray() if is_sparse else X_control[batch]
-        means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
-        X_pert[select] -= means_batch
+            size = size - i
 
-    #            for sparse
-    #            means_block = block_diag([np.ones((1, n_neighbors))] * size, format='csr') / n_neighbors
-    #            means_block = means_block @ X_control[batch]
-    #            X_pert[select] -= means_block
+            # sparse is very slow
+            means_batch = X_control[batch]
+            means_batch = means_batch.toarray() if is_sparse else means_batch
+            means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
+
+            X_pert[select] -= means_batch
 
     adata_pert = sc.AnnData(X=X_pert, obs=adata.obs[~control_mask])
     return adata_pert
