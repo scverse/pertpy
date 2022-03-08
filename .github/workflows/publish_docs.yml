@@ -11,7 +11,7 @@ jobs:
               name: Check out source-code repository
 
             - name: Setup Python
-              uses: actions/setup-python@v1
+              uses: actions/setup-python@v3
               with:
                   python-version: 3.8
 
