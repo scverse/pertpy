@@ -44,7 +44,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "pertpy"
-copyright = "2021, Lukas Heumos"
+copyright = "2022, Lukas Heumos"
 author = "Lukas Heumos"
 
 # The version info for the project you're documenting, acts as replacement
