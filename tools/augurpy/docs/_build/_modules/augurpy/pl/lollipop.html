@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>augurpy.pl.lollipop &mdash; augurpy 0.1.0 documentation</title>
+        <link
+            rel="stylesheet"
+            href="../../../_static/pygments.css"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="../../../_static/css/theme.css"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="../../../_static/custom_cookietemple.css"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="../../../_static/dark_mode_css/general.css"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="../../../_static/dark_mode_css/dark.css"
+            type="text/css"
+        />
+        <!--[if lt IE 9]>
+            <script src="../../../_static/js/html5shiv.min.js"></script>
+        <![endif]-->
+
+        <script
+            data-url_root="../../../"
+            id="documentation_options"
+            src="../../../_static/documentation_options.js"
+        ></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/dark_mode_js/default_light.js"></script>
+        <script src="../../../_static/dark_mode_js/theme_switcher.js"></script>
+        <script src="../../../_static/js/theme.js"></script>
+        <link rel="index" title="Index" href="../../../genindex.html" />
+        <link rel="search" title="Search" href="../../../search.html" />
+    </head>
+
+    <body class="wy-body-for-nav">
+        <div class="wy-grid-for-nav">
+            <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+                <div class="wy-side-scroll">
+                    <div class="wy-side-nav-search">
+                        <a href="../../../index.html" class="icon icon-home">
+                            augurpy
+                        </a>
+                        <div class="version">0.1.0</div>
+                        <div role="search">
+                            <form
+                                id="rtd-search-form"
+                                class="wy-form"
+                                action="../../../search.html"
+                                method="get"
+                            >
+                                <input
+                                    type="text"
+                                    name="q"
+                                    placeholder="Search docs"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="check_keywords"
+                                    value="yes"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="area"
+                                    value="default"
+                                />
+                            </form>
+                        </div>
+                    </div>
+                    <div
+                        class="wy-menu wy-menu-vertical"
+                        data-spy="affix"
+                        role="navigation"
+                        aria-label="Navigation menu"
+                    >
+                        <p class="caption" role="heading">
+                            <span class="caption-text">Contents:</span>
+                        </p>
+                        <ul>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../../../readme.html"
+                                    >augurpy</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../../../installation.html"
+                                    >Installation</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../../../usage.html"
+                                    >Usage</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../../../reference.html"
+                                    >Reference</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../../../contributing.html"
+                                    >Contributor Guide</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../../../authors.html"
+                                    >Credits</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../../../code_of_conduct.html"
+                                    >Contributor Covenant Code of Conduct</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+                <nav class="wy-nav-top" aria-label="Mobile navigation menu">
+                    <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+                    <a href="../../../index.html">augurpy</a>
+                </nav>
+
+                <div class="wy-nav-content">
+                    <div class="rst-content">
+                        <div role="navigation" aria-label="Page navigation">
+                            <ul class="wy-breadcrumbs">
+                                <li>
+                                    <a
+                                        href="../../../index.html"
+                                        class="icon icon-home"
+                                    ></a>
+                                    &raquo;
+                                </li>
+                                <li>
+                                    <a href="../../index.html">Module code</a>
+                                    &raquo;
+                                </li>
+                                <li>augurpy.pl.lollipop</li>
+                                <li class="wy-breadcrumbs-aside"></li>
+                            </ul>
+                            <hr />
+                        </div>
+                        <div
+                            role="main"
+                            class="document"
+                            itemscope="itemscope"
+                            itemtype="http://schema.org/Article"
+                        >
+                            <div itemprop="articleBody">
+                                <h1>Source code for augurpy.pl.lollipop</h1>
+                                <div class="highlight">
+                                    <pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.axes</span> <span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span> <span class="nn">matplotlib.figure</span> <span class="kn">import</span> <span class="n">Figure</span>
+
+
+<div class="viewcode-block" id="lollipop"><a class="viewcode-back" href="../../../pl/augurpy.pl.lollipop.lollipop.html#augurpy.pl.lollipop.lollipop">[docs]</a><span class="k">def</span> <span class="nf">lollipop</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">return_figure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Figure</span><span class="p">,</span> <span class="n">Axes</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Plot a lollipop plot of the mean augur values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        results: results after running `predict()`</span>
+<span class="sd">        ax: optionally, axes used to draw plot</span>
+<span class="sd">        return_figure: if `True` returns figure of the plot</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Axes of the plot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+    <span class="n">y_axes_range</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;summary_metrics&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">hlines</span><span class="p">(</span>
+        <span class="n">y_axes_range</span><span class="p">,</span>
+        <span class="n">xmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">xmax</span><span class="o">=</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;summary_metrics&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;mean_augur_score&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;mean_augur_score&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="c1"># drawing the markers (circle)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">results</span><span class="p">[</span><span class="s2">&quot;summary_metrics&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;mean_augur_score&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;mean_augur_score&quot;</span><span class="p">],</span> <span class="n">y_axes_range</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># formatting and details</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Mean Augur Score&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Cell Type&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">y_axes_range</span><span class="p">,</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;summary_metrics&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;mean_augur_score&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fig</span> <span class="k">if</span> <span class="n">return_figure</span> <span class="k">else</span> <span class="n">ax</span></div>
+</pre>
+                                </div>
+                            </div>
+                        </div>
+                        <footer>
+                            <hr />
+
+                            <div role="contentinfo">
+                                <p>&#169; Copyright 2021, Lukas Heumos.</p>
+                            </div>
+
+                            Built with
+                            <a href="https://www.sphinx-doc.org/">Sphinx</a>
+                            using a
+                            <a
+                                href="https://github.com/readthedocs/sphinx_rtd_theme"
+                                >theme</a
+                            >
+                            provided by
+                            <a href="https://readthedocs.org">Read the Docs</a>.
+                        </footer>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <script>
+            jQuery(function () {
+                SphinxRtdTheme.Navigation.enable(true);
+            });
+        </script>
+    </body>
+</html>
