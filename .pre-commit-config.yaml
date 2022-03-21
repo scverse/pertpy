@@ -40,6 +40,7 @@ repos:
             language: system
             types: [text]
             stages: [commit, push, manual]
+            exclude: docs/
           - id: pyupgrade
             name: pyupgrade
             description: Automatically upgrade syntax for newer versions.
