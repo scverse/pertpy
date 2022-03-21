@@ -18,7 +18,7 @@ package = "pertpy"
 python_versions = ["3.8"]
 nox.options.sessions = (
     "pre-commit",
-    "safety",
+    # "safety",
     "mypy",
     "tests",
     # "xdoctest",
@@ -164,7 +164,7 @@ def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinx-rtd-dark-mode")
+    session.install("sphinx", "sphinx-click")
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
