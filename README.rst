@@ -47,6 +47,16 @@ You can install *pertpy* via pip_ from PyPI_:
 
    $ pip install pertpy
 
+Featured Tools
+--------------
+
+Augurpy
++++++++
+
+the python implementation of `Augur R package <https://github.com/neurorestore/Augur>`_ Skinnider, M.A., Squair, J.W., Kathe, C. et al. `Cell type prioritization in single-cell data <https://doi.org/10.1038/s41587-020-0605-1>`_. Nat Biotechnol 39, 30–34 (2021).
+
+Augurpy aims to rank or prioritize cell types according to the their response to experimental perturbations given high dimensional single-cell sequencing data. The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are more easily seperated into perturbed and unperturbed than cell types with little or no response. This seperability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type. Augurpy trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and then prioritizes cell type response according to metric scores measuring the accuracy of the model. For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient is used as a proxy for how accurate the model is which in turn approximates perturbation response.
+See `API/Tools <api.tools_>`_ for more details.
 
 Usage
 -----
