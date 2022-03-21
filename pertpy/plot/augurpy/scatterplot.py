@@ -5,7 +5,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 
-def scatterplot(results1, results2, top_n=None, ax: Axes = None, return_figure: bool = False) -> Union[Figure, Axes]:
+def scatterplot(results1, results2, top_n=None, return_figure: bool = False) -> Union[Figure, Axes]:
     """Create scatterplot with two augur results.
 
     Args:

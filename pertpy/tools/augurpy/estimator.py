@@ -11,7 +11,33 @@ from switchlang import switch
 
 @dataclass
 class Params:
-    """Type signature for random forest and logistic regression parameters."""
+    """Type signature for random forest and logistic regression parameters.
+
+    Args:
+        n_estimators: defines the number of trees in the forest;
+        max_depth: specifies the maximal depth of each tree;
+        max_features: specifies the maximal number of features considered when looking at best split.
+            * if int then consider max_features for each split
+            * if float consider round(max_features*n_features)
+            * if `auto` then max_features=n_features (default)
+            * if `log2` then max_features=log2(n_features)
+            * if `sqrt` then max_featuers=sqrt(n_features)
+        penalty: defines the norm of the penalty used in logistic regression
+            * if `l1` then L1 penalty is added
+            * if `l2` then L2 penalty is added (default)
+            * if `elasticnet` both L1 and L2 penalties are added
+            * if `none` no penalty is added
+
+        random_state: sets random model seed
+
+    Attributes:
+        n_estimators: defines the number of trees in the forest;
+        max_depth: specifies the maximal depth of each tree;
+        max_features: specifies the maximal number of features considered when looking at best split.
+        penalty: defines the norm of the penalty used in logistic regression
+        random_state: sets random model seed
+
+    """
 
     n_estimators: int = 100
     max_depth: int | None = None
@@ -39,6 +65,9 @@ def create_estimator(
         classifier: classifier to use in calculating the area under the curve.
                     Either random forest classifier or logistic regression for categorical data
                     or random forest regressor for continous data
+        params: parameters used to populate the model object. Default values are `n_estimators` =
+            100, `max_depth` = None, `max_features` = 2, `penalty` = `l2`, `random_state` = None.
+
         params: parameters used to populate the model object.
                 n_estimators defines the number of trees in the forest;
                 max_depth specifies the maximal depth of each tree;

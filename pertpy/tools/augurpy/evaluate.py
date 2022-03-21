@@ -43,6 +43,7 @@ def cross_validate_subsample(
     feature_perc: float,
     subsample_idx: int,
     random_state: int | None,
+    zero_division: int | str,
 ) -> DataFrame:
     """Cross validate subsample anndata object.
 
@@ -57,6 +58,8 @@ def cross_validate_subsample(
         folds: number of folds to run cross validation on
         subsample_idx: index of the subsample
         random_state: set numpy random seed, sampling seed and fold seed
+        zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
+            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
     Returns:
         Results for each cross validation fold.
@@ -70,7 +73,12 @@ def cross_validate_subsample(
         random_state=subsample_idx,
     )
     results = run_cross_validation(
-        estimator=estimator, subsample=subsample, folds=folds, subsample_idx=subsample_idx, random_state=random_state
+        estimator=estimator,
+        subsample=subsample,
+        folds=folds,
+        subsample_idx=subsample_idx,
+        random_state=random_state,
+        zero_division=zero_division,
     )
     return results
 
@@ -193,12 +201,15 @@ def ccc_score(y_true, y_pred) -> float:
 def set_scorer(
     estimator: RandomForestRegressor | RandomForestClassifier | LogisticRegression,
     multiclass: bool,
+    zero_division: int | str,
 ) -> dict[str, Any]:
     """Set scoring fuctions for cross-validation based on estimator.
 
     Args:
         estimator: classifier object used to fit the model used to calculate the area under the curve
         multiclass: `True` if there are more than two target classes
+        zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
+            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
     Returns:
         Dict linking name to scorer object and string name
@@ -208,7 +219,7 @@ def set_scorer(
             "augur_score": make_scorer(roc_auc_score, multi_class="ovo", needs_proba=True),
             "auc": make_scorer(roc_auc_score, multi_class="ovo", needs_proba=True),
             "accuracy": make_scorer(accuracy_score),
-            "precision": make_scorer(precision_score, average="macro"),
+            "precision": make_scorer(precision_score, average="macro", zero_division=zero_division),
             "f1": make_scorer(f1_score, average="macro"),
             "recall": make_scorer(recall_score, average="macro"),
         }
@@ -217,7 +228,7 @@ def set_scorer(
             "augur_score": make_scorer(roc_auc_score, needs_proba=True),
             "auc": make_scorer(roc_auc_score, needs_proba=True),
             "accuracy": make_scorer(accuracy_score),
-            "precision": make_scorer(precision_score, average="binary"),
+            "precision": make_scorer(precision_score, average="binary", zero_division=zero_division),
             "f1": make_scorer(f1_score, average="binary"),
             "recall": make_scorer(recall_score, average="binary"),
         }
@@ -236,8 +247,9 @@ def run_cross_validation(
     subsample: AnnData,
     estimator: RandomForestRegressor | RandomForestClassifier | LogisticRegression,
     subsample_idx: int,
-    folds: int = 3,
-    random_state=Optional[int],
+    folds: int,
+    random_state: int | None,
+    zero_division: int | str,
 ) -> dict:
     """Perform cross validation on given subsample.
 
@@ -247,13 +259,15 @@ def run_cross_validation(
         subsample_idx: index of subsample
         folds: number of folds
         random_state: set random fold seed
+        zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
+            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
     Returns:
         Dictionary containing prediction metrics and estimator for each fold.
     """
     x = subsample.to_df()
     y = subsample.obs["y_"]
-    scorer = set_scorer(estimator, multiclass=True if len(y.unique()) > 2 else False)
+    scorer = set_scorer(estimator, multiclass=True if len(y.unique()) > 2 else False, zero_division=zero_division)
     folds = StratifiedKFold(n_splits=folds, random_state=random_state, shuffle=True)
 
     results = cross_validate(
@@ -452,6 +466,7 @@ def predict(
     augur_mode: Literal["permute"] | Literal["default"] | Literal["velocity"] = "default",
     select_variance_features: bool = False,
     random_state: int | None = None,
+    zero_division: int | str = 0,
 ) -> tuple[AnnData, dict[str, Any]]:
     """Calculates the Area under the Curve using the given classifier.
 
@@ -479,10 +494,19 @@ def predict(
             permuting the labels. Note that when setting augur_mode = "permute" n_subsample values less than 100 will be
             set to 500.
         random_state: set numpy random seed, sampling seed and fold seed
+        zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
+            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
     Returns:
-        A dictionary containing the following keys: Dict[X, y, celltypes, parameters, results, feature_importances, AUC]
-        and the Anndata object with additional augur_score obs and uns summary.
+        A tuple with a dictionary containing the following keys
+
+            * summary_metrics: Pandas Dataframe containing mean metrics for each cell type
+            * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs
+            * full_results: Dict containing merged results of individual cross validation runs for each cell type
+            * [**cell_types]: Cross validation runs of the cell type called
+
+        and the original anndata object with added mean_augur_score metrics in obs.
+
     """
     if augur_mode == "permute" and n_subsamples < 100:
         n_subsamples = 500
@@ -541,6 +565,7 @@ def predict(
                     feature_perc=feature_perc,
                     subsample_idx=i,
                     random_state=random_state,
+                    zero_division=zero_division,
                 )
                 for i in range(n_subsamples)
             )
