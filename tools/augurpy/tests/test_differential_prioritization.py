@@ -2,7 +2,6 @@ from pathlib import Path
 
 import numpy as np
 import scanpy as sc
-
 from augurpy.differential_prioritization import predict_differential_prioritization
 from augurpy.estimator import Params, create_estimator
 from augurpy.evaluate import predict

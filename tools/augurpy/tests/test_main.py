@@ -1,8 +1,7 @@
 """Test cases for the __main__ module."""
 import pytest
-from click.testing import CliRunner
-
 from augurpy import __main__
+from click.testing import CliRunner
 
 
 @pytest.fixture

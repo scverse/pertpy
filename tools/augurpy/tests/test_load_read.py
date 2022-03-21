@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import scanpy as sc
-
 from augurpy.read_load import load
 
 CWD = Path(__file__).parent.resolve()

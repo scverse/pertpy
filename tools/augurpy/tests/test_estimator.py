@@ -1,7 +1,6 @@
 import pytest
-from sklearn.ensemble import RandomForestRegressor
-
 from augurpy.estimator import Params, create_estimator
+from sklearn.ensemble import RandomForestRegressor
 
 
 def test_creation():

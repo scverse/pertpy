@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 import scanpy as sc
-
 from augurpy.estimator import Params, create_estimator
 from augurpy.evaluate import draw_subsample, predict, run_cross_validation, select_variance
 from augurpy.read_load import load
@@ -55,11 +54,11 @@ def test_classifier(adata=sc_sim_adata):
 
     cv = run_cross_validation(adata, rf_classifier, subsample_idx=1, folds=3, random_state=42)
     auc = 0.766289
-    assert any([isclose(cv["mean_auc"], auc, abs_tol=10 ** -5)])
+    assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-5)])
 
     cv = run_cross_validation(adata, lr_classifier, subsample_idx=1, folds=3, random_state=42)
     auc = 0.965745
-    assert any([isclose(cv["mean_auc"], auc, abs_tol=10 ** -5)])
+    assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-5)])
 
 
 def test_regressor(adata=sc_sim_adata):
@@ -67,7 +66,7 @@ def test_regressor(adata=sc_sim_adata):
     cv = run_cross_validation(adata, rf_regressor, subsample_idx=1, folds=3, random_state=42)
     ccc = 0.231356
     r2 = 0.206195
-    assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10 ** -5), isclose(cv["mean_r2"], r2, abs_tol=10 ** -5)])
+    assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10**-5), isclose(cv["mean_r2"], r2, abs_tol=10**-5)])
 
 
 def test_subsample(adata=sc_sim_adata):
