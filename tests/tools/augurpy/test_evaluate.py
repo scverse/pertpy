@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 import scanpy as sc
-from pertpy.tools.augurpy.estimator import Params, create_estimator
-from pertpy.tools.augurpy.evaluate import draw_subsample, predict, run_cross_validation, select_variance
-from pertpy.tools.augurpy.read_load import load
+from pertpy.tl.augurpy.estimator import Params, create_estimator
+from pertpy.tl.augurpy.evaluate import draw_subsample, predict, run_cross_validation, select_variance
+from pertpy.tl.augurpy.read_load import load
 
 CWD = Path(__file__).parent.resolve()
 

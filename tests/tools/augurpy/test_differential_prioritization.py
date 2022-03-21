@@ -2,10 +2,10 @@ from pathlib import Path
 
 import numpy as np
 import scanpy as sc
-from pertpy.tools.augurpy.differential_prioritization import predict_differential_prioritization
-from pertpy.tools.augurpy.estimator import Params, create_estimator
-from pertpy.tools.augurpy.evaluate import predict
-from pertpy.tools.augurpy.read_load import load
+from pertpy.tl.augurpy.differential_prioritization import predict_differential_prioritization
+from pertpy.tl.augurpy.estimator import Params, create_estimator
+from pertpy.tl.augurpy.evaluate import predict
+from pertpy.tl.augurpy.read_load import load
 
 CWD = Path(__file__).parent.resolve()
 

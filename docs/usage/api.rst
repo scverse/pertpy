@@ -39,12 +39,12 @@ Example implementation
 
 .. code:: python
 
-   import augurpy as ag
+   import pertpy.tl.augurpy as ag
 
    adata = '<data_you_want_to_analyse.h5ad>'
-   adata = ag.load(adata, label_col = "<label_col_name>", cell_type_col = "<cell_type_col_name>")
-   classifier = ag.create_estimator(classifier='random_forest_classifier')
-   adata, results = ag.predict(adata, classifier)
+   adata = ag.read_load.load(adata, label_col = "<label_col_name>", cell_type_col = "<cell_type_col_name>")
+   classifier = ag.estimator.create_estimator(classifier='random_forest_classifier')
+   adata, results = ag.evaluate.predict(adata, classifier)
 
    # metrics for each cell type
    results['summary_metrics']
@@ -52,12 +52,12 @@ Example implementation
 See `here <tutorials>`_ for a more elaborate tutorial.
 
 
-.. currentmodule:: pertpy.tools.augurpy
+.. currentmodule:: pertpy.tl.augurpy
 
 Loading Data
 >>>>>>>>>>>>
 
-.. module:: pertpy.tools.augurpy
+.. module:: pertpy.tl.augurpy
 
 .. autosummary::
     :toctree: read_load

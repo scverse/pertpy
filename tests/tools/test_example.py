@@ -1,4 +1,4 @@
-from pertpy.tools._example import add_me
+from pertpy.tl._example import add_me
 
 
 def test_add_me():

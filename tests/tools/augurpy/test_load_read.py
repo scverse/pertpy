@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import scanpy as sc
-from pertpy.tools.augurpy.read_load import load
+from pertpy.tl.augurpy.read_load import load
 
 CWD = Path(__file__).parent.resolve()
 

@@ -1,5 +1,5 @@
 import pytest
-from pertpy.tools.augurpy.estimator import Params, create_estimator
+from pertpy.tl.augurpy.estimator import Params, create_estimator
 from sklearn.ensemble import RandomForestRegressor
 
 
