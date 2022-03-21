@@ -1,291 +1,1457 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<html class="writer-html5" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="generator"
+            content="Docutils 0.17.1: http://docutils.sourceforge.net/"
+        />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>augurpy.estimator.Params &mdash; augurpy 0.1.0 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            augurpy.estimator.Params &mdash; augurpy 0.1.0 documentation
+        </title>
+        <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+        <link
+            rel="stylesheet"
+            href="../_static/css/theme.css"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="../_static/custom_cookietemple.css"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="../_static/dark_mode_css/general.css"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="../_static/dark_mode_css/dark.css"
+            type="text/css"
+        />
+        <!--[if lt IE 9]>
+            <script src="../_static/js/html5shiv.min.js"></script>
+        <![endif]-->
 
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script
+            data-url_root="../"
+            id="documentation_options"
+            src="../_static/documentation_options.js"
+        ></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/dark_mode_js/default_light.js"></script>
         <script src="../_static/dark_mode_js/theme_switcher.js"></script>
-    <script src="../_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="augurpy.evaluate.predict" href="../evaluate/augurpy.evaluate.predict.html" />
-    <link rel="prev" title="augurpy.estimator.create_estimator" href="augurpy.estimator.create_estimator.html" />
-</head>
+        <script src="../_static/js/theme.js"></script>
+        <link rel="index" title="Index" href="../genindex.html" />
+        <link rel="search" title="Search" href="../search.html" />
+        <link
+            rel="next"
+            title="augurpy.evaluate.predict"
+            href="../evaluate/augurpy.evaluate.predict.html"
+        />
+        <link
+            rel="prev"
+            title="augurpy.estimator.create_estimator"
+            href="augurpy.estimator.create_estimator.html"
+        />
+    </head>
 
-<body class="wy-body-for-nav">
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> augurpy
-          </a>
-              <div class="version">
-                0.1.0
-              </div>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../readme.html">augurpy</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../usage.html">Usage</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="../usage.html#api">API</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="../usage.html#module-augurpy">Loading Data</a></li>
-<li class="toctree-l3 current"><a class="reference internal" href="../usage.html#estimator">Estimator</a><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="augurpy.estimator.create_estimator.html">augurpy.estimator.create_estimator</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">augurpy.estimator.Params</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../usage.html#evaluation">Evaluation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../usage.html#differential-prioritization">Differential Prioritization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../usage.html#plots">Plots</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributor Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
-</ul>
+    <body class="wy-body-for-nav">
+        <div class="wy-grid-for-nav">
+            <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+                <div class="wy-side-scroll">
+                    <div class="wy-side-nav-search">
+                        <a href="../index.html" class="icon icon-home">
+                            augurpy
+                        </a>
+                        <div class="version">0.1.0</div>
+                        <div role="search">
+                            <form
+                                id="rtd-search-form"
+                                class="wy-form"
+                                action="../search.html"
+                                method="get"
+                            >
+                                <input
+                                    type="text"
+                                    name="q"
+                                    placeholder="Search docs"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="check_keywords"
+                                    value="yes"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="area"
+                                    value="default"
+                                />
+                            </form>
+                        </div>
+                    </div>
+                    <div
+                        class="wy-menu wy-menu-vertical"
+                        data-spy="affix"
+                        role="navigation"
+                        aria-label="Navigation menu"
+                    >
+                        <p class="caption" role="heading">
+                            <span class="caption-text">Contents:</span>
+                        </p>
+                        <ul class="current">
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../readme.html"
+                                    >augurpy</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../installation.html"
+                                    >Installation</a
+                                >
+                            </li>
+                            <li class="toctree-l1 current">
+                                <a
+                                    class="reference internal"
+                                    href="../usage.html"
+                                    >Usage</a
+                                >
+                                <ul class="current">
+                                    <li class="toctree-l2 current">
+                                        <a
+                                            class="reference internal"
+                                            href="../usage.html#api"
+                                            >API</a
+                                        >
+                                        <ul class="current">
+                                            <li class="toctree-l3">
+                                                <a
+                                                    class="reference internal"
+                                                    href="../usage.html#module-augurpy"
+                                                    >Loading Data</a
+                                                >
+                                            </li>
+                                            <li class="toctree-l3 current">
+                                                <a
+                                                    class="reference internal"
+                                                    href="../usage.html#estimator"
+                                                    >Estimator</a
+                                                >
+                                                <ul class="current">
+                                                    <li class="toctree-l4">
+                                                        <a
+                                                            class="
+                                                                reference
+                                                                internal
+                                                            "
+                                                            href="augurpy.estimator.create_estimator.html"
+                                                            >augurpy.estimator.create_estimator</a
+                                                        >
+                                                    </li>
+                                                    <li
+                                                        class="
+                                                            toctree-l4
+                                                            current
+                                                        "
+                                                    >
+                                                        <a
+                                                            class="
+                                                                current
+                                                                reference
+                                                                internal
+                                                            "
+                                                            href="#"
+                                                            >augurpy.estimator.Params</a
+                                                        >
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li class="toctree-l3">
+                                                <a
+                                                    class="reference internal"
+                                                    href="../usage.html#evaluation"
+                                                    >Evaluation</a
+                                                >
+                                            </li>
+                                            <li class="toctree-l3">
+                                                <a
+                                                    class="reference internal"
+                                                    href="../usage.html#differential-prioritization"
+                                                    >Differential
+                                                    Prioritization</a
+                                                >
+                                            </li>
+                                            <li class="toctree-l3">
+                                                <a
+                                                    class="reference internal"
+                                                    href="../usage.html#plots"
+                                                    >Plots</a
+                                                >
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../reference.html"
+                                    >Reference</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../contributing.html"
+                                    >Contributor Guide</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../authors.html"
+                                    >Credits</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="../code_of_conduct.html"
+                                    >Contributor Covenant Code of Conduct</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
 
+            <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+                <nav class="wy-nav-top" aria-label="Mobile navigation menu">
+                    <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+                    <a href="../index.html">augurpy</a>
+                </nav>
+
+                <div class="wy-nav-content">
+                    <div class="rst-content">
+                        <div role="navigation" aria-label="Page navigation">
+                            <ul class="wy-breadcrumbs">
+                                <li>
+                                    <a
+                                        href="../index.html"
+                                        class="icon icon-home"
+                                    ></a>
+                                    &raquo;
+                                </li>
+                                <li>
+                                    <a href="../usage.html">Usage</a> &raquo;
+                                </li>
+                                <li>augurpy.estimator.Params</li>
+                                <li class="wy-breadcrumbs-aside">
+                                    <a
+                                        href="../_sources/estimator/augurpy.estimator.Params.rst.txt"
+                                        rel="nofollow"
+                                    >
+                                        View page source</a
+                                    >
+                                </li>
+                            </ul>
+                            <hr />
+                        </div>
+                        <div
+                            role="main"
+                            class="document"
+                            itemscope="itemscope"
+                            itemtype="http://schema.org/Article"
+                        >
+                            <div itemprop="articleBody">
+                                <section id="augurpy-estimator-params">
+                                    <h1>
+                                        augurpy.estimator.Params<a
+                                            class="headerlink"
+                                            href="#augurpy-estimator-params"
+                                            title="Permalink to this headline"
+                                            ></a
+                                        >
+                                    </h1>
+                                    <dl class="py class">
+                                        <dt
+                                            class="sig sig-object py"
+                                            id="augurpy.estimator.Params"
+                                        >
+                                            <em class="property"
+                                                ><span class="pre">class</span
+                                                ><span class="w"> </span></em
+                                            ><span
+                                                class="
+                                                    sig-prename
+                                                    descclassname
+                                                "
+                                                ><span class="pre"
+                                                    >augurpy.estimator.</span
+                                                ></span
+                                            ><span class="sig-name descname"
+                                                ><span class="pre"
+                                                    >Params</span
+                                                ></span
+                                            ><span class="sig-paren">(</span
+                                            ><em class="sig-param"
+                                                ><span class="n"
+                                                    ><span class="pre"
+                                                        >n_estimators</span
+                                                    ></span
+                                                ><span class="o"
+                                                    ><span class="pre"
+                                                        >=</span
+                                                    ></span
+                                                ><span class="default_value"
+                                                    ><span class="pre"
+                                                        >100</span
+                                                    ></span
+                                                ></em
+                                            >,
+                                            <em class="sig-param"
+                                                ><span class="n"
+                                                    ><span class="pre"
+                                                        >max_depth</span
+                                                    ></span
+                                                ><span class="o"
+                                                    ><span class="pre"
+                                                        >=</span
+                                                    ></span
+                                                ><span class="default_value"
+                                                    ><span class="pre"
+                                                        >None</span
+                                                    ></span
+                                                ></em
+                                            >,
+                                            <em class="sig-param"
+                                                ><span class="n"
+                                                    ><span class="pre"
+                                                        >max_features</span
+                                                    ></span
+                                                ><span class="o"
+                                                    ><span class="pre"
+                                                        >=</span
+                                                    ></span
+                                                ><span class="default_value"
+                                                    ><span class="pre"
+                                                        >2</span
+                                                    ></span
+                                                ></em
+                                            >,
+                                            <em class="sig-param"
+                                                ><span class="n"
+                                                    ><span class="pre"
+                                                        >penalty</span
+                                                    ></span
+                                                ><span class="o"
+                                                    ><span class="pre"
+                                                        >=</span
+                                                    ></span
+                                                ><span class="default_value"
+                                                    ><span class="pre"
+                                                        >'l2'</span
+                                                    ></span
+                                                ></em
+                                            >,
+                                            <em class="sig-param"
+                                                ><span class="n"
+                                                    ><span class="pre"
+                                                        >random_state</span
+                                                    ></span
+                                                ><span class="o"
+                                                    ><span class="pre"
+                                                        >=</span
+                                                    ></span
+                                                ><span class="default_value"
+                                                    ><span class="pre"
+                                                        >None</span
+                                                    ></span
+                                                ></em
+                                            ><span class="sig-paren">)</span
+                                            ><a
+                                                class="reference internal"
+                                                href="../_modules/augurpy/estimator.html#Params"
+                                                ><span class="viewcode-link"
+                                                    ><span class="pre"
+                                                        >[source]</span
+                                                    ></span
+                                                ></a
+                                            ><a
+                                                class="headerlink"
+                                                href="#augurpy.estimator.Params"
+                                                title="Permalink to this definition"
+                                                ></a
+                                            >
+                                        </dt>
+                                        <dd>
+                                            <p>
+                                                Type signature for random forest
+                                                and logistic regression
+                                                parameters.
+                                            </p>
+                                            <dl class="field-list simple">
+                                                <dt class="field-odd">
+                                                    Parameters
+                                                </dt>
+                                                <dd class="field-odd">
+                                                    <ul class="simple">
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >n_estimators</strong
+                                                                >
+                                                                (<em>int</em>) –
+                                                                defines the
+                                                                number of trees
+                                                                in the forest;
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >max_depth</strong
+                                                                >
+                                                                (<em>int</em
+                                                                ><em> | </em
+                                                                ><em>None</em>)
+                                                                – specifies the
+                                                                maximal depth of
+                                                                each tree;
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >max_features</strong
+                                                                >
+                                                                (<em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'auto'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'log2'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'sqrt'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>int</em
+                                                                ><em> | </em
+                                                                ><em>float</em>)
+                                                                –
+                                                            </p>
+                                                            <p>
+                                                                specifies the
+                                                                maximal number
+                                                                of features
+                                                                considered when
+                                                                looking at best
+                                                                split.
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite>int</cite>
+                                                                then consider
+                                                                max_features for
+                                                                each split
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite
+                                                                    >float</cite
+                                                                >
+                                                                consider
+                                                                round(max_features*n_features)
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite
+                                                                    >auto</cite
+                                                                >
+                                                                then
+                                                                max_features=n_features
+                                                                (default)
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite
+                                                                    >log2</cite
+                                                                >
+                                                                then
+                                                                max_features=log2(n_features)
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite
+                                                                    >sqrt</cite
+                                                                >
+                                                                then
+                                                                max_featuers=sqrt(n_features)
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >penalty</strong
+                                                                >
+                                                                (<em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'l1'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'l2'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em
+                                                                    >'elasticnet'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'none'</em
+                                                                ><em>]</em>) –
+                                                            </p>
+                                                            <p>
+                                                                defines the norm
+                                                                of the penalty
+                                                                used in logistic
+                                                                regression
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite>l1</cite>
+                                                                then L1 penalty
+                                                                is added
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite>l2</cite>
+                                                                then L2 penalty
+                                                                is added
+                                                                (default)
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite
+                                                                    >elasticnet</cite
+                                                                >
+                                                                both L1 and L2
+                                                                penalties are
+                                                                added
+                                                            </p>
+                                                            <p>
+                                                                if
+                                                                <cite
+                                                                    >none</cite
+                                                                >
+                                                                no penalty is
+                                                                added
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >random_state</strong
+                                                                >
+                                                                (<em>int</em
+                                                                ><em> | </em
+                                                                ><em>None</em>)
+                                                                – sets random
+                                                                model seed
+                                                            </p>
+                                                        </li>
+                                                    </ul>
+                                                </dd>
+                                                <dt class="field-even">
+                                                    Return type
+                                                </dt>
+                                                <dd class="field-even">
+                                                    <p>None</p>
+                                                </dd>
+                                            </dl>
+                                            <dl class="py attribute">
+                                                <dt
+                                                    class="sig sig-object py"
+                                                    id="augurpy.estimator.Params.n_estimators"
+                                                >
+                                                    <span
+                                                        class="
+                                                            sig-name
+                                                            descname
+                                                        "
+                                                        ><span class="pre"
+                                                            >n_estimators</span
+                                                        ></span
+                                                    ><a
+                                                        class="headerlink"
+                                                        href="#augurpy.estimator.Params.n_estimators"
+                                                        title="Permalink to this definition"
+                                                        ></a
+                                                    >
+                                                </dt>
+                                                <dd>
+                                                    <p>
+                                                        defines the number of
+                                                        trees in the forest;
+                                                    </p>
+                                                    <dl
+                                                        class="
+                                                            field-list
+                                                            simple
+                                                        "
+                                                    >
+                                                        <dt class="field-odd">
+                                                            Type
+                                                        </dt>
+                                                        <dd class="field-odd">
+                                                            <p>int</p>
+                                                        </dd>
+                                                    </dl>
+                                                </dd>
+                                            </dl>
+
+                                            <dl class="py attribute">
+                                                <dt
+                                                    class="sig sig-object py"
+                                                    id="augurpy.estimator.Params.max_depth"
+                                                >
+                                                    <span
+                                                        class="
+                                                            sig-name
+                                                            descname
+                                                        "
+                                                        ><span class="pre"
+                                                            >max_depth</span
+                                                        ></span
+                                                    ><a
+                                                        class="headerlink"
+                                                        href="#augurpy.estimator.Params.max_depth"
+                                                        title="Permalink to this definition"
+                                                        ></a
+                                                    >
+                                                </dt>
+                                                <dd>
+                                                    <p>
+                                                        specifies the maximal
+                                                        depth of each tree;
+                                                    </p>
+                                                    <dl
+                                                        class="
+                                                            field-list
+                                                            simple
+                                                        "
+                                                    >
+                                                        <dt class="field-odd">
+                                                            Type
+                                                        </dt>
+                                                        <dd class="field-odd">
+                                                            <p>int | None</p>
+                                                        </dd>
+                                                    </dl>
+                                                </dd>
+                                            </dl>
+
+                                            <dl class="py attribute">
+                                                <dt
+                                                    class="sig sig-object py"
+                                                    id="augurpy.estimator.Params.max_features"
+                                                >
+                                                    <span
+                                                        class="
+                                                            sig-name
+                                                            descname
+                                                        "
+                                                        ><span class="pre"
+                                                            >max_features</span
+                                                        ></span
+                                                    ><a
+                                                        class="headerlink"
+                                                        href="#augurpy.estimator.Params.max_features"
+                                                        title="Permalink to this definition"
+                                                        ></a
+                                                    >
+                                                </dt>
+                                                <dd>
+                                                    <p>
+                                                        specifies the maximal
+                                                        number of features
+                                                        considered when looking
+                                                        at best split.
+                                                    </p>
+                                                    <dl
+                                                        class="
+                                                            field-list
+                                                            simple
+                                                        "
+                                                    >
+                                                        <dt class="field-odd">
+                                                            Type
+                                                        </dt>
+                                                        <dd class="field-odd">
+                                                            <p>
+                                                                Literal[‘auto’]
+                                                                |
+                                                                Literal[‘log2’]
+                                                                |
+                                                                Literal[‘sqrt’]
+                                                                | int | float
+                                                            </p>
+                                                        </dd>
+                                                    </dl>
+                                                </dd>
+                                            </dl>
+
+                                            <dl class="py attribute">
+                                                <dt
+                                                    class="sig sig-object py"
+                                                    id="augurpy.estimator.Params.penalty"
+                                                >
+                                                    <span
+                                                        class="
+                                                            sig-name
+                                                            descname
+                                                        "
+                                                        ><span class="pre"
+                                                            >penalty</span
+                                                        ></span
+                                                    ><a
+                                                        class="headerlink"
+                                                        href="#augurpy.estimator.Params.penalty"
+                                                        title="Permalink to this definition"
+                                                        ></a
+                                                    >
+                                                </dt>
+                                                <dd>
+                                                    <p>
+                                                        defines the norm of the
+                                                        penalty used in logistic
+                                                        regression
+                                                    </p>
+                                                    <dl
+                                                        class="
+                                                            field-list
+                                                            simple
+                                                        "
+                                                    >
+                                                        <dt class="field-odd">
+                                                            Type
+                                                        </dt>
+                                                        <dd class="field-odd">
+                                                            <p>
+                                                                Literal[‘l1’] |
+                                                                Literal[‘l2’] |
+                                                                Literal[‘elasticnet’]
+                                                                |
+                                                                Literal[‘none’]
+                                                            </p>
+                                                        </dd>
+                                                    </dl>
+                                                </dd>
+                                            </dl>
+
+                                            <dl class="py attribute">
+                                                <dt
+                                                    class="sig sig-object py"
+                                                    id="augurpy.estimator.Params.random_state"
+                                                >
+                                                    <span
+                                                        class="
+                                                            sig-name
+                                                            descname
+                                                        "
+                                                        ><span class="pre"
+                                                            >random_state</span
+                                                        ></span
+                                                    ><a
+                                                        class="headerlink"
+                                                        href="#augurpy.estimator.Params.random_state"
+                                                        title="Permalink to this definition"
+                                                        ></a
+                                                    >
+                                                </dt>
+                                                <dd>
+                                                    <p>
+                                                        sets random model seed
+                                                    </p>
+                                                    <dl
+                                                        class="
+                                                            field-list
+                                                            simple
+                                                        "
+                                                    >
+                                                        <dt class="field-odd">
+                                                            Type
+                                                        </dt>
+                                                        <dd class="field-odd">
+                                                            <p>int | None</p>
+                                                        </dd>
+                                                    </dl>
+                                                </dd>
+                                            </dl>
+
+                                            <dl class="field-list simple">
+                                                <dt class="field-odd">
+                                                    Returns
+                                                </dt>
+                                                <dd class="field-odd">
+                                                    <p>Params class object.</p>
+                                                </dd>
+                                                <dt class="field-even">
+                                                    Parameters
+                                                </dt>
+                                                <dd class="field-even">
+                                                    <ul class="simple">
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >n_estimators</strong
+                                                                >
+                                                                (<em>int</em>) –
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >max_depth</strong
+                                                                >
+                                                                (<em>int</em
+                                                                ><em> | </em
+                                                                ><em>None</em>)
+                                                                –
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >max_features</strong
+                                                                >
+                                                                (<em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'auto'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'log2'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'sqrt'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>int</em
+                                                                ><em> | </em
+                                                                ><em>float</em>)
+                                                                –
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >penalty</strong
+                                                                >
+                                                                (<em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'l1'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'l2'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em
+                                                                    >'elasticnet'</em
+                                                                ><em>] </em
+                                                                ><em>| </em
+                                                                ><em>Literal</em
+                                                                ><em>[</em
+                                                                ><em>'none'</em
+                                                                ><em>]</em>) –
+                                                            </p>
+                                                        </li>
+                                                        <li>
+                                                            <p>
+                                                                <strong
+                                                                    >random_state</strong
+                                                                >
+                                                                (<em>int</em
+                                                                ><em> | </em
+                                                                ><em>None</em>)
+                                                                –
+                                                            </p>
+                                                        </li>
+                                                    </ul>
+                                                </dd>
+                                                <dt class="field-odd">
+                                                    Return type
+                                                </dt>
+                                                <dd class="field-odd">
+                                                    <p>None</p>
+                                                </dd>
+                                            </dl>
+                                            <dl class="py method">
+                                                <dt
+                                                    class="sig sig-object py"
+                                                    id="augurpy.estimator.Params.__init__"
+                                                >
+                                                    <span
+                                                        class="
+                                                            sig-name
+                                                            descname
+                                                        "
+                                                        ><span class="pre"
+                                                            >__init__</span
+                                                        ></span
+                                                    ><span class="sig-paren"
+                                                        >(</span
+                                                    ><em class="sig-param"
+                                                        ><span class="n"
+                                                            ><span class="pre"
+                                                                >n_estimators</span
+                                                            ></span
+                                                        ><span class="o"
+                                                            ><span class="pre"
+                                                                >=</span
+                                                            ></span
+                                                        ><span
+                                                            class="
+                                                                default_value
+                                                            "
+                                                            ><span class="pre"
+                                                                >100</span
+                                                            ></span
+                                                        ></em
+                                                    >,
+                                                    <em class="sig-param"
+                                                        ><span class="n"
+                                                            ><span class="pre"
+                                                                >max_depth</span
+                                                            ></span
+                                                        ><span class="o"
+                                                            ><span class="pre"
+                                                                >=</span
+                                                            ></span
+                                                        ><span
+                                                            class="
+                                                                default_value
+                                                            "
+                                                            ><span class="pre"
+                                                                >None</span
+                                                            ></span
+                                                        ></em
+                                                    >,
+                                                    <em class="sig-param"
+                                                        ><span class="n"
+                                                            ><span class="pre"
+                                                                >max_features</span
+                                                            ></span
+                                                        ><span class="o"
+                                                            ><span class="pre"
+                                                                >=</span
+                                                            ></span
+                                                        ><span
+                                                            class="
+                                                                default_value
+                                                            "
+                                                            ><span class="pre"
+                                                                >2</span
+                                                            ></span
+                                                        ></em
+                                                    >,
+                                                    <em class="sig-param"
+                                                        ><span class="n"
+                                                            ><span class="pre"
+                                                                >penalty</span
+                                                            ></span
+                                                        ><span class="o"
+                                                            ><span class="pre"
+                                                                >=</span
+                                                            ></span
+                                                        ><span
+                                                            class="
+                                                                default_value
+                                                            "
+                                                            ><span class="pre"
+                                                                >'l2'</span
+                                                            ></span
+                                                        ></em
+                                                    >,
+                                                    <em class="sig-param"
+                                                        ><span class="n"
+                                                            ><span class="pre"
+                                                                >random_state</span
+                                                            ></span
+                                                        ><span class="o"
+                                                            ><span class="pre"
+                                                                >=</span
+                                                            ></span
+                                                        ><span
+                                                            class="
+                                                                default_value
+                                                            "
+                                                            ><span class="pre"
+                                                                >None</span
+                                                            ></span
+                                                        ></em
+                                                    ><span class="sig-paren"
+                                                        >)</span
+                                                    ><a
+                                                        class="headerlink"
+                                                        href="#augurpy.estimator.Params.__init__"
+                                                        title="Permalink to this definition"
+                                                        ></a
+                                                    >
+                                                </dt>
+                                                <dd>
+                                                    <dl
+                                                        class="
+                                                            field-list
+                                                            simple
+                                                        "
+                                                    >
+                                                        <dt class="field-odd">
+                                                            Parameters
+                                                        </dt>
+                                                        <dd class="field-odd">
+                                                            <ul class="simple">
+                                                                <li>
+                                                                    <p>
+                                                                        <strong
+                                                                            >n_estimators</strong
+                                                                        >
+                                                                        (<em>int</em>)
+                                                                        –
+                                                                    </p>
+                                                                </li>
+                                                                <li>
+                                                                    <p>
+                                                                        <strong
+                                                                            >max_depth</strong
+                                                                        >
+                                                                        (<em
+                                                                            >int</em
+                                                                        ><em>
+                                                                            | </em
+                                                                        ><em
+                                                                            >None</em
+                                                                        >) –
+                                                                    </p>
+                                                                </li>
+                                                                <li>
+                                                                    <p>
+                                                                        <strong
+                                                                            >max_features</strong
+                                                                        >
+                                                                        (<em
+                                                                            >Literal</em
+                                                                        ><em
+                                                                            >[</em
+                                                                        ><em
+                                                                            >'auto'</em
+                                                                        ><em
+                                                                            >] </em
+                                                                        ><em
+                                                                            >| </em
+                                                                        ><em
+                                                                            >Literal</em
+                                                                        ><em
+                                                                            >[</em
+                                                                        ><em
+                                                                            >'log2'</em
+                                                                        ><em
+                                                                            >] </em
+                                                                        ><em
+                                                                            >| </em
+                                                                        ><em
+                                                                            >Literal</em
+                                                                        ><em
+                                                                            >[</em
+                                                                        ><em
+                                                                            >'sqrt'</em
+                                                                        ><em
+                                                                            >] </em
+                                                                        ><em
+                                                                            >| </em
+                                                                        ><em
+                                                                            >int</em
+                                                                        ><em>
+                                                                            | </em
+                                                                        ><em
+                                                                            >float</em
+                                                                        >) –
+                                                                    </p>
+                                                                </li>
+                                                                <li>
+                                                                    <p>
+                                                                        <strong
+                                                                            >penalty</strong
+                                                                        >
+                                                                        (<em
+                                                                            >Literal</em
+                                                                        ><em
+                                                                            >[</em
+                                                                        ><em
+                                                                            >'l1'</em
+                                                                        ><em
+                                                                            >] </em
+                                                                        ><em
+                                                                            >| </em
+                                                                        ><em
+                                                                            >Literal</em
+                                                                        ><em
+                                                                            >[</em
+                                                                        ><em
+                                                                            >'l2'</em
+                                                                        ><em
+                                                                            >] </em
+                                                                        ><em
+                                                                            >| </em
+                                                                        ><em
+                                                                            >Literal</em
+                                                                        ><em
+                                                                            >[</em
+                                                                        ><em
+                                                                            >'elasticnet'</em
+                                                                        ><em
+                                                                            >] </em
+                                                                        ><em
+                                                                            >| </em
+                                                                        ><em
+                                                                            >Literal</em
+                                                                        ><em
+                                                                            >[</em
+                                                                        ><em
+                                                                            >'none'</em
+                                                                        ><em
+                                                                            >]</em
+                                                                        >) –
+                                                                    </p>
+                                                                </li>
+                                                                <li>
+                                                                    <p>
+                                                                        <strong
+                                                                            >random_state</strong
+                                                                        >
+                                                                        (<em
+                                                                            >int</em
+                                                                        ><em>
+                                                                            | </em
+                                                                        ><em
+                                                                            >None</em
+                                                                        >) –
+                                                                    </p>
+                                                                </li>
+                                                            </ul>
+                                                        </dd>
+                                                        <dt class="field-even">
+                                                            Return type
+                                                        </dt>
+                                                        <dd class="field-even">
+                                                            <p>None</p>
+                                                        </dd>
+                                                    </dl>
+                                                </dd>
+                                            </dl>
+
+                                            <p class="rubric">Methods</p>
+                                            <table
+                                                class="
+                                                    longtable
+                                                    docutils
+                                                    align-default
+                                                "
+                                            >
+                                                <colgroup>
+                                                    <col style="width: 10%" />
+                                                    <col style="width: 90%" />
+                                                </colgroup>
+                                                <tbody>
+                                                    <tr class="row-odd">
+                                                        <td>
+                                                            <p>
+                                                                <a
+                                                                    class="
+                                                                        reference
+                                                                        internal
+                                                                    "
+                                                                    href="#augurpy.estimator.Params.__init__"
+                                                                    title="augurpy.estimator.Params.__init__"
+                                                                    ><code
+                                                                        class="
+                                                                            xref
+                                                                            py
+                                                                            py-obj
+                                                                            docutils
+                                                                            literal
+                                                                            notranslate
+                                                                        "
+                                                                        ><span
+                                                                            class="
+                                                                                pre
+                                                                            "
+                                                                            >__init__</span
+                                                                        ></code
+                                                                    ></a
+                                                                >([n_estimators, max_depth, ...])
+                                                            </p>
+                                                        </td>
+                                                        <td><p></p></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <p class="rubric">Attributes</p>
+                                            <table
+                                                class="
+                                                    longtable
+                                                    docutils
+                                                    align-default
+                                                "
+                                            >
+                                                <colgroup>
+                                                    <col style="width: 10%" />
+                                                    <col style="width: 90%" />
+                                                </colgroup>
+                                                <tbody>
+                                                    <tr class="row-odd">
+                                                        <td>
+                                                            <p>
+                                                                <a
+                                                                    class="
+                                                                        reference
+                                                                        internal
+                                                                    "
+                                                                    href="#augurpy.estimator.Params.max_depth"
+                                                                    title="augurpy.estimator.Params.max_depth"
+                                                                    ><code
+                                                                        class="
+                                                                            xref
+                                                                            py
+                                                                            py-obj
+                                                                            docutils
+                                                                            literal
+                                                                            notranslate
+                                                                        "
+                                                                        ><span
+                                                                            class="
+                                                                                pre
+                                                                            "
+                                                                            >max_depth</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </p>
+                                                        </td>
+                                                        <td><p></p></td>
+                                                    </tr>
+                                                    <tr class="row-even">
+                                                        <td>
+                                                            <p>
+                                                                <a
+                                                                    class="
+                                                                        reference
+                                                                        internal
+                                                                    "
+                                                                    href="#augurpy.estimator.Params.max_features"
+                                                                    title="augurpy.estimator.Params.max_features"
+                                                                    ><code
+                                                                        class="
+                                                                            xref
+                                                                            py
+                                                                            py-obj
+                                                                            docutils
+                                                                            literal
+                                                                            notranslate
+                                                                        "
+                                                                        ><span
+                                                                            class="
+                                                                                pre
+                                                                            "
+                                                                            >max_features</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </p>
+                                                        </td>
+                                                        <td><p></p></td>
+                                                    </tr>
+                                                    <tr class="row-odd">
+                                                        <td>
+                                                            <p>
+                                                                <a
+                                                                    class="
+                                                                        reference
+                                                                        internal
+                                                                    "
+                                                                    href="#augurpy.estimator.Params.n_estimators"
+                                                                    title="augurpy.estimator.Params.n_estimators"
+                                                                    ><code
+                                                                        class="
+                                                                            xref
+                                                                            py
+                                                                            py-obj
+                                                                            docutils
+                                                                            literal
+                                                                            notranslate
+                                                                        "
+                                                                        ><span
+                                                                            class="
+                                                                                pre
+                                                                            "
+                                                                            >n_estimators</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </p>
+                                                        </td>
+                                                        <td><p></p></td>
+                                                    </tr>
+                                                    <tr class="row-even">
+                                                        <td>
+                                                            <p>
+                                                                <a
+                                                                    class="
+                                                                        reference
+                                                                        internal
+                                                                    "
+                                                                    href="#augurpy.estimator.Params.penalty"
+                                                                    title="augurpy.estimator.Params.penalty"
+                                                                    ><code
+                                                                        class="
+                                                                            xref
+                                                                            py
+                                                                            py-obj
+                                                                            docutils
+                                                                            literal
+                                                                            notranslate
+                                                                        "
+                                                                        ><span
+                                                                            class="
+                                                                                pre
+                                                                            "
+                                                                            >penalty</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </p>
+                                                        </td>
+                                                        <td><p></p></td>
+                                                    </tr>
+                                                    <tr class="row-odd">
+                                                        <td>
+                                                            <p>
+                                                                <a
+                                                                    class="
+                                                                        reference
+                                                                        internal
+                                                                    "
+                                                                    href="#augurpy.estimator.Params.random_state"
+                                                                    title="augurpy.estimator.Params.random_state"
+                                                                    ><code
+                                                                        class="
+                                                                            xref
+                                                                            py
+                                                                            py-obj
+                                                                            docutils
+                                                                            literal
+                                                                            notranslate
+                                                                        "
+                                                                        ><span
+                                                                            class="
+                                                                                pre
+                                                                            "
+                                                                            >random_state</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </p>
+                                                        </td>
+                                                        <td><p></p></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </dd>
+                                    </dl>
+                                </section>
+                            </div>
+                        </div>
+                        <footer>
+                            <div
+                                class="rst-footer-buttons"
+                                role="navigation"
+                                aria-label="Footer"
+                            >
+                                <a
+                                    href="augurpy.estimator.create_estimator.html"
+                                    class="btn btn-neutral float-left"
+                                    title="augurpy.estimator.create_estimator"
+                                    accesskey="p"
+                                    rel="prev"
+                                    ><span
+                                        class="fa fa-arrow-circle-left"
+                                        aria-hidden="true"
+                                    ></span>
+                                    Previous</a
+                                >
+                                <a
+                                    href="../evaluate/augurpy.evaluate.predict.html"
+                                    class="btn btn-neutral float-right"
+                                    title="augurpy.evaluate.predict"
+                                    accesskey="n"
+                                    rel="next"
+                                    >Next
+                                    <span
+                                        class="fa fa-arrow-circle-right"
+                                        aria-hidden="true"
+                                    ></span
+                                ></a>
+                            </div>
+
+                            <hr />
+
+                            <div role="contentinfo">
+                                <p>&#169; Copyright 2021, Lukas Heumos.</p>
+                            </div>
+
+                            Built with
+                            <a href="https://www.sphinx-doc.org/">Sphinx</a>
+                            using a
+                            <a
+                                href="https://github.com/readthedocs/sphinx_rtd_theme"
+                                >theme</a
+                            >
+                            provided by
+                            <a href="https://readthedocs.org">Read the Docs</a>.
+                        </footer>
+                    </div>
+                </div>
+            </section>
         </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">augurpy</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../usage.html">Usage</a> &raquo;</li>
-      <li>augurpy.estimator.Params</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/estimator/augurpy.estimator.Params.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-
-  <section id="augurpy-estimator-params">
-<h1>augurpy.estimator.Params<a class="headerlink" href="#augurpy-estimator-params" title="Permalink to this headline"></a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="augurpy.estimator.Params">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">augurpy.estimator.</span></span><span class="sig-name descname"><span class="pre">Params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'l2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/augurpy/estimator.html#Params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#augurpy.estimator.Params" title="Permalink to this definition"></a></dt>
-<dd><p>Type signature for random forest and logistic regression parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>n_estimators</strong> (<em>int</em>) – defines the number of trees in the forest;</p></li>
-<li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>) – specifies the maximal depth of each tree;</p></li>
-<li><p><strong>max_features</strong> (<em>Literal</em><em>[</em><em>'auto'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'log2'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'sqrt'</em><em>] </em><em>| </em><em>int</em><em> | </em><em>float</em>) – <p>specifies the maximal number of features considered when looking at best split.</p>
-<p>if <cite>int</cite> then consider max_features for each split</p>
-<p>if <cite>float</cite> consider round(max_features*n_features)</p>
-<p>if <cite>auto</cite> then max_features=n_features (default)</p>
-<p>if <cite>log2</cite> then max_features=log2(n_features)</p>
-<p>if <cite>sqrt</cite> then max_featuers=sqrt(n_features)</p>
-</p></li>
-<li><p><strong>penalty</strong> (<em>Literal</em><em>[</em><em>'l1'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'l2'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'elasticnet'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'none'</em><em>]</em>) – <p>defines the norm of the penalty used in logistic regression</p>
-<p>if <cite>l1</cite> then L1 penalty is added</p>
-<p>if <cite>l2</cite> then L2 penalty is added (default)</p>
-<p>if <cite>elasticnet</cite> both L1 and L2 penalties are added</p>
-<p>if <cite>none</cite> no penalty is added</p>
-</p></li>
-<li><p><strong>random_state</strong> (<em>int</em><em> | </em><em>None</em>) – sets random model seed</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="augurpy.estimator.Params.n_estimators">
-<span class="sig-name descname"><span class="pre">n_estimators</span></span><a class="headerlink" href="#augurpy.estimator.Params.n_estimators" title="Permalink to this definition"></a></dt>
-<dd><p>defines the number of trees in the forest;</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="augurpy.estimator.Params.max_depth">
-<span class="sig-name descname"><span class="pre">max_depth</span></span><a class="headerlink" href="#augurpy.estimator.Params.max_depth" title="Permalink to this definition"></a></dt>
-<dd><p>specifies the maximal depth of each tree;</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int | None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="augurpy.estimator.Params.max_features">
-<span class="sig-name descname"><span class="pre">max_features</span></span><a class="headerlink" href="#augurpy.estimator.Params.max_features" title="Permalink to this definition"></a></dt>
-<dd><p>specifies the maximal number of features considered when looking at best split.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Literal[‘auto’] | Literal[‘log2’] | Literal[‘sqrt’] | int | float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="augurpy.estimator.Params.penalty">
-<span class="sig-name descname"><span class="pre">penalty</span></span><a class="headerlink" href="#augurpy.estimator.Params.penalty" title="Permalink to this definition"></a></dt>
-<dd><p>defines the norm of the penalty used in logistic regression</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>Literal[‘l1’] | Literal[‘l2’] | Literal[‘elasticnet’] | Literal[‘none’]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="augurpy.estimator.Params.random_state">
-<span class="sig-name descname"><span class="pre">random_state</span></span><a class="headerlink" href="#augurpy.estimator.Params.random_state" title="Permalink to this definition"></a></dt>
-<dd><p>sets random model seed</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int | None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Params class object.</p>
-</dd>
-<dt class="field-even">Parameters</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>n_estimators</strong> (<em>int</em>) – </p></li>
-<li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>max_features</strong> (<em>Literal</em><em>[</em><em>'auto'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'log2'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'sqrt'</em><em>] </em><em>| </em><em>int</em><em> | </em><em>float</em>) – </p></li>
-<li><p><strong>penalty</strong> (<em>Literal</em><em>[</em><em>'l1'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'l2'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'elasticnet'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'none'</em><em>]</em>) – </p></li>
-<li><p><strong>random_state</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="augurpy.estimator.Params.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'l2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#augurpy.estimator.Params.__init__" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>n_estimators</strong> (<em>int</em>) – </p></li>
-<li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>max_features</strong> (<em>Literal</em><em>[</em><em>'auto'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'log2'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'sqrt'</em><em>] </em><em>| </em><em>int</em><em> | </em><em>float</em>) – </p></li>
-<li><p><strong>penalty</strong> (<em>Literal</em><em>[</em><em>'l1'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'l2'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'elasticnet'</em><em>] </em><em>| </em><em>Literal</em><em>[</em><em>'none'</em><em>]</em>) – </p></li>
-<li><p><strong>random_state</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#augurpy.estimator.Params.__init__" title="augurpy.estimator.Params.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([n_estimators, max_depth, ...])</p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#augurpy.estimator.Params.max_depth" title="augurpy.estimator.Params.max_depth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_depth</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#augurpy.estimator.Params.max_features" title="augurpy.estimator.Params.max_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_features</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#augurpy.estimator.Params.n_estimators" title="augurpy.estimator.Params.n_estimators"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_estimators</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#augurpy.estimator.Params.penalty" title="augurpy.estimator.Params.penalty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">penalty</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#augurpy.estimator.Params.random_state" title="augurpy.estimator.Params.random_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random_state</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</section>
-
-
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="augurpy.estimator.create_estimator.html" class="btn btn-neutral float-left" title="augurpy.estimator.create_estimator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../evaluate/augurpy.evaluate.predict.html" class="btn btn-neutral float-right" title="augurpy.evaluate.predict" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2021, Lukas Heumos.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
-
-</footer>
-        </div>
-      </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
-
-</body>
+        <script>
+            jQuery(function () {
+                SphinxRtdTheme.Navigation.enable(true);
+            });
+        </script>
+    </body>
 </html>
