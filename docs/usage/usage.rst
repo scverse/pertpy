@@ -63,7 +63,13 @@ Estimator
     :toctree: estimator
 
     tools.augurpy.estimator.create_estimator
+
+    :template: param_class.rst
+    :toctree: estimator
+
     tools.augurpy.estimator.Params
+
+
 
 Evaluation
 ++++++++++

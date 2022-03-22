@@ -13,25 +13,28 @@ from switchlang import switch
 class Params:
     """Type signature for random forest and logistic regression parameters.
 
-    Attributes:
+    Parameters:
         n_estimators: defines the number of trees in the forest;
         max_depth: specifies the maximal depth of each tree;
         max_features: specifies the maximal number of features considered when looking at best split.
+
             * if int then consider max_features for each split
             * if float consider round(max_features*n_features)
             * if `auto` then max_features=n_features (default)
             * if `log2` then max_features=log2(n_features)
             * if `sqrt` then max_featuers=sqrt(n_features)
+
         penalty: defines the norm of the penalty used in logistic regression
+
             * if `l1` then L1 penalty is added
             * if `l2` then L2 penalty is added (default)
             * if `elasticnet` both L1 and L2 penalties are added
             * if `none` no penalty is added
+
         random_state: sets random model seed
     """
 
     n_estimators: int = 100
-    "this is a test"
     max_depth: int | None = None
     max_features: Literal["auto"] | Literal["log2"] | Literal["sqrt"] | int | float = 2
     penalty: Literal["l1"] | Literal["l2"] | Literal["elasticnet"] | Literal["none"] = "l2"
