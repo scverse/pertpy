@@ -31,7 +31,7 @@ def load(
 
     Returns:
         Anndata object containing gene expression values (cells in rows, genes in columns) and cell type, label and y
-        dummie variables as obs
+        dummy variables as obs
     """
     if isinstance(input, AnnData):
         input.obs = input.obs.rename(columns={cell_type_col: "cell_type", label_col: "label"})
@@ -52,7 +52,7 @@ def load(
 
     if len(adata.obs["label"].unique()) < 2:
         raise ValueError("Less than two unique labels in dataset. At least two are needed for the analysis.")
-    # dummie variables for categorical data
+    # dummy variables for categorical data
     if adata.obs["label"].dtype.name == "category":
         # filter samples acording to label
         if condition_label is not None and treatment_label is not None:
