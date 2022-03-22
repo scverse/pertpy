@@ -119,7 +119,6 @@ def bhattacherjee_rna() -> AnnData:
     return adata
 
 
-# 19122572
 def sciplex3() -> AnnData:
     """SciPlex3 perturbation dataset curated for perturbation modeling.
 
