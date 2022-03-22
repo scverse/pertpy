@@ -17,15 +17,12 @@ def pert_sign(
     copy=False,
     **kwargs
 ):
-    # add split by <replicate>
-    # also seems to require diffs for all cells not only perturbed.
     if copy:
         adata = adata.copy()
 
     adata.layers["X_pert"] = adata.X.copy()
 
-    pert_mask = adata.obs[pert_key] != control
-    control_mask = ~pert_mask
+    control_mask = adata.obs[pert_key] == control
 
     if split_by is None:
         split_masks = [np.full(adata.n_obs, True, dtype=bool)]
@@ -34,22 +31,21 @@ def pert_sign(
         cats = split_obs.unique()
         split_masks = [split_obs == cat for cat in cats]
 
-    X = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
+    R = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
 
     for split_mask in split_masks:
         control_mask_split = control_mask & split_mask
 
-        X_split = X[split_mask]
-        X_control = X[control_mask_split]
+        R_split = R[split_mask]
+        R_control = R[control_mask_split]
 
         eps = kwargs.pop("epsilon", 0.1)
-        nn_index = NNDescent(X_control, **kwargs)
-        indices, _ = nn_index.query(X_split, k=n_neighbors, epsilon=eps)
+        nn_index = NNDescent(R_control, **kwargs)
+        indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
 
-        X_split = adata.X[split_mask]
         X_control = np.expm1(adata.X[control_mask_split])
 
-        n_split = X_split.shape[0]
+        n_split = split_mask.sum()
         n_control = X_control.shape[0]
 
         if batch_size is None:
@@ -60,14 +56,16 @@ def pert_sign(
                 (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)), shape=(n_split, n_control)
             )
             neigh_matrix /= n_neighbors
-
-            X_split -= np.log1p(neigh_matrix @ X_control)
+            adata.layers["X_pert"][split_mask] -= np.log1p(neigh_matrix @ X_control)
         else:
-            is_sparse = issparse(X_split)
+            is_sparse = issparse(X_control)
+            split_indices = np.where(split_mask)[0]
             for i in range(0, n_split, batch_size):
                 size = min(i + batch_size, n_split)
                 select = slice(i, size)
+
                 batch = np.ravel(indices[select])
+                split_batch = split_indices[select]
 
                 size = size - i
 
@@ -76,10 +74,7 @@ def pert_sign(
                 means_batch = means_batch.toarray() if is_sparse else means_batch
                 means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
 
-                X_split[select] -= np.log1p(means_batch)
-
-        # also bad for sparse
-        adata.layers["X_pert"][split_mask] = X_split
+                adata.layers["X_pert"][split_batch] -= np.log1p(means_batch)
 
     if copy:
         return adata
