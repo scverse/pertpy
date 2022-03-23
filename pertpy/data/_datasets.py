@@ -122,7 +122,6 @@ def bhattacherjee_rna() -> AnnData:
 def sciplex3() -> AnnData:
     """SciPlex3 perturbation dataset curated for perturbation modeling.
 
-
     Args:
         file_path: Path to the dataset
 
