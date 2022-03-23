@@ -356,3 +356,30 @@ def norman_2019_raw() -> AnnData:
         adata = sc.read_h5ad(output_file_path)
 
     return adata
+
+
+def dialogue_example() -> AnnData:
+    """Example dataset used to feature DIALOGUE
+
+    https://github.com/livnatje/DIALOGUE/wiki/Example
+
+    Args:
+        file_path: Path to the dataset
+
+    Returns:
+        :class:`~anndata.AnnData` object
+    """
+    output_file_name = "dialogue_example.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/34490714",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
