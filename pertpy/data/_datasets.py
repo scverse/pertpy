@@ -16,9 +16,6 @@ def burczynski_crohn() -> AnnData:
     cells from 42 healthy individuals, 59 CD patients, and 26 UC patients by
     hybridization to microarrays interrogating more than 22,000 sequences.
 
-    Args:
-        file_path: Path to the dataset
-
     Reference:
         Burczynski et al., "Molecular classification of Crohn's disease and
         ulcerative colitis patients using transcriptional profiles in peripheral blood mononuclear cells"
@@ -39,9 +36,6 @@ def burczynski_crispr() -> MuData:
     Papalexi, E., Mimitou, E.P., Butler, A.W. et al. Characterizing the molecular regulation
     of inhibitory immune checkpoints with multimodal single-cell screens.
     Nat Genet 53, 322–331 (2021). https://doi.org/10.1038/s41588-021-00778-2
-
-    Args:
-        file_path: Path to the dataset
 
     Returns:
         :class:`~anndata.AnnData` object of the Crispr dataset
@@ -66,9 +60,6 @@ def sc_sim_augur() -> AnnData:
     """Simulated test dataset used the Usage example for the Augur.
 
     https://github.com/neurorestore/Augur
-
-    Args:
-        file_path: Path to the dataset
 
     Returns:
         :class:`~anndata.AnnData` object of a simulated single-cell RNA seq dataset
@@ -95,9 +86,6 @@ def bhattacherjee() -> AnnData:
     Adult mice were subject to cocaine self-administration, samples were
     collected a three time points: Maintance, 48h after cocaine withdrawal and
     15 days after cocaine withdrawal.
-
-    Args:
-        file_path: Path to the dataset
 
     Reference:
         Bhattacherjee A, Djekidel MN, Chen R, Chen W, Tuesta LM, Zhang Y. Cell
@@ -126,9 +114,6 @@ def bhattacherjee() -> AnnData:
 
 def sciplex3_raw() -> AnnData:
     """Raw sciplex3 perturbation dataset curated for perturbation modeling.
-
-    Args:
-        file_path: Path to the dataset
 
     Reference:
         Srivatsan SR, McFaline-Figueroa JL, Ramani V, Saunders L, Cao J, Packer J,
@@ -163,9 +148,6 @@ def frangieh_2021() -> AnnData:
     chosen by their membership in an immune evasion program that is associated with
     immunotherapy resistance in patients.
 
-    Args:
-        file_path: Path to the dataset
-
     Reference:
         Frangieh, C.J., Melms, J.C., Thakore, P.I. et al. Multimodal pooled Perturb-CITE-seq
         screens in patient models define mechanisms of cancer immune evasion.
@@ -197,9 +179,6 @@ def frangieh_2021_raw() -> AnnData:
     chosen by their membership in an immune evasion program that is associated with
     immunotherapy resistance in patients.
 
-    Args:
-        file_path: Path to the dataset
-
     Reference:
         Frangieh, C.J., Melms, J.C., Thakore, P.I. et al. Multimodal pooled Perturb-CITE-seq
         screens in patient models define mechanisms of cancer immune evasion.
@@ -228,11 +207,8 @@ def dixit_2016_raw() -> AnnData:
     """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations
 
     scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens
-    unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post trasnduction,
+    unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post transduction,
     and 13 days at a higher MOI of perturbations.
-
-    Args:
-        file_path: Path to the dataset
 
     Reference:
         Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with
@@ -265,9 +241,6 @@ def dixit_2016() -> AnnData:
     unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post trasnduction,
     and 13 days at a higher MOI of perturbations.
 
-    Args:
-        file_path: Path to the dataset
-
     Reference:
         Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with
         Scalable Single-Cell RNA Profiling of Pooled Genetic Screens.
@@ -298,9 +271,6 @@ def norman_2019() -> AnnData:
     Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
     overexpressing genes alone or in combination
 
-    Args:
-        file_path: Path to the dataset
-
     Reference:
         Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
         single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
@@ -330,9 +300,6 @@ def norman_2019_raw() -> AnnData:
 
     Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
     overexpressing genes alone or in combination
-
-    Args:
-        file_path: Path to the dataset
 
     Reference:
         Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
