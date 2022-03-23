@@ -35,9 +35,9 @@ def burczynski_crispr() -> MuData:
 
     https://satijalab.org/seurat/articles/mixscape_vignette.html
 
-    Reference: 
+    Reference:
     Papalexi, E., Mimitou, E.P., Butler, A.W. et al. Characterizing the molecular regulation
-    of inhibitory immune checkpoints with multimodal single-cell screens. 
+    of inhibitory immune checkpoints with multimodal single-cell screens.
     Nat Genet 53, 322–331 (2021). https://doi.org/10.1038/s41588-021-00778-2
 
     Args:
@@ -160,7 +160,7 @@ def frangieh_2021() -> AnnData:
     """Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling
 
     We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,
-    chosen by their membership in an immune evasion program that is associated with 
+    chosen by their membership in an immune evasion program that is associated with
     immunotherapy resistance in patients.
 
     Args:
@@ -194,7 +194,7 @@ def frangieh_2021_raw() -> AnnData:
     """Raw Perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling readout
 
     We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,
-    chosen by their membership in an immune evasion program that is associated with 
+    chosen by their membership in an immune evasion program that is associated with
     immunotherapy resistance in patients.
 
     Args:
@@ -227,7 +227,7 @@ def frangieh_2021_raw() -> AnnData:
 def dixit_2016_raw() -> AnnData:
     """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations
 
-    scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens 
+    scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens
     unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post trasnduction,
     and 13 days at a higher MOI of perturbations.
 
@@ -235,8 +235,8 @@ def dixit_2016_raw() -> AnnData:
         file_path: Path to the dataset
 
     Reference:
-        Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with 
-        Scalable Single-Cell RNA Profiling of Pooled Genetic Screens. 
+        Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with
+        Scalable Single-Cell RNA Profiling of Pooled Genetic Screens.
         Cell 2016 Dec 15;167(7):1853-1866.e17. DOI:https://doi.org/10.1016/j.cell.2016.11.038
 
     Returns:
@@ -258,11 +258,10 @@ def dixit_2016_raw() -> AnnData:
     return adata
 
 
-
 def dixit_2016() -> AnnData:
     """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.
 
-    scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens 
+    scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens
     unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post trasnduction,
     and 13 days at a higher MOI of perturbations.
 
@@ -270,8 +269,8 @@ def dixit_2016() -> AnnData:
         file_path: Path to the dataset
 
     Reference:
-        Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with 
-        Scalable Single-Cell RNA Profiling of Pooled Genetic Screens. 
+        Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with
+        Scalable Single-Cell RNA Profiling of Pooled Genetic Screens.
         Cell 2016 Dec 15;167(7):1853-1866.e17. DOI:https://doi.org/10.1016/j.cell.2016.11.038
 
     Returns:
@@ -296,15 +295,15 @@ def dixit_2016() -> AnnData:
 def norman_2019() -> AnnData:
     """Processed single-cell, pooled CRISPR screening.
 
-    Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of 
+    Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
     overexpressing genes alone or in combination
 
     Args:
         file_path: Path to the dataset
 
     Reference:
-        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich 
-        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793. 
+        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
+        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
@@ -329,15 +328,15 @@ def norman_2019() -> AnnData:
 def norman_2019_raw() -> AnnData:
     """Raw single-cell, pooled CRISPR screening.
 
-    Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of 
+    Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
     overexpressing genes alone or in combination
 
     Args:
         file_path: Path to the dataset
 
     Reference:
-        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich 
-        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793. 
+        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
+        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
