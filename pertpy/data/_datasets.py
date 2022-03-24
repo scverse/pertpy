@@ -142,7 +142,7 @@ def sciplex3_raw() -> AnnData:
 
 
 def frangieh_2021() -> AnnData:
-    """Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling
+    """Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling.
 
     We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,
     chosen by their membership in an immune evasion program that is associated with
@@ -173,7 +173,7 @@ def frangieh_2021() -> AnnData:
 
 
 def frangieh_2021_raw() -> AnnData:
-    """Raw Perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling readout
+    """Raw Perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling readout.
 
     We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,
     chosen by their membership in an immune evasion program that is associated with
@@ -204,7 +204,7 @@ def frangieh_2021_raw() -> AnnData:
 
 
 def dixit_2016_raw() -> AnnData:
-    """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations
+    """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.
 
     scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens
     unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post transduction,
@@ -326,12 +326,9 @@ def norman_2019_raw() -> AnnData:
 
 
 def dialogue_example() -> AnnData:
-    """Example dataset used to feature DIALOGUE
+    """Example dataset used to feature DIALOGUE.
 
     https://github.com/livnatje/DIALOGUE/wiki/Example
-
-    Args:
-        file_path: Path to the dataset
 
     Returns:
         :class:`~anndata.AnnData` object
