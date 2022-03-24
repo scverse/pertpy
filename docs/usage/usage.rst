@@ -6,13 +6,13 @@ Import the pertpy API as follows:
 
 .. code:: python
 
-   import pertpy as pp
+   import pertpy as py
 
 You can then access the respective modules like:
 
 .. code:: python
 
-   pp.pl.cool_fancy_plot()
+   py.pl.cool_fancy_plot()
 
 
 .. currentmodule:: pertpy
