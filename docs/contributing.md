@@ -81,6 +81,26 @@ $ nox --session=tests
 Unit tests are located in the `tests` directory,
 and are written using the [pytest] testing framework.
 
+## How to build and view the documentation
+
+This project uses [Sphinx] together with several extensions to build the documentation.
+It further requires [Pandoc] to translate various formats.
+
+To install all required dependencies for the documentation run:
+
+```console
+$ pip install -r docs/requirements.txt
+```
+
+Please note that ehrapy itself must also be installed. To build the documentation run:
+
+```console
+$ make html
+```
+
+from inside the docs folder. The generated static HTML files can be found in the `_build/html` folder.
+Simply open them with your favorite browser.
+
 ## How to submit changes
 
 Open a [pull request] to submit changes to this project against the `development` branch.

@@ -62,16 +62,14 @@ jobs:
 
             - name: Install Poetry
               run: |
-                  pip install poetry
+                  pipx install poetry
                   poetry --version
 
-            - name: Install Nox
+            - name: Install Nox nox-poetry rich
               run: |
-                  pip install nox nox-poetry
-                  nox --version
-
-            - name: Install Rich
-              run: pip install rich
+                  pipx install nox
+                  pipx inject nox nox-poetry
+                  pipx inject nox rich
 
             - name: Compute pre-commit cache key
               if: matrix.session == 'pre-commit'
@@ -98,8 +96,7 @@ jobs:
                       ${{ steps.pre-commit-cache.outputs.result }}-
 
             - name: Run Nox
-              run: |
-                  nox --force-color --python=${{ matrix.python-version }}
+              run: nox --force-color --python=${{ matrix.python-version }}
 
             - name: Upload coverage data
               if: always() && matrix.session == 'tests'
@@ -129,16 +126,14 @@ jobs:
 
             - name: Install Poetry
               run: |
-                  pip install poetry
+                  pipx install poetry
                   poetry --version
 
-            - name: Install Nox
+            - name: Install Nox nox-poetry rich
               run: |
-                  pip install nox nox-poetry
-                  nox --version
-
-            - name: Install Rich
-              run: pip install rich
+                  pipx install nox
+                  pipx inject nox nox-poetry
+                  pipx inject nox rich
 
             - name: Download coverage data
               uses: actions/download-artifact@v3
