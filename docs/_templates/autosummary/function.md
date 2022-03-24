@@ -1,5 +1,5 @@
 ---
-github_url: '{{ fullname }}'
+github_url: "{{ fullname }}"
 ---
 
 {{ fullname | escape | underline}}
@@ -8,4 +8,4 @@ github_url: '{{ fullname }}'
 .. autofunction:: {{ fullname }}
 ```
 
-(sphx_glr_backref_{{fullname}})=
+(sphx*glr_backref*{{fullname}})=

@@ -41,5 +41,4 @@ For questions about the usage of pertpy use [Github Discussions].
         For a more in depth introduction please read the `Scanpy paper <https://genomebiology.biomedcentral.com/articles/10.1186/s13059-017-1382-0>`_.
 ```
 
-
 [github discussions]: https://github.com/theislab/pertpy/discussions

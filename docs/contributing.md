@@ -6,10 +6,10 @@ highly welcomes contributions in the form of bug reports, feature requests, and 
 
 Here is a list of important resources for contributors:
 
-- [Source Code]
-- [Documentation]
-- [Issue Tracker]
-- [Code of Conduct]
+-   [Source Code]
+-   [Documentation]
+-   [Issue Tracker]
+-   [Code of Conduct]
 
 ## How to report a bug
 
@@ -33,9 +33,9 @@ This will automatically also clone and update the submodules.
 
 You need Python 3.8+ and the following tools:
 
-- [Poetry]
-- [Nox]
-- [nox-poetry]
+-   [Poetry]
+-   [Nox]
+-   [nox-poetry]
 
 You can install them with:
 
@@ -87,9 +87,9 @@ Open a [pull request] to submit changes to this project against the `development
 
 Your pull request needs to meet the following guidelines for acceptance:
 
-- The Nox test suite must pass without errors and warnings.
-- Include unit tests. This project maintains a high code coverage.
-- If your changes add functionality, update the documentation accordingly.
+-   The Nox test suite must pass without errors and warnings.
+-   Include unit tests. This project maintains a high code coverage.
+-   If your changes add functionality, update the documentation accordingly.
 
 To run linting and code formatting checks before committing your change, you can install pre-commit as a Git hook by running the following command:
 
