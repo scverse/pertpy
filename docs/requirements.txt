@@ -1,6 +1,5 @@
 Sphinx
-pydata-sphinx-theme
-sphinx-automodapi
+sphinx-automodapi>
 sphinx-autodoc-annotation
 sphinx_last_updated_by_git
 sphinxcontrib-spelling
@@ -10,7 +9,8 @@ sphinxcontrib-bibtex
 nbsphinx
 nbsphinx-link
 sphinx-copybutton
-sphinx-tabs
-sphinx-panels
-sphinx_click
-click
+furo
+myst-parser
+sphinx-remove-toctrees
+sphinx-design
+sphinxext-opengraph

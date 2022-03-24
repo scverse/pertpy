@@ -27,11 +27,11 @@ jobs:
                           os: ubuntu-latest,
                           session: "tests",
                       }
-                    - {
-                          python-version: 3.8,
-                          os: windows-latest,
-                          session: "tests",
-                      }
+                    #                    - {
+                    #                          python-version: 3.8,
+                    #                          os: windows-latest,
+                    #                          session: "tests",
+                    #                      }
                     - {
                           python-version: 3.8,
                           os: macos-latest,

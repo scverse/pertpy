@@ -1,9 +1,14 @@
-:github_url: {{ fullname }}
+---
+github_url: "{{ fullname }}"
+---
 
 {{ fullname | escape | underline}}
 
+```{eval-rst}
 .. currentmodule:: {{ module }}
+```
 
+```{eval-rst}
 .. autoclass:: {{ objname }}
 
    {% block attributes %}
@@ -33,7 +38,4 @@
    {% endblock %}
 
    .. _sphx_glr_backref_{{fullname}}:
-
-   .. minigallery:: {{fullname}}
-       :add-heading: Gallery
-       :heading-level: -
+```
