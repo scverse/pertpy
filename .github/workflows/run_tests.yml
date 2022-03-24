@@ -20,11 +20,6 @@ jobs:
                     - {
                           python-version: 3.8,
                           os: ubuntu-latest,
-                          session: "safety",
-                      }
-                    - {
-                          python-version: 3.8,
-                          os: ubuntu-latest,
                           session: "mypy",
                       }
                     - {

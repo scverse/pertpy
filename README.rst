@@ -35,7 +35,7 @@ pertpy
 Features
 --------
 
-* TODO
+* Differential cell type perturbation analysis with Augurpy
 
 
 Installation
@@ -46,7 +46,6 @@ You can install *pertpy* via pip_ from PyPI_:
 .. code:: console
 
    $ pip install pertpy
-
 
 Usage
 -----
