@@ -100,7 +100,7 @@ def bhattacherjee() -> AnnData:
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://figshare.com/ndownloader/files/34465022",
+            url="https://figshare.com/ndownloader/files/34526528",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,

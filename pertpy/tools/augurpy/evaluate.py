@@ -416,8 +416,6 @@ def select_variance(adata: AnnData, var_quantile: float, filter_negative_residua
     cv0 = cvs.loc[keep]
     mean0 = adata.var.loc[keep, "means"]
 
-    print("[bold yellow]Set smaller span value in the case of a `segmentation fault` error.")
-    print("[bold yellow]Set larger span in case of svddc or other near singularities error.")
     if any(mean0 < 0):
         # if there are negative values, don't bother comparing to log-transformed
         # means - fit on normalized data directly
@@ -526,9 +524,12 @@ def predict(
         "feature_importances": defaultdict(list),
         "full_results": defaultdict(list),
     }
+    if select_variance_features:
+        print("[bold yellow]Set smaller span value in the case of a `segmentation fault` error.")
+        print("[bold yellow]Set larger span in case of svddc or other near singularities error.")
     adata.obs["augur_score"] = nan
     for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data."):
-        cell_type_subsample = adata[adata.obs["cell_type"] == cell_type]
+        cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
         if augur_mode == "default" or augur_mode == "permute":
             cell_type_subsample = (
                 select_highly_variable(cell_type_subsample)
