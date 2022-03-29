@@ -347,3 +347,36 @@ def dialogue_example() -> AnnData:
         adata = sc.read_h5ad(output_file_path)
 
     return adata
+
+
+def kang_2018() -> AnnData:
+    """Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes
+
+    HiSeq 2500 data for sequencing of PBMCs from SLE patients and 2 controls. We collected 1M cells
+    each from frozen PBMC samples that were Ficoll isolated and prepared using the 10x Single Cell
+    instrument according to standard protocol. Samples A, B, and C were prepared on the instrument
+    directly following thaw, while samples 2.1 and 2.2 were cultured for 6 hours with (B) or
+    without (A) IFN-beta stimulation prior to loading on the 10x Single Cell instrument.
+
+    Reference:
+        Kang, H., Subramaniam, M., Targ, S. et al. Multiplexed droplet single-cell RNA-sequencing
+        using natural genetic variation.
+        Nat Biotechnol 36, 89–94 (2018). https://doi.org/10.1038/nbt.4042
+
+    Returns:
+        :class:`~anndata.AnnData` object of droplet-based single cell RNA-sequencing
+    """
+    output_file_name = "kang_2018.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/34464122",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata

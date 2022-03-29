@@ -6,6 +6,7 @@ from pertpy.data._datasets import (
     dixit_2016_raw,
     frangieh_2021,
     frangieh_2021_raw,
+    kang_2018,
     norman_2019,
     norman_2019_raw,
     sc_sim_augur,
