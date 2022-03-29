@@ -1,22 +1,54 @@
+from typing import Optional
+
 import numpy as np
 import scanpy as sc
+from anndata import AnnData
 from pynndescent import NNDescent
 from scanpy.tools._utils import _choose_representation
 from scipy.sparse import csr_matrix, issparse
 
 
 def pert_sign(
-    adata,
-    pert_key,
-    control,
-    split_by=None,
-    n_neighbors=20,
-    use_rep=None,
-    n_pcs=None,
-    batch_size=None,
-    copy=False,
+    adata: AnnData,
+    pert_key: str,
+    control: str,
+    split_by: str = None,
+    n_neighbors: int = 20,
+    use_rep: Optional[str] = None,
+    n_pcs: Optional[int] = None,
+    batch_size: Optional[int] = None,
+    copy: bool = False,
     **kwargs
 ):
+    """Calculate perturbation signature.
+
+    For each cell, we identify `n_neighbors` cells from the control pool with
+    the most similar mRNA expression profiles. The perturbation signature is calculated by subtracting
+    the averaged mRNA expression profile of the control neighbors from the mRNA expression profile
+    of each cell.
+
+    Args:
+        adata: The annotated data object.
+        pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
+        control: Control category from the `pert_key` column.
+        split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
+            the perturbation signature for every replicate separately.
+        n_neighbors: Number of neighbors from the control to use for the perturbation signature.
+        use_rep: Use the indicated representation. `'X'` or any key for `.obsm` is valid.
+            If `None`, the representation is chosen automatically:
+            For `.n_vars` < 50, `.X` is used, otherwise 'X_pca' is used.
+            If 'X_pca' is not present, it’s computed with default parameters.
+        n_pcs: Use this many PCs. If `n_pcs==0` use `.X` if `use_rep is None`.
+        batch_size: Size of batch to calculate the perturbation signature.
+            If 'None', the perturbation signature is calcuated in the full mode, requiring more memory.
+            The batched mode is very inefficient for sparse data.
+        copy: Determines whether a copy of the `adata` is returned.
+        **kwargs: Additional arguments for the `NNDescent` class from `pynndescent`.
+
+    Returns:
+        If `copy=True`, returns the copy of `adata` with the perturbation signature in `.layers["X_pert"]`.
+        Otherwise writes the perturbation signature directly to `.layers["X_pert"]` of the provided `adata`.
+    """
     if copy:
         adata = adata.copy()
 
