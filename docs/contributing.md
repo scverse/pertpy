@@ -121,7 +121,7 @@ It is recommended to open an issue before starting work on anything.
 This will allow a chance to talk it over with the owners and validate your approach.
 
 [apache2.0 license]: https://opensource.org/licenses/Apache2.0
-[code of conduct]: CODE_OF_CONDUCT.rst
+[code of conduct]: https://github.com/theislab/pertpy/CODE_OF_CONDUCT.md
 [documentation]: https://pertpy.readthedocs.io/
 [issue tracker]: https://github.com/theislab/pertpy/issues
 [nox]: https://nox.thea.codes/

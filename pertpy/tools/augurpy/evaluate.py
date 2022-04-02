@@ -473,38 +473,30 @@ def predict(
         classifier: classifier to use in calculating augur metrics, either random forest or logistic regression
         n_subsamples: number of random subsamples to draw from complete dataset for each cell type
         subsample_size: number of cells to subsample randomly per type from each experimental condition
-        folds: number of folds to run cross validation on. Be careful changing this parameter without also changing
-            `subsample_size`.
-        min_cells: minimum number of cells for a particular cell type in each condition in order to retain that type for
-            analysis (depricated..)
+        folds: number of folds to run cross validation on. Be careful changing this parameter without also changing `subsample_size`.
+        min_cells: minimum number of cells for a particular cell type in each condition in order to retain that type for analysis (depricated..)
         feature_perc: proportion of genes that are randomly selected as features for input to the classifier in each
-            subsample using the random gene filter
-        var_quantile: the quantile below which features will be filtered, based on their residuals in a loess model;
-            defaults to `0.5`
-        span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range
-            (0, 1]. Default is 0.75
+                      subsample using the random gene filter
+        var_quantile: the quantile below which features will be filtered, based on their residuals in a loess model (default: `0.5`)
+        span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range (0, 1] (default: 0.75)
         filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
         n_threads: number of threads to use for parallelization
         show_progress: if `True` display a progress bar for the analysis with estimated time remaining
         augur_mode: one of default, velocity or permute. Setting augur_mode = "velocity" disables feature selection,
-            assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,
-            while setting augur_mode = "permute" will generate a null distribution of AUCs for each cell type by
-            permuting the labels. Note that when setting augur_mode = "permute" n_subsample values less than 100 will be
-            set to 500.
+                    assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,
+                    while setting augur_mode = "permute" will generate a null distribution of AUCs for each cell type by
+                    permuting the labels. Note that when setting augur_mode = "permute" n_subsample values less than 100 will be set to 500.
         random_state: set numpy random seed, sampling seed and fold seed
         zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
-            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
+                       set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
     Returns:
-        A tuple with a dictionary containing the following keys
+        A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs:
 
             * summary_metrics: Pandas Dataframe containing mean metrics for each cell type
             * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs
             * full_results: Dict containing merged results of individual cross validation runs for each cell type
-            * [**cell_types]: Cross validation runs of the cell type called
-
-        and the original anndata object with added mean_augur_score metrics in obs.
-
+            * [cell_types]: Cross validation runs of the cell type called
     """
     if augur_mode == "permute" and n_subsamples < 100:
         n_subsamples = 500
@@ -514,8 +506,8 @@ def predict(
         )
     if isinstance(classifier, LogisticRegression) and len(adata.obs["y_"].unique()) > 2:
         raise ValueError(
-            "[Bold red]Logistic regression cannot be used for multiclass classification. "
-            + "[Bold red]Use a random forest classifier or filter labels in load()."
+            "Logistic regression cannot be used for multiclass classification. "
+            + "Use a random forest classifier or filter labels in load()."
         )
     if min_cells is None:
         min_cells = n_subsamples

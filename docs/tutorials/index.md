@@ -17,6 +17,7 @@ For questions about the usage of pertpy use [Github Discussions].
 .. nbgallery::
 
    notebooks/mixscape
+   notebooks/augurpy
 
 ```
 

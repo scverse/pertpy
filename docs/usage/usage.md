@@ -3,13 +3,13 @@
 Import the pertpy API as follows:
 
 ```python
-import pertpy as py
+import pertpy as pt
 ```
 
 You can then access the respective modules like:
 
 ```python
-py.pl.cool_fancy_plot()
+pt.pl.cool_fancy_plot()
 ```
 
 ```{eval-rst}
@@ -29,12 +29,12 @@ This separability is quantified by measuring how well experimental labels (eg. t
 Example implementation
 
 ```python
-import pertpy as pp
+import pertpy as pt
 
 adata = '<data_you_want_to_analyse.h5ad>'
-adata = pp.tl.ag.read_load.load(adata, label_col = "<label_col_name>", cell_type_col = "<cell_type_col_name>")
-classifier = pp.tl.ag.estimator.create_estimator(classifier='random_forest_classifier')
-adata, results = pp.tl.ag.evaluate.predict(adata, classifier)
+adata = pt.tl.ag.read_load.load(adata, label_col = "<label_col_name>", cell_type_col = "<cell_type_col_name>")
+classifier = pt.tl.ag.estimator.create_estimator(classifier='random_forest_classifier')
+adata, results = pt.tl.ag.evaluate.predict(adata, classifier)
 
 # metrics for each cell type
 results['summary_metrics']

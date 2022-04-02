@@ -2,6 +2,7 @@ from pertpy.data._datasets import (
     bhattacherjee,
     burczynski_crispr,
     burczynski_crohn,
+    dialogue_example,
     dixit_2016,
     dixit_2016_raw,
     frangieh_2021,

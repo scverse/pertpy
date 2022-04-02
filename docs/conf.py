@@ -173,5 +173,6 @@ nbsphinx_prolog = r"""
     version=version, docname="{{ docname|e }}"
 )
 nbsphinx_thumbnails = {
-    "tutorials/notebooks/mixscape": "_static/tutorials/placeholder.png",
+    "tutorials/notebooks/mixscape": "_static/tutorials/mixscape.png",
+    "tutorials/notebooks/augurpy": "_static/tutorials/augur.png",
 }
