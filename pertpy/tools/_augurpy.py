@@ -663,7 +663,7 @@ class Augurpy:
             )
         if min_cells is None:
             min_cells = n_subsamples
-        results: dict[Any, Any] = {
+        results: dict[str, Any] = {
             "summary_metrics": {},
             "feature_importances": defaultdict(list),
             "full_results": defaultdict(list),

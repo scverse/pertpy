@@ -82,6 +82,9 @@ See [here](tutorials) for a more elaborate tutorial.
 .. autosummary::
     :toctree: plot
 
-    plot.AugurpyPlots
+    plot.ag.dp_scatter
+    plot.ag.important_features
+    plot.ag.lollipop
+    plot.ag.scatterplot
 
 ```

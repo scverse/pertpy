@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+from typing import Any
+
+import pandas as pd
+from anndata import AnnData
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 
 class AugurpyPlot:
-    """Plotting functions for Augurpy. Imported as 'ag'."""
+    """Plotting functions for Augurpy."""
 
     @staticmethod
-    def dp_scatter(results, top_n=None, ax: Axes = None, return_figure: bool = False) -> Figure | Axes:
+    def dp_scatter(results: pd.DataFrame, top_n=None, ax: Axes = None, return_figure: bool = False) -> Figure | Axes:
         """Plot result of differential prioritization.
 
         Args:
-            results: results after running differential prioritization
+            results: Results after running differential prioritization.
             top_n: optionally, the number of top prioritized cell types to label in the plot
             ax: optionally, axes used to draw plot
             return_figure: if `True` returns figure of the plot
@@ -48,11 +52,14 @@ class AugurpyPlot:
         return fig if return_figure else ax
 
     @staticmethod
-    def important_features(results: dict, top_n=10, ax: Axes = None, return_figure: bool = False) -> Figure | Axes:
+    def important_features(
+        data: dict[str, Any], key: str = "augurpy_results", top_n=10, ax: Axes = None, return_figure: bool = False
+    ) -> Figure | Axes:
         """Plot a lollipop plot of the n features with largest feature importances.
 
         Args:
-            results: results after running `predict()`
+            results: results after running `predict()` as dictionary or the AnnData object.
+            key: Key in the AnnData object of the results
             top_n: n number feature importance values to plot. Default is 10.
             ax: optionally, axes used to draw plot
             return_figure: if `True` returns figure of the plot, default is `False`
@@ -60,6 +67,10 @@ class AugurpyPlot:
         Returns:
             Axes of the plot.
         """
+        if isinstance(data, AnnData):
+            results = data.uns[key]
+        else:
+            results = data
         # top_n features to plot
         n_features = (
             results["feature_importances"]
@@ -88,17 +99,24 @@ class AugurpyPlot:
         return fig if return_figure else ax
 
     @staticmethod
-    def lollipop(results: dict, ax: Axes = None, return_figure: bool = False) -> Figure | Axes:
+    def lollipop(
+        data: dict[str, Any], key: str = "augurpy_results", ax: Axes = None, return_figure: bool = False
+    ) -> Figure | Axes:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
-            results: results after running `predict()`
+            results: results after running `predict()` as dictionary or the AnnData object.
+            key: Key in the AnnData object of the results
             ax: optionally, axes used to draw plot
             return_figure: if `True` returns figure of the plot
 
         Returns:
             Axes of the plot.
         """
+        if isinstance(data, AnnData):
+            results = data.uns[key]
+        else:
+            results = data
         if ax is None:
             fig, ax = plt.subplots()
         y_axes_range = range(1, len(results["summary_metrics"].columns) + 1)
@@ -123,7 +141,9 @@ class AugurpyPlot:
         return fig if return_figure else ax
 
     @staticmethod
-    def scatterplot(results1, results2, top_n=None, return_figure: bool = False) -> Figure | Axes:
+    def scatterplot(
+        results1: dict[str, Any], results2: dict[str, Any], top_n=None, return_figure: bool = False
+    ) -> Figure | Axes:
         """Create scatterplot with two augur results.
 
         Args:
