@@ -36,7 +36,6 @@ pt.pl.cool_fancy_plot()
     data.dialogue_example
 ```
 
-
 ## Tools
 
 ### Augurpy
@@ -83,10 +82,9 @@ See [here](tutorials) for a more elaborate tutorial.
 .. autosummary::
     :toctree: plot
 
-    plot.augurpy.differential_prioritization.dp_scatter
-    plot.augurpy.important_features.important_features
-    plot.augurpy.lollipop.lollipop
-    plot.augurpy.scatterplot.scatterplot
+    plot.differential_prioritization.dp_scatter
+    plot.important_features.important_features
+    plot.lollipop.lollipop
+    plot.scatterplot.scatterplot
 
 ```
-

@@ -9,7 +9,7 @@ from scanpy import settings
 from pertpy.data._dataloader import _download
 
 
-def burczynski_crohn() -> AnnData:
+def burczynski_crohn() -> AnnData:  # pragma: no cover
     """Bulk data with conditions ulcerative colitis (UC) and Crohn's disease (CD).
 
     The study assesses transcriptional profiles in peripheral blood mononuclear
@@ -27,7 +27,7 @@ def burczynski_crohn() -> AnnData:
     return sc.datasets.burczynski06()
 
 
-def burczynski_crispr() -> MuData:
+def burczynski_crispr() -> MuData:  # pragma: no cover
     """Dataset of the Mixscape Vignette.
 
     https://satijalab.org/seurat/articles/mixscape_vignette.html
@@ -56,7 +56,7 @@ def burczynski_crispr() -> MuData:
     return mudata
 
 
-def sc_sim_augur() -> AnnData:
+def sc_sim_augur() -> AnnData:  # pragma: no cover
     """Simulated test dataset used the Usage example for the Augur.
 
     https://github.com/neurorestore/Augur
@@ -80,7 +80,7 @@ def sc_sim_augur() -> AnnData:
     return adata
 
 
-def bhattacherjee() -> AnnData:
+def bhattacherjee() -> AnnData:  # pragma: no cover
     """Processed single-cell data PFC adult mice under cocaine self-administration.
 
     Adult mice were subject to cocaine self-administration, samples were
@@ -112,7 +112,7 @@ def bhattacherjee() -> AnnData:
     return adata
 
 
-def sciplex3_raw() -> AnnData:
+def sciplex3_raw() -> AnnData:  # pragma: no cover
     """Raw sciplex3 perturbation dataset curated for perturbation modeling.
 
     Reference:
@@ -141,7 +141,7 @@ def sciplex3_raw() -> AnnData:
     return adata
 
 
-def frangieh_2021() -> AnnData:
+def frangieh_2021() -> AnnData:  # pragma: no cover
     """Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling.
 
     We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,
@@ -172,7 +172,7 @@ def frangieh_2021() -> AnnData:
     return adata
 
 
-def frangieh_2021_raw() -> AnnData:
+def frangieh_2021_raw() -> AnnData:  # pragma: no cover
     """Raw Perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling readout.
 
     We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,
@@ -203,7 +203,7 @@ def frangieh_2021_raw() -> AnnData:
     return adata
 
 
-def dixit_2016_raw() -> AnnData:
+def dixit_2016_raw() -> AnnData:  # pragma: no cover
     """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.
 
     scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens
@@ -234,7 +234,7 @@ def dixit_2016_raw() -> AnnData:
     return adata
 
 
-def dixit_2016() -> AnnData:
+def dixit_2016() -> AnnData:  # pragma: no cover
     """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.
 
     scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens
@@ -265,7 +265,7 @@ def dixit_2016() -> AnnData:
     return adata
 
 
-def norman_2019() -> AnnData:
+def norman_2019() -> AnnData:  # pragma: no cover
     """Processed single-cell, pooled CRISPR screening.
 
     Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
@@ -295,7 +295,7 @@ def norman_2019() -> AnnData:
     return adata
 
 
-def norman_2019_raw() -> AnnData:
+def norman_2019_raw() -> AnnData:  # pragma: no cover
     """Raw single-cell, pooled CRISPR screening.
 
     Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
@@ -325,7 +325,7 @@ def norman_2019_raw() -> AnnData:
     return adata
 
 
-def dialogue_example() -> AnnData:
+def dialogue_example() -> AnnData:  # pragma: no cover
     """Example dataset used to feature DIALOGUE.
 
     https://github.com/livnatje/DIALOGUE/wiki/Example
@@ -349,7 +349,7 @@ def dialogue_example() -> AnnData:
     return adata
 
 
-def kang_2018() -> AnnData:
+def kang_2018() -> AnnData:  # pragma: no cover
     """Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes
 
     HiSeq 2500 data for sequencing of PBMCs from SLE patients and 2 controls. We collected 1M cells

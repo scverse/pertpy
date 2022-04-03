@@ -13,6 +13,7 @@ import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
 from rich.progress import track
+from rich import print
 from scipy import stats
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -614,6 +615,7 @@ class Augurpy:
         n_threads: int = 4,
         augur_mode: Literal["permute"] | Literal["default"] | Literal["velocity"] = "default",
         select_variance_features: bool = False,
+        key_added: str = "augurpy_results",
         random_state: int | None = None,
         zero_division: int | str = 0,
     ) -> tuple[AnnData, dict[str, Any]]:
@@ -631,7 +633,7 @@ class Augurpy:
             span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range (0, 1] (default: 0.75)
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
             n_threads: number of threads to use for parallelization
-            show_progress: if `True` display a progress bar for the analysis with estimated time remaining
+            key_added: Key to add results to in .uns
             augur_mode: one of default, velocity or permute. Setting augur_mode = "velocity" disables feature selection,
                         assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,
                         while setting augur_mode = "permute" will generate a null distribution of AUCs for each cell type by
@@ -670,7 +672,7 @@ class Augurpy:
             print("[bold yellow]Set smaller span value in the case of a `segmentation fault` error.")
             print("[bold yellow]Set larger span in case of svddc or other near singularities error.")
         adata.obs["augur_score"] = nan
-        for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data."):
+        for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data..."):
             cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
             if augur_mode == "default" or augur_mode == "permute":
                 cell_type_subsample = (
@@ -736,12 +738,13 @@ class Augurpy:
                 results["full_results"]["cell_type"].extend([cell_type] * folds * n_subsamples)
         # make sure one cell type worked
         if len(results) <= 2:
-            print("[Bold red]No cells types had more than min_cells needed. Please adjust data or min_cells parameter.")
+            print("[bold red]No cells types had more than min_cells needed. Please adjust data or min_cells parameter.")
 
         results["summary_metrics"] = pd.DataFrame(results["summary_metrics"])
         results["feature_importances"] = pd.DataFrame(results["feature_importances"])
         results["full_results"] = pd.DataFrame(results["full_results"])
         adata.uns["summary_metrics"] = pd.DataFrame(results["summary_metrics"])
+        adata.uns[key_added] = results
 
         return adata, results
 
@@ -764,7 +767,7 @@ class Augurpy:
             augur2: Augurpy results from condition 2, obtained from `predict()[1]`
             permuted1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
             permuted2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
-            n_subsamples: number of subsamples to pool when calculating the mean augur score fro each permutation; defaults to 50
+            n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation; defaults to 50
             n_permutations: the total number of mean augur scores to calculate from a background distribution
 
         Returns:
