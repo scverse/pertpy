@@ -12,8 +12,8 @@ import scanpy as sc
 import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
-from rich.progress import track
 from rich import print
+from rich.progress import track
 from scipy import stats
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor

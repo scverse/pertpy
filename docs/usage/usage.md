@@ -82,9 +82,6 @@ See [here](tutorials) for a more elaborate tutorial.
 .. autosummary::
     :toctree: plot
 
-    plot.differential_prioritization.dp_scatter
-    plot.important_features.important_features
-    plot.lollipop.lollipop
-    plot.scatterplot.scatterplot
+    plot.AugurpyPlots
 
 ```

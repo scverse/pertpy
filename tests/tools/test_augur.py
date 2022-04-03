@@ -1,7 +1,4 @@
 from math import isclose
-
-import pytest
-
 from pathlib import Path
 
 import numpy as np
@@ -10,10 +7,10 @@ import scanpy as sc
 from sklearn.ensemble import RandomForestRegressor
 
 import pertpy as pt
-
 from pertpy.tools._augurpy import Params
 
 CWD = Path(__file__).parent.resolve()
+
 
 class TestAugur:
 
@@ -76,14 +73,14 @@ class TestAugur:
 
         cv = self.ag_rfc.run_cross_validation(adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
         auc = 0.766289
-        assert any([isclose(cv["mean_auc"], auc, abs_tol=10 ** -3)])
+        assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
         sc_sim_adata = self.ag_lrc.load(sc_sim_adata)
         sc.pp.highly_variable_genes(sc_sim_adata)
         cv = self.ag_lrc.run_cross_validation(sc_sim_adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
         auc = 0.991796
-        assert any([isclose(cv["mean_auc"], auc, abs_tol=10 ** -3)])
+        assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
     def test_regressor(self):
         """Test run cross validation with regressor."""
@@ -92,7 +89,7 @@ class TestAugur:
         cv = self.ag_rfr.run_cross_validation(sc_sim_adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
         ccc = 0.231356
         r2 = 0.206195
-        assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10 ** -5), isclose(cv["mean_r2"], r2, abs_tol=10 ** -5)])
+        assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10**-5), isclose(cv["mean_r2"], r2, abs_tol=10**-5)])
 
     def test_subsample(self):
         """Test default, permute and velocity subsampling process."""
@@ -186,11 +183,7 @@ class TestAugur:
         adata, results1 = ag.predict(sc_sim_adata, n_threads=4, n_subsamples=3, random_state=2)
         adata, results2 = ag.predict(sc_sim_adata, n_threads=4, n_subsamples=3, random_state=42)
 
-        a, permut1 = ag.predict(
-            sc_sim_adata, augur_mode="permute", n_threads=4, n_subsamples=100, random_state=2
-        )
-        a, permut2 = ag.predict(
-            sc_sim_adata, augur_mode="permute", n_threads=4, n_subsamples=100, random_state=42
-        )
+        a, permut1 = ag.predict(sc_sim_adata, augur_mode="permute", n_threads=4, n_subsamples=100, random_state=2)
+        a, permut2 = ag.predict(sc_sim_adata, augur_mode="permute", n_threads=4, n_subsamples=100, random_state=42)
         delta = ag.predict_differential_prioritization(results1, results2, permut1, permut2)
         assert not np.isnan(delta["z"]).any()
