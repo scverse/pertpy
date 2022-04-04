@@ -1,1 +1,1 @@
-from pertpy.plot.augurpy import differential_prioritization, important_features, lollipop, scatterplot
+from pertpy.plot._augurpy import AugurpyPlot as ag  # noqa: N813
