@@ -1,6 +1,6 @@
 from pertpy.data._datasets import (
     bhattacherjee,
-    burczynski_crispr,
+    papalexi_2021,
     burczynski_crohn,
     dialogue_example,
     dixit_2016,

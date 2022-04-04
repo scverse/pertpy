@@ -27,7 +27,7 @@ def burczynski_crohn() -> AnnData:  # pragma: no cover
     return sc.datasets.burczynski06()
 
 
-def burczynski_crispr() -> MuData:  # pragma: no cover
+def papalexi_2021() -> MuData:  # pragma: no cover
     """Dataset of the Mixscape Vignette.
 
     https://satijalab.org/seurat/articles/mixscape_vignette.html
@@ -40,7 +40,7 @@ def burczynski_crispr() -> MuData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the Crispr dataset
     """
-    output_file_name = "burczynski_crispr.h5mu"
+    output_file_name = "papalexi_2021.h5mu"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
