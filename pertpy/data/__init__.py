@@ -1,6 +1,5 @@
 from pertpy.data._datasets import (
     bhattacherjee,
-    papalexi_2021,
     burczynski_crohn,
     dialogue_example,
     dixit_2016,
@@ -10,6 +9,7 @@ from pertpy.data._datasets import (
     kang_2018,
     norman_2019,
     norman_2019_raw,
+    papalexi_2021,
     sc_sim_augur,
     sciplex3_raw,
 )
