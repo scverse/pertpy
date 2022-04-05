@@ -12,7 +12,7 @@ def pert_sign(
     adata: AnnData,
     pert_key: str,
     control: str,
-    split_by: str = None,
+    split_by: Optional[str] = None,
     n_neighbors: int = 20,
     use_rep: Optional[str] = None,
     n_pcs: Optional[int] = None,
