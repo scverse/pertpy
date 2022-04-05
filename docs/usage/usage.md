@@ -23,7 +23,7 @@ pt.pl.cool_fancy_plot()
     :toctree: data
 
     data.burczynski_crohn
-    data.burczynski_crispr
+    data.papalexi_2021
     data.sc_sim_augur
     data.bhattacherjee
     data.sciplex3_raw
