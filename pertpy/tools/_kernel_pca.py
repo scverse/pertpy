@@ -6,7 +6,7 @@ from sklearn.decomposition import KernelPCA
 
 def kernel_pca(
     adata: AnnData,
-    n_comps: Optional[int] = None,
+    n_comps: int = 50,
     kernel: str = "linear",
     copy: bool = False,
     return_transformer: bool = False,
