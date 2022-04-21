@@ -74,6 +74,35 @@ See [here](tutorials) for a more elaborate tutorial.
     tools.Augurpy
 ```
 
+### Perturbation signature
+
+The python implementation of Mixscape's [CalcPerturbSig](https://satijalab.org/seurat/reference/calcperturbsig).
+
+To calculate perturbation signature, for each cell, we identify `n_neighbors` cells from the control pool with
+the most similar mRNA expression profiles. The perturbation signature is calculated by subtracting
+the averaged mRNA expression profile of the control neighbors from the mRNA expression profile
+of each cell.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.pert_sign
+```
+
+### Representation
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.kernel_pca
+```
+
 ## Plots
 
 ### Augurpy
