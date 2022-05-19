@@ -24,6 +24,7 @@ pt.pl.cool_fancy_plot()
 
     data.burczynski_crohn
     data.papalexi_2021
+    data.kang_2018
     data.sc_sim_augur
     data.bhattacherjee
     data.sciplex3_raw
