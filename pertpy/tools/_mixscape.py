@@ -53,7 +53,7 @@ def mixscape(
     copy: Optional[bool] = False,
 ):
     """Function to identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
-    
+
     https://satijalab.org/seurat/reference/runmixscape
 
     Args:
@@ -71,7 +71,7 @@ def mixscape(
             the perturbation signature for every replicate separately.
         pval_cutoff: P-value cut-off for selection of significantly DE genes.
         fine_mode: When this is equal to TRUE, DE genes for each target gene class will be calculated for each gRNA separately and pooled into one DE list for calculating the perturbation score of every cell and their subsequent classification.
-        fine_mode_labels: The column of `.obs` with gRNA ID labels. 
+        fine_mode_labels: The column of `.obs` with gRNA ID labels.
         prtb_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
         copy: Determines whether a copy of the `adata` is returned.
         **kwargs: Additional arguments for the `NNDescent` class from `pynndescent`.
@@ -82,10 +82,10 @@ def mixscape(
 
         mixscape_class: pandas.Series (`adata.obs['mixscape_class']`).
         Classification result with cells being either classified as perturbed (KO, by default) or non-perturbed (NP) based on their target gene class.
-        
+
         mixscape_class_global: pandas.Series (`adata.obs['mixscape_class_global']`).
         Global classification result (perturbed, NP or NT)
-        
+
         mixscape_class_p_ko: pandas.Series (`adata.obs['mixscape_class_p_ko']`).
         Posterior probabilities used to determine if a cell is KO (default). Name of this item will change to match prtb.type parameter setting. (>0.5) or NP
     """
@@ -106,8 +106,8 @@ def mixscape(
         cat = cats[split]
         genes = list(set(adata[split_mask].obs[labels]).difference([control]))
         adata_split = adata[split_mask].copy()
-        sc.tl.rank_genes_groups(adata_split, layer = layer, groupby=labels, groups=genes, reference=control)
-        #sc.tl.rank_genes_groups(adata, layer=layer, groupby=labels, groups=genes, reference=control)
+        sc.tl.rank_genes_groups(adata_split, layer=layer, groupby=labels, groups=genes, reference=control)
+        # sc.tl.rank_genes_groups(adata, layer=layer, groupby=labels, groups=genes, reference=control)
         for gene in genes:
             logfc_threshold_mask = adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene] >= logfc_threshold
             de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
@@ -205,7 +205,7 @@ def mixscape(
                     n_iter += 1
 
                 adata.obs[new_class_name][(adata.obs[new_class_name] == gene) & split_mask] = f"{gene} {prtb_type}"
-                #adata.obs[new_class_name][(adata.obs[new_class_name] == gene)] = f"{gene} {prtb_type}"
+                # adata.obs[new_class_name][(adata.obs[new_class_name] == gene)] = f"{gene} {prtb_type}"
 
             adata.obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in adata.obs[new_class_name]]
             adata.obs[f"{new_class_name}_p_{prtb_type.lower()}"][orig_guide_cells_index] = post_prob
