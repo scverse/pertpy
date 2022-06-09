@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from anndata import AnnData
 from sklearn.decomposition import KernelPCA
@@ -10,9 +10,9 @@ def kernel_pca(
     kernel: str = "linear",
     copy: bool = False,
     return_transformer: bool = False,
-    **kwargs
+    **kwargs,
 ):
-    """Compute kernel pca on `adata.X`.
+    """Compute kernel PCA on `adata.X`.
 
     Compute Kernel Principal component analysis (KPCA) using sklearn.
     See also :class:`~sklearn.decomposition.KernelPCA`.
