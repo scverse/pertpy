@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional, Union
-
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -10,28 +8,7 @@ from scipy import sparse
 from sklearn.mixture import GaussianMixture
 
 
-def _get_column_indices(adata, col_names):
-    """Fetches the column indices in X for a given list of column names
-
-    Args:
-        adata: :class:`~anndata.AnnData` object
-        col_names: Column names to extract the indices for
-
-    Returns:
-        Set of column indices
-    """
-    if isinstance(col_names, str):  # pragma: no cover
-        col_names = [col_names]
-
-    indices = list()
-    for idx, col in enumerate(adata.var_names):
-        if col in col_names:
-            indices.append(idx)
-
-    return indices
-
-
-def define_normal_mixscape(X: np.ndarray | sparse.spmatrix | pd.DataFrame | None) -> list[float]:  # noqa: N803
+def _define_normal_mixscape(X: np.ndarray | sparse.spmatrix | pd.DataFrame | None) -> list[float]:  # noqa: N803
     """Calculates the mean and standard deviation of a matrix.
 
     Args:
@@ -190,9 +167,9 @@ def mixscape(
                     pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
 
                     # guide_norm = define_normal_mixscape(pvec[guide_cells_index])
-                    guide_norm = define_normal_mixscape(pvec[guide_cells])
+                    guide_norm = _define_normal_mixscape(pvec[guide_cells])
                     # nt_norm = define_normal_mixscape(pvec[nt_cells_index])
-                    nt_norm = define_normal_mixscape(pvec[nt_cells])
+                    nt_norm = _define_normal_mixscape(pvec[nt_cells])
                     means_init = np.array([[nt_norm[0]], [guide_norm[0]]])
                     precisions_init = np.array([nt_norm[1], guide_norm[1]])
                     mm = GaussianMixture(
@@ -225,3 +202,24 @@ def mixscape(
 
     if copy:
         return adata
+
+
+def _get_column_indices(adata, col_names):
+    """Fetches the column indices in X for a given list of column names
+
+    Args:
+        adata: :class:`~anndata.AnnData` object
+        col_names: Column names to extract the indices for
+
+    Returns:
+        Set of column indices
+    """
+    if isinstance(col_names, str):  # pragma: no cover
+        col_names = [col_names]
+
+    indices = list()
+    for idx, col in enumerate(adata.var_names):
+        if col in col_names:
+            indices.append(idx)
+
+    return indices
