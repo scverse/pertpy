@@ -1,39 +1,29 @@
 import warnings
 from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from scipy import sparse
 from sklearn.mixture import GaussianMixture
 
 warnings.simplefilter("ignore")
 
 
-def get_column_indices(adata, col_names):
-    """Fetches the column indices in X for a given list of column names
+def _define_normal_mixscape(X: np.ndarray | sparse.spmatrix | pd.DataFrame | None) -> list[float]:  # noqa: N803
+    """Calculates the mean and standard deviation of a matrix.
 
     Args:
-        adata: :class:`~anndata.AnnData` object
-        col_names: Column names to extract the indices for
+        X: The matrix to calculate the properties for.
 
     Returns:
-        Set of column indices
+        Mean and standard deviation of the matrix.
     """
-    if isinstance(col_names, str):
-        col_names = [col_names]
+    mu = X.mean()
+    sd = X.std()
 
-    indices = list()
-    for idx, col in enumerate(adata.var_names):
-        if col in col_names:
-            indices.append(idx)
-
-    return indices
-
-
-def define_normal_mixscape(x):
-    mu = x.mean()
-    sd = x.std()
     return [mu, sd]
 
 
@@ -41,18 +31,19 @@ def mixscape(
     adata: AnnData,
     labels: str,
     control: str,
-    new_class_name: Optional[str] = "mixscape_class",
-    min_de_genes: Optional[int] = 5,
-    layer: Optional[str] = None,
-    logfc_threshold: Optional[float] = 0.25,
-    iter_num: Optional[int] = 10,
-    split_by: Optional[str] = None,
-    pval_cutoff: Optional[float] = 5e-2,
-    perturbation_type: Optional[str] = "KO",
-    copy: Optional[bool] = False,
+    new_class_name: str | None = "mixscape_class",
+    min_de_genes: int | None = 5,
+    layer: str | None = None,
+    logfc_threshold: float | None = 0.25,
+    iter_num: int | None = 10,
+    split_by: str | None = None,
+    pval_cutoff: float | None = 5e-2,
+    perturbation_type: str | None = "KO",
+    copy: bool | None = False,
 ):
-    """Function to identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
-    https://satijalab.org/seurat/reference/runmixscape
+    """Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
+
+    The implementation resembles https://satijalab.org/seurat/reference/runmixscape
 
     Args:
         adata: The annotated data object.
@@ -62,10 +53,10 @@ def mixscape(
         new_class_name: Name of mixscape classification to be stored in `.obs`.
         min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
         layer: Key from adata.layers whose value will be used to perform tests on.
-        logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells. Default is 0.25.
+        logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
         iter_num: Number of normalmixEM iterations to run if convergence does not occur.
         split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
-            the perturbation signature for every replicate separately.
+                  the perturbation signature for every replicate separately.
         pval_cutoff: P-value cut-off for selection of significantly DE genes.
         perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
         copy: Determines whether a copy of the `adata` is returned.
@@ -83,21 +74,21 @@ def mixscape(
         mixscape_class_p_ko: pandas.Series (`adata.obs['mixscape_class_p_ko']`).
         Posterior probabilities used to determine if a cell is KO (default). Name of this item will change to match prtb.type parameter setting. (>0.5) or NP
     """
-
     if copy:
         adata = adata.copy()
+
     if split_by is None:
         split_masks = [np.full(adata.n_obs, True, dtype=bool)]
-        cats = ["con1"]
+        categories = ["all"]
     else:
         split_obs = adata.obs[split_by]
-        cats = split_obs.unique()
-        split_masks = [split_obs == cat for cat in cats]
+        categories = split_obs.unique()
+        split_masks = [split_obs == category for category in categories]
 
     # determine gene sets across all splits/groups through differential gene expression
-    prtb_markers = {}
+    perturbation_markers = {}
     for split, split_mask in enumerate(split_masks):
-        cat = cats[split]
+        category = categories[split]
         # get gene sets for each split
         genes = list(set(adata[split_mask].obs[labels]).difference([control]))
         adata_split = adata[split_mask].copy()
@@ -113,7 +104,7 @@ def mixscape(
             de_genes = de_genes[pvals_adj < pval_cutoff]
             if len(de_genes) < min_de_genes:
                 de_genes = np.array([])
-            prtb_markers[(cat, gene)] = de_genes
+            perturbation_markers[(category, gene)] = de_genes
 
     adata_comp = adata
     if layer is not None:
@@ -132,7 +123,7 @@ def mixscape(
     gv_list = {}
 
     for split, split_mask in enumerate(split_masks):
-        cat = cats[split]
+        category = categories[split]
         genes = list(set(adata[split_mask].obs[labels]).difference([control]))
         for gene in genes:
             post_prob = 0
@@ -141,11 +132,11 @@ def mixscape(
             nt_cells = (adata.obs[labels] == control) & split_mask
             all_cells = orig_guide_cells | nt_cells
 
-            if len(prtb_markers[(cat, gene)]) == 0:
+            if len(perturbation_markers[(category, gene)]) == 0:
                 adata.obs.loc[orig_guide_cells, new_class_name] = f"{gene} NP"
             else:
-                de_genes = prtb_markers[(cat, gene)]
-                de_genes_indices = get_column_indices(adata, list(de_genes))
+                de_genes = perturbation_markers[(category, gene)]
+                de_genes_indices = _get_column_indices(adata, list(de_genes))
                 dat = X[all_cells][:, de_genes_indices]
                 converged = False
                 n_iter = 0
@@ -171,8 +162,8 @@ def mixscape(
                             gv_list[gene] = {}
                         gv_list[gene][cat] = gv
 
-                    guide_norm = define_normal_mixscape(pvec[guide_cells])
-                    nt_norm = define_normal_mixscape(pvec[nt_cells])
+                    guide_norm = _define_normal_mixscape(pvec[guide_cells])
+                    nt_norm = _define_normal_mixscape(pvec[nt_cells])
                     means_init = np.array([[nt_norm[0]], [guide_norm[0]]])
                     precisions_init = np.array([nt_norm[1], guide_norm[1]])
                     mm = GaussianMixture(
@@ -209,3 +200,24 @@ def mixscape(
 
     if copy:
         return adata
+
+
+def _get_column_indices(adata, col_names):
+    """Fetches the column indices in X for a given list of column names
+
+    Args:
+        adata: :class:`~anndata.AnnData` object
+        col_names: Column names to extract the indices for
+
+    Returns:
+        Set of column indices
+    """
+    if isinstance(col_names, str):  # pragma: no cover
+        col_names = [col_names]
+
+    indices = list()
+    for idx, col in enumerate(adata.var_names):
+        if col in col_names:
+            indices.append(idx)
+
+    return indices
