@@ -44,7 +44,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://figshare.com/ndownloader/files/31645901",
+            url="https://figshare.com/ndownloader/files/35936519",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
