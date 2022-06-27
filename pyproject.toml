@@ -30,6 +30,7 @@ requests = ">=2.27.1"
 ipywidgets = ">=7.6.5"
 switchlang = "^0.1.0"
 scikit-misc = "^0.1.4"
+plotnine = "^0.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.2.5"

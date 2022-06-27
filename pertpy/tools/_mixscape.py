@@ -1,6 +1,6 @@
-import warnings
-from typing import Optional
 from __future__ import annotations
+
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -72,7 +72,7 @@ def mixscape(
         Global classification result (perturbed, NP or NT)
 
         mixscape_class_p_ko: pandas.Series (`adata.obs['mixscape_class_p_ko']`).
-        Posterior probabilities used to determine if a cell is KO (default). Name of this item will change to match prtb.type parameter setting. (>0.5) or NP
+        Posterior probabilities used to determine if a cell is KO (default). Name of this item will change to match perturbation_type parameter setting. (>0.5) or NP
     """
     if copy:
         adata = adata.copy()
@@ -86,7 +86,10 @@ def mixscape(
         split_masks = [split_obs == category for category in categories]
 
     # determine gene sets across all splits/groups through differential gene expression
-    perturbation_markers = {}
+    # perturbation_markers = {}
+    # gv_list = {} #
+    perturbation_markers: dict[tuple, np.ndarray] = {}
+    gv_list: dict[str, dict] = {}
     for split, split_mask in enumerate(split_masks):
         category = categories[split]
         # get gene sets for each split
@@ -120,7 +123,6 @@ def mixscape(
         ],
         dtype=np.object_,
     )
-    gv_list = {}
 
     for split, split_mask in enumerate(split_masks):
         category = categories[split]
@@ -160,7 +162,7 @@ def mixscape(
                         gv.loc[guide_cells, labels] = gene
                         if gene not in gv_list.keys():
                             gv_list[gene] = {}
-                        gv_list[gene][cat] = gv
+                        gv_list[gene][category] = gv
 
                     guide_norm = _define_normal_mixscape(pvec[guide_cells])
                     nt_norm = _define_normal_mixscape(pvec[nt_cells])
