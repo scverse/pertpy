@@ -27,9 +27,9 @@ def plotperturbscore(
     target_gene: str,
     mixscape_class="mixscape_class",
     color="orange",
-    split_by: str | None = None,
+    split_by: str = None,
     before_mixscape=False,
-    perturbation_type: str | None = "KO",
+    perturbation_type: str = "KO",
 ):
     """Density plots to visualize perturbation scores calculated from RunMixscape function.
     https://satijalab.org/seurat/reference/plotperturbscore

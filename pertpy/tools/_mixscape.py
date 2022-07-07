@@ -86,8 +86,6 @@ def mixscape(
         split_masks = [split_obs == category for category in categories]
 
     # determine gene sets across all splits/groups through differential gene expression
-    # perturbation_markers = {}
-    # gv_list = {} #
     perturbation_markers: dict[tuple, np.ndarray] = {}
     gv_list: dict[str, dict] = {}
     for split, split_mask in enumerate(split_masks):

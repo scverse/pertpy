@@ -119,3 +119,15 @@ of each cell.
     plot.ag.scatterplot
 
 ```
+
+### Mixscape
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.mixscape_violin
+    plot.plotperturbscore
+    plot.mixscape_heatmap
+    plot.mixscape_barplot
+```
