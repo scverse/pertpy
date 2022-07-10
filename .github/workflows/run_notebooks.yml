@@ -9,7 +9,11 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                notebook: ["docs/tutorials/notebooks/mixscape.ipynb"]
+                notebook:
+                    [
+                        "docs/tutorials/notebooks/mixscape.ipynb",
+                        "docs/tutorials/notebooks/augurpy.ipynb",
+                    ]
         steps:
             - uses: actions/checkout@v3
               with:
