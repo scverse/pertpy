@@ -1,42 +1,41 @@
 from __future__ import annotations
 
-import pandas as pd
-import numpy as np
-from anndata import AnnData
-import scanpy as sc
 import copy
 from collections import OrderedDict
 from typing import Literal, Sequence
+
+import numpy as np
+import pandas as pd
+import scanpy as sc
+from anndata import AnnData
 from matplotlib import pyplot as pl
 from matplotlib.axes import Axes
-from scanpy import get
-from scanpy._settings import settings
-from scanpy._utils import _check_use_raw, sanitize_anndata
-from scanpy.plotting import _utils
-from scanpy.plotting._utils import setup_axes
 from plotnine import (
     aes,
-    element_text,
     element_blank,
+    element_text,
     facet_wrap,
     geom_bar,
     geom_density,
-    ggplot,
     geom_point,
+    ggplot,
     labs,
-    scale_fill_manual,
     scale_color_manual,
+    scale_fill_manual,
     theme,
     theme_classic,
     xlab,
     ylab,
 )
+from scanpy import get
+from scanpy._settings import settings
+from scanpy._utils import _check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
 
 
 class MixscapePlot:
     """Plotting functions for Mixscape."""
-    
+
     @staticmethod
     def barplot(
         adata: AnnData,
@@ -73,7 +72,9 @@ class MixscapePlot:
         KO_cells_percentage = KO_cells_percentage.sort_values("value", ascending=False)
 
         new_levels = KO_cells_percentage[control]
-        all_cells_percentage[control] = pd.Categorical(all_cells_percentage[control], categories=new_levels, ordered=False)
+        all_cells_percentage[control] = pd.Categorical(
+            all_cells_percentage[control], categories=new_levels, ordered=False
+        )
         all_cells_percentage[mixscape_class_global] = pd.Categorical(
             all_cells_percentage[mixscape_class_global], categories=["NT", "NP", "KO"], ordered=False
         )
@@ -342,7 +343,7 @@ class MixscapePlot:
             groupby: The key of the observation grouping to consider. Default is 'mixscape_class'.
             log: Plot on logarithmic axis.
             use_raw: Whether to use `raw` attribute of `adata`. Defaults to `True` if `.raw` is present.
-            stripplot: Add a stripplot on top of the violin plot. 
+            stripplot: Add a stripplot on top of the violin plot.
             order: Order in which to show the categories.
             xlabel: Label of the x axis. Defaults to `groupby` if `rotation` is `None`, otherwise, no label is shown.
             ylabel: Label of the y axis. If `None` and `groupby` is `None`, defaults to `'value'`. If `None` and `groubpy` is not `None`, defaults to `keys`.
@@ -438,7 +439,7 @@ class MixscapePlot:
             kwds.setdefault("inner")
 
             if ax is None:
-                axs, _, _, _ = setup_axes(
+                axs, _, _, _ = _utils.setup_axes(
                     ax=ax,
                     panels=["x"] if groupby is None else keys,
                     show_ticks=True,
@@ -446,7 +447,7 @@ class MixscapePlot:
                 )
             else:
                 axs = [ax]
-            for ax, y, ylab in zip(axs, ys, ylabel):
+            for ax, y, ylab in zip(axs, ys, ylabel):  # noqa: F402
                 ax = sns.violinplot(
                     x=x,
                     y=y,
