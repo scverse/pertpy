@@ -21,7 +21,7 @@ from plotnine import (
 )
 
 
-def plotperturbscore(
+def mixscape_perturbscore(
     adata: AnnData,
     labels: str,
     target_gene: str,
@@ -31,7 +31,7 @@ def plotperturbscore(
     before_mixscape=False,
     perturbation_type: str = "KO",
 ):
-    """Density plots to visualize perturbation scores calculated from RunMixscape function.
+    """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
     https://satijalab.org/seurat/reference/plotperturbscore
 
     Args:
@@ -44,6 +44,7 @@ def plotperturbscore(
             the perturbation signature for every replicate separately.
         before_mixscape: Option to split densities based on mixscape classification (default) or original target gene classification. Default is set to NULL and plots cells by original class ID.
         perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+    
     Returns:
         The ggplot object used for drawn.
     """
@@ -57,6 +58,7 @@ def plotperturbscore(
             perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
     perturbation_score["mix"] = adata.obs[mixscape_class][perturbation_score.index]
     gd = list(set(perturbation_score[labels]).difference({target_gene}))[0]
+    # If before_mixscape is True, split densities based on original target gene classification
     if before_mixscape is True:
         cols = {gd: "#7d7d7d", target_gene: color}
         p = ggplot(perturbation_score, aes(x="pvec", color="gene_target")) + geom_density() + theme_classic()
@@ -70,6 +72,7 @@ def plotperturbscore(
         perturbation_score.loc[perturbation_score["gene_target"] == target_gene, "y_jitter"] = np.random.uniform(
             low=-top_r / 10, high=0, size=sum(perturbation_score["gene_target"] == target_gene)
         )
+        # If split_by is provided, split densities based on the split_by
         if split_by is not None:
             perturbation_score["split"] = adata.obs[split_by][perturbation_score.index]
             p2 = (
@@ -104,6 +107,7 @@ def plotperturbscore(
                     plot_title=element_text(size=16, face="bold"),
                 )
             )
+    # If before_mixscape is False, split densities based on mixscape classifications
     else:
         cols = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
         p = ggplot(perturbation_score, aes(x="pvec", color="mix")) + geom_density() + theme_classic()
@@ -125,6 +129,7 @@ def plotperturbscore(
         perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = np.random.uniform(
             low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} NP")
         )
+        # If split_by is provided, split densities based on the split_by
         if split_by is not None:
             perturbation_score["split"] = adata.obs[split_by][perturbation_score.index]
             p2 = (

@@ -38,7 +38,7 @@ def mixscape_violin(
     ax: Axes | None = None,
     **kwds,
 ):
-    """Violin plot using mixscape results. Need to run `pt.tl.mixscape` first.
+    """Violin plot using mixscape results. Requires `pt.tl.mixscape` to be run first.
 
     Args:
         adata: The annotated data object.
@@ -59,7 +59,6 @@ def mixscape_violin(
     Returns:
         A :class:`~matplotlib.axes.Axes` object if `ax` is `None` else `None`.
     """
-
     if isinstance(target_gene_idents, str):
         mixscape_class_mask = adata.obs[groupby] == target_gene_idents
     elif isinstance(target_gene_idents, list):

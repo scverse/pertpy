@@ -127,7 +127,7 @@ of each cell.
     :toctree: plot
 
     plot.mixscape_violin
-    plot.plotperturbscore
+    plot.mixscape_perturbscore
     plot.mixscape_heatmap
     plot.mixscape_barplot
 ```

@@ -38,31 +38,30 @@ def mixscape_barplot(
     Args:
         adata: The annotated data object.
         control: Control category from the `pert_key` column. Default is 'NT'.
-        mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).        show: Show the plot, do not return axis.
+        mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).        
+        show: Show the plot, do not return axis.
         save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
 
     Returns:
-        If show is False, return ggplot object used for drawn.
+        If show is False, return ggplot object used to draw the plot.
     """
-
     count = pd.crosstab(index=adata.obs[mixscape_class_global], columns=adata.obs[control])
-    df = count / count.sum()
-    df2 = pd.melt(df, ignore_index=False).reset_index()
-    test = df2[df2[mixscape_class_global] == "KO"]
-    test = test.sort_values("value", ascending=False)
+    all_cells_percentage = pd.melt(count / count.sum(), ignore_index=False).reset_index()
+    KO_cells_percentage = all_cells_percentage[all_cells_percentage[mixscape_class_global] == "KO"]
+    KO_cells_percentage = KO_cells_percentage.sort_values("value", ascending=False)
 
-    new_levels = test[control]
-    df2[control] = pd.Categorical(df2[control], categories=new_levels, ordered=False)
-    df2[mixscape_class_global] = pd.Categorical(
-        df2[mixscape_class_global], categories=["NT", "NP", "KO"], ordered=False
+    new_levels = KO_cells_percentage[control]
+    all_cells_percentage[control] = pd.Categorical(all_cells_percentage[control], categories=new_levels, ordered=False)
+    all_cells_percentage[mixscape_class_global] = pd.Categorical(
+        all_cells_percentage[mixscape_class_global], categories=["NT", "NP", "KO"], ordered=False
     )
-    df2["gene"] = df2[control].str.rsplit("g", expand=True)[0]
-    df2["guide_number"] = df2[control].str.rsplit("g", expand=True)[1]
-    df2["guide_number"] = "g" + df2["guide_number"]
-    df3 = df2[df2["gene"] != "NT"]
+    all_cells_percentage["gene"] = all_cells_percentage[control].str.rsplit("g", expand=True)[0]
+    all_cells_percentage["guide_number"] = all_cells_percentage[control].str.rsplit("g", expand=True)[1]
+    all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
+    NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
 
     p1 = (
-        ggplot(df3, aes(x="guide_number", y="value", fill="mixscape_class_global"))
+        ggplot(NP_KO_cells, aes(x="guide_number", y="value", fill="mixscape_class_global"))
         + scale_fill_manual(values=["#7d7d7d", "#c9c9c9", "#ff7256"])
         + geom_bar(stat="identity")
         + theme_classic()
