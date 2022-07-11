@@ -12,8 +12,8 @@ threshold = 0.8
 def test_mixscape():
     adata = read(f"{CWD}/mixscape.h5ad")
     r_result = read_csv(f"{CWD}/r_result.csv", index_col="index", squeeze=True)
-
-    pt.tl.mixscape(adata=adata, control="NT", labels="gene_target", layer="X_pert")
+    mixscape_identifier = pt.tl.Mixscape()
+    mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target", layer="X_pert")
     python_result = adata.obs["mixscape_class_global"]
 
     assert "mixscape_class" in adata.obs

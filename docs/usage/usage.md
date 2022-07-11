@@ -126,8 +126,8 @@ of each cell.
 .. autosummary::
     :toctree: plot
 
-    plot.mixscape_violin
-    plot.mixscape_perturbscore
-    plot.mixscape_heatmap
-    plot.mixscape_barplot
+    plot.ms.violin
+    plot.ms.perturbscore
+    plot.ms.heatmap
+    plot.ms.barplot
 ```
