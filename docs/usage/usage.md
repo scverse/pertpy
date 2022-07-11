@@ -93,7 +93,7 @@ of each cell.
     :toctree: tools
 
     tools.pert_sign
-    tools.mixscape
+    tools.Mixscape
 ```
 
 ### Representation
