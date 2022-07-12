@@ -32,6 +32,8 @@ from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
 
+import pertpy as pt
+
 
 class MixscapePlot:
     """Plotting functions for Mixscape."""
@@ -497,3 +499,96 @@ class MixscapePlot:
                 return axs[0]
             else:
                 return axs
+
+    @staticmethod
+    def lda(
+        adata: AnnData,
+        labels: str,
+        mixscape_class_global="mixscape_class_global",
+        layer: str | None = None,
+        control: str | None = "NT",
+        n_comps: int | None = 10,
+        min_de_genes: int | None = 5,
+        logfc_threshold: float | None = 0.25,
+        split_by: str | None = None,
+        pval_cutoff: float | None = 5e-2,
+        perturbation_type: str | None = "KO",
+        show: bool | None = None,
+        save: bool | str | None = None,
+        **kwds,
+    ):
+        """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
+
+        Args:
+            adata: The annotated data object.
+            labels: The column of `.obs` with target gene labels.
+            mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
+            layer: Key from `adata.layers` whose value will be used to perform tests on.
+            control: Control category from the `pert_key` column. Default is 'NT'.
+            n_comps: Number of principal components to use. Defaults to 10.
+            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
+            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
+            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
+            pval_cutoff: P-value cut-off for selection of significantly DE genes.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            show: Show the plot, do not return axis.
+            save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
+            **kwds: Additional arguments to `scanpy.pl.umap`.
+        """
+        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+        if mixscape_class_global not in adata.obs:
+            raise ValueError("Please run `pt.tl.mixscape` first.")
+        if split_by is None:
+            split_masks = [np.full(adata.n_obs, True, dtype=bool)]
+            categories = ["all"]
+        else:
+            split_obs = adata.obs[split_by]
+            categories = split_obs.unique()
+            split_masks = [split_obs == category for category in categories]
+
+        mixscape_identifier = pt.tl.Mixscape()
+        # determine gene sets across all splits/groups through differential gene expression
+        perturbation_markers = mixscape_identifier._get_perturbation_markers(
+            adata=adata,
+            split_masks=split_masks,
+            categories=categories,
+            labels=labels,
+            control=control,
+            layer=layer,
+            pval_cutoff=pval_cutoff,
+            min_de_genes=min_de_genes,
+            logfc_threshold=logfc_threshold,
+        )
+        adata_subset = adata[
+            (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
+        ].copy()
+        projected_pcs: dict[str, np.ndarray] = {}
+        # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
+        for _, (key, value) in enumerate(perturbation_markers.items()):
+            if len(value) == 0:
+                continue
+            else:
+                gene_subset = adata_subset[
+                    (adata_subset.obs[labels] == key[1]) | (adata_subset.obs[labels] == control)
+                ].copy()
+                sc.pp.scale(gene_subset)
+                sc.tl.pca(gene_subset, n_comps=n_comps)
+                sc.pp.neighbors(gene_subset)
+                # projects each subspace onto all cells in the data.
+                sc.tl.ingest(adata=adata_subset, adata_ref=gene_subset, embedding_method="pca")
+                projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
+        # concatenate all pcs into a single matrix.
+        for index, (_, value) in enumerate(projected_pcs.items()):
+            if index == 0:
+                projected_pcs_array = value
+            else:
+                projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
+
+        clf = LinearDiscriminantAnalysis(n_components=len(projected_pcs))
+        clf.fit(projected_pcs_array, adata_subset.obs["gene_target"])
+        cell_embeddings = clf.transform(projected_pcs_array)
+        adata_subset.obsm["cell_embeddings"] = cell_embeddings
+        sc.pp.neighbors(adata_subset, use_rep="cell_embeddings")
+        sc.tl.umap(adata_subset, n_components=11)
+        sc.pl.umap(adata_subset, color="mixscape_class", show=show, save=save, **kwds)

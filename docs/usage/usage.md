@@ -130,4 +130,5 @@ of each cell.
     plot.ms.perturbscore
     plot.ms.heatmap
     plot.ms.barplot
+    plot.ms.lda
 ```
