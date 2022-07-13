@@ -13,6 +13,8 @@ warnings.simplefilter("ignore")
 
 
 class Mixscape:
+    """Python implementation of Mixscape."""
+
     def __init__(self):
         pass
 

@@ -39,7 +39,7 @@ class MixscapePlot:
     """Plotting functions for Mixscape."""
 
     @staticmethod
-    def barplot(
+    def barplot(  # pragma: no cover
         adata: AnnData,
         control: str = "NT",
         mixscape_class_global="mixscape_class_global",
@@ -114,7 +114,7 @@ class MixscapePlot:
             return p1
 
     @staticmethod
-    def heatmap(
+    def heatmap(  # pragma: no cover
         adata: AnnData,
         labels: str,
         target_gene: str,
@@ -164,7 +164,7 @@ class MixscapePlot:
         )
 
     @staticmethod
-    def perturbscore(
+    def perturbscore(  # pragma: no cover
         adata: AnnData,
         labels: str,
         target_gene: str,
@@ -175,6 +175,7 @@ class MixscapePlot:
         perturbation_type: str = "KO",
     ):
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function. Requires `pt.tl.mixscape` to be run first.
+
         https://satijalab.org/seurat/reference/plotperturbscore
 
         Args:
@@ -313,7 +314,7 @@ class MixscapePlot:
         return p2
 
     @staticmethod
-    def violin(
+    def violin(  # noqa: C901  pragma: no cover
         adata: AnnData,
         target_gene_idents: str | list[str],
         keys: str | Sequence[str] = "mixscape_class_p_ko",
@@ -501,7 +502,7 @@ class MixscapePlot:
                 return axs
 
     @staticmethod
-    def lda(
+    def lda(  # pragma: no cover
         adata: AnnData,
         labels: str,
         mixscape_class_global="mixscape_class_global",

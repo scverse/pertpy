@@ -1,7 +1,6 @@
 from typing import Optional
 
 import numpy as np
-import scanpy as sc
 from anndata import AnnData
 from pynndescent import NNDescent
 from scanpy.tools._utils import _choose_representation
@@ -22,10 +21,9 @@ def pert_sign(
 ):
     """Calculate perturbation signature.
 
-    For each cell, we identify `n_neighbors` cells from the control pool with
-    the most similar mRNA expression profiles. The perturbation signature is calculated by subtracting
-    the averaged mRNA expression profile of the control neighbors from the mRNA expression profile
-    of each cell.
+    For each cell, we identify `n_neighbors` cells from the control pool with the most similar mRNA expression profiles.
+    The perturbation signature is calculated by subtracting the averaged mRNA expression profile of the control
+    neighbors from the mRNA expression profile of each cell.
 
     Args:
         adata: The annotated data object.
