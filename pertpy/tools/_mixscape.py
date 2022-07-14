@@ -6,8 +6,13 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from pynndescent import NNDescent
+from scanpy.tools._utils import _choose_representation
 from scipy import sparse
+from scipy.sparse import csr_matrix, issparse
 from sklearn.mixture import GaussianMixture
+
+import pertpy as pt
 
 warnings.simplefilter("ignore")
 
@@ -17,6 +22,110 @@ class Mixscape:
 
     def __init__(self):
         pass
+
+    def pert_sign(
+        self,
+        adata: AnnData,
+        pert_key: str,
+        control: str,
+        split_by: str | None = None,
+        n_neighbors: int = 20,
+        use_rep: str | None = None,
+        n_pcs: int | None = None,
+        batch_size: int | None = None,
+        copy: bool = False,
+        **kwargs,
+    ):
+        """Calculate perturbation signature.
+
+        For each cell, we identify `n_neighbors` cells from the control pool with the most similar mRNA expression profiles.
+        The perturbation signature is calculated by subtracting the averaged mRNA expression profile of the control
+        neighbors from the mRNA expression profile of each cell.
+
+        Args:
+            adata: The annotated data object.
+            pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
+            control: Control category from the `pert_key` column.
+            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
+                the perturbation signature for every replicate separately.
+            n_neighbors: Number of neighbors from the control to use for the perturbation signature.
+            use_rep: Use the indicated representation. `'X'` or any key for `.obsm` is valid.
+                If `None`, the representation is chosen automatically:
+                For `.n_vars` < 50, `.X` is used, otherwise 'X_pca' is used.
+                If 'X_pca' is not present, it’s computed with default parameters.
+            n_pcs: Use this many PCs. If `n_pcs==0` use `.X` if `use_rep is None`.
+            batch_size: Size of batch to calculate the perturbation signature.
+                If 'None', the perturbation signature is calcuated in the full mode, requiring more memory.
+                The batched mode is very inefficient for sparse data.
+            copy: Determines whether a copy of the `adata` is returned.
+            **kwargs: Additional arguments for the `NNDescent` class from `pynndescent`.
+
+        Returns:
+            If `copy=True`, returns the copy of `adata` with the perturbation signature in `.layers["X_pert"]`.
+            Otherwise writes the perturbation signature directly to `.layers["X_pert"]` of the provided `adata`.
+        """
+        if copy:
+            adata = adata.copy()
+
+        adata.layers["X_pert"] = adata.X.copy()
+
+        control_mask = adata.obs[pert_key] == control
+
+        if split_by is None:
+            split_masks = [np.full(adata.n_obs, True, dtype=bool)]
+        else:
+            split_obs = adata.obs[split_by]
+            cats = split_obs.unique()
+            split_masks = [split_obs == cat for cat in cats]
+
+        R = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
+
+        for split_mask in split_masks:
+            control_mask_split = control_mask & split_mask
+
+            R_split = R[split_mask]
+            R_control = R[control_mask_split]
+
+            eps = kwargs.pop("epsilon", 0.1)
+            nn_index = NNDescent(R_control, **kwargs)
+            indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
+
+            X_control = np.expm1(adata.X[control_mask_split])
+
+            n_split = split_mask.sum()
+            n_control = X_control.shape[0]
+
+            if batch_size is None:
+                col_indices = np.ravel(indices)
+                row_indices = np.repeat(np.arange(n_split), n_neighbors)
+
+                neigh_matrix = csr_matrix(
+                    (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
+                    shape=(n_split, n_control),
+                )
+                neigh_matrix /= n_neighbors
+                adata.layers["X_pert"][split_mask] -= np.log1p(neigh_matrix @ X_control)
+            else:
+                is_sparse = issparse(X_control)
+                split_indices = np.where(split_mask)[0]
+                for i in range(0, n_split, batch_size):
+                    size = min(i + batch_size, n_split)
+                    select = slice(i, size)
+
+                    batch = np.ravel(indices[select])
+                    split_batch = split_indices[select]
+
+                    size = size - i
+
+                    # sparse is very slow
+                    means_batch = X_control[batch]
+                    means_batch = means_batch.toarray() if is_sparse else means_batch
+                    means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
+
+                    adata.layers["X_pert"][split_batch] -= np.log1p(means_batch)
+
+        if copy:
+            return adata
 
     def mixscape(
         self,
@@ -171,6 +280,104 @@ class Mixscape:
                 adata.obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in adata.obs[new_class_name]]
                 adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
         adata.uns["mixscape"] = gv_list
+
+        if copy:
+            return adata
+
+    def lda(
+        self,
+        adata: AnnData,
+        labels: str,
+        mixscape_class_global="mixscape_class_global",
+        layer: str | None = None,
+        control: str | None = "NT",
+        n_comps: int | None = 10,
+        min_de_genes: int | None = 5,
+        logfc_threshold: float | None = 0.25,
+        split_by: str | None = None,
+        pval_cutoff: float | None = 5e-2,
+        perturbation_type: str | None = "KO",
+        copy: bool | None = False,
+    ):
+        """Linear Discriminant Analysis on pooled CRISPR screen data. Requires `pt.tl.mixscape()` to be run first.
+
+        Args:
+            adata: The annotated data object.
+            labels: The column of `.obs` with target gene labels.
+            mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
+            layer: Key from `adata.layers` whose value will be used to perform tests on.
+            control: Control category from the `pert_key` column. Default is 'NT'.
+            n_comps: Number of principal components to use. Defaults to 10.
+            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
+            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
+            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
+            pval_cutoff: P-value cut-off for selection of significantly DE genes.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            copy: Determines whether a copy of the `adata` is returned.
+
+        Returns:
+            If `copy=True`, returns the copy of `adata` with the LDA result in `.uns`.
+            Otherwise writes the results directly to `.uns` of the provided `adata`.
+
+            mixscape_lda: numpy.ndarray (`adata.uns['mixscape_lda']`).
+            LDA result.
+        """
+        if copy:
+            adata = adata.copy()
+        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+        if mixscape_class_global not in adata.obs:
+            raise ValueError("Please run `pt.tl.mixscape` first.")
+        if split_by is None:
+            split_masks = [np.full(adata.n_obs, True, dtype=bool)]
+            categories = ["all"]
+        else:
+            split_obs = adata.obs[split_by]
+            categories = split_obs.unique()
+            split_masks = [split_obs == category for category in categories]
+
+        mixscape_identifier = pt.tl.Mixscape()
+        # determine gene sets across all splits/groups through differential gene expression
+        perturbation_markers = mixscape_identifier._get_perturbation_markers(
+            adata=adata,
+            split_masks=split_masks,
+            categories=categories,
+            labels=labels,
+            control=control,
+            layer=layer,
+            pval_cutoff=pval_cutoff,
+            min_de_genes=min_de_genes,
+            logfc_threshold=logfc_threshold,
+        )
+        adata_subset = adata[
+            (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
+        ].copy()
+        projected_pcs: dict[str, np.ndarray] = {}
+        # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
+        for _, (key, value) in enumerate(perturbation_markers.items()):
+            if len(value) == 0:
+                continue
+            else:
+                gene_subset = adata_subset[
+                    (adata_subset.obs[labels] == key[1]) | (adata_subset.obs[labels] == control)
+                ].copy()
+                sc.pp.scale(gene_subset)
+                sc.tl.pca(gene_subset, n_comps=n_comps)
+                sc.pp.neighbors(gene_subset)
+                # projects each subspace onto all cells in the data.
+                sc.tl.ingest(adata=adata_subset, adata_ref=gene_subset, embedding_method="pca")
+                projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
+        # concatenate all pcs into a single matrix.
+        for index, (_, value) in enumerate(projected_pcs.items()):
+            if index == 0:
+                projected_pcs_array = value
+            else:
+                projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
+
+        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs["gene_target"])) - 1)
+        clf.fit(projected_pcs_array, adata_subset.obs["gene_target"])
+        cell_embeddings = clf.transform(projected_pcs_array)
+        adata.uns["mixscape_lda"] = cell_embeddings
 
         if copy:
             return adata
