@@ -61,7 +61,7 @@ adata, results = ag.predict(adata)
 results['summary_metrics']
 ```
 
-See [here](tutorials) for a more elaborate tutorial.
+See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augurpy.html) for a more elaborate tutorial.
 
 ```{eval-rst}
 .. currentmodule:: pertpy
@@ -75,14 +75,13 @@ See [here](tutorials) for a more elaborate tutorial.
     tools.Augurpy
 ```
 
-### Perturbation signature
+### Mixscape
 
-The python implementation of Mixscape's [CalcPerturbSig](https://satijalab.org/seurat/reference/calcperturbsig).
+A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html) Papalexi et al. [Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens](https://www.nature.com/articles/s41588-021-00778-2).
 
-To calculate perturbation signature, for each cell, we identify `n_neighbors` cells from the control pool with
-the most similar mRNA expression profiles. The perturbation signature is calculated by subtracting
-the averaged mRNA expression profile of the control neighbors from the mRNA expression profile
-of each cell.
+Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
+Next, it determines which targeted cells were affected by the genetic perturbation (=KO) and which targeted cells were not (=NP) with the use of mixture models.
+Finally, it visualizes similarities and differences across different perturbations.
 
 ```{eval-rst}
 .. currentmodule:: pertpy
@@ -92,8 +91,10 @@ of each cell.
 .. autosummary::
     :toctree: tools
 
-    tools.pert_sign
+    tools.Mixscape
 ```
+
+See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
 
 ### Representation
 
@@ -117,4 +118,17 @@ of each cell.
     plot.ag.lollipop
     plot.ag.scatterplot
 
+```
+
+### Mixscape
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.ms.violin
+    plot.ms.perturbscore
+    plot.ms.heatmap
+    plot.ms.barplot
+    plot.ms.lda
 ```
