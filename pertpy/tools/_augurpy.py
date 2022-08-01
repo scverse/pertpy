@@ -231,6 +231,7 @@ class Augurpy:
         # filter features with 0 variance
         subsample.var["highly_variable"] = False
         subsample.var["means"] = np.ravel(subsample.X.mean(axis=0))
+        # Converting because the Syntax for power for numpy arrays is different -> use sparse Syntax as default
         if isinstance(subsample.X, np.ndarray):
             subsample.X = sparse.csc_matrix(subsample.X)
         subsample.var["var"] = np.ravel(subsample.X.power(2).mean(axis=0) - np.power(subsample.X.mean(axis=0), 2))
@@ -557,6 +558,9 @@ class Augurpy:
         """
         adata.var["highly_variable"] = False
         adata.var["means"] = np.ravel(adata.X.mean(axis=0))
+        # Converting because the Syntax for power for numpy arrays is different -> use sparse Syntax as default
+        if isinstance(adata.X, np.ndarray):
+            adata.X = sparse.csc_matrix(adata.X)
         adata.var["sds"] = np.ravel(np.sqrt(adata.X.power(2).mean(axis=0) - np.power(adata.X.mean(axis=0), 2)))
         # remove all features with 0 variance
         adata.var.loc[adata.var["sds"] > 0, "highly_variable"] = True
@@ -616,7 +620,7 @@ class Augurpy:
         filter_negative_residuals: bool = False,
         n_threads: int = 4,
         augur_mode: Literal["permute"] | Literal["default"] | Literal["velocity"] = "default",
-        select_variance_features: bool = False,
+        select_variance_features: bool = True,
         key_added: str = "augurpy_results",
         random_state: int | None = None,
         zero_division: int | str = 0,
@@ -635,6 +639,8 @@ class Augurpy:
             span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range (0, 1] (default: 0.75)
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
             n_threads: number of threads to use for parallelization
+            select_variance_features: Whether to select genes based on the original Augur implementation (True)
+                                      or using scanpy's highly_variable_genes (False) (default: True9
             key_added: Key to add results to in .uns
             augur_mode: one of default, velocity or permute. Setting augur_mode = "velocity" disables feature selection,
                         assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,

@@ -36,7 +36,9 @@ class TestAugur:
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
         sc_sim_adata = self.ag_rfc.load(sc_sim_adata)
         sc.pp.highly_variable_genes(sc_sim_adata)
-        adata, results = self.ag_rfc.predict(sc_sim_adata, n_threads=4, n_subsamples=3, random_state=42)
+        adata, results = self.ag_rfc.predict(
+            sc_sim_adata, n_threads=4, n_subsamples=3, random_state=42, select_variance_features=False
+        )
 
         assert results["CellTypeA"][2]["subsample_idx"] == 2
         assert "augur_score" in adata.obs.columns
@@ -49,7 +51,9 @@ class TestAugur:
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
         sc_sim_adata = self.ag_rfc.load(sc_sim_adata)
         sc.pp.highly_variable_genes(sc_sim_adata)
-        adata, results = self.ag_lrc.predict(sc_sim_adata, n_threads=4, n_subsamples=3, random_state=42)
+        adata, results = self.ag_lrc.predict(
+            sc_sim_adata, n_threads=4, n_subsamples=3, random_state=42, select_variance_features=False
+        )
 
         assert "augur_score" in adata.obs.columns
         assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.610733, 0.927815, 0.969765])
