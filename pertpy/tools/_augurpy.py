@@ -14,7 +14,7 @@ from anndata import AnnData
 from joblib import Parallel, delayed
 from rich import print
 from rich.progress import track
-from scipy import stats
+from scipy import sparse, stats
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
@@ -231,6 +231,8 @@ class Augurpy:
         # filter features with 0 variance
         subsample.var["highly_variable"] = False
         subsample.var["means"] = np.ravel(subsample.X.mean(axis=0))
+        if isinstance(subsample.X, np.ndarray):
+            subsample.X = sparse.csc_matrix(subsample.X)
         subsample.var["var"] = np.ravel(subsample.X.power(2).mean(axis=0) - np.power(subsample.X.mean(axis=0), 2))
         # remove all features with 0 variance
         subsample.var.loc[subsample.var["var"] > 0, "highly_variable"] = True
