@@ -40,7 +40,7 @@ class TestAugur:
 
         assert results["CellTypeA"][2]["subsample_idx"] == 2
         assert "augur_score" in adata.obs.columns
-        assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.521730, 0.783635, 0.868858])
+        assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.634920, 0.933484, 0.902494])
         assert "feature_importances" in results.keys()
         assert len(set(results["summary_metrics"]["CellTypeA"])) == len(results["summary_metrics"]["CellTypeA"]) - 1
 
@@ -52,7 +52,7 @@ class TestAugur:
         adata, results = self.ag_lrc.predict(sc_sim_adata, n_threads=4, n_subsamples=3, random_state=42)
 
         assert "augur_score" in adata.obs.columns
-        assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.610733, 0.927815, 0.969765])
+        assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.691232, 0.955404, 0.972789])
         assert "feature_importances" in results.keys()
 
     def test_random_forest_regressor(self):
@@ -72,14 +72,15 @@ class TestAugur:
         adata = sc.pp.subsample(sc_sim_adata, n_obs=100, random_state=42, copy=True)
 
         cv = self.ag_rfc.run_cross_validation(adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
-        auc = 0.766289
+        auc = 0.786412
+        print(cv["mean_auc"])
         assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
         sc_sim_adata = self.ag_lrc.load(sc_sim_adata)
         sc.pp.highly_variable_genes(sc_sim_adata)
         cv = self.ag_lrc.run_cross_validation(sc_sim_adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
-        auc = 0.991796
+        auc = 0.978673
         assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
     def test_regressor(self):
@@ -87,8 +88,8 @@ class TestAugur:
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
         sc_sim_adata = self.ag_rfc.load(sc_sim_adata)
         cv = self.ag_rfr.run_cross_validation(sc_sim_adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
-        ccc = 0.231356
-        r2 = 0.206195
+        ccc = 0.168800
+        r2 = 0.149887
         assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10**-5), isclose(cv["mean_r2"], r2, abs_tol=10**-5)])
 
     def test_subsample(self):
@@ -134,7 +135,7 @@ class TestAugur:
             categorical=True,
             random_state=42,
         )
-        assert len(velocity_subsample.var_names) == 5908 and len(velocity_subsample.obs_names) == 40
+        assert len(velocity_subsample.var_names) == 5505 and len(velocity_subsample.obs_names) == 40
 
     def test_multiclass(self):
         """Test multiclass evaluation."""
@@ -148,7 +149,7 @@ class TestAugur:
         adata = sc_sim_adata[sc_sim_adata.obs["cell_type"] == "CellTypeA"]
         ad = self.ag_rfc.select_variance(adata, var_quantile=0.5, span=0.3, filter_negative_residuals=False)
 
-        assert 4871 == len(ad.var.index[ad.var["highly_variable"]])
+        assert 3672 == len(ad.var.index[ad.var["highly_variable"]])
 
     def test_creation(self):
         """Test output of create_estimator."""
