@@ -73,7 +73,6 @@ class TestAugur:
 
         cv = self.ag_rfc.run_cross_validation(adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
         auc = 0.786412
-        print(cv["mean_auc"])
         assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
