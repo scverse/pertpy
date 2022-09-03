@@ -1,52 +1,99 @@
 from pathlib import Path
 
-from anndata import read
-from pandas import read_csv
+import anndata
+import numpy as np
+import pandas as pd
+from scipy import sparse
 
 import pertpy as pt
 
 CWD = Path(__file__).parent.resolve()
-threshold = 0.8
+
+# Random generate data settings
+num_cells_per_group = 100
+num_not_de = 10
+num_de = 10
+accuracy_threshold = 0.8
 
 
 class TestMixscape:
+    def make_test_adata(self):
+        np.random.seed(1)
+        # generate not differentially expressed genes
+        for i in range(num_not_de):
+            NT = np.random.normal(0, 1, num_cells_per_group)
+            NT = np.where(NT < 0, 0, NT)
+            NP = np.random.normal(0, 1, num_cells_per_group)
+            NP = np.where(NP < 0, 0, NP)
+            KO = np.random.normal(0, 1, num_cells_per_group)
+            KO = np.where(KO < 0, 0, KO)
+            gene_i = np.concatenate((NT, NP, KO))
+            gene_i = np.expand_dims(gene_i, axis=1)
+            if i == 0:
+                X = gene_i
+            else:
+                X = np.concatenate((X, gene_i), axis=1)
+
+        # generate differentially expressed genes
+        for i in range(num_de):
+            NT = np.random.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
+            NT = np.where(NT < 0, 0, NT)
+            NP = np.random.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
+            NP = np.where(NP < 0, 0, NP)
+            KO = np.random.normal(i + 4, 0.5 + 0.1 * i, num_cells_per_group)
+            KO = np.where(KO < 0, 0, KO)
+            gene_i = np.concatenate((NT, NP, KO))
+            gene_i = np.expand_dims(gene_i, axis=1)
+            X = np.concatenate((X, gene_i), axis=1)
+
+        # obs for random AnnData
+        gene_target = {"gene_target": ["NT"] * num_cells_per_group + ["target_gene_a"] * num_cells_per_group * 2}
+        gene_target = pd.DataFrame(gene_target)
+        label = {"label": ["control", "treatment", "treatment"] * num_cells_per_group}
+        label = pd.DataFrame(label)
+        obs = pd.concat([gene_target, label], axis=1)
+        obs = obs.set_index(np.arange(num_cells_per_group * 3))
+        obs.index.rename("index", inplace=True)
+
+        # var for random AnnData
+        var_data = {"name": ["gene" + str(i) for i in range(1, num_not_de + num_de + 1)]}
+        var = pd.DataFrame(var_data)
+        var = var.set_index("name", drop=False)
+        var.index.rename("index", inplace=True)
+
+        X = sparse.csr_matrix(X)
+        adata = anndata.AnnData(X=X, obs=obs, var=var)
+        return adata
+
     def test_mixscape(self):
-        adata = read(f"{CWD}/mixscape.h5ad")
-        r_result = read_csv(f"{CWD}/r_result.csv", index_col="index", squeeze=True)
+        adata = self.make_test_adata()
         mixscape_identifier = pt.tl.Mixscape()
-        mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target", layer="X_pert")
-        python_result = adata.obs["mixscape_class_global"]
+        mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
+        np_result = adata.obs["mixscape_class_global"] == "NP"
+        np_result_correct = np_result[num_cells_per_group : num_cells_per_group * 2]
+
+        ko_result = adata.obs["mixscape_class_global"] == "KO"
+        ko_result_correct = ko_result[num_cells_per_group * 2 : num_cells_per_group * 3]
 
         assert "mixscape_class" in adata.obs
         assert "mixscape_class_global" in adata.obs
         assert "mixscape_class_p_ko" in adata.obs
-        assert sum(python_result.eq(r_result)) / len(python_result) > threshold
-        assert (
-            sum(r_result.loc[r_result == "KO"].eq(python_result)) / len(python_result.loc[python_result == "KO"])
-            > threshold
-        )
-        assert (
-            sum(r_result.loc[r_result == "NP"].eq(python_result)) / len(python_result.loc[python_result == "NP"])
-            > threshold
-        )
-        assert (
-            sum(r_result.loc[r_result == "NT"].eq(python_result)) / len(python_result.loc[python_result == "NT"])
-            > threshold
-        )
+        assert sum(np_result_correct) > accuracy_threshold * num_cells_per_group
+        assert sum(ko_result_correct) > accuracy_threshold * num_cells_per_group
 
     def test_pert_sign(self):
-        sc_sim_adata = read(f"{CWD}/sc_sim.h5ad")
+        adata = self.make_test_adata()
 
-        pt.tl.kernel_pca(sc_sim_adata, n_comps=50)
+        pt.tl.kernel_pca(adata, n_comps=50)
         mixscape_identifier = pt.tl.Mixscape()
-        mixscape_identifier.pert_sign(sc_sim_adata, pert_key="label", control="control", use_rep="X_kpca")
+        mixscape_identifier.pert_sign(adata, pert_key="label", control="control", use_rep="X_kpca")
 
-        assert "X_pert" in sc_sim_adata.layers
+        assert "X_pert" in adata.layers
 
     def test_lda(self):
-        adata = read(f"{CWD}/mixscape.h5ad")
+        adata = self.make_test_adata()
         mixscape_identifier = pt.tl.Mixscape()
-        mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target", layer="X_pert")
-        mixscape_identifier.lda(adata=adata, labels="gene_target", layer="X_pert")
+        mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
+        mixscape_identifier.lda(adata=adata, labels="gene_target")
 
         assert "mixscape_lda" in adata.uns
