@@ -1,8 +1,8 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
 <meta property="og:title" content="Tutorials" />
   
@@ -15,16 +15,16 @@
 <meta property="og:image" content="https://pertpy.readthedocs.io/en/latest//_static/logo.png" />
   
 <meta property="og:image:alt" content="Tutorials" />
-  <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Contributor Guide" href="../contributing.html" /><link rel="prev" title="Usage" href="../usage/usage.html" />
+  <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Contributor Guide" href="../contributing.html" /><link rel="prev" title="pertpy.plot.ms.lda" href="../usage/plot/pertpy.plot.ms.lda.html" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/>
+    <meta name="generator" content="sphinx-5.1.1, furo 2022.06.21"/>
         <title>Tutorials - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=935aa2abcc5c1da4283d1dc201fb1f0add16d23a" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=40978830699223671f4072448e654b5958f38b89" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.59c74d8c95b765a7fd995ac71d459ebe.min.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=25ceb02ed1c46dc30f2321ff83e92799f69dfdb9" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="../_static/css/override.css" />
     <link rel="stylesheet" type="text/css" href="../_static/css/sphinx_gallery.css" />
     
@@ -58,10 +58,12 @@
   }
 </style></head>
   <body>
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
     
+
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
     <title>Contents</title>
@@ -176,7 +178,34 @@
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../usage/usage.html">Usage</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../usage/usage.html">Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.burczynski_crohn.html">pertpy.data.burczynski_crohn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.papalexi_2021.html">pertpy.data.papalexi_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.kang_2018.html">pertpy.data.kang_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.sc_sim_augur.html">pertpy.data.sc_sim_augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.bhattacherjee.html">pertpy.data.bhattacherjee</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.sciplex3_raw.html">pertpy.data.sciplex3_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.norman_2019.html">pertpy.data.norman_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.norman_2019_raw.html">pertpy.data.norman_2019_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/tools/pertpy.tools.Augurpy.html">pertpy.tools.Augurpy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/tools/pertpy.tools.Mixscape.html">pertpy.tools.Mixscape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/tools/pertpy.tools.kernel_pca.html">pertpy.tools.kernel_pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ag.dp_scatter.html">pertpy.plot.ag.dp_scatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ag.important_features.html">pertpy.plot.ag.important_features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ag.lollipop.html">pertpy.plot.ag.lollipop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ag.scatterplot.html">pertpy.plot.ag.scatterplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ms.violin.html">pertpy.plot.ms.violin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ms.perturbscore.html">pertpy.plot.ms.perturbscore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ms.heatmap.html">pertpy.plot.ms.heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ms.barplot.html">pertpy.plot.ms.barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/plot/pertpy.plot.ms.lda.html">pertpy.plot.ms.lda</a></li>
+</ul>
+</li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributor Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
@@ -201,7 +230,8 @@
           </svg>
           <span>Back to top</span>
         </a>
-        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -216,7 +246,7 @@
         </div>
         <article role="main">
           <section class="tex2jax_ignore mathjax_ignore" id="tutorials">
-<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">#</a></h1>
+<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this heading">#</a></h1>
 <p>The easiest way to get familiar with pertpy is to follow along with our tutorials.
 Many are also designed to work seamlessly in Binder, a free cloud computing platform.</p>
 <div class="admonition note">
@@ -224,14 +254,14 @@ Many are also designed to work seamlessly in Binder, a free cloud computing plat
 <p>For questions about the usage of pertpy use <a class="reference external" href="https://github.com/theislab/pertpy/discussions">Github Discussions</a>.</p>
 </div>
 <section id="quick-start">
-<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">#</a></h2>
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this heading">#</a></h2>
 <div class="toctree-wrapper compound">
 </div>
 <div class="sphx-glr-clear"></div><section id="glossary">
-<h3>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">#</a></h3>
+<h3>Glossary<a class="headerlink" href="#glossary" title="Permalink to this heading">#</a></h3>
 <div class="sd-tab-set docutils">
-<input checked="checked" id="d811304f-3a75-4e10-9098-a32b1894303d" name="642a3b6c-784c-4c93-8693-7bc47d945b58" type="radio"/>
-<label class="sd-tab-label" for="d811304f-3a75-4e10-9098-a32b1894303d">
+<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
+</input><label class="sd-tab-label" for="sd-tab-item-0">
 AnnData</label><div class="sd-tab-content docutils">
 <p><a class="reference external" href="https://github.com/theislab/anndata">AnnData</a> is short for Annotated Data and is the primary datastructure that ehrapy uses.
 It is based on the principle of a single Numpy matrix X embraced by two Pandas Dataframes.
@@ -239,8 +269,8 @@ All rows are called observations (in our case patients/patient visits or similar
 are known as variables (any feature such as e.g. age, B12 level or similar).
 For a more in depth introduction please read the <a class="reference external" href="https://doi.org/10.1101/2021.12.16.473007">AnnData paper</a>.</p>
 </div>
-<input id="65967485-b2c8-429e-ab6f-ee5576cb6aff" name="642a3b6c-784c-4c93-8693-7bc47d945b58" type="radio"/>
-<label class="sd-tab-label" for="65967485-b2c8-429e-ab6f-ee5576cb6aff">
+<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
+</input><label class="sd-tab-label" for="sd-tab-item-1">
 scanpy</label><div class="sd-tab-content docutils">
 <p>The implementation of ehrapy is based on <a class="reference external" href="https://github.com/theislab/scanpy">scanpy</a>, a framework to analyze single-cell sequencing data.
 ehrapy reuses the implemented algorithms in scanpy and wraps them for simple access.
@@ -265,14 +295,14 @@ For a more in depth introduction please read the <a class="reference external" h
               </div>
               <svg><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="../usage/usage.html">
+          <a class="prev-page" href="../usage/plot/pertpy.plot.ms.lda.html">
               <svg><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Usage</div>
+                <div class="title">pertpy.plot.ms.lda</div>
                 
               </div>
             </a>
@@ -326,6 +356,7 @@ For a more in depth introduction please read the <a class="reference external" h
 </div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
     <script src="../_static/scripts/furo.js"></script>
     <script src="../_static/clipboard.min.js"></script>

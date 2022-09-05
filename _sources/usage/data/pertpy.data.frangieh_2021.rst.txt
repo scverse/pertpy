@@ -1,0 +1,6 @@
+﻿pertpy.data.frangieh\_2021
+==========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: frangieh_2021

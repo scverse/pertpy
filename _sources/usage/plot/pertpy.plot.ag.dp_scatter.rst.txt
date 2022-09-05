@@ -1,0 +1,6 @@
+﻿pertpy.plot.ag.dp\_scatter
+==========================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: ag.dp_scatter

@@ -23,7 +23,8 @@ pt.pl.cool_fancy_plot()
     :toctree: data
 
     data.burczynski_crohn
-    data.burczynski_crispr
+    data.papalexi_2021
+    data.kang_2018
     data.sc_sim_augur
     data.bhattacherjee
     data.sciplex3_raw
@@ -60,7 +61,7 @@ adata, results = ag.predict(adata)
 results['summary_metrics']
 ```
 
-See [here](tutorials) for a more elaborate tutorial.
+See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augurpy.html) for a more elaborate tutorial.
 
 ```{eval-rst}
 .. currentmodule:: pertpy
@@ -72,6 +73,36 @@ See [here](tutorials) for a more elaborate tutorial.
     :nosignatures:
 
     tools.Augurpy
+```
+
+### Mixscape
+
+A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html) Papalexi et al. [Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens](https://www.nature.com/articles/s41588-021-00778-2).
+
+Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
+Next, it determines which targeted cells were affected by the genetic perturbation (=KO) and which targeted cells were not (=NP) with the use of mixture models.
+Finally, it visualizes similarities and differences across different perturbations.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Mixscape
+```
+
+See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
+
+### Representation
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.kernel_pca
 ```
 
 ## Plots
@@ -87,4 +118,17 @@ See [here](tutorials) for a more elaborate tutorial.
     plot.ag.lollipop
     plot.ag.scatterplot
 
+```
+
+### Mixscape
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.ms.violin
+    plot.ms.perturbscore
+    plot.ms.heatmap
+    plot.ms.barplot
+    plot.ms.lda
 ```

@@ -1,0 +1,6 @@
+﻿pertpy.plot.ag.important\_features
+==================================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: ag.important_features

@@ -1,0 +1,6 @@
+﻿pertpy.data.papalexi\_2021
+==========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: papalexi_2021

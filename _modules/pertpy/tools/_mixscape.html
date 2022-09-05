@@ -1,0 +1,733 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
+
+    <meta name="generator" content="sphinx-5.1.1, furo 2022.06.21"/>
+        <title>pertpy.tools._mixscape - pertpy</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=40978830699223671f4072448e654b5958f38b89" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/override.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/sphinx_gallery.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #003262;
+  --color-brand-content: #003262per;
+  --admonition-font-size: var(--font-size-normal);
+  --admonition-title-font-size: var(--font-size-normal);
+  --code-font-size: var(--font-size--small);
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">pertpy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../usage/usage.html">Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.burczynski_crohn.html">pertpy.data.burczynski_crohn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.papalexi_2021.html">pertpy.data.papalexi_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.kang_2018.html">pertpy.data.kang_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.sc_sim_augur.html">pertpy.data.sc_sim_augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.bhattacherjee.html">pertpy.data.bhattacherjee</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.sciplex3_raw.html">pertpy.data.sciplex3_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.norman_2019.html">pertpy.data.norman_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.norman_2019_raw.html">pertpy.data.norman_2019_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Augurpy.html">pertpy.tools.Augurpy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Mixscape.html">pertpy.tools.Mixscape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.kernel_pca.html">pertpy.tools.kernel_pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.dp_scatter.html">pertpy.plot.ag.dp_scatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.important_features.html">pertpy.plot.ag.important_features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.lollipop.html">pertpy.plot.ag.lollipop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.scatterplot.html">pertpy.plot.ag.scatterplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.violin.html">pertpy.plot.ms.violin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.perturbscore.html">pertpy.plot.ms.perturbscore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.heatmap.html">pertpy.plot.ms.heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.barplot.html">pertpy.plot.ms.barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.lda.html">pertpy.plot.ms.lda</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for pertpy.tools._mixscape</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="kn">from</span> <span class="nn">anndata</span> <span class="kn">import</span> <span class="n">AnnData</span>
+<span class="kn">from</span> <span class="nn">pynndescent</span> <span class="kn">import</span> <span class="n">NNDescent</span>
+<span class="kn">from</span> <span class="nn">scanpy.tools._utils</span> <span class="kn">import</span> <span class="n">_choose_representation</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">sparse</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span><span class="p">,</span> <span class="n">issparse</span>
+<span class="kn">from</span> <span class="nn">sklearn.mixture</span> <span class="kn">import</span> <span class="n">GaussianMixture</span>
+
+<span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Mixscape"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Mixscape.html#pertpy.tools.Mixscape">[docs]</a><span class="k">class</span> <span class="nc">Mixscape</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Python implementation of Mixscape.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Mixscape.pert_sign"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Mixscape.html#pertpy.tools.Mixscape.pert_sign">[docs]</a>    <span class="k">def</span> <span class="nf">pert_sign</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+        <span class="n">pert_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">control</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">split_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_neighbors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="n">use_rep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_pcs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate perturbation signature.</span>
+
+<span class="sd">        For each cell, we identify `n_neighbors` cells from the control pool with the most similar mRNA expression profiles.</span>
+<span class="sd">        The perturbation signature is calculated by subtracting the averaged mRNA expression profile of the control</span>
+<span class="sd">        neighbors from the mRNA expression profile of each cell.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: The annotated data object.</span>
+<span class="sd">            pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.</span>
+<span class="sd">            control: Control category from the `pert_key` column.</span>
+<span class="sd">            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate</span>
+<span class="sd">                the perturbation signature for every replicate separately.</span>
+<span class="sd">            n_neighbors: Number of neighbors from the control to use for the perturbation signature.</span>
+<span class="sd">            use_rep: Use the indicated representation. `&#39;X&#39;` or any key for `.obsm` is valid.</span>
+<span class="sd">                If `None`, the representation is chosen automatically:</span>
+<span class="sd">                For `.n_vars` &lt; 50, `.X` is used, otherwise &#39;X_pca&#39; is used.</span>
+<span class="sd">                If &#39;X_pca&#39; is not present, it’s computed with default parameters.</span>
+<span class="sd">            n_pcs: Use this many PCs. If `n_pcs==0` use `.X` if `use_rep is None`.</span>
+<span class="sd">            batch_size: Size of batch to calculate the perturbation signature.</span>
+<span class="sd">                If &#39;None&#39;, the perturbation signature is calcuated in the full mode, requiring more memory.</span>
+<span class="sd">                The batched mode is very inefficient for sparse data.</span>
+<span class="sd">            copy: Determines whether a copy of the `adata` is returned.</span>
+<span class="sd">            **kwargs: Additional arguments for the `NNDescent` class from `pynndescent`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If `copy=True`, returns the copy of `adata` with the perturbation signature in `.layers[&quot;X_pert&quot;]`.</span>
+<span class="sd">            Otherwise writes the perturbation signature directly to `.layers[&quot;X_pert&quot;]` of the provided `adata`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+            <span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">adata</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s2">&quot;X_pert&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">control_mask</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">pert_key</span><span class="p">]</span> <span class="o">==</span> <span class="n">control</span>
+
+        <span class="k">if</span> <span class="n">split_by</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">split_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">n_obs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">split_obs</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">split_by</span><span class="p">]</span>
+            <span class="n">cats</span> <span class="o">=</span> <span class="n">split_obs</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+            <span class="n">split_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">split_obs</span> <span class="o">==</span> <span class="n">cat</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">cats</span><span class="p">]</span>
+
+        <span class="n">R</span> <span class="o">=</span> <span class="n">_choose_representation</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">use_rep</span><span class="o">=</span><span class="n">use_rep</span><span class="p">,</span> <span class="n">n_pcs</span><span class="o">=</span><span class="n">n_pcs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">split_mask</span> <span class="ow">in</span> <span class="n">split_masks</span><span class="p">:</span>
+            <span class="n">control_mask_split</span> <span class="o">=</span> <span class="n">control_mask</span> <span class="o">&amp;</span> <span class="n">split_mask</span>
+
+            <span class="n">R_split</span> <span class="o">=</span> <span class="n">R</span><span class="p">[</span><span class="n">split_mask</span><span class="p">]</span>
+            <span class="n">R_control</span> <span class="o">=</span> <span class="n">R</span><span class="p">[</span><span class="n">control_mask_split</span><span class="p">]</span>
+
+            <span class="n">eps</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;epsilon&quot;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+            <span class="n">nn_index</span> <span class="o">=</span> <span class="n">NNDescent</span><span class="p">(</span><span class="n">R_control</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">indices</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nn_index</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">R_split</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">n_neighbors</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="n">eps</span><span class="p">)</span>
+
+            <span class="n">X_control</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">control_mask_split</span><span class="p">])</span>
+
+            <span class="n">n_split</span> <span class="o">=</span> <span class="n">split_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">n_control</span> <span class="o">=</span> <span class="n">X_control</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">col_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+                <span class="n">row_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_split</span><span class="p">),</span> <span class="n">n_neighbors</span><span class="p">)</span>
+
+                <span class="n">neigh_matrix</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">col_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="p">(</span><span class="n">row_indices</span><span class="p">,</span> <span class="n">col_indices</span><span class="p">)),</span>
+                    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n_split</span><span class="p">,</span> <span class="n">n_control</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">neigh_matrix</span> <span class="o">/=</span> <span class="n">n_neighbors</span>
+                <span class="n">adata</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s2">&quot;X_pert&quot;</span><span class="p">][</span><span class="n">split_mask</span><span class="p">]</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">neigh_matrix</span> <span class="o">@</span> <span class="n">X_control</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">is_sparse</span> <span class="o">=</span> <span class="n">issparse</span><span class="p">(</span><span class="n">X_control</span><span class="p">)</span>
+                <span class="n">split_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">split_mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_split</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_split</span><span class="p">)</span>
+                    <span class="n">select</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+                    <span class="n">batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="n">select</span><span class="p">])</span>
+                    <span class="n">split_batch</span> <span class="o">=</span> <span class="n">split_indices</span><span class="p">[</span><span class="n">select</span><span class="p">]</span>
+
+                    <span class="n">size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">i</span>
+
+                    <span class="c1"># sparse is very slow</span>
+                    <span class="n">means_batch</span> <span class="o">=</span> <span class="n">X_control</span><span class="p">[</span><span class="n">batch</span><span class="p">]</span>
+                    <span class="n">means_batch</span> <span class="o">=</span> <span class="n">means_batch</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_sparse</span> <span class="k">else</span> <span class="n">means_batch</span>
+                    <span class="n">means_batch</span> <span class="o">=</span> <span class="n">means_batch</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+                    <span class="n">adata</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s2">&quot;X_pert&quot;</span><span class="p">][</span><span class="n">split_batch</span><span class="p">]</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">means_batch</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">adata</span></div>
+
+<div class="viewcode-block" id="Mixscape.mixscape"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Mixscape.html#pertpy.tools.Mixscape.mixscape">[docs]</a>    <span class="k">def</span> <span class="nf">mixscape</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">control</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">new_class_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;mixscape_class&quot;</span><span class="p">,</span>
+        <span class="n">min_de_genes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="n">layer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">logfc_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">iter_num</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">split_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pval_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mf">5e-2</span><span class="p">,</span>
+        <span class="n">perturbation_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;KO&quot;</span><span class="p">,</span>
+        <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.</span>
+
+<span class="sd">        The implementation resembles https://satijalab.org/seurat/reference/runmixscape</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: The annotated data object.</span>
+<span class="sd">            pert_key: The column of `.obs` with perturbation categories, should also contain `control`.</span>
+<span class="sd">            labels: The column of `.obs` with target gene labels.</span>
+<span class="sd">            control: Control category from the `pert_key` column.</span>
+<span class="sd">            new_class_name: Name of mixscape classification to be stored in `.obs`.</span>
+<span class="sd">            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.</span>
+<span class="sd">            layer: Key from adata.layers whose value will be used to perform tests on.</span>
+<span class="sd">            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).</span>
+<span class="sd">            iter_num: Number of normalmixEM iterations to run if convergence does not occur.</span>
+<span class="sd">            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate</span>
+<span class="sd">                    the perturbation signature for every replicate separately.</span>
+<span class="sd">            pval_cutoff: P-value cut-off for selection of significantly DE genes.</span>
+<span class="sd">            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.</span>
+<span class="sd">            copy: Determines whether a copy of the `adata` is returned.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If `copy=True`, returns the copy of `adata` with the classification result in `.obs`.</span>
+<span class="sd">            Otherwise writes the results directly to `.obs` of the provided `adata`.</span>
+
+<span class="sd">            mixscape_class: pandas.Series (`adata.obs[&#39;mixscape_class&#39;]`).</span>
+<span class="sd">            Classification result with cells being either classified as perturbed (KO, by default) or non-perturbed (NP) based on their target gene class.</span>
+
+<span class="sd">            mixscape_class_global: pandas.Series (`adata.obs[&#39;mixscape_class_global&#39;]`).</span>
+<span class="sd">            Global classification result (perturbed, NP or NT)</span>
+
+<span class="sd">            mixscape_class_p_ko: pandas.Series (`adata.obs[&#39;mixscape_class_p_ko&#39;]`).</span>
+<span class="sd">            Posterior probabilities used to determine if a cell is KO (default). Name of this item will change to match perturbation_type parameter setting. (&gt;0.5) or NP</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+            <span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">split_by</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">split_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">n_obs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)]</span>
+            <span class="n">categories</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">split_obs</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">split_by</span><span class="p">]</span>
+            <span class="n">categories</span> <span class="o">=</span> <span class="n">split_obs</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+            <span class="n">split_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">split_obs</span> <span class="o">==</span> <span class="n">category</span> <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">]</span>
+
+        <span class="n">perturbation_markers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_perturbation_markers</span><span class="p">(</span>
+            <span class="n">adata</span><span class="p">,</span> <span class="n">split_masks</span><span class="p">,</span> <span class="n">categories</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">control</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">pval_cutoff</span><span class="p">,</span> <span class="n">min_de_genes</span><span class="p">,</span> <span class="n">logfc_threshold</span>
+        <span class="p">)</span>
+
+        <span class="n">adata_comp</span> <span class="o">=</span> <span class="n">adata</span>
+        <span class="k">if</span> <span class="n">layer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">adata_comp</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">adata_comp</span><span class="o">.</span><span class="n">X</span>
+        <span class="c1"># initialize return variables</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">new_class_name</span><span class="si">}</span><span class="s2">_p_</span><span class="si">{</span><span class="n">perturbation_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">new_class_name</span><span class="si">}</span><span class="s2">_global&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">adata</span><span class="o">.</span><span class="n">n_obs</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">object_</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">gv_list</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">split_mask</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">split_masks</span><span class="p">):</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="n">categories</span><span class="p">[</span><span class="n">split</span><span class="p">]</span>
+            <span class="n">genes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="p">[</span><span class="n">split_mask</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">])</span><span class="o">.</span><span class="n">difference</span><span class="p">([</span><span class="n">control</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genes</span><span class="p">:</span>
+                <span class="n">post_prob</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">orig_guide_cells</span> <span class="o">=</span> <span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">split_mask</span>
+                <span class="n">orig_guide_cells_index</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">orig_guide_cells</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">orig_guide_cells</span><span class="p">])</span>
+                <span class="n">nt_cells</span> <span class="o">=</span> <span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span> <span class="o">==</span> <span class="n">control</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">split_mask</span>
+                <span class="n">all_cells</span> <span class="o">=</span> <span class="n">orig_guide_cells</span> <span class="o">|</span> <span class="n">nt_cells</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">perturbation_markers</span><span class="p">[(</span><span class="n">category</span><span class="p">,</span> <span class="n">gene</span><span class="p">)])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">orig_guide_cells</span><span class="p">,</span> <span class="n">new_class_name</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2"> NP&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">de_genes</span> <span class="o">=</span> <span class="n">perturbation_markers</span><span class="p">[(</span><span class="n">category</span><span class="p">,</span> <span class="n">gene</span><span class="p">)]</span>
+                    <span class="n">de_genes_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_column_indices</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">de_genes</span><span class="p">))</span>
+                    <span class="n">dat</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">all_cells</span><span class="p">][:,</span> <span class="n">de_genes_indices</span><span class="p">]</span>
+                    <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">n_iter</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">old_classes</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">][</span><span class="n">all_cells</span><span class="p">]</span>
+                    <span class="k">while</span> <span class="ow">not</span> <span class="n">converged</span> <span class="ow">and</span> <span class="n">n_iter</span> <span class="o">&lt;</span> <span class="n">iter_num</span><span class="p">:</span>
+                        <span class="c1"># Get all cells in current split&amp;Gene</span>
+                        <span class="n">guide_cells</span> <span class="o">=</span> <span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">split_mask</span>
+                        <span class="c1"># get average value for each gene over all selected cells</span>
+                        <span class="c1"># all cells in current split&amp;Gene minus all NT cells in current split</span>
+                        <span class="c1"># Each row is for each cell, each column is for each gene, get mean for each column</span>
+                        <span class="n">vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">guide_cells</span><span class="p">][:,</span> <span class="n">de_genes_indices</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                            <span class="n">X</span><span class="p">[</span><span class="n">nt_cells</span><span class="p">][:,</span> <span class="n">de_genes_indices</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span>
+                        <span class="p">)</span>
+                        <span class="c1"># project cells onto the perturbation vector</span>
+                        <span class="n">pvec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">dat</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span> <span class="n">vec</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">vec</span><span class="p">))</span>
+                        <span class="n">pvec</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pvec</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">all_cells</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">all_cells</span><span class="p">]))</span>
+                        <span class="k">if</span> <span class="n">n_iter</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">gv</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;pvec&quot;</span><span class="p">,</span> <span class="n">labels</span><span class="p">])</span>
+                            <span class="n">gv</span><span class="p">[</span><span class="s2">&quot;pvec&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pvec</span>
+                            <span class="n">gv</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span> <span class="o">=</span> <span class="n">control</span>
+                            <span class="n">gv</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">guide_cells</span><span class="p">,</span> <span class="n">labels</span><span class="p">]</span> <span class="o">=</span> <span class="n">gene</span>
+                            <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gv_list</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                                <span class="n">gv_list</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                            <span class="n">gv_list</span><span class="p">[</span><span class="n">gene</span><span class="p">][</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="n">gv</span>
+
+                        <span class="n">guide_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_define_normal_mixscape</span><span class="p">(</span><span class="n">pvec</span><span class="p">[</span><span class="n">guide_cells</span><span class="p">])</span>
+                        <span class="n">nt_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_define_normal_mixscape</span><span class="p">(</span><span class="n">pvec</span><span class="p">[</span><span class="n">nt_cells</span><span class="p">])</span>
+                        <span class="n">means_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">nt_norm</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">guide_norm</span><span class="p">[</span><span class="mi">0</span><span class="p">]]])</span>
+                        <span class="n">precisions_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">nt_norm</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">guide_norm</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                        <span class="n">mm</span> <span class="o">=</span> <span class="n">GaussianMixture</span><span class="p">(</span>
+                            <span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                            <span class="n">covariance_type</span><span class="o">=</span><span class="s2">&quot;spherical&quot;</span><span class="p">,</span>
+                            <span class="n">means_init</span><span class="o">=</span><span class="n">means_init</span><span class="p">,</span>
+                            <span class="n">precisions_init</span><span class="o">=</span><span class="n">precisions_init</span><span class="p">,</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pvec</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                        <span class="n">probabilities</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pvec</span><span class="p">[</span><span class="n">orig_guide_cells_index</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                        <span class="n">lik_ratio</span> <span class="o">=</span> <span class="n">probabilities</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">probabilities</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="n">post_prob</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">lik_ratio</span><span class="p">)</span>
+                        <span class="c1"># based on the posterior probability, assign cells to the two classes</span>
+                        <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                            <span class="p">[</span><span class="n">orig_guide_cells_index</span><span class="p">[</span><span class="n">cell</span><span class="p">]</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">post_prob</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">new_class_name</span>
+                        <span class="p">]</span> <span class="o">=</span> <span class="n">gene</span>
+                        <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                            <span class="p">[</span><span class="n">orig_guide_cells_index</span><span class="p">[</span><span class="n">cell</span><span class="p">]</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">post_prob</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">new_class_name</span>
+                        <span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2"> NP&quot;</span>
+                        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">][</span><span class="n">split_mask</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_de_genes</span><span class="p">:</span>
+                            <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">guide_cells</span><span class="p">,</span> <span class="n">new_class_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;NP&quot;</span>
+                            <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">if</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">][</span><span class="n">all_cells</span><span class="p">]</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">old_classes</span><span class="p">):</span>
+                            <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">old_classes</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">][</span><span class="n">all_cells</span><span class="p">]</span>
+                        <span class="n">n_iter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">split_mask</span><span class="p">,</span> <span class="n">new_class_name</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">perturbation_type</span><span class="si">}</span><span class="s2">&quot;</span>
+
+                <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">new_class_name</span><span class="si">}</span><span class="s2">_global&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">]]</span>
+                <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">orig_guide_cells_index</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">new_class_name</span><span class="si">}</span><span class="s2">_p_</span><span class="si">{</span><span class="n">perturbation_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">post_prob</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;mixscape&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gv_list</span>
+
+        <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">adata</span></div>
+
+<div class="viewcode-block" id="Mixscape.lda"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Mixscape.html#pertpy.tools.Mixscape.lda">[docs]</a>    <span class="k">def</span> <span class="nf">lda</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">mixscape_class_global</span><span class="o">=</span><span class="s2">&quot;mixscape_class_global&quot;</span><span class="p">,</span>
+        <span class="n">layer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">control</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;NT&quot;</span><span class="p">,</span>
+        <span class="n">n_comps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">min_de_genes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="n">logfc_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">split_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pval_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mf">5e-2</span><span class="p">,</span>
+        <span class="n">perturbation_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;KO&quot;</span><span class="p">,</span>
+        <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Linear Discriminant Analysis on pooled CRISPR screen data. Requires `pt.tl.mixscape()` to be run first.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: The annotated data object.</span>
+<span class="sd">            labels: The column of `.obs` with target gene labels.</span>
+<span class="sd">            mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).</span>
+<span class="sd">            layer: Key from `adata.layers` whose value will be used to perform tests on.</span>
+<span class="sd">            control: Control category from the `pert_key` column. Default is &#39;NT&#39;.</span>
+<span class="sd">            n_comps: Number of principal components to use. Defaults to 10.</span>
+<span class="sd">            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.</span>
+<span class="sd">            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).</span>
+<span class="sd">            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate</span>
+<span class="sd">            pval_cutoff: P-value cut-off for selection of significantly DE genes.</span>
+<span class="sd">            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.</span>
+<span class="sd">            copy: Determines whether a copy of the `adata` is returned.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If `copy=True`, returns the copy of `adata` with the LDA result in `.uns`.</span>
+<span class="sd">            Otherwise writes the results directly to `.uns` of the provided `adata`.</span>
+
+<span class="sd">            mixscape_lda: numpy.ndarray (`adata.uns[&#39;mixscape_lda&#39;]`).</span>
+<span class="sd">            LDA result.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+            <span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="kn">from</span> <span class="nn">sklearn.discriminant_analysis</span> <span class="kn">import</span> <span class="n">LinearDiscriminantAnalysis</span>
+
+        <span class="k">if</span> <span class="n">mixscape_class_global</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please run `pt.tl.mixscape` first.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">split_by</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">split_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">n_obs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)]</span>
+            <span class="n">categories</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">split_obs</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">split_by</span><span class="p">]</span>
+            <span class="n">categories</span> <span class="o">=</span> <span class="n">split_obs</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+            <span class="n">split_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">split_obs</span> <span class="o">==</span> <span class="n">category</span> <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">]</span>
+
+        <span class="n">mixscape_identifier</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Mixscape</span><span class="p">()</span>
+        <span class="c1"># determine gene sets across all splits/groups through differential gene expression</span>
+        <span class="n">perturbation_markers</span> <span class="o">=</span> <span class="n">mixscape_identifier</span><span class="o">.</span><span class="n">_get_perturbation_markers</span><span class="p">(</span>
+            <span class="n">adata</span><span class="o">=</span><span class="n">adata</span><span class="p">,</span>
+            <span class="n">split_masks</span><span class="o">=</span><span class="n">split_masks</span><span class="p">,</span>
+            <span class="n">categories</span><span class="o">=</span><span class="n">categories</span><span class="p">,</span>
+            <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+            <span class="n">control</span><span class="o">=</span><span class="n">control</span><span class="p">,</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">layer</span><span class="p">,</span>
+            <span class="n">pval_cutoff</span><span class="o">=</span><span class="n">pval_cutoff</span><span class="p">,</span>
+            <span class="n">min_de_genes</span><span class="o">=</span><span class="n">min_de_genes</span><span class="p">,</span>
+            <span class="n">logfc_threshold</span><span class="o">=</span><span class="n">logfc_threshold</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">adata_subset</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span>
+            <span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">mixscape_class_global</span><span class="p">]</span> <span class="o">==</span> <span class="n">perturbation_type</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">mixscape_class_global</span><span class="p">]</span> <span class="o">==</span> <span class="n">control</span><span class="p">)</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">projected_pcs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">perturbation_markers</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gene_subset</span> <span class="o">=</span> <span class="n">adata_subset</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">adata_subset</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span> <span class="o">==</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">|</span> <span class="p">(</span><span class="n">adata_subset</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">]</span> <span class="o">==</span> <span class="n">control</span><span class="p">)</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">gene_subset</span><span class="p">)</span>
+                <span class="n">sc</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">pca</span><span class="p">(</span><span class="n">gene_subset</span><span class="p">,</span> <span class="n">n_comps</span><span class="o">=</span><span class="n">n_comps</span><span class="p">)</span>
+                <span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">neighbors</span><span class="p">(</span><span class="n">gene_subset</span><span class="p">)</span>
+                <span class="c1"># projects each subspace onto all cells in the data.</span>
+                <span class="n">sc</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">ingest</span><span class="p">(</span><span class="n">adata</span><span class="o">=</span><span class="n">adata_subset</span><span class="p">,</span> <span class="n">adata_ref</span><span class="o">=</span><span class="n">gene_subset</span><span class="p">,</span> <span class="n">embedding_method</span><span class="o">=</span><span class="s2">&quot;pca&quot;</span><span class="p">)</span>
+                <span class="n">projected_pcs</span><span class="p">[</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">adata_subset</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;X_pca&quot;</span><span class="p">]</span>
+        <span class="c1"># concatenate all pcs into a single matrix.</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">projected_pcs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">projected_pcs_array</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">projected_pcs_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">projected_pcs_array</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">clf</span> <span class="o">=</span> <span class="n">LinearDiscriminantAnalysis</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">adata_subset</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;gene_target&quot;</span><span class="p">]))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">projected_pcs_array</span><span class="p">,</span> <span class="n">adata_subset</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;gene_target&quot;</span><span class="p">])</span>
+        <span class="n">cell_embeddings</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">projected_pcs_array</span><span class="p">)</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;mixscape_lda&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cell_embeddings</span>
+
+        <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">adata</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_perturbation_markers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">,</span> <span class="n">split_masks</span><span class="p">,</span> <span class="n">categories</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">control</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">pval_cutoff</span><span class="p">,</span> <span class="n">min_de_genes</span><span class="p">,</span> <span class="n">logfc_threshold</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;determine gene sets across all splits/groups through differential gene expression</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: :class:`~anndata.AnnData` object</span>
+<span class="sd">            col_names: Column names to extract the indices for</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Set of column indices</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">perturbation_markers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">split_mask</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">split_masks</span><span class="p">):</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="n">categories</span><span class="p">[</span><span class="n">split</span><span class="p">]</span>
+            <span class="c1"># get gene sets for each split</span>
+            <span class="n">genes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="p">[</span><span class="n">split_mask</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">labels</span><span class="p">])</span><span class="o">.</span><span class="n">difference</span><span class="p">([</span><span class="n">control</span><span class="p">]))</span>
+            <span class="n">adata_split</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span><span class="n">split_mask</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="c1"># find top DE genes between cells with targeting and non-targeting gRNAs</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">rank_genes_groups</span><span class="p">(</span>
+                <span class="n">adata_split</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">layer</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">genes</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">control</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;t-test&quot;</span>
+            <span class="p">)</span>
+            <span class="c1"># get DE genes for each gene</span>
+            <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genes</span><span class="p">:</span>
+                <span class="n">logfc_threshold_mask</span> <span class="o">=</span> <span class="n">adata_split</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;rank_genes_groups&quot;</span><span class="p">][</span><span class="s2">&quot;logfoldchanges&quot;</span><span class="p">][</span><span class="n">gene</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">logfc_threshold</span>
+                <span class="n">de_genes</span> <span class="o">=</span> <span class="n">adata_split</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;rank_genes_groups&quot;</span><span class="p">][</span><span class="s2">&quot;names&quot;</span><span class="p">][</span><span class="n">gene</span><span class="p">][</span><span class="n">logfc_threshold_mask</span><span class="p">]</span>
+                <span class="n">pvals_adj</span> <span class="o">=</span> <span class="n">adata_split</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;rank_genes_groups&quot;</span><span class="p">][</span><span class="s2">&quot;pvals_adj&quot;</span><span class="p">][</span><span class="n">gene</span><span class="p">][</span><span class="n">logfc_threshold_mask</span><span class="p">]</span>
+                <span class="n">de_genes</span> <span class="o">=</span> <span class="n">de_genes</span><span class="p">[</span><span class="n">pvals_adj</span> <span class="o">&lt;</span> <span class="n">pval_cutoff</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">de_genes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_de_genes</span><span class="p">:</span>
+                    <span class="n">de_genes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+                <span class="n">perturbation_markers</span><span class="p">[(</span><span class="n">category</span><span class="p">,</span> <span class="n">gene</span><span class="p">)]</span> <span class="o">=</span> <span class="n">de_genes</span>
+
+        <span class="k">return</span> <span class="n">perturbation_markers</span>
+
+    <span class="k">def</span> <span class="nf">_get_column_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">,</span> <span class="n">col_names</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetches the column indices in X for a given list of column names</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: :class:`~anndata.AnnData` object</span>
+<span class="sd">            col_names: Column names to extract the indices for</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Set of column indices</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">col_names</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+            <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">col_names</span><span class="p">]</span>
+
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">var_names</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">col_names</span><span class="p">:</span>
+                <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">indices</span>
+
+    <span class="k">def</span> <span class="nf">_define_normal_mixscape</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">sparse</span><span class="o">.</span><span class="n">spmatrix</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>  <span class="c1"># noqa: N803</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the mean and standard deviation of a matrix.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: The matrix to calculate the properties for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Mean and standard deviation of the matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">mu</span><span class="p">,</span> <span class="n">sd</span><span class="p">]</span></div>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021, Lukas Heumos, Theislab
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/scripts/furo.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    </body>
+</html>

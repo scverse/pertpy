@@ -1,0 +1,6 @@
+﻿pertpy.data.sc\_sim\_augur
+==========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: sc_sim_augur

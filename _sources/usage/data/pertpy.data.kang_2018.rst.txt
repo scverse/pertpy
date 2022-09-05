@@ -1,0 +1,6 @@
+﻿pertpy.data.kang\_2018
+======================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: kang_2018

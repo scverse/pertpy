@@ -1,0 +1,6 @@
+﻿pertpy.data.dixit\_2016
+=======================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: dixit_2016

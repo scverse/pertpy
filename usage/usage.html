@@ -1,8 +1,8 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
 <meta property="og:title" content="Usage" />
   
@@ -15,16 +15,16 @@
 <meta property="og:image" content="https://pertpy.readthedocs.io/en/latest//_static/logo.png" />
   
 <meta property="og:image:alt" content="Usage" />
-  <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Tutorials" href="../tutorials/index.html" /><link rel="prev" title="Installation" href="../installation.html" />
+  <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="pertpy.data.burczynski_crohn" href="data/pertpy.data.burczynski_crohn.html" /><link rel="prev" title="Installation" href="../installation.html" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/>
+    <meta name="generator" content="sphinx-5.1.1, furo 2022.06.21"/>
         <title>Usage - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=935aa2abcc5c1da4283d1dc201fb1f0add16d23a" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=40978830699223671f4072448e654b5958f38b89" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.59c74d8c95b765a7fd995ac71d459ebe.min.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=25ceb02ed1c46dc30f2321ff83e92799f69dfdb9" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="../_static/css/override.css" />
     <link rel="stylesheet" type="text/css" href="../_static/css/sphinx_gallery.css" />
     
@@ -58,10 +58,12 @@
   }
 </style></head>
   <body>
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
     
+
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
     <title>Contents</title>
@@ -176,7 +178,34 @@
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Usage</a></li>
+<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">Usage</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.burczynski_crohn.html">pertpy.data.burczynski_crohn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.papalexi_2021.html">pertpy.data.papalexi_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.kang_2018.html">pertpy.data.kang_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.sc_sim_augur.html">pertpy.data.sc_sim_augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.bhattacherjee.html">pertpy.data.bhattacherjee</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.sciplex3_raw.html">pertpy.data.sciplex3_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.norman_2019.html">pertpy.data.norman_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.norman_2019_raw.html">pertpy.data.norman_2019_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/pertpy.tools.Augurpy.html">pertpy.tools.Augurpy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/pertpy.tools.Mixscape.html">pertpy.tools.Mixscape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/pertpy.tools.kernel_pca.html">pertpy.tools.kernel_pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ag.dp_scatter.html">pertpy.plot.ag.dp_scatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ag.important_features.html">pertpy.plot.ag.important_features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ag.lollipop.html">pertpy.plot.ag.lollipop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ag.scatterplot.html">pertpy.plot.ag.scatterplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ms.violin.html">pertpy.plot.ms.violin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ms.perturbscore.html">pertpy.plot.ms.perturbscore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ms.heatmap.html">pertpy.plot.ms.heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ms.barplot.html">pertpy.plot.ms.barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot/pertpy.plot.ms.lda.html">pertpy.plot.ms.lda</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributor Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
@@ -201,7 +230,8 @@
           </svg>
           <span>Back to top</span>
         </a>
-        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -216,7 +246,7 @@
         </div>
         <article role="main">
           <section class="tex2jax_ignore mathjax_ignore" id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">#</a></h1>
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h1>
 <p>Import the pertpy API as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
 </pre></div>
@@ -226,20 +256,57 @@
 </pre></div>
 </div>
 <section id="data">
-<h2>Data<a class="headerlink" href="#data" title="Permalink to this headline">#</a></h2>
-<div class="table-wrapper"><table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%"/>
-<col style="width: 90%"/>
-</colgroup>
+<h2>Data<a class="headerlink" href="#data" title="Permalink to this heading">#</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.burczynski_crohn.html#pertpy.data.burczynski_crohn" title="pertpy.data.burczynski_crohn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.burczynski_crohn</span></code></a>()</p></td>
+<td><p>Bulk data with conditions ulcerative colitis (UC) and Crohn's disease (CD).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.papalexi_2021.html#pertpy.data.papalexi_2021" title="pertpy.data.papalexi_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.papalexi_2021</span></code></a>()</p></td>
+<td><p>Dataset of the Mixscape Vignette.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.kang_2018.html#pertpy.data.kang_2018" title="pertpy.data.kang_2018"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.kang_2018</span></code></a>()</p></td>
+<td><p>Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.sc_sim_augur.html#pertpy.data.sc_sim_augur" title="pertpy.data.sc_sim_augur"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.sc_sim_augur</span></code></a>()</p></td>
+<td><p>Simulated test dataset used the Usage example for the Augur.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.bhattacherjee.html#pertpy.data.bhattacherjee" title="pertpy.data.bhattacherjee"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.bhattacherjee</span></code></a>()</p></td>
+<td><p>Processed single-cell data PFC adult mice under cocaine self-administration.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.sciplex3_raw.html#pertpy.data.sciplex3_raw" title="pertpy.data.sciplex3_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.sciplex3_raw</span></code></a>()</p></td>
+<td><p>Raw sciplex3 perturbation dataset curated for perturbation modeling.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021.html#pertpy.data.frangieh_2021" title="pertpy.data.frangieh_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021</span></code></a>()</p></td>
+<td><p>Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021_raw.html#pertpy.data.frangieh_2021_raw" title="pertpy.data.frangieh_2021_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021_raw</span></code></a>()</p></td>
+<td><p>Raw Perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling readout.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.dixit_2016.html#pertpy.data.dixit_2016" title="pertpy.data.dixit_2016"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.dixit_2016</span></code></a>()</p></td>
+<td><p>Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.dixit_2016_raw.html#pertpy.data.dixit_2016_raw" title="pertpy.data.dixit_2016_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.dixit_2016_raw</span></code></a>()</p></td>
+<td><p>Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.norman_2019.html#pertpy.data.norman_2019" title="pertpy.data.norman_2019"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.norman_2019</span></code></a>()</p></td>
+<td><p>Processed single-cell, pooled CRISPR screening.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.norman_2019_raw.html#pertpy.data.norman_2019_raw" title="pertpy.data.norman_2019_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.norman_2019_raw</span></code></a>()</p></td>
+<td><p>Raw single-cell, pooled CRISPR screening.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.dialogue_example.html#pertpy.data.dialogue_example" title="pertpy.data.dialogue_example"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.dialogue_example</span></code></a>()</p></td>
+<td><p>Example dataset used to feature DIALOGUE.</p></td>
+</tr>
 </tbody>
-</table></div>
+</table>
+</div>
 </section>
 <section id="tools">
-<h2>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">#</a></h2>
+<h2>Tools<a class="headerlink" href="#tools" title="Permalink to this heading">#</a></h2>
 <section id="augurpy">
-<h3>Augurpy<a class="headerlink" href="#augurpy" title="Permalink to this headline">#</a></h3>
+<h3>Augurpy<a class="headerlink" href="#augurpy" title="Permalink to this heading">#</a></h3>
 <p>The Python implementation of <a class="reference external" href="https://github.com/neurorestore/Augur">Augur R package</a> Skinnider, M.A., Squair, J.W., Kathe, C. et al. <a class="reference external" href="https://doi.org/10.1038/s41587-020-0605-1">Cell type prioritization in single-cell data</a>. Nat Biotechnol 39, 30–34 (2021).</p>
 <p>Augurpy aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
 The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are more easily separated into perturbed and unperturbed than cell types with little or no response.
@@ -248,37 +315,101 @@ This separability is quantified by measuring how well experimental labels (eg. t
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
 
 <span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">sc_sim_augur</span><span class="p">()</span>
-<span class="n">ag</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Augurpy</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="s2">"random_forest_classifier"</span><span class="p">)</span>
+<span class="n">ag</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Augurpy</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="s2">&quot;random_forest_classifier&quot;</span><span class="p">)</span>
 <span class="n">adata</span> <span class="o">=</span> <span class="n">ag</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
 <span class="n">adata</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">ag</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
 
 <span class="c1"># metrics for each cell type</span>
-<span class="n">results</span><span class="p">[</span><span class="s1">'summary_metrics'</span><span class="p">]</span>
+<span class="n">results</span><span class="p">[</span><span class="s1">&#39;summary_metrics&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>See <a class="reference external" href="https://pytorch-lightning.readthedocs.io/en/stable/index.html#tutorials" title="(in PyTorch Lightning v1.6.0)"><span class="xref myst">here</span></a> for a more elaborate tutorial.</p>
-<div class="table-wrapper"><table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%"/>
-<col style="width: 90%"/>
-</colgroup>
+<p>See <a class="reference external" href="https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augurpy.html">augurpy tutorial</a> for a more elaborate tutorial.</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="tools/pertpy.tools.Augurpy.html#pertpy.tools.Augurpy" title="pertpy.tools.Augurpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tools.Augurpy</span></code></a></p></td>
+<td><p>Python implementation of Augur.</p></td>
+</tr>
 </tbody>
-</table></div>
+</table>
+</div>
+</section>
+<section id="mixscape">
+<h3>Mixscape<a class="headerlink" href="#mixscape" title="Permalink to this heading">#</a></h3>
+<p>A Python implementation of <a class="reference external" href="https://satijalab.org/seurat/articles/mixscape_vignette.html">Mixscape</a> Papalexi et al. <a class="reference external" href="https://www.nature.com/articles/s41588-021-00778-2">Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens</a>.</p>
+<p>Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
+Next, it determines which targeted cells were affected by the genetic perturbation (=KO) and which targeted cells were not (=NP) with the use of mixture models.
+Finally, it visualizes similarities and differences across different perturbations.</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="tools/pertpy.tools.Mixscape.html#pertpy.tools.Mixscape" title="pertpy.tools.Mixscape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tools.Mixscape</span></code></a>()</p></td>
+<td><p>Python implementation of Mixscape.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See <a class="reference external" href="https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html">mixscape tutorial</a> for a more elaborate tutorial.</p>
+</section>
+<section id="representation">
+<h3>Representation<a class="headerlink" href="#representation" title="Permalink to this heading">#</a></h3>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="tools/pertpy.tools.kernel_pca.html#pertpy.tools.kernel_pca" title="pertpy.tools.kernel_pca"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tools.kernel_pca</span></code></a>(adata[, n_comps, kernel, ...])</p></td>
+<td><p>Compute kernel PCA on <cite>adata.X</cite>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </section>
 </section>
 <section id="plots">
-<h2>Plots<a class="headerlink" href="#plots" title="Permalink to this headline">#</a></h2>
+<h2>Plots<a class="headerlink" href="#plots" title="Permalink to this heading">#</a></h2>
 <section id="id1">
-<h3>Augurpy<a class="headerlink" href="#id1" title="Permalink to this headline">#</a></h3>
-<div class="table-wrapper"><table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%"/>
-<col style="width: 90%"/>
-</colgroup>
+<h3>Augurpy<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h3>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="plot/pertpy.plot.ag.dp_scatter.html#pertpy.plot.ag.dp_scatter" title="pertpy.plot.ag.dp_scatter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ag.dp_scatter</span></code></a>(results[, top_n, ax, ...])</p></td>
+<td><p>Plot result of differential prioritization.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="plot/pertpy.plot.ag.important_features.html#pertpy.plot.ag.important_features" title="pertpy.plot.ag.important_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ag.important_features</span></code></a>(data[, key, ...])</p></td>
+<td><p>Plot a lollipop plot of the n features with largest feature importances.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="plot/pertpy.plot.ag.lollipop.html#pertpy.plot.ag.lollipop" title="pertpy.plot.ag.lollipop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ag.lollipop</span></code></a>(data[, key, ax, return_figure])</p></td>
+<td><p>Plot a lollipop plot of the mean augur values.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="plot/pertpy.plot.ag.scatterplot.html#pertpy.plot.ag.scatterplot" title="pertpy.plot.ag.scatterplot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ag.scatterplot</span></code></a>(results1, results2[, ...])</p></td>
+<td><p>Create scatterplot with two augur results.</p></td>
+</tr>
 </tbody>
-</table></div>
+</table>
+</div>
+</section>
+<section id="id2">
+<h3>Mixscape<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h3>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="plot/pertpy.plot.ms.violin.html#pertpy.plot.ms.violin" title="pertpy.plot.ms.violin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ms.violin</span></code></a>(adata, target_gene_idents[, ...])</p></td>
+<td><p>Violin plot using mixscape results.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="plot/pertpy.plot.ms.perturbscore.html#pertpy.plot.ms.perturbscore" title="pertpy.plot.ms.perturbscore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ms.perturbscore</span></code></a>(adata, labels, target_gene)</p></td>
+<td><p>Density plots to visualize perturbation scores calculated by the <cite>pt.tl.mixscape</cite> function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="plot/pertpy.plot.ms.heatmap.html#pertpy.plot.ms.heatmap" title="pertpy.plot.ms.heatmap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ms.heatmap</span></code></a>(adata, labels, target_gene)</p></td>
+<td><p>Heatmap plot using mixscape results.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="plot/pertpy.plot.ms.barplot.html#pertpy.plot.ms.barplot" title="pertpy.plot.ms.barplot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ms.barplot</span></code></a>(adata[, control, ...])</p></td>
+<td><p>Barplot to visualize perturbation scores calculated from RunMixscape function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="plot/pertpy.plot.ms.lda.html#pertpy.plot.ms.lda" title="pertpy.plot.ms.lda"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot.ms.lda</span></code></a>(adata[, mixscape_class, ...])</p></td>
+<td><p>Visualizing perturbation responses with Linear Discriminant Analysis.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </section>
 </section>
 </section>
@@ -288,12 +419,12 @@ This separability is quantified by measuring how well experimental labels (eg. t
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../tutorials/index.html">
+          <a class="next-page" href="data/pertpy.data.burczynski_crohn.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Tutorials</div>
+                <div class="title">pertpy.data.burczynski_crohn</div>
               </div>
               <svg><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -343,10 +474,13 @@ This separability is quantified by measuring how well experimental labels (eg. t
 <li><a class="reference internal" href="#data">Data</a></li>
 <li><a class="reference internal" href="#tools">Tools</a><ul>
 <li><a class="reference internal" href="#augurpy">Augurpy</a></li>
+<li><a class="reference internal" href="#mixscape">Mixscape</a></li>
+<li><a class="reference internal" href="#representation">Representation</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#plots">Plots</a><ul>
 <li><a class="reference internal" href="#id1">Augurpy</a></li>
+<li><a class="reference internal" href="#id2">Mixscape</a></li>
 </ul>
 </li>
 </ul>
@@ -363,6 +497,7 @@ This separability is quantified by measuring how well experimental labels (eg. t
 </div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
     <script src="../_static/scripts/furo.js"></script>
     <script src="../_static/clipboard.min.js"></script>

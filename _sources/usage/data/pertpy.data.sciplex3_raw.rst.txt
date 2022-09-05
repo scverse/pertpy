@@ -1,0 +1,6 @@
+﻿pertpy.data.sciplex3\_raw
+=========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: sciplex3_raw

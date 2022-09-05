@@ -1,0 +1,6 @@
+﻿pertpy.data.dialogue\_example
+=============================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: dialogue_example

@@ -1,0 +1,50 @@
+﻿pertpy.tools.Mixscape
+=====================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: Mixscape
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.Mixscape.lda
+    ~pertpy.tools.Mixscape.mixscape
+    ~pertpy.tools.Mixscape.pert_sign
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+lda
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Mixscape.lda
+mixscape
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Mixscape.mixscape
+pert_sign
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Mixscape.pert_sign
+
+

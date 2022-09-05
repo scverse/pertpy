@@ -1,0 +1,6 @@
+﻿pertpy.tools.kernel\_pca
+========================
+
+.. currentmodule:: pertpy.tools
+
+.. autofunction:: kernel_pca
