@@ -304,7 +304,7 @@ class Milopy:
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
 
         # Run Graph spatial FDR correction
-        self._graph_spatialFDR(sample_adata, neighbors_key=adata.uns["nhood_neighbors_key"])
+        self._graph_spatial_fdr(sample_adata, neighbors_key=adata.uns["nhood_neighbors_key"])
 
     def annotate_nhoods(self, milo_mdata: MuData, anno_col: str):
         """Assigns a categorical label to neighbourhoods, based on the most frequent label among cells in each neighbourhood. This can be useful to stratify DA testing results by cell types or samples.
@@ -356,7 +356,7 @@ class Milopy:
             None. Adds in place:
             - `milo_mdata['samples'].var["nhood_{anno_col}"]`: assigning a continuous value to each nhood
         """
-        if "samples" not in milo_mdata:
+        if "samples" not in milo_mdata.mod:
             raise ValueError(
                 "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
             )
