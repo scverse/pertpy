@@ -73,7 +73,7 @@ class MilopyPlot:
             vmax=vmax,
             vmin=vmin,
             title=title,
-            shshow=show,
+            show=show,
             save=save,
             **kwargs,
         )
