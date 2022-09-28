@@ -12,6 +12,7 @@ from mudata import MuData
 from rpy2.robjects import conversion, numpy2ri, pandas2ri
 from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
 from scipy.sparse import csr_matrix
+from sklearn.metrics.pairwise import euclidean_distances
 
 
 class Milopy:
@@ -70,9 +71,8 @@ class Milopy:
             try:
                 knn_graph = adata.obsp["connectivities"].copy()
             except KeyError:
-                raise KeyError(
-                    'No "connectivities" slot in adata.obsp -- please run scanpy.pp.neighbors(adata) first'
-                ) from None
+                print('No "connectivities" slot in adata.obsp -- please run scanpy.pp.neighbors(adata) first')
+                raise
         else:
             try:
                 use_rep = adata.uns["neighbors"]["params"]["use_rep"]
@@ -95,8 +95,6 @@ class Milopy:
                 len(random_vertices),
             ]
         )
-
-        from sklearn.metrics.pairwise import euclidean_distances
 
         for i in range(len(random_vertices)):
             nh_pos = np.median(X_dimred[non_zero_cols[non_zero_rows == i], :], 0).reshape(-1, 1)
@@ -158,6 +156,7 @@ class Milopy:
             nhoods = adata.obsm["nhoods"]
         except KeyError:
             print('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
+            raise
         #  Make nhood abundance matrix
         sample_dummies = pd.get_dummies(adata.obs[sample_col])
         all_samples = sample_dummies.columns
@@ -203,20 +202,14 @@ class Milopy:
         try:
             sample_adata = milo_mdata["samples"]
         except KeyError:
-            raise ValueError(
+            print(
                 "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
-            ) from None
+            )
+            raise
         adata = milo_mdata["cells"]
 
         # Set up rpy2 to run edgeR
-        numpy2ri.activate()
-        pandas2ri.activate()
-        edgeR = self._try_import_bioc_library("edgeR")
-        limma = self._try_import_bioc_library("limma")
-        stats = importr("stats")
-        base = importr("base")
-        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", design.lstrip("~ ")))]
-
+        edgeR, limma, stats, base, covariates = self._setup_rpy2(design)
         # Add covariates used for testing to sample_adata.var
         sample_col = sample_adata.uns["sample_col"]
         try:
@@ -224,24 +217,26 @@ class Milopy:
         except KeyError:
             missing_cov = [x for x in covariates if x not in sample_adata.obs.columns]
             print("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
-
+            raise
         sample_obs = sample_obs[covariates + [sample_col]]
         sample_obs.index = sample_obs[sample_col].astype("str")
 
         try:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
-        except ValueError:
+        except AssertionError:
             print(
                 "Covariates cannot be unambiguously assigned to each sample -- each sample value should match a single covariate value"
             )
+            raise
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
+
         # Get design dataframe
         try:
             design_df = sample_adata.obs[covariates]
         except KeyError:
             missing_cov = [x for x in covariates if x not in sample_adata.obs.columns]
             print('Covariates {c} are not columns in adata.uns["sample_adata"].obs'.format(c=" ".join(missing_cov)))
-
+            raise
         # Get count matrix
         count_mat = sample_adata.X.T.toarray()
         lib_size = count_mat.sum(0)
@@ -288,6 +283,7 @@ class Milopy:
                 mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
             except ValueError:
                 print("Model contrasts must be in the form 'A-B' or 'A+B'")
+                raise
             res = base.as_data_frame(
                 edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
             )
@@ -323,9 +319,10 @@ class Milopy:
         try:
             sample_adata = milo_mdata["samples"]
         except KeyError:
-            raise ValueError(
+            print(
                 "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
-            ) from None
+            )
+            raise
         adata = milo_mdata["cells"]
 
         # Check value is not numeric
@@ -387,9 +384,10 @@ class Milopy:
         try:
             sample_adata = milo_mdata["samples"]
         except KeyError:
-            raise ValueError(
+            print(
                 "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
-            ) from None
+            )
+            raise
         adata = milo_mdata["cells"]
 
         sample_col = sample_adata.uns["sample_col"]
@@ -401,6 +399,7 @@ class Milopy:
         except KeyError:
             missing_cov = [x for x in covariates if x not in sample_adata.obs.columns]
             print("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
+            raise
         sample_obs = sample_obs[covariates + [sample_col]].astype("str")
         sample_obs.index = sample_obs[sample_col]
         try:
@@ -409,6 +408,7 @@ class Milopy:
             print(
                 "Covariates cannot be unambiguously assigned to each sample -- each sample value should match a single covariate value"
             )
+            raise
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
 
     def build_nhood_graph(self, milo_mdata: MuData, basis: str = "X_umap"):
@@ -450,9 +450,10 @@ class Milopy:
         try:
             sample_adata = milo_mdata["samples"]
         except KeyError:
-            raise ValueError(
+            print(
                 "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
-            ) from None
+            )
+            raise
         adata = milo_mdata["cells"]
 
         # Get gene expression matrix
@@ -468,6 +469,24 @@ class Milopy:
         nhoods_X = csr_matrix(nhoods_X / adata.obsm["nhoods"].toarray().sum(0))
         sample_adata.varm[expr_id] = nhoods_X.T
 
+    def _setup_rpy2(
+        self,
+        design,
+    ):
+        """Set up rpy2 to run edgeR
+
+        Args:
+            design (str): formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata['cells'].obs`.
+        """
+        numpy2ri.activate()
+        pandas2ri.activate()
+        edgeR = self._try_import_bioc_library("edgeR")
+        limma = self._try_import_bioc_library("limma")
+        stats = importr("stats")
+        base = importr("base")
+        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", design.lstrip("~ ")))]
+        return edgeR, limma, stats, base, covariates
+
     def _try_import_bioc_library(
         self,
         name: str,
@@ -481,9 +500,8 @@ class Milopy:
             _r_lib = importr(name)
             return _r_lib
         except PackageNotInstalledError:
-            raise RuntimeError(
-                f"Install Bioconductor library `{name!r}` first as `BiocManager::install({name!r}).`"
-            ) from None
+            print(f"Install Bioconductor library `{name!r}` first as `BiocManager::install({name!r}).`")
+            raise
 
     def _graph_spatial_fdr(
         self,

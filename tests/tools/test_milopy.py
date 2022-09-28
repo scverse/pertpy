@@ -2,8 +2,14 @@ import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
+from rpy2.robjects.packages import PackageNotInstalledError, importr
 
 import pertpy as pt
+
+try:
+    r_dependency = importr("edgeR")
+except PackageNotInstalledError:
+    r_dependency = None
 
 
 class TestMilopy:
@@ -77,7 +83,7 @@ class TestMilopy:
 
         assert top_a == top_b, 'The order of samples in milo_mdata["samples"] does not match'
 
-    @pytest.mark.skip(reason="Require R dependecy")
+    @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     @pytest.fixture
     def da_nhoods_mdata(self, adata):
         adata = adata.copy()
@@ -98,19 +104,19 @@ class TestMilopy:
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata
 
-    @pytest.mark.skip(reason="Require R dependecy")
+    @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_missing_covariate(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         with pytest.raises(KeyError):
             self.milo.da_nhoods(mdata, design="~ciaone")
 
-    @pytest.mark.skip(reason="Require R dependecy")
+    @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_non_unique_covariate(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
-        with pytest.raises(ValueError):
+        with pytest.raises(AssertionError):
             self.milo.da_nhoods(mdata, design="~phase")
 
-    @pytest.mark.skip(reason="Require R dependecy")
+    @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_pvalues(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         self.milo.da_nhoods(mdata, design="~condition")
@@ -118,7 +124,7 @@ class TestMilopy:
         min_p, max_p = sample_adata.var["PValue"].min(), sample_adata.var["PValue"].max()
         assert (min_p >= 0) & (max_p <= 1), "P-values are not between 0 and 1"
 
-    @pytest.mark.skip(reason="Require R dependecy")
+    @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_fdr(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         self.milo.da_nhoods(mdata, design="~condition")
@@ -127,7 +133,7 @@ class TestMilopy:
             np.round(sample_adata.var["PValue"], 10) <= np.round(sample_adata.var["SpatialFDR"], 10)
         ), "FDR is higher than uncorrected P-values"
 
-    @pytest.mark.skip(reason="Require R dependecy")
+    @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_default_contrast(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         adata = mdata["cells"].copy()
