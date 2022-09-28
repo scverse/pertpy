@@ -24,8 +24,15 @@ class TestMilopy:
     def test_make_nhoods_number(self, adata):
         adata = adata.copy()
         p = 0.1
-        self.milo.make_nhoods(adata, prop=p)
+        adata = self.milo.make_nhoods(adata, prop=p, copy=True)
         assert adata.obsm["nhoods"].shape[1] <= int(np.round(adata.n_obs * p))
+        
+    def test_make_nhoods_missing_connectivities(self, adata):
+        adata = adata.copy()
+        p = 0.1
+        del(adata.obsp['connectivities'])
+        with pytest.raises(KeyError):
+            adata = self.milo.make_nhoods(adata, prop=p)
 
     def test_make_nhoods_sizes(self, adata):
         adata = adata.copy()
@@ -62,6 +69,14 @@ class TestMilopy:
         df.index = sample_adata.obs_names
         top_b = df.sort_values(0, ascending=False).values.ravel()
         assert all((top_b - top_a) == 0), 'The counts for samples in milo_mdata["samples"] does not match'
+    
+    def test_count_nhoods_missing_nhoods(self, adata):
+        adata = adata.copy()
+        self.milo.make_nhoods(adata)
+        sample_col = "phase"
+        del(adata.obsm["nhoods"])
+        with pytest.raises(KeyError):
+            _ = self.milo.count_nhoods(adata, sample_col=sample_col)
 
     def test_count_nhoods_sample_order(self, adata):
         adata = adata.copy()
@@ -103,6 +118,11 @@ class TestMilopy:
         adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata
+
+    @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
+    def test_da_nhoods_missing_samples(self, adata):
+        with pytest.raises(KeyError):
+            self.milo.da_nhoods(adata, design="~condition")
 
     @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_missing_covariate(self, da_nhoods_mdata):
