@@ -21,6 +21,23 @@ class Milopy:
     def __init__(self):
         pass
 
+    def load(
+        self,
+        input: AnnData,
+        rna: str | None = "rna",
+    ) -> MuData:
+        """Set up the MuData object from the input.
+
+        Args:
+            input (AnnData): AnnData
+            rna (str | None, optional): Modality name for original AnnData object. Defaults to 'rna'.
+        Returns:
+            MuData: MuData object with original AnnData (default is `mudata['rna']`).
+        """
+
+        mdata = MuData({rna: input})
+        return mdata
+
     def make_nhoods(
         self,
         adata: AnnData,
@@ -31,7 +48,7 @@ class Milopy:
     ):
         """Randomly sample vertcies on a graph to define neighbourhoods.
 
-        The implementation resembels https://github.com/emdann/milopy
+        The implementation is from https://github.com/emdann/milopy
         These are then refined by computing the median profile for the neighbourhood in reduced dimensional space and selecting the nearest vertex to this position.
         Thus, multiple neighbourhoods may be collapsed down together to prevent over-sampling the graph space.
 
@@ -134,29 +151,38 @@ class Milopy:
 
     def count_nhoods(
         self,
-        adata: AnnData,
+        data: AnnData | MuData,
         sample_col: str,
+        rna: str | None = "rna",
     ):
         """Builds a sample-level AnnData object storing the matrix of cell counts per sample per neighbourhood.
 
         Args:
-            adata (AnnData): AnnData object with neighbourhoods defined in `adata.obsm['nhoods']`
+            data (AnnData or MuData): AnnData object with neighbourhoods defined in `obsm['nhoods']` or MuData object with a modality with neighbourhoods defined in `obsm['nhoods']`
             sample_col (str): Column in adata.obs that contains sample information
+            rna (str): If input data is MuData, specify modality name of 'rna'. Defaults to 'rna'.
 
         Returns:
-            MuData object storing the original (i.e. cell-level) AnnData in `mudata['cells']`
-            and the sample-level anndata storing the neighbourhood cell counts in `mudata['samples']`.
+            MuData object storing the original (i.e. rna) AnnData in `mudata['rna']`
+            and the compositional anndata storing the neighbourhood cell counts in `mudata['milo_compositional']`.
             Here:
-            - `mudata['samples'].obs_names` are samples (defined from `adata.obs['sample_col']`)
-            - `mudata['samples'].var_names` are neighbourhoods
-            - `mudata['samples'].X` is the matrix counting the number of cells from each
+            - `mudata['milo_compositional'].obs_names` are samples (defined from `adata.obs['sample_col']`)
+            - `mudata['milo_compositional'].var_names` are neighbourhoods
+            - `mudata['milo_compositional'].X` is the matrix counting the number of cells from each
             sample in each neighbourhood
         """
-        try:
-            nhoods = adata.obsm["nhoods"]
-        except KeyError:
-            print('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
-            raise
+        if isinstance(data, MuData):
+            adata = data[rna]
+            is_MuData = True
+        if isinstance(data, AnnData):
+            adata = data
+            is_MuData = False
+        if isinstance(adata, AnnData) or isinstance(adata, AnnData):
+            try:
+                nhoods = adata.obsm["nhoods"]
+            except KeyError:
+                print('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
+                raise
         #  Make nhood abundance matrix
         sample_dummies = pd.get_dummies(adata.obs[sample_col])
         all_samples = sample_dummies.columns
@@ -170,10 +196,14 @@ class Milopy:
         sample_adata.var["kth_distance"] = adata.obs.loc[
             adata.obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"
         ].values
-        # adata.uns["sample_adata"] = sample_adata
-        # Make MuData object
-        milo_mdata = MuData({"cells": adata, "samples": sample_adata})
-        return milo_mdata
+
+        if is_MuData is True:
+            data.mod["milo_compositional"] = sample_adata
+            return data
+        else:
+            # Make MuData object
+            milo_mdata = MuData({"rna": adata, "milo_compositional": sample_adata})
+            return milo_mdata
 
     def da_nhoods(
         self,
@@ -187,29 +217,29 @@ class Milopy:
 
         Args:
             milo_mdata (MuData): MuData object
-            design (str): formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata['cells'].obs`.
+            design (str): formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata['rna'].obs`.
             model_contrasts (str | None, optional): A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl"). If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group. Defaults to None.
-            subset_samples (List[str] | None, optional): subset of samples (obs in `milo_mdata['samples']`) to use for the test. Defaults to None.
+            subset_samples (List[str] | None, optional): subset of samples (obs in `milo_mdata['milo_compositional']`) to use for the test. Defaults to None.
             add_intercept (bool, optional): whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default. Defaults to True.
 
         Returns:
-            None, modifies `milo_mdata['samples']` in place, adding the results of the DA test to `.var`:
+            None, modifies `milo_mdata['milo_compositional']` in place, adding the results of the DA test to `.var`:
             - `logFC` stores the log fold change in cell abundance (coefficient from the GLM)
             - `PValue` stores the p-value for the QLF test before multiple testing correction
             - `SpatialFDR` stores the the p-value adjusted for multiple testing to limit the false discovery rate,
                 calculated with weighted Benjamini-Hochberg procedure
         """
         try:
-            sample_adata = milo_mdata["samples"]
+            sample_adata = milo_mdata["milo_compositional"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods() first"
             )
             raise
-        adata = milo_mdata["cells"]
+        adata = milo_mdata["rna"]
 
-        # Set up rpy2 to run edgeR
-        edgeR, limma, stats, base, covariates = self._setup_rpy2(design)
+        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", design.lstrip("~ ")))]
+
         # Add covariates used for testing to sample_adata.var
         sample_col = sample_adata.uns["sample_col"]
         try:
@@ -255,6 +285,9 @@ class Milopy:
         # Filter out nhoods with zero counts (they can appear after sample filtering)
         keep_nhoods = count_mat[:, keep_smp].sum(1) > 0
 
+        # Set up rpy2 to run edgeR
+        edgeR, limma, stats, base = self._setup_rpy2(design)
+        
         # Define model matrix
         if not add_intercept or model_contrasts is not None:
             design = design + " + 0"
@@ -311,19 +344,19 @@ class Milopy:
 
         Returns:
             None. Adds in place:
-            - `milo_mdata['samples'].var["nhood_annotation"]`: assigning a label to each nhood
-            - `milo_mdata['samples'].var["nhood_annotation_frac"]` stores the fraciton of cells in the neighbourhood with the assigned label
-            - `milo_mdata['samples'].varm['frac_annotation']`: stores the fraction of cells from each label in each nhood
-            - `milo_mdata['samples'].uns["annotation_labels"]`: stores the column names for `milo_mdata['samples'].varm['frac_annotation']`
+            - `milo_mdata['milo_compositional'].var["nhood_annotation"]`: assigning a label to each nhood
+            - `milo_mdata['milo_compositional'].var["nhood_annotation_frac"]` stores the fraciton of cells in the neighbourhood with the assigned label
+            - `milo_mdata['milo_compositional'].varm['frac_annotation']`: stores the fraction of cells from each label in each nhood
+            - `milo_mdata['milo_compositional'].uns["annotation_labels"]`: stores the column names for `milo_mdata['milo_compositional'].varm['frac_annotation']`
         """
         try:
-            sample_adata = milo_mdata["samples"]
+            sample_adata = milo_mdata["milo_compositional"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
             raise
-        adata = milo_mdata["cells"]
+        adata = milo_mdata["rna"]
 
         # Check value is not numeric
         if pd.api.types.is_numeric_dtype(adata.obs[anno_col]):
@@ -351,13 +384,13 @@ class Milopy:
 
         Returns:
             None. Adds in place:
-            - `milo_mdata['samples'].var["nhood_{anno_col}"]`: assigning a continuous value to each nhood
+            - `milo_mdata['milo_compositional'].var["nhood_{anno_col}"]`: assigning a continuous value to each nhood
         """
-        if "samples" not in milo_mdata.mod:
+        if "milo_compositional" not in milo_mdata.mod:
             raise ValueError(
-                "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
-        adata = milo_mdata["cells"]
+        adata = milo_mdata["rna"]
 
         # Check value is not categorical
         if not pd.api.types.is_numeric_dtype(adata.obs[anno_col]):
@@ -369,26 +402,26 @@ class Milopy:
 
         mean_anno_val = anno_val.toarray() / np.array(adata.obsm["nhoods"].T.sum(1))
 
-        milo_mdata["samples"].var[f"nhood_{anno_col}"] = mean_anno_val
+        milo_mdata["milo_compositional"].var[f"nhood_{anno_col}"] = mean_anno_val
 
     def add_covariate_to_nhoods_var(self, milo_mdata: MuData, new_covariates: list[str]):
         """Add covariate from cell-level obs to sample-level obs. These should be covariates for which a single value can be assigned to each sample.
 
         Args:
             milo_mdata (MuData): MuData object
-            new_covariates (List[str]): columns in `milo_mdata['cells'].obs` to add to `milo_mdata['samples'].obs`.
+            new_covariates (List[str]): columns in `milo_mdata['rna'].obs` to add to `milo_mdata['milo_compositional'].obs`.
 
         Returns:
-            None, adds columns to `milo_mdata['samples']` in place
+            None, adds columns to `milo_mdata['milo_compositional']` in place
         """
         try:
-            sample_adata = milo_mdata["samples"]
+            sample_adata = milo_mdata["milo_compositional"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
             raise
-        adata = milo_mdata["cells"]
+        adata = milo_mdata["rna"]
 
         sample_col = sample_adata.uns["sample_col"]
         covariates = list(
@@ -419,19 +452,22 @@ class Milopy:
             basis (str, optional): Name of the obsm basis to use for layout of neighbourhoods (key in `adata.obsm`). Defaults to "X_umap".
 
         Returns:
-            - `milo_mdata['samples'].varp['nhood_connectivities']`: graph of overlap between neighbourhoods (i.e. no of shared cells)
-            - `milo_mdata['samples'].var["Nhood_size"]`: number of cells in neighbourhoods
+            - `milo_mdata['milo_compositional'].varp['nhood_connectivities']`: graph of overlap between neighbourhoods (i.e. no of shared cells)
+            - `milo_mdata['milo_compositional'].var["Nhood_size"]`: number of cells in neighbourhoods
         """
-        adata = milo_mdata["cells"]
+        adata = milo_mdata["rna"]
         # # Add embedding positions
-        milo_mdata["samples"].varm["X_milo_graph"] = adata[adata.obs["nhood_ixs_refined"] == 1].obsm[basis]
+        milo_mdata["milo_compositional"].varm["X_milo_graph"] = adata[adata.obs["nhood_ixs_refined"] == 1].obsm[basis]
         # Add nhood size
-        milo_mdata["samples"].var["Nhood_size"] = np.array(adata.obsm["nhoods"].sum(0)).flatten()
+        milo_mdata["milo_compositional"].var["Nhood_size"] = np.array(adata.obsm["nhoods"].sum(0)).flatten()
         # Add adjacency graph
-        milo_mdata["samples"].varp["nhood_connectivities"] = adata.obsm["nhoods"].T.dot(adata.obsm["nhoods"])
-        milo_mdata["samples"].varp["nhood_connectivities"].setdiag(0)
-        milo_mdata["samples"].varp["nhood_connectivities"].eliminate_zeros()
-        milo_mdata["samples"].uns["nhood"] = {"connectivities_key": "nhood_connectivities", "distances_key": ""}
+        milo_mdata["milo_compositional"].varp["nhood_connectivities"] = adata.obsm["nhoods"].T.dot(adata.obsm["nhoods"])
+        milo_mdata["milo_compositional"].varp["nhood_connectivities"].setdiag(0)
+        milo_mdata["milo_compositional"].varp["nhood_connectivities"].eliminate_zeros()
+        milo_mdata["milo_compositional"].uns["nhood"] = {
+            "connectivities_key": "nhood_connectivities",
+            "distances_key": "",
+        }
 
     def add_nhood_expression(
         self,
@@ -442,19 +478,19 @@ class Milopy:
 
         Args:
             milo_mdata (MuData): MuData object
-            layer (str | None, optional): If provided, use `milo_mdata['cells'][layer]` as expression matrix instead of `milo_mdata['cells'].X`. Defaults to None.
+            layer (str | None, optional): If provided, use `milo_mdata['rna'][layer]` as expression matrix instead of `milo_mdata['rna'].X`. Defaults to None.
 
         Returns:
-            Updates adata in place to store the matrix of average expression in each neighbourhood in `milo_mdata['samples'].varm['expr']`
+            Updates adata in place to store the matrix of average expression in each neighbourhood in `milo_mdata['milo_compositional'].varm['expr']`
         """
         try:
-            sample_adata = milo_mdata["samples"]
+            sample_adata = milo_mdata["milo_compositional"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
             raise
-        adata = milo_mdata["cells"]
+        adata = milo_mdata["rna"]
 
         # Get gene expression matrix
         if layer is None:
@@ -476,7 +512,7 @@ class Milopy:
         """Set up rpy2 to run edgeR
 
         Args:
-            design (str): formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata['cells'].obs`.
+            design (str): formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata['rna'].obs`.
         """
         numpy2ri.activate()
         pandas2ri.activate()
@@ -484,8 +520,8 @@ class Milopy:
         limma = self._try_import_bioc_library("limma")
         stats = importr("stats")
         base = importr("base")
-        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", design.lstrip("~ ")))]
-        return edgeR, limma, stats, base, covariates
+        
+        return edgeR, limma, stats, base
 
     def _try_import_bioc_library(
         self,

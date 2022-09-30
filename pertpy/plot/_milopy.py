@@ -39,7 +39,7 @@ class MilopyPlot:
             save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
         """
-        nhood_adata = milo_mdata["samples"].T.copy()
+        nhood_adata = milo_mdata["milo_compositional"].T.copy()
 
         if "Nhood_size" not in nhood_adata.obs.columns:
             raise KeyError(
@@ -113,10 +113,10 @@ class MilopyPlot:
             subset_nhoods (List, optional): List of nhoods to plot. If None, plot all nhoods. Defaults to None.
         """
         try:
-            nhood_adata = milo_mdata["samples"].T.copy()
+            nhood_adata = milo_mdata["milo_compositional"].T.copy()
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
 
         if subset_nhoods is not None:
@@ -152,7 +152,7 @@ class MilopyPlot:
         try:
             obs_col = nhood_adata.uns["annotation_obs"]
             anno_palette = dict(
-                zip(milo_mdata["cells"].obs[obs_col].cat.categories, milo_mdata["cells"].uns[f"{obs_col}_colors"])
+                zip(milo_mdata["rna"].obs[obs_col].cat.categories, milo_mdata["rna"].uns[f"{obs_col}_colors"])
             )
             sns.violinplot(
                 data=anno_df,
@@ -203,10 +203,10 @@ class MilopyPlot:
             log_counts (bool, optional): Whether to plot log1p of cell counts. Defaults to False.
         """
         try:
-            nhood_adata = milo_mdata["samples"].T.copy()
+            nhood_adata = milo_mdata["milo_compositional"].T.copy()
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'cells' and 'samples' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
 
         if subset_nhoods is None:
