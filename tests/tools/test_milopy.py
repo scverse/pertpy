@@ -194,9 +194,11 @@ class TestMilopy:
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata
 
-    def test_annotate_nhoods_missing_samples(self, adata):
-        with pytest.raises(KeyError):
-            self.milo.annotate_nhoods_continuous(adata, anno_col="S_score")
+    def test_annotate_nhoods_missing_samples(self, annotate_nhoods_mdata):
+        mdata = annotate_nhoods_mdata.copy()
+        del mdata.mod["milo_compositional"]
+        with pytest.raises(ValueError):
+            self.milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
 
     def test_annotate_nhoods_continuous_mean_range(self, annotate_nhoods_mdata):
         mdata = annotate_nhoods_mdata.copy()
