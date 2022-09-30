@@ -287,7 +287,7 @@ class Milopy:
 
         # Set up rpy2 to run edgeR
         edgeR, limma, stats, base = self._setup_rpy2(design)
-        
+
         # Define model matrix
         if not add_intercept or model_contrasts is not None:
             design = design + " + 0"
@@ -520,7 +520,7 @@ class Milopy:
         limma = self._try_import_bioc_library("limma")
         stats = importr("stats")
         base = importr("base")
-        
+
         return edgeR, limma, stats, base
 
     def _try_import_bioc_library(

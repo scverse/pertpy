@@ -104,7 +104,7 @@ class TestMilopy:
 
         assert top_a == top_b, 'The order of samples in milo_mdata["milo_compositional"] does not match'
 
-    #@pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
+    # @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     @pytest.fixture
     def da_nhoods_mdata(self, adata):
         adata = adata.copy()
@@ -125,18 +125,18 @@ class TestMilopy:
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata
 
-    #@pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
+    # @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_missing_samples(self, adata):
         with pytest.raises(KeyError):
             self.milo.da_nhoods(adata, design="~condition")
 
-    #@pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
+    # @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_missing_covariate(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         with pytest.raises(KeyError):
             self.milo.da_nhoods(mdata, design="~ciaone")
 
-    #@pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
+    # @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     def test_da_nhoods_non_unique_covariate(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         with pytest.raises(AssertionError):
@@ -193,7 +193,7 @@ class TestMilopy:
         adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata
-    
+
     def test_annotate_nhoods_missing_samples(self, adata):
         with pytest.raises(KeyError):
             self.milo.annotate_nhoods_continuous(adata, anno_col="S_score")
