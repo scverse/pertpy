@@ -47,7 +47,7 @@ pt.pl.cool_fancy_plot()
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+    :toctree: pertpy.tools
 
     pertpy.tools.Augurpy
 ```
