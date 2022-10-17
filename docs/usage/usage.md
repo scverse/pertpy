@@ -47,7 +47,7 @@ pt.pl.cool_fancy_plot()
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: pertpy.tools
+    :toctree: plot
 
-    pertpy.tools.Augurpy
+    plot.ag.dp_scatter
 ```
