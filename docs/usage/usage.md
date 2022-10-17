@@ -52,7 +52,6 @@ pt.pl.cool_fancy_plot()
 ```{eval-rst}
 .. autosummary::
     :toctree: tools
-    :nosignatures:
 
     tools.Augurpy
 ```
