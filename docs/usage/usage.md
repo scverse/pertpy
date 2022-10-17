@@ -114,6 +114,10 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
 ### Augurpy
 
 ```{eval-rst}
+.. module:: pertpy
+```
+
+```{eval-rst}
 .. autosummary::
     :toctree: plot
 
