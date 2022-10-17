@@ -72,10 +72,6 @@ results['summary_metrics']
 See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augurpy.html) for a more elaborate tutorial.
 
 ```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
 .. autosummary::
     :toctree: tools
     :nosignatures:
@@ -90,10 +86,6 @@ A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixs
 Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
 Next, it determines which targeted cells were affected by the genetic perturbation (=KO) and which targeted cells were not (=NP) with the use of mixture models.
 Finally, it visualizes similarities and differences across different perturbations.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
@@ -111,4 +103,36 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
     :toctree: tools
 
     tools.kernel_pca
+```
+
+## Plots
+
+```{eval-rst}
+.. module:: pertpy
+```
+
+### Augurpy
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.ag.dp_scatter
+    plot.ag.important_features
+    plot.ag.lollipop
+    plot.ag.scatterplot
+
+```
+
+### Mixscape
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.ms.violin
+    plot.ms.perturbscore
+    plot.ms.heatmap
+    plot.ms.barplot
+    plot.ms.lda
 ```
