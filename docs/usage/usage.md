@@ -46,37 +46,3 @@ pt.pl.cool_fancy_plot()
 ```{eval-rst}
 .. currentmodule:: pertpy
 ```
-
-### Augurpy
-
-The Python implementation of [Augur R package](https://github.com/neurorestore/Augur) Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
-
-Augurpy aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
-The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are more easily separated into perturbed and unperturbed than cell types with little or no response.
-This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type. Augurpy trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and then prioritizes cell type response according to metric scores measuring the accuracy of the model. For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient is used as a proxy for how accurate the model is which in turn approximates perturbation response.
-
-Example implementation
-
-```python
-import pertpy as pt
-
-adata = pt.dt.sc_sim_augur()
-ag = pt.tl.Augurpy(estimator="random_forest_classifier")
-adata = ag.load(adata)
-adata, results = ag.predict(adata)
-
-# metrics for each cell type
-results['summary_metrics']
-```
-
-See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augurpy.html) for a more elaborate tutorial.
-
-
-
-```{eval-rst}
-.. autosummary::
-    :toctree: tools
-    :nosignatures:
-
-    tools.Augurpy
-```
