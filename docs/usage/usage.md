@@ -98,7 +98,8 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
 
 ### Milopy
 
-Basic python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scanpy pipelines for single-cell analysis. See [preprint](https://www.biorxiv.org/content/10.1101/2020.11.23.393769v1) for details on the statistical framework.
+A Python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scverse pipelines for single-cell analysis.
+See [Differential abundance testing on single-cell data using k-nearest neighbor graphs](https://www.nature.com/articles/s41587-021-01033-z) for details on the statistical framework.
 
 ```{eval-rst}
 .. currentmodule:: pertpy
