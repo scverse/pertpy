@@ -43,10 +43,6 @@ pt.pl.cool_fancy_plot()
 
 ## Tools
 
-```{eval-rst}
-.. module:: pertpy
-```
-
 ### Augurpy
 
 The Python implementation of [Augur R package](https://github.com/neurorestore/Augur) Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
@@ -72,6 +68,10 @@ results['summary_metrics']
 See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augurpy.html) for a more elaborate tutorial.
 
 ```{eval-rst}
+.. module:: pertpy
+```
+
+```{eval-rst}
 .. autosummary::
     :toctree: tools
     :nosignatures:
@@ -86,6 +86,10 @@ A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixs
 Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
 Next, it determines which targeted cells were affected by the genetic perturbation (=KO) and which targeted cells were not (=NP) with the use of mixture models.
 Finally, it visualizes similarities and differences across different perturbations.
+
+```{eval-rst}
+.. module:: pertpy
+```
 
 ```{eval-rst}
 .. autosummary::
