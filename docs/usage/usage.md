@@ -46,8 +46,12 @@ pt.pl.cool_fancy_plot()
 ### Augurpy
 
 ```{eval-rst}
-.. autosummary::
-    :toctree: plot
+.. module:: pertpy
+```
 
-    plot.ag.dp_scatter
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.ms.violin
 ```
