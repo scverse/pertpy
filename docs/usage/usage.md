@@ -46,12 +46,8 @@ pt.pl.cool_fancy_plot()
 ### Augurpy
 
 ```{eval-rst}
-.. module:: pertpy
-```
-
-```{eval-rst}
 .. autosummary::
     :toctree: tools
 
-    tools.Augurpy
+    pertpy.tools.Augurpy
 ```
