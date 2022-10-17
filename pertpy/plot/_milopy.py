@@ -79,8 +79,8 @@ class MilopyPlot:
 
     @staticmethod
     def nhood(
-        adata: AnnData,
-        ix: int | list[int],
+        mdata: MuData,
+        ix: int,
         basis="X_umap",
         show: bool | None = None,
         save: bool | str | None = None,
@@ -89,15 +89,18 @@ class MilopyPlot:
         """Visualize cells in a neighbourhood.
 
         Args:
-            adata: AnnData object, storing neighbourhood assignments in `adata.obsm['nhoods']`
+            mdata: MuData object with 'rna' slot, storing neighbourhood assignments in `mdata['rna'].obsm['nhoods']`
             ix: index of neighbourhood to visualize
             basis: Embedding to use for visualization. Defaults to "X_umap".
             show: Show the plot, do not return axis.
             save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
         """
-        adata.obs["Nhood"] = adata.obsm["nhoods"][:, ix].toarray().ravel()
-        sc.pl.embedding(adata, basis, color="Nhood", size=30, title="Nhood" + str(ix), show=show, save=save, **kwargs)
+
+        mdata["rna"].obs["Nhood"] = mdata["rna"].obsm["nhoods"][:, ix].toarray().ravel()
+        sc.pl.embedding(
+            mdata["rna"], basis, color="Nhood", size=30, title="Nhood" + str(ix), show=show, save=save, **kwargs
+        )
 
     @staticmethod
     def da_beeswarm(mdata: MuData, anno_col: str = "nhood_annotation", alpha: float = 0.1, subset_nhoods: list = None):

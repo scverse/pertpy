@@ -298,7 +298,7 @@ class Milopy:
 
         if solver == "edger":
             # Set up rpy2 to run edgeR
-            edgeR, limma, stats, base = self._setup_rpy2(design)
+            edgeR, limma, stats, base = self._setup_rpy2()
 
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
@@ -519,13 +519,8 @@ class Milopy:
 
     def _setup_rpy2(
         self,
-        design,
     ):
-        """Set up rpy2 to run edgeR
-
-        Args:
-            design (str): formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata['rna'].obs`.
-        """
+        """Set up rpy2 to run edgeR"""
         numpy2ri.activate()
         pandas2ri.activate()
         edgeR = self._try_import_bioc_library("edgeR")
