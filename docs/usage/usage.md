@@ -107,19 +107,6 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
 
 ## Plots
 
-### Augurpy
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.ag.dp_scatter
-    plot.ag.important_features
-    plot.ag.lollipop
-    plot.ag.scatterplot
-
-```
-
 ### Mixscape
 
 ```{eval-rst}
