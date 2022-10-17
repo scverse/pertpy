@@ -51,7 +51,7 @@ pt.pl.cool_fancy_plot()
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+    :toctree: tl
 
-    tools.Mixscape
+    tl.Mixscape
 ```
