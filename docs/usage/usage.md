@@ -104,31 +104,3 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
 
     tools.kernel_pca
 ```
-
-## Plots
-
-### Augurpy
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot._augurpy.dp_scatter
-    plot._augurpy.important_features
-    plot._augurpy.lollipop
-    plot._augurpy.scatterplot
-
-```
-
-### Mixscape
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot._mixscape.violin
-    plot._mixscape.perturbscore
-    plot._mixscape.heatmap
-    plot._mixscape.barplot
-    plot._mixscape.lda
-```
