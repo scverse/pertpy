@@ -53,5 +53,5 @@ pt.pl.cool_fancy_plot()
 .. autosummary::
     :toctree: tools
 
-    tools.ms.violin
+    tools.Mixscape
 ```
