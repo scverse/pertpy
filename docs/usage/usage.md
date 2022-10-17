@@ -43,7 +43,7 @@ pt.pl.cool_fancy_plot()
 
 ## Tools
 
-### Augurpy
+### Mixscape
 
 ```{eval-rst}
 .. module:: pertpy
@@ -51,7 +51,7 @@ pt.pl.cool_fancy_plot()
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tl
+    :toctree: tools
 
-    tl.Mixscape
+    tools.Mixscape
 ```
