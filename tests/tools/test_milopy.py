@@ -3,13 +3,14 @@ import pandas as pd
 import pytest
 import scanpy as sc
 from mudata import MuData
-from rpy2.robjects.packages import PackageNotInstalledError, importr
 
 import pertpy as pt
 
 try:
+    from rpy2.robjects.packages import PackageNotInstalledError, importr
+
     r_dependency = importr("edgeR")
-except PackageNotInstalledError:
+except Exception:
     r_dependency = None
 
 

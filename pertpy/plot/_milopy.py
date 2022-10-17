@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -16,7 +14,7 @@ class MilopyPlot:
 
     @staticmethod
     def nhood_graph(
-        milo_mdata: MuData,
+        mdata: MuData,
         alpha: float = 0.1,
         min_logFC: float = 0,
         min_size: int = 10,
@@ -29,17 +27,18 @@ class MilopyPlot:
         """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding)
 
         Args:
-            milo_mdata (MuData): MuData object
-            alpha (float, optional): Significance threshold. Defaults to 0.1.
-            min_logFC (float, optional): Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods. Defaults to 0.
-            min_size (int, optional): Minimum size of nodes in visualization. Defaults to 10.
-            plot_edges (bool, optional): If edges for neighbourhood overlaps whould be plotted. Defaults to False.
-            title (str, optional): Plot title. Defaults to "DA log-Fold Change".
+            mdata: MuData object
+            alpha: Significance threshold. (default: 0.1)
+            min_logFC: Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods. (default: 0)
+            min_size: Minimum size of nodes in visualization. (default: 10)
+            plot_edges: If edges for neighbourhood overlaps whould be plotted. Defaults to False.
+            title: Plot title. Defaults to "DA log-Fold Change".
             show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
+            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
+                  Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
         """
-        nhood_adata = milo_mdata["milo_compositional"].T.copy()
+        nhood_adata = mdata["milo_compositional"].T.copy()
 
         if "Nhood_size" not in nhood_adata.obs.columns:
             raise KeyError(
@@ -87,12 +86,12 @@ class MilopyPlot:
         save: bool | str | None = None,
         **kwargs,
     ):
-        """Visualize cells in a neighbourhood
+        """Visualize cells in a neighbourhood.
 
         Args:
-            adata (AnnData): AnnData object, storing neighbourhood assignments in `adata.obsm['nhoods']`
-            ix (int | list[int]): index of neighbourhood to visualize
-            basis (str, optional): Embedding to use for visualization. Defaults to "X_umap".
+            adata: AnnData object, storing neighbourhood assignments in `adata.obsm['nhoods']`
+            ix: index of neighbourhood to visualize
+            basis: Embedding to use for visualization. Defaults to "X_umap".
             show: Show the plot, do not return axis.
             save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
@@ -101,22 +100,20 @@ class MilopyPlot:
         sc.pl.embedding(adata, basis, color="Nhood", size=30, title="Nhood" + str(ix), show=show, save=save, **kwargs)
 
     @staticmethod
-    def da_beeswarm(
-        milo_mdata: MuData, anno_col: str = "nhood_annotation", alpha: float = 0.1, subset_nhoods: list = None
-    ):
+    def da_beeswarm(mdata: MuData, anno_col: str = "nhood_annotation", alpha: float = 0.1, subset_nhoods: list = None):
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
-            milo_mdata (MuData): MuData object
-            anno_col (str, optional): Column in adata.uns['nhood_adata'].obs to use as annotation. Defaults to 'nhood_annotation'.
-            alpha (float, optional): Significance threshold. Defaults to 0.1.
-            subset_nhoods (List, optional): List of nhoods to plot. If None, plot all nhoods. Defaults to None.
+            mdata: MuData object
+            anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
+            alpha: Significance threshold. (default: 0.1)
+            subset_nhoods: List of nhoods to plot. If None, plot all nhoods. (default: None)
         """
         try:
-            nhood_adata = milo_mdata["milo_compositional"].T.copy()
+            nhood_adata = mdata["milo_compositional"].T.copy()
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
 
         if subset_nhoods is not None:
@@ -151,9 +148,7 @@ class MilopyPlot:
 
         try:
             obs_col = nhood_adata.uns["annotation_obs"]
-            anno_palette = dict(
-                zip(milo_mdata["rna"].obs[obs_col].cat.categories, milo_mdata["rna"].uns[f"{obs_col}_colors"])
-            )
+            anno_palette = dict(zip(mdata["rna"].obs[obs_col].cat.categories, mdata["rna"].uns[f"{obs_col}_colors"]))
             sns.violinplot(
                 data=anno_df,
                 y=anno_col,
@@ -193,17 +188,17 @@ class MilopyPlot:
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
     @staticmethod
-    def nhood_counts_by_cond(milo_mdata: MuData, test_var: str, subset_nhoods: list = None, log_counts: bool = False):
+    def nhood_counts_by_cond(mdata: MuData, test_var: str, subset_nhoods: list = None, log_counts: bool = False):
         """Plot boxplot of cell numbers vs condition of interest
 
         Args:
-            milo_mdata (MuData): MuData object storing cell level and nhood level information
-            test_var (str): Name of column in adata.obs storing condition of interest (y-axis for boxplot)
-            subset_nhoods (List, optional): List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods. Defaults to None.
-            log_counts (bool, optional): Whether to plot log1p of cell counts. Defaults to False.
+            mdata: MuData object storing cell level and nhood level information
+            test_var: Name of column in adata.obs storing condition of interest (y-axis for boxplot)
+            subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods. (default: None)
+            log_counts: Whether to plot log1p of cell counts. (default: False)
         """
         try:
-            nhood_adata = milo_mdata["milo_compositional"].T.copy()
+            nhood_adata = mdata["milo_compositional"].T.copy()
         except KeyError:
             print(
                 "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"

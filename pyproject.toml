@@ -31,7 +31,6 @@ ipywidgets = ">=7.6.5"
 switchlang = "^0.1.0"
 scikit-misc = "^0.1.4"
 plotnine = "^0.8.0"
-rpy2 = "^3.5.4"
 leidenalg = "^0.8.10"
 
 [tool.poetry.dev-dependencies]
