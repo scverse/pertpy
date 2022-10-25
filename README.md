@@ -12,9 +12,9 @@
 
 ## Features
 
-- Differential cell type perturbation analysis with Augurpy
-- Analysis of CRISPR-KO screens with Mixscape
-- Compositional analysis with Milo and tascCODA
+-   Differential cell type perturbation analysis with Augurpy
+-   Analysis of CRISPR-KO screens with Mixscape
+-   Compositional analysis with Milo and tascCODA
 
 ## Installation
 
