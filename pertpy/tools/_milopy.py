@@ -47,8 +47,9 @@ class Milopy:
 
     def make_nhoods(
         self,
-        adata: AnnData,
+        data: AnnData | MuData,
         neighbors_key: str | None = None,
+        rna_key: str | None = "rna",
         prop: float = 0.1,
         seed: int = 0,
         copy: bool = False,
@@ -60,11 +61,12 @@ class Milopy:
         Thus, multiple neighbourhoods may be collapsed to prevent over-sampling the graph space.
 
         Args:
-            adata: Should contain a knn graph in `adata.obsp`.
+            data: AnnData object with knn graph defined in `obsp` or MuData object with a modality with knn graph defined in `obsp`
             neighbors_key: The key in `adata.obsp` to use as KNN graph.
                            If not specified, `make_nhoods` looks .obsp[‘connectivities’] for connectivities (default storage places for `scanpy.pp.neighbors`).
                            If specified, it looks at .obsp[.uns[neighbors_key][‘connectivities_key’]] for connectivities.
                            (default: None)
+            rna_key: If input data is MuData, specify modality name of 'rna'. (default: rna)
             prop: Fraction of cells to sample for neighbourhood index search. (default: 0.1)
             seed: Random seed for cell sampling. (default: 0)
             copy: Determines whether a copy of the `adata` is returned. (default: False)
@@ -85,6 +87,10 @@ class Milopy:
             nhood_neighbors_key: `adata.uns["nhood_neighbors_key"]`
             KNN graph key, used for neighbourhood construction
         """
+        if isinstance(data, MuData):
+            adata = data[rna_key]
+        if isinstance(data, AnnData):
+            adata = data
         if copy:
             adata = adata.copy()
 
@@ -187,7 +193,7 @@ class Milopy:
         if isinstance(data, AnnData):
             adata = data
             is_MuData = False
-        if isinstance(adata, AnnData) or isinstance(adata, AnnData):
+        if isinstance(adata, AnnData):
             try:
                 nhoods = adata.obsm["nhoods"]
             except KeyError:
