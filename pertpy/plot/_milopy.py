@@ -81,6 +81,7 @@ class MilopyPlot:
     def nhood(
         mdata: MuData,
         ix: int,
+        feature_key: str | None = "rna",
         basis="X_umap",
         show: bool | None = None,
         save: bool | str | None = None,
@@ -89,7 +90,7 @@ class MilopyPlot:
         """Visualize cells in a neighbourhood.
 
         Args:
-            mdata: MuData object with 'rna' slot, storing neighbourhood assignments in `mdata['rna'].obsm['nhoods']`
+            mdata: MuData object with feature_key slot, storing neighbourhood assignments in `mdata[feature_key].obsm['nhoods']`
             ix: index of neighbourhood to visualize
             basis: Embedding to use for visualization. Defaults to "X_umap".
             show: Show the plot, do not return axis.
@@ -97,13 +98,19 @@ class MilopyPlot:
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
         """
 
-        mdata["rna"].obs["Nhood"] = mdata["rna"].obsm["nhoods"][:, ix].toarray().ravel()
+        mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
         sc.pl.embedding(
-            mdata["rna"], basis, color="Nhood", size=30, title="Nhood" + str(ix), show=show, save=save, **kwargs
+            mdata[feature_key], basis, color="Nhood", size=30, title="Nhood" + str(ix), show=show, save=save, **kwargs
         )
 
     @staticmethod
-    def da_beeswarm(mdata: MuData, anno_col: str = "nhood_annotation", alpha: float = 0.1, subset_nhoods: list = None):
+    def da_beeswarm(
+        mdata: MuData,
+        feature_key: str | None = "rna",
+        anno_col: str = "nhood_annotation",
+        alpha: float = 0.1,
+        subset_nhoods: list = None,
+    ):
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
@@ -116,7 +123,7 @@ class MilopyPlot:
             nhood_adata = mdata["milo_compositional"].T.copy()
         except KeyError:
             print(
-                "mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
 
         if subset_nhoods is not None:
@@ -151,7 +158,9 @@ class MilopyPlot:
 
         try:
             obs_col = nhood_adata.uns["annotation_obs"]
-            anno_palette = dict(zip(mdata["rna"].obs[obs_col].cat.categories, mdata["rna"].uns[f"{obs_col}_colors"]))
+            anno_palette = dict(
+                zip(mdata[feature_key].obs[obs_col].cat.categories, mdata[feature_key].uns[f"{obs_col}_colors"])
+            )
             sns.violinplot(
                 data=anno_df,
                 y=anno_col,
@@ -191,7 +200,13 @@ class MilopyPlot:
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
     @staticmethod
-    def nhood_counts_by_cond(mdata: MuData, test_var: str, subset_nhoods: list = None, log_counts: bool = False):
+    def nhood_counts_by_cond(
+        mdata: MuData,
+        test_var: str,
+        subset_nhoods: list = None,
+        log_counts: bool = False,
+        feature_key: str | None = "rna",
+    ):
         """Plot boxplot of cell numbers vs condition of interest
 
         Args:
@@ -204,7 +219,7 @@ class MilopyPlot:
             nhood_adata = mdata["milo_compositional"].T.copy()
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
 
         if subset_nhoods is None:

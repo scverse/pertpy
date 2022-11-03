@@ -31,17 +31,17 @@ class Milopy:
     def load(
         self,
         input: AnnData,
-        rna_key: str | None = "rna",
+        feature_key: str | None = "rna",
     ) -> MuData:
         """Prepare a MuData object for subsequent processing.
 
         Args:
             input: AnnData
-            rna_key: Key to store the RNA modality in the MuData object.
+            feature_key: Key to store the cell-level AnnData object in the MuData object
         Returns:
-            MuData: MuData object with original AnnData (default is `mudata['rna']`).
+            MuData: MuData object with original AnnData (default is `mudata[feature_key]`).
         """
-        mdata = MuData({rna_key: input, "milo_compositional": AnnData()})
+        mdata = MuData({feature_key: input, "milo_compositional": AnnData()})
 
         return mdata
 
@@ -49,24 +49,24 @@ class Milopy:
         self,
         data: AnnData | MuData,
         neighbors_key: str | None = None,
-        rna_key: str | None = "rna",
+        feature_key: str | None = "rna",
         prop: float = 0.1,
         seed: int = 0,
         copy: bool = False,
     ):
-        """Randomly sample vertices on a graph to define neighbourhoods.
+        """Randomly sample vertices on a KNN graph to define neighbourhoods of cells.
 
-        The neighborhoods get refined by computing the median profile for the neighbourhood in reduced dimensional space
+        The set of neighborhoods get refined by computing the median profile for the neighbourhood in reduced dimensional space
         and by selecting the nearest vertex to this position.
         Thus, multiple neighbourhoods may be collapsed to prevent over-sampling the graph space.
 
         Args:
-            data: AnnData object with knn graph defined in `obsp` or MuData object with a modality with knn graph defined in `obsp`
-            neighbors_key: The key in `adata.obsp` to use as KNN graph.
+            data: AnnData object with KNN graph defined in `obsp` or MuData object with a modality with KNN graph defined in `obsp`
+            neighbors_key: The key in `adata.obsp` or `mdata[feature_key].obsp` to use as KNN graph.
                            If not specified, `make_nhoods` looks .obsp[‘connectivities’] for connectivities (default storage places for `scanpy.pp.neighbors`).
                            If specified, it looks at .obsp[.uns[neighbors_key][‘connectivities_key’]] for connectivities.
                            (default: None)
-            rna_key: If input data is MuData, specify modality name of 'rna'. (default: rna)
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
             prop: Fraction of cells to sample for neighbourhood index search. (default: 0.1)
             seed: Random seed for cell sampling. (default: 0)
             copy: Determines whether a copy of the `adata` is returned. (default: False)
@@ -76,7 +76,7 @@ class Milopy:
             Otherwise:
 
             nhoods: scipy.sparse._csr.csr_matrix in `adata.obsm['nhoods']`.
-            A binary matrix of cell to neighbourhood assignments
+            A binary matrix of cell to neighbourhood assignments. Neighbourhoods in the columns are ordered by the order of the index cell in adata.obs_names
 
             nhood_ixs_refined: pandas.Series in `adata.obs['nhood_ixs_refined']`.
             A boolean indicating whether a cell is an index for a neighbourhood
@@ -88,7 +88,7 @@ class Milopy:
             KNN graph key, used for neighbourhood construction
         """
         if isinstance(data, MuData):
-            adata = data[rna_key]
+            adata = data[feature_key]
         if isinstance(data, AnnData):
             adata = data
         if copy:
@@ -169,17 +169,17 @@ class Milopy:
         self,
         data: AnnData | MuData,
         sample_col: str,
-        rna_key: str | None = "rna",
+        feature_key: str | None = "rna",
     ):
         """Builds a sample-level AnnData object storing the matrix of cell counts per sample per neighbourhood.
 
         Args:
             data: AnnData object with neighbourhoods defined in `obsm['nhoods']` or MuData object with a modality with neighbourhoods defined in `obsm['nhoods']`
             sample_col: Column in adata.obs that contains sample information
-            rna_key: If input data is MuData, specify modality name of 'rna'. (default: rna)
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
 
         Returns:
-            MuData object storing the original (i.e. rna) AnnData in `mudata['rna']`
+            MuData object storing the original (i.e. rna) AnnData in `mudata[feature_key]`
             and the compositional anndata storing the neighbourhood cell counts in `mudata['milo_compositional']`.
             Here:
             - `mudata['milo_compositional'].obs_names` are samples (defined from `adata.obs['sample_col']`)
@@ -188,7 +188,7 @@ class Milopy:
             sample in each neighbourhood
         """
         if isinstance(data, MuData):
-            adata = data[rna_key]
+            adata = data[feature_key]
             is_MuData = True
         if isinstance(data, AnnData):
             adata = data
@@ -217,7 +217,7 @@ class Milopy:
             data.mod["milo_compositional"] = sample_adata
             return data
         else:
-            milo_mdata = MuData({"rna": adata, "milo_compositional": sample_adata})
+            milo_mdata = MuData({feature_key: adata, "milo_compositional": sample_adata})
             return milo_mdata
 
     def da_nhoods(
@@ -227,16 +227,18 @@ class Milopy:
         model_contrasts: str | None = None,
         subset_samples: list[str] | None = None,
         add_intercept: bool = True,
+        feature_key: str | None = "rna",
         solver: Literal["edger", "batchglm"] = "edger",
     ):
-        """Performs differential abundance testing on neighbourhoods using QLF test implementation from edgeR (using R under the hood).
+        """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
 
         Args:
             mdata: MuData object
-            design: formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata['rna'].obs`.
+            design: formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata[feature_key].obs`.
             model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl"). If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group. Defaults to None.
             subset_samples: subset of samples (obs in `milo_mdata['milo_compositional']`) to use for the test. Defaults to None.
             add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default. Defaults to True.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
             solver: The solver to fit the model to. One of "edger" (requires R, rpy2 and edgeR to be installed) or "batchglm"
 
         Returns:
@@ -250,10 +252,10 @@ class Milopy:
             sample_adata = mdata["milo_compositional"]
         except KeyError:
             print(
-                "[bold red]milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods() first"
+                "[bold red]milo_mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods() first"
             )
             raise
-        adata = mdata["rna"]
+        adata = mdata[feature_key]
 
         covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", design.lstrip("~ ")))]
 
@@ -272,7 +274,7 @@ class Milopy:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
         except AssertionError:
             print(
-                "Covariates cannot be unambiguously assigned to each sample -- each sample value should match a single covariate value"
+                f"Values in mdata[{feature_key}].obs[{covariates}] cannot be unambiguously assigned to each sample -- each sample value should match a single covariate value"
             )
             raise
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
@@ -353,12 +355,18 @@ class Milopy:
         # Run Graph spatial FDR correction
         self._graph_spatial_fdr(sample_adata, neighbors_key=adata.uns["nhood_neighbors_key"])
 
-    def annotate_nhoods(self, mdata: MuData, anno_col: str):
+    def annotate_nhoods(
+        self,
+        mdata: MuData,
+        anno_col: str,
+        feature_key: str | None = "rna",
+    ):
         """Assigns a categorical label to neighbourhoods, based on the most frequent label among cells in each neighbourhood. This can be useful to stratify DA testing results by cell types or samples.
 
         Args:
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
 
         Returns:
             None. Adds in place:
@@ -371,10 +379,10 @@ class Milopy:
             sample_adata = mdata["milo_compositional"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
             raise
-        adata = mdata["rna"]
+        adata = mdata[feature_key]
 
         # Check value is not numeric
         if pd.api.types.is_numeric_dtype(adata.obs[anno_col]):
@@ -393,12 +401,13 @@ class Milopy:
         sample_adata.var["nhood_annotation"] = anno_frac_dataframe.idxmax(1)
         sample_adata.var["nhood_annotation_frac"] = anno_frac_dataframe.max(1)
 
-    def annotate_nhoods_continuous(self, mdata: MuData, anno_col: str):
+    def annotate_nhoods_continuous(self, mdata: MuData, anno_col: str, feature_key: str | None = "rna"):
         """Assigns a continuous value to neighbourhoods, based on mean cell level covariate stored in adata.obs. This can be useful to correlate DA log-foldChanges with continuous covariates such as pseudotime, gene expression scores etc...
 
         Args:
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
 
         Returns:
             None. Adds in place:
@@ -406,9 +415,9 @@ class Milopy:
         """
         if "milo_compositional" not in mdata.mod:
             raise ValueError(
-                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
-        adata = mdata["rna"]
+        adata = mdata[feature_key]
 
         # Check value is not categorical
         if not pd.api.types.is_numeric_dtype(adata.obs[anno_col]):
@@ -422,12 +431,13 @@ class Milopy:
 
         mdata["milo_compositional"].var[f"nhood_{anno_col}"] = mean_anno_val
 
-    def add_covariate_to_nhoods_var(self, mdata: MuData, new_covariates: list[str]):
+    def add_covariate_to_nhoods_var(self, mdata: MuData, new_covariates: list[str], feature_key: str | None = "rna"):
         """Add covariate from cell-level obs to sample-level obs. These should be covariates for which a single value can be assigned to each sample.
 
         Args:
             mdata: MuData object
-            new_covariates: columns in `milo_mdata['rna'].obs` to add to `milo_mdata['milo_compositional'].obs`.
+            new_covariates: columns in `milo_mdata[feature_key].obs` to add to `milo_mdata['milo_compositional'].obs`.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
 
         Returns:
             None, adds columns to `milo_mdata['milo_compositional']` in place
@@ -436,10 +446,10 @@ class Milopy:
             sample_adata = mdata["milo_compositional"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
             raise
-        adata = mdata["rna"]
+        adata = mdata[feature_key]
 
         sample_col = sample_adata.uns["sample_col"]
         covariates = list(
@@ -462,18 +472,19 @@ class Milopy:
             raise
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
 
-    def build_nhood_graph(self, mdata: MuData, basis: str = "X_umap"):
+    def build_nhood_graph(self, mdata: MuData, basis: str = "X_umap", feature_key: str | None = "rna"):
         """Build graph of neighbourhoods used for visualization of DA results
 
         Args:
             mdata: MuData object
             basis: Name of the obsm basis to use for layout of neighbourhoods (key in `adata.obsm`). Defaults to "X_umap".
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
 
         Returns:
             - `milo_mdata['milo_compositional'].varp['nhood_connectivities']`: graph of overlap between neighbourhoods (i.e. no of shared cells)
             - `milo_mdata['milo_compositional'].var["Nhood_size"]`: number of cells in neighbourhoods
         """
-        adata = mdata["rna"]
+        adata = mdata[feature_key]
         # # Add embedding positions
         mdata["milo_compositional"].varm["X_milo_graph"] = adata[adata.obs["nhood_ixs_refined"] == 1].obsm[basis]
         # Add nhood size
@@ -487,16 +498,13 @@ class Milopy:
             "distances_key": "",
         }
 
-    def add_nhood_expression(
-        self,
-        mdata: MuData,
-        layer: str | None = None,
-    ):
+    def add_nhood_expression(self, mdata: MuData, layer: str | None = None, feature_key: str | None = "rna"):
         """Calculates the mean expression in neighbourhoods of each feature.
 
         Args:
             mdata: MuData object
-            layer: If provided, use `milo_mdata['rna'][layer]` as expression matrix instead of `milo_mdata['rna'].X`. Defaults to None.
+            layer: If provided, use `milo_mdata[feature_key][layer]` as expression matrix instead of `milo_mdata[feature_key].X`. Defaults to None.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
 
         Returns:
             Updates adata in place to store the matrix of average expression in each neighbourhood in `milo_mdata['milo_compositional'].varm['expr']`
@@ -505,10 +513,10 @@ class Milopy:
             sample_adata = mdata["milo_compositional"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: 'rna' and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
             )
             raise
-        adata = mdata["rna"]
+        adata = mdata[feature_key]
 
         # Get gene expression matrix
         if layer is None:
