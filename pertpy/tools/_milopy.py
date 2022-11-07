@@ -148,7 +148,6 @@ class Milopy:
         adata.obs["nhood_ixs_refined"] = adata.obs_names.isin(adata.obs_names[refined_vertices])
         adata.obs["nhood_ixs_refined"] = adata.obs["nhood_ixs_refined"].astype("int")
         adata.obs["nhood_ixs_random"] = adata.obs["nhood_ixs_random"].astype("int")
-        # Store info on neighbor_key used
         adata.uns["nhood_neighbors_key"] = neighbors_key
         # Store distance to K-th nearest neighbor (used for spatial FDR correction)
         if neighbors_key is None:
