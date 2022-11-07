@@ -96,6 +96,24 @@ Finally, it visualizes similarities and differences across different perturbatio
 
 See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
 
+### Milopy
+
+A Python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scverse pipelines for single-cell analysis.
+See [Differential abundance testing on single-cell data using k-nearest neighbor graphs](https://www.nature.com/articles/s41587-021-01033-z) for details on the statistical framework.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Milopy
+```
+
+See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
+
 ### Representation
 
 ```{eval-rst}
@@ -131,4 +149,16 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
     plot.ms.heatmap
     plot.ms.barplot
     plot.ms.lda
+```
+
+### Milopy
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.milo.nhood_graph
+    plot.milo.nhood
+    plot.milo.da_beeswarm
+    plot.milo.nhood_counts_by_cond
 ```
