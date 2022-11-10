@@ -403,6 +403,33 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/38171703",
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+    return adata
+
+
+def haber_2017_regions() -> AnnData:  # pragma: no cover
+    """Raw single-cell, pooled CRISPR screening.
+
+    Epithelial cells from the small intestine and organoids of mice.
+    Some of the cells were also subject to Salmonella or Heligmosomoides polygyrus infection (day 3 and day 10).
+
+    Reference:
+        Haber, Adam L. et al. “A single-cell survey of the small intestinal epithelium” Nature vol. 551 (2017): 333-339
+        doi:10.1038/nature24489
+
+    Returns:
+        :class:`~anndata.AnnData` object
+    """
+    output_file_name = "haber_2017_regions.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/38169900",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,

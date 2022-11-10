@@ -35,6 +35,7 @@ pt.pl.cool_fancy_plot()
     data.norman_2019
     data.norman_2019_raw
     data.dialogue_example
+    data.haber_2017_regions
 ```
 
 ## Tools
