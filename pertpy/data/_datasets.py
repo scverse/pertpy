@@ -385,9 +385,9 @@ def kang_2018() -> AnnData:  # pragma: no cover
 def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     """Processed 10X 5' scRNA-seq data from PBMC of COVID-19 patients and healthy donors
 
-    The study
-    - Downsampled to approx. 500 cells per donor
-    - Both COVID-19 and control samples were mapped to reference atlas of healthy PBMCs with scArches
+    The study profiled peripheral blood mononuclear cells from 90 COVID-19 patients with different disease severity and 23 healthy control donors.
+    Here the dataset was downsampled to approx. 500 cells per donor and cells were mapped to a reference atlas of healthy PBMCs from 12 studies
+    with scArches.
 
     Reference:
         Stephenson, E., Reynolds, G., Botting, R. A., et al. (2021).
