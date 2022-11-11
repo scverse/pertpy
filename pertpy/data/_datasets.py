@@ -382,6 +382,36 @@ def kang_2018() -> AnnData:  # pragma: no cover
     return adata
 
 
+def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
+    """Processed 10X 5' scRNA-seq data from PBMC of COVID-19 patients and healthy donors
+
+    The study profiled peripheral blood mononuclear cells from 90 COVID-19 patients with different disease severity and 23 healthy control donors.
+    Here the dataset was downsampled to approx. 500 cells per donor and cells were mapped to a reference atlas of healthy PBMCs from 12 studies
+    with scArches.
+
+    Reference:
+        Stephenson, E., Reynolds, G., Botting, R. A., et al. (2021).
+        Single-cell multi-omics analysis of the immune response in COVID-19.
+        Nature Medicine, 27(5). https://doi.org/10.1038/s41591-021-01329-2
+
+
+    Returns:
+        :class:`~anndata.AnnData` object of scRNA-seq profiles
+    """
+    output_file_name = "stephenson_2021_subsampled.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/38171703",
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+    return adata
+
+
 def haber_2017_regions() -> AnnData:  # pragma: no cover
     """Raw single-cell, pooled CRISPR screening.
 
@@ -407,5 +437,4 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
     else:
         adata = sc.read_h5ad(output_file_path)
-
     return adata
