@@ -13,4 +13,5 @@ from pertpy.data._datasets import (
     papalexi_2021,
     sc_sim_augur,
     sciplex3_raw,
+    stephenson_2021_subsampled,
 )
