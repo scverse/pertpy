@@ -440,9 +440,9 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Adamson_2016_pilot() -> AnnData:  # pragma: no cover
+def adamson_2016_pilot() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -450,14 +450,14 @@ def Adamson_2016_pilot() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2016.11.048
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Adamson_2016_pilot.h5ad"
+    output_file_name = "adamson_2016_pilot.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -473,9 +473,9 @@ def Adamson_2016_pilot() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
+def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -483,14 +483,14 @@ def Adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2016.11.048
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Adamson_2016_upr_epistasis.h5ad"
+    output_file_name = "adamson_2016_upr_epistasis.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -506,9 +506,9 @@ def Adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
+def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -516,14 +516,14 @@ def Adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2016.11.048
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Adamson_2016_upr_perturb_seq.h5ad"
+    output_file_name = "adamson_2016_upr_perturb_seq.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -539,9 +539,9 @@ def Adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Aissa_2021() -> AnnData:  # pragma: no cover
+def aissa_2021() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -549,14 +549,14 @@ def Aissa_2021() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41467-021-21884-z
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Aissa_2021.h5ad"
+    output_file_name = "aissa_2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -572,9 +572,9 @@ def Aissa_2021() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Chang_2021() -> AnnData:  # pragma: no cover
+def chang_2021() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -582,14 +582,14 @@ def Chang_2021() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41587-021-01005-3
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Chang_2021.h5ad"
+    output_file_name = "chang_2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -605,9 +605,9 @@ def Chang_2021() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Datlinger_2017() -> AnnData:  # pragma: no cover
+def datlinger_2017() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -615,14 +615,14 @@ def Datlinger_2017() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/nmeth.4177
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Datlinger_2017.h5ad"
+    output_file_name = "datlinger_2017.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -638,9 +638,9 @@ def Datlinger_2017() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Datlinger_2021() -> AnnData:  # pragma: no cover
+def datlinger_2021() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -648,14 +648,14 @@ def Datlinger_2021() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41592-021-01153-z
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Datlinger_2021.h5ad"
+    output_file_name = "datlinger_2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -671,9 +671,9 @@ def Datlinger_2021() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Dixit_2016() -> AnnData:  # pragma: no cover
+def dixit_2016_scperturb() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -681,14 +681,14 @@ def Dixit_2016() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2016.11.038
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Dixit_2016.h5ad"
+    output_file_name = "dixit_2016_scperturb.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -704,9 +704,9 @@ def Dixit_2016() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Frangieh_2021_protein() -> AnnData:  # pragma: no cover
+def frangieh_2021_protein() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -714,14 +714,14 @@ def Frangieh_2021_protein() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41588-021-00779-1
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Frangieh_2021_protein.h5ad"
+    output_file_name = "frangieh_2021_protein.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -737,9 +737,9 @@ def Frangieh_2021_protein() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Frangieh_2021_RNA() -> AnnData:  # pragma: no cover
+def frangieh_2021_rna() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -747,14 +747,14 @@ def Frangieh_2021_RNA() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41588-021-00779-1
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Frangieh_2021_RNA.h5ad"
+    output_file_name = "frangieh_2021_rna.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -770,9 +770,9 @@ def Frangieh_2021_RNA() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Gasperini_2019_atscale() -> AnnData:  # pragma: no cover
+def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -780,14 +780,14 @@ def Gasperini_2019_atscale() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2018.11.029
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Gasperini_2019_atscale.h5ad"
+    output_file_name = "gasperini_2019_atscale.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -803,9 +803,9 @@ def Gasperini_2019_atscale() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Gasperini_2019_highMOI() -> AnnData:  # pragma: no cover
+def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -813,14 +813,14 @@ def Gasperini_2019_highMOI() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2018.11.029
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Gasperini_2019_highMOI.h5ad"
+    output_file_name = "gasperini_2019_highmoi.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -834,11 +834,11 @@ def Gasperini_2019_highMOI() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Gasperini_2019_lowMOI() -> AnnData:  # pragma: no cover
+
+def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -846,14 +846,14 @@ def Gasperini_2019_lowMOI() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2018.11.029
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Gasperini_2019_lowMOI.h5ad"
+    output_file_name = "gasperini_2019_lowmoi.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -867,11 +867,11 @@ def Gasperini_2019_lowMOI() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Gehring_2019() -> AnnData:  # pragma: no cover
+
+def gehring_2019() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -879,14 +879,14 @@ def Gehring_2019() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41587-019-0372-z
 
     Returns:
         :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
     """
-    output_file_name = "Gehring_2019.h5ad"
+    output_file_name = "gehring_2019.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -900,11 +900,11 @@ def Gehring_2019() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def McFarland_2020() -> AnnData:  # pragma: no cover
+
+def mcfarland_2020() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -912,14 +912,14 @@ def McFarland_2020() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41467-020-17440-w
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "McFarland_2020.h5ad"
+    output_file_name = "mcfarland_2020.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -935,9 +935,9 @@ def McFarland_2020() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Norman_2019_filtered() -> AnnData:  # pragma: no cover
+def norman_2019_filtered() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -945,14 +945,14 @@ def Norman_2019_filtered() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1126/science.aax4438
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Norman_2019_filtered.h5ad"
+    output_file_name = "norman_2019_filtered.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -968,9 +968,9 @@ def Norman_2019_filtered() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Papalexi_2021_eccite_arrayed_protein() -> AnnData:  # pragma: no cover
+def papalexi_2021_eccite_arrayed_protein() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -978,14 +978,14 @@ def Papalexi_2021_eccite_arrayed_protein() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41588-021-00778-2
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Papalexi_2021_eccite_arrayed_protein.h5ad"
+    output_file_name = "papalexi_2021_eccite_arrayed_protein.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1001,9 +1001,9 @@ def Papalexi_2021_eccite_arrayed_protein() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Papalexi_2021_eccite_arrayed_RNA() -> AnnData:  # pragma: no cover
+def papalexi_2021_eccite_arrayed_rna() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1011,14 +1011,14 @@ def Papalexi_2021_eccite_arrayed_RNA() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41588-021-00778-2
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Papalexi_2021_eccite_arrayed_RNA.h5ad"
+    output_file_name = "papalexi_2021_eccite_arrayed_rna.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1034,9 +1034,9 @@ def Papalexi_2021_eccite_arrayed_RNA() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Papalexi_2021_eccite_protein() -> AnnData:  # pragma: no cover
+def papalexi_2021_eccite_protein() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1044,14 +1044,14 @@ def Papalexi_2021_eccite_protein() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41588-021-00778-2
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Papalexi_2021_eccite_protein.h5ad"
+    output_file_name = "papalexi_2021_eccite_protein.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1065,11 +1065,11 @@ def Papalexi_2021_eccite_protein() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Papalexi_2021_eccite_RNA() -> AnnData:  # pragma: no cover
+
+def papalexi_2021_eccite_rna() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1077,14 +1077,14 @@ def Papalexi_2021_eccite_RNA() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41588-021-00778-2
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Papalexi_2021_eccite_RNA.h5ad"
+    output_file_name = "papalexi_2021_eccite_rna.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1100,9 +1100,9 @@ def Papalexi_2021_eccite_RNA() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Replogle_2022_K562_essential() -> AnnData:  # pragma: no cover
+def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1110,14 +1110,14 @@ def Replogle_2022_K562_essential() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2022.05.013
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Replogle_2022_K562_essential.h5ad"
+    output_file_name = "replogle_2022_k562_essential.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1133,9 +1133,9 @@ def Replogle_2022_K562_essential() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Replogle_2022_K562_gwps() -> AnnData:  # pragma: no cover
+def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1143,14 +1143,14 @@ def Replogle_2022_K562_gwps() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2022.05.013
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Replogle_2022_K562_gwps.h5ad"
+    output_file_name = "replogle_2022_k562_gwps.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1166,9 +1166,9 @@ def Replogle_2022_K562_gwps() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Replogle_2022_rpe1() -> AnnData:  # pragma: no cover
+def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1176,14 +1176,14 @@ def Replogle_2022_rpe1() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2022.05.013
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Replogle_2022_rpe1.h5ad"
+    output_file_name = "replogle_2022_rpe1.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1199,9 +1199,9 @@ def Replogle_2022_rpe1() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Schiebinger_2019_GSE106340() -> AnnData:  # pragma: no cover
+def schiebinger_2019_gse106340() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1209,14 +1209,14 @@ def Schiebinger_2019_GSE106340() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2019.01.006
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Schiebinger_2019_.h5ad"
+    output_file_name = "schiebinger_2019_gse106340.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1232,9 +1232,9 @@ def Schiebinger_2019_GSE106340() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Schiebinger_2019_GSE115943() -> AnnData:  # pragma: no cover
+def schiebinger_2019_gse115943() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1242,14 +1242,14 @@ def Schiebinger_2019_GSE115943() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2019.01.006
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Schiebinger_2019_.h5ad"
+    output_file_name = "Schiebinger_2019_gse115943.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1265,9 +1265,9 @@ def Schiebinger_2019_GSE115943() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Schraivogel_2020_TAP_SCREEN_chr11() -> AnnData:  # pragma: no cover
+def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1275,14 +1275,14 @@ def Schraivogel_2020_TAP_SCREEN_chr11() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41592-020-0837-5
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Schraivogel_2020_TAP_SCREEN_chr11.h5ad"
+    output_file_name = "schraivogel_2020_tap_screen_chr11.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1298,9 +1298,9 @@ def Schraivogel_2020_TAP_SCREEN_chr11() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Schraivogel_2020_TAP_SCREEN_chr8() -> AnnData:  # pragma: no cover
+def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1308,14 +1308,14 @@ def Schraivogel_2020_TAP_SCREEN_chr8() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41592-020-0837-5
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Schraivogel_2020_TAP_SCREEN_chr8.h5ad"
+    output_file_name = "schraivogel_2020_tap_screen_chr8.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1329,11 +1329,11 @@ def Schraivogel_2020_TAP_SCREEN_chr8() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Shifrut_2018() -> AnnData:  # pragma: no cover
+
+def shifrut_2018() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1341,14 +1341,14 @@ def Shifrut_2018() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.cell.2018.10.024
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Shifrut_2018.h5ad"
+    output_file_name = "shifrut_2018.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1362,11 +1362,11 @@ def Shifrut_2018() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
-    
-def Srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
+
+
+def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1374,14 +1374,14 @@ def Srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1126/science.aax6234
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Srivatsan_2020_sciplex2.h5ad"
+    output_file_name = "srivatsan_2020_sciplex2.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1395,11 +1395,11 @@ def Srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
+
+def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1407,14 +1407,14 @@ def Srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1126/science.aax6234
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Srivatsan_2020_sciplex3.h5ad"
+    output_file_name = "srivatsan_2020_sciplex3.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1428,11 +1428,11 @@ def Srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
+
+def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1440,14 +1440,14 @@ def Srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1126/science.aax6234
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Srivatsan_2020_sciplex4.h5ad"
+    output_file_name = "srivatsan_2020_sciplex4.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1463,9 +1463,9 @@ def Srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Tian_2019_day7neuron() -> AnnData:  # pragma: no cover
+def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1473,14 +1473,14 @@ def Tian_2019_day7neuron() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.neuron.2019.07.014
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Tian_2019_day7neuron.h5ad"
+    output_file_name = "tian_2019_day7neuron.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1494,11 +1494,11 @@ def Tian_2019_day7neuron() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Tian_2019_iPSC() -> AnnData:  # pragma: no cover
+
+def tian_2019_ipsc() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1506,14 +1506,14 @@ def Tian_2019_iPSC() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.neuron.2019.07.014
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Tian_2019_iPSC.h5ad"
+    output_file_name = "tian_2019_iPSC.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1527,11 +1527,11 @@ def Tian_2019_iPSC() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Tian_2021_CRISPRa() -> AnnData:  # pragma: no cover
+
+def tian_2021_crispra() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1539,14 +1539,14 @@ def Tian_2021_CRISPRa() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41593-021-00862-0
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Tian_2021_CRISPRa.h5ad"
+    output_file_name = "tian_2021_crispra.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1562,9 +1562,9 @@ def Tian_2021_CRISPRa() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Tian_2021_CRISPRi() -> AnnData:  # pragma: no cover
+def tian_2021_crispri() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1572,14 +1572,14 @@ def Tian_2021_CRISPRi() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1038/s41593-021-00862-0
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Tian_2021_CRISPRi.h5ad"
+    output_file_name = "tian_2021_crispri.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1593,11 +1593,11 @@ def Tian_2021_CRISPRi() -> AnnData:  # pragma: no cover
         adata = sc.read_h5ad(output_file_path)
 
     return adata
-    
 
-def Weinreb_2020() -> AnnData:  # pragma: no cover
+
+def weinreb_2020() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1605,14 +1605,14 @@ def Weinreb_2020() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1126/science.aaw3381
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Weinreb_2020.h5ad"
+    output_file_name = "weinreb_2020.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1628,9 +1628,9 @@ def Weinreb_2020() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Xie_2017() -> AnnData:  # pragma: no cover
+def xie_2017() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1638,14 +1638,14 @@ def Xie_2017() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1016/j.molcel.2017.03.007
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "Xie_2017.h5ad"
+    output_file_name = "xie_2017.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -1661,9 +1661,9 @@ def Xie_2017() -> AnnData:  # pragma: no cover
     return adata
 
 
-def Zhao_2021() -> AnnData:  # pragma: no cover
+def zhao_2021() -> AnnData:  # pragma: no cover
     """scPerturb Single-Cell Perturbation Data.
-    
+
     https://github.com/sanderlab/scPerturb
 
     Reference:
@@ -1671,14 +1671,14 @@ def Zhao_2021() -> AnnData:  # pragma: no cover
        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-       
+
     Source paper:
         https://doi.org/10.1186/s13073-021-00894-y
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    output_file_name = "ZhaoSims2021.h5ad"
+    output_file_name = "zhaoSims2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
