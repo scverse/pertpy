@@ -438,3 +438,1257 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     else:
         adata = sc.read_h5ad(output_file_path)
     return adata
+
+
+def Adamson_2016_pilot() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2016.11.048
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Adamson_2016_pilot.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/AdamsonWeissman2016_GSM2406675_10X001.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2016.11.048
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Adamson_2016_upr_epistasis.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/AdamsonWeissman2016_GSM2406677_10X005.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2016.11.048
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Adamson_2016_upr_perturb_seq.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/AdamsonWeissman2016_GSM2406681_10X010.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Aissa_2021() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41467-021-21884-z
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Aissa_2021.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/AissaBenevolenskaya2021.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Chang_2021() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41587-021-01005-3
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Chang_2021.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/ChangYe2021.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Datlinger_2017() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/nmeth.4177
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Datlinger_2017.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/DatlingerBock2017.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Datlinger_2021() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41592-021-01153-z
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Datlinger_2021.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/DatlingerBock2021.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Dixit_2016() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2016.11.038
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Dixit_2016.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/DixitRegev2016.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Frangieh_2021_protein() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41588-021-00779-1
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Frangieh_2021_protein.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/FrangiehIzar2021_protein.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Frangieh_2021_RNA() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41588-021-00779-1
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Frangieh_2021_RNA.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/FrangiehIzar2021_RNA.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Gasperini_2019_atscale() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2018.11.029
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Gasperini_2019_atscale.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/GasperiniShendure2019_atscale.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Gasperini_2019_highMOI() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2018.11.029
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Gasperini_2019_highMOI.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/GasperiniShendure2019_highMOI.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Gasperini_2019_lowMOI() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2018.11.029
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Gasperini_2019_lowMOI.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/GasperiniShendure2019_lowMOI.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Gehring_2019() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41587-019-0372-z
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Gehring_2019.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/GehringPachter2019.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def McFarland_2020() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41467-020-17440-w
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "McFarland_2020.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/McFarlandTsherniak2020.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Norman_2019_filtered() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1126/science.aax4438
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Norman_2019_filtered.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/NormanWeissman2019_filtered.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Papalexi_2021_eccite_arrayed_protein() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41588-021-00778-2
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Papalexi_2021_eccite_arrayed_protein.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_arrayed_protein.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Papalexi_2021_eccite_arrayed_RNA() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41588-021-00778-2
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Papalexi_2021_eccite_arrayed_RNA.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_arrayed_RNA.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Papalexi_2021_eccite_protein() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41588-021-00778-2
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Papalexi_2021_eccite_protein.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_protein.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Papalexi_2021_eccite_RNA() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41588-021-00778-2
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Papalexi_2021_eccite_RNA.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_RNA.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Replogle_2022_K562_essential() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2022.05.013
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Replogle_2022_K562_essential.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/ReplogleWeissman2022_K562_essential.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Replogle_2022_K562_gwps() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2022.05.013
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Replogle_2022_K562_gwps.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/ReplogleWeissman2022_K562_gwps.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Replogle_2022_rpe1() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2022.05.013
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Replogle_2022_rpe1.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/ReplogleWeissman2022_rpe1.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Schiebinger_2019_GSE106340() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2019.01.006
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Schiebinger_2019_.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/SchiebingerLander2019_GSE106340.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Schiebinger_2019_GSE115943() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2019.01.006
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Schiebinger_2019_.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/SchiebingerLander2019_GSE115943.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Schraivogel_2020_TAP_SCREEN_chr11() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41592-020-0837-5
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Schraivogel_2020_TAP_SCREEN_chr11.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_11_screen.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Schraivogel_2020_TAP_SCREEN_chr8() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41592-020-0837-5
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Schraivogel_2020_TAP_SCREEN_chr8.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_8_screen.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Shifrut_2018() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.cell.2018.10.024
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Shifrut_2018.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/ShifrutMarson2018.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+    
+def Srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1126/science.aax6234
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Srivatsan_2020_sciplex2.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/SrivatsanTrapnell2020_sciplex2.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1126/science.aax6234
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Srivatsan_2020_sciplex3.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/SrivatsanTrapnell2020_sciplex3.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1126/science.aax6234
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Srivatsan_2020_sciplex4.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/SrivatsanTrapnell2020_sciplex4.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Tian_2019_day7neuron() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.neuron.2019.07.014
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Tian_2019_day7neuron.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/TianKampmann2019_day7neuron.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Tian_2019_iPSC() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.neuron.2019.07.014
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Tian_2019_iPSC.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/TianKampmann2019_iPSC.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Tian_2021_CRISPRa() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41593-021-00862-0
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Tian_2021_CRISPRa.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/TianKampmann2021_CRISPRa.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Tian_2021_CRISPRi() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1038/s41593-021-00862-0
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Tian_2021_CRISPRi.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/TianKampmann2021_CRISPRi.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+    
+
+def Weinreb_2020() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1126/science.aaw3381
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Weinreb_2020.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/WeinrebKlein2020.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Xie_2017() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1016/j.molcel.2017.03.007
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "Xie_2017.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/XieHon2017.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def Zhao_2021() -> AnnData:  # pragma: no cover
+    """scPerturb Single-Cell Perturbation Data.
+    
+    https://github.com/sanderlab/scPerturb
+
+    Reference:
+       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+       
+    Source paper:
+        https://doi.org/10.1186/s13073-021-00894-y
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "ZhaoSims2021.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://zenodo.org/record/7278143/files/ZhaoSims2021.h5ad?download=1",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
