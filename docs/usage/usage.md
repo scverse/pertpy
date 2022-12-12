@@ -116,6 +116,21 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
     tools.Augurpy
 ```
 
+### MetaData
+
+MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.MetaData
+```
+
+
 ### Mixscape
 
 A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html) Papalexi et al. [Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens](https://www.nature.com/articles/s41588-021-00778-2).
