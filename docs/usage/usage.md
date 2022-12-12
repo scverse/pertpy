@@ -119,6 +119,7 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
 ### MetaData
 
 MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+
 ```{eval-rst}
 .. currentmodule:: pertpy
 ```
@@ -129,7 +130,6 @@ MetaData provides tooling to fetch and add more metadata to perturbations by que
 
     tools.MetaData
 ```
-
 
 ### Mixscape
 
