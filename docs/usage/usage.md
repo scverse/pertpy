@@ -155,6 +155,23 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
 
+### scCODA and tascCODA
+
+Reimplementation of scCODA for identification of compositional changes in high-throughput sequencing count data and tascCODA for sparse, tree-aggregated modeling of high-throughput sequencing data.
+See [scCODA is a Bayesian model for compositional single-cell data analysis](https://www.nature.com/articles/s41467-021-27150-6) for statistical methodology and benchmarking performance of scCODA and [tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data](https://www.frontiersin.org/articles/10.3389/fgene.2021.766405/full) for statistical methodology and benchmarking performance of tascCODA.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.SccodaModel2
+    tools.TasccodaModel2
+```
+
 ### Representation
 
 ```{eval-rst}
@@ -202,4 +219,19 @@ See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebook
     plot.milo.nhood
     plot.milo.da_beeswarm
     plot.milo.nhood_counts_by_cond
+```
+
+### scCODA and tascCODA
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.coda.stacked_barplot
+    plot.coda.effects_barplot
+    plot.coda.boxplots
+    plot.coda.rel_abundance_dispersion_plot
+    plot.coda.draw_tree
+    plot.coda.draw_effects
+    plot.coda.effects_umap
 ```
