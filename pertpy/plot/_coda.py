@@ -1,7 +1,6 @@
 import os
 from typing import List, Literal, Optional, Tuple, Union
 
-import ete3 as ete
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,39 +16,40 @@ from matplotlib.colors import ListedColormap
 from mudata import MuData
 from statannotations.Annotator import Annotator
 
-from pertpy.tools._sccoda import CompositionalModel2
+from pertpy.tools._base_coda import CompositionalModel2, collapse_singularities_2
 
 sns.set_style("ticks")
 
 
-class SccodaPlot:
+class CodaPlot:
     @staticmethod
-    def __stackbar(
+    def __stackbar( # pragma: no cover
         y: np.ndarray,
         type_names: List[str],
         title: str,
         level_names: List[str],
-        figsize: Optional[Tuple[int, int]] = None,
+        figsize: Optional[Tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[ListedColormap] = cm.tab20,
         show_legend: Optional[bool] = True,
-    ) -> plt.Subplot:
+    ) -> plt.Axes:
         """Plots a stacked barplot for one (discrete) covariate
-            Typical use (only inside stacked_barplot): plot_one_stackbar(data.X, data.var.index, "xyz", data.obs.index)
+
+        Typical use (only inside stacked_barplot): plot_one_stackbar(data.X, data.var.index, "xyz", data.obs.index)
 
 
         Args:
-            y (np.ndarray): The count data, collapsed onto the level of interest. i.e. a binary covariate has two rows, one for each group, containing the count mean of each cell type
-            type_names (List[str]): The names of all cell types
-            title (str): Plot title, usually the covariate's name
-            level_names (List[str]): Names of the covariate's levels
-            figsize (Optional[Tuple[int, int]], optional): Figure size. Defaults to None.
-            dpi (Optional[int], optional): Dpi setting. Defaults to 100.
-            cmap (Optional[ListedColormap], optional): The color map for the barplot. Defaults to cm.tab20.
-            show_legend (Optional[bool], optional): If True, adds a legend. Defaults to True.
+            y: The count data, collapsed onto the level of interest. i.e. a binary covariate has two rows, one for each group, containing the count mean of each cell type
+            type_names: The names of all cell types
+            title: Plot title, usually the covariate's name
+            level_names: Names of the covariate's levels
+            figsize: Figure size. Defaults to None.
+            dpi: Dpi setting. Defaults to 100.
+            cmap: The color map for the barplot. Defaults to cm.tab20.
+            show_legend: If True, adds a legend. Defaults to True.
 
         Returns:
-            plt.Subplot: Returns a plot.
+            A :class:`~matplotlib.axes.Axes` object
         """
         n_bars, n_types = y.shape
 
@@ -85,32 +85,33 @@ class SccodaPlot:
         return ax
 
     @staticmethod
-    def stacked_barplot(
+    def stacked_barplot( # pragma: no cover
         data: Union[AnnData, MuData],
         feature_name: str,
         modality_key: str = "coda",
-        figsize: Optional[Tuple[int, int]] = None,
+        figsize: Optional[Tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[ListedColormap] = cm.tab20,
         show_legend: Optional[bool] = True,
         level_order: List[str] = None,
-    ) -> plt.Subplot:
+    ) -> plt.Axes:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
-            Usage: plot_feature_stackbars(data, ["cov1", "cov2", "cov3"])
+
+        Usage: plot_feature_stackbars(data, ["cov1", "cov2", "cov3"])
 
 
         Args:
-            data (Union[AnnData, MuData]): AnnData object or MuData object.
-            feature_name (str): The name of the covariate to plot. If feature_name=="samples", one bar for every sample will be plotted
-            modality_key (str, optional): If data is a MuData object, specify which modality to use. Defaults to "coda".
-            figsize (Optional[Tuple[int, int]], optional): Figure size. Defaults to None.
-            dpi (Optional[int], optional): Dpi setting. Defaults to 100.
-            cmap (Optional[ListedColormap], optional): The matplotlib color map for the barplot. Defaults to cm.tab20.
-            show_legend (Optional[bool], optional): If True, adds a legend. Defaults to True.
-            level_order (List[str], optional): Custom ordering of bars on the x-axis. Defaults to None.
+            data: AnnData object or MuData object.
+            feature_name: The name of the covariate to plot. If feature_name=="samples", one bar for every sample will be plotted
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            figsize: Figure size. Defaults to None.
+            dpi: Dpi setting. Defaults to 100.
+            cmap: The matplotlib color map for the barplot. Defaults to cm.tab20.
+            show_legend: If True, adds a legend. Defaults to True.
+            level_order: Custom ordering of bars on the x-axis. Defaults to None.
 
         Returns:
-            plt.Subplot: A plot.
+            A :class:`~matplotlib.axes.Axes` object
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -125,7 +126,7 @@ class SccodaPlot:
             if level_order:
                 assert set(level_order) == set(data.obs.index), "level order is inconsistent with levels"
                 data = data[level_order]
-            g = SccodaPlot.__stackbar(
+            ax = CodaPlot.__stackbar(
                 data.X,
                 type_names=data.var.index,
                 title="samples",
@@ -151,7 +152,7 @@ class SccodaPlot:
                 l_indices = np.where(data.obs[feature_name] == levels[level])
                 feature_totals[level] = np.sum(data.X[l_indices], axis=0)
 
-            g = SccodaPlot.__stackbar(
+            ax = CodaPlot.__stackbar(
                 feature_totals,
                 type_names=type_names,
                 title=feature_name,
@@ -161,10 +162,10 @@ class SccodaPlot:
                 cmap=cmap,
                 show_legend=show_legend,
             )
-        return g
+        return ax
 
     @staticmethod
-    def effects_barplot(  # noqa: C901
+    def effects_barplot(  # noqa: C901 # pragma: no cover
         data: Union[AnnData, MuData],
         modality_key: str = "coda",
         covariates: Optional[Union[str, List]] = None,
@@ -172,31 +173,33 @@ class SccodaPlot:
         plot_facets: bool = True,
         plot_zero_covariate: bool = True,
         plot_zero_cell_type: bool = False,
-        figsize: Optional[Tuple[int, int]] = None,
+        figsize: Optional[Tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[Union[str, ListedColormap]] = cm.tab20,
         level_order: List[str] = None,
         args_barplot: Optional[dict] = None,
-    ) -> Optional[Union[plt.Subplot, sns.axisgrid.FacetGrid]]:
-        """Barplot visualization for effects. The effect results for each covariate are shown as a group of barplots,
-            with intra--group separation by cell types. The covariates groups can either be ordered along the x-axis of a single plot (plot_facets=False) or as plot facets (plot_facets=True).
+    ) -> Optional[Union[plt.Axes, sns.axisgrid.FacetGrid]]:
+        """Barplot visualization for effects.
+
+        The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
+        The covariates groups can either be ordered along the x-axis of a single plot (plot_facets=False) or as plot facets (plot_facets=True).
 
         Args:
-            data (Union[AnnData, MuData]): AnnData object or MuData object.
-            modality_key (str, optional): If data is a MuData object, specify which modality to use. Defaults to "coda".
-            covariates (Optional[Union[str, List]], optional): The name of the covariates in data.obs to plot. Defaults to None.
-            parameter (Literal[ &quot;log2, optional): The parameter in effect summary to plot. Defaults to "log2-fold change".
-            plot_facets (bool, optional): If False, plot cell types on the x-axis. If True, plot as facets. Defaults to True.
-            plot_zero_covariate (bool, optional): If True, plot covariate that have all zero effects. If False, do not plot. Defaults to True.
-            plot_zero_cell_type (bool, optional): If True, plot cell type that have zero effect. If False, do not plot. Defaults to False.
-            figsize (Optional[Tuple[int, int]], optional): _description_. Defaults to None.
-            dpi (Optional[int], optional): Figure size. Defaults to 100.
-            cmap (Optional[Union[str, ListedColormap]], optional): The seaborn color map for the barplot. Defaults to cm.tab20.
-            level_order (List[str], optional): Custom ordering of bars on the x-axis. Defaults to None.
-            args_barplot (Optional[dict], optional): Arguments passed to sns.barplot. Defaults to {}.
+            data: AnnData object or MuData object.
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            covariates: The name of the covariates in data.obs to plot. Defaults to None.
+            parameter: The parameter in effect summary to plot. Defaults to "log2-fold change".
+            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets. Defaults to True.
+            plot_zero_covariate: If True, plot covariate that have all zero effects. If False, do not plot. Defaults to True.
+            plot_zero_cell_type: If True, plot cell type that have zero effect. If False, do not plot. Defaults to False.
+            figsize: Figure size. Defaults to None.
+            dpi: Figure size. Defaults to 100.
+            cmap: The seaborn color map for the barplot. Defaults to cm.tab20.
+            level_order: Custom ordering of bars on the x-axis. Defaults to None.
+            args_barplot: Arguments passed to sns.barplot. Defaults to {}.
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~plt.AxesSubplot` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
         """
         if args_barplot is None:
             args_barplot = {}
@@ -204,6 +207,7 @@ class SccodaPlot:
             data = data[modality_key]
         if isinstance(data, AnnData):
             data = data
+        # Get covariate names and non-zero covariate names from adata
         covariate_names = data.uns["scCODA_params"]["covariate_names"]
         if covariates is not None:
             if isinstance(covariates, str):
@@ -252,6 +256,7 @@ class SccodaPlot:
                     ]
                     plot_df = plot_df[~plot_df["Cell Type"].isin(cell_type_names_zero)]
 
+        # If plot as facets, create a FacetGrid and map barplot to it.
         if plot_facets:
             if isinstance(cmap, ListedColormap):
                 cmap = np.array([cmap(i % cmap.N) for i in range(len(plot_df["Cell Type"].unique()))])
@@ -291,6 +296,7 @@ class SccodaPlot:
                             ax.set_xticks([])
             return g
 
+        # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
 
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
@@ -321,7 +327,7 @@ class SccodaPlot:
             return ax
 
     @staticmethod
-    def boxplots(  # noqa: C901
+    def boxplots(  # noqa: C901 # pragma: no cover
         data: Union[AnnData, MuData],
         feature_name: str,
         modality_key: str = "coda",
@@ -333,35 +339,35 @@ class SccodaPlot:
         cell_types: Optional[list] = None,
         args_boxplot: Optional[dict] = None,
         args_swarmplot: Optional[dict] = None,
-        figsize: Optional[Tuple[int, int]] = None,
+        figsize: Optional[Tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[str] = "Blues",
         show_legend: Optional[bool] = True,
         level_order: List[str] = None,
-    ) -> Optional[Union[plt.Subplot, sns.axisgrid.FacetGrid]]:
+    ) -> Optional[Union[plt.Axes, sns.axisgrid.FacetGrid]]:
         """Grouped boxplot visualization. The cell counts for each cell type are shown as a group of boxplots,
             with intra--group separation by a covariate from data.obs.
 
         Args:
-            data (Union[AnnData, MuData]): AnnData object or MuData object
-            feature_name (str): The name of the feature in data.obs to plot
-            modality_key (str, optional): If data is a MuData object, specify which modality to use. Defaults to "coda".
-            y_scale (Literal["relative", "log", "log10", "count"]], optional): Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count), "log10" - log10(count), "count" - absolute abundance (cell counts). Defaults to "relative".
-            plot_facets (bool, optional): If False, plot cell types on the x-axis. If True, plot as facets. Defaults to False.
-            add_dots (bool, optional): If True, overlay a scatterplot with one dot for each data point. Defaults to False.
-            draw_effects (bool, optional): If True, draw horizontal bars for credible effects (You have to run inference on model before using this option!). Defaults to False.
-            model (CompositionalModel2): When draw_effects, specify a tasCODA model
-            cell_types (Optional[list], optional): Subset of cell types that should be plotted. Defaults to None.
-            args_boxplot (Optional[dict], optional): Arguments passed to sns.boxplot. Defaults to {}.
-            args_swarmplot (Optional[dict], optional): Arguments passed to sns.swarmplot. Defaults to {}.
-            figsize (Optional[Tuple[int, int]], optional): Figure size. Defaults to None.
-            dpi (Optional[int], optional): Dpi setting. Defaults to 100.
-            cmap (Optional[str], optional): The seaborn color map for the barplot. Defaults to "Blues".
-            show_legend (Optional[bool], optional): If True, adds a legend. Defaults to True.
-            level_order (List[str], optional): Custom ordering of bars on the x-axis. Defaults to None.
+            data: AnnData object or MuData object
+            feature_name: The name of the feature in data.obs to plot
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            y_scale: Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count), "log10" - log10(count), "count" - absolute abundance (cell counts). Defaults to "relative".
+            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets. Defaults to False.
+            add_dots: If True, overlay a scatterplot with one dot for each data point. Defaults to False.
+            draw_effects: If True, draw horizontal bars for credible effects (You have to run inference on model before using this option!). Defaults to False.
+            model: When draw_effects, specify a tasCODA model
+            cell_types: Subset of cell types that should be plotted. Defaults to None.
+            args_boxplot: Arguments passed to sns.boxplot. Defaults to {}.
+            args_swarmplot: Arguments passed to sns.swarmplot. Defaults to {}.
+            figsize: Figure size. Defaults to None.
+            dpi: Dpi setting. Defaults to 100.
+            cmap: The seaborn color map for the barplot. Defaults to "Blues".
+            show_legend: If True, adds a legend. Defaults to True.
+            level_order: Custom ordering of bars on the x-axis. Defaults to None.
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~plt.AxesSubplot` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
         """
         if args_boxplot is None:
             args_boxplot = {}
@@ -396,6 +402,7 @@ class SccodaPlot:
         if cell_types is not None:
             plot_df = plot_df[plot_df["Cell type"].isin(cell_types)]
 
+        # Get credible effects results from model
         if draw_effects:
             if model is not None:
                 credible_effects_df = model.credible_effects(data, modality_key).to_frame().reset_index()
@@ -405,6 +412,7 @@ class SccodaPlot:
             credible_effects_df[feature_name] = credible_effects_df[feature_name].str.removesuffix("]")
             credible_effects_df = credible_effects_df[credible_effects_df["Final Parameter"]]
 
+        # If plot as facets, create a FacetGrid and map boxplot to it.
         if plot_facets:
 
             if level_order is None:
@@ -463,13 +471,14 @@ class SccodaPlot:
                     ).set_titles("{col_name}")
             return g
 
+        # If not plot as facets, call boxplot to plot cell types on the x-axis.
         else:
 
             if level_order:
                 args_boxplot["hue_order"] = level_order
                 args_swarmplot["hue_order"] = level_order
 
-            fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+            _, ax = plt.subplots(figsize=figsize, dpi=dpi)
 
             ax = sns.boxplot(
                 x="Cell type",
@@ -528,33 +537,34 @@ class SccodaPlot:
             return ax
 
     @staticmethod
-    def rel_abundance_dispersion_plot(
+    def rel_abundance_dispersion_plot( # pragma: no cover
         data: Union[AnnData, MuData],
         modality_key: str = "coda",
         abundant_threshold: Optional[float] = 0.9,
         default_color: Optional[str] = "Grey",
         abundant_color: Optional[str] = "Red",
         label_cell_types: bool = True,
-        figsize: Optional[Tuple[int, int]] = None,
+        figsize: Optional[Tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         ax: Axes = None,
-    ) -> plt.Subplot:
+    ) -> plt.Axes:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
-            If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
+
+        If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
 
         Args:
-            data (Union[AnnData, MuData]): AnnData object or MuData object.
-            modality_key (str, optional): If data is a MuData object, specify which modality to use. Defaults to "coda". Defaults to "coda".
-            abundant_threshold (Optional[float], optional): Presence threshold for abundant cell types. Defaults to 0.9.
-            default_color (Optional[str], optional): Bar color for all non-minimal cell types. Defaults to "Grey".
-            abundant_color (Optional[str], optional): Bar color for cell types with abundant percentage larger than abundant_threshold. Defaults to "Red".
-            label_cell_types (bool, optional): Label dots with cell type names. Defaults to True.
-            figsize (Optional[Tuple[int, int]], optional): Figure size. Defaults to None.
-            dpi (Optional[int], optional): Dpi setting. Defaults to 100.
-            ax (Axes, optional): A matplotlib axes object. Only works if plotting a single component. Defaults to None.
+            data: AnnData object or MuData object.
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda". Defaults to "coda".
+            abundant_threshold: Presence threshold for abundant cell types. Defaults to 0.9.
+            default_color: Bar color for all non-minimal cell types. Defaults to "Grey".
+            abundant_color: Bar color for cell types with abundant percentage larger than abundant_threshold. Defaults to "Red".
+            label_cell_types: Label dots with cell type names. Defaults to True.
+            figsize: Figure size. Defaults to None.
+            dpi: Dpi setting. Defaults to 100.
+            ax: A matplotlib axes object. Only works if plotting a single component. Defaults to None.
 
         Returns:
-            plt.Subplot: A plot
+            A :class:`~matplotlib.axes.Axes` object
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -607,7 +617,6 @@ class SccodaPlot:
             a = pd.concat({"x": x, "y": y, "val": val}, axis=1)
             texts = [
                 ax.text(
-                    # + .02*ax.get_xlim()[1],
                     point["x"],
                     point["y"],
                     str(point["val"]),
@@ -630,7 +639,7 @@ class SccodaPlot:
         return ax
 
     @staticmethod
-    def draw_tree(
+    def draw_tree( # pragma: no cover
         tree: Tree,
         tight_text: Optional[bool] = False,
         show_scale: Optional[bool] = False,
@@ -641,18 +650,18 @@ class SccodaPlot:
         w: Optional[float] = None,
         dpi: Optional[int] = 90,
     ):
-        """Plot a tree.
+        """Plot a tree using input ete3 tree object.
 
         Args:
-            tree (Tree): A ete3 tree object.
-            tight_text (Optional[bool], optional): When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Default to False.
-            show_scale (Optional[bool], optional): Include the scale legend in the tree image or not. Default to False.
-            show (Optional[bool], optional): If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
-            file_name (Optional[str], optional): Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not. Defaults to None.
-            units (Optional[Literal[&quot;px&quot;, &quot;mm&quot;, &quot;in&quot;]], optional): “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
-            h (Optional[float], optional): Height of the image in units. Defaults to None.
-            w (Optional[float], optional): Width of the image in units. Defaults to None.
-            dpi (Optional[int], optional): Dots per inches. Defaults to 90.
+            tree: A ete3 tree object.
+            tight_text: When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Default to False.
+            show_scale: Include the scale legend in the tree image or not. Default to False.
+            show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
+            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not. Defaults to None.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
+            h: Height of the image in units. Defaults to None.
+            w: Width of the image in units. Defaults to None.
+            dpi: Dots per inches. Defaults to 90.
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
@@ -674,7 +683,7 @@ class SccodaPlot:
             return tree, tree_style
 
     @staticmethod
-    def draw_effects(  # noqa: C901
+    def draw_effects(  # noqa: C901 # pragma: no cover
         data: Union[AnnData, MuData],
         tree: Union[Tree, str],
         covariate: str,
@@ -693,20 +702,20 @@ class SccodaPlot:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:
-            data (Union[AnnData, MuData]): AnnData object or MuData object.
-            tree (Tree): A ete3 tree object or a str to indicate the tree stored in `.uns`.
-            covariate (str): The covariate, whose effects should be plotted
-            modality_key (str, optional): If data is a MuData object, specify which modality to use. Defaults to "coda".
-            show_legend (Optional[bool], optional): If show legend of nodes significant effects or not. Default is False if show_leaf_effects is True.
-            show_leaf_effects (Optional[bool], optional): If True, plot bar plots which indicate leave-level significant effects. Defaults to False.
-            tight_text (Optional[bool], optional): When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Defaults to False.
-            show_scale (Optional[bool], optional): Include the scale legend in the tree image or not. Defaults to False.
-            show (Optional[bool], optional): If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
-            file_name (Optional[str], optional): Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not. Defaults to None.
-            units (Optional[Literal[&quot;px&quot;, &quot;mm&quot;, &quot;in&quot;]], optional): “px”: pixels, “mm”: millimeters, “in”: inches. Default is "in". Defaults to "in".
-            h (Optional[float], optional): Height of the image in units. Defaults to None.
-            w (Optional[float], optional): Width of the image in units. Defaults to None.
-            dpi (Optional[int], optional): Dots per inches. Defaults to 90.
+            data: AnnData object or MuData object.
+            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
+            covariate: The covariate, whose effects should be plotted
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            show_legend: If show legend of nodes significant effects or not. Default is False if show_leaf_effects is True.
+            show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects. Defaults to False.
+            tight_text: When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Defaults to False.
+            show_scale: Include the scale legend in the tree image or not. Defaults to False.
+            show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
+            file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not. Defaults to None.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Default is "in". Defaults to "in".
+            h: Height of the image in units. Defaults to None.
+            w: Width of the image in units. Defaults to None.
+            dpi: Dots per inches. Defaults to 90.
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
@@ -846,7 +855,7 @@ class SccodaPlot:
                 return tree2, tree_style
 
     @staticmethod
-    def effects_umap(
+    def effects_umap( # pragma: no cover
         data: MuData,
         effect_name: Optional[Union[str, list]],
         cluster_key: str,
@@ -859,13 +868,13 @@ class SccodaPlot:
         """Plot a UMAP visualization colored by effect strength. Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData (default is data['rna']) depending on the cluster they were assigned to.
 
         Args:
-            data (Union[AnnData, MuData]): AnnData object or MuData object.
-            effect_name (Optional[Union[str, list]]): The name of the effect results in .varm of aggregated sample-level AnnData (default is data['coda']) to plot
-            cluster_key (str): The cluster information in .obs of cell-level AnnData (default is data['rna']). To assign cell types' effects to original cells.
-            modality_key_1 (str, optional): Key to the cell-level AnnData in the MuData object. Defaults to "rna".
-            modality_key_2 (str, optional): Key to the aggregated sample-level AnnData object in the MuData object. Defaults to "coda".
-            show (bool, optional): Whether to display the figure or return axis. Defaults to None.
-            ax (Axes, optional): A matplotlib axes object. Only works if plotting a single component. Defaults to None.
+            data: AnnData object or MuData object.
+            effect_name: The name of the effect results in .varm of aggregated sample-level AnnData (default is data['coda']) to plot
+            cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']). To assign cell types' effects to original cells.
+            modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to "rna".
+            modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object. Defaults to "coda".
+            show: Whether to display the figure or return axis. Defaults to None.
+            ax: A matplotlib axes object. Only works if plotting a single component. Defaults to None.
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
 
         Returns:
@@ -890,26 +899,3 @@ class SccodaPlot:
         else:
             vmax = max([data_rna.obs[effect].max() for _, effect in enumerate(effect_name)])
         return sc.pl.umap(data_rna, color=effect_name, vmax=vmax, vmin=vmin, ax=ax, show=show, **kwargs)
-
-
-def collapse_singularities_2(tree: ete.Tree) -> ete.Tree:
-    """
-    Collapses (deletes) nodes in a ete3 tree that are singularities (have only one child).
-
-    Parameters
-    ----------
-    tree
-        A ete3 tree object
-
-    Returns
-    -------
-    A ete3 tree without singularities
-
-    tree
-        A ete3 tree
-    """
-    for node in tree.iter_descendants():
-        if len(node.get_children()) == 1:
-            node.delete()
-
-    return tree

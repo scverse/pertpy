@@ -15,8 +15,7 @@ CWD = Path(__file__).parent.resolve()
 
 class TestscCODA:
 
-    sccoda_model = pt.tl.SccodaModel2()
-    tasccoda_model = pt.tl.TasccodaModel2()
+    sccoda_model = pt.tl.Sccoda()
 
     @pytest.fixture
     def adata(self):
@@ -68,55 +67,3 @@ class TestscCODA:
         self.sccoda_model.go_nuts(mdata)
         arviz_data = self.sccoda_model.make_arviz(mdata, num_prior_samples=100)
         assert isinstance(arviz_data, az.InferenceData)
-
-    @pytest.fixture
-    def smillie_adata(self):
-        smillie_adata = sc.read_h5ad(f"{CWD}/smillie_data.h5ad")
-        return smillie_adata
-
-    def test_load_tasccoda(self, smillie_adata):
-        mdata = self.tasccoda_model.load(
-            smillie_adata,
-            type="sample_level",
-            levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-            key_added="lineage",
-            add_level_name=True,
-        )
-        assert isinstance(mdata, MuData)
-        assert "rna" in mdata.mod
-        assert "coda" in mdata.mod
-        assert "lineage" in mdata["coda"].uns
-
-    def test_prepare_tasccoda(self, smillie_adata):
-        mdata = self.tasccoda_model.load(
-            smillie_adata,
-            type="sample_level",
-            levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-            key_added="lineage",
-            add_level_name=True,
-        )
-        mdata = self.tasccoda_model.prepare(
-            mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-        )
-        assert "scCODA_params" in mdata["coda"].uns
-        assert "covariate_matrix" in mdata["coda"].obsm
-        assert "sample_counts" in mdata["coda"].obsm
-        assert isinstance(mdata["coda"].obsm["sample_counts"], np.ndarray)
-        assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 85
-
-    def test_go_nuts_tasccoda(self, smillie_adata):
-        mdata = self.tasccoda_model.load(
-            smillie_adata,
-            type="sample_level",
-            levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-            key_added="lineage",
-            add_level_name=True,
-        )
-        mdata = self.tasccoda_model.prepare(
-            mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-        )
-        self.tasccoda_model.go_nuts(mdata, num_samples=1000, num_warmup=100)
-        assert "effect_df_Health[T.Inflamed]" in mdata["coda"].varm
-        assert "effect_df_Health[T.Non-inflamed]" in mdata["coda"].varm
-        assert mdata["coda"].varm["effect_df_Health[T.Inflamed]"].shape == (51, 7)
-        assert mdata["coda"].varm["effect_df_Health[T.Non-inflamed]"].shape == (51, 7)
