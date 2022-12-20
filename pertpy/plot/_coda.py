@@ -23,7 +23,7 @@ sns.set_style("ticks")
 
 class CodaPlot:
     @staticmethod
-    def __stackbar( # pragma: no cover
+    def __stackbar(  # pragma: no cover
         y: np.ndarray,
         type_names: List[str],
         title: str,
@@ -85,7 +85,7 @@ class CodaPlot:
         return ax
 
     @staticmethod
-    def stacked_barplot( # pragma: no cover
+    def stacked_barplot(  # pragma: no cover
         data: Union[AnnData, MuData],
         feature_name: str,
         modality_key: str = "coda",
@@ -382,7 +382,7 @@ class CodaPlot:
             sample_sums = np.sum(data.X, axis=1, keepdims=True)
             X = data.X / sample_sums
             value_name = "Proportion"
-        # add pseudocount 1 if using log scale (needs to be improved)
+        # add pseudocount 1 if using log scale
         elif y_scale == "log":
             X = np.log(data.X + 1)
             value_name = "log(count)"
@@ -537,7 +537,7 @@ class CodaPlot:
             return ax
 
     @staticmethod
-    def rel_abundance_dispersion_plot( # pragma: no cover
+    def rel_abundance_dispersion_plot(  # pragma: no cover
         data: Union[AnnData, MuData],
         modality_key: str = "coda",
         abundant_threshold: Optional[float] = 0.9,
@@ -639,7 +639,7 @@ class CodaPlot:
         return ax
 
     @staticmethod
-    def draw_tree( # pragma: no cover
+    def draw_tree(  # pragma: no cover
         tree: Tree,
         tight_text: Optional[bool] = False,
         show_scale: Optional[bool] = False,
@@ -855,7 +855,7 @@ class CodaPlot:
                 return tree2, tree_style
 
     @staticmethod
-    def effects_umap( # pragma: no cover
+    def effects_umap(  # pragma: no cover
         data: MuData,
         effect_name: Optional[Union[str, list]],
         cluster_key: str,
