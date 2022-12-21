@@ -76,7 +76,7 @@ class CompositionalModel2(ABC):
     def model(self, *args, **kwargs):
         pass
 
-    def prepare_anndata(
+    def prepare(
         self,
         sample_adata: AnnData,
         formula: str,
@@ -360,19 +360,18 @@ class CompositionalModel2(ABC):
 
         Returns:
             Tuple[pd.DataFrame, pd.DataFrame] or Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Intercept, effect and node-level DataFrames
-            pd.DataFrame: intercept_df
+
+            intercept_df
                 Summary of intercept parameters. Contains one row per cell type.
 
-                Columns:
                 - Final Parameter: Final intercept model parameter
                 - HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)
                 - SD: Standard deviation of MCMC samples
                 - Expected sample: Expected cell counts for a sample with no present covariates. See the tutorial for more explanation
 
-            pd.DataFrame: effect_df
+            effect_df
                 Summary of effect (slope) parameters. Contains one row per covariate/cell type combination.
 
-                Columns:
                 - Final Parameter: Final effect model parameter. If this parameter is 0, the effect is not significant, else it is.
                 - HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)
                 - SD: Standard deviation of MCMC samples
@@ -380,10 +379,9 @@ class CompositionalModel2(ABC):
                 - log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate
                 - Inclusion probability: Share of MCMC samples, for which this effect was not set to 0 by the spike-and-slab prior.
 
-            pd.DataFrame: node_df
+            node_df
                 Summary of effect (slope) parameters on the tree nodes (features or groups of features). Contains one row per covariate/cell type combination.
 
-                Columns:
                 - Final Parameter: Final effect model parameter. If this parameter is 0, the effect is not significant, else it is.
                 - Median: Median of parameter over MCMC chain
                 - HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)

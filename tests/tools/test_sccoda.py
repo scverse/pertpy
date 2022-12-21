@@ -15,7 +15,7 @@ CWD = Path(__file__).parent.resolve()
 
 class TestscCODA:
 
-    sccoda_model = pt.tl.Sccoda()
+    sccoda = pt.tl.Sccoda()
 
     @pytest.fixture
     def adata(self):
@@ -25,14 +25,14 @@ class TestscCODA:
         return adata
 
     def test_load(self, adata):
-        mdata = self.sccoda_model.load(adata, type="sample_level")
+        mdata = self.sccoda.load(adata, type="sample_level")
         assert isinstance(mdata, MuData)
         assert "rna" in mdata.mod
         assert "coda" in mdata.mod
 
     def test_prepare(self, adata):
-        mdata = self.sccoda_model.load(adata, type="sample_level")
-        mdata = self.sccoda_model.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
+        mdata = self.sccoda.load(adata, type="sample_level")
+        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
         assert "scCODA_params" in mdata["coda"].uns
         assert "covariate_matrix" in mdata["coda"].obsm
         assert "sample_counts" in mdata["coda"].obsm
@@ -40,9 +40,9 @@ class TestscCODA:
         assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 6
 
     def test_go_nuts(self, adata):
-        mdata = self.sccoda_model.load(adata, type="sample_level")
-        mdata = self.sccoda_model.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
-        self.sccoda_model.go_nuts(mdata, num_warmup=100, num_samples=1000)
+        mdata = self.sccoda.load(adata, type="sample_level")
+        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
+        self.sccoda.go_nuts(mdata, num_warmup=100, num_samples=1000)
         assert "effect_df_Condition[T.H.poly.Day10]" in mdata["coda"].varm
         assert "effect_df_Condition[T.H.poly.Day3]" in mdata["coda"].varm
         assert "effect_df_Condition[T.Salm]" in mdata["coda"].varm
@@ -54,16 +54,16 @@ class TestscCODA:
 
     def test_credible_effects(self, adata):
         adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
-        mdata = self.sccoda_model.load(adata_salm, type="sample_level")
-        mdata = self.sccoda_model.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
-        self.sccoda_model.go_nuts(mdata)
-        assert isinstance(self.sccoda_model.credible_effects(mdata), pd.Series)
-        assert self.sccoda_model.credible_effects(mdata)["Condition[T.Salm]"]["Enterocyte"]
+        mdata = self.sccoda.load(adata_salm, type="sample_level")
+        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
+        self.sccoda.go_nuts(mdata)
+        assert isinstance(self.sccoda.credible_effects(mdata), pd.Series)
+        assert self.sccoda.credible_effects(mdata)["Condition[T.Salm]"]["Enterocyte"]
 
     def test_make_arviz(self, adata):
         adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
-        mdata = self.sccoda_model.load(adata_salm, type="sample_level")
-        mdata = self.sccoda_model.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
-        self.sccoda_model.go_nuts(mdata)
-        arviz_data = self.sccoda_model.make_arviz(mdata, num_prior_samples=100)
+        mdata = self.sccoda.load(adata_salm, type="sample_level")
+        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
+        self.sccoda.go_nuts(mdata)
+        arviz_data = self.sccoda.make_arviz(mdata, num_prior_samples=100)
         assert isinstance(arviz_data, az.InferenceData)

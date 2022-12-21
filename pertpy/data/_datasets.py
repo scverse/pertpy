@@ -141,6 +141,58 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
     return adata
 
 
+def haber_counts() -> AnnData:  # pragma: no cover
+    """Tabularized counts of cell types in the small intestinal epithelium of mice with different conditions.
+
+    Reference:
+        Haber, Adam L. et al. “A single-cell survey of the small intestinal epithelium” Nature vol. 551 (2017): 333-339
+        doi:10.1038/nature24489
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "haber_counts.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def smillie() -> AnnData:  # pragma: no cover
+    """scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
+
+    Reference:
+        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
+        Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "smillie.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
 def frangieh_2021() -> AnnData:  # pragma: no cover
     """Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling.
 

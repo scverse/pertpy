@@ -12,7 +12,7 @@ CWD = Path(__file__).parent.resolve()
 
 class TesttascCODA:
 
-    tasccoda_model = pt.tl.Tasccoda()
+    tasccoda = pt.tl.Tasccoda()
 
     @pytest.fixture
     def smillie_adata(self):
@@ -20,7 +20,7 @@ class TesttascCODA:
         return smillie_adata
 
     def test_load(self, smillie_adata):
-        mdata = self.tasccoda_model.load(
+        mdata = self.tasccoda.load(
             smillie_adata,
             type="sample_level",
             levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
@@ -33,14 +33,14 @@ class TesttascCODA:
         assert "lineage" in mdata["coda"].uns
 
     def test_prepare(self, smillie_adata):
-        mdata = self.tasccoda_model.load(
+        mdata = self.tasccoda.load(
             smillie_adata,
             type="sample_level",
             levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
             key_added="lineage",
             add_level_name=True,
         )
-        mdata = self.tasccoda_model.prepare(
+        mdata = self.tasccoda.prepare(
             mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
         )
         assert "scCODA_params" in mdata["coda"].uns
@@ -50,17 +50,17 @@ class TesttascCODA:
         assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 85
 
     def test_go_nuts(self, smillie_adata):
-        mdata = self.tasccoda_model.load(
+        mdata = self.tasccoda.load(
             smillie_adata,
             type="sample_level",
             levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
             key_added="lineage",
             add_level_name=True,
         )
-        mdata = self.tasccoda_model.prepare(
+        mdata = self.tasccoda.prepare(
             mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
         )
-        self.tasccoda_model.go_nuts(mdata, num_samples=1000, num_warmup=100)
+        self.tasccoda.go_nuts(mdata, num_samples=1000, num_warmup=100)
         assert "effect_df_Health[T.Inflamed]" in mdata["coda"].varm
         assert "effect_df_Health[T.Non-inflamed]" in mdata["coda"].varm
         assert mdata["coda"].varm["effect_df_Health[T.Inflamed]"].shape == (51, 7)

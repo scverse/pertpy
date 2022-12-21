@@ -44,6 +44,7 @@ pt.pl.cool_fancy_plot()
     data.gasperini_2019_lowmoi
     data.gehring_2019
     data.haber_2017_regions
+    data.haber_counts
     data.kang_2018
     data.mcfarland_2020
     data.norman_2019
@@ -64,6 +65,7 @@ pt.pl.cool_fancy_plot()
     data.schraivogel_2020_tap_screen_chr11
     data.sciplex3_raw
     data.shifrut_2018
+    data.smillie
     data.srivatsan_2020_sciplex2
     data.srivatsan_2020_sciplex3
     data.srivatsan_2020_sciplex4
