@@ -148,17 +148,13 @@ class CompositionalModel2(ABC):
 
         # Check input data
         if covariate_matrix.shape[0] != sample_adata.X.shape[0]:
-            raise ValueError(
-                "Wrong input dimensions X[{},:] != y[{},:]".format(
-                    sample_adata.obsm["covariate_matrix"].shape[0], sample_adata.X.shape[0]
-                )
-            )
+            row_len_covariate_matrix = sample_adata.obsm["covariate_matrix"].shape[0]
+            row_len_sample_adata = sample_adata.X.shape[0]
+            raise ValueError(f"Wrong input dimensions X[{row_len_covariate_matrix},:] != y[{row_len_sample_adata},:]")
         if covariate_matrix.shape[0] != len(sample_adata.obsm["sample_counts"]):
-            raise ValueError(
-                "Wrong input dimensions X[{},:] != n_total[{}]".format(
-                    sample_adata.obsm["covariate_matrix"], len(sample_adata.obsm["sample_counts"])
-                )
-            )
+            covariate_matrix = sample_adata.obsm["covariate_matrix"]
+            len_sample_counts = len(sample_adata.obsm["sample_counts"])
+            raise ValueError(f"Wrong input dimensions X[{covariate_matrix},:] != n_total[{len_sample_counts}]")
 
         # Save important model parameters in uns
         sample_adata.uns["scCODA_params"] = {
