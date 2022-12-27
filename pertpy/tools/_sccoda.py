@@ -284,7 +284,7 @@ class Sccoda(CompositionalModel2):
                 adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
                 mdata_salm = sccoda.load(adata_salm, type="sample_level")
                 mdata_salm = sccoda.prepare(mdata_salm, formula="Condition", reference_cell_type="Goblet")
-                sccoda.go_nuts(mdata_salm)
+                sccoda.run_nuts(mdata_salm)
                 sccoda.make_arviz(mdata_salm, num_prior_samples=100)
         """
         if isinstance(data, MuData):
@@ -366,17 +366,8 @@ class Sccoda(CompositionalModel2):
 
         return arviz_data
 
-    def go_nuts(
-        self,
-        data: AnnData | MuData,
-        modality_key: str = "coda",
-        num_samples: int = 10000,
-        num_warmup: int = 1000,
-        rng_key: int = None,
-        copy: bool = False,
-        *args,
-        **kwargs,
-    ):
+    def run_nuts(self, data: AnnData | MuData, modality_key: str = "coda", num_samples: int = 10000,
+                 num_warmup: int = 1000, rng_key: int = None, copy: bool = False, *args, **kwargs):
         """
         Example:
             .. code-block:: python
@@ -387,11 +378,11 @@ class Sccoda(CompositionalModel2):
                 sccoda = pt.tl.Sccoda()
                 mdata = sccoda.load(adata, type="sample_level")
                 mdata = sccoda.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
-                sccoda.go_nuts(mdata, num_warmup=100, num_samples=1000)
+                sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000)
         """
-        return super().go_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
+        return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
-    go_nuts.__doc__ = CompositionalModel2.go_nuts.__doc__ + go_nuts.__doc__
+    run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """
@@ -405,7 +396,7 @@ class Sccoda(CompositionalModel2):
                 adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
                 mdata_salm = sccoda.load(adata_salm, type="sample_level")
                 mdata_salm = sccoda.prepare(mdata_salm, formula="Condition", reference_cell_type="Goblet")
-                sccoda.go_nuts(mdata_salm)
+                sccoda.run_nuts(mdata_salm)
                 sccoda.credible_effects(mdata_salm)
         """
         return super().credible_effects(data, modality_key, est_fdr)
@@ -424,7 +415,7 @@ class Sccoda(CompositionalModel2):
                 adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
                 mdata_salm = sccoda.load(adata_salm, type="sample_level")
                 mdata_salm = sccoda.prepare(mdata_salm, formula="Condition", reference_cell_type="Goblet")
-                sccoda.go_nuts(mdata_salm)
+                sccoda.run_nuts(mdata_salm)
                 sccoda.summary(mdata_salm)
         """
         return super().summary(data, extended, modality_key, *args, **kwargs)
@@ -443,7 +434,7 @@ class Sccoda(CompositionalModel2):
                 adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
                 mdata_salm = sccoda.load(adata_salm, type="sample_level")
                 mdata_salm = sccoda.prepare(mdata_salm, formula="Condition", reference_cell_type="Goblet")
-                sccoda.go_nuts(mdata_salm)
+                sccoda.run_nuts(mdata_salm)
                 sccoda.set_fdr(mdata_salm, est_fdr=0.4)
                 sccoda.summary(mdata_salm)
         """

@@ -39,10 +39,10 @@ class TestscCODA:
         assert isinstance(mdata["coda"].obsm["sample_counts"], np.ndarray)
         assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 6
 
-    def test_go_nuts(self, adata):
+    def test_run_nuts(self, adata):
         mdata = self.sccoda.load(adata, type="sample_level")
         mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
-        self.sccoda.go_nuts(mdata, num_warmup=100, num_samples=1000)
+        self.sccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
         assert "effect_df_Condition[T.H.poly.Day10]" in mdata["coda"].varm
         assert "effect_df_Condition[T.H.poly.Day3]" in mdata["coda"].varm
         assert "effect_df_Condition[T.Salm]" in mdata["coda"].varm
@@ -56,7 +56,7 @@ class TestscCODA:
         adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
         mdata = self.sccoda.load(adata_salm, type="sample_level")
         mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
-        self.sccoda.go_nuts(mdata)
+        self.sccoda.run_nuts(mdata)
         assert isinstance(self.sccoda.credible_effects(mdata), pd.Series)
         assert self.sccoda.credible_effects(mdata)["Condition[T.Salm]"]["Enterocyte"]
 
@@ -64,6 +64,6 @@ class TestscCODA:
         adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
         mdata = self.sccoda.load(adata_salm, type="sample_level")
         mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
-        self.sccoda.go_nuts(mdata)
+        self.sccoda.run_nuts(mdata)
         arviz_data = self.sccoda.make_arviz(mdata, num_prior_samples=100)
         assert isinstance(arviz_data, az.InferenceData)

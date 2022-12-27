@@ -49,7 +49,7 @@ class TesttascCODA:
         assert isinstance(mdata["coda"].obsm["sample_counts"], np.ndarray)
         assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 85
 
-    def test_go_nuts(self, smillie_adata):
+    def test_run_nuts(self, smillie_adata):
         mdata = self.tasccoda.load(
             smillie_adata,
             type="sample_level",
@@ -60,7 +60,7 @@ class TesttascCODA:
         mdata = self.tasccoda.prepare(
             mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
         )
-        self.tasccoda.go_nuts(mdata, num_samples=1000, num_warmup=100)
+        self.tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
         assert "effect_df_Health[T.Inflamed]" in mdata["coda"].varm
         assert "effect_df_Health[T.Non-inflamed]" in mdata["coda"].varm
         assert mdata["coda"].varm["effect_df_Health[T.Inflamed]"].shape == (51, 7)

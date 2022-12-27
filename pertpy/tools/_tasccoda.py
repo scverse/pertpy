@@ -450,7 +450,7 @@ class Tasccoda(CompositionalModel2):
                 mdata = tasccoda.prepare(
                     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
                 )
-                tasccoda.go_nuts(mdata, num_samples=1000, num_warmup=100)
+                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
                 tasccoda.make_arviz(mdata)
         """
         if isinstance(data, MuData):
@@ -536,17 +536,8 @@ class Tasccoda(CompositionalModel2):
 
         return arviz_data
 
-    def go_nuts(
-        self,
-        data: AnnData | MuData,
-        modality_key: str = "coda",
-        num_samples: int = 10000,
-        num_warmup: int = 1000,
-        rng_key: int = None,
-        copy: bool = False,
-        *args,
-        **kwargs,
-    ):
+    def run_nuts(self, data: AnnData | MuData, modality_key: str = "coda", num_samples: int = 10000,
+                 num_warmup: int = 1000, rng_key: int = None, copy: bool = False, *args, **kwargs):
         """
         Example:
             .. code-block:: python
@@ -563,11 +554,11 @@ class Tasccoda(CompositionalModel2):
                 mdata = tasccoda.prepare(
                     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
                 )
-                tasccoda.go_nuts(mdata, num_samples=1000, num_warmup=100)
+                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
         """
-        return super().go_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
+        return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
-    go_nuts.__doc__ = CompositionalModel2.go_nuts.__doc__ + go_nuts.__doc__
+    run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
@@ -586,7 +577,7 @@ class Tasccoda(CompositionalModel2):
                 mdata = tasccoda.prepare(
                     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
                 )
-                tasccoda.go_nuts(mdata, num_samples=1000, num_warmup=100)
+                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
                 tasccoda.summary(mdata)
         """
         return super().summary(data, extended, modality_key, *args, **kwargs)
@@ -610,7 +601,7 @@ class Tasccoda(CompositionalModel2):
                 mdata = tasccoda.prepare(
                     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
                 )
-                tasccoda.go_nuts(mdata, num_samples=1000, num_warmup=100)
+                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
                 tasccoda.credible_effects(mdata)
         """
         return super().credible_effects(data, modality_key, est_fdr)
@@ -634,7 +625,7 @@ class Tasccoda(CompositionalModel2):
                 mdata = tasccoda.prepare(
                     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
                 )
-                tasccoda.go_nuts(mdata, num_samples=1000, num_warmup=100)
+                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
                 tasccoda.set_fdr(mdata_salm, est_fdr=0.4)
         """
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)

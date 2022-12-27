@@ -207,7 +207,7 @@ class CodaPlot:
             data = data[modality_key]
         if isinstance(data, AnnData):
             data = data
-        # Get covariate names and non-zero covariate names from adata
+        # Get covariate names from adata, partition into those with nonzero effects for min. one cell type/no cell types
         covariate_names = data.uns["scCODA_params"]["covariate_names"]
         if covariates is not None:
             if isinstance(covariates, str):
@@ -227,6 +227,7 @@ class CodaPlot:
         if not plot_zero_covariate:
             covariate_names = covariate_names_non_zero
 
+        # set up df for plotting
         plot_df = pd.concat(
             [data.varm[f"effect_df_{covariate_name}"][parameter] for covariate_name in covariate_names],
             axis=1,
@@ -382,12 +383,16 @@ class CodaPlot:
             sample_sums = np.sum(data.X, axis=1, keepdims=True)
             X = data.X / sample_sums
             value_name = "Proportion"
-        # add pseudocount 1 if using log scale
+        # add pseudocount 0.5 if using log scale
         elif y_scale == "log":
-            X = np.log(data.X + 1)
+            X = data.X.copy()
+            X[X == 0] = 0.5
+            X = np.log(X)
             value_name = "log(count)"
         elif y_scale == "log10":
-            X = np.log10(data.X + 1)
+            X = data.X.copy()
+            X[X == 0] = 0.5
+            X = np.log(X)
             value_name = "log10(count)"
         elif y_scale == "count":
             X = data.X

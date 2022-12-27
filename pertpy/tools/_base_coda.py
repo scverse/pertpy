@@ -238,7 +238,7 @@ class CompositionalModel2(ABC):
         if copy:
             return sample_adata
 
-    def go_nuts(
+    def run_nuts(
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
@@ -249,7 +249,7 @@ class CompositionalModel2(ABC):
         *args,
         **kwargs,
     ):
-        """No-U-turn sampling
+        """Run No-U-turn sampling (Hoffman and Gelman, 2014), an efficient version of Hamiltonian Monte Carlo sampling to infer optimal model parameters.
 
         Args:
             data: AnnData object or MuData object.
@@ -302,7 +302,7 @@ class CompositionalModel2(ABC):
         *args,
         **kwargs,
     ):
-        """Hamiltonian Monte Carlo sampling
+        """Run standard Hamiltonian Monte Carlo sampling (Neal, 2011) to infer optimal model parameters.
 
         Args:
             data: AnnData object or MuData object.
@@ -1272,7 +1272,8 @@ def from_scanpy(
     adata: AnnData,
     cell_type_identifier: str,
     sample_identifier: str,
-    covariate_key: str | None = None,
+    covariate_uns: str | None = None,
+    covariate_obs: list[str] | None = None,
     covariate_df: pd.DataFrame | None = None,
 ) -> AnnData:
 
@@ -1289,7 +1290,8 @@ def from_scanpy(
         adata: An anndata object from scanpy
         cell_type_identifier: column name in adata.obs that specifies the cell types
         sample_identifier: column name in adata.obs that specifies the sample
-        covariate_key: key for adata.uns, where covariate values are stored
+        covariate_uns: key for adata.uns, where covariate values are stored
+        covariate_obs: list of column names in adata.obs, where covariate values are stored. Note: If covariate values are not unique for a value of sample_identifier, this covaariate will be skipped.
         covariate_df: DataFrame with covariates
 
     Returns:
@@ -1297,22 +1299,40 @@ def from_scanpy(
 
     """
 
+    # get cell type counts
     groups = adata.obs.value_counts([sample_identifier, cell_type_identifier])
     count_data = groups.unstack(level=cell_type_identifier)
     count_data = count_data.fillna(0)
 
-    if covariate_key is not None:
-        covariate_df = pd.DataFrame(adata.uns[covariate_key])
-    elif covariate_df is None:
+    # get covariates from different sources
+    covariate_df_ = pd.DataFrame(index=count_data.index)
+
+    if covariate_df is None and covariate_obs is None and covariate_uns is None:
         print("No covariate information specified!")
-        covariate_df = pd.DataFrame(index=count_data.index)
 
-    if set(covariate_df.index) != set(count_data.index):
-        raise ValueError("anndata sample names and covariate_df index do not have the same elements!")
-    covs_ord = covariate_df.reindex(count_data.index)
-    covs_ord.index = covs_ord.index.astype(str)
+    if covariate_uns is not None:
+        covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns])
+        covariate_df_ = pd.concat((covariate_df_, covariate_df_uns), axis=1)
 
+    if covariate_obs is not None:
+        for c in covariate_obs:
+            if any(adata.obs.groupby("batch").nunique()[c] != 1):
+                print(f"Covariate {c} has non-unique values! Skipping...")
+                covariate_obs.remove(c)
+
+        covariate_df_obs = adata.obs.groupby("batch").first()[covariate_obs]
+        covariate_df_ = pd.concat((covariate_df_, covariate_df_obs), axis=1)
+
+    if covariate_df is not None:
+        if set(covariate_df.index) != set(count_data.index):
+            raise ValueError("anndata sample names and covariate_df index do not have the same elements!")
+        covs_ord = covariate_df.reindex(count_data.index)
+        covariate_df_ = pd.concat((covariate_df_, covs_ord), axis=1)
+
+    covariate_df_.index = covariate_df_.index.astype(str)
+
+    # create var (number of cells for each type as only column)
     var_dat = count_data.sum(axis=0).rename("n_cells").to_frame()
     var_dat.index = var_dat.index.astype(str)
 
-    return AnnData(X=count_data.values, var=var_dat, obs=covs_ord)
+    return AnnData(X=count_data.values, var=var_dat, obs=covariate_df_)
