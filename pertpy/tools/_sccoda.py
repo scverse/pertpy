@@ -57,7 +57,8 @@ class Sccoda(CompositionalModel2):
         generate_sample_level: bool = False,
         cell_type_identifier: str = None,
         sample_identifier: str = None,
-        covariate_key: str | None = None,
+        covariate_uns: str | None = None,
+        covariate_obs: list[str] | None = None,
         covariate_df: pd.DataFrame | None = None,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
@@ -69,7 +70,8 @@ class Sccoda(CompositionalModel2):
             type : Specify the input adata type, which could be either a cell-level AnnData or an aggregated sample-level AnnData.
             cell_type_identifier: If type is "cell_level", specify column name in adata.obs that specifies the cell types. Defaults to None.
             sample_identifier: If type is "cell_level", specify column name in adata.obs that specifies the sample. Defaults to None.
-            covariate_key: If type is "cell_level", specify key for adata.uns, where covariate values are stored. Defaults to None.
+            covariate_uns: If type is "cell_level", specify key for adata.uns, where covariate values are stored. Defaults to None.
+            covariate_obs: If type is "cell_level", specify list of keys for adata.obs, where covariate values are stored. Defaults to None.
             covariate_df: If type is "cell_level", specify dataFrame with covariates. Defaults to None.
             modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to "rna".
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object. Defaults to "coda".
@@ -93,7 +95,8 @@ class Sccoda(CompositionalModel2):
                     adata=adata,
                     cell_type_identifier=cell_type_identifier,
                     sample_identifier=sample_identifier,
-                    covariate_key=covariate_key,
+                    covariate_uns=covariate_uns,
+                    covariate_obs=covariate_obs,
                     covariate_df=covariate_df,
                 )
             else:

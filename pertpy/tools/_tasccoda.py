@@ -65,7 +65,8 @@ class Tasccoda(CompositionalModel2):
         type: Literal["cell_level", "sample_level"],
         cell_type_identifier: str = None,
         sample_identifier: str = None,
-        covariate_key: str | None = None,
+        covariate_uns: str | None = None,
+        covariate_obs: list[str] | None = None,
         covariate_df: pd.DataFrame | None = None,
         dendrogram_key: str = None,
         levels_orig: list[str] = None,
@@ -82,7 +83,8 @@ class Tasccoda(CompositionalModel2):
             type: Specify the input adata type, which could be either a cell-level AnnData or an aggregated sample-level AnnData.
             cell_type_identifier: If type is "cell_level", specify column name in adata.obs that specifies the cell types. Defaults to None.
             sample_identifier: If type is "cell_level", specify column name in adata.obs that specifies the sample. Defaults to None.
-            covariate_key: If type is "cell_level", specify key for adata.uns, where covariate values are stored. Defaults to None.
+            covariate_uns: If type is "cell_level", specify key for adata.uns, where covariate values are stored. Defaults to None.
+            covariate_obs: If type is "cell_level", specify list of keys for adata.obs, where covariate values are stored. Defaults to None.
             covariate_df: If type is "cell_level", specify dataFrame with covariates. Defaults to None.
             dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
             levels_orig: List that indicates which columns in `.obs` of the original data correspond tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
@@ -114,7 +116,8 @@ class Tasccoda(CompositionalModel2):
                 adata=adata,
                 cell_type_identifier=cell_type_identifier,
                 sample_identifier=sample_identifier,
-                covariate_key=covariate_key,
+                covariate_uns=covariate_uns,
+                covariate_obs=covariate_obs,
                 covariate_df=covariate_df,
             )
             mdata = MuData({modality_key_1: adata, modality_key_2: adata_coda})
