@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import anndata
 import pandas as pd
-import scanpy as sc
 from scanpy import settings
 
 from pertpy.data._dataloader import _download
@@ -31,7 +32,7 @@ class MetaData:
         adata: anndata,
         cell_line_column: str = "DepMap_ID",
         cell_line_type: str = "DepMap_ID",
-        cell_line_information: list = None,
+        cell_line_information: list[str] = None,
         copy: bool = False,
     ) -> anndata:
         """Fetch cell line annotation.
@@ -105,7 +106,6 @@ class MetaData:
                     "Please give the cell line metadata available in the DepMap,"
                     "or fetch all the metadata by default."
                 )
-
         else:
             raise ValueError(
                 "The specified cell line type is not available in the DepMap database."
@@ -113,4 +113,5 @@ class MetaData:
                 "e.g. DepMap_ID, cell_line_name or stripped_cell_line_name."
                 "DepMap_ID is compared by default."
             )
+
         return adata
