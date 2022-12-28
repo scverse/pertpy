@@ -143,3 +143,6 @@ dmypy.json
 *.h5ad
 *.h5md
 *.h5mu
+
+# Test cache
+cache
