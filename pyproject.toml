@@ -40,7 +40,6 @@ arviz = "^0.14.0"
 numpyro = "^0.10.1"
 adjusttext = "^0.7.3"
 statannotations = "^0.5.0"
-tasccoda = "^0.1.3"
 protobuf = "3.20.1"
 altair = "^4.2.0"
 

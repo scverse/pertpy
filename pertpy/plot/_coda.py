@@ -248,6 +248,8 @@ class CodaPlot:
                             "value": 0,
                         }
                         plot_df = plot_df.append(new_row, ignore_index=True)
+                    plot_df["covariate_"] = pd.Categorical(plot_df["Covariate"], covariate_names)
+                    plot_df = plot_df.sort_values(["covariate_"])
             else:
                 if not plot_zero_cell_type:
                     cell_type_names_zero = [
@@ -891,7 +893,7 @@ class CodaPlot:
             effect_name = [effect_name]
         for _, effect in enumerate(effect_name):
             data_rna.obs[effect] = [
-                data_coda.varm[effect].loc[f"cluster_{c}", "Effect"] for c in data_rna.obs[cluster_key]
+                data_coda.varm[effect].loc[f"{c}", "Effect"] for c in data_rna.obs[cluster_key]
             ]
         if kwargs.get("vmin"):
             vmin = kwargs["vmin"]

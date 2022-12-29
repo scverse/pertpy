@@ -71,7 +71,7 @@ class Tasccoda(CompositionalModel2):
         dendrogram_key: str = None,
         levels_orig: list[str] = None,
         levels_agg: list[str] = None,
-        add_level_name: bool = False,
+        add_level_name: bool = True,
         key_added: str = "tree",
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
@@ -87,8 +87,8 @@ class Tasccoda(CompositionalModel2):
             covariate_obs: If type is "cell_level", specify list of keys for adata.obs, where covariate values are stored. Defaults to None.
             covariate_df: If type is "cell_level", specify dataFrame with covariates. Defaults to None.
             dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
-            levels_orig: List that indicates which columns in `.obs` of the original data correspond tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
-            levels_agg: List that indicates which columns in `.var` of the aggregated data correspond tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
+            levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
+            levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
             add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}. Defaults to False.
             key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
             modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to "rna".

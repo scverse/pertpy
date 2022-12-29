@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 import scanpy as sc
 from mudata import MuData
-from sccoda.util.cell_composition_data import from_pandas
 
 import pertpy as pt
 
@@ -19,13 +18,13 @@ class TestscCODA:
 
     @pytest.fixture
     def adata(self):
-        haber_data = pd.read_csv(f"{CWD}/haber_data.csv")
-        adata = from_pandas(haber_data, covariate_columns=["Mouse"])
-        adata.obs["Condition"] = adata.obs["Mouse"].str.replace(r"_[0-9]", "", regex=True)
-        return adata
+        cells = pt.dt.haber_2017_regions()
+        return cells
 
     def test_load(self, adata):
-        mdata = self.sccoda.load(adata, type="sample_level")
+        mdata = self.sccoda.load(adata(), type="cell_level", generate_sample_level=True,
+                                 cell_type_identifier="cell_label", sample_identifier="batch",
+                                 covariate_obs=["condition"])
         assert isinstance(mdata, MuData)
         assert "rna" in mdata.mod
         assert "coda" in mdata.mod

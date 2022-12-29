@@ -218,8 +218,11 @@ class CompositionalModel2(ABC):
         )
 
         # Set acceptance rate and save sampled values to `sample_adata.uns`
-        sample_adata.uns["scCODA_params"]["mcmc"]["acceptance_rate"] = self.mcmc.last_state.mean_accept_prob.to_py()
-        sample_adata.uns["scCODA_params"]["mcmc"]["samples"] = self.mcmc.get_samples()
+        sample_adata.uns["scCODA_params"]["mcmc"]["acceptance_rate"] = np.array(self.mcmc.last_state.mean_accept_prob)
+        samples = self.mcmc.get_samples()
+        for k, v in samples.items():
+            samples[k] = np.array(v)
+        sample_adata.uns["scCODA_params"]["mcmc"]["samples"] = samples
 
         # Evaluate results and create result dataframes (based on tre-aggregation or not)
         if sample_adata.uns["scCODA_params"]["model_type"] == "classic":
@@ -276,9 +279,9 @@ class CompositionalModel2(ABC):
         # Set rng key if needed
         if rng_key is None:
             rng_key_array = random.PRNGKey(np.random.randint(0, 10000))
-            sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = rng_key_array
         else:
             rng_key_array = random.PRNGKey(rng_key)
+        sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
         nuts_kernel = NUTS(self.model, *args, **kwargs)
@@ -636,7 +639,7 @@ class CompositionalModel2(ABC):
         alphas_exp = np.exp(alpha_par)
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
 
-        beta_mean = alpha_par
+        beta_mean = np.array(alpha_par)
         for d in range(D):
             beta_d = effect_df.loc[:, "final_parameter"].values[(d * K) : ((d + 1) * K)]
             beta_d = beta_mean + beta_d
@@ -738,7 +741,7 @@ class CompositionalModel2(ABC):
             if model_type == "tree_agg":
                 intercept_df, effect_df, node_df = self.summary_prepare(sample_adata, *args, **kwargs)  # type: ignore
             else:
-                intercept_df, effect_df, _ = self.summary_prepare(sample_adata, *args, **kwargs)  # type: ignore
+                intercept_df, effect_df = self.summary_prepare(sample_adata, *args, **kwargs)  # type: ignore
         # otherwise, get pre-calculated DataFrames. Effect DataFrame is stitched together from varm
         else:
             intercept_df = sample_adata.varm["intercept_df"]
@@ -843,6 +846,83 @@ class CompositionalModel2(ABC):
                         end_section=True,
                     )
                 console.print(table)
+
+    def get_intercept_df(self, data: AnnData | MuData, modality_key: str = "coda"):
+        """Get intercept dataframe as printed in the extended summary
+
+        Args:
+            data: AnnData object or MuData object.
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+
+        Returns:
+            pd.DataFrame: Intercept data frame.
+        """
+
+        if isinstance(data, MuData):
+            try:
+                sample_adata = data[modality_key]
+            except IndexError:
+                print("When data is a MuData object, modality_key must be specified!")
+                raise
+        if isinstance(data, AnnData):
+            sample_adata = data
+
+        return sample_adata.varm["intercept_df"]
+
+    def get_effect_df(self, data: AnnData | MuData, modality_key: str = "coda"):
+        """Get effect dataframe as printed in the extended summary
+
+        Args:
+            data: AnnData object or MuData object.
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+
+        Returns:
+            pd.DataFrame: Effect data frame.
+        """
+
+        if isinstance(data, MuData):
+            try:
+                sample_adata = data[modality_key]
+            except IndexError:
+                print("When data is a MuData object, modality_key must be specified!")
+                raise
+        if isinstance(data, AnnData):
+            sample_adata = data
+
+        covariates = sample_adata.uns["scCODA_params"]["covariate_names"]
+        effect_dfs = [sample_adata.varm[f"effect_df_{cov}"] for cov in covariates]
+        effect_df = pd.concat(effect_dfs)
+        effect_df.index = pd.MultiIndex.from_product(
+            (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
+        )
+        effect_df.index = effect_df.index.set_levels(
+            effect_df.index.levels[0].str.replace("Condition", "").str.replace("[", "").str.replace("]", ""),
+            level=0,
+        )
+
+        return effect_df
+
+    def get_node_df(self, data: AnnData | MuData, modality_key: str = "coda"):
+        """Get node effect dataframe as printed in the extended summary of a tascCODA model
+
+        Args:
+            data: AnnData object or MuData object.
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+
+        Returns:
+            pd.DataFrame: Node effect data frame.
+        """
+
+        if isinstance(data, MuData):
+            try:
+                sample_adata = data[modality_key]
+            except IndexError:
+                print("When data is a MuData object, modality_key must be specified!")
+                raise
+        if isinstance(data, AnnData):
+            sample_adata = data
+
+        return sample_adata.uns["scCODA_params"]["node_df"]
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """Direct posterior probability approach to calculate credible effects while keeping the expected FDR at a certain level
@@ -1203,8 +1283,8 @@ def import_tree(
         modality_1: If `data` is MuData, specifiy the modality name to the original cell level anndata object. Defaults to None.
         modality_2: If `data` is MuData, specifiy the modality name to the aggregated level anndata object. Defaults to None.
         dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
-        levels_orig: List that indicates which columns in `.obs` of the original data correspond tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
-        levels_agg: List that indicates which columns in `.var` of the aggregated data correspond tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
+        levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
+        levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
         add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}. Defaults to True.
         key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
         copy: Return a copy instead of writing to `data`. Defaults to False.
@@ -1316,11 +1396,11 @@ def from_scanpy(
 
     if covariate_obs is not None:
         for c in covariate_obs:
-            if any(adata.obs.groupby("batch").nunique()[c] != 1):
+            if any(adata.obs.groupby(sample_identifier).nunique()[c] != 1):
                 print(f"Covariate {c} has non-unique values! Skipping...")
                 covariate_obs.remove(c)
 
-        covariate_df_obs = adata.obs.groupby("batch").first()[covariate_obs]
+        covariate_df_obs = adata.obs.groupby(sample_identifier).first()[covariate_obs]
         covariate_df_ = pd.concat((covariate_df_, covariate_df_obs), axis=1)
 
     if covariate_df is not None:
