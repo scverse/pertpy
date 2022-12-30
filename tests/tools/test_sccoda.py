@@ -50,10 +50,10 @@ class TestscCODA:
         assert "effect_df_condition[T.Hpoly.Day3]" in mdata["coda"].varm
         assert "effect_df_condition[T.Salmonella]" in mdata["coda"].varm
         assert "intercept_df" in mdata["coda"].varm
-        assert mdata["coda"].varm["effect_df_condition[T.Hpoly.Day10]"].shape == (9, 7)
-        assert mdata["coda"].varm["effect_df_condition[T.Hpoly.Day3]"].shape == (9, 7)
-        assert mdata["coda"].varm["effect_df_condition[T.Salmonella]"].shape == (9, 7)
-        assert mdata["coda"].varm["intercept_df"].shape == (9, 5)
+        assert mdata["coda"].varm["effect_df_condition[T.Hpoly.Day10]"].shape == (8, 7)
+        assert mdata["coda"].varm["effect_df_condition[T.Hpoly.Day3]"].shape == (8, 7)
+        assert mdata["coda"].varm["effect_df_condition[T.Salmonella]"].shape == (8, 7)
+        assert mdata["coda"].varm["intercept_df"].shape == (8, 5)
 
     def test_credible_effects(self, adata):
         adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
