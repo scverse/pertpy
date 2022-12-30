@@ -30,7 +30,9 @@ class TestscCODA:
         assert "coda" in mdata.mod
 
     def test_prepare(self, adata):
-        mdata = self.sccoda.load(adata, type="sample_level")
+        mdata = self.sccoda.load(adata, type="cell_level", generate_sample_level=True,
+                                 cell_type_identifier="cell_label", sample_identifier="batch",
+                                 covariate_obs=["condition"])
         mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
         assert "scCODA_params" in mdata["coda"].uns
         assert "covariate_matrix" in mdata["coda"].obsm
@@ -39,7 +41,9 @@ class TestscCODA:
         assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 6
 
     def test_run_nuts(self, adata):
-        mdata = self.sccoda.load(adata, type="sample_level")
+        mdata = self.sccoda.load(adata, type="cell_level", generate_sample_level=True,
+                                 cell_type_identifier="cell_label", sample_identifier="batch",
+                                 covariate_obs=["condition"])
         mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
         self.sccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
         assert "effect_df_condition[T.Hpoly.Day10]" in mdata["coda"].varm
@@ -53,7 +57,9 @@ class TestscCODA:
 
     def test_credible_effects(self, adata):
         adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
-        mdata = self.sccoda.load(adata_salm, type="sample_level")
+        mdata = self.sccoda.load(adata_salm, type="cell_level", generate_sample_level=True,
+                                 cell_type_identifier="cell_label", sample_identifier="batch",
+                                 covariate_obs=["condition"])
         mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Goblet")
         self.sccoda.run_nuts(mdata)
         assert isinstance(self.sccoda.credible_effects(mdata), pd.Series)
@@ -61,7 +67,9 @@ class TestscCODA:
 
     def test_make_arviz(self, adata):
         adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
-        mdata = self.sccoda.load(adata_salm, type="sample_level")
+        mdata = self.sccoda.load(adata_salm, type="cell_level", generate_sample_level=True,
+                                 cell_type_identifier="cell_label", sample_identifier="batch",
+                                 covariate_obs=["condition"])
         mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Goblet")
         self.sccoda.run_nuts(mdata)
         arviz_data = self.sccoda.make_arviz(mdata, num_prior_samples=100)
