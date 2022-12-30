@@ -22,7 +22,7 @@ class TestscCODA:
         return cells
 
     def test_load(self, adata):
-        mdata = self.sccoda.load(adata(), type="cell_level", generate_sample_level=True,
+        mdata = self.sccoda.load(adata, type="cell_level", generate_sample_level=True,
                                  cell_type_identifier="cell_label", sample_identifier="batch",
                                  covariate_obs=["condition"])
         assert isinstance(mdata, MuData)
@@ -31,7 +31,7 @@ class TestscCODA:
 
     def test_prepare(self, adata):
         mdata = self.sccoda.load(adata, type="sample_level")
-        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
+        mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
         assert "scCODA_params" in mdata["coda"].uns
         assert "covariate_matrix" in mdata["coda"].obsm
         assert "sample_counts" in mdata["coda"].obsm
@@ -40,29 +40,29 @@ class TestscCODA:
 
     def test_run_nuts(self, adata):
         mdata = self.sccoda.load(adata, type="sample_level")
-        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Endocrine")
+        mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
         self.sccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
-        assert "effect_df_Condition[T.H.poly.Day10]" in mdata["coda"].varm
-        assert "effect_df_Condition[T.H.poly.Day3]" in mdata["coda"].varm
-        assert "effect_df_Condition[T.Salm]" in mdata["coda"].varm
+        assert "effect_df_condition[T.Hpoly.Day10]" in mdata["coda"].varm
+        assert "effect_df_condition[T.Hpoly.Day3]" in mdata["coda"].varm
+        assert "effect_df_condition[T.Salmonella]" in mdata["coda"].varm
         assert "intercept_df" in mdata["coda"].varm
-        assert mdata["coda"].varm["effect_df_Condition[T.H.poly.Day10]"].shape == (9, 7)
-        assert mdata["coda"].varm["effect_df_Condition[T.H.poly.Day3]"].shape == (9, 7)
-        assert mdata["coda"].varm["effect_df_Condition[T.Salm]"].shape == (9, 7)
+        assert mdata["coda"].varm["effect_df_condition[T.Hpoly.Day10]"].shape == (9, 7)
+        assert mdata["coda"].varm["effect_df_condition[T.Hpoly.Day3]"].shape == (9, 7)
+        assert mdata["coda"].varm["effect_df_condition[T.Salmonella]"].shape == (9, 7)
         assert mdata["coda"].varm["intercept_df"].shape == (9, 5)
 
     def test_credible_effects(self, adata):
-        adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
+        adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
         mdata = self.sccoda.load(adata_salm, type="sample_level")
-        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
+        mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Goblet")
         self.sccoda.run_nuts(mdata)
         assert isinstance(self.sccoda.credible_effects(mdata), pd.Series)
-        assert self.sccoda.credible_effects(mdata)["Condition[T.Salm]"]["Enterocyte"]
+        assert self.sccoda.credible_effects(mdata)["condition[T.Salmonella]"]["Enterocyte"]
 
     def test_make_arviz(self, adata):
-        adata_salm = adata[adata.obs["Condition"].isin(["Control", "Salm"])]
+        adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
         mdata = self.sccoda.load(adata_salm, type="sample_level")
-        mdata = self.sccoda.prepare(mdata, formula="Condition", reference_cell_type="Goblet")
+        mdata = self.sccoda.prepare(mdata, formula="condition", reference_cell_type="Goblet")
         self.sccoda.run_nuts(mdata)
         arviz_data = self.sccoda.make_arviz(mdata, num_prior_samples=100)
         assert isinstance(arviz_data, az.InferenceData)
