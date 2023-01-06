@@ -17,6 +17,7 @@ class MetaData:
         cell_line_file_name = "sample_info.csv"
         cell_line_file_path = settings.cachedir.__str__() + "/" + cell_line_file_name
         if not Path(cell_line_file_path).exists():
+            print("No DepMap metadata file found. Start downloading now.")
             _download(
                 url="https://ndownloader.figshare.com/files/35020903",
                 output_file_name=cell_line_file_name,

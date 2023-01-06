@@ -5,7 +5,7 @@ from scipy import sparse
 
 import pertpy as pt
 
-# Random generate data settings
+# Generate data settings
 num_cells = 100
 num_genes = 100
 num_cells_per_id = num_cells // 4
@@ -15,15 +15,8 @@ class TestMetaData:
     def make_test_adata(self):
         np.random.seed(1)
         # generate count matrix
-        np.random.seed(1)
-        for i in range(num_genes):
-            gene_i = np.random.normal(0, 1, num_cells)
-            gene_i = np.where(gene_i < 0, 0, gene_i)
-            gene_i = np.expand_dims(gene_i, axis=1)
-            if i == 0:
-                X = gene_i
-            else:
-                X = np.concatenate((X, gene_i), axis=1)
+        X = np.random.normal(0, 1, (num_cells, num_genes))
+        X = np.where(X < 0, 0, X)
 
         # obs for random AnnData, which contains the cell line information DepMap_ID
         cell_line = {
