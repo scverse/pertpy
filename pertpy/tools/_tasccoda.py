@@ -539,8 +539,17 @@ class Tasccoda(CompositionalModel2):
 
         return arviz_data
 
-    def run_nuts(self, data: AnnData | MuData, modality_key: str = "coda", num_samples: int = 10000,
-                 num_warmup: int = 1000, rng_key: int = None, copy: bool = False, *args, **kwargs):
+    def run_nuts(
+        self,
+        data: AnnData | MuData,
+        modality_key: str = "coda",
+        num_samples: int = 10000,
+        num_warmup: int = 1000,
+        rng_key: int = None,
+        copy: bool = False,
+        *args,
+        **kwargs,
+    ):
         """
         Example:
             .. code-block:: python

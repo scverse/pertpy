@@ -21,7 +21,6 @@ from pertpy.data._datasets import (
     gasperini_2019_lowmoi,
     gehring_2019,
     haber_2017_regions,
-    haber_counts,
     kang_2018,
     mcfarland_2020,
     norman_2019,

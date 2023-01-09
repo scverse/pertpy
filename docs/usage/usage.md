@@ -44,7 +44,6 @@ pt.pl.cool_fancy_plot()
     data.gasperini_2019_lowmoi
     data.gehring_2019
     data.haber_2017_regions
-    data.haber_counts
     data.kang_2018
     data.mcfarland_2020
     data.norman_2019

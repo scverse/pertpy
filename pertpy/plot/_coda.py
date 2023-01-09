@@ -892,9 +892,7 @@ class CodaPlot:
         if isinstance(effect_name, str):
             effect_name = [effect_name]
         for _, effect in enumerate(effect_name):
-            data_rna.obs[effect] = [
-                data_coda.varm[effect].loc[f"{c}", "Effect"] for c in data_rna.obs[cluster_key]
-            ]
+            data_rna.obs[effect] = [data_coda.varm[effect].loc[f"{c}", "Effect"] for c in data_rna.obs[cluster_key]]
         if kwargs.get("vmin"):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")

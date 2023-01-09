@@ -16,7 +16,7 @@ class TesttascCODA:
 
     @pytest.fixture
     def smillie_adata(self):
-        smillie_adata = sc.read_h5ad(f"{CWD}/smillie_data.h5ad")
+        smillie_adata = pt.dt.smillie()
         return smillie_adata
 
     def test_load(self, smillie_adata):
