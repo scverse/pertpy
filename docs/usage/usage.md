@@ -86,10 +86,15 @@ pt.pl.cool_fancy_plot()
 The Python implementation of [Augur R package](https://github.com/neurorestore/Augur) Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
 
 Augurpy aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
-The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are more easily separated into perturbed and unperturbed than cell types with little or no response.
-This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type. Augurpy trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and then prioritizes cell type response according to metric scores measuring the accuracy of the model. For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient is used as a proxy for how accurate the model is which in turn approximates perturbation response.
+The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are
+more easily separated into perturbed and unperturbed than cell types with little or no response.
+This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type.
+Augurpy trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and
+then prioritizes cell type response according to metric scores measuring the accuracy of the model.
+For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient
+is used as a proxy for how accurate the model is which in turn approximates perturbation response.
 
-Example implementation
+Example implementation:
 
 ```python
 import pertpy as pt
@@ -134,6 +139,19 @@ Finally, it visualizes similarities and differences across different perturbatio
     :toctree: tools
 
     tools.Mixscape
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+mdata = pt.dt.papalexi_2021()
+ms = pt.tl.Mixscape()
+ms.pert_sign(mdata['rna'], 'perturbation', 'NT', 'replicate')
+ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+ms.lda(adata=mdata['rna'], labels='gene_target', layer='X_pert')
+pt.pl.ms.lda(adata=mdata['rna'])
 ```
 
 See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
