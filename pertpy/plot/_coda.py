@@ -250,8 +250,7 @@ class CodaPlot:
                         plot_df = plot_df.append(new_row, ignore_index=True)
                     plot_df["covariate_"] = pd.Categorical(plot_df["Covariate"], covariate_names)
                     plot_df = plot_df.sort_values(["covariate_"])
-            else:
-                if not plot_zero_cell_type:
+        if not plot_zero_cell_type:
                     cell_type_names_zero = [
                         name
                         for name in plot_df["Cell Type"].unique()

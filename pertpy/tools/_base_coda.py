@@ -224,7 +224,7 @@ class CompositionalModel2(ABC):
             samples[k] = np.array(v)
         sample_adata.uns["scCODA_params"]["mcmc"]["samples"] = samples
 
-        # Evaluate results and create result dataframes (based on tre-aggregation or not)
+        # Evaluate results and create result dataframes (based on tree-aggregation or not)
         if sample_adata.uns["scCODA_params"]["model_type"] == "classic":
             intercept_df, effect_df = self.summary_prepare(sample_adata)  # type: ignore
         elif sample_adata.uns["scCODA_params"]["model_type"] == "tree_agg":
