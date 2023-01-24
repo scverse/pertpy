@@ -251,12 +251,12 @@ class CodaPlot:
                     plot_df["covariate_"] = pd.Categorical(plot_df["Covariate"], covariate_names)
                     plot_df = plot_df.sort_values(["covariate_"])
         if not plot_zero_cell_type:
-                    cell_type_names_zero = [
-                        name
-                        for name in plot_df["Cell Type"].unique()
-                        if (plot_df[plot_df["Cell Type"] == name]["value"] == 0).all()
-                    ]
-                    plot_df = plot_df[~plot_df["Cell Type"].isin(cell_type_names_zero)]
+            cell_type_names_zero = [
+                name
+                for name in plot_df["Cell Type"].unique()
+                if (plot_df[plot_df["Cell Type"] == name]["value"] == 0).all()
+            ]
+            plot_df = plot_df[~plot_df["Cell Type"].isin(cell_type_names_zero)]
 
         # If plot as facets, create a FacetGrid and map barplot to it.
         if plot_facets:
