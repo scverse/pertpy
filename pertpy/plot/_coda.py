@@ -79,7 +79,7 @@ class CodaPlot:
         if show_legend:
             ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1)
         ax.set_xticks(r)
-        ax.set_xticklabels(level_names, rotation=45)
+        ax.set_xticklabels(level_names, rotation=45, ha="right")
         ax.set_ylabel("Proportion")
 
         return ax

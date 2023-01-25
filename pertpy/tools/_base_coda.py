@@ -1350,7 +1350,7 @@ def import_tree(
 def from_scanpy(
     adata: AnnData,
     cell_type_identifier: str,
-    sample_identifier: str,
+    sample_identifier: str | list[str],
     covariate_uns: str | None = None,
     covariate_obs: list[str] | None = None,
     covariate_df: pd.DataFrame | None = None,
@@ -1358,16 +1358,16 @@ def from_scanpy(
     """
     Creates a compositional analysis dataset from a single anndata object, as it is produced by e.g. scanpy.
 
-    The anndata object needs to have a column in adata.obs that contains the cell type assignment,
-    and one column that specifies the grouping into samples.
-    Covariates can either be specified via a key in adata.uns, or as a separate DataFrame.
+    The anndata object needs to have a column in adata.obs that contains the cell type assignment.
+    Further, it must contain one column or a set of columns (e.g. subject id, treatment, disease status) that uniquely identify each (statistical) sample.
+    Further covariates (e.g. subject age) can either be specified via addidional column names in adata.obs, a key in adata.uns, or as a separate DataFrame.
 
     NOTE: The order of samples in the returned dataset is determined by the first occurence of cells from each sample in `adata`
 
     Args:
         adata: An anndata object from scanpy
         cell_type_identifier: column name in adata.obs that specifies the cell types
-        sample_identifier: column name in adata.obs that specifies the sample
+        sample_identifier: column name or list of column names in adata.obs that uniquely identify each sample
         covariate_uns: key for adata.uns, where covariate values are stored
         covariate_obs: list of column names in adata.obs, where covariate values are stored. Note: If covariate values are not unique for a value of sample_identifier, this covaariate will be skipped.
         covariate_df: DataFrame with covariates
@@ -1376,6 +1376,20 @@ def from_scanpy(
         AnnData: A data set with cells aggregated to the (sample x cell type) level
 
     """
+
+    if type(sample_identifier) == str:
+        sample_identifier = [sample_identifier]
+
+    if covariate_obs:
+        covariate_obs += sample_identifier
+    else:
+
+        covariate_obs = sample_identifier
+
+    # join sample identifiers
+    if type(sample_identifier) == list:
+        adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg('-'.join, axis=1)
+        sample_identifier = "scCODA_sample_id"
 
     # get cell type counts
     groups = adata.obs.value_counts([sample_identifier, cell_type_identifier])
