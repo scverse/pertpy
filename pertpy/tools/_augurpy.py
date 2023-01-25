@@ -36,6 +36,11 @@ from statsmodels.stats.multitest import fdrcorrection
 from switchlang import switch
 
 
+def _raise_exception(exception_message: str):
+    """Raise exception for invalid classifier input."""
+    raise Exception(exception_message)
+
+
 @dataclass
 class Params:
     """Type signature for random forest and logistic regression parameters.
@@ -188,7 +193,7 @@ class Augurpy:
                 "logistic_regression_classifier",
                 lambda: LogisticRegression(penalty=params.penalty, random_state=params.random_state),
             )
-            c.default((_ for _ in ()).throw(ValueError("Invalid classifier")))
+            c.default(lambda: _raise_exception("Invalid classifer."))
 
         return c.result
 
