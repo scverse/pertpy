@@ -1383,7 +1383,6 @@ def from_scanpy(
     if covariate_obs:
         covariate_obs += sample_identifier
     else:
-
         covariate_obs = sample_identifier
 
     # join sample identifiers
