@@ -41,6 +41,7 @@ from pertpy.data._datasets import (
     schraivogel_2020_tap_screen_chr11,
     sciplex3_raw,
     shifrut_2018,
+    smillie,
     srivatsan_2020_sciplex2,
     srivatsan_2020_sciplex3,
     srivatsan_2020_sciplex4,

@@ -530,9 +530,9 @@ class MixscapePlot:
             **kwds: Additional arguments to `scanpy.pl.umap`.
         """
         if mixscape_class not in adata.obs:
-            raise ValueError(f'Did not find .obs["{mixscape_class}"]. Please run `pt.tl.mixscape` first.')
+            raise ValueError(f'Did not find .obs["{mixscape_class!r}"]. Please run `pt.tl.mixscape` first.')
         if lda_key not in adata.uns:
-            raise ValueError(f'Did not find .uns["{lda_key}"]. Run `pt.tl.neighbors` first.')
+            raise ValueError(f'Did not find .uns["{lda_key!r}"]. Run `pt.tl.neighbors` first.')
 
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
