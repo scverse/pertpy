@@ -600,7 +600,6 @@ class CompositionalModel2(ABC):
 
             # Inclusion prob threshold value. Direct posterior probability approach cf. Newton et al. (2004)
             def opt_thresh(result, alpha):
-
                 incs = np.array(result.loc[result["inclusion_prob"] > 0, "inclusion_prob"])
                 incs[::-1].sort()
 
@@ -1356,7 +1355,6 @@ def from_scanpy(
     covariate_obs: list[str] | None = None,
     covariate_df: pd.DataFrame | None = None,
 ) -> AnnData:
-
     """
     Creates a compositional analysis dataset from a single anndata object, as it is produced by e.g. scanpy.
 

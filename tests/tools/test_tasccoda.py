@@ -11,7 +11,6 @@ CWD = Path(__file__).parent.resolve()
 
 
 class TesttascCODA:
-
     tasccoda = pt.tl.Tasccoda()
 
     @pytest.fixture

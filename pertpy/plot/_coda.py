@@ -300,7 +300,6 @@ class CodaPlot:
 
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
-
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
             if len(covariate_names) == 1:
                 if isinstance(cmap, ListedColormap):
@@ -420,7 +419,6 @@ class CodaPlot:
 
         # If plot as facets, create a FacetGrid and map boxplot to it.
         if plot_facets:
-
             if level_order is None:
                 level_order = pd.unique(plot_df[feature_name])
 
@@ -451,7 +449,6 @@ class CodaPlot:
             )
 
             if add_dots:
-
                 if "hue" in args_swarmplot:
                     hue = args_swarmplot.pop("hue")
                 else:
@@ -479,7 +476,6 @@ class CodaPlot:
 
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
         else:
-
             if level_order:
                 args_boxplot["hue_order"] = level_order
                 args_swarmplot["hue_order"] = level_order

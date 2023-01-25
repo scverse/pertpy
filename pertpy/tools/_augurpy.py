@@ -68,11 +68,6 @@ class Params:
     random_state: int | None = None
 
 
-def _raise_exception(exception_message: str):
-    """Raise exception for invalid classifier input."""
-    raise Exception(exception_message)
-
-
 class Augurpy:
     """Python implementation of Augur."""
 
@@ -193,7 +188,7 @@ class Augurpy:
                 "logistic_regression_classifier",
                 lambda: LogisticRegression(penalty=params.penalty, random_state=params.random_state),
             )
-            c.default(lambda: _raise_exception("Missing valid input."))
+            c.default((_ for _ in ()).throw(ValueError("Invalid classifier")))
 
         return c.result
 

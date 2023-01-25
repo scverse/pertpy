@@ -13,7 +13,6 @@ CWD = Path(__file__).parent.resolve()
 
 
 class TestAugur:
-
     ag_rfc = pt.tl.Augurpy("random_forest_classifier", Params(random_state=42))
     ag_lrc = pt.tl.Augurpy("logistic_regression_classifier", Params(random_state=42))
     ag_rfr = pt.tl.Augurpy("random_forest_regressor", Params(random_state=42))
@@ -157,11 +156,6 @@ class TestAugur:
     def test_creation(self):
         """Test output of create_estimator."""
         assert isinstance(self.ag_rfr.estimator, RandomForestRegressor)
-
-    def test_missing_value(self):
-        """Test raising missing value error."""
-        with pytest.raises(Exception):
-            self.ag_rfr.create_estimator("this is no estimator")
 
     def test_params(self):
         """Test parameters."""

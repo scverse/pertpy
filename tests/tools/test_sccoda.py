@@ -13,7 +13,6 @@ CWD = Path(__file__).parent.resolve()
 
 
 class TestscCODA:
-
     sccoda = pt.tl.Sccoda()
 
     @pytest.fixture
