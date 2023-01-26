@@ -1383,11 +1383,11 @@ def from_scanpy(
     if covariate_obs:
         covariate_obs += sample_identifier
     else:
-        covariate_obs = sample_identifier
+        covariate_obs = sample_identifier  # type: ignore
 
     # join sample identifiers
     if type(sample_identifier) == list:
-        adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg('-'.join, axis=1)
+        adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
 
     # get cell type counts
