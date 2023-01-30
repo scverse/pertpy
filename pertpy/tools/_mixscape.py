@@ -153,7 +153,7 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             new_class_name: Name of mixscape classification to be stored in `.obs`.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            layer: Key from adata.layers whose value will be used to perform tests on.
+            layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
@@ -194,7 +194,9 @@ class Mixscape:
         if layer is not None:
             X = adata_comp.layers[layer]
         else:
-            X = adata_comp.X
+            warning = "Using .layers[\"X_pert\"] as default!"
+            print(warning)
+            X = adata_comp.layers["X_pert"]
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
         adata.obs[new_class_name] = adata.obs[labels].astype(str)
