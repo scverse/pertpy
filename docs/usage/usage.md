@@ -64,6 +64,7 @@ pt.pl.cool_fancy_plot()
     data.schraivogel_2020_tap_screen_chr11
     data.sciplex3_raw
     data.shifrut_2018
+    data.smillie
     data.srivatsan_2020_sciplex2
     data.srivatsan_2020_sciplex3
     data.srivatsan_2020_sciplex4
@@ -155,7 +156,9 @@ pt.pl.ms.lda(adata=mdata['rna'])
 
 See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
 
-### Milopy
+### Compositional analysis
+
+#### Milopy
 
 A Python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scverse pipelines for single-cell analysis.
 See [Differential abundance testing on single-cell data using k-nearest neighbor graphs](https://www.nature.com/articles/s41587-021-01033-z) for details on the statistical framework.
@@ -172,6 +175,23 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 ```
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
+
+#### scCODA and tascCODA
+
+Reimplementation of scCODA for identification of compositional changes in high-throughput sequencing count data and tascCODA for sparse, tree-aggregated modeling of high-throughput sequencing data.
+See [scCODA is a Bayesian model for compositional single-cell data analysis](https://www.nature.com/articles/s41467-021-27150-6) for statistical methodology and benchmarking performance of scCODA and [tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data](https://www.frontiersin.org/articles/10.3389/fgene.2021.766405/full) for statistical methodology and benchmarking performance of tascCODA.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Sccoda
+    tools.Tasccoda
+```
 
 ### Representation
 
@@ -210,7 +230,9 @@ See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebook
     plot.ms.lda
 ```
 
-### Milopy
+### Compositional analysis
+
+#### Milopy
 
 ```{eval-rst}
 .. autosummary::
@@ -220,4 +242,19 @@ See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebook
     plot.milo.nhood
     plot.milo.da_beeswarm
     plot.milo.nhood_counts_by_cond
+```
+
+#### scCODA and tascCODA
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.coda.stacked_barplot
+    plot.coda.effects_barplot
+    plot.coda.boxplots
+    plot.coda.rel_abundance_dispersion_plot
+    plot.coda.draw_tree
+    plot.coda.draw_effects
+    plot.coda.effects_umap
 ```
