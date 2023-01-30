@@ -194,8 +194,6 @@ class Mixscape:
         if layer is not None:
             X = adata_comp.layers[layer]
         else:
-            warning = "Using .layers[\"X_pert\"] as default!"
-            print(warning)
             X = adata_comp.layers["X_pert"]
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
