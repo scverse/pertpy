@@ -86,7 +86,6 @@ intersphinx_mapping = dict(
     pandas=("https://pandas.pydata.org/docs/", None),
     python=("https://docs.python.org/3", None),
     scipy=("https://docs.scipy.org/doc/scipy/reference/", None),
-    sklearn=("https://scikit-learn.org/stable/", None),
     torch=("https://pytorch.org/docs/master/", None),
     scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
     pytorch_lightning=("https://pytorch-lightning.readthedocs.io/en/stable/", None),
