@@ -93,6 +93,7 @@ class TestMixscape:
 
     def test_lda(self):
         adata = self.make_test_adata()
+        adata.layers['X_pert'] = adata.X
         mixscape_identifier = pt.tl.Mixscape()
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
         mixscape_identifier.lda(adata=adata, labels="gene_target")
