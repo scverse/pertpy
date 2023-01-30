@@ -12,4 +12,5 @@ pertpy_pypi_latest.check_latest()
 
 from . import data as dt
 from . import plot as pl
+from . import preprocessing as pp
 from . import tools as tl
