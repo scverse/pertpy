@@ -194,7 +194,13 @@ class Mixscape:
         if layer is not None:
             X = adata_comp.layers[layer]
         else:
-            X = adata_comp.layers["X_pert"]
+            try:
+                X = adata_comp.layers["X_pert"]
+            except KeyError:
+                print(
+                    '[bold yellow]No "X_pert" found in .layers! -- Please run pert_sign first to calculate perturbation signature!'
+                )
+                raise
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
         adata.obs[new_class_name] = adata.obs[labels].astype(str)
