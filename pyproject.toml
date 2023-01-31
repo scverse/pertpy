@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pertpy"
-version = "0.3.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.4.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Perturbation Analysis in the Scanpy ecosystem."
 authors = ["Lukas Heumos <lukas.heumos@posteo.net>"]
 license = "MIT"
