@@ -390,8 +390,17 @@ class Mixscape:
             return adata
 
     def _get_perturbation_markers(
-        self, adata, split_masks, categories, labels, control, layer, pval_cutoff, min_de_genes, logfc_threshold
-    ):
+        self,
+        adata: AnnData,
+        split_masks: list[np.ndarray],
+        categories: list[str],
+        labels: str,
+        control: str,
+        layer: str,
+        pval_cutoff: float,
+        min_de_genes: float,
+        logfc_threshold: float,
+    ) -> dict[tuple, np.ndarray]:
         """determine gene sets across all splits/groups through differential gene expression
 
         Args:
