@@ -1,0 +1,6 @@
+﻿pertpy.data.srivatsan\_2020\_sciplex4
+=====================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: srivatsan_2020_sciplex4

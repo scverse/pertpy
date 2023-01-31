@@ -1,0 +1,6 @@
+﻿pertpy.data.gasperini\_2019\_highmoi
+====================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: gasperini_2019_highmoi

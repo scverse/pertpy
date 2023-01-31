@@ -1,0 +1,6 @@
+﻿pertpy.plot.coda.stacked\_barplot
+=================================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: coda.stacked_barplot

@@ -1,0 +1,6 @@
+﻿pertpy.data.mcfarland\_2020
+===========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: mcfarland_2020

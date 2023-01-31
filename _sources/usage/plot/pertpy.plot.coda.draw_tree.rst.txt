@@ -1,0 +1,6 @@
+﻿pertpy.plot.coda.draw\_tree
+===========================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: coda.draw_tree

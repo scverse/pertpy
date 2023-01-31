@@ -1,0 +1,6 @@
+﻿pertpy.data.frangieh\_2021\_rna
+===============================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: frangieh_2021_rna

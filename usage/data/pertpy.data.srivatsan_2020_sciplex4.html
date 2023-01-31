@@ -1,0 +1,414 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<meta property="og:title" content="pertpy.data.srivatsan_2020_sciplex4" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://pertpy.readthedocs.io/en/latest/usage/data/pertpy.data.srivatsan_2020_sciplex4.html" />
+<meta property="og:site_name" content="pertpy" />
+<meta property="og:image" content="https://pertpy.readthedocs.io/en/latest//_static/logo.png" />
+<meta property="og:image:alt" content="pertpy" />
+<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="pertpy.data.stephenson_2021_subsampled" href="pertpy.data.stephenson_2021_subsampled.html" /><link rel="prev" title="pertpy.data.srivatsan_2020_sciplex3" href="pertpy.data.srivatsan_2020_sciplex3.html" />
+
+    <!-- Generated with Sphinx 5.3.0 and Furo 2022.12.07 -->
+        <title>pertpy.data.srivatsan_2020_sciplex4 - pertpy</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/override.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/sphinx_gallery.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #003262;
+  --color-brand-content: #003262per;
+  --admonition-font-size: var(--font-size-normal);
+  --admonition-title-font-size: var(--font-size-normal);
+  --code-font-size: var(--font-size--small);
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">pertpy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../usage.html">Usage</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.adamson_2016_pilot.html">pertpy.data.adamson_2016_pilot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.adamson_2016_upr_epistasis.html">pertpy.data.adamson_2016_upr_epistasis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.adamson_2016_upr_perturb_seq.html">pertpy.data.adamson_2016_upr_perturb_seq</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.aissa_2021.html">pertpy.data.aissa_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.bhattacherjee.html">pertpy.data.bhattacherjee</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.burczynski_crohn.html">pertpy.data.burczynski_crohn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.chang_2021.html">pertpy.data.chang_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.datlinger_2017.html">pertpy.data.datlinger_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.datlinger_2021.html">pertpy.data.datlinger_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.frangieh_2021_rna.html">pertpy.data.frangieh_2021_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.gasperini_2019_atscale.html">pertpy.data.gasperini_2019_atscale</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.gasperini_2019_highmoi.html">pertpy.data.gasperini_2019_highmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.gasperini_2019_lowmoi.html">pertpy.data.gasperini_2019_lowmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.gehring_2019.html">pertpy.data.gehring_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.haber_2017_regions.html">pertpy.data.haber_2017_regions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.kang_2018.html">pertpy.data.kang_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.mcfarland_2020.html">pertpy.data.mcfarland_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.norman_2019.html">pertpy.data.norman_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.norman_2019_filtered.html">pertpy.data.norman_2019_filtered</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.norman_2019_raw.html">pertpy.data.norman_2019_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.papalexi_2021.html">pertpy.data.papalexi_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.papalexi_2021_eccite_arrayed_protein.html">pertpy.data.papalexi_2021_eccite_arrayed_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.papalexi_2021_eccite_arrayed_rna.html">pertpy.data.papalexi_2021_eccite_arrayed_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.papalexi_2021_eccite_protein.html">pertpy.data.papalexi_2021_eccite_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.papalexi_2021_eccite_rna.html">pertpy.data.papalexi_2021_eccite_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.replogle_2022_k562_essential.html">pertpy.data.replogle_2022_k562_essential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.replogle_2022_k562_gwps.html">pertpy.data.replogle_2022_k562_gwps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.replogle_2022_rpe1.html">pertpy.data.replogle_2022_rpe1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.sc_sim_augur.html">pertpy.data.sc_sim_augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.schiebinger_2019_16day.html">pertpy.data.schiebinger_2019_16day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.schiebinger_2019_18day.html">pertpy.data.schiebinger_2019_18day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.schraivogel_2020_tap_screen_chr8.html">pertpy.data.schraivogel_2020_tap_screen_chr8</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.schraivogel_2020_tap_screen_chr11.html">pertpy.data.schraivogel_2020_tap_screen_chr11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.sciplex3_raw.html">pertpy.data.sciplex3_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.shifrut_2018.html">pertpy.data.shifrut_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.smillie.html">pertpy.data.smillie</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.srivatsan_2020_sciplex2.html">pertpy.data.srivatsan_2020_sciplex2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.srivatsan_2020_sciplex3.html">pertpy.data.srivatsan_2020_sciplex3</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">pertpy.data.srivatsan_2020_sciplex4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.stephenson_2021_subsampled.html">pertpy.data.stephenson_2021_subsampled</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.tian_2019_day7neuron.html">pertpy.data.tian_2019_day7neuron</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.tian_2019_ipsc.html">pertpy.data.tian_2019_ipsc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.tian_2021_crispra.html">pertpy.data.tian_2021_crispra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.tian_2021_crispri.html">pertpy.data.tian_2021_crispri</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.weinreb_2020.html">pertpy.data.weinreb_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.xie_2017.html">pertpy.data.xie_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.data.zhao_2021.html">pertpy.data.zhao_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/pertpy.tools.Augurpy.html">pertpy.tools.Augurpy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/pertpy.tools.Mixscape.html">pertpy.tools.Mixscape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/pertpy.tools.Milopy.html">pertpy.tools.Milopy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/pertpy.tools.Sccoda.html">pertpy.tools.Sccoda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/pertpy.tools.Tasccoda.html">pertpy.tools.Tasccoda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tools/pertpy.tools.kernel_pca.html">pertpy.tools.kernel_pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.dp_scatter.html">pertpy.plot.ag.dp_scatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.important_features.html">pertpy.plot.ag.important_features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.lollipop.html">pertpy.plot.ag.lollipop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.scatterplot.html">pertpy.plot.ag.scatterplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.violin.html">pertpy.plot.ms.violin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.perturbscore.html">pertpy.plot.ms.perturbscore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.heatmap.html">pertpy.plot.ms.heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.barplot.html">pertpy.plot.ms.barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.lda.html">pertpy.plot.ms.lda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.nhood_graph.html">pertpy.plot.milo.nhood_graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.nhood.html">pertpy.plot.milo.nhood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.da_beeswarm.html">pertpy.plot.milo.da_beeswarm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.nhood_counts_by_cond.html">pertpy.plot.milo.nhood_counts_by_cond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.stacked_barplot.html">pertpy.plot.coda.stacked_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.effects_barplot.html">pertpy.plot.coda.effects_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.boxplots.html">pertpy.plot.coda.boxplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.rel_abundance_dispersion_plot.html">pertpy.plot.coda.rel_abundance_dispersion_plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.draw_tree.html">pertpy.plot.coda.draw_tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.draw_effects.html">pertpy.plot.coda.draw_effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.effects_umap.html">pertpy.plot.coda.effects_umap</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="pertpy-data-srivatsan-2020-sciplex4">
+<h1>pertpy.data.srivatsan_2020_sciplex4<a class="headerlink" href="#pertpy-data-srivatsan-2020-sciplex4" title="Permalink to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="pertpy.data.srivatsan_2020_sciplex4">
+<span class="sig-prename descclassname"><span class="pre">pertpy.data.</span></span><span class="sig-name descname"><span class="pre">srivatsan_2020_sciplex4</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/data/_datasets.html#srivatsan_2020_sciplex4"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.data.srivatsan_2020_sciplex4" title="Permalink to this definition">#</a></dt>
+<dd><p>scPerturb Single-Cell Perturbation Data.</p>
+<p><a class="reference external" href="https://github.com/sanderlab/scPerturb">https://github.com/sanderlab/scPerturb</a></p>
+<dl class="simple">
+<dt>Reference:</dt><dd><p>Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
+Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
+scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
+bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.</p>
+</dd>
+</dl>
+<p>A549 and MCF7 cells were treated with pracinostat in the presence and absence of
+acetyl-CoA precursors (acetate, pyruvate, or citrate) or inhibitors of enzymes
+(ACLY, ACSS2, or PDH) involved in replenishing acetyl-CoA pools. After treatment,
+cells were harvested and processed using sci-Plex and trajectories constructed
+for each cell line. In both A549 and MCF7 cells, acetate, pyruvate, and citrate
+supplementation was capable of blocking pracinostat-treated cells from reaching
+the end of the HDAC inhibitor trajectory.</p>
+<dl class="simple">
+<dt>Source paper:</dt><dd><p><a class="reference external" href="https://doi.org/10.1126/science.aax6234">https://doi.org/10.1126/science.aax6234</a></p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object of scPerturb single-cell perturbation data</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="pertpy.data.stephenson_2021_subsampled.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">pertpy.data.stephenson_2021_subsampled</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="pertpy.data.srivatsan_2020_sciplex3.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">pertpy.data.srivatsan_2020_sciplex3</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021, Lukas Heumos, Theislab
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">pertpy.data.srivatsan_2020_sciplex4</a><ul>
+<li><a class="reference internal" href="#pertpy.data.srivatsan_2020_sciplex4"><code class="docutils literal notranslate"><span class="pre">srivatsan_2020_sciplex4()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/scripts/furo.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    </body>
+</html>

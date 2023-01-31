@@ -1,0 +1,6 @@
+﻿pertpy.plot.coda.effects\_barplot
+=================================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: coda.effects_barplot

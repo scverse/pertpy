@@ -1,0 +1,6 @@
+﻿pertpy.data.aissa\_2021
+=======================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: aissa_2021

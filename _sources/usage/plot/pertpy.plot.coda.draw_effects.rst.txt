@@ -1,0 +1,6 @@
+﻿pertpy.plot.coda.draw\_effects
+==============================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: coda.draw_effects

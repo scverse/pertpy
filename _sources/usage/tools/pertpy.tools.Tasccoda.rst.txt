@@ -1,0 +1,100 @@
+﻿pertpy.tools.Tasccoda
+=====================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: Tasccoda
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.Tasccoda.credible_effects
+    ~pertpy.tools.Tasccoda.get_effect_df
+    ~pertpy.tools.Tasccoda.get_intercept_df
+    ~pertpy.tools.Tasccoda.get_node_df
+    ~pertpy.tools.Tasccoda.load
+    ~pertpy.tools.Tasccoda.make_arviz
+    ~pertpy.tools.Tasccoda.model
+    ~pertpy.tools.Tasccoda.prepare
+    ~pertpy.tools.Tasccoda.run_hmc
+    ~pertpy.tools.Tasccoda.run_nuts
+    ~pertpy.tools.Tasccoda.set_fdr
+    ~pertpy.tools.Tasccoda.summary
+    ~pertpy.tools.Tasccoda.summary_prepare
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+credible_effects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.credible_effects
+get_effect_df
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.get_effect_df
+get_intercept_df
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.get_intercept_df
+get_node_df
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.get_node_df
+load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.load
+make_arviz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.make_arviz
+model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.model
+prepare
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.prepare
+run_hmc
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.run_hmc
+run_nuts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.run_nuts
+set_fdr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.set_fdr
+summary
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.summary
+summary_prepare
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.summary_prepare
+
+

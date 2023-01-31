@@ -1,0 +1,6 @@
+﻿pertpy.data.adamson\_2016\_upr\_perturb\_seq
+============================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: adamson_2016_upr_perturb_seq

@@ -1,0 +1,100 @@
+﻿pertpy.tools.Sccoda
+===================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: Sccoda
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.Sccoda.credible_effects
+    ~pertpy.tools.Sccoda.get_effect_df
+    ~pertpy.tools.Sccoda.get_intercept_df
+    ~pertpy.tools.Sccoda.get_node_df
+    ~pertpy.tools.Sccoda.load
+    ~pertpy.tools.Sccoda.make_arviz
+    ~pertpy.tools.Sccoda.model
+    ~pertpy.tools.Sccoda.prepare
+    ~pertpy.tools.Sccoda.run_hmc
+    ~pertpy.tools.Sccoda.run_nuts
+    ~pertpy.tools.Sccoda.set_fdr
+    ~pertpy.tools.Sccoda.summary
+    ~pertpy.tools.Sccoda.summary_prepare
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+credible_effects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.credible_effects
+get_effect_df
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.get_effect_df
+get_intercept_df
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.get_intercept_df
+get_node_df
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.get_node_df
+load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.load
+make_arviz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.make_arviz
+model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.model
+prepare
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.prepare
+run_hmc
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.run_hmc
+run_nuts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.run_nuts
+set_fdr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.set_fdr
+summary
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.summary
+summary_prepare
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.summary_prepare
+
+

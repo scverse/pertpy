@@ -1,0 +1,6 @@
+﻿pertpy.data.tian\_2021\_crispri
+===============================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: tian_2021_crispri

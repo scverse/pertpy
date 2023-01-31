@@ -1,0 +1,6 @@
+﻿pertpy.data.zhao\_2021
+======================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: zhao_2021

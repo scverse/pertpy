@@ -1,0 +1,6 @@
+﻿pertpy.data.gehring\_2019
+=========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: gehring_2019

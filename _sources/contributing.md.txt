@@ -92,7 +92,7 @@ To install all required dependencies for the documentation run:
 $ pip install -r docs/requirements.txt
 ```
 
-Please note that ehrapy itself must also be installed. To build the documentation run:
+Please note that pertpy itself must also be installed. To build the documentation run:
 
 ```console
 $ make html

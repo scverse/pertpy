@@ -1,0 +1,6 @@
+﻿pertpy.data.adamson\_2016\_upr\_epistasis
+=========================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: adamson_2016_upr_epistasis

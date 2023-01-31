@@ -1,0 +1,6 @@
+﻿pertpy.data.shifrut\_2018
+=========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: shifrut_2018

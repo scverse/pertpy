@@ -1,0 +1,6 @@
+﻿pertpy.data.stephenson\_2021\_subsampled
+========================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: stephenson_2021_subsampled

@@ -1,0 +1,6 @@
+﻿pertpy.data.datlinger\_2021
+===========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: datlinger_2021

@@ -1,0 +1,6 @@
+﻿pertpy.data.norman\_2019\_filtered
+==================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: norman_2019_filtered

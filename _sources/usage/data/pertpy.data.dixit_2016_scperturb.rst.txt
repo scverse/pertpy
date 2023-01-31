@@ -1,0 +1,6 @@
+﻿pertpy.data.dixit\_2016\_scperturb
+==================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: dixit_2016_scperturb

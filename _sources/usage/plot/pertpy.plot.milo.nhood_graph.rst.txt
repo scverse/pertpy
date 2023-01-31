@@ -1,0 +1,6 @@
+﻿pertpy.plot.milo.nhood\_graph
+=============================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: milo.nhood_graph

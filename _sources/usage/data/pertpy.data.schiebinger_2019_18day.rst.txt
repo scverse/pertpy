@@ -1,0 +1,6 @@
+﻿pertpy.data.schiebinger\_2019\_18day
+====================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: schiebinger_2019_18day

@@ -1,0 +1,6 @@
+﻿pertpy.plot.milo.nhood\_counts\_by\_cond
+========================================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: milo.nhood_counts_by_cond

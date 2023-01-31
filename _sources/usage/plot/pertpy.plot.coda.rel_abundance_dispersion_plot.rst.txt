@@ -1,0 +1,6 @@
+﻿pertpy.plot.coda.rel\_abundance\_dispersion\_plot
+=================================================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: coda.rel_abundance_dispersion_plot

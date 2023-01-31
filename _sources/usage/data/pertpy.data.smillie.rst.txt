@@ -1,0 +1,6 @@
+﻿pertpy.data.smillie
+===================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: smillie

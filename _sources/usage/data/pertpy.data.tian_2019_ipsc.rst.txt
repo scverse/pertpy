@@ -1,0 +1,6 @@
+﻿pertpy.data.tian\_2019\_ipsc
+============================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: tian_2019_ipsc

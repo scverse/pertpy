@@ -1,0 +1,6 @@
+﻿pertpy.data.weinreb\_2020
+=========================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: weinreb_2020

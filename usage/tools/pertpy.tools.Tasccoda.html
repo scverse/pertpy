@@ -1,0 +1,998 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<meta property="og:title" content="pertpy.tools.Tasccoda" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://pertpy.readthedocs.io/en/latest/usage/tools/pertpy.tools.Tasccoda.html" />
+<meta property="og:site_name" content="pertpy" />
+<meta property="og:description" content="Methods table: Methods: credible_effects: get_effect_df: get_intercept_df: get_node_df: load: make_arviz: model: prepare: run_hmc: run_nuts: set_fdr: summary: summary_prepare:" />
+<meta property="og:image" content="https://pertpy.readthedocs.io/en/latest//_static/logo.png" />
+<meta property="og:image:alt" content="pertpy" />
+<meta name="description" content="Methods table: Methods: credible_effects: get_effect_df: get_intercept_df: get_node_df: load: make_arviz: model: prepare: run_hmc: run_nuts: set_fdr: summary: summary_prepare:" />
+<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="pertpy.tools.kernel_pca" href="pertpy.tools.kernel_pca.html" /><link rel="prev" title="pertpy.tools.Sccoda" href="pertpy.tools.Sccoda.html" />
+
+    <!-- Generated with Sphinx 5.3.0 and Furo 2022.12.07 -->
+        <title>pertpy.tools.Tasccoda - pertpy</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/override.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/sphinx_gallery.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #003262;
+  --color-brand-content: #003262per;
+  --admonition-font-size: var(--font-size-normal);
+  --admonition-title-font-size: var(--font-size-normal);
+  --code-font-size: var(--font-size--small);
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">pertpy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../usage.html">Usage</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.adamson_2016_pilot.html">pertpy.data.adamson_2016_pilot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.adamson_2016_upr_epistasis.html">pertpy.data.adamson_2016_upr_epistasis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.adamson_2016_upr_perturb_seq.html">pertpy.data.adamson_2016_upr_perturb_seq</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.aissa_2021.html">pertpy.data.aissa_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.bhattacherjee.html">pertpy.data.bhattacherjee</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.burczynski_crohn.html">pertpy.data.burczynski_crohn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.chang_2021.html">pertpy.data.chang_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.datlinger_2017.html">pertpy.data.datlinger_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.datlinger_2021.html">pertpy.data.datlinger_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_rna.html">pertpy.data.frangieh_2021_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.gasperini_2019_atscale.html">pertpy.data.gasperini_2019_atscale</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.gasperini_2019_highmoi.html">pertpy.data.gasperini_2019_highmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.gasperini_2019_lowmoi.html">pertpy.data.gasperini_2019_lowmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.gehring_2019.html">pertpy.data.gehring_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.haber_2017_regions.html">pertpy.data.haber_2017_regions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.kang_2018.html">pertpy.data.kang_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.mcfarland_2020.html">pertpy.data.mcfarland_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.norman_2019.html">pertpy.data.norman_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.norman_2019_filtered.html">pertpy.data.norman_2019_filtered</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.norman_2019_raw.html">pertpy.data.norman_2019_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.papalexi_2021.html">pertpy.data.papalexi_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.papalexi_2021_eccite_arrayed_protein.html">pertpy.data.papalexi_2021_eccite_arrayed_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.papalexi_2021_eccite_arrayed_rna.html">pertpy.data.papalexi_2021_eccite_arrayed_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.papalexi_2021_eccite_protein.html">pertpy.data.papalexi_2021_eccite_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.papalexi_2021_eccite_rna.html">pertpy.data.papalexi_2021_eccite_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.replogle_2022_k562_essential.html">pertpy.data.replogle_2022_k562_essential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.replogle_2022_k562_gwps.html">pertpy.data.replogle_2022_k562_gwps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.replogle_2022_rpe1.html">pertpy.data.replogle_2022_rpe1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.sc_sim_augur.html">pertpy.data.sc_sim_augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.schiebinger_2019_16day.html">pertpy.data.schiebinger_2019_16day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.schiebinger_2019_18day.html">pertpy.data.schiebinger_2019_18day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.schraivogel_2020_tap_screen_chr8.html">pertpy.data.schraivogel_2020_tap_screen_chr8</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.schraivogel_2020_tap_screen_chr11.html">pertpy.data.schraivogel_2020_tap_screen_chr11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.sciplex3_raw.html">pertpy.data.sciplex3_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.shifrut_2018.html">pertpy.data.shifrut_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.smillie.html">pertpy.data.smillie</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.srivatsan_2020_sciplex2.html">pertpy.data.srivatsan_2020_sciplex2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.srivatsan_2020_sciplex3.html">pertpy.data.srivatsan_2020_sciplex3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.srivatsan_2020_sciplex4.html">pertpy.data.srivatsan_2020_sciplex4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.stephenson_2021_subsampled.html">pertpy.data.stephenson_2021_subsampled</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.tian_2019_day7neuron.html">pertpy.data.tian_2019_day7neuron</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.tian_2019_ipsc.html">pertpy.data.tian_2019_ipsc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.tian_2021_crispra.html">pertpy.data.tian_2021_crispra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.tian_2021_crispri.html">pertpy.data.tian_2021_crispri</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.weinreb_2020.html">pertpy.data.weinreb_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.xie_2017.html">pertpy.data.xie_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.zhao_2021.html">pertpy.data.zhao_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.tools.Augurpy.html">pertpy.tools.Augurpy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.tools.Mixscape.html">pertpy.tools.Mixscape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.tools.Milopy.html">pertpy.tools.Milopy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.tools.Sccoda.html">pertpy.tools.Sccoda</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">pertpy.tools.Tasccoda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pertpy.tools.kernel_pca.html">pertpy.tools.kernel_pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.dp_scatter.html">pertpy.plot.ag.dp_scatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.important_features.html">pertpy.plot.ag.important_features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.lollipop.html">pertpy.plot.ag.lollipop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ag.scatterplot.html">pertpy.plot.ag.scatterplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.violin.html">pertpy.plot.ms.violin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.perturbscore.html">pertpy.plot.ms.perturbscore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.heatmap.html">pertpy.plot.ms.heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.barplot.html">pertpy.plot.ms.barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.ms.lda.html">pertpy.plot.ms.lda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.nhood_graph.html">pertpy.plot.milo.nhood_graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.nhood.html">pertpy.plot.milo.nhood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.da_beeswarm.html">pertpy.plot.milo.da_beeswarm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.milo.nhood_counts_by_cond.html">pertpy.plot.milo.nhood_counts_by_cond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.stacked_barplot.html">pertpy.plot.coda.stacked_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.effects_barplot.html">pertpy.plot.coda.effects_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.boxplots.html">pertpy.plot.coda.boxplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.rel_abundance_dispersion_plot.html">pertpy.plot.coda.rel_abundance_dispersion_plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.draw_tree.html">pertpy.plot.coda.draw_tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.draw_effects.html">pertpy.plot.coda.draw_effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plot/pertpy.plot.coda.effects_umap.html">pertpy.plot.coda.effects_umap</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="pertpy-tools-tasccoda">
+<h1>pertpy.tools.Tasccoda<a class="headerlink" href="#pertpy-tools-tasccoda" title="Permalink to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pertpy.tools.</span></span><span class="sig-name descname"><span class="pre">Tasccoda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda" title="Permalink to this definition">#</a></dt>
+<dd><p>Statistical model for tree-aggregated differential composition analysis (tascCODA, Ostner et al., 2021).</p>
+<p>The hierarchical formulation of the model for one sample is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+    Y_i &amp;\sim \textrm{DirMult}(\bar{Y}_i, \textbf{a}(\textbf{x})_i)\\
+    \log(\textbf{a}(X))_i &amp;= \alpha + X_{i, \cdot} \beta\\
+    \alpha_j &amp;\sim \mathcal{N}(0, 10) &amp; \forall j\in[p]\\
+    \beta &amp;= \hat{\beta} A^T \\
+    \hat{\beta}_{l, k} &amp;= 0 &amp; \forall k \in \hat{v}, l \in [d]\\
+    \hat{\beta}_{l, k} &amp;= \theta \tilde{\beta}_{1, l, k} + (1- \theta) \tilde{\beta}_{0, l, k} \quad &amp; \forall k\in\{[v] \smallsetminus \hat{v}\}, l \in [d]\\
+    \tilde{\beta}_{m, l, k} &amp;= \sigma_{m, l, k} * b_{m, l, k} \quad &amp; \forall k\in\{[v] \smallsetminus \hat{v}\}, m \in \{0, 1\}, l \in [d]\\
+    \sigma_{m, l, k} &amp;\sim \textrm{Exp}(\lambda_{m, l, k}^2/2) \quad &amp; \forall k\in\{[v] \smallsetminus \hat{v}\}, l \in \{0, 1\}, l \in [d]\\
+    b_{m, l, k} &amp;\sim N(0,1) \quad &amp; \forall k\in\{[v] \smallsetminus \hat{v}\}, l \in \{0, 1\}, l \in [d]\\
+    \theta &amp;\sim \textrm{Beta}(1, \frac{1}{|\{[v] \smallsetminus \hat{v}\}|})
+\end{align*}\end{split}\]</div>
+</div>
+<p>with Y being the cell counts, X the covariates, and v the set of nodes of the underlying tree structure.</p>
+<p>For further information, see <cite>tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data</cite>
+(Ostner et al., 2021)</p>
+</dd></dl>
+
+<section id="methods-table">
+<h2>Methods table<a class="headerlink" href="#methods-table" title="Permalink to this heading">#</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.credible_effects" title="pertpy.tools.Tasccoda.credible_effects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">credible_effects</span></code></a>(data[, modality_key, est_fdr])</p></td>
+<td><p>Decides which effects of the scCODA model are credible based on an adjustable inclusion probability threshold.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.get_effect_df" title="pertpy.tools.Tasccoda.get_effect_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_effect_df</span></code></a>(data[, modality_key])</p></td>
+<td><p>Get effect dataframe as printed in the extended summary</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.get_intercept_df" title="pertpy.tools.Tasccoda.get_intercept_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_intercept_df</span></code></a>(data[, modality_key])</p></td>
+<td><p>Get intercept dataframe as printed in the extended summary</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.get_node_df" title="pertpy.tools.Tasccoda.get_node_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_node_df</span></code></a>(data[, modality_key])</p></td>
+<td><p>Get node effect dataframe as printed in the extended summary of a tascCODA model</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.load" title="pertpy.tools.Tasccoda.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(adata, type[, cell_type_identifier, ...])</p></td>
+<td><p>Prepare a MuData object for subsequent processing.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.make_arviz" title="pertpy.tools.Tasccoda.make_arviz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_arviz</span></code></a>(data[, modality_key, rng_key, ...])</p></td>
+<td><p>Creates arviz object from model results for MCMC diagnosis</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.model" title="pertpy.tools.Tasccoda.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a>(counts, covariates, n_total, ...)</p></td>
+<td><p>Implements tascCODA model in numpyro</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.prepare" title="pertpy.tools.Tasccoda.prepare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare</span></code></a>(data, formula[, ...])</p></td>
+<td><p>Handles data preprocessing, covariate matrix creation, reference selection, and zero count replacement for tascCODA.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.run_hmc" title="pertpy.tools.Tasccoda.run_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_hmc</span></code></a>(data[, modality_key, num_samples, ...])</p></td>
+<td><p>Run standard Hamiltonian Monte Carlo sampling (Neal, 2011) to infer optimal model parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.run_nuts" title="pertpy.tools.Tasccoda.run_nuts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_nuts</span></code></a>(data[, modality_key, num_samples, ...])</p></td>
+<td><p>Run No-U-turn sampling (Hoffman and Gelman, 2014), an efficient version of Hamiltonian Monte Carlo sampling to infer optimal model parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.set_fdr" title="pertpy.tools.Tasccoda.set_fdr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_fdr</span></code></a>(data, est_fdr[, modality_key])</p></td>
+<td><p>Direct posterior probability approach to calculate credible effects while keeping the expected FDR at a certain level</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.summary" title="pertpy.tools.Tasccoda.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a>(data[, extended, modality_key])</p></td>
+<td><p>Printing method for the summary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pertpy.tools.Tasccoda.summary_prepare" title="pertpy.tools.Tasccoda.summary_prepare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary_prepare</span></code></a>(sample_adata[, est_fdr])</p></td>
+<td><p>Generates summary dataframes for intercepts, effects and node-level effect (if using tree aggregation).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="methods">
+<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this heading">#</a></h2>
+<section id="credible-effects">
+<h3>credible_effects<a class="headerlink" href="#credible-effects" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.credible_effects">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">credible_effects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">est_fdr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.credible_effects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.credible_effects" title="Permalink to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Decides which effects of the scCODA model are credible based on an adjustable inclusion probability threshold.</dt><dd><p>Note: Parameter est_fdr has no effect for spike-and-slab LASSO selection method</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+<li><p><strong>est_fdr</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Estimated false discovery rate. Must be between 0 and 1. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Credible effect decision series which includes boolean values indicate whether effects are credible under inc_prob_threshold.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">smillie</span><span class="p">()</span>
+<span class="n">tasccoda</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Tasccoda</span><span class="p">()</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">adata</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sample_level&quot;</span><span class="p">,</span>
+    <span class="n">levels_agg</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Major_l1&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l2&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l3&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l4&quot;</span><span class="p">,</span> <span class="s2">&quot;Cluster&quot;</span><span class="p">],</span>
+    <span class="n">key_added</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">add_level_name</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+    <span class="n">mdata</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;Health&quot;</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;automatic&quot;</span><span class="p">,</span> <span class="n">tree_key</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">pen_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">run_nuts</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">credible_effects</span><span class="p">(</span><span class="n">mdata</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="get-effect-df">
+<h3>get_effect_df<a class="headerlink" href="#get-effect-df" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.get_effect_df">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">get_effect_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.Tasccoda.get_effect_df" title="Permalink to this definition">#</a></dt>
+<dd><p>Get effect dataframe as printed in the extended summary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Effect data frame.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="get-intercept-df">
+<h3>get_intercept_df<a class="headerlink" href="#get-intercept-df" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.get_intercept_df">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">get_intercept_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.Tasccoda.get_intercept_df" title="Permalink to this definition">#</a></dt>
+<dd><p>Get intercept dataframe as printed in the extended summary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Intercept data frame.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="get-node-df">
+<h3>get_node_df<a class="headerlink" href="#get-node-df" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.get_node_df">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">get_node_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.Tasccoda.get_node_df" title="Permalink to this definition">#</a></dt>
+<dd><p>Get node effect dataframe as printed in the extended summary of a tascCODA model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Node effect data frame.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="load">
+<h3>load<a class="headerlink" href="#load" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.load">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_type_identifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_identifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariate_uns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariate_obs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariate_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dendrogram_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels_orig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels_agg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_level_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_added</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tree'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rna'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.load" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare a MuData object for subsequent processing. If type is “cell_level”, then create a compositional analysis dataset from the input adata. If type is “sample_level”, generate ete tree for tascCODA models from dendrogram information or cell-level observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adata</strong> (<em>AnnData</em>) – AnnData object.</p></li>
+<li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>(</em><em>'cell_level'</em><em>, </em><em>'sample_level'</em><em>)</em><em>]</em>) – Specify the input adata type, which could be either a cell-level AnnData or an aggregated sample-level AnnData.</p></li>
+<li><p><strong>cell_type_identifier</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If type is “cell_level”, specify column name in adata.obs that specifies the cell types. Defaults to None.</p></li>
+<li><p><strong>sample_identifier</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If type is “cell_level”, specify column name in adata.obs that specifies the sample. Defaults to None.</p></li>
+<li><p><strong>covariate_uns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> | </em><em>None</em>) – If type is “cell_level”, specify key for adata.uns, where covariate values are stored. Defaults to None.</p></li>
+<li><p><strong>covariate_obs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – If type is “cell_level”, specify list of keys for adata.obs, where covariate values are stored. Defaults to None.</p></li>
+<li><p><strong>covariate_df</strong> (<em>pd.DataFrame</em><em> | </em><em>None</em>) – If type is “cell_level”, specify dataFrame with covariates. Defaults to None.</p></li>
+<li><p><strong>dendrogram_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Key to the scanpy.tl.dendrogram result in <cite>.uns</cite> of original cell level anndata object. Defaults to None.</p></li>
+<li><p><strong>levels_orig</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>]</em>) – List that indicates which columns in <cite>.obs</cite> of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.</p></li>
+<li><p><strong>levels_agg</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>]</em>) – List that indicates which columns in <cite>.var</cite> of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.</p></li>
+<li><p><strong>add_level_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – If True, internal nodes in the tree will be named as “{level_name}_{node_name}” instead of just {level_name}. Defaults to False.</p></li>
+<li><p><strong>key_added</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If not specified, the tree is stored in .uns[‘tree’]. If <cite>data</cite> is AnnData, save tree in <cite>data</cite>. If <cite>data</cite> is MuData, save tree in data[modality_2]. Defaults to “tree”.</p></li>
+<li><p><strong>modality_key_1</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Key to the cell-level AnnData in the MuData object. Defaults to “rna”.</p></li>
+<li><p><strong>modality_key_2</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Key to the aggregated sample-level AnnData object in the MuData object. Defaults to “coda”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MuData object with cell-level AnnData (<cite>mudata[modality_key_1]</cite>) and aggregated sample-level AnnData (<cite>mudata[modality_key_2]</cite>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MuData</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">smillie</span><span class="p">()</span>
+<span class="n">tasccoda</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Tasccoda</span><span class="p">()</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">adata</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sample_level&quot;</span><span class="p">,</span>
+    <span class="n">levels_agg</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Major_l1&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l2&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l3&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l4&quot;</span><span class="p">,</span> <span class="s2">&quot;Cluster&quot;</span><span class="p">],</span>
+    <span class="n">key_added</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">add_level_name</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="make-arviz">
+<h3>make_arviz<a class="headerlink" href="#make-arviz" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.make_arviz">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">make_arviz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_prior_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_posterior_predictive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.make_arviz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.make_arviz" title="Permalink to this definition">#</a></dt>
+<dd><p>Creates arviz object from model results for MCMC diagnosis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+<li><p><strong>rng_key</strong> – The rng state used for the prior simulation. If None, a random state will be selected. Defaults to None.</p></li>
+<li><p><strong>num_prior_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Number of prior samples calculated. Defaults to 500.</p></li>
+<li><p><strong>use_posterior_predictive</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – If True, the posterior predictive will be calculated. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>arviz_data</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>arviz.InferenceData</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">smillie</span><span class="p">()</span>
+<span class="n">tasccoda</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Tasccoda</span><span class="p">()</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">adata</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sample_level&quot;</span><span class="p">,</span>
+    <span class="n">levels_agg</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Major_l1&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l2&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l3&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l4&quot;</span><span class="p">,</span> <span class="s2">&quot;Cluster&quot;</span><span class="p">],</span>
+    <span class="n">key_added</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">add_level_name</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+    <span class="n">mdata</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;Health&quot;</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;automatic&quot;</span><span class="p">,</span> <span class="n">tree_key</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">pen_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">run_nuts</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">make_arviz</span><span class="p">(</span><span class="n">mdata</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="model">
+<h3>model<a class="headerlink" href="#model" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.model">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_adata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.model" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements tascCODA model in numpyro</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counts</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>) – Count data array</p></li>
+<li><p><strong>covariates</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>) – Covariate matrix</p></li>
+<li><p><strong>n_total</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Number of counts per sample</p></li>
+<li><p><strong>ref_index</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>) – Index of reference feature</p></li>
+<li><p><strong>sample_adata</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>) – Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>predictions (see numpyro documentation for details on models)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="prepare">
+<h3>prepare<a class="headerlink" href="#prepare" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.prepare">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formula</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_cell_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'automatic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">automatic_reference_absence_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pen_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Handles data preprocessing, covariate matrix creation, reference selection, and zero count replacement for tascCODA. Also sets model parameters, model type (tree_agg), effect selection type (sslaso) and performs tree processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – Anndata object with cell counts as .X and covariates saved in .obs or a MuData object.</p></li>
+<li><p><strong>formula</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – R-style formula for building the covariate matrix.
+Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.
+To set a different level as the base category for a categorical covariate, use “C(&lt;CovariateName&gt;, Treatment(‘&lt;ReferenceLevelName&gt;’))”</p></li>
+<li><p><strong>reference_cell_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Column name that sets the reference cell type.
+Reference the name of a column. If “automatic”, the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen. Defaults to “automatic”.</p></li>
+<li><p><strong>automatic_reference_absence_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – If using reference_cell_type = “automatic”, determine the maximum fraction of zero entries for a cell type
+to be considered as a possible reference cell type. Defaults to 0.05.</p></li>
+<li><p><strong>tree_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Key in <cite>adata.uns</cite> that contains the tree structure</p></li>
+<li><p><strong>pen_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – Dictionary with penalty arguments. With <cite>reg=”scaled_3”</cite>, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.
+See the tascCODA paper for an explanation of these parameters. Default: lambda_0 = 50, lambda_1 = 5, phi = 0.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify key to the aggregated sample-level AnnData object in the MuData object. Defaults to “coda”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>AnnData | MuData</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>Return an AnnData (if input data is an AnnData object) or return a MuData (if input data is a MuData object)</p>
+<p>Specifically, parameters have been set:</p>
+<ul class="simple">
+<li><p><cite>adata.uns[“param_names”]</cite> or <cite>data[modality_key].uns[“param_names”]</cite>: List with the names of all tracked latent model parameters (through <cite>npy.sample</cite> or <cite>npy.deterministic</cite>)</p></li>
+<li><p><cite>adata.uns[“scCODA_params”][“model_type”]</cite> or <cite>data[modality_key].uns[“scCODA_params”][“model_type”]</cite>: String indicating the model type (“classic”)</p></li>
+<li><p><cite>adata.uns[“scCODA_params”][“select_type”]</cite> or <cite>data[modality_key].uns[“scCODA_params”][“select_type”]</cite>: String indicating the type of spike_and_slab selection (“spikeslab”)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">smillie</span><span class="p">()</span>
+<span class="n">tasccoda</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Tasccoda</span><span class="p">()</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">adata</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sample_level&quot;</span><span class="p">,</span>
+    <span class="n">levels_agg</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Major_l1&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l2&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l3&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l4&quot;</span><span class="p">,</span> <span class="s2">&quot;Cluster&quot;</span><span class="p">],</span>
+    <span class="n">key_added</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">add_level_name</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+    <span class="n">mdata</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;Health&quot;</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;automatic&quot;</span><span class="p">,</span> <span class="n">tree_key</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">pen_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="run-hmc">
+<h3>run_hmc<a class="headerlink" href="#run-hmc" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.run_hmc">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">run_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.Tasccoda.run_hmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Run standard Hamiltonian Monte Carlo sampling (Neal, 2011) to infer optimal model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Number of sampled values after burn-in. Defaults to 20000.</p></li>
+<li><p><strong>num_warmup</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Number of burn-in (warmup) samples. Defaults to 5000.</p></li>
+<li><p><strong>rng_key</strong> – The rng state used. If None, a random state will be selected. Defaults to None.</p></li>
+<li><p><strong>copy</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – Return a copy instead of writing to adata. Defaults to False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="run-nuts">
+<h3>run_nuts<a class="headerlink" href="#run-nuts" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.run_nuts">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">run_nuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.run_nuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.run_nuts" title="Permalink to this definition">#</a></dt>
+<dd><p>Run No-U-turn sampling (Hoffman and Gelman, 2014), an efficient version of Hamiltonian Monte Carlo sampling to infer optimal model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Number of sampled values after burn-in. Defaults to 10000.</p></li>
+<li><p><strong>num_warmup</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Number of burn-in (warmup) samples. Defaults to 1000.</p></li>
+<li><p><strong>rng_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The rng state used. If None, a random state will be selected. Defaults to None.</p></li>
+<li><p><strong>copy</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – Return a copy instead of writing to adata. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Calls <cite>self.__run_mcmc</cite></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">smillie</span><span class="p">()</span>
+<span class="n">tasccoda</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Tasccoda</span><span class="p">()</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">adata</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sample_level&quot;</span><span class="p">,</span>
+    <span class="n">levels_agg</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Major_l1&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l2&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l3&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l4&quot;</span><span class="p">,</span> <span class="s2">&quot;Cluster&quot;</span><span class="p">],</span>
+    <span class="n">key_added</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">add_level_name</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+    <span class="n">mdata</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;Health&quot;</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;automatic&quot;</span><span class="p">,</span> <span class="n">tree_key</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">pen_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">run_nuts</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="set-fdr">
+<h3>set_fdr<a class="headerlink" href="#set-fdr" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.set_fdr">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">set_fdr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">est_fdr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.set_fdr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.set_fdr" title="Permalink to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Direct posterior probability approach to calculate credible effects while keeping the expected FDR at a certain level</dt><dd><p>Note: Does not work for spike-and-slab LASSO selection method</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>est_fdr</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Desired FDR value.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+<li><p><strong>args</strong> – passed to self.summary_prepare</p></li>
+<li><p><strong>kwargs</strong> – passed to self.summary_prepare</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Adjusts intercept_df and effect_df</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">smillie</span><span class="p">()</span>
+<span class="n">tasccoda</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Tasccoda</span><span class="p">()</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">adata</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sample_level&quot;</span><span class="p">,</span>
+    <span class="n">levels_agg</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Major_l1&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l2&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l3&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l4&quot;</span><span class="p">,</span> <span class="s2">&quot;Cluster&quot;</span><span class="p">],</span>
+    <span class="n">key_added</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">add_level_name</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+    <span class="n">mdata</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;Health&quot;</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;automatic&quot;</span><span class="p">,</span> <span class="n">tree_key</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">pen_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">run_nuts</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">set_fdr</span><span class="p">(</span><span class="n">mdata_salm</span><span class="p">,</span> <span class="n">est_fdr</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="summary">
+<h3>summary<a class="headerlink" href="#summary" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.summary">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coda'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_tasccoda.html#Tasccoda.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.Tasccoda.summary" title="Permalink to this definition">#</a></dt>
+<dd><p>Printing method for the summary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>AnnData</em><em> | </em><em>MuData</em>) – AnnData object or MuData object.</p></li>
+<li><p><strong>extended</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – If True, return the extended summary with additional statistics. Defaults to False.</p></li>
+<li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
+<li><p><strong>args</strong> – Passed to az.summary</p></li>
+<li><p><strong>kwargs</strong> – Passed to az.summary</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">smillie</span><span class="p">()</span>
+<span class="n">tasccoda</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Tasccoda</span><span class="p">()</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">adata</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sample_level&quot;</span><span class="p">,</span>
+    <span class="n">levels_agg</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Major_l1&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l2&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l3&quot;</span><span class="p">,</span> <span class="s2">&quot;Major_l4&quot;</span><span class="p">,</span> <span class="s2">&quot;Cluster&quot;</span><span class="p">],</span>
+    <span class="n">key_added</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">add_level_name</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">mdata</span> <span class="o">=</span> <span class="n">tasccoda</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+    <span class="n">mdata</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;Health&quot;</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;automatic&quot;</span><span class="p">,</span> <span class="n">tree_key</span><span class="o">=</span><span class="s2">&quot;lineage&quot;</span><span class="p">,</span> <span class="n">pen_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">run_nuts</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">tasccoda</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">mdata</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="summary-prepare">
+<h3>summary_prepare<a class="headerlink" href="#summary-prepare" title="Permalink to this heading">#</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pertpy.tools.Tasccoda.summary_prepare">
+<span class="sig-prename descclassname"><span class="pre">Tasccoda.</span></span><span class="sig-name descname"><span class="pre">summary_prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">est_fdr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.Tasccoda.summary_prepare" title="Permalink to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Generates summary dataframes for intercepts, effects and node-level effect (if using tree aggregation).</dt><dd><p>This function builds on and supports all functionalities from <code class="docutils literal notranslate"><span class="pre">az.summary</span></code>.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_adata</strong> – Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.</p></li>
+<li><p><strong>est_fdr</strong> – Desired FDR value. Defaults to 0.05.</p></li>
+<li><p><strong>args</strong> – Passed to <code class="docutils literal notranslate"><span class="pre">az.summary</span></code></p></li>
+<li><p><strong>kwargs</strong> – Passed to <code class="docutils literal notranslate"><span class="pre">az.summary</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Intercept, effect and node-level DataFrames</p>
+<dl class="simple">
+<dt>intercept_df</dt><dd><p>Summary of intercept parameters. Contains one row per cell type.</p>
+<ul class="simple">
+<li><p>Final Parameter: Final intercept model parameter</p></li>
+<li><p>HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)</p></li>
+<li><p>SD: Standard deviation of MCMC samples</p></li>
+<li><p>Expected sample: Expected cell counts for a sample with no present covariates. See the tutorial for more explanation</p></li>
+</ul>
+</dd>
+<dt>effect_df</dt><dd><p>Summary of effect (slope) parameters. Contains one row per covariate/cell type combination.</p>
+<ul class="simple">
+<li><p>Final Parameter: Final effect model parameter. If this parameter is 0, the effect is not significant, else it is.</p></li>
+<li><p>HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)</p></li>
+<li><p>SD: Standard deviation of MCMC samples</p></li>
+<li><p>Expected sample: Expected cell counts for a sample with only the current covariate set to 1. See the tutorial for more explanation</p></li>
+<li><p>log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate</p></li>
+<li><p>Inclusion probability: Share of MCMC samples, for which this effect was not set to 0 by the spike-and-slab prior.</p></li>
+</ul>
+</dd>
+<dt>node_df</dt><dd><p>Summary of effect (slope) parameters on the tree nodes (features or groups of features). Contains one row per covariate/cell type combination.</p>
+<ul class="simple">
+<li><p>Final Parameter: Final effect model parameter. If this parameter is 0, the effect is not significant, else it is.</p></li>
+<li><p>Median: Median of parameter over MCMC chain</p></li>
+<li><p>HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)</p></li>
+<li><p>SD: Standard deviation of MCMC samples</p></li>
+<li><p>Delta: Decision boundary value - threshold of practical significance</p></li>
+<li><p>Is credible: Boolean indicator whether effect is credible</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[pd.DataFrame, pd.DataFrame] or Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="pertpy.tools.kernel_pca.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">pertpy.tools.kernel_pca</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="pertpy.tools.Sccoda.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">pertpy.tools.Sccoda</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021, Lukas Heumos, Theislab
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">pertpy.tools.Tasccoda</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda"><code class="docutils literal notranslate"><span class="pre">Tasccoda</span></code></a></li>
+<li><a class="reference internal" href="#methods-table">Methods table</a></li>
+<li><a class="reference internal" href="#methods">Methods</a><ul>
+<li><a class="reference internal" href="#credible-effects">credible_effects</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.credible_effects"><code class="docutils literal notranslate"><span class="pre">Tasccoda.credible_effects()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#get-effect-df">get_effect_df</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.get_effect_df"><code class="docutils literal notranslate"><span class="pre">Tasccoda.get_effect_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#get-intercept-df">get_intercept_df</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.get_intercept_df"><code class="docutils literal notranslate"><span class="pre">Tasccoda.get_intercept_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#get-node-df">get_node_df</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.get_node_df"><code class="docutils literal notranslate"><span class="pre">Tasccoda.get_node_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#load">load</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.load"><code class="docutils literal notranslate"><span class="pre">Tasccoda.load()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#make-arviz">make_arviz</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.make_arviz"><code class="docutils literal notranslate"><span class="pre">Tasccoda.make_arviz()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#model">model</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.model"><code class="docutils literal notranslate"><span class="pre">Tasccoda.model()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#prepare">prepare</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.prepare"><code class="docutils literal notranslate"><span class="pre">Tasccoda.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#run-hmc">run_hmc</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.run_hmc"><code class="docutils literal notranslate"><span class="pre">Tasccoda.run_hmc()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#run-nuts">run_nuts</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.run_nuts"><code class="docutils literal notranslate"><span class="pre">Tasccoda.run_nuts()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#set-fdr">set_fdr</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.set_fdr"><code class="docutils literal notranslate"><span class="pre">Tasccoda.set_fdr()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#summary">summary</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.summary"><code class="docutils literal notranslate"><span class="pre">Tasccoda.summary()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#summary-prepare">summary_prepare</a><ul>
+<li><a class="reference internal" href="#pertpy.tools.Tasccoda.summary_prepare"><code class="docutils literal notranslate"><span class="pre">Tasccoda.summary_prepare()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/scripts/furo.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

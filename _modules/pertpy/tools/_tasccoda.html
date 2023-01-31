@@ -1,0 +1,979 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
+
+    <!-- Generated with Sphinx 5.3.0 and Furo 2022.12.07 -->
+        <title>pertpy.tools._tasccoda - pertpy</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/override.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/sphinx_gallery.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #003262;
+  --color-brand-content: #003262per;
+  --admonition-font-size: var(--font-size-normal);
+  --admonition-title-font-size: var(--font-size-normal);
+  --code-font-size: var(--font-size--small);
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">pertpy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../usage/usage.html">Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.adamson_2016_pilot.html">pertpy.data.adamson_2016_pilot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.adamson_2016_upr_epistasis.html">pertpy.data.adamson_2016_upr_epistasis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.adamson_2016_upr_perturb_seq.html">pertpy.data.adamson_2016_upr_perturb_seq</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.aissa_2021.html">pertpy.data.aissa_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.bhattacherjee.html">pertpy.data.bhattacherjee</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.burczynski_crohn.html">pertpy.data.burczynski_crohn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.chang_2021.html">pertpy.data.chang_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.datlinger_2017.html">pertpy.data.datlinger_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.datlinger_2021.html">pertpy.data.datlinger_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_rna.html">pertpy.data.frangieh_2021_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gasperini_2019_atscale.html">pertpy.data.gasperini_2019_atscale</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gasperini_2019_highmoi.html">pertpy.data.gasperini_2019_highmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gasperini_2019_lowmoi.html">pertpy.data.gasperini_2019_lowmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gehring_2019.html">pertpy.data.gehring_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.haber_2017_regions.html">pertpy.data.haber_2017_regions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.kang_2018.html">pertpy.data.kang_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.mcfarland_2020.html">pertpy.data.mcfarland_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.norman_2019.html">pertpy.data.norman_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.norman_2019_filtered.html">pertpy.data.norman_2019_filtered</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.norman_2019_raw.html">pertpy.data.norman_2019_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.papalexi_2021.html">pertpy.data.papalexi_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.papalexi_2021_eccite_arrayed_protein.html">pertpy.data.papalexi_2021_eccite_arrayed_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.papalexi_2021_eccite_arrayed_rna.html">pertpy.data.papalexi_2021_eccite_arrayed_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.papalexi_2021_eccite_protein.html">pertpy.data.papalexi_2021_eccite_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.papalexi_2021_eccite_rna.html">pertpy.data.papalexi_2021_eccite_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.replogle_2022_k562_essential.html">pertpy.data.replogle_2022_k562_essential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.replogle_2022_k562_gwps.html">pertpy.data.replogle_2022_k562_gwps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.replogle_2022_rpe1.html">pertpy.data.replogle_2022_rpe1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.sc_sim_augur.html">pertpy.data.sc_sim_augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schiebinger_2019_16day.html">pertpy.data.schiebinger_2019_16day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schiebinger_2019_18day.html">pertpy.data.schiebinger_2019_18day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr8.html">pertpy.data.schraivogel_2020_tap_screen_chr8</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr11.html">pertpy.data.schraivogel_2020_tap_screen_chr11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.sciplex3_raw.html">pertpy.data.sciplex3_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.shifrut_2018.html">pertpy.data.shifrut_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.smillie.html">pertpy.data.smillie</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex2.html">pertpy.data.srivatsan_2020_sciplex2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex3.html">pertpy.data.srivatsan_2020_sciplex3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex4.html">pertpy.data.srivatsan_2020_sciplex4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.stephenson_2021_subsampled.html">pertpy.data.stephenson_2021_subsampled</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2019_day7neuron.html">pertpy.data.tian_2019_day7neuron</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2019_ipsc.html">pertpy.data.tian_2019_ipsc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2021_crispra.html">pertpy.data.tian_2021_crispra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2021_crispri.html">pertpy.data.tian_2021_crispri</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.weinreb_2020.html">pertpy.data.weinreb_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.xie_2017.html">pertpy.data.xie_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.zhao_2021.html">pertpy.data.zhao_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Augurpy.html">pertpy.tools.Augurpy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Mixscape.html">pertpy.tools.Mixscape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Milopy.html">pertpy.tools.Milopy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Sccoda.html">pertpy.tools.Sccoda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Tasccoda.html">pertpy.tools.Tasccoda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.kernel_pca.html">pertpy.tools.kernel_pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.dp_scatter.html">pertpy.plot.ag.dp_scatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.important_features.html">pertpy.plot.ag.important_features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.lollipop.html">pertpy.plot.ag.lollipop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.scatterplot.html">pertpy.plot.ag.scatterplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.violin.html">pertpy.plot.ms.violin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.perturbscore.html">pertpy.plot.ms.perturbscore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.heatmap.html">pertpy.plot.ms.heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.barplot.html">pertpy.plot.ms.barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.lda.html">pertpy.plot.ms.lda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.nhood_graph.html">pertpy.plot.milo.nhood_graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.nhood.html">pertpy.plot.milo.nhood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.da_beeswarm.html">pertpy.plot.milo.da_beeswarm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.nhood_counts_by_cond.html">pertpy.plot.milo.nhood_counts_by_cond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.stacked_barplot.html">pertpy.plot.coda.stacked_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.effects_barplot.html">pertpy.plot.coda.effects_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.boxplots.html">pertpy.plot.coda.boxplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.rel_abundance_dispersion_plot.html">pertpy.plot.coda.rel_abundance_dispersion_plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.draw_tree.html">pertpy.plot.coda.draw_tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.draw_effects.html">pertpy.plot.coda.draw_effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.effects_umap.html">pertpy.plot.coda.effects_umap</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for pertpy.tools._tasccoda</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span> <span class="nn">arviz</span> <span class="k">as</span> <span class="nn">az</span>
+<span class="kn">import</span> <span class="nn">ete3</span> <span class="k">as</span> <span class="nn">ete</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpyro</span> <span class="k">as</span> <span class="nn">npy</span>
+<span class="kn">import</span> <span class="nn">numpyro.distributions</span> <span class="k">as</span> <span class="nn">npd</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">toytree</span> <span class="k">as</span> <span class="nn">tt</span>
+<span class="kn">from</span> <span class="nn">anndata</span> <span class="kn">import</span> <span class="n">AnnData</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span>
+<span class="kn">from</span> <span class="nn">jax.config</span> <span class="kn">import</span> <span class="n">config</span>
+<span class="kn">from</span> <span class="nn">mudata</span> <span class="kn">import</span> <span class="n">MuData</span>
+<span class="kn">from</span> <span class="nn">numpyro.infer</span> <span class="kn">import</span> <span class="n">Predictive</span>
+<span class="kn">from</span> <span class="nn">rich</span> <span class="kn">import</span> <span class="nb">print</span>
+
+<span class="kn">from</span> <span class="nn">pertpy.tools._base_coda</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CompositionalModel2</span><span class="p">,</span>
+    <span class="n">collapse_singularities</span><span class="p">,</span>
+    <span class="n">collapse_singularities_2</span><span class="p">,</span>
+    <span class="n">from_scanpy</span><span class="p">,</span>
+    <span class="n">get_a</span><span class="p">,</span>
+    <span class="n">get_a_2</span><span class="p">,</span>
+    <span class="n">import_tree</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Tasccoda"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda">[docs]</a><span class="k">class</span> <span class="nc">Tasccoda</span><span class="p">(</span><span class="n">CompositionalModel2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Statistical model for tree-aggregated differential composition analysis (tascCODA, Ostner et al., 2021).</span>
+
+<span class="sd">    The hierarchical formulation of the model for one sample is:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">         \\begin{align*}</span>
+<span class="sd">            Y_i &amp;\\sim \\textrm{DirMult}(\\bar{Y}_i, \\textbf{a}(\\textbf{x})_i)\\\\</span>
+<span class="sd">            \\log(\\textbf{a}(X))_i &amp;= \\alpha + X_{i, \\cdot} \\beta\\\\</span>
+<span class="sd">            \\alpha_j &amp;\\sim \\mathcal{N}(0, 10) &amp; \\forall j\\in[p]\\\\</span>
+<span class="sd">            \\beta &amp;= \\hat{\\beta} A^T \\\\</span>
+<span class="sd">            \\hat{\\beta}_{l, k} &amp;= 0 &amp; \\forall k \\in \\hat{v}, l \\in [d]\\\\</span>
+<span class="sd">            \\hat{\\beta}_{l, k} &amp;= \\theta \\tilde{\\beta}_{1, l, k} + (1- \\theta) \\tilde{\\beta}_{0, l, k} \\quad &amp; \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in [d]\\\\</span>
+<span class="sd">            \\tilde{\\beta}_{m, l, k} &amp;= \\sigma_{m, l, k} * b_{m, l, k} \\quad &amp; \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, m \\in \\{0, 1\\}, l \\in [d]\\\\</span>
+<span class="sd">            \\sigma_{m, l, k} &amp;\\sim \\textrm{Exp}(\\lambda_{m, l, k}^2/2) \\quad &amp; \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in \\{0, 1\\}, l \\in [d]\\\\</span>
+<span class="sd">            b_{m, l, k} &amp;\\sim N(0,1) \\quad &amp; \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in \\{0, 1\\}, l \\in [d]\\\\</span>
+<span class="sd">            \\theta &amp;\\sim \\textrm{Beta}(1, \\frac{1}{|\\{[v] \\smallsetminus \\hat{v}\\}|})</span>
+<span class="sd">        \\end{align*}</span>
+
+<span class="sd">    with Y being the cell counts, X the covariates, and v the set of nodes of the underlying tree structure.</span>
+
+<span class="sd">    For further information, see `tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data`</span>
+<span class="sd">    (Ostner et al., 2021)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Tasccoda.load"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+        <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cell_level&quot;</span><span class="p">,</span> <span class="s2">&quot;sample_level&quot;</span><span class="p">],</span>
+        <span class="n">cell_type_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sample_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covariate_uns</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covariate_obs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covariate_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dendrogram_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">levels_orig</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">levels_agg</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">add_level_name</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">key_added</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tree&quot;</span><span class="p">,</span>
+        <span class="n">modality_key_1</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rna&quot;</span><span class="p">,</span>
+        <span class="n">modality_key_2</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coda&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MuData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare a MuData object for subsequent processing. If type is &quot;cell_level&quot;, then create a compositional analysis dataset from the input adata. If type is &quot;sample_level&quot;, generate ete tree for tascCODA models from dendrogram information or cell-level observations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: AnnData object.</span>
+<span class="sd">            type: Specify the input adata type, which could be either a cell-level AnnData or an aggregated sample-level AnnData.</span>
+<span class="sd">            cell_type_identifier: If type is &quot;cell_level&quot;, specify column name in adata.obs that specifies the cell types. Defaults to None.</span>
+<span class="sd">            sample_identifier: If type is &quot;cell_level&quot;, specify column name in adata.obs that specifies the sample. Defaults to None.</span>
+<span class="sd">            covariate_uns: If type is &quot;cell_level&quot;, specify key for adata.uns, where covariate values are stored. Defaults to None.</span>
+<span class="sd">            covariate_obs: If type is &quot;cell_level&quot;, specify list of keys for adata.obs, where covariate values are stored. Defaults to None.</span>
+<span class="sd">            covariate_df: If type is &quot;cell_level&quot;, specify dataFrame with covariates. Defaults to None.</span>
+<span class="sd">            dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.</span>
+<span class="sd">            levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.</span>
+<span class="sd">            levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.</span>
+<span class="sd">            add_level_name: If True, internal nodes in the tree will be named as &quot;{level_name}_{node_name}&quot; instead of just {level_name}. Defaults to False.</span>
+<span class="sd">            key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2]. Defaults to &quot;tree&quot;.</span>
+<span class="sd">            modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to &quot;rna&quot;.</span>
+<span class="sd">            modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object. Defaults to &quot;coda&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MuData: MuData object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                import pertpy as pt</span>
+
+<span class="sd">                adata = pt.dt.smillie()</span>
+<span class="sd">                tasccoda = pt.tl.Tasccoda()</span>
+<span class="sd">                mdata = tasccoda.load(</span>
+<span class="sd">                    adata, type=&quot;sample_level&quot;,</span>
+<span class="sd">                    levels_agg=[&quot;Major_l1&quot;, &quot;Major_l2&quot;, &quot;Major_l3&quot;, &quot;Major_l4&quot;, &quot;Cluster&quot;],</span>
+<span class="sd">                    key_added=&quot;lineage&quot;, add_level_name=True</span>
+<span class="sd">                )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;cell_level&quot;</span><span class="p">:</span>
+            <span class="n">adata_coda</span> <span class="o">=</span> <span class="n">from_scanpy</span><span class="p">(</span>
+                <span class="n">adata</span><span class="o">=</span><span class="n">adata</span><span class="p">,</span>
+                <span class="n">cell_type_identifier</span><span class="o">=</span><span class="n">cell_type_identifier</span><span class="p">,</span>
+                <span class="n">sample_identifier</span><span class="o">=</span><span class="n">sample_identifier</span><span class="p">,</span>
+                <span class="n">covariate_uns</span><span class="o">=</span><span class="n">covariate_uns</span><span class="p">,</span>
+                <span class="n">covariate_obs</span><span class="o">=</span><span class="n">covariate_obs</span><span class="p">,</span>
+                <span class="n">covariate_df</span><span class="o">=</span><span class="n">covariate_df</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">mdata</span> <span class="o">=</span> <span class="n">MuData</span><span class="p">({</span><span class="n">modality_key_1</span><span class="p">:</span> <span class="n">adata</span><span class="p">,</span> <span class="n">modality_key_2</span><span class="p">:</span> <span class="n">adata_coda</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mdata</span> <span class="o">=</span> <span class="n">MuData</span><span class="p">({</span><span class="n">modality_key_1</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">(),</span> <span class="n">modality_key_2</span><span class="p">:</span> <span class="n">adata</span><span class="p">})</span>
+        <span class="n">import_tree</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">mdata</span><span class="p">,</span>
+            <span class="n">modality_1</span><span class="o">=</span><span class="n">modality_key_1</span><span class="p">,</span>
+            <span class="n">modality_2</span><span class="o">=</span><span class="n">modality_key_2</span><span class="p">,</span>
+            <span class="n">dendrogram_key</span><span class="o">=</span><span class="n">dendrogram_key</span><span class="p">,</span>
+            <span class="n">levels_orig</span><span class="o">=</span><span class="n">levels_orig</span><span class="p">,</span>
+            <span class="n">levels_agg</span><span class="o">=</span><span class="n">levels_agg</span><span class="p">,</span>
+            <span class="n">add_level_name</span><span class="o">=</span><span class="n">add_level_name</span><span class="p">,</span>
+            <span class="n">key_added</span><span class="o">=</span><span class="n">key_added</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mdata</span></div>
+
+<div class="viewcode-block" id="Tasccoda.prepare"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.prepare">[docs]</a>    <span class="k">def</span> <span class="nf">prepare</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">MuData</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">reference_cell_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;automatic&quot;</span><span class="p">,</span>
+        <span class="n">automatic_reference_absence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">tree_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pen_args</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">modality_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coda&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">MuData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handles data preprocessing, covariate matrix creation, reference selection, and zero count replacement for tascCODA. Also sets model parameters, model type (tree_agg), effect selection type (sslaso) and performs tree processing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: Anndata object with cell counts as .X and covariates saved in .obs or a MuData object.</span>
+<span class="sd">            formula: R-style formula for building the covariate matrix.</span>
+<span class="sd">                Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.</span>
+<span class="sd">                To set a different level as the base category for a categorical covariate, use &quot;C(&lt;CovariateName&gt;, Treatment(&#39;&lt;ReferenceLevelName&gt;&#39;))&quot;</span>
+<span class="sd">            reference_cell_type: Column name that sets the reference cell type.</span>
+<span class="sd">                Reference the name of a column. If &quot;automatic&quot;, the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen. Defaults to &quot;automatic&quot;.</span>
+<span class="sd">            automatic_reference_absence_threshold: If using reference_cell_type = &quot;automatic&quot;, determine the maximum fraction of zero entries for a cell type</span>
+<span class="sd">                to be considered as a possible reference cell type. Defaults to 0.05.</span>
+<span class="sd">            tree_key: Key in `adata.uns` that contains the tree structure</span>
+<span class="sd">            pen_args: Dictionary with penalty arguments. With `reg=&quot;scaled_3&quot;`, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.</span>
+<span class="sd">                See the tascCODA paper for an explanation of these parameters. Default: lambda_0 = 50, lambda_1 = 5, phi = 0.</span>
+<span class="sd">            modality_key: If data is a MuData object, specify key to the aggregated sample-level AnnData object in the MuData object. Defaults to &quot;coda&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Return an AnnData (if input data is an AnnData object) or return a MuData (if input data is a MuData object)</span>
+
+<span class="sd">            Specifically, parameters have been set:</span>
+
+<span class="sd">            - `adata.uns[&quot;param_names&quot;]` or `data[modality_key].uns[&quot;param_names&quot;]`: List with the names of all tracked latent model parameters (through `npy.sample` or `npy.deterministic`)</span>
+<span class="sd">            - `adata.uns[&quot;scCODA_params&quot;][&quot;model_type&quot;]` or `data[modality_key].uns[&quot;scCODA_params&quot;][&quot;model_type&quot;]`: String indicating the model type (&quot;classic&quot;)</span>
+<span class="sd">            - `adata.uns[&quot;scCODA_params&quot;][&quot;select_type&quot;]` or `data[modality_key].uns[&quot;scCODA_params&quot;][&quot;select_type&quot;]`: String indicating the type of spike_and_slab selection (&quot;spikeslab&quot;)</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                import pertpy as pt</span>
+
+<span class="sd">                adata = pt.dt.smillie()</span>
+<span class="sd">                tasccoda = pt.tl.Tasccoda()</span>
+<span class="sd">                mdata = tasccoda.load(</span>
+<span class="sd">                    adata, type=&quot;sample_level&quot;,</span>
+<span class="sd">                    levels_agg=[&quot;Major_l1&quot;, &quot;Major_l2&quot;, &quot;Major_l3&quot;, &quot;Major_l4&quot;, &quot;Cluster&quot;],</span>
+<span class="sd">                    key_added=&quot;lineage&quot;, add_level_name=True</span>
+<span class="sd">                )</span>
+<span class="sd">                mdata = tasccoda.prepare(</span>
+<span class="sd">                    mdata, formula=&quot;Health&quot;, reference_cell_type=&quot;automatic&quot;, tree_key=&quot;lineage&quot;, pen_args={&quot;phi&quot;: 0}</span>
+<span class="sd">                )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pen_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pen_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_1&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">MuData</span><span class="p">):</span>
+            <span class="n">adata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">modality_key</span><span class="p">]</span>
+            <span class="n">is_MuData</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">AnnData</span><span class="p">):</span>
+            <span class="n">adata</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="n">is_MuData</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">adata</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="p">,</span> <span class="n">automatic_reference_absence_threshold</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tree_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please specify the key in .uns that contains the tree structure!&quot;</span><span class="p">)</span>
+
+        <span class="c1"># toytree tree - only for legacy reasons, can be removed in the final version</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">tree_key</span><span class="p">])</span> <span class="o">==</span> <span class="n">tt</span><span class="o">.</span><span class="n">tree</span><span class="p">:</span>
+            <span class="c1"># Collapse singularities in the tree</span>
+            <span class="n">phy_tree</span> <span class="o">=</span> <span class="n">collapse_singularities</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">tree_key</span><span class="p">])</span>
+
+            <span class="c1"># Get ancestor matrix</span>
+            <span class="n">A</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="n">get_a</span><span class="p">(</span><span class="n">phy_tree</span><span class="p">)</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;ancestor_matrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;T&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">T</span>
+
+            <span class="c1"># Bring names of nodes back in order, they might have been scrambled during collapse_singularities</span>
+            <span class="n">node_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">phy_tree</span><span class="o">.</span><span class="n">idx_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()][</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">node_names</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;node_names&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_names</span>
+
+            <span class="n">order</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">tree_key</span><span class="p">]</span><span class="o">.</span><span class="n">treenode</span><span class="o">.</span><span class="n">traverse</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">()]</span>
+            <span class="n">order</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+            <span class="n">order_ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">order</span><span class="p">]</span>
+
+            <span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[:,</span> <span class="n">order_ind</span><span class="p">]</span>
+
+            <span class="n">ref_node_index</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_index&quot;</span><span class="p">]</span>
+            <span class="c1"># Ancestors of reference are a reference, too!</span>
+            <span class="n">refs</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">idx</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">phy_tree</span><span class="o">.</span><span class="n">idx_dict</span><span class="p">[</span><span class="n">ref_node_index</span><span class="p">]</span><span class="o">.</span><span class="n">get_ancestors</span><span class="p">()][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">refs</span> <span class="o">=</span> <span class="p">[</span><span class="n">ref_node_index</span><span class="p">]</span> <span class="o">+</span> <span class="n">refs</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">refs</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_leaf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_node_index</span>
+
+            <span class="c1"># number of leaves for each internal node (important for aggregation penalty lambda_1)</span>
+            <span class="k">if</span> <span class="s2">&quot;node_leaves&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pen_args</span><span class="p">:</span>
+                <span class="n">node_leaves</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">get_leaves</span><span class="p">())</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">phy_tree</span><span class="o">.</span><span class="n">idx_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+                <span class="n">node_leaves</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+                <span class="n">pen_args</span><span class="p">[</span><span class="s2">&quot;node_leaves&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">node_leaves</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">refs</span><span class="p">)</span>
+
+        <span class="c1"># ete tree</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">tree_key</span><span class="p">])</span> <span class="o">==</span> <span class="n">ete</span><span class="o">.</span><span class="n">Tree</span><span class="p">:</span>
+            <span class="c1"># Collapse singularities in the tree</span>
+            <span class="n">phy_tree</span> <span class="o">=</span> <span class="n">collapse_singularities_2</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">tree_key</span><span class="p">])</span>
+
+            <span class="n">node_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">phy_tree</span><span class="o">.</span><span class="n">iter_descendants</span><span class="p">()]</span>
+
+            <span class="c1"># Get ancestor matrix</span>
+            <span class="n">A</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="n">get_a_2</span><span class="p">(</span><span class="n">phy_tree</span><span class="p">,</span> <span class="n">leaf_order</span><span class="o">=</span><span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">node_order</span><span class="o">=</span><span class="n">node_names</span><span class="p">)</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;ancestor_matrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;T&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">T</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;node_names&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_names</span>
+
+            <span class="c1"># Ancestors of reference are a reference, too!</span>
+            <span class="c1"># Get names of reference nodes</span>
+            <span class="n">reference_cell_type</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_cell_type&quot;</span><span class="p">]</span>
+            <span class="n">ref_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">phy_tree</span><span class="o">.</span><span class="n">search_nodes</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">reference_cell_type</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_ancestors</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">ref_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">reference_cell_type</span><span class="p">]</span> <span class="o">+</span> <span class="n">ref_nodes</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_nodes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_nodes</span>
+
+            <span class="c1"># indices of reference nodes</span>
+            <span class="n">ref_idxs</span> <span class="o">=</span> <span class="p">[</span><span class="n">node_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ref_nodes</span><span class="p">]</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_idxs</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_leaf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># number of leaves for each internal node (important for aggregation penalty lambda_1)</span>
+            <span class="k">if</span> <span class="s2">&quot;node_leaves&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pen_args</span><span class="p">:</span>
+                <span class="n">node_leaves</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">get_leaves</span><span class="p">())</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">phy_tree</span><span class="o">.</span><span class="n">iter_descendants</span><span class="p">()]</span>
+                <span class="n">pen_args</span><span class="p">[</span><span class="s2">&quot;node_leaves&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">node_leaves</span><span class="p">),</span> <span class="n">ref_idxs</span><span class="p">)</span>
+
+        <span class="c1"># No valid tree structure</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tree structure is not a toytree or ete3 tree object&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Default spike-and-slab LASSO parameters</span>
+        <span class="k">if</span> <span class="s2">&quot;lambda_0&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pen_args</span><span class="p">:</span>
+            <span class="n">pen_args</span><span class="p">[</span><span class="s2">&quot;lambda_0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+        <span class="k">if</span> <span class="s2">&quot;lambda_1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pen_args</span><span class="p">:</span>
+            <span class="n">pen_args</span><span class="p">[</span><span class="s2">&quot;lambda_1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">if</span> <span class="s2">&quot;phi&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pen_args</span><span class="p">:</span>
+            <span class="n">pen_args</span><span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;sslasso_pen_args&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pen_args</span>
+
+        <span class="c1"># All parameters that are returned for analysis</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;param_names&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;alpha_0&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;b_0&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;alpha_1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;b_1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;theta&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;alpha&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bet_0&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bet_1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;beta_select&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;beta&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;concentration&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;prediction&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;model_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;tree_agg&quot;</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;select_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sslasso&quot;</span>
+        <span class="k">if</span> <span class="n">is_MuData</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">mod</span><span class="p">[</span><span class="n">modality_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">adata</span></div>
+
+<div class="viewcode-block" id="Tasccoda.model"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.model">[docs]</a>    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">covariates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">n_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ref_index</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sample_adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Implements tascCODA model in numpyro</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            counts: Count data array</span>
+<span class="sd">            covariates: Covariate matrix</span>
+<span class="sd">            n_total: Number of counts per sample</span>
+<span class="sd">            ref_index: Index of reference feature</span>
+<span class="sd">            sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            predictions (see numpyro documentation for details on models)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># data dimensions</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="s2">&quot;float64&quot;</span>
+
+        <span class="n">N</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;covariate_matrix&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;T&quot;</span><span class="p">]</span>
+
+        <span class="c1"># spike-and-slab LASSO parameters</span>
+        <span class="n">lambda_0</span> <span class="o">=</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;sslasso_pen_args&quot;</span><span class="p">][</span><span class="s2">&quot;lambda_0&quot;</span><span class="p">]</span>
+        <span class="c1"># tree-based scaled penalty</span>
+        <span class="n">penalty_scale_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="mi">1</span>
+                <span class="o">/</span> <span class="p">(</span>
+                    <span class="mi">1</span>
+                    <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+                        <span class="o">-</span><span class="mi">1</span>
+                        <span class="o">*</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;sslasso_pen_args&quot;</span><span class="p">][</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span>
+                        <span class="o">*</span> <span class="p">(</span><span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;sslasso_pen_args&quot;</span><span class="p">][</span><span class="s2">&quot;node_leaves&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">P</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">dtype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">lambda_1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;sslasso_pen_args&quot;</span><span class="p">][</span><span class="s2">&quot;lambda_1&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">penalty_scale_factor</span>
+        <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;sslasso_pen_args&quot;</span><span class="p">][</span><span class="s2">&quot;lambda_1_scaled&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambda_1</span>
+
+        <span class="c1"># Reference nodes must be sorted by index</span>
+        <span class="n">ref_index</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">ref_index</span><span class="p">)</span>
+        <span class="n">num_ref_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_index</span><span class="p">)</span>
+
+        <span class="c1"># Sizes of different parameter matrices</span>
+        <span class="n">alpha_size</span> <span class="o">=</span> <span class="p">[</span><span class="n">P</span><span class="p">]</span>
+        <span class="n">beta_nobl_size</span> <span class="o">=</span> <span class="p">[</span><span class="n">D</span><span class="p">,</span> <span class="n">T</span> <span class="o">-</span> <span class="n">num_ref_nodes</span><span class="p">]</span>
+
+        <span class="c1"># Size of inferred parameter matrix</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">D</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">num_ref_nodes</span><span class="p">)</span>
+
+        <span class="c1"># Initial MCMC states</span>
+        <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;mcmc&quot;</span><span class="p">][</span><span class="s2">&quot;init_params&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;a_0&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">beta_nobl_size</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">lambda_0</span><span class="p">,</span>
+            <span class="s2">&quot;b_raw_0&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">beta_nobl_size</span><span class="p">),</span>
+            <span class="s2">&quot;a_1&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">beta_nobl_size</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">lambda_1</span><span class="p">,</span>
+            <span class="s2">&quot;b_raw_1&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">beta_nobl_size</span><span class="p">),</span>
+            <span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha_size</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># numpyro plates for all dimensions</span>
+        <span class="n">covariate_axis</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;covs&quot;</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">node_axis</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;ct&quot;</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">node_axis_nobl</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;ctnb&quot;</span><span class="p">,</span> <span class="n">T</span> <span class="o">-</span> <span class="n">num_ref_nodes</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">cell_type_axis</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;ct&quot;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sample_axis</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Spike-and-slab LASSO effects</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">npd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">concentration1</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">concentration0</span><span class="o">=</span><span class="n">d</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="n">covariate_axis</span><span class="p">,</span> <span class="n">node_axis_nobl</span><span class="p">:</span>
+            <span class="n">a_0</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;a_0&quot;</span><span class="p">,</span> <span class="n">npd</span><span class="o">.</span><span class="n">Exponential</span><span class="p">((</span><span class="n">lambda_0</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">b_raw_0</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;b_raw_0&quot;</span><span class="p">,</span> <span class="n">npd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+            <span class="n">b_tilde_0</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">deterministic</span><span class="p">(</span><span class="s2">&quot;b_tilde_0&quot;</span><span class="p">,</span> <span class="n">a_0</span> <span class="o">*</span> <span class="n">b_raw_0</span><span class="p">)</span>
+
+            <span class="n">a_1</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;a_1&quot;</span><span class="p">,</span> <span class="n">npd</span><span class="o">.</span><span class="n">Exponential</span><span class="p">((</span><span class="n">lambda_1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">b_raw_1</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;b_raw_1&quot;</span><span class="p">,</span> <span class="n">npd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+            <span class="n">b_tilde_1</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">deterministic</span><span class="p">(</span><span class="s2">&quot;b_tilde_1&quot;</span><span class="p">,</span> <span class="n">a_1</span> <span class="o">*</span> <span class="n">b_raw_1</span><span class="p">)</span>
+
+            <span class="c1"># calculate proposed beta and perform spike-and-slab</span>
+            <span class="n">b_tilde</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">theta</span><span class="p">)</span> <span class="o">*</span> <span class="n">b_tilde_0</span> <span class="o">+</span> <span class="n">theta</span> <span class="o">+</span> <span class="n">b_tilde_1</span>
+
+        <span class="k">with</span> <span class="n">node_axis</span><span class="p">,</span> <span class="n">covariate_axis</span><span class="p">:</span>
+            <span class="c1"># Include effect 0 for reference nodes</span>
+            <span class="n">ref_inserts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ref_index</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_ref_nodes</span><span class="p">)])</span>
+            <span class="n">b_tilde</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">b_tilde</span><span class="p">,</span> <span class="n">ref_inserts</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">D</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">b_tilde</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">deterministic</span><span class="p">(</span><span class="s2">&quot;b_tilde&quot;</span><span class="p">,</span> <span class="n">b_tilde</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">cell_type_axis</span><span class="p">:</span>
+            <span class="c1"># Intercepts</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="n">npd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">))</span>
+
+            <span class="k">with</span> <span class="n">covariate_axis</span><span class="p">:</span>
+                <span class="c1"># sum up tree levels</span>
+                <span class="n">beta</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">deterministic</span><span class="p">(</span>
+                    <span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">b_tilde</span><span class="p">,</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;ancestor_matrix&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Combine intercepts and effects</span>
+        <span class="k">with</span> <span class="n">sample_axis</span><span class="p">:</span>
+            <span class="n">concentrations</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">deterministic</span><span class="p">(</span>
+                <span class="s2">&quot;concentrations&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">covariates</span><span class="p">,</span> <span class="n">beta</span><span class="p">)),</span> <span class="mf">0.0001</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Calculate DM-distributed counts</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">npy</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;counts&quot;</span><span class="p">,</span> <span class="n">npd</span><span class="o">.</span><span class="n">DirichletMultinomial</span><span class="p">(</span><span class="n">concentrations</span><span class="p">,</span> <span class="n">n_total</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">counts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">predictions</span></div>
+
+<div class="viewcode-block" id="Tasccoda.make_arviz"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.make_arviz">[docs]</a>    <span class="k">def</span> <span class="nf">make_arviz</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">MuData</span><span class="p">,</span>
+        <span class="n">modality_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coda&quot;</span><span class="p">,</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_prior_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">use_posterior_predictive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates arviz object from model results for MCMC diagnosis</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: AnnData object or MuData object.</span>
+<span class="sd">            modality_key: If data is a MuData object, specify which modality to use. Defaults to &quot;coda&quot;.</span>
+<span class="sd">            rng_key: The rng state used for the prior simulation. If None, a random state will be selected. Defaults to None.</span>
+<span class="sd">            num_prior_samples: Number of prior samples calculated. Defaults to 500.</span>
+<span class="sd">            use_posterior_predictive: If True, the posterior predictive will be calculated. Defaults to True.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            arviz.InferenceData: arviz_data</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                import pertpy as pt</span>
+
+<span class="sd">                adata = pt.dt.smillie()</span>
+<span class="sd">                tasccoda = pt.tl.Tasccoda()</span>
+<span class="sd">                mdata = tasccoda.load(</span>
+<span class="sd">                    adata, type=&quot;sample_level&quot;,</span>
+<span class="sd">                    levels_agg=[&quot;Major_l1&quot;, &quot;Major_l2&quot;, &quot;Major_l3&quot;, &quot;Major_l4&quot;, &quot;Cluster&quot;],</span>
+<span class="sd">                    key_added=&quot;lineage&quot;, add_level_name=True</span>
+<span class="sd">                )</span>
+<span class="sd">                mdata = tasccoda.prepare(</span>
+<span class="sd">                    mdata, formula=&quot;Health&quot;, reference_cell_type=&quot;automatic&quot;, tree_key=&quot;lineage&quot;, pen_args={&quot;phi&quot;: 0}</span>
+<span class="sd">                )</span>
+<span class="sd">                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)</span>
+<span class="sd">                tasccoda.make_arviz(mdata)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">MuData</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">sample_adata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">modality_key</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;When data is a MuData object, modality_key must be specified!&quot;</span><span class="p">)</span>
+                <span class="k">raise</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">AnnData</span><span class="p">):</span>
+            <span class="n">sample_adata</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mcmc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No MCMC sampling found. Please run a sampler first!&quot;</span><span class="p">)</span>
+
+        <span class="c1"># feature names</span>
+        <span class="n">cell_types</span> <span class="o">=</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+
+        <span class="c1"># arviz dimensions</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;a_0&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;node_nb&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;b_raw_0&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;node_nb&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;a_1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;node_nb&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;b_raw_1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;node_nb&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;b_tilde_0&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;node_nb&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;b_tilde_1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;node_nb&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;b_tilde&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;node&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;beta&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">,</span> <span class="s2">&quot;cell_type&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;concentrations&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="s2">&quot;cell_type&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;counts&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="s2">&quot;cell_type&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="c1"># arviz coordinates</span>
+        <span class="n">reference_index</span> <span class="o">=</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_index&quot;</span><span class="p">]</span>
+        <span class="n">node_names</span> <span class="o">=</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;node_names&quot;</span><span class="p">]</span>
+        <span class="n">nodes_nb</span> <span class="o">=</span> <span class="p">[</span><span class="n">val</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node_names</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">reference_index</span><span class="p">]</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;cell_type&quot;</span><span class="p">:</span> <span class="n">cell_types</span><span class="p">,</span>
+            <span class="s2">&quot;node_nb&quot;</span><span class="p">:</span> <span class="n">nodes_nb</span><span class="p">,</span>
+            <span class="s2">&quot;node&quot;</span><span class="p">:</span> <span class="n">node_names</span><span class="p">,</span>
+            <span class="s2">&quot;covariate&quot;</span><span class="p">:</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;covariate_names&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;sample&quot;</span><span class="p">:</span> <span class="n">sample_adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">dtype</span> <span class="o">=</span> <span class="s2">&quot;float64&quot;</span>
+
+        <span class="c1"># Prior and posterior predictive simulation</span>
+        <span class="n">numpyro_covariates</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sample_adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;covariate_matrix&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">numpyro_n_total</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sample_adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;sample_counts&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">ref_index</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sample_adata</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s2">&quot;scCODA_params&quot;</span><span class="p">][</span><span class="s2">&quot;reference_index&quot;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">rng_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rng_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">use_posterior_predictive</span><span class="p">:</span>
+            <span class="n">posterior_predictive</span> <span class="o">=</span> <span class="n">Predictive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">get_samples</span><span class="p">())(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">counts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">covariates</span><span class="o">=</span><span class="n">numpyro_covariates</span><span class="p">,</span>
+                <span class="n">n_total</span><span class="o">=</span><span class="n">numpyro_n_total</span><span class="p">,</span>
+                <span class="n">ref_index</span><span class="o">=</span><span class="n">ref_index</span><span class="p">,</span>
+                <span class="n">sample_adata</span><span class="o">=</span><span class="n">sample_adata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">posterior_predictive</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">num_prior_samples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">prior</span> <span class="o">=</span> <span class="n">Predictive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_prior_samples</span><span class="p">)(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">counts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">covariates</span><span class="o">=</span><span class="n">numpyro_covariates</span><span class="p">,</span>
+                <span class="n">n_total</span><span class="o">=</span><span class="n">numpyro_n_total</span><span class="p">,</span>
+                <span class="n">ref_index</span><span class="o">=</span><span class="n">ref_index</span><span class="p">,</span>
+                <span class="n">sample_adata</span><span class="o">=</span><span class="n">sample_adata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prior</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Create arviz object</span>
+        <span class="n">arviz_data</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">from_numpyro</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mcmc</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="n">prior</span><span class="p">,</span> <span class="n">posterior_predictive</span><span class="o">=</span><span class="n">posterior_predictive</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="n">coords</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">arviz_data</span></div>
+
+<div class="viewcode-block" id="Tasccoda.run_nuts"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.run_nuts">[docs]</a>    <span class="k">def</span> <span class="nf">run_nuts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">MuData</span><span class="p">,</span>
+        <span class="n">modality_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coda&quot;</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+        <span class="n">num_warmup</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                import pertpy as pt</span>
+
+<span class="sd">                adata = pt.dt.smillie()</span>
+<span class="sd">                tasccoda = pt.tl.Tasccoda()</span>
+<span class="sd">                mdata = tasccoda.load(</span>
+<span class="sd">                    adata, type=&quot;sample_level&quot;,</span>
+<span class="sd">                    levels_agg=[&quot;Major_l1&quot;, &quot;Major_l2&quot;, &quot;Major_l3&quot;, &quot;Major_l4&quot;, &quot;Cluster&quot;],</span>
+<span class="sd">                    key_added=&quot;lineage&quot;, add_level_name=True</span>
+<span class="sd">                )</span>
+<span class="sd">                mdata = tasccoda.prepare(</span>
+<span class="sd">                    mdata, formula=&quot;Health&quot;, reference_cell_type=&quot;automatic&quot;, tree_key=&quot;lineage&quot;, pen_args={&quot;phi&quot;: 0}</span>
+<span class="sd">                )</span>
+<span class="sd">                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run_nuts</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">modality_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">copy</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="n">run_nuts</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">CompositionalModel2</span><span class="o">.</span><span class="n">run_nuts</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">+</span> <span class="n">run_nuts</span><span class="o">.</span><span class="vm">__doc__</span>
+
+<div class="viewcode-block" id="Tasccoda.summary"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.summary">[docs]</a>    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">MuData</span><span class="p">,</span> <span class="n">extended</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">modality_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coda&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                import pertpy as pt</span>
+
+<span class="sd">                adata = pt.dt.smillie()</span>
+<span class="sd">                tasccoda = pt.tl.Tasccoda()</span>
+<span class="sd">                mdata = tasccoda.load(</span>
+<span class="sd">                    adata, type=&quot;sample_level&quot;,</span>
+<span class="sd">                    levels_agg=[&quot;Major_l1&quot;, &quot;Major_l2&quot;, &quot;Major_l3&quot;, &quot;Major_l4&quot;, &quot;Cluster&quot;],</span>
+<span class="sd">                    key_added=&quot;lineage&quot;, add_level_name=True</span>
+<span class="sd">                )</span>
+<span class="sd">                mdata = tasccoda.prepare(</span>
+<span class="sd">                    mdata, formula=&quot;Health&quot;, reference_cell_type=&quot;automatic&quot;, tree_key=&quot;lineage&quot;, pen_args={&quot;phi&quot;: 0}</span>
+<span class="sd">                )</span>
+<span class="sd">                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)</span>
+<span class="sd">                tasccoda.summary(mdata)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">extended</span><span class="p">,</span> <span class="n">modality_key</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="n">summary</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">CompositionalModel2</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">+</span> <span class="n">summary</span><span class="o">.</span><span class="vm">__doc__</span>
+
+<div class="viewcode-block" id="Tasccoda.credible_effects"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.credible_effects">[docs]</a>    <span class="k">def</span> <span class="nf">credible_effects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">MuData</span><span class="p">,</span> <span class="n">modality_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coda&quot;</span><span class="p">,</span> <span class="n">est_fdr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                import pertpy as pt</span>
+
+<span class="sd">                adata = pt.dt.smillie()</span>
+<span class="sd">                tasccoda = pt.tl.Tasccoda()</span>
+<span class="sd">                mdata = tasccoda.load(</span>
+<span class="sd">                    adata, type=&quot;sample_level&quot;,</span>
+<span class="sd">                    levels_agg=[&quot;Major_l1&quot;, &quot;Major_l2&quot;, &quot;Major_l3&quot;, &quot;Major_l4&quot;, &quot;Cluster&quot;],</span>
+<span class="sd">                    key_added=&quot;lineage&quot;, add_level_name=True</span>
+<span class="sd">                )</span>
+<span class="sd">                mdata = tasccoda.prepare(</span>
+<span class="sd">                    mdata, formula=&quot;Health&quot;, reference_cell_type=&quot;automatic&quot;, tree_key=&quot;lineage&quot;, pen_args={&quot;phi&quot;: 0}</span>
+<span class="sd">                )</span>
+<span class="sd">                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)</span>
+<span class="sd">                tasccoda.credible_effects(mdata)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">credible_effects</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">modality_key</span><span class="p">,</span> <span class="n">est_fdr</span><span class="p">)</span></div>
+
+    <span class="n">credible_effects</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">CompositionalModel2</span><span class="o">.</span><span class="n">credible_effects</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">+</span> <span class="n">credible_effects</span><span class="o">.</span><span class="vm">__doc__</span>
+
+<div class="viewcode-block" id="Tasccoda.set_fdr"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Tasccoda.html#pertpy.tools.Tasccoda.set_fdr">[docs]</a>    <span class="k">def</span> <span class="nf">set_fdr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">MuData</span><span class="p">,</span> <span class="n">est_fdr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">modality_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coda&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                import pertpy as pt</span>
+
+<span class="sd">                adata = pt.dt.smillie()</span>
+<span class="sd">                tasccoda = pt.tl.Tasccoda()</span>
+<span class="sd">                mdata = tasccoda.load(</span>
+<span class="sd">                    adata, type=&quot;sample_level&quot;,</span>
+<span class="sd">                    levels_agg=[&quot;Major_l1&quot;, &quot;Major_l2&quot;, &quot;Major_l3&quot;, &quot;Major_l4&quot;, &quot;Cluster&quot;],</span>
+<span class="sd">                    key_added=&quot;lineage&quot;, add_level_name=True</span>
+<span class="sd">                )</span>
+<span class="sd">                mdata = tasccoda.prepare(</span>
+<span class="sd">                    mdata, formula=&quot;Health&quot;, reference_cell_type=&quot;automatic&quot;, tree_key=&quot;lineage&quot;, pen_args={&quot;phi&quot;: 0}</span>
+<span class="sd">                )</span>
+<span class="sd">                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)</span>
+<span class="sd">                tasccoda.set_fdr(mdata_salm, est_fdr=0.4)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_fdr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">est_fdr</span><span class="p">,</span> <span class="n">modality_key</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="n">set_fdr</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">CompositionalModel2</span><span class="o">.</span><span class="n">set_fdr</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">+</span> <span class="n">set_fdr</span><span class="o">.</span><span class="vm">__doc__</span></div>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021, Lukas Heumos, Theislab
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/scripts/furo.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    </body>
+</html>

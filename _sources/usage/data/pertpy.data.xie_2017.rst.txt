@@ -1,0 +1,6 @@
+﻿pertpy.data.xie\_2017
+=====================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: xie_2017

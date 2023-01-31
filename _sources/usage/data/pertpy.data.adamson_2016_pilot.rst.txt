@@ -1,0 +1,6 @@
+﻿pertpy.data.adamson\_2016\_pilot
+================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: adamson_2016_pilot

@@ -1,0 +1,6 @@
+﻿pertpy.data.replogle\_2022\_rpe1
+================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: replogle_2022_rpe1

@@ -1,0 +1,6 @@
+﻿pertpy.data.haber\_2017\_regions
+================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: haber_2017_regions

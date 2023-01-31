@@ -1,0 +1,6 @@
+﻿pertpy.data.replogle\_2022\_k562\_essential
+===========================================
+
+.. currentmodule:: pertpy.data
+
+.. autofunction:: replogle_2022_k562_essential
