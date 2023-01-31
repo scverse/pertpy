@@ -7,6 +7,7 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from pynndescent import NNDescent
+from rich import print
 from scanpy.tools._utils import _choose_representation
 from scipy import sparse
 from scipy.sparse import csr_matrix, issparse
