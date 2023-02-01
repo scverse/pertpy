@@ -68,6 +68,7 @@ class TestMixscape:
     def test_mixscape(self):
         adata = self.make_test_adata()
         mixscape_identifier = pt.tl.Mixscape()
+        adata.layers["X_pert"] = adata.X
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
         np_result = adata.obs["mixscape_class_global"] == "NP"
         np_result_correct = np_result[num_cells_per_group : num_cells_per_group * 2]
@@ -92,6 +93,7 @@ class TestMixscape:
 
     def test_lda(self):
         adata = self.make_test_adata()
+        adata.layers["X_pert"] = adata.X
         mixscape_identifier = pt.tl.Mixscape()
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
         mixscape_identifier.lda(adata=adata, labels="gene_target")

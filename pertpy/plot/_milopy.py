@@ -38,7 +38,7 @@ class MilopyPlot:
                   Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
         """
-        nhood_adata = mdata["milo_compositional"].T.copy()
+        nhood_adata = mdata["milo"].T.copy()
 
         if "Nhood_size" not in nhood_adata.obs.columns:
             raise KeyError(
@@ -120,10 +120,10 @@ class MilopyPlot:
             subset_nhoods: List of nhoods to plot. If None, plot all nhoods. (default: None)
         """
         try:
-            nhood_adata = mdata["milo_compositional"].T.copy()
+            nhood_adata = mdata["milo"].T.copy()
         except KeyError:
             print(
-                "mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
             )
 
         if subset_nhoods is not None:
@@ -216,10 +216,10 @@ class MilopyPlot:
             log_counts: Whether to plot log1p of cell counts. (default: False)
         """
         try:
-            nhood_adata = mdata["milo_compositional"].T.copy()
+            nhood_adata = mdata["milo"].T.copy()
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: feature_key and 'milo_compositional' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
             )
 
         if subset_nhoods is None:

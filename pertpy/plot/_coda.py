@@ -79,7 +79,7 @@ class CodaPlot:
         if show_legend:
             ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1)
         ax.set_xticks(r)
-        ax.set_xticklabels(level_names, rotation=45)
+        ax.set_xticklabels(level_names, rotation=45, ha="right")
         ax.set_ylabel("Proportion")
 
         return ax
@@ -642,7 +642,9 @@ class CodaPlot:
 
     @staticmethod
     def draw_tree(  # pragma: no cover
-        tree: Tree,
+        data: Union[AnnData, MuData],
+        modality_key: str = "coda",
+        tree: Union[Tree, str] = "tree",
         tight_text: Optional[bool] = False,
         show_scale: Optional[bool] = False,
         show: Optional[bool] = True,
@@ -655,7 +657,9 @@ class CodaPlot:
         """Plot a tree using input ete3 tree object.
 
         Args:
-            tree: A ete3 tree object.
+            data: AnnData object or MuData object.
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
             tight_text: When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Default to False.
             show_scale: Include the scale legend in the tree image or not. Default to False.
             show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
@@ -668,6 +672,12 @@ class CodaPlot:
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
         """
+        if isinstance(data, MuData):
+            data = data[modality_key]
+        if isinstance(data, AnnData):
+            data = data
+        if isinstance(tree, str):
+            tree = data.uns[tree]
 
         def my_layout(node):
             text_face = TextFace(node.name, tight_text=tight_text)
@@ -687,9 +697,9 @@ class CodaPlot:
     @staticmethod
     def draw_effects(  # noqa: C901 # pragma: no cover
         data: Union[AnnData, MuData],
-        tree: Union[Tree, str],
         covariate: str,
         modality_key: str = "coda",
+        tree: Union[Tree, str] = "tree",
         show_legend: Optional[bool] = None,
         show_leaf_effects: Optional[bool] = False,
         tight_text: Optional[bool] = False,
@@ -705,9 +715,9 @@ class CodaPlot:
 
         Args:
             data: AnnData object or MuData object.
-            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
-            covariate: The covariate, whose effects should be plotted
+            covariate: The covariate, whose effects should be plotted.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
             show_legend: If show legend of nodes significant effects or not. Default is False if show_leaf_effects is True.
             show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects. Defaults to False.
             tight_text: When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Defaults to False.
