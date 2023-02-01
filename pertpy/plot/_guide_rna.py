@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-from typing import Optional, Union
 
 import numpy as np
 import scanpy as sc
@@ -10,8 +11,8 @@ class GuideRnaPlot:
     @staticmethod
     def heatmap(
         adata: AnnData,
-        layer: Optional[str] = None,
-        order_by: Union[np.ndarray, str, None] = None,
+        layer: str | None = None,
+        order_by: np.ndarray | str | None = None,
         key_to_save_order: str = None,
         **kwds,
     ) -> None:
@@ -61,3 +62,5 @@ class GuideRnaPlot:
         sc.pl.heatmap(grna, grna.var.index.tolist(), groupby="dummy_group", cmap="viridis", dendrogram=False, **kwds)
         if key_to_save_order is not None:
             adata.obs[key_to_save_order] = order
+
+        return None

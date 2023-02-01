@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-from typing import Optional, Union
 
 import numpy as np
 import scipy
@@ -11,10 +12,10 @@ class GuideAssignment:
     def assign_by_threshold(
         adata: AnnData,
         assignment_threshold: float,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         output_layer: str = "assigned_guides",
         only_return_results: bool = False,
-    ) -> Union[np.ndarray, None]:
+    ) -> np.ndarray | None:
         """\
         Simple threshold based gRNA assignment function.
         Each cell is assigned to gRNA with at least `assignment_threshold` counts.
@@ -49,19 +50,20 @@ class GuideAssignment:
         assigned_grnas = scipy.sparse.csr_matrix(assigned_grnas)
         if only_return_results:
             dt = {"names": adata.var_names, "formats": [np.int32] * len(adata.var_names)}
-            assigned_grnas.dtype = dt
+            assigned_grnas = assigned_grnas.astype(dt)
             return assigned_grnas
         adata.layers[output_layer] = assigned_grnas
+        return None
 
     @staticmethod
     def assign_to_max_guide(
         adata: AnnData,
         assignment_threshold: float,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         output_key: str = "assigned_guide",
         no_grna_assigned_key: str = "NT",
         only_return_results: bool = False,
-    ) -> Union[np.ndarray, None]:
+    ) -> np.ndarray | None:
         """\
         Simple threshold based max gRNA assignment function.
         Each cell is assigned to the most expressed gRNA if it has at least `assignment_threshold` counts.
@@ -102,3 +104,4 @@ class GuideAssignment:
         if only_return_results:
             return assigned_grna
         adata.obs[output_key] = assigned_grna
+        return None
