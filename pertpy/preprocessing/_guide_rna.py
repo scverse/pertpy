@@ -16,25 +16,19 @@ class GuideAssignment:
         output_layer: str = "assigned_guides",
         only_return_results: bool = False,
     ) -> np.ndarray | None:
-        """\
-        Simple threshold based gRNA assignment function.
-        Each cell is assigned to gRNA with at least `assignment_threshold` counts.
-        Parameters
-        ----------
-        adata
-            Annotated data matrix containing gRNA values
-        assignment_threshold
-            If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
-        layer
-            Key to the layer containing raw count values of the gRNAs.
-            adata.X is used if layer is None.
-        output_layer
-            Assigned guide will be saved on adata.layers[output_key]. default value is `assigned_guides`.
-        only_return_results
-            If True, input adata is not modified and the result is returned as an np.ndarray.
-        Returns
-        -------
-        Updates the adata with the following:
+        """Simple threshold based gRNA assignment function.
+            Each cell is assigned to gRNA with at least `assignment_threshold` counts.
+
+        Args:
+            adata: Annotated data matrix containing gRNA values
+            assignment_threshold: If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
+            layer: Key to the layer containing raw count values of the gRNAs.
+                adata.X is used if layer is None.
+            output_layer: Assigned guide will be saved on adata.layers[output_key]. default value is `assigned_guides`.
+            only_return_results: If True, input adata is not modified and the result is returned as an np.ndarray.
+
+        Returns:
+            Updates the adata with the following:
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):
@@ -64,27 +58,20 @@ class GuideAssignment:
         no_grna_assigned_key: str = "NT",
         only_return_results: bool = False,
     ) -> np.ndarray | None:
-        """\
-        Simple threshold based max gRNA assignment function.
-        Each cell is assigned to the most expressed gRNA if it has at least `assignment_threshold` counts.
-        Parameters
-        ----------
-        adata
-            Annotated data matrix containing gRNA values
-        assignment_threshold
-            If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
-        layer
-            Key to the layer containing raw count values of the gRNAs.
-            adata.X is used if layer is None.
-        output_key
-            Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
-        no_grna_assigned_key
-            The key to return if no gRNA is expressed enough.
-        only_return_results
-            If True, input adata is not modified and the result is returned as an np.ndarray.
-        Returns
-        -------
-        Updates the adata with the following:
+        """Simple threshold based max gRNA assignment function.
+           Each cell is assigned to the most expressed gRNA if it has at least `assignment_threshold` counts.
+
+        Args:
+            adata: Annotated data matrix containing gRNA values
+            assignment_threshold: If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
+            layer: Key to the layer containing raw count values of the gRNAs.
+                   adata.X is used if layer is None.
+            output_key: Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
+            no_grna_assigned_key: The key to return if no gRNA is expressed enough.
+            only_return_results: If True, input adata is not modified and the result is returned as an np.ndarray.
+
+        Returns:
+            Updates the adata with the following:
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):
