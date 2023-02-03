@@ -43,8 +43,6 @@ class GuideAssignment:
         assigned_grnas = np.where(counts >= assignment_threshold, 1, 0)
         assigned_grnas = scipy.sparse.csr_matrix(assigned_grnas)
         if only_return_results:
-            dt = {"names": adata.var_names, "formats": [np.int32] * len(adata.var_names)}
-            assigned_grnas = assigned_grnas.astype(dt)
             return assigned_grnas
         adata.layers[output_layer] = assigned_grnas
         return None
