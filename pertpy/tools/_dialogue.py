@@ -6,7 +6,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 from anndata import AnnData
-from sparsecca import multicca_pmd
+from sparsecca import multicca_permute, multicca_pmd
 
 
 class Dialogue:
@@ -183,9 +183,11 @@ class Dialogue:
             adata, groupby, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=mimic_dialogue
         )
 
-        # TODO: awaiting implementation of MultiCCA.permute in order to determine optimal penalty
+        n_samples = mcca_in[0].shape[1]
         if penalties is None:
-            penalties = [10 for x in cell_types]  # random number for now
+            penalties = multicca_permute(
+                mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
+            )["bestpenalties"]
         else:
             penalties = penalties
 
