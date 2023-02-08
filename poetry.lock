@@ -4111,6 +4111,30 @@ files = [
 ]
 
 [[package]]
+name = "sparsecca"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = []
+develop = false
+
+[package.dependencies]
+numpy = "*"
+pandas = "*"
+statsmodels = "*"
+
+[package.extras]
+rpy2 = ["rpy2 (>=3)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/theislab/sparsecca"
+reference = "HEAD"
+resolved_reference = "aba5fccd3bb319233c8e1a8f4e49105a797e32cd"
+
+[[package]]
 name = "sphinx"
 version = "5.3.0"
 description = "Python documentation generator"
@@ -5223,4 +5247,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<3.11"
-content-hash = "d161dc12bab1544a27dba40179f3e15bd03da3ac9b3beb9ba33a3616b1e04238"
+content-hash = "d3cb2430e38aa56b25152581e13cadd610a3457ca1ad2a11e0bf93de3b5b23be"
