@@ -47,13 +47,8 @@ pt.pl.cool_fancy_plot()
     data.kang_2018
     data.mcfarland_2020
     data.norman_2019
-    data.norman_2019_filtered
     data.norman_2019_raw
     data.papalexi_2021
-    data.papalexi_2021_eccite_arrayed_protein
-    data.papalexi_2021_eccite_arrayed_rna
-    data.papalexi_2021_eccite_protein
-    data.papalexi_2021_eccite_rna
     data.replogle_2022_k562_essential
     data.replogle_2022_k562_gwps
     data.replogle_2022_rpe1
