@@ -37,4 +37,4 @@ This package was created with [cookietemple] using [Cookiecutter] based on [Hype
 [hypermodern_python_cookiecutter]: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 [pip]: https://pip.pypa.io/
 [pypi]: https://pypi.org/
-[usage]: https://pertpy.readthedocs.io/en/latest/usage.html
+[usage]: https://pertpy.readthedocs.io/en/latest/usage/usage.html

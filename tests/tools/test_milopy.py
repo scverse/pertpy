@@ -15,7 +15,6 @@ except Exception:
 
 
 class TestMilopy:
-
     milo = pt.tl.Milopy()
 
     @pytest.fixture
@@ -71,11 +70,11 @@ class TestMilopy:
         top_a = adata.obs.iloc[nh_cells].value_counts(sample_col).values.ravel()
 
         # Check it matches the one calculated
-        sample_adata = milo_mdata["milo_compositional"]
+        sample_adata = milo_mdata["milo"]
         df = pd.DataFrame(sample_adata.X.T[nh, :].toarray()).T
         df.index = sample_adata.obs_names
         top_b = df.sort_values(0, ascending=False).values.ravel()
-        assert all((top_b - top_a) == 0), 'The counts for samples in milo_mdata["milo_compositional"] does not match'
+        assert all((top_b - top_a) == 0), 'The counts for samples in milo_mdata["milo"] does not match'
 
     def test_count_nhoods_missing_nhoods(self, adata):
         adata = adata.copy()
@@ -98,12 +97,12 @@ class TestMilopy:
         top_a = adata.obs.iloc[nh_cells].value_counts(sample_col).index[0]
 
         # Check it matches the one calculated
-        sample_adata = milo_mdata["milo_compositional"]
+        sample_adata = milo_mdata["milo"]
         df = pd.DataFrame(sample_adata.X.T[nh, :].toarray()).T
         df.index = sample_adata.obs_names
         top_b = df.sort_values(0, ascending=False).index[0]
 
-        assert top_a == top_b, 'The order of samples in milo_mdata["milo_compositional"] does not match'
+        assert top_a == top_b, 'The order of samples in milo_mdata["milo"] does not match'
 
     # @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
     @pytest.fixture
@@ -147,7 +146,7 @@ class TestMilopy:
     def test_da_nhoods_pvalues(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         self.milo.da_nhoods(mdata, design="~condition")
-        sample_adata = mdata["milo_compositional"].copy()
+        sample_adata = mdata["milo"].copy()
         min_p, max_p = sample_adata.var["PValue"].min(), sample_adata.var["PValue"].max()
         assert (min_p >= 0) & (max_p <= 1), "P-values are not between 0 and 1"
 
@@ -155,7 +154,7 @@ class TestMilopy:
     def test_da_nhoods_fdr(self, da_nhoods_mdata):
         mdata = da_nhoods_mdata.copy()
         self.milo.da_nhoods(mdata, design="~condition")
-        sample_adata = mdata["milo_compositional"].copy()
+        sample_adata = mdata["milo"].copy()
         assert np.all(
             np.round(sample_adata.var["PValue"], 10) <= np.round(sample_adata.var["SpatialFDR"], 10)
         ), "FDR is higher than uncorrected P-values"
@@ -168,9 +167,9 @@ class TestMilopy:
             adata.obs["condition"].astype("category").cat.reorder_categories(["ConditionA", "ConditionB"])
         )
         self.milo.da_nhoods(mdata, design="~condition")
-        default_results = mdata["milo_compositional"].var.copy()
+        default_results = mdata["milo"].var.copy()
         self.milo.da_nhoods(mdata, design="~condition", model_contrasts="conditionConditionB-conditionConditionA")
-        contr_results = mdata["milo_compositional"].var.copy()
+        contr_results = mdata["milo"].var.copy()
 
         assert np.corrcoef(contr_results["SpatialFDR"], default_results["SpatialFDR"])[0, 1] > 0.99
         assert np.corrcoef(contr_results["logFC"], default_results["logFC"])[0, 1] > 0.99
@@ -197,28 +196,28 @@ class TestMilopy:
 
     def test_annotate_nhoods_missing_samples(self, annotate_nhoods_mdata):
         mdata = annotate_nhoods_mdata.copy()
-        del mdata.mod["milo_compositional"]
+        del mdata.mod["milo"]
         with pytest.raises(ValueError):
             self.milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
 
     def test_annotate_nhoods_continuous_mean_range(self, annotate_nhoods_mdata):
         mdata = annotate_nhoods_mdata.copy()
         self.milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
-        assert mdata["milo_compositional"].var["nhood_S_score"].max() < mdata["rna"].obs["S_score"].max()
-        assert mdata["milo_compositional"].var["nhood_S_score"].min() > mdata["rna"].obs["S_score"].min()
+        assert mdata["milo"].var["nhood_S_score"].max() < mdata["rna"].obs["S_score"].max()
+        assert mdata["milo"].var["nhood_S_score"].min() > mdata["rna"].obs["S_score"].min()
 
     def test_annotate_nhoods_continuous_correct_mean(self, annotate_nhoods_mdata):
         mdata = annotate_nhoods_mdata.copy()
         self.milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
-        i = np.random.choice(np.arange(mdata["milo_compositional"].n_obs))
+        i = np.random.choice(np.arange(mdata["milo"].n_obs))
         mean_val_nhood = mdata["rna"].obs[mdata["rna"].obsm["nhoods"][:, i].toarray() == 1]["S_score"].mean()
-        assert mdata["milo_compositional"].var["nhood_S_score"][i] == pytest.approx(mean_val_nhood, 0.0001)
+        assert mdata["milo"].var["nhood_S_score"][i] == pytest.approx(mean_val_nhood, 0.0001)
 
     def test_annotate_nhoods_annotation_frac_range(self, annotate_nhoods_mdata):
         mdata = annotate_nhoods_mdata.copy()
         self.milo.annotate_nhoods(mdata, anno_col="louvain")
-        assert mdata["milo_compositional"].var["nhood_annotation_frac"].max() <= 1.0
-        assert mdata["milo_compositional"].var["nhood_annotation_frac"].min() >= 0.0
+        assert mdata["milo"].var["nhood_annotation_frac"].max() <= 1.0
+        assert mdata["milo"].var["nhood_annotation_frac"].min() >= 0.0
 
     def test_annotate_nhoods_cont_gives_error(self, annotate_nhoods_mdata):
         mdata = annotate_nhoods_mdata.copy()
@@ -254,11 +253,11 @@ class TestMilopy:
     def test_add_nhood_expression_nhood_mean_range(self, add_nhood_expression_mdata):
         mdata = add_nhood_expression_mdata.copy()
         self.milo.add_nhood_expression(mdata)
-        assert mdata["milo_compositional"].varm["expr"].shape[1] == mdata["rna"].n_vars
+        assert mdata["milo"].varm["expr"].shape[1] == mdata["rna"].n_vars
         mdata = add_nhood_expression_mdata.copy()
         self.milo.add_nhood_expression(mdata)
         nhood_ix = 10
-        nhood_gex = mdata["milo_compositional"].varm["expr"][nhood_ix, :].toarray().ravel()
+        nhood_gex = mdata["milo"].varm["expr"][nhood_ix, :].toarray().ravel()
         nhood_cells = mdata["rna"].obs_names[mdata["rna"].obsm["nhoods"][:, nhood_ix].toarray().ravel() == 1]
         mean_gex = np.array(mdata["rna"][nhood_cells].X.mean(axis=0)).ravel()
         assert nhood_gex == pytest.approx(mean_gex, 0.0001)

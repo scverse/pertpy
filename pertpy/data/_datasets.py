@@ -28,17 +28,15 @@ def burczynski_crohn() -> AnnData:  # pragma: no cover
 
 
 def papalexi_2021() -> MuData:  # pragma: no cover
-    """Dataset of the Mixscape Vignette.
-
-    https://satijalab.org/seurat/articles/mixscape_vignette.html
+    """ECCITE-seq dataset of 11 gRNAs generated from stimulated THP-1 cell line.
 
     Reference:
-    Papalexi, E., Mimitou, E.P., Butler, A.W. et al. Characterizing the molecular regulation
-    of inhibitory immune checkpoints with multimodal single-cell screens.
-    Nat Genet 53, 322–331 (2021). https://doi.org/10.1038/s41588-021-00778-2
+        Papalexi, E., Mimitou, E.P., Butler, A.W. et al. Characterizing the molecular regulation
+        of inhibitory immune checkpoints with multimodal single-cell screens.
+        Nat Genet 53, 322–331 (2021). https://doi.org/10.1038/s41588-021-00778-2
 
     Returns:
-        :class:`~anndata.AnnData` object of the Crispr dataset
+        :class:`~anndata.AnnData` object of the ECCITE-seq dataset
     """
     output_file_name = "papalexi_2021.h5mu"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -57,7 +55,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
 
 
 def sc_sim_augur() -> AnnData:  # pragma: no cover
-    """Simulated test dataset used the Usage example for the Augur.
+    """Simulated test dataset used the usage example for the Augur.
 
     https://github.com/neurorestore/Augur
 
@@ -130,6 +128,32 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/33979517",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def smillie() -> AnnData:  # pragma: no cover
+    """scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
+
+    Reference:
+        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
+        Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
+
+    Returns:
+        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+    """
+    output_file_name = "smillie.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/38648585",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -350,7 +374,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
 
 
 def kang_2018() -> AnnData:  # pragma: no cover
-    """Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes
+    """Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes.
 
     HiSeq 2500 data for sequencing of PBMCs from SLE patients and 2 controls. We collected 1M cells
     each from frozen PBMC samples that were Ficoll isolated and prepared using the 10x Single Cell
@@ -393,7 +417,6 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
         Stephenson, E., Reynolds, G., Botting, R. A., et al. (2021).
         Single-cell multi-omics analysis of the immune response in COVID-19.
         Nature Medicine, 27(5). https://doi.org/10.1038/s41591-021-01329-2
-
 
     Returns:
         :class:`~anndata.AnnData` object of scRNA-seq profiles
@@ -441,25 +464,16 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
 
 
 def adamson_2016_pilot() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
+    """6000 chronic myeloid leukemia (K562) cells carrying 8 distinct GBCs.
 
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
-    In a pilot experiment, single-cell RNA-seq was performed on a pool of individually
-    transduced chronic myeloid leukemia cells (K562) carrying 8 distinct GBCs, analyzing
-    ∼6,000 cells total.
+    In a pilot experiment, single-cell RNA-seq was performed on a pool of individually transduced chronic
+    myeloid leukemia cells (K562) carrying 8 distinct guide barcodes, analyzing ∼6,000 cells total.
 
     Source paper:
-        https://doi.org/10.1016/j.cell.2016.11.048
+        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "adamson_2016_pilot.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -478,16 +492,7 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
 
 
 def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
+    """15000 K562 cells with UPR sensor genes knocked out and treated with thapsigargin.
 
     In UPR epistasis experiment, Perturb-seq was applied to explore the branches of
     the mammalian UPR. Using the three-guide Perturb-seq vector, sgRNAs targeting each
@@ -497,10 +502,10 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
     of ∼15,000 cells were sequenced.
 
     Source paper:
-        https://doi.org/10.1016/j.cell.2016.11.048
+        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb preparedsingle-cell perturbation data
     """
     output_file_name = "adamson_2016_upr_epistasis.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -519,15 +524,7 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
 
 
 def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomics of 65000 cells that were subject to 91 sgRNAs targeting 82 genes.
 
     In UPR Perturb-seq experiment, Perturb-seq was applied to a small CRISPRi library
     of 91 sgRNAs targeting 82 genes. sgRNAs were delivered via pooled transduction
@@ -535,10 +532,10 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
     were collected in one large pooled experiment.
 
     Source paper:
-        https://doi.org/10.1016/j.cell.2016.11.048
+        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "adamson_2016_upr_perturb_seq.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -557,21 +554,13 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
 
 
 def aissa_2021() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
+    """Transcriptomics of 848 P99 cells subject to consecutive erlotinib and 756 control cells.
 
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    In this study 848 PC9 cells subjected to consecutive erlotinib treatment (for
+    1, 2, 4, 9, and 11 days) and 756 control cells were analysed using Drop-seq.
 
     Source paper:
-        https://doi.org/10.1038/s41467-021-21884-z
-
-    In this studym 848 PC9 cells subjected to consecutive erlotinib treatment (for
-    1, 2, 4, 9, and 11 days) and 756 control cells were analysed using Drop-seq.
+        https://www.nature.com/articles/s41467-021-21884-z
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -593,15 +582,7 @@ def aissa_2021() -> AnnData:  # pragma: no cover
 
 
 def chang_2021() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomics of 5 different cell lines that were induced with a unique TraCe-seq barcode.
 
     TraCe-seq is a method that captures at clonal resolution the origin, fate and
     differential early adaptive transcriptional programs of cells in a complex
@@ -610,10 +591,10 @@ def chang_2021() -> AnnData:  # pragma: no cover
     Transduced cells were selected with puromycin only, mixed together and profiled by 10x scRNA-seq.
 
     Source paper:
-        https://doi.org/10.1038/s41587-021-01005-3
+        https://www.nature.com/articles/s41587-021-01005-3
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "chang_2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -632,15 +613,7 @@ def chang_2021() -> AnnData:  # pragma: no cover
 
 
 def datlinger_2017() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptpmics of 5905 Jurkat cells induced with anti-CD3 and anti-CD28 antibodies.
 
     For CROP-seq, Jurkat cells were transduced with a gRNA library targeting high-level
     regulators of T cell receptor signaling and a set of transcription factors. After 10
@@ -650,10 +623,10 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
     single-cell transcriptomes with uniquely assigned gRNAs.
 
     Source paper:
-        https://doi.org/10.1038/nmeth.4177
+        https://www.nature.com/articles/nmeth.4177
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "datlinger_2017.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -672,15 +645,7 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
 
 
 def datlinger_2021() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-     https://github.com/sanderlab/scPerturb
-
-     Reference:
-        Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-        Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-        scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-        bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomics of 151788 nuclei of four cell lines.
 
     A large-scale scifi-RNA-seq experiment was performed with 383,000 nuclei loaded into
     a single microfluidic channel of the Chromium system. Four human cell lines (HEK293T,
@@ -688,11 +653,11 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
     each cell line with different preindexing (round1) barcodes were marked. This experiment
     resulted in 151,788 single-cell transcriptomes passing quality control.
 
-     Source paper:
-         https://doi.org/10.1038/s41592-021-01153-z
+    Source paper:
+        https://doi.org/10.1038/s41592-021-01153-z
 
      Returns:
-         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "datlinger_2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -711,29 +676,20 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
 
 
 def dixit_2016_scperturb() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomics of 200000 bone marrow-derived dendritic K562 cells.
 
     Six Perturb-seq experiments were performed, analyzing 200,000 cells. In bone
     marrow-derived dendritic cells (BMDCs), 24 transcription factors (TFs) were targeted
     and the effects pre-stimulation (0 hr) and at 3 hr post-lipopolysaccharide (LPS) were
     measured. In K562 cells, 14 TFs and 10 cell-cycle regulators were targeted in separate
     pooled experiments. For K562 TFs, experiments were performed using lower and higher MOI
-    and at two time points. Reference scRNA-seq data from unperturbed cells were collected
-    separately.
+    and at two time points. Reference scRNA-seq data from unperturbed cells were collected separately.
 
     Source paper:
         https://doi.org/10.1016/j.cell.2016.11.038
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "dixit_2016_scperturb.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -752,15 +708,7 @@ def dixit_2016_scperturb() -> AnnData:  # pragma: no cover
 
 
 def frangieh_2021_protein() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """CITE-seq data of 218000 cells under 750 perturbations (only the surface protein data).
 
     Perturb-CITE-seq was developed for pooled CRISPR perturbation screens with multi-modal
     RNA and protein single-cell profiling readout and applied to screen patient-derived
@@ -773,7 +721,7 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
         https://doi.org/10.1038/s41588-021-00779-1
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "frangieh_2021_protein.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -792,15 +740,7 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
 
 
 def frangieh_2021_rna() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """CITE-seq data of 218000 cells under 750 perturbations (only the transcriptomics data).
 
     Perturb-CITE-seq was developed for pooled CRISPR perturbation screens with multi-modal
     RNA and protein single-cell profiling readout and applied to screen patient-derived
@@ -813,7 +753,7 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
         https://doi.org/10.1038/s41588-021-00779-1
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "frangieh_2021_rna.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -832,15 +772,7 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
 
 
 def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomics of 254974 cells of chronic K562 cells with CRISPRi perturbations.
 
     Across two experiments, the authors used dCas9-KRAB to perturb 5,920 candidate enhancers
     with no strong a priori hypothesis as to their target gene(s) in 254,974 cells of chronic
@@ -850,7 +782,7 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
         https://doi.org/10.1016/j.cell.2018.11.029
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "gasperini_2019_atscale.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -869,15 +801,7 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
 
 
 def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """K562 perturbed cells with 1119 candidate enhancers (only the high MOI part).
 
     The authors used dCas9-KRAB to perturb 1,119 candidate enhancers with no strong a priori
     hypothesis as to their target gene(s) in the chronic myelogenous leukemia cell line
@@ -907,15 +831,7 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
 
 
 def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """K562 perturbed cells with 1119 candidate enhancers (only the low MOI part).
 
     The authors used dCas9-KRAB to perturb 1,119 candidate enhancers with no strong a priori
     hypothesis as to their target gene(s) in chronic myelogenous leukemia cell line K562,
@@ -926,7 +842,7 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
         https://doi.org/10.1016/j.cell.2018.11.029
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "gasperini_2019_lowmoi.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -945,15 +861,7 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
 
 
 def gehring_2019() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """96-plex perturbation experiment on live mouse neural stem cells.
 
     In this study, a 96-plex perturbation experiment was conducted on live mouse neural
     stem cells (NSCs), consisting of a pair of drug-triples with 4 drugs in total at 3
@@ -963,7 +871,7 @@ def gehring_2019() -> AnnData:  # pragma: no cover
         https://doi.org/10.1038/s41587-019-0372-z
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of a scPerturb prepared single-cell dataset
     """
     output_file_name = "gehring_2019.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -982,15 +890,7 @@ def gehring_2019() -> AnnData:  # pragma: no cover
 
 
 def mcfarland_2020() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Response of various cell lines to a range of different drugs and CRISPRi perturbations.
 
     Here, the authors developed MIX-Seq, a method for multiplexed transcriptional profiling
     of post-perturbation responses across many cell contexts, using scRNA-seq applied to
@@ -1019,227 +919,19 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
     return adata
 
 
-def norman_2019_filtered() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
-    K562 cells stably expressing dCas9-KRAB were transduced with the CRISPRa genetic
-    interactions (GIs) library. 132 gene pairs were picked from the GI map, chosen
-    both within and between blocks of genes with similar interaction profiles, and
-    targeted each with CRISPRa sgRNA pairs. In total, transcriptional readouts for
-    287 perturbations measured across ~110,000 single cells were obtained (median
-    273 cells per condition) in one pooled experiment.
-
-
-    Source paper:
-        https://doi.org/10.1126/science.aax4438
-
-    Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
-    """
-    output_file_name = "norman_2019_filtered.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
-    if not Path(output_file_path).exists():
-        _download(
-            url="https://zenodo.org/record/7278143/files/NormanWeissman2019_filtered.h5ad?download=1",
-            output_file_name=output_file_name,
-            output_path=settings.datasetdir,
-            is_zip=False,
-        )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
-
-    return adata
-
-
-def papalexi_2021_eccite_arrayed_protein() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
-    A pilot experiment was performed using gRNA species targeting PD-L1 or IFNGR1 as
-    well as NT controls on simulated THP-1 cells. Libraries were sequenced on a
-    NextSeq 500 system. ADT libraries were processed with CITE-seq-Count and
-    normalized across cells using the centered log ratio. Cells with high mitochondrial
-    gene content (>8%) were removed.
-
-
-    Source paper:
-        https://doi.org/10.1038/s41588-021-00778-2
-
-    Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
-    """
-    output_file_name = "papalexi_2021_eccite_arrayed_protein.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
-    if not Path(output_file_path).exists():
-        _download(
-            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_arrayed_protein.h5ad?download=1",
-            output_file_name=output_file_name,
-            output_path=settings.datasetdir,
-            is_zip=False,
-        )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
-
-    return adata
-
-
-def papalexi_2021_eccite_arrayed_rna() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
-    A pilot experiment was performed using gRNA species targeting PD-L1 or IFNGR1 as
-    well as NT controls on simulated THP-1 cells. Libraries were sequenced on a NextSeq
-    500 system. mRNA libraries were quantified using Cell Ranger (2.1.1; hg19 reference)
-    and normalized using standard log normalization in Seurat.
-
-    Source paper:
-        https://doi.org/10.1038/s41588-021-00778-2
-
-    Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
-    """
-    output_file_name = "papalexi_2021_eccite_arrayed_rna.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
-    if not Path(output_file_path).exists():
-        _download(
-            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_arrayed_RNA.h5ad?download=1",
-            output_file_name=output_file_name,
-            output_path=settings.datasetdir,
-            is_zip=False,
-        )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
-
-    return adata
-
-
-def papalexi_2021_eccite_protein() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
-    In an ECCITE-seq experiment, THP-1 Cas9-inducible cells were transduced with virus
-    containing 111 guides at a low MOI to obtain cells with one gRNA and then stimulated.
-    Samples were hashed following the cell hashing protocol. Protein (ADTs) libraries
-    were constructed by following 10x Genomics and ECCITE-seq protocols, and then sequenced
-    together on two lanes of a NovaSeq run. The CITE-seq-Count package was used to generate
-    count matrices for ADT libraries.
-
-    Source paper:
-        https://doi.org/10.1038/s41588-021-00778-2
-
-    Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
-    """
-    output_file_name = "papalexi_2021_eccite_protein.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
-    if not Path(output_file_path).exists():
-        _download(
-            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_protein.h5ad?download=1",
-            output_file_name=output_file_name,
-            output_path=settings.datasetdir,
-            is_zip=False,
-        )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
-
-    return adata
-
-
-def papalexi_2021_eccite_rna() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
-    In an ECCITE-seq experiment, THP-1 Cas9-inducible cells were transduced with virus
-    containing 111 guides at a low MOI to obtain cells with one gRNA and then stimulated.
-    Samples were hashed following the cell hashing protocol. mRNA Libraries were constructed
-    by following 10x Genomics and ECCITE-seq protocols, and then sequenced together on
-    two lanes of a NovaSeq run. Sequencing reads from the mRNA library were mapped to the
-    hg19 reference genome using Cell Ranger software (version 2.1.1).
-
-    Source paper:
-        https://doi.org/10.1038/s41588-021-00778-2
-
-    Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
-    """
-    output_file_name = "papalexi_2021_eccite_rna.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
-    if not Path(output_file_path).exists():
-        _download(
-            url="https://zenodo.org/record/7278143/files/PapalexiSatija2021_eccite_RNA.h5ad?download=1",
-            output_file_name=output_file_name,
-            output_path=settings.datasetdir,
-            is_zip=False,
-        )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
-
-    return adata
-
-
 def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """K562 cells transduced with CRISPRi (day 7 after transduction).
 
     For day 6 essential-scale experiment in chronic myeloid leukemia (CML) (K562) cell
     lines, library lentivirus was packaged into lentivirus in 293T cells and empirically
     measured in K562 cells to obtain viral titers. CRISPRi K562 cells were transduced
-    and 20Q1 Cancer Dependency Map common essential genes were targeted at day 7 after
-    transduction.
+    and 20Q1 Cancer Dependency Map common essential genes were targeted at day 7 after transduction.
 
     Source paper:
         https://doi.org/10.1016/j.cell.2022.05.013
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "replogle_2022_k562_essential.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1258,15 +950,7 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
 
 
 def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """K562 cells transduced with CRISPRi (day 8 after transcduction).
 
     Here, the authors used a compact, multiplexed CRISPR interference (CRISPRi) library
     to assay thousands of loss-of-function genetic perturbations with single-cell RNA sequencing
@@ -1279,7 +963,7 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
         https://doi.org/10.1016/j.cell.2022.05.013
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "replogle_2022_k562_gwps.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1298,15 +982,7 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
 
 
 def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """RPE1 cells transduced with CRISPRi (day 7 after transcduction).
 
     For day 7 essential-scale Perturb-seq experiment in retinal pigment epithelial (RPE1)
     cell lines, library lentivirus was packaged into lentivirus in 293T cells and
@@ -1318,7 +994,7 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
         https://doi.org/10.1016/j.cell.2022.05.013
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "replogle_2022_rpe1.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1337,15 +1013,7 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
 
 
 def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomes of 65781 iPSC cells collected over 10 time points in 2i or serum conditions (16-day time course).
 
     Samples were collected from established iPSC lines reprogrammed from the reprogramming mouse embryonic
     fibroblasts (MEFs), maintained in either 2i or serum conditions, at 10 time points across 16 days.
@@ -1377,15 +1045,7 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
 
 
 def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomes of 259155 iPSC cells collected over 39 time points in 2i or serum conditions (18-day time course).
 
     Samples were collected from established iPSC lines reprogrammed from the reprogramming mouse embryonic
     fibroblasts (MEFs), maintained in either 2i or serum conditions, over 39 time points separated by
@@ -1415,21 +1075,12 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
 
 
 def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """TAP-seq applied to K562 cells (only chromosome 11).
 
     TAP-seq was applied to generate perturbation-based enhancer–target gene maps in K562 cells.
     They perturbed all 1,778 putatively active enhancers predicted on the basis of ENCODE data
     in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes
-    within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes
-    were measured.
+    within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.
 
     Source paper:
         https://doi.org/10.1038/s41592-020-0837-5
@@ -1454,27 +1105,18 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
 
 
 def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """TAP-seq applied to K562 cells (only chromosome 8).
 
     TAP-seq was applied to generate perturbation-based enhancer–target gene maps in K562 cells.
     They perturbed all 1,778 putatively active enhancers predicted on the basis of ENCODE data
     in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes
-    within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes
-    were measured.
+    within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.
 
     Source paper:
         https://doi.org/10.1038/s41592-020-0837-5
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "schraivogel_2020_tap_screen_chr8.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1493,15 +1135,7 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
 
 
 def shifrut_2018() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """CD8 T-cells from two donors for two conditions (SLICE and CROP-seq).
 
     The authors developed a new method, single guide RNA (sgRNA) lentiviral infection
     with Cas9 protein electroporation (SLICE), and adapted it to allow for CROP-Seq in
@@ -1513,7 +1147,7 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
         https://doi.org/10.1016/j.cell.2018.10.024
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "shifrut_2018.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1532,15 +1166,7 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
 
 
 def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """A549 cells exposed to four compounds.
 
     A549, a human lung adenocarcinoma cell line, was exposed to one of four compounds:
     dexamethasone (a corticosteroid agonist), nutlin-3a (a p53-Mdm2 antagonist),
@@ -1553,7 +1179,7 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
         https://doi.org/10.1126/science.aax6234
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "srivatsan_2020_sciplex2.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1572,15 +1198,7 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
 
 
 def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomes of 650000 A549, K562, and mCF7 cells exposed to 188 compounds.
 
     sci-Plex was used to screen three well-characterized human cancer cell lines, A549
     (lung adenocarcinoma), K562 (chronic myelogenous leukemia), and MCF7 (mammary
@@ -1591,7 +1209,7 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
         https://doi.org/10.1126/science.aax6234
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "srivatsan_2020_sciplex3.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1610,15 +1228,7 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
 
 
 def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """A549 and MCF7 cells treated with pracinostat.
 
     A549 and MCF7 cells were treated with pracinostat in the presence and absence of
     acetyl-CoA precursors (acetate, pyruvate, or citrate) or inhibitors of enzymes
@@ -1632,7 +1242,7 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
         https://doi.org/10.1126/science.aax6234
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "srivatsan_2020_sciplex4.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1651,15 +1261,7 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
 
 
 def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomes of 20000 day 7 neurons targeted by 58 gRNAs.
 
     The authors performed single-cell RNA sequencing of ∼20,000 day 7 neurons via 10x Genomics
     platform. Transcripts containing sgRNA sequences were further amplified to facilitate
@@ -1669,12 +1271,11 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
     from ∼91,000 mean reads per cell, the median number of ∼4,600 genes detected per cell and
     ∼8,400 cells to which a unique sgRNA could be assigned after quality control.
 
-
     Source paper:
         https://doi.org/10.1016/j.neuron.2019.07.014
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "tian_2019_day7neuron.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1693,15 +1294,7 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
 
 
 def tian_2019_ipsc() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomics of 20000 iPSCs targeted by 58 sgRNAs.
 
     The authors performed single-cell RNA sequencing of ∼20,000 iPSCs via 10x Genomics
     platform. Transcripts containing sgRNA sequences were further amplified to facilitate
@@ -1711,12 +1304,11 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
     from ∼84,000 mean reads per cell, the median number of ∼5,000 genes detected per cell and
     ∼15,000 cells to which a unique sgRNA could be assigned after quality control.
 
-
     Source paper:
         https://doi.org/10.1016/j.neuron.2019.07.014
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "tian_2019_iPSC.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1735,15 +1327,7 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
 
 
 def tian_2021_crispra() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """CROP-seq of 50000 neurons treated with 374 gRNAs (CRISPRa only).
 
     For CRISPRa, 100 genes were inclued in the CROP-seq experiments. The CROP-seq
     libraries included 2 sgRNAs per gene plus 6 non-targeting control sgRNAs for a
@@ -1774,15 +1358,7 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
 
 
 def tian_2021_crispri() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """CROP-seq of 98000 neurons treated with 374 gRNAs (CRISPRi only).
 
     For CRISPRi, 184 genes were inclued in the CROP-seq experiments. The CROP-seq
     libraries included 2 sgRNAs per gene plus 6 non-targeting control sgRNAs for a
@@ -1795,7 +1371,7 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
         https://doi.org/10.1038/s41593-021-00862-0
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "tian_2021_crispri.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1814,24 +1390,13 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
 
 
 def weinreb_2020() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
-
-    Source paper:
-        https://doi.org/10.1126/science.aaw3381
+    """Mouse embryonic stem cells under different cytokines across time.
 
     The authors developed a tool called LARRY (lineage and RNA recovery) and applied
     it to mouse embryonic stem cells under different cytokine conditions across time.
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "weinreb_2020.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1850,25 +1415,17 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
 
 
 def xie_2017() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Transcriptomics of 51448 cells generated with Mosaic-seq.
 
     Mosaic-seq was applied to 71 constituent enhancers from 15 super-enhancers, this
     analysis of 51,448 sgRNA-induced transcriptomes finds that only a small number of
-    constituents are major effectors of target gene expression。
+    constituents are major effectors of target gene expression.
 
     Source paper:
         https://doi.org/10.1016/j.molcel.2017.03.007
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "xie_2017.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -1887,15 +1444,7 @@ def xie_2017() -> AnnData:  # pragma: no cover
 
 
 def zhao_2021() -> AnnData:  # pragma: no cover
-    """scPerturb Single-Cell Perturbation Data.
-
-    https://github.com/sanderlab/scPerturb
-
-    Reference:
-       Stefan Peidli, Tessa Durakis Green, Ciyue Shen, Torsten Gross, Joseph Min,
-       Jake Taylor-King, Debora Marks, Augustin Luna, Nils Bluthgen, Chris Sander.
-       scPerturb: Information Resource for Harmonized Single-Cell Perturbation Data.
-       bioRxiv 2022.08.20.504663; doi: 10.1101/2022.08.20.504663.
+    """Multiplexed drug perturbation from freshly resected tumors.
 
     Source paper:
         https://doi.org/10.1186/s13073-021-00894-y
@@ -1907,7 +1456,7 @@ def zhao_2021() -> AnnData:  # pragma: no cover
     additional GBM resection to identify patient-specific responses.
 
     Returns:
-        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
+        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "zhaoSims2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name

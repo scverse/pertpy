@@ -47,13 +47,8 @@ pt.pl.cool_fancy_plot()
     data.kang_2018
     data.mcfarland_2020
     data.norman_2019
-    data.norman_2019_filtered
     data.norman_2019_raw
     data.papalexi_2021
-    data.papalexi_2021_eccite_arrayed_protein
-    data.papalexi_2021_eccite_arrayed_rna
-    data.papalexi_2021_eccite_protein
-    data.papalexi_2021_eccite_rna
     data.replogle_2022_k562_essential
     data.replogle_2022_k562_gwps
     data.replogle_2022_rpe1
@@ -64,6 +59,7 @@ pt.pl.cool_fancy_plot()
     data.schraivogel_2020_tap_screen_chr11
     data.sciplex3_raw
     data.shifrut_2018
+    data.smillie
     data.srivatsan_2020_sciplex2
     data.srivatsan_2020_sciplex3
     data.srivatsan_2020_sciplex4
@@ -75,7 +71,6 @@ pt.pl.cool_fancy_plot()
     data.weinreb_2020
     data.xie_2017
     data.zhao_2021
-
 ```
 
 ## Tools
@@ -85,10 +80,15 @@ pt.pl.cool_fancy_plot()
 The Python implementation of [Augur R package](https://github.com/neurorestore/Augur) Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
 
 Augurpy aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
-The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are more easily separated into perturbed and unperturbed than cell types with little or no response.
-This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type. Augurpy trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and then prioritizes cell type response according to metric scores measuring the accuracy of the model. For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient is used as a proxy for how accurate the model is which in turn approximates perturbation response.
+The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are
+more easily separated into perturbed and unperturbed than cell types with little or no response.
+This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type.
+Augurpy trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and
+then prioritizes cell type response according to metric scores measuring the accuracy of the model.
+For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient
+is used as a proxy for how accurate the model is which in turn approximates perturbation response.
 
-Example implementation
+Example implementation:
 
 ```python
 import pertpy as pt
@@ -150,9 +150,24 @@ Finally, it visualizes similarities and differences across different perturbatio
     tools.Mixscape
 ```
 
+Example implementation:
+
+```python
+import pertpy as pt
+
+mdata = pt.dt.papalexi_2021()
+ms = pt.tl.Mixscape()
+ms.pert_sign(mdata['rna'], 'perturbation', 'NT', 'replicate')
+ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+ms.lda(adata=mdata['rna'], labels='gene_target', layer='X_pert')
+pt.pl.ms.lda(adata=mdata['rna'])
+```
+
 See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
 
-### Milopy
+### Compositional analysis
+
+#### Milopy
 
 A Python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scverse pipelines for single-cell analysis.
 See [Differential abundance testing on single-cell data using k-nearest neighbor graphs](https://www.nature.com/articles/s41587-021-01033-z) for details on the statistical framework.
@@ -169,6 +184,61 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 ```
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
+
+#### scCODA and tascCODA
+
+Reimplementation of scCODA for identification of compositional changes in high-throughput sequencing count data and tascCODA for sparse, tree-aggregated modeling of high-throughput sequencing data.
+See [scCODA is a Bayesian model for compositional single-cell data analysis](https://www.nature.com/articles/s41467-021-27150-6) for statistical methodology and benchmarking performance of scCODA and [tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data](https://www.frontiersin.org/articles/10.3389/fgene.2021.766405/full) for statistical methodology and benchmarking performance of tascCODA.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Sccoda
+    tools.Tasccoda
+```
+
+### Multi-cellular or gene programs
+
+#### DIALOGUE
+
+A Python implementation of DIALOGUE for the discovery of multicellular programs.
+See [DIALOGUE maps multicellular programs in tissue from single-cell or spatial transcriptomics data](https://www.nature.com/articles/s41587-022-01288-0) for more details on the methodology.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Dialogue
+```
+
+See [dialogue tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html) for a more elaborate tutorial.
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+adata = pt.dt.dialogue_example()
+sc.pp.pca(adata)
+sc.pp.neighbors(adata)
+sc.tl.umap(adata)
+
+dl = pt.tl.Dialogue()
+adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
+    adata,
+    groupby='clinical.status',
+    celltype_key='cell.subtypes',
+    mimic_dialogue=True
+)
+```
 
 ### Representation
 
@@ -207,7 +277,9 @@ See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebook
     plot.ms.lda
 ```
 
-### Milopy
+### Compositional analysis
+
+#### Milopy
 
 ```{eval-rst}
 .. autosummary::
@@ -217,4 +289,19 @@ See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebook
     plot.milo.nhood
     plot.milo.da_beeswarm
     plot.milo.nhood_counts_by_cond
+```
+
+#### scCODA and tascCODA
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.coda.stacked_barplot
+    plot.coda.effects_barplot
+    plot.coda.boxplots
+    plot.coda.rel_abundance_dispersion_plot
+    plot.coda.draw_tree
+    plot.coda.draw_effects
+    plot.coda.effects_umap
 ```

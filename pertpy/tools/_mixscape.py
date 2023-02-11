@@ -7,6 +7,7 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from pynndescent import NNDescent
+from rich import print
 from scanpy.tools._utils import _choose_representation
 from scipy import sparse
 from scipy.sparse import csr_matrix, issparse
@@ -153,7 +154,7 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             new_class_name: Name of mixscape classification to be stored in `.obs`.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            layer: Key from adata.layers whose value will be used to perform tests on.
+            layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
@@ -194,7 +195,13 @@ class Mixscape:
         if layer is not None:
             X = adata_comp.layers[layer]
         else:
-            X = adata_comp.X
+            try:
+                X = adata_comp.layers["X_pert"]
+            except KeyError:
+                print(
+                    '[bold yellow]No "X_pert" found in .layers! -- Please run pert_sign first to calculate perturbation signature!'
+                )
+                raise
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
         adata.obs[new_class_name] = adata.obs[labels].astype(str)
@@ -383,8 +390,17 @@ class Mixscape:
             return adata
 
     def _get_perturbation_markers(
-        self, adata, split_masks, categories, labels, control, layer, pval_cutoff, min_de_genes, logfc_threshold
-    ):
+        self,
+        adata: AnnData,
+        split_masks: list[np.ndarray],
+        categories: list[str],
+        labels: str,
+        control: str,
+        layer: str,
+        pval_cutoff: float,
+        min_de_genes: float,
+        logfc_threshold: float,
+    ) -> dict[tuple, np.ndarray]:
         """determine gene sets across all splits/groups through differential gene expression
 
         Args:

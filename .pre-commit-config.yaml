@@ -52,8 +52,9 @@ repos:
       rev: v2.5.1
       hooks:
           - id: prettier
+            language_version: "17.9.1"
     - repo: https://github.com/pycqa/isort
-      rev: 5.9.3
+      rev: 5.12.0
       hooks:
           - id: isort
             name: isort (python)

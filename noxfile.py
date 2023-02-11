@@ -17,7 +17,7 @@ except ImportError:
     sys.exit(1)
 
 package = "pertpy"
-python_versions = ["3.8"]
+python_versions = ["3.8", "3.10"]
 nox.options.sessions = (
     "pre-commit",
     # "safety",
