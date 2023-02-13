@@ -47,13 +47,8 @@ pt.pl.cool_fancy_plot()
     data.kang_2018
     data.mcfarland_2020
     data.norman_2019
-    data.norman_2019_filtered
     data.norman_2019_raw
     data.papalexi_2021
-    data.papalexi_2021_eccite_arrayed_protein
-    data.papalexi_2021_eccite_arrayed_rna
-    data.papalexi_2021_eccite_protein
-    data.papalexi_2021_eccite_rna
     data.replogle_2022_k562_essential
     data.replogle_2022_k562_gwps
     data.replogle_2022_rpe1
@@ -76,7 +71,6 @@ pt.pl.cool_fancy_plot()
     data.weinreb_2020
     data.xie_2017
     data.zhao_2021
-
 ```
 
 ## Tools
@@ -191,6 +185,44 @@ See [scCODA is a Bayesian model for compositional single-cell data analysis](htt
 
     tools.Sccoda
     tools.Tasccoda
+```
+
+### Multi-cellular or gene programs
+
+#### DIALOGUE
+
+A Python implementation of DIALOGUE for the discovery of multicellular programs.
+See [DIALOGUE maps multicellular programs in tissue from single-cell or spatial transcriptomics data](https://www.nature.com/articles/s41587-022-01288-0) for more details on the methodology.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Dialogue
+```
+
+See [dialogue tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html) for a more elaborate tutorial.
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+adata = pt.dt.dialogue_example()
+sc.pp.pca(adata)
+sc.pp.neighbors(adata)
+sc.tl.umap(adata)
+
+dl = pt.tl.Dialogue()
+adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
+    adata,
+    groupby='clinical.status',
+    celltype_key='cell.subtypes',
+    mimic_dialogue=True
+)
 ```
 
 ### Representation

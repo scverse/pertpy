@@ -1381,7 +1381,7 @@ def from_scanpy(
         sample_identifier = [sample_identifier]
 
     if covariate_obs:
-        covariate_obs += sample_identifier
+        covariate_obs += [i for i in sample_identifier if i not in covariate_obs]
     else:
         covariate_obs = sample_identifier  # type: ignore
 
