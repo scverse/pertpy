@@ -43,6 +43,7 @@ statannotations = "^0.5.0"
 protobuf = "3.20.1"
 numba = "^0.56.4"
 sparsecca = {git = "https://github.com/theislab/sparsecca"}
+decoupler = "^1.3.3"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.2.5"
