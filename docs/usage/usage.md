@@ -73,6 +73,28 @@ pt.pl.cool_fancy_plot()
     data.zhao_2021
 ```
 
+## Preprocessing
+
+### Guide Assignment
+
+Simple functions for:
+
+-   Heatmap plotting of guide RNAs.
+-   Assigning guides based on thresholds.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: preprocessing
+    :nosignatures:
+
+    plot.guide
+    preprocessing.guide_assignment
+```
+
 ## Tools
 
 ### Augurpy
