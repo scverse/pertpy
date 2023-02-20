@@ -39,11 +39,10 @@ class MetaData:
                 output_path=settings.cachedir,
                 is_zip=True,
             )
-
         self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
 
         """Download meta data for driver genes of the COSMIC Tier 1 gene from DepMap_Sanger """
-        self.driver_gene_cosmic = pd.read_csv("Census_allSun Feb 12 10_56_28 2023.csv")
+        # self.driver_gene_cosmic = pd.read_csv("Census_allSun Feb 12 10_56_28 2023.csv")
 
         """Download bulk RNA-seq data collated from the Wellcome Sanger Institute and the Broad Institute """
         bulk_rna_sanger_file_name = "rnaseq_sanger.zip"
@@ -56,7 +55,6 @@ class MetaData:
                 output_path=settings.cachedir,
                 is_zip=True,
             )
-
         self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path)
 
         bulk_rna_broad_file_name = "rnaseq_broad.zip"
@@ -69,13 +67,27 @@ class MetaData:
                 output_path=settings.cachedir,
                 is_zip=True,
             )
-
         self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path)
 
-    def getinfo_annotate_driver_genes(self, driver_gene_set: str = "intOGen") -> None:
-        """Fetch driver gene annotation.
+        """Download proteomics data (ProCan-DepMapSanger) which saves protein intensity values
+         acquired using data-independent acquisition mass spectrometry (DIA-MS). """
 
-        The user can use this function to know which kind of information to query when annotating driver gene information from DepMap_Sanger.
+        proteomics_file_name = "Proteomics_20221214.zip"
+        proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214.csv"
+        if not Path(proteomics_file_path).exists():
+            print("No metadata file was found for proteomics data (ProCan-DepMapSanger). Start downloading now.")
+            _download(
+                url="https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip",
+                output_file_name=proteomics_file_name,
+                output_path=settings.cachedir,
+                is_zip=True,
+            )
+        self.proteomics_data = pd.read_csv(proteomics_file_path)
+
+    def getinfo_annotate_driver_genes(self, driver_gene_set: str = "intOGen") -> None:
+        """
+        The user can use this function to know which kind of information to query when annotating
+        driver gene information from DepMap_Sanger.
         The list of driver genes is the union of two complementary gene sets: intOGen & COSMIC Tier 1.
         """
 
@@ -96,41 +108,40 @@ class MetaData:
             print(f"{len(self.driver_gene_cosmic.index)} driver genes are saved in this file")
 
     def getinfo_annotate_bulk_rna_expression(self, cell_line_source: str = "broad") -> None:
-        """Fetch bulk rna expression.
-
-        The user can use this function to know which kind of information to query when annotating bulk rna expression.
-        There are two sources for the cell line bulk rna expression data: broad or Sanger.
+        """
+        The user can use this function to know which kind of information to query when
+        annotating bulk rna expression.
+        There are two sources for the cell Line bulk rna expression data: broad or Sanger.
         """
 
-        """Print the columns of the cell line bulk rna expression data."""
+        """Print the columns of the DepMap_Sanger driver gene annotation and the number of driver genes."""
         if cell_line_source == "broad":
             print(
                 "Current available information in the RNA-Seq Data for broad cell line only: ",
                 *list(self.bulk_rna_broad.columns.values),
                 sep="\n- ",
             )
-            print(
-                f"{len(self.bulk_rna_broad.model_name.unique())} unique cell lines are saved in this file under the "
-                f"column model_name"
-            )
+            print(f"{len(self.bulk_rna_broad.model_name.unique())} unique cell lines are saved in this file.")
             print(f"{len(self.bulk_rna_broad.gene_id.unique())} unique genes are saved in this file")
 
-        if cell_line_source == "sanger":
+        elif cell_line_source == "sanger":
             print(
                 "Current available information in the RNA-Seq Data for Sanger cell line only: ",
                 *list(self.bulk_rna_sanger.columns.values),
                 sep="\n- ",
             )
-            print(
-                f"{len(self.bulk_rna_sanger.model_name.unique())} unique cell lines are saved in this file under the "
-                f"column model_name"
+            print(f"{len(self.bulk_rna_sanger.model_name.unique())} unique cell lines are saved in this file.")
+            print(f"{len(self.bulk_rna_sanger.gene_id.unique())} unique genes are saved in this file.")
+        else:
+            raise ValueError(
+                "The specified source of bulk rna expression data is not available. "
+                "Please choose either broad or sanger."
             )
-            print(f"{len(self.bulk_rna_sanger.gene_id.unique())} unique genes are saved in this file")
 
     def getinfo_annotate_cell_lines(self) -> None:
-        """Fetch cell line annotation.
-
-        The user can use this function to know which kind of information to query when annotating cell line information from Dependency Map (DepMap).
+        """
+        The user can use this function to know which kind of information to query when
+        annotating cell line information from Dependency Map (DepMap).
         """
 
         """Print the columns of the DepMap cell line annotation and the number of cell lines."""
@@ -142,6 +153,28 @@ class MetaData:
         print(f"{len(self.cell_line_meta.index)} cell lines are saved in this file")
         # print('Please also have a brief overview about what the DepMap cell annotation file looks like ',
         # self.cell_line_meta.head())
+
+    def getinfo_annotate_protein_expression(self) -> None:
+        """
+        The user can use this function to know which kind of information to query when annotating protein expression.
+        Protein intensity values acquired using data-independent acquisition mass spectrometry (DIA-MS).
+
+        Data was then log2-transformed. MS runs across replicates of each cell line were combined by
+        calculating the geometric mean.
+        The final dataset, termed ProCan-DepMapSanger, was derived from 6,864 mass spectrometry runs covering
+        949 cell lines and quantifying a total of 8,498 proteins.
+
+        Z-Score is calculated with reference to each protein as measured across the entire cell line panel.
+        """
+
+        """Print the columns of the protein expression data and the number of proteins."""
+        print(
+            "Current available information in the proteomics data: ",
+            *list(self.proteomics_data.columns.values),
+            sep="\n- ",
+        )
+        print(f"{len(self.proteomics_data.model_name.unique())} unique cell lines are saved in this file.")
+        print(f"{len(self.proteomics_data.uniprot_id.unique())} unique proteins are saved in this file.")
 
     def annotate_cell_lines(
         self,
@@ -248,8 +281,9 @@ class MetaData:
         self,
         adata: anndata,
         cell_line_identifier: str = "cell_line_name",
-        cell_line_source: str = "broad",
-        cell_line_information: str = "read_count",
+        identifier_type: str = "model_name",
+        bulk_rna_source: str = "broad",
+        bulk_rna_information: str = "read_count",
         copy: bool = False,
     ) -> anndata:
         """Fetch bulk rna expression.
@@ -259,8 +293,9 @@ class MetaData:
         Args:
             adata: The data object to annotate.
             cell_line_identifier: The column of `.obs` with cell line information. (default: "cell_line_name")
-            cell_line_source: The bulk rna expression data from either Broad or Sanger cell line. (default: "broad")
-            cell_line_information: The metadata to fetch. (default: read_count)
+            identifier_type: The type of cell line information, e.g. model_name or model_id. (default: 'model_name')
+            bulk_rna_source: The bulk rna expression data from either Broad or Sanger cell line. (default: "broad")
+            bulk_rna_information: The metadata to fetch. (default: read_count)
             copy: Determines whether a copy of the `adata` is returned. (default: False)
 
         Returns:
@@ -268,15 +303,34 @@ class MetaData:
         """
         if copy:
             adata = adata.copy()
-        if cell_line_source == "broad":
+        if bulk_rna_source == "broad":
             bulk_rna = self.bulk_rna_broad
-        else:
+        elif bulk_rna_source == "sanger":
             bulk_rna = self.bulk_rna_sanger
+        else:
+            raise ValueError(
+                "The specified source of bulk rna expression data is not available. "
+                "Please choose either broad or sanger."
+            )
 
         """If the specified cell line type can be found in the bulk rna expression data,
         we can compare these keys and fetch the corresponding metadata."""
 
-        not_matched_identifiers = list(set(adata.obs[cell_line_identifier]) - set(bulk_rna["model_name"]))
+        if cell_line_identifier not in adata.obs.columns:
+            raise ValueError(
+                "The specified cell line identifier can't be found in the adata.obs. "
+                "Please fetch the cell line meta data first using the functiion "
+                "annotate_cell_lines()."
+            )
+
+        if identifier_type not in bulk_rna.columns:
+            raise ValueError(
+                "The specified identifier type can't be found in the meta data. "
+                "Please check the available identifier type in the meta data using "
+                "the function getinfo_annotate_bulk_rna_expression()."
+            )
+
+        not_matched_identifiers = list(set(adata.obs[cell_line_identifier]) - set(bulk_rna[identifier_type]))
         if len(not_matched_identifiers) > 0:
             print(
                 "Following identifiers can not be found in bulk RNA expression data,"
@@ -285,21 +339,71 @@ class MetaData:
                 sep="\n- ",
             )
 
-        bulk_rna_gb_cellline = bulk_rna.groupby("model_name")[["gene_symbol", cell_line_information]].agg(
-            lambda x: list(x)
+        rna_exp = pd.pivot(bulk_rna, index=identifier_type, columns="gene_id", values=bulk_rna_information)
+        rna_exp = rna_exp.reindex(adata.obs[cell_line_identifier]).to_numpy()
+        adata.obsm["bulk_rna_expression_" + bulk_rna_source] = rna_exp
+
+        return adata
+
+    def annotate_protein_expression(
+        self,
+        adata: anndata,
+        cell_line_identifier: str = "cell_line_name",
+        identifier_type: str = "model_name",
+        proteomics_information: str = "protein_intensity",
+        copy: bool = False,
+    ) -> anndata:
+        """Fetch protein expression.
+
+        For each cell, we fetch protein intensity values acquired using data-independent acquisition mass spectrometry (DIA-MS).
+
+        Args:
+            adata: The data object to annotate.
+            cell_line_identifier: The column of `.obs` with cell line information. (default: 'cell_line_name")
+            identifier_type: The type of cell line information, e.g. model_name or model_id. (default: 'model_name')
+            proteomics_information: The metadata to fetch, protein_intensity or zscore. (default: 'protein_intensity')
+            copy: Determines whether a copy of the `adata` is returned. (default: False)
+
+        Returns:
+            Returns an AnnData object with protein expression annotation.
+        """
+        if copy:
+            adata = adata.copy()
+
+        """If the specified cell line type can be found in the protein expression data,
+        we can compare these keys and fetch the corresponding metadata."""
+
+        if cell_line_identifier not in adata.obs.columns:
+            raise ValueError(
+                "The specified cell line identifier can't be found in the adata.obs. "
+                "Please fetch the cell line meta data first using the functiion "
+                "annotate_cell_lines()."
+            )
+
+        if identifier_type not in self.proteomics_data.columns:
+            raise ValueError(
+                "The specified identifier type can't be found in the meta data. "
+                "Please check the available identifier type in the meta data using "
+                "the function getinfo_annotate_protein_expression()."
+            )
+
+        not_matched_identifiers = list(
+            set(adata.obs[cell_line_identifier]) - set(self.proteomics_data[identifier_type])
         )
-        bulk_rna_expression = pd.DataFrame(
-            bulk_rna_gb_cellline[cell_line_information].tolist(), index=bulk_rna_gb_cellline.index
+        if len(not_matched_identifiers) > 0:
+            print(
+                "Following identifiers can not be found in the protein expression data,"
+                " so their corresponding meta data are NA values. Please check it again:",
+                *not_matched_identifiers,
+                sep="\n- ",
+            )
+        # convert the original protein intensities table from long format to wide format, group by the cell lines
+        prot_exp = pd.pivot(
+            self.proteomics_data, index=identifier_type, columns="uniprot_id", values=proteomics_information
         )
-        bulk_rna_expression.columns = bulk_rna_gb_cellline.gene_symbol[1]
-        bulk_rna_expression.index.names = [None]
-        bulk_rna_expression_mapped = pd.merge(
-            adata.obs[cell_line_identifier],
-            bulk_rna_expression,
-            left_on=cell_line_identifier,
-            right_index=True,
-            how="left",
-        )
-        adata.obsm["bulk_rna_expression_" + cell_line_source] = bulk_rna_expression_mapped
+        # convert to np array
+        prot_exp = prot_exp.reindex(adata.obs[cell_line_identifier]).to_numpy()
+        # save in the adata.obsm
+        adata.obsm["proteomics_" + proteomics_information] = prot_exp
 
         return adata
