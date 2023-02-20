@@ -6,7 +6,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 from anndata import AnnData
-from sparsecca import multicca_permute, multicca_pmd
+from sparsecca import multicca_pmd
 
 
 class Dialogue:
@@ -25,9 +25,9 @@ class Dialogue:
         """
         pseudobulk = {"Genes": adata.var_names.values}
 
-        for category in adata.obs.loc[:, groupby].cat.categories:
-            temp = adata.obs.loc[:, groupby] == category
-            pseudobulk[category] = adata[temp].X.median(axis=0).A1
+        for i in adata.obs.loc[:, groupby].cat.categories:
+            temp = adata.obs.loc[:, groupby] == i
+            pseudobulk[i] = adata[temp].X.median(axis=0).A1
 
         pseudobulk = pd.DataFrame(pseudobulk).set_index("Genes")
 
@@ -48,9 +48,9 @@ class Dialogue:
         """
         aggr = {}
 
-        for category in adata.obs.loc[:, groupby].cat.categories:
-            temp = adata.obs.loc[:, groupby] == category
-            aggr[category] = adata[temp].obsm["X_pca"][:, :n_components].mean(axis=0)
+        for i in adata.obs.loc[:, groupby].cat.categories:
+            temp = adata.obs.loc[:, groupby] == i
+            aggr[i] = adata[temp].obsm["X_pca"][:, :n_components].mean(axis=0)
 
         aggr = pd.DataFrame(aggr)
 
@@ -78,7 +78,7 @@ class Dialogue:
             return ((pseudobulks - pseudobulks.mean()) / pseudobulks.std()).to_numpy()
 
     def _concat_adata_mcp_scores(
-        self, adata: AnnData, ct_subs: dict[str, AnnData], mcp_scores: dict[str, np.ndarray]
+        self, adata: AnnData, ct_subs: dict[str, AnnData], mcp_scores: dict[str, np.ndarray], celltype_key: str
     ) -> AnnData:
         """Concatenates the AnnData object with the mcp scores.
 
@@ -98,7 +98,7 @@ class Dialogue:
 
         ad_mcp = {
             ct: __concat_obs(ct_subs[ct], pd.DataFrame(mcp_scores[ct]))
-            for ct in adata.obs["cell.subtypes"].cat.categories
+            for ct in adata.obs[celltype_key].cat.categories
         }
 
         adata = ad.concat(ad_mcp.values())
@@ -183,11 +183,9 @@ class Dialogue:
             adata, groupby, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=mimic_dialogue
         )
 
-        n_samples = mcca_in[0].shape[1]
+        # TODO: awaiting implementation of MultiCCA.permute in order to determine optimal penalty
         if penalties is None:
-            penalties = multicca_permute(
-                mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
-            )["bestpenalties"]
+            penalties = [10 for x in cell_types]  # random number for now
         else:
             penalties = penalties
 
@@ -201,6 +199,6 @@ class Dialogue:
         # TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it's not at all
         # matched at this point in the function and requires references to internals that shouldn't need exposing (ct_subs)
 
-        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=mcp_scores)
+        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=mcp_scores, celltype_key=celltype_key)
 
         return adata, mcp_scores, ws_dict, ct_subs
