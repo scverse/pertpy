@@ -78,7 +78,7 @@ class Dialogue:
             return ((pseudobulks - pseudobulks.mean()) / pseudobulks.std()).to_numpy()
 
     def _concat_adata_mcp_scores(
-        self, adata: AnnData, ct_subs: dict[str, AnnData], mcp_scores: dict[str, np.ndarray]
+        self, adata: AnnData, ct_subs: dict[str, AnnData], mcp_scores: dict[str, np.ndarray], celltype_key: str
     ) -> AnnData:
         """Concatenates the AnnData object with the mcp scores.
 
@@ -98,7 +98,7 @@ class Dialogue:
 
         ad_mcp = {
             ct: __concat_obs(ct_subs[ct], pd.DataFrame(mcp_scores[ct]))
-            for ct in adata.obs["cell.subtypes"].cat.categories
+            for ct in adata.obs[celltype_key].cat.categories
         }
 
         adata = ad.concat(ad_mcp.values())
@@ -201,6 +201,6 @@ class Dialogue:
         # TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it's not at all
         # matched at this point in the function and requires references to internals that shouldn't need exposing (ct_subs)
 
-        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=mcp_scores)
+        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=mcp_scores, celltype_key=celltype_key)
 
         return adata, mcp_scores, ws_dict, ct_subs
