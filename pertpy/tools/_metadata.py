@@ -42,7 +42,7 @@ class MetaData:
         self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
 
         """Download meta data for driver genes of the COSMIC Tier 1 gene from DepMap_Sanger """
-        # self.driver_gene_cosmic = pd.read_csv("Census_allSun Feb 12 10_56_28 2023.csv")
+        self.driver_gene_cosmic = pd.read_csv("COSMIC_tier1.csv")
 
         """Download bulk RNA-seq data collated from the Wellcome Sanger Institute and the Broad Institute """
         bulk_rna_sanger_file_name = "rnaseq_sanger.zip"
