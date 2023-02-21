@@ -27,24 +27,16 @@ class TestGuideRnaProcessingAndPlotting:
         )
         return adata
 
-    def test_grna_heatmap_plotting(self):
-        adata = self.make_test_adata()
-
-        key = "cell_order_in_grna_plot"
-        assert key not in adata.obs
-        pt.pl.guide.heatmap(adata, key_to_save_order=key)
-        assert key in adata.obs
-
     def test_grna_threshold_assignment(self):
         adata = self.make_test_adata()
 
         threshold = 5
         output_layer = "assigned_guides"
-
         assert output_layer not in adata.layers
-        pt.pp.guide_assignment.assign_by_threshold(adata, assignment_threshold=threshold, output_layer=output_layer)
+
+        ga = pt.pp.GuideAssignment()
+        ga.assign_by_threshold(adata, assignment_threshold=threshold, output_layer=output_layer)
         assert output_layer in adata.layers
-        print(adata.X < threshold, adata.layers[output_layer] == 1)
         assert np.all(np.logical_xor(adata.X < threshold, adata.layers[output_layer].A == 1))
 
     def test_grna_max_assignment(self):
@@ -52,9 +44,10 @@ class TestGuideRnaProcessingAndPlotting:
 
         threshold = 5
         output_key = "assigned_guide"
-
         assert output_key not in adata.obs
-        pt.pp.guide_assignment.assign_to_max_guide(adata, assignment_threshold=threshold, output_key=output_key)
+
+        ga = pt.pp.GuideAssignment()
+        ga.assign_to_max_guide(adata, assignment_threshold=threshold, output_key=output_key)
         assert output_key in adata.obs
         assert tuple(adata.obs[output_key]) == tuple(
             [f"guide_{i}" if i > 0 else "NT" for i in [1, 4, 6, 0, 6, 1, 7, 1]]

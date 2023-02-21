@@ -79,8 +79,7 @@ pt.pl.cool_fancy_plot()
 
 Simple functions for:
 
--   Heatmap plotting of guide RNAs.
--   Assigning guides based on thresholds.
+Assigning guides based on thresholds. Each cell is assigned to the most expressed gRNA if it has at least the specified number of counts.
 
 ```{eval-rst}
 .. currentmodule:: pertpy
@@ -91,8 +90,7 @@ Simple functions for:
     :toctree: preprocessing
     :nosignatures:
 
-    plot.guide
-    preprocessing.guide_assignment
+    preprocessing.GuideAssignment
 ```
 
 ## Tools
@@ -257,6 +255,16 @@ adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
 ```
 
 ## Plots
+
+### Preprocessing
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.guide
+
+```
 
 ### Augurpy
 
