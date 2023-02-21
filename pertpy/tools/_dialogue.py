@@ -25,9 +25,9 @@ class Dialogue:
         """
         pseudobulk = {"Genes": adata.var_names.values}
 
-        for i in adata.obs.loc[:, groupby].cat.categories:
-            temp = adata.obs.loc[:, groupby] == i
-            pseudobulk[i] = adata[temp].X.median(axis=0).A1
+        for category in adata.obs.loc[:, groupby].cat.categories:
+            temp = adata.obs.loc[:, groupby] == category
+            pseudobulk[category] = adata[temp].X.median(axis=0).A1
 
         pseudobulk = pd.DataFrame(pseudobulk).set_index("Genes")
 
@@ -48,9 +48,9 @@ class Dialogue:
         """
         aggr = {}
 
-        for i in adata.obs.loc[:, groupby].cat.categories:
-            temp = adata.obs.loc[:, groupby] == i
-            aggr[i] = adata[temp].obsm["X_pca"][:, :n_components].mean(axis=0)
+        for category in adata.obs.loc[:, groupby].cat.categories:
+            temp = adata.obs.loc[:, groupby] == category
+            aggr[category] = adata[temp].obsm["X_pca"][:, :n_components].mean(axis=0)
 
         aggr = pd.DataFrame(aggr)
 
