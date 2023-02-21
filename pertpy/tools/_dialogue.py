@@ -97,8 +97,7 @@ class Dialogue:
             return adata
 
         ad_mcp = {
-            ct: __concat_obs(ct_subs[ct], pd.DataFrame(mcp_scores[ct]))
-            for ct in adata.obs[celltype_key].cat.categories
+            ct: __concat_obs(ct_subs[ct], pd.DataFrame(mcp_scores[ct])) for ct in adata.obs[celltype_key].cat.categories
         }
 
         adata = ad.concat(ad_mcp.values())
