@@ -24,7 +24,7 @@ class Mixscape:
     def __init__(self):
         pass
 
-    def pert_sign(
+    def perturbation_signature(
         self,
         adata: AnnData,
         pert_key: str,

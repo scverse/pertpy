@@ -142,8 +142,8 @@ import pertpy as pt
 
 mdata = pt.dt.papalexi_2021()
 ms = pt.tl.Mixscape()
-ms.pert_sign(mdata['rna'], 'perturbation', 'NT', 'replicate')
-ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+ms.mixscape(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
 ms.lda(adata=mdata['rna'], labels='gene_target', layer='X_pert')
 pt.pl.ms.lda(adata=mdata['rna'])
 ```
