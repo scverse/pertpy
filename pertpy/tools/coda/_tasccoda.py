@@ -17,7 +17,7 @@ from mudata import MuData
 from numpyro.infer import Predictive
 from rich import print
 
-from pertpy.tools._base_coda import (
+from pertpy.tools.coda._base_coda import (
     CompositionalModel2,
     collapse_singularities,
     collapse_singularities_2,
