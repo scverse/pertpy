@@ -7,20 +7,20 @@ import scanpy as sc
 from sklearn.ensemble import RandomForestRegressor
 
 import pertpy as pt
-from pertpy.tools._augurpy import Params
+from pertpy.tools._augur import Params
 
 CWD = Path(__file__).parent.resolve()
 
 
 class TestAugur:
-    ag_rfc = pt.tl.Augurpy("random_forest_classifier", Params(random_state=42))
-    ag_lrc = pt.tl.Augurpy("logistic_regression_classifier", Params(random_state=42))
-    ag_rfr = pt.tl.Augurpy("random_forest_regressor", Params(random_state=42))
+    ag_rfc = pt.tl.Augur("random_forest_classifier", Params(random_state=42))
+    ag_lrc = pt.tl.Augur("logistic_regression_classifier", Params(random_state=42))
+    ag_rfr = pt.tl.Augur("random_forest_regressor", Params(random_state=42))
 
     def test_load(self):
         """Test if load function creates anndata objects."""
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
-        ag = pt.tl.Augurpy(estimator="random_forest_classifier")
+        ag = pt.tl.Augur(estimator="random_forest_classifier")
 
         loaded_adata = ag.load(sc_sim_adata)
         loaded_df = ag.load(sc_sim_adata.to_df(), meta=sc_sim_adata.obs, cell_type_col="cell_type", label_col="label")
@@ -175,7 +175,7 @@ class TestAugur:
         """Test differential prioritization run."""
         sc_sim_adata = sc.read_h5ad(f"{CWD}/sc_sim.h5ad")
 
-        ag = pt.tl.Augurpy("random_forest_classifier", Params(random_state=42))
+        ag = pt.tl.Augur("random_forest_classifier", Params(random_state=42))
         ag.load(sc_sim_adata)
 
         adata, results1 = ag.predict(sc_sim_adata, n_threads=4, n_subsamples=3, random_state=2)

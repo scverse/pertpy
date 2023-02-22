@@ -94,7 +94,7 @@ Example implementation:
 import pertpy as pt
 
 adata = pt.dt.sc_sim_augur()
-ag = pt.tl.Augurpy(estimator="random_forest_classifier")
+ag = pt.tl.Augur(estimator="random_forest_classifier")
 adata = ag.load(adata)
 adata, results = ag.predict(adata)
 
