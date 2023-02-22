@@ -204,7 +204,7 @@ class Milo:
         sample_dummies = csr_matrix(sample_dummies.values)
         nhood_count_mat = nhoods.T.dot(sample_dummies)
         sample_obs = pd.DataFrame(index=all_samples)
-        sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs)
+        sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs, dtype=np.float32)
         sample_adata.uns["sample_col"] = sample_col
         # Save nhood index info
         sample_adata.var["index_cell"] = adata.obs_names[adata.obs["nhood_ixs_refined"] == 1]
