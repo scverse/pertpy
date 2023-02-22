@@ -33,3 +33,6 @@ jobs:
 
             - name: Check twine package
               run: twine check dist/*
+
+            - name: Import package
+              run: python -c "import pertpy as pt"
