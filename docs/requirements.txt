@@ -14,3 +14,4 @@ myst-parser
 sphinx-remove-toctrees
 sphinx-design
 sphinxext-opengraph
+ete3
