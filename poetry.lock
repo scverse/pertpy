@@ -867,17 +867,6 @@ conda = ["pyyaml"]
 pipenv = ["pipenv"]
 
 [[package]]
-name = "ete3"
-version = "3.1.2"
-description = "A Python Environment for (phylogenetic) Tree Exploration"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "ete3-3.1.2.tar.gz", hash = "sha256:4fc987b8c529889d6608fab1101f1455cb5cbd42722788de6aea9c7d0a8e59e9"},
-]
-
-[[package]]
 name = "exceptiongroup"
 version = "1.1.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -5152,4 +5141,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<3.11"
-content-hash = "945e2677a59db9ae54bd8a49b3d925eda2a34646180a71578f1228db042a07d6"
+content-hash = "9cee2083fc0e8a7ad830249e9bf7fb771067b24d8cce77d680bc68ca991b0a41"
