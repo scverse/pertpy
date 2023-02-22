@@ -113,7 +113,7 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
     :toctree: tools
     :nosignatures:
 
-    tools.Augurpy
+    tools.Augur
 ```
 
 ### Mixscape
@@ -165,7 +165,7 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 .. autosummary::
     :toctree: tools
 
-    tools.Milopy
+    tools.Milo
 ```
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
