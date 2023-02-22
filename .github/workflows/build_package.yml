@@ -38,4 +38,4 @@ jobs:
               run: pip install .
 
             - name: Import package
-              run: poetry run python -c "import pertpy as pt"
+              run: python -c "import pertpy as pt"
