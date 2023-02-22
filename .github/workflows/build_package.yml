@@ -34,5 +34,8 @@ jobs:
             - name: Check twine package
               run: twine check dist/*
 
+            - name: Install pertpy
+              run: pip install .
+
             - name: Import package
               run: poetry run python -c "import pertpy as pt"
