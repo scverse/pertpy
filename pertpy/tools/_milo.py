@@ -22,7 +22,7 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import euclidean_distances
 
 
-class Milopy:
+class Milo:
     """Python implementation of Milo."""
 
     def __init__(self):
