@@ -35,4 +35,4 @@ jobs:
               run: twine check dist/*
 
             - name: Import package
-              run: python -c "import pertpy as pt"
+              run: poetry run python -c "import pertpy as pt"
