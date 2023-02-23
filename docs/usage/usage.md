@@ -219,11 +219,19 @@ sc.tl.umap(adata)
 dl = pt.tl.Dialogue()
 adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     adata,
-    groupby='clinical.status',
+    sample_id='clinical.status',
     celltype_key='cell.subtypes',
+    n_counts_key="nCount_RNA",
     mimic_dialogue=True
 )
-dl.multilevel_modeling()
+all_results = dl.multilevel_modeling(ct_subs=ct_subs,
+                                     mcp_scores=mcps,
+                                     n_counts_key="nCount_RNA",
+                                     n_mcps=3,
+                                     sample_id="clinical.status",
+                                     confounder="gender",
+                                     formula="y ~ x + nCount_RNA",
+                                     )
 ```
 
 ### Representation

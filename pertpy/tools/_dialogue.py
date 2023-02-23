@@ -11,7 +11,9 @@ import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
 from rich import print
-from rich.progress import Progress
+from rich.console import Group
+from rich.live import Live
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 from sklearn.linear_model import LinearRegression
 from sparsecca import multicca_permute, multicca_pmd
 
@@ -98,9 +100,10 @@ class Dialogue:
         Args:
             adata: The AnnData object to append mcp scores to.
             mcp_scores: The MCP scores dictionary.
+            celltype_key: Key of the cell type column in obs.
 
         Returns:
-            AnnData object with concatenated MCP scores in obs
+            AnnData object with concatenated MCP scores in obs.
         """
 
         def __concat_obs(adata: AnnData, mcp_df: pd.DataFrame) -> AnnData:
@@ -222,21 +225,18 @@ class Dialogue:
             confounder: Any model confounders.
 
         Returns:
-            DataFrame with z-scores, estimates, p-values, adjusted p-values and booleans marking whether a gene is up (True) or downregulated (False).
+            DataFrame with z-scores, estimates, p-values, adjusted p-values and booleans
+            marking whether a gene is up (True) or downregulated (False).
         """
         scores.columns = ["y"]
 
         hlm_result = pd.DataFrame(columns=["estimate", "p_val"])
 
-        with Progress() as progress:
-            task = progress.add_task("[red]Determining mixed effects...", total=len(tme.index))
-
-            for gene, expr_data in tme.loc[genes_in_mcp].iterrows():
-                tme_gene = pd.DataFrame(data={"x": expr_data})  # parse tmp_gene with column name x for formula
-                hlm_result.loc[gene] = self._formula_hlm(
-                    y=scores, x_labels=x_labels, x_tme=tme_gene, formula=formula, sample_obs=confounder
-                )
-                progress.update(task, advance=1)
+        for gene, expr_data in tme.loc[genes_in_mcp].iterrows():
+            tme_gene = pd.DataFrame(data={"x": expr_data})
+            hlm_result.loc[gene] = self._formula_hlm(
+                y=scores, x_labels=x_labels, x_tme=tme_gene, formula=formula, sample_obs=confounder
+            )
 
         hlm_result["z_score"] = self._get_cor_zscores(hlm_result["estimate"], hlm_result["p_val"])["z_score"]
 
@@ -265,17 +265,15 @@ class Dialogue:
             According to the values in a df column (default: zscore) the significant up and downregulated gene names
         """
         min_threshold = -abs(min_threshold)
-        zscores_neg = df.loc[:, index]  # values for downregulated genes
-        zscores_pos = pd.Series(data=[-score for score in zscores_neg], index=df.index)  # values for upregulated genes
-        top_genes = {}
+        zscores_neg = df.loc[:, index]
+        zscores_pos = pd.Series(data=[-score for score in zscores_neg], index=df.index)
 
+        top_genes = {}
         for pair in [(zscores_pos, ".up"), (zscores_neg, ".down")]:
             zscores = pair[0]
             suffix = pair[1]
             ordered = zscores.argsort()
-            threshold = min(
-                zscores[ordered[min(max_length, len(zscores) - 1)]], min_threshold
-            )  # compare calculated threshold with input min_threshold
+            threshold = min(zscores[ordered[min(max_length, len(zscores) - 1)]], min_threshold)
             # extract all gene names where value in column is <= threshold -> get significant genes
             genes = zscores.index
             top_genes[mcp_name + suffix] = sorted([genes[i] for i in range(len(zscores)) if zscores[i] <= threshold])
@@ -285,10 +283,10 @@ class Dialogue:
     def _apply_HLM_per_MCP_for_one_pair(  # noqa: N802
         self,
         mcp_name: str,
-        scores_df: pd.DataFrame,  # TODO this type annotation is wrong -> dicts n stuff -> fix it
+        scores_df: dict,
         ct_data: AnnData,
         tme: pd.DataFrame,
-        sig: pd.DataFrame,
+        sig: dict,
         n_counts: str,
         formula: str,
         confounder: str,
@@ -308,8 +306,9 @@ class Dialogue:
         Returns:
             The HLM results together with significant up/downregulated genes per MCP
         """
+
         # apply pairwise for cell type the HLM formula
-        # TODO: Ensure that the var names never change throughout all of DIALOG -> store them and use them here
+        # TODO: Ensure that the var names never change throughout all of DIALOGUE -> store them and use them here
         HLM_result = self._mixed_effects(
             scores=scores_df[[mcp_name]],
             x_labels=ct_data.obs[[n_counts, confounder]],
@@ -323,9 +322,7 @@ class Dialogue:
         HLM_result["up"] = [gene in sig[mcp_name]["up"] for gene in HLM_result.index]
 
         # extract significant up and downregulated genes
-        sig_genes = self._get_top_cor(
-            df=HLM_result, mcp_name=mcp_name, max_length=100, min_threshold=1
-        )  # corresponds to results of sig1f
+        sig_genes = self._get_top_cor(df=HLM_result, mcp_name=mcp_name, max_length=100, min_threshold=1)
 
         # append dataframe with new column indicating which mcp was used
         HLM_result["program"] = mcp_name
@@ -448,10 +445,10 @@ class Dialogue:
 
             cca_sig_unformatted = _get_top_elements(  # 3 up, 3 dn, for each mcp
                 pd.DataFrame(C1.T, index=top_cor_genes), max_length=max_genes, min_threshold=0.05
-            )  # get.top.cor
+            )
 
             # TODO: probably format the up and down within get_top_elements
-            cca_sig = defaultdict(dict)
+            cca_sig: dict[str, Any] = defaultdict(dict)
             for i in range(0, int(len(cca_sig_unformatted) / 2)):
                 cca_sig[f"MCP{i + 1}"]["up"] = cca_sig_unformatted[i * 2]
                 cca_sig[f"MCP{i + 1}"]["down"] = cca_sig_unformatted[i * 2 + 1]
@@ -464,7 +461,7 @@ class Dialogue:
     def load(
         self,
         adata: AnnData,
-        groupby: str,
+        sample_id: str,
         celltype_key: str,
         ct_order: list[str],
         agg_pca: bool = True,
@@ -475,8 +472,8 @@ class Dialogue:
         Mimics DIALOGUE's `make.cell.types` and the pre-processing that occurs in DIALOGUE1.
 
         Args:
-            adata: AnnData object to loa
-            groupby: The key to aggregate the pseudobulks for.
+            adata: AnnData object generate celltype objects for
+            sample_id: The key to aggregate the pseudobulks for.
             celltype_key: The key of the cell type column.
             ct_order: The order of cell types
             agg_pca: Whether to aggregate pseudobulks with PCA or not (default: True).
@@ -487,7 +484,7 @@ class Dialogue:
         """
         ct_subs = {ct: adata[adata.obs[celltype_key] == ct].copy() for ct in ct_order}
         fn = self._pseudobulk_pca if agg_pca else self._get_pseudobulks
-        ct_aggr = {ct: fn(ad, groupby) for ct, ad in ct_subs.items()}  # type: ignore
+        ct_aggr = {ct: fn(ad, sample_id) for ct, ad in ct_subs.items()}  # type: ignore
 
         # TODO: implement check (as in https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L114-L119)
         # that there are at least 5 share samples here
@@ -502,7 +499,7 @@ class Dialogue:
     def calculate_multifactor_PMD(  # noqa: N802
         self,
         adata: AnnData,
-        groupby: str,
+        sample_id: str,
         celltype_key: str,
         n_counts_key: str,
         n_mcps: int = 3,
@@ -517,7 +514,7 @@ class Dialogue:
 
         Args:
             adata: AnnData object to calculate PMD for.
-            groupby: Key to use for pseudobulk determination.
+            sample_id: Key to use for pseudobulk determination.
             celltype_key: Cell type column key.
             n_counts_key: Key of the number of counts in obs. Also commonly the size factor.
             n_mcps: Number of PMD components which corresponds to the number of determined MCPs.
@@ -538,7 +535,7 @@ class Dialogue:
             ct_order = cell_types = adata.obs[celltype_key].astype("category").cat.categories
 
         mcca_in, ct_subs = self.load(
-            adata, groupby, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=mimic_dialogue
+            adata, sample_id, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=mimic_dialogue
         )
 
         n_samples = mcca_in[0].shape[1]
@@ -574,7 +571,7 @@ class Dialogue:
         mcp_scores: dict,
         n_counts_key: str,
         n_mcps: int,
-        sample_colname: str,
+        sample_id: str,
         confounder: str,
         formula: str = None,
     ) -> dict[str, dict[Any, dict[str, tuple[pd.DataFrame, dict[str, Any]]]]]:
@@ -585,7 +582,7 @@ class Dialogue:
             mcp_scores: The determined MCP scores from the PMD step.
             n_counts_key: The key of the number of counts.
             n_mcps: The number of MCPs.
-            sample_colname: The sample column number.  # TODO: harmonize with the groupby from DIALOGUE 1 -> should it be called sample_ID?
+            sample_id: The sample column number.
             confounder: Any modeling confounders.
             formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.
 
@@ -611,85 +608,101 @@ class Dialogue:
 
         # run HLM for each pair
         all_results = {}
-        for pair in pairs:
-            cell_type_1 = pair[0]
-            cell_type_2 = pair[1]
-            print(
-                f'[bold green]#************DIALOGUE Step II (multilevel modeling): "{cell_type_1} vs. {cell_type_2}" ************#'
-            )
+        mlm_progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+        )
+        mixed_model_progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            transient=True,
+        )
+        group = Group(mlm_progress, mixed_model_progress)
+        live = Live(group)
+        with live:
+            mlm_task = mlm_progress.add_task("[bold blue]Running multilevel modeling", total=len(pairs))
 
-            ct_data_1 = ct_subs[cell_type_1]
-            ct_data_2 = ct_subs[cell_type_2]
+            for pair in pairs:
+                cell_type_1 = pair[0]
+                cell_type_2 = pair[1]
+                mlm_progress.update(mlm_task, description=f"[bold blue]{cell_type_1} vs {cell_type_2}")
 
-            # equivalent to dialogue2.pair
-            mcps = []
-            for mcp, cell_type_list in mcp_cell_types.items():
-                if cell_type_1 in cell_type_list and cell_type_2 in cell_type_list:
-                    mcps.append(mcp)
+                ct_data_1 = ct_subs[cell_type_1]
+                ct_data_2 = ct_subs[cell_type_2]
 
-            if len(mcps) == 0:
-                print(f"[bold red]No shared MCPs between {cell_type_1} and {cell_type_2}.")
-                continue
+                # equivalent to dialogue2.pair
+                mcps = []
+                for mcp, cell_type_list in mcp_cell_types.items():
+                    if cell_type_1 in cell_type_list and cell_type_2 in cell_type_list:
+                        mcps.append(mcp)
 
-            print(f"[bold blue]{len(mcps)} MCPs identified for these cell types.")
+                if len(mcps) == 0:
+                    print(f"[bold red]No shared MCPs between {cell_type_1} and {cell_type_2}.")
+                    continue
 
-            cca_sig = self._calculate_cca_sig(ct_subs, mcp_scores, n_counts_key=n_counts_key)
+                print(f"[bold blue]{len(mcps)} MCPs identified for {cell_type_1} and {cell_type_2}.")
 
-            sig_1 = cca_sig[cell_type_1]  # TODO: only need the up and down genes from this here per MCP
-            sig_2 = cca_sig[cell_type_2]
-            # only use samples which have a minimum number of cells (default 2) in both cell types
-            sample_ids = list(
-                set(self._get_abundant_from_series(ct_data_1.obs[sample_colname]))
-                & set(self._get_abundant_from_series(ct_data_2.obs[sample_colname]))
-            )
+                cca_sig = self._calculate_cca_sig(ct_subs, mcp_scores, n_counts_key=n_counts_key)
 
-            # subset cell types to valid samples (set.cell.types)
-            ct_data_1 = ct_data_1[ct_data_1.obs[sample_colname].isin(sample_ids)]
-            ct_data_2 = ct_data_2[ct_data_2.obs[sample_colname].isin(sample_ids)]
-
-            # TODO: shouldn't need this aligning step for cells. corresponds to @scores / y
-            #     scores_1 = cca_scores[cell_type_1].loc[ct_data_1.obs.index]
-            #     scores_2 = cca_scores[cell_type_2].loc[ct_data_2.obs.index]
-
-            # indexes into the average sample expression per gene with the sample id per cell. corresponds to @tme / x
-            tme_1 = self._get_pseudobulks(ct_data_2, sample_colname, strategy="mean").loc[
-                :, ct_data_1.obs[sample_colname]
-            ]  # unclear why we do this
-            tme_1.columns = ct_data_1.obs.index
-            tme_2 = self._get_pseudobulks(ct_data_1, sample_colname, strategy="mean").loc[
-                :, ct_data_2.obs[sample_colname]
-            ]
-            tme_2.columns = ct_data_2.obs.index
-
-            # write output:
-            # merged_result dict contains
-            # - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
-            # - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps  # TODO?
-            merged_results = {}
-
-            for mcp in mcps:
-                result = {}
-                result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
-                    mcp_name=mcp,
-                    scores_df=mcp_scores_df[cell_type_2],
-                    ct_data=ct_data_2,
-                    tme=tme_2,
-                    sig=sig_1,
-                    n_counts=n_counts_key,
-                    formula=formula,
-                    confounder=confounder,
+                sig_1 = cca_sig[cell_type_1]  # TODO: only need the up and down genes from this here per MCP
+                sig_2 = cca_sig[cell_type_2]
+                # only use samples which have a minimum number of cells (default 2) in both cell types
+                sample_ids = list(
+                    set(self._get_abundant_from_series(ct_data_1.obs[sample_id]))
+                    & set(self._get_abundant_from_series(ct_data_2.obs[sample_id]))
                 )
-                result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
-                    mcp_name=mcp,
-                    scores_df=mcp_scores_df[cell_type_1],
-                    ct_data=ct_data_1,
-                    tme=tme_1,
-                    sig=sig_2,
-                    n_counts=n_counts_key,
-                    formula=formula,
-                    confounder=confounder,
-                )
-                merged_results[mcp] = result
+
+                # subset cell types to valid samples (set.cell.types)
+                ct_data_1 = ct_data_1[ct_data_1.obs[sample_id].isin(sample_ids)]
+                ct_data_2 = ct_data_2[ct_data_2.obs[sample_id].isin(sample_ids)]
+
+                # TODO: shouldn't need this aligning step for cells. corresponds to @scores / y
+                #     scores_1 = cca_scores[cell_type_1].loc[ct_data_1.obs.index]
+                #     scores_2 = cca_scores[cell_type_2].loc[ct_data_2.obs.index]
+
+                # indexes into the average sample expression per gene with the sample id per cell. corresponds to @tme / x
+                tme_1 = self._get_pseudobulks(ct_data_2, sample_id, strategy="mean").loc[
+                    :, ct_data_1.obs[sample_id]
+                ]  # unclear why we do this
+                tme_1.columns = ct_data_1.obs.index
+                tme_2 = self._get_pseudobulks(ct_data_1, sample_id, strategy="mean").loc[:, ct_data_2.obs[sample_id]]
+                tme_2.columns = ct_data_2.obs.index
+
+                merged_results = {}
+
+                mm_task = mixed_model_progress.add_task("[bold blue]Determining mixed effects", total=len(mcps))
+                for mcp in mcps:
+                    mixed_model_progress.update(mm_task, description=f"[bold blue]Determining mixed effects for {mcp}")
+                    result = {}
+                    result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
+                        mcp_name=mcp,
+                        scores_df=mcp_scores_df[cell_type_2],
+                        ct_data=ct_data_2,
+                        tme=tme_2,
+                        sig=sig_1,
+                        n_counts=n_counts_key,
+                        formula=formula,
+                        confounder=confounder,
+                    )
+                    result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
+                        mcp_name=mcp,
+                        scores_df=mcp_scores_df[cell_type_1],
+                        ct_data=ct_data_1,
+                        tme=tme_1,
+                        sig=sig_2,
+                        n_counts=n_counts_key,
+                        formula=formula,
+                        confounder=confounder,
+                    )
+                    merged_results[mcp] = result
+
+                    mixed_model_progress.update(mm_task, advance=1)
+                mixed_model_progress.update(mm_task, visible=False)
+                mlm_progress.update(mlm_task, advance=1)
 
             # merge results - TODO, but probably don't need
             #     merged_results['HLM_result_1'] = pd.concat([merged_result[mcp]['HLM_result_1'] for mcp in mcps])

@@ -11,4 +11,4 @@ try:
     from pertpy.tools._sccoda import Sccoda
     from pertpy.tools._tasccoda import Tasccoda
 except ImportError:
-    print("[bold yellow]To use sccoda or tasccoda please install ete3 with `pip install ete3`")
+    print("[bold yellow]To use sccoda or tasccoda please install ete3 with [green]pip install ete3")
