@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import Any, Literal
+from typing import Any, Dict, Literal
 
 import anndata as ad
 import numpy as np
@@ -27,6 +27,8 @@ class Dialogue:
         """Return cell-averaged data by groupby.
 
         Copied from `https://github.com/schillerlab/sc-toolbox/blob/397e80dc5e8fb8017b75f6c3fa634a1e1213d484/sc_toolbox/tools/__init__.py#L458`
+
+        # TODO: Replace with decoupler's implementation
 
         Args:
             groupby: The key to groupby for pseudobulks
@@ -82,7 +84,6 @@ class Dialogue:
 
         Returns:
             The scaled count matrix.
-
         """
         # DIALOGUE doesn't scale the data before passing to multicca, unlike what is recommended by sparsecca.
         # However, performing this scaling _does_ increase overall correlation of the end result
@@ -120,7 +121,7 @@ class Dialogue:
 
         return adata
 
-    def _get_abundant_from_series(self, series: pd.Series, min_count: int = 2) -> list[str]:
+    def _get_abundant_elements_from_series(self, series: pd.Series, min_count: int = 2) -> list[str]:
         """Returns a list from `elements` that occur more than `min_count` times.
 
         Args:
@@ -153,11 +154,11 @@ class Dialogue:
         pos_est = pd.DataFrame(
             [p_val.iloc[i] / 2 if estimate.iloc[i] > 0 else 1 - (p_val.iloc[i] / 2) for i in range(len(estimate))],
             columns=["pos_est"],
-        )  # significiant in pos_est will be positive
+        )  # significant in pos_est will be positive
         neg_est = pd.DataFrame(
             [p_val.iloc[i] / 2 if -estimate.iloc[i] > 0 else 1 - (p_val.iloc[i] / 2) for i in range(len(estimate))],
             columns=["neg_est"],
-        )  # significiant in neg_est will be negative
+        )  # significant in neg_est will be negative
         onesided_p_vals = pd.concat([pos_est, neg_est], axis=1)
 
         # calculate zscores
@@ -291,7 +292,9 @@ class Dialogue:
         formula: str,
         confounder: str,
     ) -> tuple[pd.DataFrame, dict[str, Any]]:
-        """Applies the hierarchical modeling for a single MCP
+        """Applies hierarchical modeling for a single MCP.
+
+        TODO: separate the sig calculation so that this whole function is more tractable
 
         Args:
             mcp_name: The name of the MCP to model.
@@ -306,15 +309,11 @@ class Dialogue:
         Returns:
             The HLM results together with significant up/downregulated genes per MCP
         """
-
-        # apply pairwise for cell type the HLM formula
-        # TODO: Ensure that the var names never change throughout all of DIALOGUE -> store them and use them here
         HLM_result = self._mixed_effects(
             scores=scores_df[[mcp_name]],
             x_labels=ct_data.obs[[n_counts, confounder]],
             tme=tme,
-            genes_in_mcp=list(sig[mcp_name]["up"])
-            + list(sig[mcp_name]["down"]),  # TODO: separate so this whole function is more tractable
+            genes_in_mcp=list(sig[mcp_name]["up"]) + list(sig[mcp_name]["down"]),
             formula=formula,
             confounder=confounder,
         )
@@ -329,8 +328,8 @@ class Dialogue:
 
         return HLM_result, sig_genes
 
-    def _get_residuals(self, X, y) -> np.ndarray:
-        """Mimics DIALOGUE.get.residuals. Wouldn't recommend using otherwise."""
+    def _get_residuals(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """Mimics DIALOGUE.get.residuals."""
         resid = []
         for y_sub in y:
             lr = LinearRegression().fit(X.reshape(-1, 1), y_sub)
@@ -345,19 +344,10 @@ class Dialogue:
         mcp_scores: dict,
         n_counts_key: str,
         max_genes: int = 200,
-    ):
-        """Determine the up and down genes per MCP.
-
-        Args:
-            ct_subs:
-            mcp_scores:
-            max_genes:
-
-        Returns:
-
-        """
+    ) -> dict[Any, dict[str, Any]]:
+        """Determine the up and down genes per MCP."""
         # TODO: something is slightly slow here
-        cca_sig_results = {}
+        cca_sig_results: dict[Any, dict[str, Any]] = {}
         for ct in ct_subs.keys():
             ct_adata = ct_subs[ct]
             conf_m = ct_adata.obs[n_counts_key].values  # defining this for the millionth time
@@ -378,9 +368,7 @@ class Dialogue:
                 ct_adata.X.toarray().T, mcp_scores[ct].T
             )  # TODO: there are some nans here, also in R
 
-            def _get_top_elements(
-                m: pd.DataFrame, max_length: int, min_threshold: float
-            ):  # combined both top cor and top elements because one seemed like just a wrapper for another
+            def _get_top_elements(m: pd.DataFrame, max_length: int, min_threshold: float):
                 """
 
                 TODO: needs check for correctness and variable renaming
@@ -399,7 +387,7 @@ class Dialogue:
                     [m_pos, m_neg], axis=1
                 )  # check if the colnames has any significance, they are just split .up and .down in dialogue
                 top_l = []
-                for i in range(df.shape[1]):  # names are not very descriptive -> improve
+                for i in range(df.shape[1]):  # TODO: names are not very descriptive -> improve
                     mi = df.iloc[:, i].dropna()
                     ci = mi.iloc[np.argsort(mi)[min(max_length, len(mi)) - 1]]
                     min_threshold = min_threshold if min_threshold is None else min(ci, min_threshold)
@@ -408,11 +396,11 @@ class Dialogue:
                 return top_l  # returns indices as different appended lists
 
             # get genes that are most positively and negatively correlated across all MCPS
-            top_ele = _get_top_elements(  # TODO: consider rename for clarify
+            top_ele = _get_top_elements(  # TODO: consider renaming for clarify
                 pd.DataFrame(R_cca_gene_cor1_x, index=ct_adata.var.index), max_length=max_genes, min_threshold=0.05
             )
-            top_cor_genes = [x for lst in top_ele for x in lst]  # unlist
-            top_cor_genes = sorted(set(top_cor_genes))  # aka the mysterious g1 in R
+            top_cor_genes_flattened = [x for lst in top_ele for x in lst]
+            top_cor_genes_flattened = sorted(set(top_cor_genes_flattened))  # aka the mysterious g1 in R
 
             # MAJOR TODO: I've only used normal correlation instead of partial correlation as we wait on the implementation
             from scipy.stats import spearmanr
@@ -440,11 +428,11 @@ class Dialogue:
 
                 return np.array(correlations), np.array(pvals)  # pvals_adjusted
 
-            C1, P1 = _pcor_mat(ct_adata[:, top_cor_genes].X.toarray().T, mcp_scores[ct].T, conf_m)
+            C1, P1 = _pcor_mat(ct_adata[:, top_cor_genes_flattened].X.toarray().T, mcp_scores[ct].T, conf_m)
             C1[P1 > (0.05 / ct_adata.shape[1])] = 0  # why?
 
             cca_sig_unformatted = _get_top_elements(  # 3 up, 3 dn, for each mcp
-                pd.DataFrame(C1.T, index=top_cor_genes), max_length=max_genes, min_threshold=0.05
+                pd.DataFrame(C1.T, index=top_cor_genes_flattened), max_length=max_genes, min_threshold=0.05
             )
 
             # TODO: probably format the up and down within get_top_elements
@@ -652,8 +640,8 @@ class Dialogue:
                 sig_2 = cca_sig[cell_type_2]
                 # only use samples which have a minimum number of cells (default 2) in both cell types
                 sample_ids = list(
-                    set(self._get_abundant_from_series(ct_data_1.obs[sample_id]))
-                    & set(self._get_abundant_from_series(ct_data_2.obs[sample_id]))
+                    set(self._get_abundant_elements_from_series(ct_data_1.obs[sample_id]))
+                    & set(self._get_abundant_elements_from_series(ct_data_2.obs[sample_id]))
                 )
 
                 # subset cell types to valid samples (set.cell.types)
