@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import Any, Dict, Literal
+from typing import Any, Dict, Literal, Tuple
 
 import anndata as ad
 import numpy as np
@@ -10,6 +10,7 @@ import pandas as pd
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
+from pandas import DataFrame
 from rich import print
 from rich.console import Group
 from rich.live import Live
@@ -562,6 +563,7 @@ class Dialogue:
         sample_id: str,
         confounder: str,
         formula: str = None,
+        up_down_only: bool = False,
     ) -> dict[str, dict[Any, dict[str, tuple[pd.DataFrame, dict[str, Any]]]]]:
         """Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.
 
@@ -573,6 +575,7 @@ class Dialogue:
             sample_id: The sample column number.
             confounder: Any modeling confounders.
             formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.
+            up_down_only: Whether to only determine the up and down genes per MCP. Defaults to False.
 
         Returns:
             A Pandas DataFrame containing:
@@ -614,6 +617,8 @@ class Dialogue:
         with live:
             mlm_task = mlm_progress.add_task("[bold blue]Running multilevel modeling", total=len(pairs))
 
+            if up_down_only:
+                sig_results = {}
             for pair in pairs:
                 cell_type_1 = pair[0]
                 cell_type_2 = pair[1]
@@ -638,57 +643,64 @@ class Dialogue:
 
                 sig_1 = cca_sig[cell_type_1]  # TODO: only need the up and down genes from this here per MCP
                 sig_2 = cca_sig[cell_type_2]
-                # only use samples which have a minimum number of cells (default 2) in both cell types
-                sample_ids = list(
-                    set(self._get_abundant_elements_from_series(ct_data_1.obs[sample_id]))
-                    & set(self._get_abundant_elements_from_series(ct_data_2.obs[sample_id]))
-                )
 
-                # subset cell types to valid samples (set.cell.types)
-                ct_data_1 = ct_data_1[ct_data_1.obs[sample_id].isin(sample_ids)]
-                ct_data_2 = ct_data_2[ct_data_2.obs[sample_id].isin(sample_ids)]
-
-                # TODO: shouldn't need this aligning step for cells. corresponds to @scores / y
-                #     scores_1 = cca_scores[cell_type_1].loc[ct_data_1.obs.index]
-                #     scores_2 = cca_scores[cell_type_2].loc[ct_data_2.obs.index]
-
-                # indexes into the average sample expression per gene with the sample id per cell. corresponds to @tme / x
-                tme_1 = self._get_pseudobulks(ct_data_2, sample_id, strategy="mean").loc[
-                    :, ct_data_1.obs[sample_id]
-                ]  # unclear why we do this
-                tme_1.columns = ct_data_1.obs.index
-                tme_2 = self._get_pseudobulks(ct_data_1, sample_id, strategy="mean").loc[:, ct_data_2.obs[sample_id]]
-                tme_2.columns = ct_data_2.obs.index
-
-                merged_results = {}
-
-                mm_task = mixed_model_progress.add_task("[bold blue]Determining mixed effects", total=len(mcps))
-                for mcp in mcps:
-                    mixed_model_progress.update(mm_task, description=f"[bold blue]Determining mixed effects for {mcp}")
-                    result = {}
-                    result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
-                        mcp_name=mcp,
-                        scores_df=mcp_scores_df[cell_type_2],
-                        ct_data=ct_data_2,
-                        tme=tme_2,
-                        sig=sig_1,
-                        n_counts=n_counts_key,
-                        formula=formula,
-                        confounder=confounder,
+                if up_down_only:
+                    sig_results[f"{cell_type_1}_vs_{cell_type_2}"] = {cell_type_1: sig_1, cell_type_2: sig_2}
+                else:
+                    # only use samples which have a minimum number of cells (default 2) in both cell types
+                    sample_ids = list(
+                        set(self._get_abundant_elements_from_series(ct_data_1.obs[sample_id]))
+                        & set(self._get_abundant_elements_from_series(ct_data_2.obs[sample_id]))
                     )
-                    result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
-                        mcp_name=mcp,
-                        scores_df=mcp_scores_df[cell_type_1],
-                        ct_data=ct_data_1,
-                        tme=tme_1,
-                        sig=sig_2,
-                        n_counts=n_counts_key,
-                        formula=formula,
-                        confounder=confounder,
-                    )
-                    merged_results[mcp] = result
 
-                    mixed_model_progress.update(mm_task, advance=1)
+                    # subset cell types to valid samples (set.cell.types)
+                    ct_data_1 = ct_data_1[ct_data_1.obs[sample_id].isin(sample_ids)]
+                    ct_data_2 = ct_data_2[ct_data_2.obs[sample_id].isin(sample_ids)]
+
+                    # TODO: shouldn't need this aligning step for cells. corresponds to @scores / y
+                    #     scores_1 = cca_scores[cell_type_1].loc[ct_data_1.obs.index]
+                    #     scores_2 = cca_scores[cell_type_2].loc[ct_data_2.obs.index]
+
+                    # indexes into the average sample expression per gene with the sample id per cell. corresponds to @tme / x
+                    tme_1 = self._get_pseudobulks(ct_data_2, sample_id, strategy="mean").loc[
+                        :, ct_data_1.obs[sample_id]
+                    ]  # unclear why we do this
+                    tme_1.columns = ct_data_1.obs.index
+                    tme_2 = self._get_pseudobulks(ct_data_1, sample_id, strategy="mean").loc[
+                        :, ct_data_2.obs[sample_id]
+                    ]
+                    tme_2.columns = ct_data_2.obs.index
+
+                    merged_results: dict[str, dict[str, tuple[DataFrame, dict[str, Any]]]] = {}
+                    mm_task = mixed_model_progress.add_task("[bold blue]Determining mixed effects", total=len(mcps))
+                    for mcp in mcps:
+                        mixed_model_progress.update(
+                            mm_task, description=f"[bold blue]Determining mixed effects for {mcp}"
+                        )
+                        result = {}
+                        result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
+                            mcp_name=mcp,
+                            scores_df=mcp_scores_df[cell_type_2],
+                            ct_data=ct_data_2,
+                            tme=tme_2,
+                            sig=sig_1,
+                            n_counts=n_counts_key,
+                            formula=formula,
+                            confounder=confounder,
+                        )
+                        result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
+                            mcp_name=mcp,
+                            scores_df=mcp_scores_df[cell_type_1],
+                            ct_data=ct_data_1,
+                            tme=tme_1,
+                            sig=sig_2,
+                            n_counts=n_counts_key,
+                            formula=formula,
+                            confounder=confounder,
+                        )
+                        merged_results[mcp] = result
+
+                        mixed_model_progress.update(mm_task, advance=1)
                 mixed_model_progress.update(mm_task, visible=False)
                 mlm_progress.update(mlm_task, advance=1)
 
@@ -700,4 +712,7 @@ class Dialogue:
 
             all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
 
-        return all_results
+        if up_down_only:
+            return sig_results
+        else:
+            return all_results
