@@ -223,6 +223,7 @@ adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     celltype_key='cell.subtypes',
     mimic_dialogue=True
 )
+dl.multilevel_modeling()
 ```
 
 ### Representation

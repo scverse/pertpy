@@ -1,24 +1,34 @@
 from __future__ import annotations
 
-from typing import Any
+import itertools
+from collections import defaultdict
+from typing import Any, Literal
 
 import anndata as ad
 import numpy as np
 import pandas as pd
+import statsmodels.formula.api as smf
+import statsmodels.stats.multitest as ssm
 from anndata import AnnData
+from rich import print
+from rich.progress import Progress
+from sklearn.linear_model import LinearRegression
 from sparsecca import multicca_permute, multicca_pmd
 
 
 class Dialogue:
     """Python implementation of DIALOGUE"""
 
-    def _get_pseudobulks(self, adata: AnnData, groupby: str) -> pd.DataFrame:
+    def _get_pseudobulks(
+        self, adata: AnnData, groupby: str, strategy: Literal["median", "mean"] = "median"
+    ) -> pd.DataFrame:
         """Return cell-averaged data by groupby.
 
         Copied from `https://github.com/schillerlab/sc-toolbox/blob/397e80dc5e8fb8017b75f6c3fa634a1e1213d484/sc_toolbox/tools/__init__.py#L458`
 
         Args:
             groupby: The key to groupby for pseudobulks
+            strategy: The pseudobulking strategy. One of "median" or "mean"
 
         Returns:
             A Pandas DataFrame of pseudobulk counts
@@ -27,7 +37,10 @@ class Dialogue:
 
         for category in adata.obs.loc[:, groupby].cat.categories:
             temp = adata.obs.loc[:, groupby] == category
-            pseudobulk[category] = adata[temp].X.median(axis=0).A1
+            if strategy == "median":
+                pseudobulk[category] = adata[temp].X.median(axis=0).A1
+            elif strategy == "mean":
+                pseudobulk[category] = adata[temp].X.mean(axis=0).A1
 
         pseudobulk = pd.DataFrame(pseudobulk).set_index("Genes")
 
@@ -104,6 +117,350 @@ class Dialogue:
 
         return adata
 
+    def _get_abundant_from_series(self, series: pd.Series, min_count: int = 2) -> list[str]:
+        """Returns a list from `elements` that occur more than `min_count` times.
+
+        Args:
+            series: To extract the top most frequent elements included in the final output
+                      (i.e. the index in the computed frequency table) from
+            min_count: Threshold specifying the minimum element count for an element in the frequency table (inclusive)
+
+        Returns:
+            A list of elements that occur more than `min_count` times.
+        """
+        frequency = series.value_counts()
+        abundant_elements = frequency[frequency >= min_count].index.tolist()
+
+        return abundant_elements
+
+    def _get_cor_zscores(self, estimate: pd.Series, p_val: pd.Series) -> pd.DataFrame:
+        """Given estimate and p_values calculate zscore.
+
+        Args:
+            estimate: Hierarchical modeling estimate results.
+            p_val: p-values of the Hierarchical modeling.
+
+        Returns:
+            A DataFrame containing the zscores indexed by the estimates.
+        """
+        p_val.replace(0, min([p for p in p_val if p is not None and p > 0]))
+
+        # check for all (negative) estimate values if >0 then divide p_value by 2 at same index else substract the p_value/2 from 1
+        # pos_est and neg_est differ in calculation for values as negative estimation is used in neg_est
+        pos_est = pd.DataFrame(
+            [p_val.iloc[i] / 2 if estimate.iloc[i] > 0 else 1 - (p_val.iloc[i] / 2) for i in range(len(estimate))],
+            columns=["pos_est"],
+        )  # significiant in pos_est will be positive
+        neg_est = pd.DataFrame(
+            [p_val.iloc[i] / 2 if -estimate.iloc[i] > 0 else 1 - (p_val.iloc[i] / 2) for i in range(len(estimate))],
+            columns=["neg_est"],
+        )  # significiant in neg_est will be negative
+        onesided_p_vals = pd.concat([pos_est, neg_est], axis=1)
+
+        # calculate zscores
+        z_scores = pd.DataFrame(
+            [
+                np.log10(row["neg_est"]) if row["pos_est"] > 0.5 else -np.log10(row["pos_est"])
+                for _, row in onesided_p_vals.iterrows()
+            ],
+            columns=["z_score"],
+        )
+        z_scores = z_scores.set_index(estimate.index)
+
+        return z_scores
+
+    def _formula_hlm(
+        self,
+        y: pd.DataFrame,
+        x_labels: pd.DataFrame,
+        x_tme: pd.DataFrame,
+        formula: str,
+        sample_obs: str,
+        return_all: bool = False,
+    ):
+        """Applies a mixed linear model using the specified formula (MCP scores used for the dependent var) and returns the coefficient and p-value
+
+        TODO: reduce runtime? Maybe we can use an approximation or something that isn't statsmodels.
+
+        Args:
+            y: Dataframe containing the MCP score for an individual gene
+            x_labels: Dataframe that must contain a column named 'x' containing average expression values by sample
+            x_tme: Transcript mean expression of `x`.
+            formula: The mixedlm formula.
+            sample_obs: Sample identifier in the obs dataframe, such as a confounder (treated as random effect)
+            return_all: Whether to return model summary (estimate and p-value) or alternatively a list of the coefficient/p-value for x only
+
+        Returns:
+            The determined coefficients and p-values.
+        """
+        formula_data = pd.concat([y, x_tme, x_labels], axis=1)
+
+        mdf = smf.mixedlm(formula, formula_data, groups=x_labels[sample_obs]).fit()
+
+        if return_all:
+            return pd.DataFrame({"estimate": mdf.params, "p_val": mdf.pvalues})
+
+        return [mdf.params["x"], mdf.pvalues["x"]]
+
+    def _mixed_effects(
+        self,
+        scores: pd.DataFrame,
+        x_labels: pd.DataFrame,
+        tme: pd.DataFrame,
+        genes_in_mcp: list[str],
+        formula: str,
+        confounder: str,
+    ) -> pd.DataFrame:
+        """Determines z-scores, estimates and p-values with adjusted p-values and booleans marking if a gene is up or downregulated.
+
+        Args:
+            scores: A single MCP's scores with genes names in the index.
+            x_labels: Dataframe that must contain a column named 'x' containing average expression values by sample
+            tme: Transcript mean expression of `x`.
+            genes_in_mcp: Up and down genes for this MCP.
+            formula: Formula for hierachical modeling.
+            confounder: Any model confounders.
+
+        Returns:
+            DataFrame with z-scores, estimates, p-values, adjusted p-values and booleans marking whether a gene is up (True) or downregulated (False).
+        """
+        scores.columns = ["y"]
+
+        hlm_result = pd.DataFrame(columns=["estimate", "p_val"])
+
+        with Progress() as progress:
+            task = progress.add_task("[red]Determining mixed effects...", total=len(tme.index))
+
+            for gene, expr_data in tme.loc[genes_in_mcp].iterrows():
+                tme_gene = pd.DataFrame(data={"x": expr_data})  # parse tmp_gene with column name x for formula
+                hlm_result.loc[gene] = self._formula_hlm(
+                    y=scores, x_labels=x_labels, x_tme=tme_gene, formula=formula, sample_obs=confounder
+                )
+                progress.update(task, advance=1)
+
+        hlm_result["z_score"] = self._get_cor_zscores(hlm_result["estimate"], hlm_result["p_val"])["z_score"]
+
+        mt_results = ssm.multipletests(
+            hlm_result["p_val"], alpha=0.05, method="fdr_bh", is_sorted=False, returnsorted=False
+        )
+        hlm_result["p_adjust"] = mt_results[1].tolist()
+
+        return hlm_result
+
+    def _get_top_cor(
+        self, df: pd.DataFrame, mcp_name: str, max_length: int = 100, min_threshold: int = 0, index: str = "z_score"
+    ) -> dict[str, Any]:
+        """Determines the significant up- and downregulated genes by the passed index column.
+
+        TODO: This function will eventually get merged with a second version from Faye. Talk to Yuge about it.
+
+        Args:
+            df: Dataframe with rowsindex being the gene names and column with name <index> containing floats.
+            mcp_name: Name of mcp which was used for calculation of column value.
+            max_length: Value needed to later decide at what index the threshold value should be extracted from column.
+            min_threshold: Minimal threshold to select final scores by if it is smaller than calculated threshold.
+            index: Column index to use eto calculate the significant genes. Defaults to `z_score`.
+
+        Returns:
+            According to the values in a df column (default: zscore) the significant up and downregulated gene names
+        """
+        min_threshold = -abs(min_threshold)
+        zscores_neg = df.loc[:, index]  # values for downregulated genes
+        zscores_pos = pd.Series(data=[-score for score in zscores_neg], index=df.index)  # values for upregulated genes
+        top_genes = {}
+
+        for pair in [(zscores_pos, ".up"), (zscores_neg, ".down")]:
+            zscores = pair[0]
+            suffix = pair[1]
+            ordered = zscores.argsort()
+            threshold = min(
+                zscores[ordered[min(max_length, len(zscores) - 1)]], min_threshold
+            )  # compare calculated threshold with input min_threshold
+            # extract all gene names where value in column is <= threshold -> get significant genes
+            genes = zscores.index
+            top_genes[mcp_name + suffix] = sorted([genes[i] for i in range(len(zscores)) if zscores[i] <= threshold])
+
+        return top_genes
+
+    def _apply_HLM_per_MCP_for_one_pair(  # noqa: N802
+        self,
+        mcp_name: str,
+        scores_df: pd.DataFrame,  # TODO this type annotation is wrong -> dicts n stuff -> fix it
+        ct_data: AnnData,
+        tme: pd.DataFrame,
+        sig: pd.DataFrame,
+        n_counts: str,
+        formula: str,
+        confounder: str,
+    ) -> tuple[pd.DataFrame, dict[str, Any]]:
+        """Applies the hierarchical modeling for a single MCP
+
+        Args:
+            mcp_name: The name of the MCP to model.
+            scores: The MCP scores for a cell type. Number of MCPs x number of features.
+            ct_data: The AnnData object containing the metadata and labels in obs.
+            tme: Transcript mean expression in `x`.
+            sig: DataFrame containing a series of up and downregulated MCPs.
+            n_counts: The key of the gene counts.
+            formula: The formula of the hierarchical modeling.
+            confounder: Any modeling confounders.
+
+        Returns:
+            The HLM results together with significant up/downregulated genes per MCP
+        """
+        # apply pairwise for cell type the HLM formula
+        # TODO: Ensure that the var names never change throughout all of DIALOG -> store them and use them here
+        HLM_result = self._mixed_effects(
+            scores=scores_df[[mcp_name]],
+            x_labels=ct_data.obs[[n_counts, confounder]],
+            tme=tme,
+            genes_in_mcp=list(sig[mcp_name]["up"])
+            + list(sig[mcp_name]["down"]),  # TODO: separate so this whole function is more tractable
+            formula=formula,
+            confounder=confounder,
+        )
+
+        HLM_result["up"] = [gene in sig[mcp_name]["up"] for gene in HLM_result.index]
+
+        # extract significant up and downregulated genes
+        sig_genes = self._get_top_cor(
+            df=HLM_result, mcp_name=mcp_name, max_length=100, min_threshold=1
+        )  # corresponds to results of sig1f
+
+        # append dataframe with new column indicating which mcp was used
+        HLM_result["program"] = mcp_name
+
+        return HLM_result, sig_genes
+
+    def _get_residuals(self, X, y) -> np.ndarray:
+        """Mimics DIALOGUE.get.residuals. Wouldn't recommend using otherwise."""
+        resid = []
+        for y_sub in y:
+            lr = LinearRegression().fit(X.reshape(-1, 1), y_sub)
+            pred = lr.predict(X.reshape(-1, 1))
+            resid.append(y_sub - pred)
+
+        return np.array(resid)
+
+    def _calculate_cca_sig(
+        self,
+        ct_subs: dict,
+        mcp_scores: dict,
+        n_counts_key: str,
+        max_genes: int = 200,
+    ):
+        """Determine the up and down genes per MCP.
+
+        Args:
+            ct_subs:
+            mcp_scores:
+            max_genes:
+
+        Returns:
+
+        """
+        # TODO: something is slightly slow here
+        cca_sig_results = {}
+        for ct in ct_subs.keys():
+            ct_adata = ct_subs[ct]
+            conf_m = ct_adata.obs[n_counts_key].values  # defining this for the millionth time
+
+            def _corr2_coeff(A, B):
+                # Rowwise mean of input arrays & subtract from input arrays themselves
+                A_mA = A - A.mean(1)[:, None]
+                B_mB = B - B.mean(1)[:, None]
+
+                # Sum of squares across rows
+                ssA = (A_mA**2).sum(1)
+                ssB = (B_mB**2).sum(1)
+
+                # Finally get corr coeff
+                return np.dot(A_mA, B_mB.T) / np.sqrt(np.dot(ssA[:, None], ssB[None]))
+
+            R_cca_gene_cor1_x = _corr2_coeff(
+                ct_adata.X.toarray().T, mcp_scores[ct].T
+            )  # TODO: there are some nans here, also in R
+
+            def _get_top_elements(
+                m: pd.DataFrame, max_length: int, min_threshold: float
+            ):  # combined both top cor and top elements because one seemed like just a wrapper for another
+                """
+
+                TODO: needs check for correctness and variable renaming
+
+                Args:
+                    m: Any DataFrame of Gene name as index with variable columns.
+                    max_length: Maximum number of correlated elements.
+                    min_threshold: p-value threshold  # TODO confirm
+
+                Returns:
+                    Indices of the top elements
+                """
+                m_pos = -m
+                m_neg = m
+                df = pd.concat(
+                    [m_pos, m_neg], axis=1
+                )  # check if the colnames has any significance, they are just split .up and .down in dialogue
+                top_l = []
+                for i in range(df.shape[1]):  # names are not very descriptive -> improve
+                    mi = df.iloc[:, i].dropna()
+                    ci = mi.iloc[np.argsort(mi)[min(max_length, len(mi)) - 1]]
+                    min_threshold = min_threshold if min_threshold is None else min(ci, min_threshold)
+                    b = df.iloc[:, i].fillna(False) <= min_threshold
+                    top_l.append(df.index[b])  # the index is actually rownames which are genes**
+                return top_l  # returns indices as different appended lists
+
+            # get genes that are most positively and negatively correlated across all MCPS
+            top_ele = _get_top_elements(  # TODO: consider rename for clarify
+                pd.DataFrame(R_cca_gene_cor1_x, index=ct_adata.var.index), max_length=max_genes, min_threshold=0.05
+            )
+            top_cor_genes = [x for lst in top_ele for x in lst]  # unlist
+            top_cor_genes = sorted(set(top_cor_genes))  # aka the mysterious g1 in R
+
+            # MAJOR TODO: I've only used normal correlation instead of partial correlation as we wait on the implementation
+            from scipy.stats import spearmanr
+
+            def _pcor_mat(v1, v2, v3, method="spearman"):
+                """
+                MAJOR TODO: I've only used normal correlation instead of partial correlation as we wait on the implementation
+                """
+                correlations = []  # R
+                pvals = []  # P
+                for x2 in v2:
+                    c = []
+                    p = []
+                    for x1 in v1:
+                        corr, pval = spearmanr(x1, x2)
+                        c.append(corr)
+                        p.append(pval)
+                    correlations.append(c)
+                    pvals.append(p)
+
+                # TODO needs reshape
+                #     mt_results = ssm.multipletests(
+                #         pvals, alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)
+                #     pvals_adjusted = mt_results[1].tolist()
+
+                return np.array(correlations), np.array(pvals)  # pvals_adjusted
+
+            C1, P1 = _pcor_mat(ct_adata[:, top_cor_genes].X.toarray().T, mcp_scores[ct].T, conf_m)
+            C1[P1 > (0.05 / ct_adata.shape[1])] = 0  # why?
+
+            cca_sig_unformatted = _get_top_elements(  # 3 up, 3 dn, for each mcp
+                pd.DataFrame(C1.T, index=top_cor_genes), max_length=max_genes, min_threshold=0.05
+            )  # get.top.cor
+
+            # TODO: probably format the up and down within get_top_elements
+            cca_sig = defaultdict(dict)
+            for i in range(0, int(len(cca_sig_unformatted) / 2)):
+                cca_sig[f"MCP{i + 1}"]["up"] = cca_sig_unformatted[i * 2]
+                cca_sig[f"MCP{i + 1}"]["down"] = cca_sig_unformatted[i * 2 + 1]
+
+            cca_sig = dict(cca_sig)
+            cca_sig_results[ct] = cca_sig
+
+        return cca_sig_results
+
     def load(
         self,
         adata: AnnData,
@@ -147,7 +504,8 @@ class Dialogue:
         adata: AnnData,
         groupby: str,
         celltype_key: str,
-        n_components: int = 3,
+        n_counts_key: str,
+        n_mcps: int = 3,
         penalties: list[int] = None,
         ct_order: list[str] = None,
         agg_pca: bool = True,
@@ -160,8 +518,9 @@ class Dialogue:
         Args:
             adata: AnnData object to calculate PMD for.
             groupby: Key to use for pseudobulk determination.
-            celltype_key:  Cell type column key.
-            n_components: Number of PMD components.
+            celltype_key: Cell type column key.
+            n_counts_key: Key of the number of counts in obs. Also commonly the size factor.
+            n_mcps: Number of PMD components which corresponds to the number of determined MCPs.
             penalties: PMD penalties.
             ct_order: The order of cell types.
             agg_pca: Whether to calculate cell-averaged PCA components.
@@ -190,7 +549,7 @@ class Dialogue:
         else:
             penalties = penalties
 
-        ws, _ = multicca_pmd(mcca_in, penalties, K=n_components, standardize=True, niter=100, mimic_R=mimic_dialogue)
+        ws, _ = multicca_pmd(mcca_in, penalties, K=n_mcps, standardize=True, niter=100, mimic_R=mimic_dialogue)
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         mcp_scores = {
@@ -200,6 +559,144 @@ class Dialogue:
         # TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it's not at all
         # matched at this point in the function and requires references to internals that shouldn't need exposing (ct_subs)
 
-        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=mcp_scores, celltype_key=celltype_key)
+        r_scores = {
+            ct: self._get_residuals(ct_subs[ct].obs[n_counts_key].values, mcp_scores[ct].T).T
+            for i, ct in enumerate(cell_types)
+        }
+
+        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=r_scores, celltype_key=celltype_key)
 
         return adata, mcp_scores, ws_dict, ct_subs
+
+    def multilevel_modeling(
+        self,
+        ct_subs: dict,
+        mcp_scores: dict,
+        n_counts_key: str,
+        n_mcps: int,
+        sample_colname: str,
+        confounder: str,
+        formula: str = None,
+    ) -> dict[str, dict[Any, dict[str, tuple[pd.DataFrame, dict[str, Any]]]]]:
+        """Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.
+
+        Args:
+            ct_subs: The DIALOGUE cell type objects.
+            mcp_scores: The determined MCP scores from the PMD step.
+            n_counts_key: The key of the number of counts.
+            n_mcps: The number of MCPs.
+            sample_colname: The sample column number.  # TODO: harmonize with the groupby from DIALOGUE 1 -> should it be called sample_ID?
+            confounder: Any modeling confounders.
+            formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.
+
+        Returns:
+            A Pandas DataFrame containing:
+            - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
+            - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
+        """
+        cell_types = list(ct_subs.keys())
+
+        # all possible pairs of cell types with out pairing same cell type
+        pairs = list(itertools.combinations(cell_types, 2))
+
+        if not formula:
+            formula = f"y ~ x + {n_counts_key}"
+
+        # Hierarchical modeling expects DataFrames
+        mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(n_mcps)}
+        mcp_scores_df = {
+            ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=mcp_cell_types.keys())
+            for ct, v in mcp_scores.items()
+        }
+
+        # run HLM for each pair
+        all_results = {}
+        for pair in pairs:
+            cell_type_1 = pair[0]
+            cell_type_2 = pair[1]
+            print(
+                f'[bold green]#************DIALOGUE Step II (multilevel modeling): "{cell_type_1} vs. {cell_type_2}" ************#'
+            )
+
+            ct_data_1 = ct_subs[cell_type_1]
+            ct_data_2 = ct_subs[cell_type_2]
+
+            # equivalent to dialogue2.pair
+            mcps = []
+            for mcp, cell_type_list in mcp_cell_types.items():
+                if cell_type_1 in cell_type_list and cell_type_2 in cell_type_list:
+                    mcps.append(mcp)
+
+            if len(mcps) == 0:
+                print(f"[bold red]No shared MCPs between {cell_type_1} and {cell_type_2}.")
+                continue
+
+            print(f"[bold blue]{len(mcps)} MCPs identified for these cell types.")
+
+            cca_sig = self._calculate_cca_sig(ct_subs, mcp_scores, n_counts_key=n_counts_key)
+
+            sig_1 = cca_sig[cell_type_1]  # TODO: only need the up and down genes from this here per MCP
+            sig_2 = cca_sig[cell_type_2]
+            # only use samples which have a minimum number of cells (default 2) in both cell types
+            sample_ids = list(
+                set(self._get_abundant_from_series(ct_data_1.obs[sample_colname]))
+                & set(self._get_abundant_from_series(ct_data_2.obs[sample_colname]))
+            )
+
+            # subset cell types to valid samples (set.cell.types)
+            ct_data_1 = ct_data_1[ct_data_1.obs[sample_colname].isin(sample_ids)]
+            ct_data_2 = ct_data_2[ct_data_2.obs[sample_colname].isin(sample_ids)]
+
+            # TODO: shouldn't need this aligning step for cells. corresponds to @scores / y
+            #     scores_1 = cca_scores[cell_type_1].loc[ct_data_1.obs.index]
+            #     scores_2 = cca_scores[cell_type_2].loc[ct_data_2.obs.index]
+
+            # indexes into the average sample expression per gene with the sample id per cell. corresponds to @tme / x
+            tme_1 = self._get_pseudobulks(ct_data_2, sample_colname, strategy="mean").loc[
+                :, ct_data_1.obs[sample_colname]
+            ]  # unclear why we do this
+            tme_1.columns = ct_data_1.obs.index
+            tme_2 = self._get_pseudobulks(ct_data_1, sample_colname, strategy="mean").loc[
+                :, ct_data_2.obs[sample_colname]
+            ]
+            tme_2.columns = ct_data_2.obs.index
+
+            # write output:
+            # merged_result dict contains
+            # - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
+            # - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps  # TODO?
+            merged_results = {}
+
+            for mcp in mcps:
+                result = {}
+                result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
+                    mcp_name=mcp,
+                    scores_df=mcp_scores_df[cell_type_2],
+                    ct_data=ct_data_2,
+                    tme=tme_2,
+                    sig=sig_1,
+                    n_counts=n_counts_key,
+                    formula=formula,
+                    confounder=confounder,
+                )
+                result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
+                    mcp_name=mcp,
+                    scores_df=mcp_scores_df[cell_type_1],
+                    ct_data=ct_data_1,
+                    tme=tme_1,
+                    sig=sig_2,
+                    n_counts=n_counts_key,
+                    formula=formula,
+                    confounder=confounder,
+                )
+                merged_results[mcp] = result
+
+            # merge results - TODO, but probably don't need
+            #     merged_results['HLM_result_1'] = pd.concat([merged_result[mcp]['HLM_result_1'] for mcp in mcps])
+            #     merged_results['HLM_result_2'] = pd.concat([merged_result[mcp]['HLM_result_2'] for mcp in mcps])
+            #     merged_results['sig_genes_1'] = [**merged_result[mcp]['sig_genes_1'] for mcp in mcps]
+            #     merged_results['sig_genes_2'] = [**merged_result[mcp]['sig_genes_2'] for mcp in mcps]
+
+            all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
+
+        return all_results
