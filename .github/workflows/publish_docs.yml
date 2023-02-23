@@ -22,10 +22,7 @@ jobs:
               run: pip install -r docs/requirements.txt
 
             - name: Install pertpy
-              run: pip install .
-
-            - name: Install ete3
-              run: pip install ete3 pyqt5
+              run: pip install .[ete3]
 
             - name: Build docs
               run: |
