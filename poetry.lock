@@ -4084,7 +4084,7 @@ test = ["codecov", "pytest", "pytest-cov", "pytest-icdiff"]
 type = "git"
 url = "https://github.com/theislab/sparsecca"
 reference = "HEAD"
-resolved_reference = "a92b7e8f04123c521365fd1a93ee5e37e762daff"
+resolved_reference = "350e398ab509fafefc013d74103711aa0fa3d06b"
 
 [[package]]
 name = "sphinx"

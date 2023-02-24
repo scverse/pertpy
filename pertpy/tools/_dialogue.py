@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import Any, Literal
+from typing import Any, Dict, List, Literal, Tuple
 
 import anndata as ad
 import numpy as np
@@ -10,6 +10,7 @@ import pandas as pd
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
+from pandas import DataFrame
 from rich import print
 from rich.console import Group
 from rich.live import Live
@@ -367,12 +368,10 @@ class Dialogue:
         if sum(insig_mask) >= 5:  # such as genes with 0 rank, or those below 1/3
             masks.append(insig_mask)
             sig_ranks.append("insig")
-        print("calculating", len(masks), "rank categories")
 
         x_final = np.zeros(A_orig.shape[0])
         Ax = np.zeros(A_orig.shape[1])
-        for rank, mask in zip(sig_ranks, masks):
-            print(f"fitting nnls for rank {rank} with {sum(mask)} genes")
+        for _, mask in zip(sig_ranks, masks):
             A = A_orig[mask].T
             coef_nnls, _ = nnls(A, y, maxiter=n_iter)
             y = y - A @ coef_nnls  # residuals
@@ -428,7 +427,7 @@ class Dialogue:
         ws_dict: dict,
         n_counts_key: str,
         max_genes: int = 200,
-    ):
+    ) -> tuple[dict[Any, dict[str, Any]], dict[Any, list[Any]]]:
         # TODO this whole function should be standalone
         # It will contain the calculation of up/down + calculation (new final mcp scores)
         # Ensure that it'll still fit/work with the hierarchical multilevel_modeling
@@ -436,7 +435,7 @@ class Dialogue:
         """Determine the up and down genes per MCP."""
         # TODO: something is slightly slow here
         cca_sig_results: dict[Any, dict[str, Any]] = {}
-        new_mcp_scores = {}
+        new_mcp_scores: dict[Any, list[Any]] = {}
         for ct in ct_subs.keys():
             ct_adata = ct_subs[ct]
             conf_m = ct_adata.obs[n_counts_key].values  # defining this for the millionth time
@@ -503,7 +502,6 @@ class Dialogue:
 
             scores = []
             for i, mcp in enumerate(cca_sig.keys()):
-                print("scoring", mcp)
                 # TODO: I'm suspicious about how this code holds up given duplicate var_names - should test
                 pre_r_score = pre_r_scores[ct][:, i]  # noqa: F841
                 # TODO we should fix _get_top_elements to return the directionality
@@ -661,6 +659,7 @@ class Dialogue:
             A Pandas DataFrame containing:
             - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
+            TODO: Describe both returns
         """
         cell_types = list(ct_subs.keys())
 
@@ -678,7 +677,7 @@ class Dialogue:
         }
 
         # run HLM for each pair
-        all_results = {}
+        all_results: dict[str, dict[Any, dict[str, tuple[DataFrame, dict[str, Any]]]]] = {}
         mlm_progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -717,6 +716,7 @@ class Dialogue:
 
                 print(f"[bold blue]{len(mcps)} MCPs identified for {cell_type_1} and {cell_type_2}.")
 
+                new_mcp_scores: dict[Any, list[Any]]
                 cca_sig, new_mcp_scores = self._calculate_cca_sig(
                     ct_subs, mcp_scores=mcp_scores, ws_dict=ws_dict, n_counts_key=n_counts_key
                 )
