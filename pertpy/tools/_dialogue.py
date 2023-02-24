@@ -755,26 +755,26 @@ class Dialogue:
 
                     # TODO Check that the genes in result{sig_genes_1] are different and if so note that somewhere and explain why
                     result = {}
-                    # result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
-                    #     mcp_name=mcp,
-                    #     scores_df=mcp_scores_df[cell_type_2],
-                    #     ct_data=ct_data_2,
-                    #     tme=tme_2,
-                    #     sig=sig_1,
-                    #     n_counts=n_counts_key,
-                    #     formula=formula,
-                    #     confounder=confounder,
-                    # )
-                    # result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
-                    #     mcp_name=mcp,
-                    #     scores_df=mcp_scores_df[cell_type_1],
-                    #     ct_data=ct_data_1,
-                    #     tme=tme_1,
-                    #     sig=sig_2,
-                    #     n_counts=n_counts_key,
-                    #     formula=formula,
-                    #     confounder=confounder,
-                    # )
+                    result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
+                        mcp_name=mcp,
+                        scores_df=mcp_scores_df[cell_type_2],
+                        ct_data=ct_data_2,
+                        tme=tme_2,
+                        sig=sig_1,
+                        n_counts=n_counts_key,
+                        formula=formula,
+                        confounder=confounder,
+                    )
+                    result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
+                        mcp_name=mcp,
+                        scores_df=mcp_scores_df[cell_type_1],
+                        ct_data=ct_data_1,
+                        tme=tme_1,
+                        sig=sig_2,
+                        n_counts=n_counts_key,
+                        formula=formula,
+                        confounder=confounder,
+                    )
                     merged_results[mcp] = result
 
                     mixed_model_progress.update(mm_task, advance=1)
