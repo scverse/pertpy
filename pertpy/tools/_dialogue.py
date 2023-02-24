@@ -362,12 +362,13 @@ class Dialogue:
 
         sig_ranks = sorted(set(feature_ranks), reverse=True)
         sig_ranks = [rank for rank in sig_ranks if rank >= 1 / 3]  # code coverage only with n_mcps > 3
-        masks = [feature_ranks == r for r in sig_ranks if sum(feature_ranks == r) >= 5]
+        masks = [feature_ranks == r for r in sig_ranks if sum(feature_ranks == r) >= 5]  # type: ignore
 
-        insig_mask = feature_ranks < sig_ranks[-1]  # TODO: rename variable after better understanding
+        # TODO: The few type ignores are dangerous and should be checked! They could be bugs.
+        insig_mask = feature_ranks < sig_ranks[-1]  # type: ignore # TODO: rename variable after better understanding
         if sum(insig_mask) >= 5:  # such as genes with 0 rank, or those below 1/3
             masks.append(insig_mask)
-            sig_ranks.append("insig")
+            sig_ranks.append("insig")  # type: ignore
 
         x_final = np.zeros(A_orig.shape[0])
         Ax = np.zeros(A_orig.shape[1])

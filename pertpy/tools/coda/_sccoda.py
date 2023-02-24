@@ -189,7 +189,7 @@ class Sccoda(CompositionalModel2):
         else:
             return adata
 
-    def model(
+    def model(  # type: ignore
         self,
         counts: np.ndarray,
         covariates: np.ndarray,
@@ -271,7 +271,7 @@ class Sccoda(CompositionalModel2):
 
         return predictions
 
-    def make_arviz(
+    def make_arviz(  # type: ignore
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
