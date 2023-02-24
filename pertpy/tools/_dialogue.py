@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import Any, Dict, Literal
+from typing import Any, Literal
 
 import anndata as ad
 import numpy as np
@@ -14,6 +14,7 @@ from rich import print
 from rich.console import Group
 from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+from scipy.optimize import nnls
 from sklearn.linear_model import LinearRegression
 from sparsecca import multicca_permute, multicca_pmd
 
@@ -274,6 +275,7 @@ class Dialogue:
             zscores = pair[0]
             suffix = pair[1]
             ordered = zscores.argsort()
+            # TODO: There is an off by one error here (1 too many)
             threshold = min(zscores[ordered[min(max_length, len(zscores) - 1)]], min_threshold)
             # extract all gene names where value in column is <= threshold -> get significant genes
             genes = zscores.index
@@ -323,7 +325,6 @@ class Dialogue:
         # extract significant up and downregulated genes
         sig_genes = self._get_top_cor(df=HLM_result, mcp_name=mcp_name, max_length=100, min_threshold=1)
 
-        # append dataframe with new column indicating which mcp was used
         HLM_result["program"] = mcp_name
 
         return HLM_result, sig_genes
@@ -338,65 +339,114 @@ class Dialogue:
 
         return np.array(resid)
 
+    def _iterative_nnls(self, A_orig: np.ndarray, y_orig: np.ndarray, feature_ranks: list[int], n_iter: int = 1000):
+        """Solves non-negative least squares separately for different feature categories.
+
+        Mimics DLG.iterative.nnls.
+        Variables are notated according to:
+
+            `argmin|Ax - y|`
+
+        Args:
+            A_orig:
+            y_orig:
+            feature_ranks:
+            n_iter: Passed to scipy.optimize.nnls. Defaults to 1000.
+
+        Returns:
+            Returns the aggregated coefficients from nnls.
+        """
+        # TODO: Consider moving this internally to cca_sig
+        y = y_orig.copy()
+
+        sig_ranks = sorted(set(feature_ranks), reverse=True)
+        sig_ranks = [rank for rank in sig_ranks if rank >= 1 / 3]  # code coverage only with n_mcps > 3
+        masks = [feature_ranks == r for r in sig_ranks if sum(feature_ranks == r) >= 5]
+
+        insig_mask = feature_ranks < sig_ranks[-1]  # TODO: rename variable after better understanding
+        if sum(insig_mask) >= 5:  # such as genes with 0 rank, or those below 1/3
+            masks.append(insig_mask)
+            sig_ranks.append("insig")
+        print("calculating", len(masks), "rank categories")
+
+        x_final = np.zeros(A_orig.shape[0])
+        Ax = np.zeros(A_orig.shape[1])
+        for rank, mask in zip(sig_ranks, masks):
+            print(f"fitting nnls for rank {rank} with {sum(mask)} genes")
+            A = A_orig[mask].T
+            coef_nnls, _ = nnls(A, y, maxiter=n_iter)
+            y = y - A @ coef_nnls  # residuals
+            Ax += A @ coef_nnls
+            x_final[mask] = coef_nnls
+
+        return x_final
+
+    def _corr2_coeff(self, A, B):
+        # Rowwise mean of input arrays & subtract from input arrays themselves
+        A_mA = A - A.mean(1)[:, None]
+        B_mB = B - B.mean(1)[:, None]
+
+        # Sum of squares across rows
+        ssA = (A_mA**2).sum(1)
+        ssB = (B_mB**2).sum(1)
+
+        # Finally get corr coeff
+        return np.dot(A_mA, B_mB.T) / np.sqrt(np.dot(ssA[:, None], ssB[None]))
+
+    def _get_top_elements(self, m: pd.DataFrame, max_length: int, min_threshold: float):
+        """
+
+        TODO: needs check for correctness and variable renaming
+        TODO: Confirm that this doesn't return duplicate gene names
+
+        Args:
+            m: Any DataFrame of Gene name as index with variable columns.
+            max_length: Maximum number of correlated elements.
+            min_threshold: p-value threshold  # TODO confirm
+
+        Returns:
+            Indices of the top elements
+        """
+        m_pos = -m
+        m_neg = m
+        df = pd.concat(
+            [m_pos, m_neg], axis=1
+        )  # check if the colnames has any significance, they are just split .up and .down in dialogue
+        top_l = []
+        for i in range(df.shape[1]):  # TODO: names are not very descriptive -> improve
+            mi = df.iloc[:, i].dropna()
+            ci = mi.iloc[np.argsort(mi)[min(max_length, len(mi)) - 1]]
+            min_threshold = min_threshold if min_threshold is None else min(ci, min_threshold)
+            b = df.iloc[:, i].fillna(False) <= min_threshold
+            top_l.append(df.index[b])  # the index is actually rownames which are genes**
+        return top_l  # returns indices as different appended lists
+
     def _calculate_cca_sig(
         self,
         ct_subs: dict,
         mcp_scores: dict,
+        ws_dict: dict,
         n_counts_key: str,
         max_genes: int = 200,
-    ) -> dict[Any, dict[str, Any]]:
+    ):
+        # TODO this whole function should be standalone
+        # It will contain the calculation of up/down + calculation (new final mcp scores)
+        # Ensure that it'll still fit/work with the hierarchical multilevel_modeling
+
         """Determine the up and down genes per MCP."""
         # TODO: something is slightly slow here
         cca_sig_results: dict[Any, dict[str, Any]] = {}
+        new_mcp_scores = {}
         for ct in ct_subs.keys():
             ct_adata = ct_subs[ct]
             conf_m = ct_adata.obs[n_counts_key].values  # defining this for the millionth time
 
-            def _corr2_coeff(A, B):
-                # Rowwise mean of input arrays & subtract from input arrays themselves
-                A_mA = A - A.mean(1)[:, None]
-                B_mB = B - B.mean(1)[:, None]
-
-                # Sum of squares across rows
-                ssA = (A_mA**2).sum(1)
-                ssB = (B_mB**2).sum(1)
-
-                # Finally get corr coeff
-                return np.dot(A_mA, B_mB.T) / np.sqrt(np.dot(ssA[:, None], ssB[None]))
-
-            R_cca_gene_cor1_x = _corr2_coeff(
+            R_cca_gene_cor1_x = self._corr2_coeff(
                 ct_adata.X.toarray().T, mcp_scores[ct].T
             )  # TODO: there are some nans here, also in R
 
-            def _get_top_elements(m: pd.DataFrame, max_length: int, min_threshold: float):
-                """
-
-                TODO: needs check for correctness and variable renaming
-
-                Args:
-                    m: Any DataFrame of Gene name as index with variable columns.
-                    max_length: Maximum number of correlated elements.
-                    min_threshold: p-value threshold  # TODO confirm
-
-                Returns:
-                    Indices of the top elements
-                """
-                m_pos = -m
-                m_neg = m
-                df = pd.concat(
-                    [m_pos, m_neg], axis=1
-                )  # check if the colnames has any significance, they are just split .up and .down in dialogue
-                top_l = []
-                for i in range(df.shape[1]):  # TODO: names are not very descriptive -> improve
-                    mi = df.iloc[:, i].dropna()
-                    ci = mi.iloc[np.argsort(mi)[min(max_length, len(mi)) - 1]]
-                    min_threshold = min_threshold if min_threshold is None else min(ci, min_threshold)
-                    b = df.iloc[:, i].fillna(False) <= min_threshold
-                    top_l.append(df.index[b])  # the index is actually rownames which are genes**
-                return top_l  # returns indices as different appended lists
-
             # get genes that are most positively and negatively correlated across all MCPS
-            top_ele = _get_top_elements(  # TODO: consider renaming for clarify
+            top_ele = self._get_top_elements(  # TODO: consider renaming for clarify
                 pd.DataFrame(R_cca_gene_cor1_x, index=ct_adata.var.index), max_length=max_genes, min_threshold=0.05
             )
             top_cor_genes_flattened = [x for lst in top_ele for x in lst]
@@ -431,7 +481,7 @@ class Dialogue:
             C1, P1 = _pcor_mat(ct_adata[:, top_cor_genes_flattened].X.toarray().T, mcp_scores[ct].T, conf_m)
             C1[P1 > (0.05 / ct_adata.shape[1])] = 0  # why?
 
-            cca_sig_unformatted = _get_top_elements(  # 3 up, 3 dn, for each mcp
+            cca_sig_unformatted = self._get_top_elements(  # 3 up, 3 dn, for each mcp
                 pd.DataFrame(C1.T, index=top_cor_genes_flattened), max_length=max_genes, min_threshold=0.05
             )
 
@@ -444,7 +494,39 @@ class Dialogue:
             cca_sig = dict(cca_sig)
             cca_sig_results[ct] = cca_sig
 
-        return cca_sig_results
+            # This is basically DIALOGUE 3 now
+            pre_r_scores = {
+                ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws_dict[ct]
+                for i, ct in enumerate(ct_subs.keys())
+                # TODO This is a recalculation and not a new calculation
+            }
+
+            scores = []
+            for i, mcp in enumerate(cca_sig.keys()):
+                print("scoring", mcp)
+                # TODO: I'm suspicious about how this code holds up given duplicate var_names - should test
+                pre_r_score = pre_r_scores[ct][:, i]  # noqa: F841
+                # TODO we should fix _get_top_elements to return the directionality
+                # TODO this should be casted somewhere else
+                sig_mcp_genes = list(cca_sig[mcp]["up"]) + list(cca_sig[mcp]["down"])
+                # deuniqued_gene_indices = [top_cor_genes_flattened.index(g) for g in sig_mcp_genes]
+                X = ct_adata[:, sig_mcp_genes].X.toarray()
+                zscore = (X - np.mean(X, axis=0)) / np.std(
+                    X, axis=0, ddof=1
+                )  # adjusted ddof to match R even though it's wrong
+                zscores = zscore.T
+
+                # zscores = zscore.T[deuniqued_gene_indices]  # t(r1@zscores[gene.pval$genes,])  should really check this line, so troll
+
+                new_b = [gene in cca_sig[mcp]["up"] for gene in sig_mcp_genes]
+                zscores[new_b] = -zscores[new_b]
+                # coef = self._iterative_nnls(zscores, pre_r_score, pvals_mcp['Nf'].values)
+                # scores = zscores.T @ coef
+                # TODO: The line below has to be new_mcp_scores.append(scores) after we implemented the NF value caluation
+                scores.append(zscores)
+            new_mcp_scores[ct] = scores
+
+        return cca_sig_results, new_mcp_scores
 
     def load(
         self,
@@ -537,19 +619,19 @@ class Dialogue:
         ws, _ = multicca_pmd(mcca_in, penalties, K=n_mcps, standardize=True, niter=100, mimic_R=mimic_dialogue)
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
-        mcp_scores = {
+        pre_r_scores = {
             ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws[i] for i, ct in enumerate(cell_types)  # TODO change from 50
         }
 
         # TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it's not at all
         # matched at this point in the function and requires references to internals that shouldn't need exposing (ct_subs)
 
-        r_scores = {
-            ct: self._get_residuals(ct_subs[ct].obs[n_counts_key].values, mcp_scores[ct].T).T
+        mcp_scores = {
+            ct: self._get_residuals(ct_subs[ct].obs[n_counts_key].values, pre_r_scores[ct].T).T
             for i, ct in enumerate(cell_types)
         }
 
-        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=r_scores, celltype_key=celltype_key)
+        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=mcp_scores, celltype_key=celltype_key)
 
         return adata, mcp_scores, ws_dict, ct_subs
 
@@ -557,12 +639,13 @@ class Dialogue:
         self,
         ct_subs: dict,
         mcp_scores: dict,
+        ws_dict: dict,
         n_counts_key: str,
         n_mcps: int,
         sample_id: str,
         confounder: str,
         formula: str = None,
-    ) -> dict[str, dict[Any, dict[str, tuple[pd.DataFrame, dict[str, Any]]]]]:
+    ):
         """Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.
 
         Args:
@@ -589,7 +672,7 @@ class Dialogue:
 
         # Hierarchical modeling expects DataFrames
         mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(n_mcps)}
-        mcp_scores_df = {
+        mcp_scores_df = {  # noqa: F841
             ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=mcp_cell_types.keys())
             for ct, v in mcp_scores.items()
         }
@@ -634,10 +717,14 @@ class Dialogue:
 
                 print(f"[bold blue]{len(mcps)} MCPs identified for {cell_type_1} and {cell_type_2}.")
 
-                cca_sig = self._calculate_cca_sig(ct_subs, mcp_scores, n_counts_key=n_counts_key)
+                cca_sig, new_mcp_scores = self._calculate_cca_sig(
+                    ct_subs, mcp_scores=mcp_scores, ws_dict=ws_dict, n_counts_key=n_counts_key
+                )
 
-                sig_1 = cca_sig[cell_type_1]  # TODO: only need the up and down genes from this here per MCP
-                sig_2 = cca_sig[cell_type_2]
+                sig_1 = cca_sig[  # noqa: F841
+                    cell_type_1
+                ]  # TODO: only need the up and down genes from this here per MCP
+                sig_2 = cca_sig[cell_type_2]  # noqa: F841
                 # only use samples which have a minimum number of cells (default 2) in both cell types
                 sample_ids = list(
                     set(self._get_abundant_elements_from_series(ct_data_1.obs[sample_id]))
@@ -665,27 +752,29 @@ class Dialogue:
                 mm_task = mixed_model_progress.add_task("[bold blue]Determining mixed effects", total=len(mcps))
                 for mcp in mcps:
                     mixed_model_progress.update(mm_task, description=f"[bold blue]Determining mixed effects for {mcp}")
+
+                    # TODO Check that the genes in result{sig_genes_1] are different and if so note that somewhere and explain why
                     result = {}
-                    result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
-                        mcp_name=mcp,
-                        scores_df=mcp_scores_df[cell_type_2],
-                        ct_data=ct_data_2,
-                        tme=tme_2,
-                        sig=sig_1,
-                        n_counts=n_counts_key,
-                        formula=formula,
-                        confounder=confounder,
-                    )
-                    result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
-                        mcp_name=mcp,
-                        scores_df=mcp_scores_df[cell_type_1],
-                        ct_data=ct_data_1,
-                        tme=tme_1,
-                        sig=sig_2,
-                        n_counts=n_counts_key,
-                        formula=formula,
-                        confounder=confounder,
-                    )
+                    # result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
+                    #     mcp_name=mcp,
+                    #     scores_df=mcp_scores_df[cell_type_2],
+                    #     ct_data=ct_data_2,
+                    #     tme=tme_2,
+                    #     sig=sig_1,
+                    #     n_counts=n_counts_key,
+                    #     formula=formula,
+                    #     confounder=confounder,
+                    # )
+                    # result["HLM_result_2"], result["sig_genes_2"] = self._apply_HLM_per_MCP_for_one_pair(
+                    #     mcp_name=mcp,
+                    #     scores_df=mcp_scores_df[cell_type_1],
+                    #     ct_data=ct_data_1,
+                    #     tme=tme_1,
+                    #     sig=sig_2,
+                    #     n_counts=n_counts_key,
+                    #     formula=formula,
+                    #     confounder=confounder,
+                    # )
                     merged_results[mcp] = result
 
                     mixed_model_progress.update(mm_task, advance=1)
@@ -700,4 +789,4 @@ class Dialogue:
 
             all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
 
-        return all_results
+        return all_results, new_mcp_scores
