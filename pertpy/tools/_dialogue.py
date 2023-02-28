@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Any, Literal
 
 import anndata as ad
 import numpy as np
@@ -17,7 +17,7 @@ from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 from scipy.optimize import nnls
 from sklearn.linear_model import LinearRegression
-from sparsecca import multicca_permute, multicca_pmd
+from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 
 
 class Dialogue:
@@ -575,7 +575,8 @@ class Dialogue:
         penalties: list[int] = None,
         ct_order: list[str] = None,
         agg_pca: bool = True,
-        mimic_dialogue: bool = True,
+        solver: Literal["lp", "bs"] = "bs",
+        normalize: bool = True,
     ) -> tuple[AnnData, dict[str, np.ndarray], dict[Any, Any], dict[Any, Any]]:
         """Runs multifactor PMD.
 
@@ -590,7 +591,9 @@ class Dialogue:
             penalties: PMD penalties.
             ct_order: The order of cell types.
             agg_pca: Whether to calculate cell-averaged PCA components.
-            mimic_dialogue: Whether to mimic DIALOGUE as close as possible
+            solver: Which solver to use for PMD. Must be one of "lp" (linear programming) or "bs" (binary search).
+                    For differences between these to please refer to https://github.com/theislab/sparsecca/blob/main/examples/linear_programming_multicca.ipynb
+            normalize: Whether to mimic DIALOGUE as close as possible
 
         Returns:
             MCP scores  # TODO this requires more detail
@@ -604,7 +607,7 @@ class Dialogue:
             ct_order = cell_types = adata.obs[celltype_key].astype("category").cat.categories
 
         mcca_in, ct_subs = self.load(
-            adata, sample_id, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=mimic_dialogue
+            adata, sample_id, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=normalize
         )
 
         n_samples = mcca_in[0].shape[1]
@@ -615,7 +618,12 @@ class Dialogue:
         else:
             penalties = penalties
 
-        ws, _ = multicca_pmd(mcca_in, penalties, K=n_mcps, standardize=True, niter=100, mimic_R=mimic_dialogue)
+        if solver == "bs":
+            ws, _ = multicca_pmd(mcca_in, penalties, K=n_mcps, standardize=True, niter=100, mimic_R=normalize)
+        elif solver == "lp":
+            ws, _ = lp_pmd(mcca_in, penalties, K=n_mcps, standardize=True, mimic_R=normalize)
+        else:
+            raise ValueError('Please select a valid solver. Must be one of "lp" or "bs".')
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         pre_r_scores = {

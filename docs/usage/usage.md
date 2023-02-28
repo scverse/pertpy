@@ -222,7 +222,7 @@ adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     sample_id='clinical.status',
     celltype_key='cell.subtypes',
     n_counts_key="nCount_RNA",
-    mimic_dialogue=True
+    normalize=True
 )
 all_results = dl.multilevel_modeling(ct_subs=ct_subs,
                                      mcp_scores=mcps,
