@@ -75,14 +75,14 @@ class Dialogue:
 
         return aggr
 
-    def _scale_data(self, pseudobulks: pd.DataFrame, mimic_dialogue: bool = True) -> np.ndarray:
+    def _scale_data(self, pseudobulks: pd.DataFrame, normalize: bool = True) -> np.ndarray:
         """Row-wise mean center and scale by the standard deviation.
 
         TODO: the `scale` function we implemented to match the R `scale` fn should already contain this functionality.
 
         Args:
             pseudobulks: The pseudobulk PCA components.
-            mimic_dialogue: Whether to mimic DIALOGUE behavior or not.
+            normalize: Whether to mimic DIALOGUE behavior or not.
 
         Returns:
             The scaled count matrix.
@@ -90,7 +90,7 @@ class Dialogue:
         # DIALOGUE doesn't scale the data before passing to multicca, unlike what is recommended by sparsecca.
         # However, performing this scaling _does_ increase overall correlation of the end result
         # WHEN SAMPLE ORDER AND DIALOGUE2+3 PROCESSING IS IGNORED.
-        if mimic_dialogue:
+        if normalize:
             return pseudobulks.to_numpy()
         else:
             return ((pseudobulks - pseudobulks.mean()) / pseudobulks.std()).to_numpy()
@@ -534,7 +534,7 @@ class Dialogue:
         celltype_key: str,
         ct_order: list[str],
         agg_pca: bool = True,
-        mimic_dialogue: bool = True,
+        normalize: bool = True,
     ) -> tuple[list, dict]:
         """Separates cell into AnnDatas by celltype_key and creates the multifactor PMD input.
 
@@ -545,8 +545,8 @@ class Dialogue:
             sample_id: The key to aggregate the pseudobulks for.
             celltype_key: The key of the cell type column.
             ct_order: The order of cell types
-            agg_pca: Whether to aggregate pseudobulks with PCA or not (default: True).
-            mimic_dialogue: Whether to mimic DIALOGUE behavior or not (default: True).
+            agg_pca: Whether to aggregate pseudobulks with PCA or not. Defaults to True.
+            normalize: Whether to mimic DIALOGUE behavior or not. Defaults to True.
 
         Returns:
             A celltype_label:array dictionary.
@@ -559,7 +559,7 @@ class Dialogue:
         # that there are at least 5 share samples here
 
         # TODO: https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L121-L131
-        ct_preprocess = {ct: self._scale_data(ad, mimic_dialogue=mimic_dialogue).T for ct, ad in ct_aggr.items()}
+        ct_preprocess = {ct: self._scale_data(ad, normalize=normalize).T for ct, ad in ct_aggr.items()}
 
         mcca_in = [ct_preprocess[ct] for ct in ct_order]
 
@@ -593,6 +593,7 @@ class Dialogue:
             agg_pca: Whether to calculate cell-averaged PCA components.
             solver: Which solver to use for PMD. Must be one of "lp" (linear programming) or "bs" (binary search).
                     For differences between these to please refer to https://github.com/theislab/sparsecca/blob/main/examples/linear_programming_multicca.ipynb
+                    Defaults to 'bs'.
             normalize: Whether to mimic DIALOGUE as close as possible
 
         Returns:
@@ -607,7 +608,7 @@ class Dialogue:
             ct_order = cell_types = adata.obs[celltype_key].astype("category").cat.categories
 
         mcca_in, ct_subs = self.load(
-            adata, sample_id, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=normalize
+            adata, sample_id, celltype_key, ct_order=cell_types, agg_pca=agg_pca, normalize=normalize
         )
 
         n_samples = mcca_in[0].shape[1]
