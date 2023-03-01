@@ -110,6 +110,7 @@ class Dialogue:
         """
 
         def __concat_obs(adata: AnnData, mcp_df: pd.DataFrame) -> AnnData:
+            mcp_df.columns = [f"mcp_{col}" for col in mcp_df.columns]
             new_obs = pd.concat([adata.obs, mcp_df.set_index(adata.obs.index)], axis=1)
             adata.obs = new_obs
 
