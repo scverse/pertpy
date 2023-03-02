@@ -792,12 +792,12 @@ class Dialogue:
                 mixed_model_progress.update(mm_task, visible=False)
                 mlm_progress.update(mlm_task, advance=1)
 
-            # merge results - TODO, but probably don't need
-            #     merged_results['HLM_result_1'] = pd.concat([merged_result[mcp]['HLM_result_1'] for mcp in mcps])
-            #     merged_results['HLM_result_2'] = pd.concat([merged_result[mcp]['HLM_result_2'] for mcp in mcps])
-            #     merged_results['sig_genes_1'] = [**merged_result[mcp]['sig_genes_1'] for mcp in mcps]
-            #     merged_results['sig_genes_2'] = [**merged_result[mcp]['sig_genes_2'] for mcp in mcps]
+                # merge results - TODO, but probably don't need
+                #     merged_results['HLM_result_1'] = pd.concat([merged_result[mcp]['HLM_result_1'] for mcp in mcps])
+                #     merged_results['HLM_result_2'] = pd.concat([merged_result[mcp]['HLM_result_2'] for mcp in mcps])
+                #     merged_results['sig_genes_1'] = [**merged_result[mcp]['sig_genes_1'] for mcp in mcps]
+                #     merged_results['sig_genes_2'] = [**merged_result[mcp]['sig_genes_2'] for mcp in mcps]
 
-            all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
+                all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
 
         return all_results, new_mcp_scores
