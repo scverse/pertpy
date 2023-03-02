@@ -191,8 +191,8 @@ class Dialogue:
 
         Args:
             y: Dataframe containing the MCP score for an individual gene
-            x_labels: Dataframe that must contain a column named 'x' containing average expression values by sample
-            x_tme: Transcript mean expression of `x`.
+            x_labels: Dataframe with other .obs values needed for fitting the formula, specifically `n_counts_key`.
+            x_tme: Transcript mean expression of `x`, with a respectively labeled column.
             formula: The mixedlm formula.
             sample_obs: Sample identifier in the obs dataframe, such as a confounder (treated as random effect)
             return_all: Whether to return model summary (estimate and p-value) or alternatively a list of the coefficient/p-value for x only
@@ -200,9 +200,11 @@ class Dialogue:
         Returns:
             The determined coefficients and p-values.
         """
-        formula_data = pd.concat([y, x_tme, x_labels], axis=1)
+        formula_data = pd.concat(
+            [y, x_tme, x_labels], axis=1, join="inner"
+        )  # TODO: sometimes these have mismatched sizes and they shouldn't... currently fixed with join=inner
 
-        mdf = smf.mixedlm(formula, formula_data, groups=x_labels[sample_obs]).fit()
+        mdf = smf.mixedlm(formula, formula_data, groups=formula_data[sample_obs]).fit()
 
         if return_all:
             return pd.DataFrame({"estimate": mdf.params, "p_val": mdf.pvalues})
