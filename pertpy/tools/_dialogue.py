@@ -23,6 +23,20 @@ from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 class Dialogue:
     """Python implementation of DIALOGUE"""
 
+    def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int):
+        """Constructor for Dialogue.
+
+        Args:
+            sample_id: The sample ID key in AnnData.obs which is used for pseudobulk determination.
+            celltype_key: The key in AnnData.obs which contains the cell type column.
+            n_counts_key: The key of the number of counts in Anndata.obs . Also commonly the size factor.
+            n_mpcs: Number of PMD components which corresponds to the number of determined MCPs.
+        """
+        self.sample_id = sample_id
+        self.celltype_key = celltype_key
+        self.n_counts_key = n_counts_key
+        self.n_mcps = n_mpcs
+
     def _get_pseudobulks(
         self, adata: AnnData, groupby: str, strategy: Literal["median", "mean"] = "median"
     ) -> pd.DataFrame:
@@ -75,14 +89,14 @@ class Dialogue:
 
         return aggr
 
-    def _scale_data(self, pseudobulks: pd.DataFrame, mimic_dialogue: bool = True) -> np.ndarray:
+    def _scale_data(self, pseudobulks: pd.DataFrame, normalize: bool = True) -> np.ndarray:
         """Row-wise mean center and scale by the standard deviation.
 
         TODO: the `scale` function we implemented to match the R `scale` fn should already contain this functionality.
 
         Args:
             pseudobulks: The pseudobulk PCA components.
-            mimic_dialogue: Whether to mimic DIALOGUE behavior or not.
+            normalize: Whether to mimic DIALOGUE behavior or not.
 
         Returns:
             The scaled count matrix.
@@ -90,7 +104,7 @@ class Dialogue:
         # DIALOGUE doesn't scale the data before passing to multicca, unlike what is recommended by sparsecca.
         # However, performing this scaling _does_ increase overall correlation of the end result
         # WHEN SAMPLE ORDER AND DIALOGUE2+3 PROCESSING IS IGNORED.
-        if mimic_dialogue:
+        if normalize:
             return pseudobulks.to_numpy()
         else:
             return ((pseudobulks - pseudobulks.mean()) / pseudobulks.std()).to_numpy()
@@ -533,11 +547,9 @@ class Dialogue:
     def load(
         self,
         adata: AnnData,
-        sample_id: str,
-        celltype_key: str,
         ct_order: list[str],
         agg_pca: bool = True,
-        mimic_dialogue: bool = True,
+        normalize: bool = True,
     ) -> tuple[list, dict]:
         """Separates cell into AnnDatas by celltype_key and creates the multifactor PMD input.
 
@@ -545,24 +557,22 @@ class Dialogue:
 
         Args:
             adata: AnnData object generate celltype objects for
-            sample_id: The key to aggregate the pseudobulks for.
-            celltype_key: The key of the cell type column.
             ct_order: The order of cell types
-            agg_pca: Whether to aggregate pseudobulks with PCA or not (default: True).
-            mimic_dialogue: Whether to mimic DIALOGUE behavior or not (default: True).
+            agg_pca: Whether to aggregate pseudobulks with PCA or not. Defaults to True.
+            normalize: Whether to mimic DIALOGUE behavior or not. Defaults to True.
 
         Returns:
             A celltype_label:array dictionary.
         """
-        ct_subs = {ct: adata[adata.obs[celltype_key] == ct].copy() for ct in ct_order}
+        ct_subs = {ct: adata[adata.obs[self.celltype_key] == ct].copy() for ct in ct_order}
         fn = self._pseudobulk_pca if agg_pca else self._get_pseudobulks
-        ct_aggr = {ct: fn(ad, sample_id) for ct, ad in ct_subs.items()}  # type: ignore
+        ct_aggr = {ct: fn(ad, self.sample_id) for ct, ad in ct_subs.items()}  # type: ignore
 
         # TODO: implement check (as in https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L114-L119)
         # that there are at least 5 share samples here
 
         # TODO: https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L121-L131
-        ct_preprocess = {ct: self._scale_data(ad, mimic_dialogue=mimic_dialogue).T for ct, ad in ct_aggr.items()}
+        ct_preprocess = {ct: self._scale_data(ad, normalize=normalize).T for ct, ad in ct_aggr.items()}
 
         mcca_in = [ct_preprocess[ct] for ct in ct_order]
 
@@ -571,10 +581,6 @@ class Dialogue:
     def calculate_multifactor_PMD(  # noqa: N802
         self,
         adata: AnnData,
-        sample_id: str,
-        celltype_key: str,
-        n_counts_key: str,
-        n_mcps: int = 3,
         penalties: list[int] = None,
         ct_order: list[str] = None,
         agg_pca: bool = True,
@@ -588,14 +594,12 @@ class Dialogue:
         Args:
             adata: AnnData object to calculate PMD for.
             sample_id: Key to use for pseudobulk determination.
-            celltype_key: Cell type column key.
-            n_counts_key: Key of the number of counts in obs. Also commonly the size factor.
-            n_mcps: Number of PMD components which corresponds to the number of determined MCPs.
             penalties: PMD penalties.
             ct_order: The order of cell types.
             agg_pca: Whether to calculate cell-averaged PCA components.
             solver: Which solver to use for PMD. Must be one of "lp" (linear programming) or "bs" (binary search).
                     For differences between these to please refer to https://github.com/theislab/sparsecca/blob/main/examples/linear_programming_multicca.ipynb
+                    Defaults to 'bs'.
             normalize: Whether to mimic DIALOGUE as close as possible
 
         Returns:
@@ -607,11 +611,9 @@ class Dialogue:
         if ct_order is not None:
             cell_types = ct_order
         else:
-            ct_order = cell_types = adata.obs[celltype_key].astype("category").cat.categories
+            ct_order = cell_types = adata.obs[self.celltype_key].astype("category").cat.categories
 
-        mcca_in, ct_subs = self.load(
-            adata, sample_id, celltype_key, ct_order=cell_types, agg_pca=agg_pca, mimic_dialogue=normalize
-        )
+        mcca_in, ct_subs = self.load(adata, ct_order=cell_types, agg_pca=agg_pca, normalize=normalize)
 
         n_samples = mcca_in[0].shape[1]
         if penalties is None:
@@ -622,9 +624,9 @@ class Dialogue:
             penalties = penalties
 
         if solver == "bs":
-            ws, _ = multicca_pmd(mcca_in, penalties, K=n_mcps, standardize=True, niter=100, mimic_R=normalize)
+            ws, _ = multicca_pmd(mcca_in, penalties, K=self.n_mcps, standardize=True, niter=100, mimic_R=normalize)
         elif solver == "lp":
-            ws, _ = lp_pmd(mcca_in, penalties, K=n_mcps, standardize=True, mimic_R=normalize)
+            ws, _ = lp_pmd(mcca_in, penalties, K=self.n_mcps, standardize=True, mimic_R=normalize)
         else:
             raise ValueError('Please select a valid solver. Must be one of "lp" or "bs".')
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
@@ -637,11 +639,13 @@ class Dialogue:
         # matched at this point in the function and requires references to internals that shouldn't need exposing (ct_subs)
 
         mcp_scores = {
-            ct: self._get_residuals(ct_subs[ct].obs[n_counts_key].values, pre_r_scores[ct].T).T
+            ct: self._get_residuals(ct_subs[ct].obs[self.n_counts_key].values, pre_r_scores[ct].T).T
             for i, ct in enumerate(cell_types)
         }
 
-        adata = self._concat_adata_mcp_scores(adata, ct_subs=ct_subs, mcp_scores=mcp_scores, celltype_key=celltype_key)
+        adata = self._concat_adata_mcp_scores(
+            adata, ct_subs=ct_subs, mcp_scores=mcp_scores, celltype_key=self.celltype_key
+        )
 
         return adata, mcp_scores, ws_dict, ct_subs
 
@@ -650,9 +654,6 @@ class Dialogue:
         ct_subs: dict,
         mcp_scores: dict,
         ws_dict: dict,
-        n_counts_key: str,
-        n_mcps: int,
-        sample_id: str,
         confounder: str,
         formula: str = None,
     ):
@@ -661,9 +662,6 @@ class Dialogue:
         Args:
             ct_subs: The DIALOGUE cell type objects.
             mcp_scores: The determined MCP scores from the PMD step.
-            n_counts_key: The key of the number of counts.
-            n_mcps: The number of MCPs.
-            sample_id: The sample column number.
             confounder: Any modeling confounders.
             formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.
 
@@ -679,10 +677,10 @@ class Dialogue:
         pairs = list(itertools.combinations(cell_types, 2))
 
         if not formula:
-            formula = f"y ~ x + {n_counts_key}"
+            formula = f"y ~ x + {self.n_counts_key}"
 
         # Hierarchical modeling expects DataFrames
-        mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(n_mcps)}
+        mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(self.n_mcps)}
         mcp_scores_df = {  # noqa: F841
             ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=mcp_cell_types.keys())
             for ct, v in mcp_scores.items()
@@ -730,7 +728,7 @@ class Dialogue:
 
                 new_mcp_scores: dict[Any, list[Any]]
                 cca_sig, new_mcp_scores = self._calculate_cca_sig(
-                    ct_subs, mcp_scores=mcp_scores, ws_dict=ws_dict, n_counts_key=n_counts_key
+                    ct_subs, mcp_scores=mcp_scores, ws_dict=ws_dict, n_counts_key=self.n_counts_key
                 )
 
                 sig_1 = cca_sig[  # noqa: F841
@@ -739,24 +737,27 @@ class Dialogue:
                 sig_2 = cca_sig[cell_type_2]  # noqa: F841
                 # only use samples which have a minimum number of cells (default 2) in both cell types
                 sample_ids = list(
-                    set(self._get_abundant_elements_from_series(ct_data_1.obs[sample_id]))
-                    & set(self._get_abundant_elements_from_series(ct_data_2.obs[sample_id]))
+                    set(self._get_abundant_elements_from_series(ct_data_1.obs[self.sample_id]))
+                    & set(self._get_abundant_elements_from_series(ct_data_2.obs[self.sample_id]))
                 )
 
                 # subset cell types to valid samples (set.cell.types)
-                ct_data_1 = ct_data_1[ct_data_1.obs[sample_id].isin(sample_ids)]
-                ct_data_2 = ct_data_2[ct_data_2.obs[sample_id].isin(sample_ids)]
+                ct_data_1 = ct_data_1[ct_data_1.obs[self.sample_id].isin(sample_ids)]
+                ct_data_2 = ct_data_2[ct_data_2.obs[self.sample_id].isin(sample_ids)]
 
                 # TODO: shouldn't need this aligning step for cells. corresponds to @scores / y
                 #     scores_1 = cca_scores[cell_type_1].loc[ct_data_1.obs.index]
                 #     scores_2 = cca_scores[cell_type_2].loc[ct_data_2.obs.index]
 
                 # indexes into the average sample expression per gene with the sample id per cell. corresponds to @tme / x
-                tme_1 = self._get_pseudobulks(ct_data_2, sample_id, strategy="mean").loc[
-                    :, ct_data_1.obs[sample_id]
+                # TODO: Why is the sample_id type check failing?
+                tme_1 = self._get_pseudobulks(ct_data_2, groupby=self.sample_id, strategy="mean").loc[
+                    :, ct_data_1.obs[self.sample_id]
                 ]  # unclear why we do this
                 tme_1.columns = ct_data_1.obs.index
-                tme_2 = self._get_pseudobulks(ct_data_1, sample_id, strategy="mean").loc[:, ct_data_2.obs[sample_id]]
+                tme_2 = self._get_pseudobulks(ct_data_1, groupby=self.sample_id, strategy="mean").loc[
+                    :, ct_data_2.obs[self.sample_id]
+                ]
                 tme_2.columns = ct_data_2.obs.index
 
                 merged_results = {}
@@ -773,7 +774,7 @@ class Dialogue:
                         ct_data=ct_data_2,
                         tme=tme_2,
                         sig=sig_1,
-                        n_counts=n_counts_key,
+                        n_counts=self.n_counts_key,
                         formula=formula,
                         confounder=confounder,
                     )
@@ -783,7 +784,7 @@ class Dialogue:
                         ct_data=ct_data_1,
                         tme=tme_1,
                         sig=sig_2,
-                        n_counts=n_counts_key,
+                        n_counts=self.n_counts_key,
                         formula=formula,
                         confounder=confounder,
                     )
@@ -793,12 +794,12 @@ class Dialogue:
                 mixed_model_progress.update(mm_task, visible=False)
                 mlm_progress.update(mlm_task, advance=1)
 
-            # merge results - TODO, but probably don't need
-            #     merged_results['HLM_result_1'] = pd.concat([merged_result[mcp]['HLM_result_1'] for mcp in mcps])
-            #     merged_results['HLM_result_2'] = pd.concat([merged_result[mcp]['HLM_result_2'] for mcp in mcps])
-            #     merged_results['sig_genes_1'] = [**merged_result[mcp]['sig_genes_1'] for mcp in mcps]
-            #     merged_results['sig_genes_2'] = [**merged_result[mcp]['sig_genes_2'] for mcp in mcps]
+                # merge results - TODO, but probably don't need
+                #     merged_results['HLM_result_1'] = pd.concat([merged_result[mcp]['HLM_result_1'] for mcp in mcps])
+                #     merged_results['HLM_result_2'] = pd.concat([merged_result[mcp]['HLM_result_2'] for mcp in mcps])
+                #     merged_results['sig_genes_1'] = [**merged_result[mcp]['sig_genes_1'] for mcp in mcps]
+                #     merged_results['sig_genes_2'] = [**merged_result[mcp]['sig_genes_2'] for mcp in mcps]
 
-            all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
+                all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
 
         return all_results, new_mcp_scores

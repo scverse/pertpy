@@ -12,6 +12,6 @@ try:
     from pertpy.tools.coda._tasccoda import Tasccoda
 except ImportError as e:
     if "ete3" in str(e):
-        print("[bold yellow]To use sccoda or tasccoda please install ete3 with `pip install ete3`")
+        print("[bold yellow]To use sccoda or tasccoda please install ete3 with [green]pip install ete3")
     else:
         raise e
