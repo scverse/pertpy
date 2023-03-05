@@ -87,7 +87,7 @@ class TestMixscape:
 
         pt.tl.kernel_pca(adata, n_comps=50)
         mixscape_identifier = pt.tl.Mixscape()
-        mixscape_identifier.pert_sign(adata, pert_key="label", control="control", use_rep="X_kpca")
+        mixscape_identifier.perturbation_signature(adata, pert_key="label", control="control", use_rep="X_kpca")
 
         assert "X_pert" in adata.layers
 

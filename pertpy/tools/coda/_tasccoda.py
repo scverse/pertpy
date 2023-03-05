@@ -17,7 +17,7 @@ from mudata import MuData
 from numpyro.infer import Predictive
 from rich import print
 
-from pertpy.tools._base_coda import (
+from pertpy.tools.coda._base_coda import (
     CompositionalModel2,
     collapse_singularities,
     collapse_singularities_2,
@@ -301,7 +301,7 @@ class Tasccoda(CompositionalModel2):
         else:
             return adata
 
-    def model(
+    def model(  # type: ignore
         self,
         counts: np.ndarray,
         covariates: np.ndarray,
@@ -418,7 +418,7 @@ class Tasccoda(CompositionalModel2):
 
         return predictions
 
-    def make_arviz(
+    def make_arviz(  # type: ignore
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
