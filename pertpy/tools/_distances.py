@@ -1,7 +1,7 @@
-
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -10,9 +10,10 @@ from scipy.spatial.distance import cdist
 from ot.gromov import gromov_wasserstein
 from ot import unif
 from anndata import AnnData
-from tqdm import tqdm
 from statsmodels.stats.multitest import multipletests
 from sklearn.metrics import pairwise_distances
+from rich.progress import track
+
 
 """
 DEV NOTES:
@@ -22,63 +23,106 @@ User interface:
 distance metric of choice
 - get p-values for permutation test with a distance metric of choice for all or 
     some of their groups
+
+Implementation:
+- An abstract base class "AbstractDistance" for distance metrics.
+- A class for each distance metric that inherits from the abstract base class.
+- An interface / API / wrapper class "Distance" which is accessible to the user
+and selects the appropriate distance metric class based on the user input.
     
-Internally:
-- There will be two types of PermutationTest classes:
-    - One that recomputes the pairwise distance matrix every time and works for
-      any metric.
-    - One that uses the precomputed pairwise distance matrix and works only for
-    metrics that can be called on the pairwise distance matrix. Will be faster.
-NOTE: This is a bit redundant, maybe merge? Make it Fast automatically
-if Metric is callable on P?
-NOTE: Maybe move the tests to a separate file? (e.g. _tests.py) Might lead to
-confusion with DE testing though...
-
 TODO:
-- Make PermutationTest allow for multiple controls (accept list of controls)
 - Inherit docstrings from parent classes
-
-- Options how to handle Metrics for PermutationTest:
-    1. (x) Have a Metric class with two function: one of them on X and Y, the other on P.
-    The latter is only used by PermutationTest internally. The first one is accessable
-    as __call__ to the user.
-    2. Have separate, second Metric class for pairwise distances, e.g. P_Edistance.
-    3. (x) Have a wrapper function that takes a metric and returns a new metric that
-    is callable on X and Y, and uses the pairwise distance matrix P internally.
-    This function will also be accessable to the user.
-I think 1+3 is the best solution.
+- Store precomputed distances in adata object
 """ 
 
-# wrapper fcts maybe useful to user (see above)
-def distance(x: np.ndarray,
-             y: np.ndarray,
-             metric: str) -> float:
-    if metric=='edistance':
-        return Edistance()(x, y)
-    elif metric=='wasserstein':
-        return Wasserstein()(x, y)
-
-def get_distances(
-    adata: AnnData,
-    groups: List[str],
-    metric: Union[str, Metric] = 'edistance',
-    **kwargs,
-) -> pd.DataFrame:
-    """Get pairwise distances between groups of cells.
-
-    Args:
-        adata (AnnData): Annotated data matrix.
-        groups (List[str]): List of group names. # or None, then use all groups
-        metric (Union[str, Metric], optional): Distance metric. Defaults to 'edistance'.
-
-    Returns:
-        pd.DataFrame: Dataframe with pairwise distances.
+# This is the API / Interface class that the user will use
+class Distance:
+    """Distance class.
     """
-    raise NotImplementedError("get_distances is not implemented yet.")
+    # TODO: Docstrings for attributes / properties
+    # TODO: Not sure if it ok to take a str as input for metric and then
+    # overwrite it with the appropriate class. Maybe it's better to take 
+    # the class as input? Probably not, because then the user would have to
+    # know the class names and instantiate them themselves...
+    def __init__(self,
+                 metric: str = 'edistance',
+                 obsm_key: str = 'X_pca',
+                 ) -> None:
+        if metric=='edistance':
+            self.metric = Edistance()
+        elif metric=='wasserstein':
+            self.metric = WassersteinDistance()
+        elif metric=='pseudobulk':
+            self.metric = PseudobulkDistance()
+        elif metric=='mean_pairwise':
+            self.metric = MeanPairwiseDistance()
+        else:
+            raise ValueError(f"Metric '{metric}' not recognized.")
+        self.obsm_key = obsm_key
+        
     
-class Metric:
-    """Metric class of distance metrics between groups of cells. (OUTDATED)
+    def __call__(self,
+                 X: np.ndarray,
+                 Y: np.ndarray,
+                 **kwargs,
+                 ) -> float:
+        """Compute distance between vectors X and Y.
+
+        Args:
+            X (np.ndarray): First vector of shape (n_samples, n_features).
+            Y (np.ndarray): Second vector of shape (n_samples, n_features).
+
+        Returns:
+            float: Distance between X and Y.
+        """
+        return self.metric(X, Y, **kwargs)
+    
+    def pairwise(self, 
+                 adata: AnnData,
+                 groupby: str,
+                 groups: Optional[List[str]] = None,
+                 verbose: bool = True,
+                 **kwargs,
+                 ) -> pd.DataFrame:
+        """Get pairwise distances between groups of cells.
+
+        Args:
+            adata (AnnData): Annotated data matrix.
+            groupby (str): Column name in adata.obs.
+            groups (Optional[List[str]], optional): List of groups to compute
+            pairwise distances for. Defaults to None (all groups).
+            verbose (bool, optional): Whether to show progress bar. Defaults to
+            True.
+
+        Returns:
+            pd.DataFrame: Dataframe with pairwise distances.
+        """
+        # TODO: This could make use of the precomputed distances if we store
+        # those in the adata object
+        groups = adata.obs[groupby].unique() if groups is None else groups
+        df = pd.DataFrame(index=groups, columns=groups, dtype=float)
+        X = adata.obsm[self.obsm_key].copy()
+        y = adata.obs[groupby].copy()
+        fct = track if verbose else lambda x: x
+        for i, p1 in enumerate(fct(groups)):
+            x1 = X[y==p1].copy()
+            for p2 in groups[i:]:
+                x2 = X[y==p2].copy()
+                dist = self.metric(x1, x2, **kwargs)
+                df.loc[p1, p2] = dist
+                df.loc[p2, p1] = dist
+        df.index.name = groupby
+        df.columns.name = groupby
+        df.name = 'pairwise distances'  #  TODO: add metric name
+        return df
+            
+
+class AbstractDistance(ABC):
+    """Abstract class of distance metrics between two sets of vectors.
     """
+    # TODO: require property "accepts_precomputed" to be defined in child classes
+    
+    @abstractmethod
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         """Compute distance between vectors X and Y.
 
@@ -91,6 +135,7 @@ class Metric:
         """
         raise NotImplementedError("Metric class is abstract.")
     
+    @abstractmethod
     def from_Pidx(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         """Compute a distance between vectors X and Y with precomputed distances.
 
@@ -104,9 +149,15 @@ class Metric:
         """
         raise NotImplementedError("Metric class is abstract.")
 
-class Edistance(Metric):
+### Specific distance metrics ###
+class Edistance(AbstractDistance):
     """Edistance metric.
     """
+    
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = True
+    
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         # TODO: inherit docstring from parent class
         sigma_X = pairwise_distances(X, X, metric='euclidean').mean()
@@ -121,17 +172,22 @@ class Edistance(Metric):
         delta = P[idx, :][:, ~idx].mean()
         return 2 * delta - sigma_X - sigma_Y
 
-class MMD(Metric):
-    # TODO: implement MMD metric
-    # e.g.
-    # https://github.com/jindongwang/transferlearning/blob/master/code/distance/mmd_numpy_sklearn.py
-    # https://github.com/calico/scmmd
-    pass
+# class MMD(AbstractDistance):
+#     # TODO: implement MMD metric
+#     # e.g.
+#     # https://github.com/jindongwang/transferlearning/blob/master/code/distance/mmd_numpy_sklearn.py
+#     # https://github.com/calico/scmmd
+#     pass
 
-class Wasserstein(Metric):
+class WassersteinDistance(AbstractDistance):
     """Wasserstein distance metric.
     NOTE: I bet the Theislab OT people have a better solution for this.
     """
+    
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = True
+    
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         C1 = cdist(X, X)
         C2 = cdist(Y, Y)
@@ -160,230 +216,31 @@ class Wasserstein(Metric):
         dist = log0['gw_dist']
         return dist
 
-class PseudobulkDistance(Metric):
+class PseudobulkDistance(AbstractDistance):
     """Euclidean distance between pseudobulk vectors.
     """
+    
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+    
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs)
     
     def from_Pidx(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("PseudobulkDistance cannot be called on a pairwise distance matrix.")
 
-class MeanPairwiseDistance(Metric):
+class MeanPairwiseDistance(AbstractDistance):
     """Mean of the pairwise euclidean distance between two groups of cells.
     """
     # NOTE: I think this might be basically the same as PseudobulkDistance
+    
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = True
+    
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return pairwise_distances(X, Y, **kwargs).mean()
     
     def from_Pidx(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         return P[idx, :][:, ~idx].mean()
-
-class PermutationTest:
-    """Runs permutation test for all groups of cells against a contrast group ("control").
-    
-    Args:
-    metric (Metric): Distance metric to use.
-    n_perms (int): Number of permutations to run.
-    embedding (str): Name of embedding to use for distance computation.
-    alpha (float): Significance level.
-    correction (str): Multiple testing correction method.
-    verbose (bool): Whether to print progress.
-    
-    Returns:
-    pandas.DataFrame: Results of the permutation test, with columns:
-        - distance: distance between the contrast group and the group
-        - pvalue: p-value of the permutation test
-        - significant: whether the group is significantly different from the contrast group
-        - pvalue_adj: p-value after multiple testing correction
-        - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
-    """
-    
-    def __init__(self, metric: Metric, n_perms: int = 1000,
-                 embedding: str = "X_pca",
-                 alpha: float = 0.05, correction: str = "holm-sidak",
-                 verbose: bool = True, 
-                 ):
-        self.metric = metric
-        self.n_perms = n_perms
-        self.embedding = embedding
-        # self.groups = groups
-        self.alpha = alpha
-        self.correction = correction
-        # self.contrast = contrast
-        self.verbose = verbose
-        
-    def __call__(self, adata: AnnData, groupby: str, 
-                 contrast: str) -> pd.DataFrame:
-        """Run permutation test for metrics that take x and y.
-        """
-        groups = adata.obs[groupby].unique()
-        if contrast not in groups:
-            raise ValueError(f"Contrast group '{contrast}' not found in '{groupby}' of adata.obs.")
-        fct = tqdm if self.verbose else lambda x: x
-        emb = adata.obsm[self.embedding]
-        res = []
-        
-        # Generate the null distribution
-        for i in fct(range(self.n_perms)):
-            # per perturbation, shuffle with control and compute e-distance
-            df = pd.DataFrame(index=groups, columns=['distance'], dtype=float)
-            for group in groups:
-                if group == contrast:
-                    continue
-                # Shuffle the labels of the groups
-                mask = adata.obs[groupby].isin([group, contrast])
-                labels = adata.obs[groupby].values[mask]
-                shuffled_labels = np.random.permutation(labels)
-                idx = shuffled_labels==group
-                
-                X = emb[mask][idx]  # shuffled group
-                Y = emb[mask][~idx]  # shuffled contrast
-                dist = self.metric(X, Y)
-                
-                df.loc[group, 'distance'] = dist
-            res.append(df.sort_index())
-        
-        # Generate the empirical distribution
-        for group in groups:
-            if group == contrast:
-                continue
-            X = emb[adata.obs[groupby]==group]
-            Y = emb[adata.obs[groupby]==contrast]
-            df.loc[group, 'distance'] = self.metric(X, Y)
-        
-        # Evaluate the test
-        # count times shuffling resulted in larger distance
-        results = np.array(pd.concat([r['distance'] - df['distance'] for r in res], axis=1) > 0, dtype=int)
-        n_failures = pd.Series(np.clip(np.sum(results, axis=1), 1, np.inf), index=df.index)
-        pvalues = n_failures / self.n_perms
-
-        # Apply multiple testing correction
-        significant_adj, pvalue_adj, _, _ = multipletests(pvalues.values, 
-                                                          alpha=self.alpha, 
-                                                          method=self.correction
-                                                          )
-
-        # Aggregate results
-        tab = pd.DataFrame({'distance': df['distance'], 
-                            'pvalue': pvalues, 
-                            'significant': pvalues < self.alpha, 
-                            'pvalue_adj': pvalue_adj, 
-                            'significant_adj': significant_adj}, 
-                           index=df.index)
-        
-        # Set the contrast group
-        tab.loc[contrast, 'distance'] = 0
-        tab.loc[contrast, 'pvalue'] = 1
-        tab.loc[contrast, 'significant'] = False
-        tab.loc[contrast, 'pvalue_adj'] = 1
-        tab.loc[contrast, 'significant_adj'] = False
-        
-        return tab
-
-class FastPermutationTest(PermutationTest):
-    """Like PermutationTest, but Metric needs to have a from_Pidx method."""
-    # TODO: copy docstring from PermutationTest
-    def __init__(self, metric: Metric, n_perms: int = 1000,
-                 embedding: str = "X_pca",
-                 alpha: float = 0.05, correction: str = "holm-sidak",
-                 verbose: bool = True, 
-                 ):
-        self.metric = metric
-        self.n_perms = n_perms
-        self.embedding = embedding
-        # self.groups = groups
-        self.alpha = alpha
-        self.correction = correction
-        # self.contrast = contrast
-        self.verbose = verbose
-        
-    def __call__(self, adata: AnnData, groupby: str, 
-                 contrast: str) -> pd.DataFrame:
-        """Run permutation test for metrics that take x and y.
-        """
-        dist='euclidean'
-        
-        groups = adata.obs[groupby].unique()
-        if contrast not in groups:
-            raise ValueError(f"Contrast group '{contrast}' not found in '{groupby}' of adata.obs.")
-        fct = tqdm if self.verbose else lambda x: x
-        emb = adata.obsm[self.embedding]
-        res = []
-        
-        # Precompute the pairwise distances
-        pwds = {}
-        for group in groups:
-            x = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.embedding].copy()
-            pwd = pairwise_distances(x,x, metric=dist)
-            pwds[group] = pwd
-        
-        # Generate the null distribution
-        for i in fct(range(self.n_perms)):
-            # per perturbation, shuffle with control and compute e-distance
-            df = pd.DataFrame(index=groups, columns=['distance'], dtype=float)
-            for group in groups:
-                if group == contrast:
-                    continue
-                # Shuffle the labels of the groups
-                mask = adata.obs[groupby].isin([group, contrast])
-                labels = adata.obs[groupby].values[mask]
-                shuffled_labels = np.random.permutation(labels)
-                idx = shuffled_labels==group
-                
-                # quicker
-                P = pwds[group]
-                dist = self.metric.from_Pidx(P, idx)
-                
-                df.loc[group, 'distance'] = dist
-            res.append(df.sort_index())
-        
-        # Generate the empirical distribution
-        for group in groups:
-            if group == contrast:
-                continue
-            # quicker
-            mask = adata.obs[groupby].isin([group, contrast])
-            labels = adata.obs[groupby].values[mask]
-            idx = labels==group
-            P = pwds[group]
-            dist = self.metric.from_Pidx(P, idx)
-            df.loc[group, 'distance'] = dist
-        
-        # Evaluate the test
-        # count times shuffling resulted in larger distance
-        results = np.array(pd.concat([r['distance'] - df['distance'] for r in res], axis=1) > 0, dtype=int)
-        n_failures = pd.Series(np.clip(np.sum(results, axis=1), 1, np.inf), index=df.index)
-        pvalues = n_failures / self.n_perms
-
-        # Apply multiple testing correction
-        significant_adj, pvalue_adj, _, _ = multipletests(pvalues.values, 
-                                                          alpha=self.alpha, 
-                                                          method=self.correction
-                                                          )
-
-        # Aggregate results
-        tab = pd.DataFrame({'distance': df['distance'], 
-                            'pvalue': pvalues, 
-                            'significant': pvalues < self.alpha, 
-                            'pvalue_adj': pvalue_adj, 
-                            'significant_adj': significant_adj}, 
-                           index=df.index)
-        
-        # Set the contrast group
-        tab.loc[contrast, 'distance'] = 0
-        tab.loc[contrast, 'pvalue'] = 1
-        tab.loc[contrast, 'significant'] = False
-        tab.loc[contrast, 'pvalue_adj'] = 1
-        tab.loc[contrast, 'significant_adj'] = False
-        return tab
-
-class Etest(FastPermutationTest):
-    """Permutation test for e-distance."""
-    # NOTE: I think would be nice for users to have a class for each metric maybe?  
-    def __init__(self, n_perms: int = 1000, embedding: str = "X_pca", 
-                 groups: Optional[List[str]] = None, alpha: float = 0.05, 
-                 correction: str = "holm-sidak", contrast: str = "control", 
-                 verbose: bool = True):
-        super().__init__(Edistance(), n_perms, embedding, groups, alpha, 
-                         correction, contrast, verbose)

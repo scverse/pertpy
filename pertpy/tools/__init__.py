@@ -6,4 +6,5 @@ from pertpy.tools._milopy import Milopy
 from pertpy.tools._mixscape import Mixscape
 from pertpy.tools._sccoda import Sccoda
 from pertpy.tools._tasccoda import Tasccoda
-from pertpy.tools._distances import PermutationTest, Etest, Edistance, Wasserstein
+from pertpy.tools._distances import Distance
+from pertpy.tools._distance_tests import PermutationTest
