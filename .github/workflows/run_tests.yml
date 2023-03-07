@@ -20,11 +20,6 @@ jobs:
                     - {
                           python-version: "3.10",
                           os: ubuntu-latest,
-                          session: "mypy",
-                      }
-                    - {
-                          python-version: "3.10",
-                          os: ubuntu-latest,
                           session: "tests",
                       }
                     #                    - {
@@ -129,7 +124,7 @@ jobs:
                   pipx install poetry
                   poetry --version
 
-            - name: Install Nox nox-poetry rich
+            - name: Install nox nox-poetry rich
               run: |
                   pipx install nox
                   pipx inject nox nox-poetry

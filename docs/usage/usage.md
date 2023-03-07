@@ -94,7 +94,7 @@ Example implementation:
 import pertpy as pt
 
 adata = pt.dt.sc_sim_augur()
-ag = pt.tl.Augurpy(estimator="random_forest_classifier")
+ag = pt.tl.Augur(estimator="random_forest_classifier")
 adata = ag.load(adata)
 adata, results = ag.predict(adata)
 
@@ -113,7 +113,7 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
     :toctree: tools
     :nosignatures:
 
-    tools.Augurpy
+    tools.Augur
 ```
 
 ### Mixscape
@@ -142,8 +142,8 @@ import pertpy as pt
 
 mdata = pt.dt.papalexi_2021()
 ms = pt.tl.Mixscape()
-ms.pert_sign(mdata['rna'], 'perturbation', 'NT', 'replicate')
-ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+ms.mixscape(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
 ms.lda(adata=mdata['rna'], labels='gene_target', layer='X_pert')
 pt.pl.ms.lda(adata=mdata['rna'])
 ```
@@ -165,7 +165,7 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 .. autosummary::
     :toctree: tools
 
-    tools.Milopy
+    tools.Milo
 ```
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
@@ -219,10 +219,19 @@ sc.tl.umap(adata)
 dl = pt.tl.Dialogue()
 adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     adata,
-    groupby='clinical.status',
+    sample_id='clinical.status',
     celltype_key='cell.subtypes',
-    mimic_dialogue=True
+    n_counts_key="nCount_RNA",
+    normalize=True
 )
+all_results = dl.multilevel_modeling(ct_subs=ct_subs,
+                                     mcp_scores=mcps,
+                                     n_counts_key="nCount_RNA",
+                                     n_mcps=3,
+                                     sample_id="clinical.status",
+                                     confounder="gender",
+                                     formula="y ~ x + nCount_RNA",
+                                     )
 ```
 
 ### Representation

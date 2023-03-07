@@ -2,8 +2,12 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import scanpy as sc
 from mudata import MuData
+
+try:
+    import ete3
+except ImportError:
+    pytest.skip("ete3 not available", allow_module_level=True)
 
 import pertpy as pt
 

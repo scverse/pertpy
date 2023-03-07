@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Union
 from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from scipy.stats import wasserstein_distance
-from scipy.spatial.distance import cdist
-from ot.gromov import gromov_wasserstein
-from ot import unif
 from anndata import AnnData
 from statsmodels.stats.multitest import multipletests
 from sklearn.metrics import pairwise_distances
@@ -19,9 +15,9 @@ from rich.progress import track
 DEV NOTES:
 
 User interface:
-- A function to get distances between any two or more groups of cells with a 
+- A function to get distances between any two or more groups of cells with a
 distance metric of choice
-- get p-values for permutation test with a distance metric of choice for all or 
+- get p-values for permutation test with a distance metric of choice for all or
     some of their groups
 
 Implementation:
@@ -160,11 +156,11 @@ class Edistance(AbstractDistance):
     
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         # TODO: inherit docstring from parent class
-        sigma_X = pairwise_distances(X, X, metric='euclidean').mean()
-        sigma_Y = pairwise_distances(Y, Y, metric='euclidean').mean()
-        delta = pairwise_distances(X, Y, metric='euclidean').mean()        
+        sigma_X = pairwise_distances(X, X, metric="euclidean").mean()
+        sigma_Y = pairwise_distances(Y, Y, metric="euclidean").mean()
+        delta = pairwise_distances(X, Y, metric="euclidean").mean()
         return 2 * delta - sigma_X - sigma_Y
-    
+
     def from_Pidx(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         # TODO: inherit docstring from parent class
         sigma_X = P[idx, :][:, idx].mean()
@@ -179,42 +175,11 @@ class Edistance(AbstractDistance):
 #     # https://github.com/calico/scmmd
 #     pass
 
-class WassersteinDistance(AbstractDistance):
-    """Wasserstein distance metric.
-    NOTE: I bet the Theislab OT people have a better solution for this.
-    """
-    
-    def __init__(self) -> None:
-        super().__init__()
-        self.accepts_precomputed = True
-    
-    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        C1 = cdist(X, X)
-        C2 = cdist(Y, Y)
-
-        C1 /= C1.max()
-        C2 /= C2.max()
-
-        p = unif(len(C1))
-        q = unif(len(C2))
-
-        gw0, log0 = gromov_wasserstein(
-            C1, C2, p, q, 'square_loss', verbose=False, log=True)
-        dist = log0['gw_dist']
-        return dist
-    
-    def from_Pidx(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        C1 = P[idx, :][:, idx]
-        C2 = P[~idx, :][:, ~idx]
-        C1 /= C1.max()
-        C2 /= C2.max()
-        p = unif(len(C1))
-        q = unif(len(C2))
-
-        _, log0 = gromov_wasserstein(
-            C1, C2, p, q, 'square_loss', verbose=False, log=True)
-        dist = log0['gw_dist']
-        return dist
+# class WassersteinDistance(AbstractDistance):
+#     """Wasserstein distance metric.
+#     NOTE: I bet the Theislab OT people have a better solution for this.
+#     """
+#     # TODO: implement Wasserstein distance metric
 
 class PseudobulkDistance(AbstractDistance):
     """Euclidean distance between pseudobulk vectors.
@@ -226,7 +191,7 @@ class PseudobulkDistance(AbstractDistance):
     
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs)
-    
+
     def from_Pidx(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("PseudobulkDistance cannot be called on a pairwise distance matrix.")
 
@@ -241,6 +206,6 @@ class MeanPairwiseDistance(AbstractDistance):
     
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return pairwise_distances(X, Y, **kwargs).mean()
-    
+
     def from_Pidx(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         return P[idx, :][:, ~idx].mean()

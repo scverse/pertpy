@@ -173,5 +173,10 @@ nbsphinx_prolog = r"""
 )
 nbsphinx_thumbnails = {
     "tutorials/notebooks/mixscape": "_static/tutorials/mixscape.png",
-    "tutorials/notebooks/augurpy": "_static/tutorials/augur.png",
+    "tutorials/notebooks/augur": "_static/tutorials/augur.png",
+    "tutorials/notebooks/sccoda": "_static/tutorials/sccoda.png",
+    "tutorials/notebooks/sccoda_extended": "_static/tutorials/sccoda_extended.png",
+    "tutorials/notebooks/tasccoda": "_static/tutorials/tasccoda.png",
+    "tutorials/notebooks/milo": "_static/tutorials/milo.png",
+    "tutorials/notebooks/dialogue": "_static/tutorials/dialogue.png",
 }
