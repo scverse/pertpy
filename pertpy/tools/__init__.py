@@ -3,12 +3,12 @@ from rich import print
 from pertpy.tools._augur import Augur
 from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._differential_gene_expression import DifferentialGeneExpression
-from pertpy.tools._distances import Edistance, Etest, PermutationTest, Wasserstein
+from pertpy.tools._distance_tests import PermutationTest
+from pertpy.tools._distances import Distance
 from pertpy.tools._kernel_pca import kernel_pca
 from pertpy.tools._milo import Milo
 from pertpy.tools._mixscape import Mixscape
-from pertpy.tools._distances import Distance
-from pertpy.tools._distance_tests import PermutationTest
+
 try:
     from pertpy.tools.coda._sccoda import Sccoda
     from pertpy.tools.coda._tasccoda import Tasccoda
