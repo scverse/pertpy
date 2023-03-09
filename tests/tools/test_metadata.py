@@ -47,9 +47,46 @@ class TestMetaData:
         assert len(adata.obs.columns) == len(pt_metadata.cell_line_meta.columns)
         assert set(pt_metadata.cell_line_meta.columns).issubset(adata.obs)
         stripped_cell_line_name = (
-            ["SLR21"] * num_cells_per_id
-            + ["HEKTE"] * num_cells_per_id
+            ["SW579"] * num_cells_per_id
+            + ["BT474"] * num_cells_per_id
             + ["NALM19"] * num_cells_per_id
-            + ["JHESOAD1"] * num_cells_per_id
+            + ["TE-6"] * num_cells_per_id
         )
         assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
+
+    def test_ccle_expression_annotation(self):
+        adata = self.make_test_adata()
+        pt_metadata = pt.tl.MetaData()
+        pt_metadata.annotate_cell_lines(adata)
+        pt_metadata.annotate_ccle_expression(adata)
+        assert len(adata.obsm) == 1
+        assert adata.obsm["CCLE_expression"].shape == (num_cells, len(pt_metadata.ccle_expr.columns))
+
+    def test_protein_expression_annotation(self):
+        adata = self.make_test_adata()
+        pt_metadata = pt.tl.MetaData()
+        pt_metadata.annotate_cell_lines(adata)
+        pt_metadata.annotate_protein_expression(adata)
+        assert len(adata.obsm) == 1
+        assert adata.obsm["proteomics_protein_intensity"].shape == (
+            num_cells,
+            len(pt_metadata.proteomics_data.uniprot_id.unique()),
+        )
+
+    def test_bulk_rna_expression_annotation(self):
+        adata = self.make_test_adata()
+        pt_metadata = pt.tl.MetaData()
+        pt_metadata.annotate_cell_lines(adata)
+        pt_metadata.annotate_bulk_rna_expression(adata)
+        assert len(adata.obsm) == 1
+        assert adata.obsm["bulk_rna_expression_broad"].shape == (
+            num_cells,
+            len(pt_metadata.bulk_rna_broad.gene_id.unique()),
+        )
+
+        pt_metadata.annotate_bulk_rna_expression(adata, bulk_rna_source="sanger")
+        assert len(adata.obsm) == 2
+        assert adata.obsm["bulk_rna_expression_sanger"].shape == (
+            num_cells,
+            len(pt_metadata.bulk_rna_sanger.gene_id.unique()),
+        )

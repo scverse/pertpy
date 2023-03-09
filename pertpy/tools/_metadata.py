@@ -42,7 +42,7 @@ class MetaData:
         self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
 
         """Download meta data for driver genes of the COSMIC Tier 1 gene from DepMap_Sanger """
-        self.driver_gene_cosmic = pd.read_csv("COSMIC_tier1.csv")
+        self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
 
         """Download bulk RNA-seq data collated from the Wellcome Sanger Institute and the Broad Institute """
         bulk_rna_sanger_file_name = "rnaseq_sanger.zip"
@@ -83,6 +83,22 @@ class MetaData:
                 is_zip=True,
             )
         self.proteomics_data = pd.read_csv(proteomics_file_path)
+
+        """Download CCLE expression data, which contains Gene expression TPM values
+        of the protein coding genes for DepMap cell lines.
+       """
+
+        ccle_expr_file_name = "CCLE_expression.csv"
+        ccle_expr_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
+        if not Path(ccle_expr_file_path).exists():
+            print("No metadata file was found for CCLE expression data. Start downloading now.")
+            _download(
+                url="https://figshare.com/ndownloader/files/34989919",
+                output_file_name=ccle_expr_file_name,
+                output_path=settings.cachedir,
+                is_zip=False,
+            )
+        self.ccle_expr = pd.read_csv(ccle_expr_file_path, index_col=0)
 
     def getinfo_annotate_driver_genes(self, driver_gene_set: str = "intOGen") -> None:
         """
@@ -175,6 +191,17 @@ class MetaData:
         )
         print(f"{len(self.proteomics_data.model_name.unique())} unique cell lines are saved in this file.")
         print(f"{len(self.proteomics_data.uniprot_id.unique())} unique proteins are saved in this file.")
+
+    def getinfo_annotate_ccle_expression(self) -> None:
+        """
+        The user can use this function to know which kind of information to query when annotating
+        CCLE expression data.
+        """
+
+        """Print the number of genes and cell lines of the CCLE expression datas."""
+
+        print(f" Expression of {len(self.ccle_expr.columns.unique())} genes is saved in this file.")
+        print(f"{len(self.ccle_expr.index.unique())} unique cell lines are available in this file.")
 
     def annotate_cell_lines(
         self,
@@ -340,7 +367,10 @@ class MetaData:
             )
 
         rna_exp = pd.pivot(bulk_rna, index=identifier_type, columns="gene_id", values=bulk_rna_information)
-        rna_exp = rna_exp.reindex(adata.obs[cell_line_identifier]).to_numpy()
+        # order according to adata.obs
+        rna_exp = rna_exp.reindex(adata.obs[cell_line_identifier])  # .to_numpy()
+        # have same index as adata.obs
+        rna_exp = rna_exp.set_index(adata.obs.index)
         adata.obsm["bulk_rna_expression_" + bulk_rna_source] = rna_exp
 
         return adata
@@ -401,9 +431,60 @@ class MetaData:
         prot_exp = pd.pivot(
             self.proteomics_data, index=identifier_type, columns="uniprot_id", values=proteomics_information
         )
-        # convert to np array
-        prot_exp = prot_exp.reindex(adata.obs[cell_line_identifier]).to_numpy()
+        # order according to adata.obs
+        prot_exp = prot_exp.reindex(adata.obs[cell_line_identifier])
+        # have same index with adata.obs
+        prot_exp = prot_exp.set_index(adata.obs.index)
         # save in the adata.obsm
         adata.obsm["proteomics_" + proteomics_information] = prot_exp
+
+        return adata
+
+    def annotate_ccle_expression(
+        self,
+        adata: anndata,
+        cell_line_identifier: str = "DepMap_ID",
+        copy: bool = False,
+    ) -> anndata:
+        """Fetch CCLE expression.
+
+        For each cell, we fetch .
+
+        Args:
+            adata: The data object to annotate.
+            cell_line_identifier: The column of `.obs` with cell line information. (default: 'DepMap_ID")
+            copy: Determines whether a copy of the `adata` is returned. (default: False)
+
+        Returns:
+            Returns an AnnData object with CCLE expression annotation.
+        """
+        if copy:
+            adata = adata.copy()
+
+        """If the specified cell line type can be found in the CCLE expression data,
+        we can compare these keys and fetch the corresponding metadata."""
+
+        if cell_line_identifier not in adata.obs.columns:
+            raise ValueError(
+                "The specified cell line identifier can't be found in the adata.obs. "
+                "Please fetch the cell line meta data first using the functiion "
+                "annotate_cell_lines()."
+            )
+
+        not_matched_identifiers = list(set(adata.obs[cell_line_identifier]) - set(self.ccle_expr.index))
+        if len(not_matched_identifiers) > 0:
+            print(
+                "Following identifiers can not be found in the CCLE expression data,"
+                " their corresponding meta data are NA values. Please check it again:",
+                *not_matched_identifiers,
+                sep="\n- ",
+            )
+
+        # order the cell line according to adata.obs
+        ccle_expression = self.ccle_expr.reindex(adata.obs[cell_line_identifier])
+        # set the index same as in adata.obs
+        ccle_expression = ccle_expression.set_index(adata.obs.index)
+        # save in the adata.obsm
+        adata.obsm["CCLE_expression"] = ccle_expression
 
         return adata
