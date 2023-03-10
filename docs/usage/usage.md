@@ -234,6 +234,52 @@ all_results = dl.multilevel_modeling(ct_subs=ct_subs,
                                      )
 ```
 
+### Distances and Permutation Tests
+General purpose functions for distances and permutation tests. Reimplements
+functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Distances
+    tools.PermutationTest
+```
+
+See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html) 
+and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html) for a more elaborate tutorial.
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+adata = pt.dt.dixit_2016_scperturb()
+
+# basic qc and pp
+sc.pp.filter_cells(adata, min_counts=1000)
+sc.pp.normalize_per_cell(adata)
+sc.pp.filter_genes(adata, min_cells=50)
+sc.pp.log1p(adata)
+sc.pp.filter_genes(adata, min_cells=3)  # sanity cleaning
+
+# select HVGs
+n_var_max = 2000  # max total features to select
+sc.pp.highly_variable_genes(adata, n_top_genes=n_var_max, subset=True)
+sc.pp.pca(adata, use_highly_variable=True)
+
+# Pairwise distances
+distance = pt.tl.Distance('edistance', 'X_pca')
+pairwise_edistance = distance.pairwise(adata, groupby='perturbation', verbose=True)
+
+# E-test (Permutation test using E-distance)
+etest = pt.tl.PermutationTest('edistance', n_perms=1000, obsm_key='X_pca', alpha=0.05, correction='holm-sidak')
+tab = etest(adata, groupby='perturbation', contrast='control', verbose=True)
+```
+
 ### Representation
 
 ```{eval-rst}
