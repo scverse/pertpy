@@ -43,10 +43,10 @@ class TestPermutationTest:
         assert tab.shape[1] == 5
         assert type(tab) == DataFrame
         # p-values are in [0,1]
-        assert tab['pvalue'].min() > 0
-        assert tab['pvalue'].max() < 1
-        assert tab['pvalue_adj'].min() > 0
-        assert tab['pvalue_adj'].max() < 1
+        assert tab['pvalue'].min() >= 0
+        assert tab['pvalue'].max() <= 1
+        assert tab['pvalue_adj'].min() >= 0
+        assert tab['pvalue_adj'].max() <= 1
     
     def test_pb_test(self, adata):
         pb_test = pt.tl.PermutationTest('pseudobulk', n_perms=1000, 
@@ -57,7 +57,7 @@ class TestPermutationTest:
         assert tab.shape[1] == 5
         assert type(tab) == DataFrame
         # p-values are in [0,1]
-        assert tab['pvalue'].min() > 0
-        assert tab['pvalue'].max() < 1
-        assert tab['pvalue_adj'].min() > 0
-        assert tab['pvalue_adj'].max() < 1
+        assert tab['pvalue'].min() >= 0
+        assert tab['pvalue'].max() <= 1
+        assert tab['pvalue_adj'].min() >= 0
+        assert tab['pvalue_adj'].max() <= 1

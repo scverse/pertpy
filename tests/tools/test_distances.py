@@ -5,7 +5,8 @@ from pandas import DataFrame
 
 import pertpy as pt
 
-distances = ['edistance', 'pseudobulk', 'mean_pairwise']
+actual_distances = ['edistance', 'pseudobulk']
+pseudo_distances = ['mean_pairwise']
 
 class TestDistances:
     @fixture
@@ -37,7 +38,7 @@ class TestDistances:
         return adata
     
     def test_distance_axioms(self, adata):
-        for distance_ in distances:
+        for distance_ in actual_distances:
             # Test if distances are well-defined in accordance with metric axioms
             distance = pt.tl.Distance(distance_, 'X_pca')
             df = distance.pairwise(adata, groupby='perturbation', verbose=True)
@@ -51,5 +52,13 @@ class TestDistances:
             for i in range(100):
                 triplet = np.random.choice(df.index, size=3, replace=False)
                 assert df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]] >= df.loc[triplet[0], triplet[2]]
-        
+    
+    def test_distances(self, adata):
+        for distance_ in actual_distances + pseudo_distances:
+            distance = pt.tl.Distance(distance_, 'X_pca')
+            df = distance.pairwise(adata, groupby='perturbation', verbose=True)
+            assert isinstance(df, DataFrame)
+            assert df.columns.equals(df.index)
+            assert np.sum(df.values - df.values.T) == 0  # symmetry
+            assert np.sum(df.values < 0) == 0  # non-negativity
         
