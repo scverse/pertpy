@@ -20,6 +20,7 @@ DEV NOTES:
 
 TODO:
 - Make PermutationTest allow for multiple controls (accept list of controls)
+- Check if PermutationTest works for all metrics
 """
 
 
@@ -66,7 +67,7 @@ class PermutationTest:
             - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
         """
 
-        if Distance(self.metric, self.obsm_key).metric.accepts_precomputed:
+        if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
             # distance matrix, but not all metrics can do that.
             return self.test_precomputed(adata, groupby, contrast, verbose)
@@ -141,12 +142,17 @@ class PermutationTest:
 
         return tab
 
-    def test_precomputed(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
+    def test_precomputed(self, 
+                         adata: AnnData, 
+                         groupby: str, 
+                         contrast: str, 
+                         verbose: bool = True
+                         ) -> pd.DataFrame:
         """Run permutation test for metrics that take precomputed distances."""
         dist = "euclidean"  # TODO: make this an argument? This is the metric for the precomputed distances
 
         distance = Distance(self.metric, self.obsm_key)
-        if not distance.metric.accepts_precomputed:
+        if not distance.metric_fct.accepts_precomputed:
             raise ValueError(f"Metric {self.metric} does not accept precomputed distances.")
 
         groups = adata.obs[groupby].unique()
@@ -199,7 +205,6 @@ class PermutationTest:
         results = np.array(pd.concat([r["distance"] - df["distance"] for r in res], axis=1) > 0, dtype=int)
         n_failures = pd.Series(np.clip(np.sum(results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
-        # return results, n_failures, res, df  # DEBUGGING
 
         # Apply multiple testing correction
         significant_adj, pvalue_adj, _, _ = multipletests(pvalues.values, alpha=self.alpha, method=self.correction)

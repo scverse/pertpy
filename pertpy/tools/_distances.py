@@ -27,6 +27,8 @@ and selects the appropriate distance metric class based on the user input.
 TODO:
 - Inherit docstrings from parent classes
 - Store precomputed distances in adata object
+- Implement MMD
+- Implement Wasserstein distance
 """
 
 
