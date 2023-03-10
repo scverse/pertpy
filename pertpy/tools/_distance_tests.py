@@ -141,12 +141,7 @@ class PermutationTest:
 
         return tab
 
-    def test_precomputed(self, 
-                         adata: AnnData, 
-                         groupby: str, 
-                         contrast: str, 
-                         verbose: bool = True
-                         ) -> pd.DataFrame:
+    def test_precomputed(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
         """Run permutation test for metrics that take precomputed distances."""
         dist = "euclidean"  # TODO: make this an argument? This is the metric for the precomputed distances
 
@@ -182,9 +177,9 @@ class PermutationTest:
 
                 # much quicker
                 P = pwds[group]
-                dist = distance.metric_fct.from_precomputed(P, idx)
+                d = distance.metric_fct.from_precomputed(P, idx)
 
-                df.loc[group, "distance"] = dist
+                df.loc[group, "distance"] = d
             res.append(df.sort_index())
 
         # Generate the empirical distribution
@@ -196,8 +191,8 @@ class PermutationTest:
             labels = adata.obs[groupby].values[mask]
             idx = labels == group
             P = pwds[group]
-            dist = distance.metric_fct.from_precomputed(P, idx)
-            df.loc[group, "distance"] = dist
+            d = distance.metric_fct.from_precomputed(P, idx)
+            df.loc[group, "distance"] = d
 
         # Evaluate the test
         # count times shuffling resulted in larger distance
