@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
 import numpy as np
 import pandas as pd
-from _distances import Distance
 from anndata import AnnData
 from rich.progress import track
 from sklearn.metrics import pairwise_distances
 from statsmodels.stats.multitest import multipletests
+
+from ._distances import Distance
 
 """
 DEV NOTES:
