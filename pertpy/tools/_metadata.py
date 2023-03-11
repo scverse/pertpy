@@ -179,8 +179,6 @@ class MetaData:
         calculating the geometric mean.
         The final dataset, termed ProCan-DepMapSanger, was derived from 6,864 mass spectrometry runs covering
         949 cell lines and quantifying a total of 8,498 proteins.
-
-        Z-Score is calculated with reference to each protein as measured across the entire cell line panel.
         """
 
         """Print the columns of the protein expression data and the number of proteins."""
@@ -380,7 +378,6 @@ class MetaData:
         adata: anndata,
         cell_line_identifier: str = "cell_line_name",
         identifier_type: str = "model_name",
-        proteomics_information: str = "protein_intensity",
         copy: bool = False,
     ) -> anndata:
         """Fetch protein expression.
@@ -391,7 +388,6 @@ class MetaData:
             adata: The data object to annotate.
             cell_line_identifier: The column of `.obs` with cell line information. (default: 'cell_line_name")
             identifier_type: The type of cell line information, e.g. model_name or model_id. (default: 'model_name')
-            proteomics_information: The metadata to fetch, protein_intensity or zscore. (default: 'protein_intensity')
             copy: Determines whether a copy of the `adata` is returned. (default: False)
 
         Returns:
@@ -429,14 +425,14 @@ class MetaData:
             )
         # convert the original protein intensities table from long format to wide format, group by the cell lines
         prot_exp = pd.pivot(
-            self.proteomics_data, index=identifier_type, columns="uniprot_id", values=proteomics_information
+            self.proteomics_data, index=identifier_type, columns="uniprot_id", values="protein_intensity"
         )
         # order according to adata.obs
         prot_exp = prot_exp.reindex(adata.obs[cell_line_identifier])
         # have same index with adata.obs
         prot_exp = prot_exp.set_index(adata.obs.index)
         # save in the adata.obsm
-        adata.obsm["proteomics_" + proteomics_information] = prot_exp
+        adata.obsm["proteomics_protein_intensity"] = prot_exp
 
         return adata
 
