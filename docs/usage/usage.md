@@ -258,19 +258,7 @@ and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorial
 import pertpy as pt
 import scanpy as sc
 
-adata = pt.dt.dixit_2016_scperturb()
-
-# basic qc and pp
-sc.pp.filter_cells(adata, min_counts=1000)
-sc.pp.normalize_per_cell(adata)
-sc.pp.filter_genes(adata, min_cells=50)
-sc.pp.log1p(adata)
-sc.pp.filter_genes(adata, min_cells=3)  # sanity cleaning
-
-# select HVGs
-n_var_max = 2000  # max total features to select
-sc.pp.highly_variable_genes(adata, n_top_genes=n_var_max, subset=True)
-sc.pp.pca(adata, use_highly_variable=True)
+adata = pt.dt.distance_example_data()
 
 # Pairwise distances
 distance = pt.tl.Distance('edistance', 'X_pca')
