@@ -9,39 +9,21 @@ from rich.progress import track
 from sklearn.metrics import pairwise_distances
 from statsmodels.stats.multitest import multipletests
 
-"""
-DEV NOTES:
-
-User interface:
-- A function to get distances between any two or more groups of cells with a
-distance metric of choice
-- get p-values for permutation test with a distance metric of choice for all or
-    some of their groups
-
-Implementation:
-- An abstract base class "AbstractDistance" for distance metrics.
-- A class for each distance metric that inherits from the abstract base class.
-- An interface / API / wrapper class "Distance" which is accessible to the user
-and selects the appropriate distance metric class based on the user input.
-TODO:
-- Inherit docstrings from parent classes
-- Store precomputed distances in adata object
-- Implement MMD
-- Implement Wasserstein distance
-"""
-
 
 class Distance:
-    """Distance class.
-
-    Used to compute distances between groups of cells. The distance metric can
-    be specified by the user. The class also provides a method to compute
-    the pairwise distances between all groups of cells.
+    """Distance class, used to compute distances between groups of cells. 
+    
+    The distance metric can be specified by the user. The class also provides a 
+    method to compute the pairwise distances between all groups of cells.
+    Currently available metrics:
+    - "edistance": Energy distance
+    - "pseudobulk": Pseudobulk distance
+    - "mean_pairwise": Mean pairwise distance
 
     Attributes:
-        metric_fct (AbstractDistance): Distance metric function.
-        obsm_key (str): Name of embedding in adata.obsm to use.
-        metric (str): Name of distance metric.
+        metric: Name of distance metric.
+        obsm_key: Name of embedding in adata.obsm to use.
+        metric_fct: Distance metric function.
     """
 
     def __init__(
@@ -52,8 +34,8 @@ class Distance:
         """Initialize Distance class.
 
         Args:
-            metric (str, optional): Distance metric to use. Defaults to edistance.
-            obsm_key (str, optional): Name of embedding in adata.obsm to use.
+            metric: Distance metric to use. (default: "edistance")
+            obsm_key: Name of embedding in adata.obsm to use. (default: "X_pca")
         """
         metric_fct: AbstractDistance = None
         if metric == "edistance":
@@ -77,8 +59,8 @@ class Distance:
         """Compute distance between vectors X and Y.
 
         Args:
-            X (np.ndarray): First vector of shape (n_samples, n_features).
-            Y (np.ndarray): Second vector of shape (n_samples, n_features).
+            X: First vector of shape (n_samples, n_features).
+            Y: Second vector of shape (n_samples, n_features).
 
         Returns:
             float: Distance between X and Y.
@@ -96,12 +78,11 @@ class Distance:
         """Get pairwise distances between groups of cells.
 
         Args:
-            adata (AnnData): Annotated data matrix.
-            groupby (str): Column name in adata.obs.
-            groups (Optional[List[str]], optional): List of groups to compute
-            pairwise distances for. Defaults to None (all groups).
-            verbose (bool, optional): Whether to show progress bar. Defaults to
-            True.
+            adata: Annotated data matrix.
+            groupby: Column name in adata.obs.
+            groups: List of groups to compute pairwise distances for. 
+                If None, uses all groups. (default: None)
+            verbose: Whether to show progress bar. (default: True)
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
@@ -110,16 +91,16 @@ class Distance:
         # those in the adata object
         groups = adata.obs[groupby].unique() if groups is None else groups
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
-        X = adata.obsm[self.obsm_key].copy()
-        y = adata.obs[groupby].copy()
-        fct = track if verbose else lambda x: x
-        for i, p1 in enumerate(fct(groups)):
-            x1 = X[y == p1].copy()
-            for p2 in groups[i:]:
-                x2 = X[y == p2].copy()
-                dist = self.metric_fct(x1, x2, **kwargs)
-                df.loc[p1, p2] = dist
-                df.loc[p2, p1] = dist
+        embedding = adata.obsm[self.obsm_key].copy()
+        grouping = adata.obs[groupby].copy()
+        fct = track if verbose else lambda iterable: iterable
+        for index_x, group_x in enumerate(fct(groups)):
+            cells_x = embedding[grouping == group_x].copy()
+            for group_y in groups[index_x:]:
+                cells_y = embedding[grouping == group_y].copy()
+                dist = self.metric_fct(cells_x, cells_y, **kwargs)
+                df.loc[group_x, group_y] = dist
+                df.loc[group_y, group_x] = dist
         df.index.name = groupby
         df.columns.name = groupby
         df.name = f"pairwise {self.metric}"
@@ -139,8 +120,8 @@ class AbstractDistance(ABC):
         """Compute distance between vectors X and Y.
 
         Args:
-            X (np.ndarray): First vector of shape (n_samples, n_features).
-            Y (np.ndarray): Second vector of shape (n_samples, n_features).
+            X: First vector of shape (n_samples, n_features).
+            Y: Second vector of shape (n_samples, n_features).
 
         Returns:
             float: Distance between X and Y.
@@ -152,8 +133,8 @@ class AbstractDistance(ABC):
         """Compute a distance between vectors X and Y with precomputed distances.
 
         Args:
-            P (np.ndarray): Pairwise distance matrix of shape (n_samples, n_samples).
-            idx (np.ndarray): Boolean array of shape (n_samples,) indicating which
+            P: Pairwise distance matrix of shape (n_samples, n_samples).
+            idx: Boolean array of shape (n_samples,) indicating which
             samples belong to X (or Y, since each metric is symmetric).
 
         Returns:
@@ -215,8 +196,6 @@ class PseudobulkDistance(AbstractDistance):
 
 class MeanPairwiseDistance(AbstractDistance):
     """Mean of the pairwise euclidean distance between two groups of cells."""
-
-    # NOTE: I think this might be basically the same as PseudobulkDistance
 
     def __init__(self) -> None:
         super().__init__()

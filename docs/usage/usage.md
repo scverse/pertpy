@@ -261,11 +261,11 @@ import scanpy as sc
 adata = pt.dt.distance_example_data()
 
 # Pairwise distances
-distance = pt.tl.Distance('edistance', 'X_pca')
+distance = pt.tl.Distance(metric='edistance', obsm_key='X_pca')
 pairwise_edistance = distance.pairwise(adata, groupby='perturbation')
 
 # E-test (Permutation test using E-distance)
-etest = pt.tl.PermutationTest('edistance', obsm_key='X_pca', correction='holm-sidak')
+etest = pt.tl.PermutationTest(metric='edistance', obsm_key='X_pca', correction='holm-sidak')
 tab = etest(adata, groupby='perturbation', contrast='control')
 ```
 

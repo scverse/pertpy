@@ -9,29 +9,17 @@ from statsmodels.stats.multitest import multipletests
 
 from ._distances import Distance
 
-"""
-DEV NOTES:
-- There will be a single PermutationTest class that internally does one of the following strategies:
-    - recomputes the pairwise distance matrix every time and works for
-      any metric that has .
-    - uses the precomputed pairwise distance matrix and works only for
-    metrics that can be called on the pairwise distance matrix. Will be faster.
 
-TODO:
-- Make PermutationTest allow for multiple controls (accept list of controls)
-- Check if PermutationTest works for all metrics
-"""
-
-
-class PermutationTest:
-    """Runs permutation tests for all groups of cells against a contrast group ("control").
+class DistanceTest:
+    """Runs permutation tests using a distance of choice between groups of cells,
+    testing all groups of cells against a specified contrast group ("control").
 
     Args:
-    metric (str): Distance metric to use.
-    n_perms (int): Number of permutations to run.
-    obsm_key (str): Name of embedding to use for distance computation.
-    alpha (float): Significance level.
-    correction (str): Multiple testing correction method.
+        metric: Distance metric to use.
+        n_perms: Number of permutations to run. (default: 1000)
+        obsm_key: Name of embedding to use for distance computation. (default: "X_pca")
+        alpha: Significance level. (default: 0.05)
+        correction: Multiple testing correction method. (default: "holm-sidak")
     """
 
     def __init__(
@@ -49,21 +37,22 @@ class PermutationTest:
         self.correction = correction
 
     def __call__(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
-        """Run permutation test.
+        """Run a permutation test using the specified distance metric, testing
+        all groups of cells against a specified contrast group ("control").
 
         Args:
-        adata (anndata.AnnData): Annotated data matrix.
-        groupby (str): Key in adata.obs for grouping cells.
-        contrast (str): Name of the contrast group.
-        verbose (bool): Whether to print progress.
+            adata: Annotated data matrix.
+            groupby: Key in adata.obs for grouping cells.
+            contrast: Name of the contrast group.
+            verbose: Whether to print progress. (default: True)
 
         Returns:
-        pandas.DataFrame: Results of the permutation test, with columns:
-            - distance: distance between the contrast group and the group
-            - pvalue: p-value of the permutation test
-            - significant: whether the group is significantly different from the contrast group
-            - pvalue_adj: p-value after multiple testing correction
-            - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+            pandas.DataFrame: Results of the permutation test, with columns:
+                - distance: distance between the contrast group and the group
+                - pvalue: p-value of the permutation test
+                - significant: whether the group is significantly different from the contrast group
+                - pvalue_adj: p-value after multiple testing correction
+                - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
         """
         if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
@@ -73,17 +62,35 @@ class PermutationTest:
             return self.test_xy(adata, groupby, contrast, verbose)
 
     def test_xy(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
-        """Run permutation test for metrics that take x and y."""
+        """Run permutation test for metrics that can not be computed using
+        precomputed pairwise distances, but need the actual data points.
+        
+        This is slower than test_precomputed.
+        
+        Args:
+            adata: Annotated data matrix.
+            groupby: Key in adata.obs for grouping cells.
+            contrast: Name of the contrast group.
+            verbose: Whether to print progress. (default: True)
+        
+        Returns:
+            pandas.DataFrame: Results of the permutation test, with columns:
+                - distance: distance between the contrast group and the group
+                - pvalue: p-value of the permutation test
+                - significant: whether the group is significantly different from the contrast group
+                - pvalue_adj: p-value after multiple testing correction
+                - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+        """
         distance = Distance(self.metric, self.obsm_key)
         groups = adata.obs[groupby].unique()
         if contrast not in groups:
             raise ValueError(f"Contrast group {contrast} not found in {groupby} of adata.obs.")
-        fct = track if verbose else lambda x: x
-        emb = adata.obsm[self.obsm_key]
-        res = []
+        fct = track if verbose else lambda iterable: iterable
+        embedding = adata.obsm[self.obsm_key]
 
         # Generate the null distribution
-        for _i in fct(range(self.n_perms)):
+        results = []
+        for _permutation in fct(range(self.n_perms)):
             # per perturbation, shuffle with control and compute e-distance
             df = pd.DataFrame(index=groups, columns=["distance"], dtype=float)
             for group in groups:
@@ -95,25 +102,25 @@ class PermutationTest:
                 shuffled_labels = np.random.permutation(labels)
                 idx = shuffled_labels == group
 
-                X = emb[mask][idx]  # shuffled group
-                Y = emb[mask][~idx]  # shuffled contrast
+                X = embedding[mask][idx]  # shuffled group
+                Y = embedding[mask][~idx]  # shuffled contrast
                 dist = distance(X, Y)
 
                 df.loc[group, "distance"] = dist
-            res.append(df.sort_index())
+            results.append(df.sort_index())
 
         # Generate the empirical distribution
         for group in groups:
             if group == contrast:
                 continue
-            X = emb[adata.obs[groupby] == group]
-            Y = emb[adata.obs[groupby] == contrast]
+            X = embedding[adata.obs[groupby] == group]
+            Y = embedding[adata.obs[groupby] == contrast]
             df.loc[group, "distance"] = distance(X, Y)
 
         # Evaluate the test
         # count times shuffling resulted in larger distance
-        results = np.array(pd.concat([r["distance"] - df["distance"] for r in res], axis=1) > 0, dtype=int)
-        n_failures = pd.Series(np.clip(np.sum(results, axis=1), 1, np.inf), index=df.index)
+        comparison_results = np.array(pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int)
+        n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
 
         # Apply multiple testing correction
@@ -141,7 +148,22 @@ class PermutationTest:
         return tab
 
     def test_precomputed(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
-        """Run permutation test for metrics that take precomputed distances."""
+        """Run permutation test for metrics that take precomputed distances.
+        
+        Args:
+            adata: Annotated data matrix.
+            groupby: Key in adata.obs for grouping cells.
+            contrast: Name of the contrast group.
+            verbose: Whether to print progress. (default: True)
+        
+        Returns:
+            pandas.DataFrame: Results of the permutation test, with columns:
+                - distance: distance between the contrast group and the group
+                - pvalue: p-value of the permutation test
+                - significant: whether the group is significantly different from the contrast group
+                - pvalue_adj: p-value after multiple testing correction
+                - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+        """
         dist = "euclidean"  # TODO: make this an argument? This is the metric for the precomputed distances
 
         distance = Distance(self.metric, self.obsm_key)
@@ -151,18 +173,18 @@ class PermutationTest:
         groups = adata.obs[groupby].unique()
         if contrast not in groups:
             raise ValueError(f"Contrast group {contrast} not found in {groupby} of adata.obs.")
-        fct = track if verbose else lambda x: x
+        fct = track if verbose else lambda iterable: iterable
 
         # Precompute the pairwise distances
-        pwds = {}
+        precomputed_distances = {}
         for group in groups:
-            x = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.obsm_key].copy()
-            pwd = pairwise_distances(x, x, metric=dist)
-            pwds[group] = pwd
+            cells = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.obsm_key].copy()
+            pwd = pairwise_distances(cells, cells, metric=dist)
+            precomputed_distances[group] = pwd
 
         # Generate the null distribution
-        res = []
-        for _i in fct(range(self.n_perms)):
+        results = []
+        for _permutation in fct(range(self.n_perms)):
             # per perturbation, shuffle with control and compute e-distance
             df = pd.DataFrame(index=groups, columns=["distance"], dtype=float)
             for group in groups:
@@ -174,29 +196,29 @@ class PermutationTest:
                 shuffled_labels = np.random.permutation(labels)
                 idx = shuffled_labels == group
 
-                # much quicker
-                P = pwds[group]
-                d = distance.metric_fct.from_precomputed(P, idx)
+                precomputed_distance = precomputed_distances[group]
+                distance_result = distance.metric_fct.from_precomputed(precomputed_distance, idx)
 
-                df.loc[group, "distance"] = d
-            res.append(df.sort_index())
+                df.loc[group, "distance"] = distance_result
+            results.append(df.sort_index())
 
         # Generate the empirical distribution
         for group in groups:
             if group == contrast:
                 continue
-            # quicker
             mask = adata.obs[groupby].isin([group, contrast])
             labels = adata.obs[groupby].values[mask]
             idx = labels == group
-            P = pwds[group]
-            d = distance.metric_fct.from_precomputed(P, idx)
-            df.loc[group, "distance"] = d
+            
+            precomputed_distance = precomputed_distances[group]
+            distance_result = distance.metric_fct.from_precomputed(precomputed_distance, idx)
+            
+            df.loc[group, "distance"] = distance_result
 
         # Evaluate the test
         # count times shuffling resulted in larger distance
-        results = np.array(pd.concat([r["distance"] - df["distance"] for r in res], axis=1) > 0, dtype=int)
-        n_failures = pd.Series(np.clip(np.sum(results, axis=1), 1, np.inf), index=df.index)
+        comparison_results = np.array(pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int)
+        n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
 
         # Apply multiple testing correction
