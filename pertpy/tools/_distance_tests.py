@@ -65,7 +65,6 @@ class PermutationTest:
             - pvalue_adj: p-value after multiple testing correction
             - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
         """
-
         if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
             # distance matrix, but not all metrics can do that.

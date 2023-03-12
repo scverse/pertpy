@@ -31,7 +31,6 @@ TODO:
 """
 
 
-# This is the API / Interface class that the user will use
 class Distance:
     """Distance class.
 
