@@ -235,6 +235,7 @@ all_results = dl.multilevel_modeling(ct_subs=ct_subs,
 ```
 
 ### Distances and Permutation Tests
+
 General purpose functions for distances and permutation tests. Reimplements
 functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
 
@@ -250,7 +251,7 @@ functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
     tools.PermutationTest
 ```
 
-See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html) 
+See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
 and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html) for a more elaborate tutorial.
 
 ```python
