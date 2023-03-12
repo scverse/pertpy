@@ -273,11 +273,11 @@ sc.pp.pca(adata, use_highly_variable=True)
 
 # Pairwise distances
 distance = pt.tl.Distance('edistance', 'X_pca')
-pairwise_edistance = distance.pairwise(adata, groupby='perturbation', verbose=True)
+pairwise_edistance = distance.pairwise(adata, groupby='perturbation')
 
 # E-test (Permutation test using E-distance)
-etest = pt.tl.PermutationTest('edistance', n_perms=1000, obsm_key='X_pca', alpha=0.05, correction='holm-sidak')
-tab = etest(adata, groupby='perturbation', contrast='control', verbose=True)
+etest = pt.tl.PermutationTest('edistance', obsm_key='X_pca', correction='holm-sidak')
+tab = etest(adata, groupby='perturbation', contrast='control')
 ```
 
 ### Representation
