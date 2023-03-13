@@ -470,7 +470,7 @@ class MetaData:
         not_matched_identifiers = list(set(adata.obs[cell_line_identifier]) - set(self.ccle_expr.index))
         if len(not_matched_identifiers) > 0:
             print(
-                "Following identifiers can not be found in the CCLE expression data,"
+                "[bold yellow]Following identifiers can not be found in the CCLE expression data,"
                 " their corresponding meta data are NA values. Please check it again:",
                 *not_matched_identifiers,
                 sep="\n- ",
