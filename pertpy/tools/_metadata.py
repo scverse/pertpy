@@ -32,7 +32,7 @@ class MetaData:
             settings.cachedir.__str__() + "/2020-02-02_IntOGen-Drivers-20200213/Compendium_Cancer_Genes.tsv"
         )
         if not Path(driver_gene_intOGen_file_path).exists():
-            print("No metadata file was found for driver genes of the intOGen analysis. Start downloading now.")
+            print("[bold yellow]No metadata file was found for driver genes of the intOGen analysis. Starting download now.")
             _download(
                 url="https://www.intogen.org/download?file=IntOGen-Drivers-20200201.zip",
                 output_file_name=driver_gene_intOGen_file_name,
