@@ -366,7 +366,7 @@ class MetaData:
 
         rna_exp = pd.pivot(bulk_rna, index=identifier_type, columns="gene_id", values=bulk_rna_information)
         # order according to adata.obs
-        rna_exp = rna_exp.reindex(adata.obs[cell_line_identifier])  # .to_numpy()
+        rna_exp = rna_exp.reindex(adata.obs[cell_line_identifier])
         # have same index as adata.obs
         rna_exp = rna_exp.set_index(adata.obs.index)
         adata.obsm["bulk_rna_expression_" + bulk_rna_source] = rna_exp
