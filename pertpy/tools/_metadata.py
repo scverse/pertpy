@@ -60,7 +60,7 @@ class MetaData:
         bulk_rna_broad_file_name = "rnaseq_broad.zip"
         bulk_rna_broad_file_path = settings.cachedir.__str__() + "/rnaseq_broad_20210317.csv"
         if not Path(bulk_rna_broad_file_path).exists():
-            print("No metadata file was found for bulk RNA-seq data of broad cell line. Start downloading now.")
+            print("[bold yellow]No metadata file was found for bulk RNA-seq data of broad cell line. Starting download now.")
             _download(
                 url="https://cog.sanger.ac.uk/cmp/download/rnaseq_broad_20210317.zip",
                 output_file_name=bulk_rna_broad_file_name,
