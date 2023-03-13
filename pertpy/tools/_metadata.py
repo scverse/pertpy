@@ -48,7 +48,7 @@ class MetaData:
         bulk_rna_sanger_file_name = "rnaseq_sanger.zip"
         bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_sanger_20210316.csv"
         if not Path(bulk_rna_sanger_file_path).exists():
-            print("No metadata file was found for bulk RNA-seq data of Sanger cell line. Start downloading now.")
+            print("[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line. Starting download now.")
             _download(
                 url="https://cog.sanger.ac.uk/cmp/download/rnaseq_sanger_20210316.zip",
                 output_file_name=bulk_rna_sanger_file_name,
