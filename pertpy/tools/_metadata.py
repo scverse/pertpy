@@ -91,7 +91,7 @@ class MetaData:
         ccle_expr_file_name = "CCLE_expression.csv"
         ccle_expr_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
         if not Path(ccle_expr_file_path).exists():
-            print("No metadata file was found for CCLE expression data. Start downloading now.")
+            print("[bold yellow]No metadata file was found for CCLE expression data. Starting download now.")
             _download(
                 url="https://figshare.com/ndownloader/files/34989919",
                 output_file_name=ccle_expr_file_name,
