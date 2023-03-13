@@ -418,7 +418,7 @@ class MetaData:
         )
         if len(not_matched_identifiers) > 0:
             print(
-                "Following identifiers can not be found in the protein expression data,"
+                "[bold yellow]Following identifiers can not be found in the protein expression data,"
                 " so their corresponding meta data are NA values. Please check it again:",
                 *not_matched_identifiers,
                 sep="\n- ",
