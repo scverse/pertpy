@@ -75,7 +75,7 @@ class MetaData:
         proteomics_file_name = "Proteomics_20221214.zip"
         proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214.csv"
         if not Path(proteomics_file_path).exists():
-            print("No metadata file was found for proteomics data (ProCan-DepMapSanger). Start downloading now.")
+            print("[bold yellow]No metadata file was found for proteomics data (ProCan-DepMapSanger). Starting download now.")
             _download(
                 url="https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip",
                 output_file_name=proteomics_file_name,
