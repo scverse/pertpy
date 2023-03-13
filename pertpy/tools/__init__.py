@@ -4,6 +4,7 @@ from pertpy.tools._augur import Augur
 from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._differential_gene_expression import DifferentialGeneExpression
 from pertpy.tools._kernel_pca import kernel_pca
+from pertpy.tools._metadata import MetaData
 from pertpy.tools._milo import Milo
 from pertpy.tools._mixscape import Mixscape
 
