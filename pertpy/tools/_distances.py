@@ -10,7 +10,7 @@ from sklearn.metrics import pairwise_distances
 from statsmodels.stats.multitest import multipletests
 
 
-class Distance:
+class Distance():
     """Distance class, used to compute distances between groups of cells. 
     
     The distance metric can be specified by the user. The class also provides a 
@@ -152,14 +152,12 @@ class Edistance(AbstractDistance):
         self.accepts_precomputed = True
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        # TODO: inherit docstring from parent class
         sigma_X = pairwise_distances(X, X, metric="euclidean").mean()
         sigma_Y = pairwise_distances(Y, Y, metric="euclidean").mean()
         delta = pairwise_distances(X, Y, metric="euclidean").mean()
         return 2 * delta - sigma_X - sigma_Y
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        # TODO: inherit docstring from parent class
         sigma_X = P[idx, :][:, idx].mean()
         sigma_Y = P[~idx, :][:, ~idx].mean()
         delta = P[idx, :][:, ~idx].mean()
