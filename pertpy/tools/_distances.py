@@ -10,10 +10,10 @@ from sklearn.metrics import pairwise_distances
 from statsmodels.stats.multitest import multipletests
 
 
-class Distance():
-    """Distance class, used to compute distances between groups of cells. 
-    
-    The distance metric can be specified by the user. The class also provides a 
+class Distance:
+    """Distance class, used to compute distances between groups of cells.
+
+    The distance metric can be specified by the user. The class also provides a
     method to compute the pairwise distances between all groups of cells.
     Currently available metrics:
     - "edistance": Energy distance
@@ -44,6 +44,8 @@ class Distance():
             metric_fct = PseudobulkDistance()
         elif metric == "mean_pairwise":
             metric_fct = MeanPairwiseDistance()
+        elif metric == "mmd":
+            metric_fct = MMD()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -80,31 +82,69 @@ class Distance():
         Args:
             adata: Annotated data matrix.
             groupby: Column name in adata.obs.
-            groups: List of groups to compute pairwise distances for. 
+            groups: List of groups to compute pairwise distances for.
                 If None, uses all groups. (default: None)
             verbose: Whether to show progress bar. (default: True)
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
         """
-        # TODO: This could make use of the precomputed distances if we store
-        # those in the adata object
         groups = adata.obs[groupby].unique() if groups is None else groups
-        df = pd.DataFrame(index=groups, columns=groups, dtype=float)
-        embedding = adata.obsm[self.obsm_key].copy()
         grouping = adata.obs[groupby].copy()
+        df = pd.DataFrame(index=groups, columns=groups, dtype=float)
         fct = track if verbose else lambda iterable: iterable
-        for index_x, group_x in enumerate(fct(groups)):
-            cells_x = embedding[grouping == group_x].copy()
-            for group_y in groups[index_x:]:
-                cells_y = embedding[grouping == group_y].copy()
-                dist = self.metric_fct(cells_x, cells_y, **kwargs)
-                df.loc[group_x, group_y] = dist
-                df.loc[group_y, group_x] = dist
+
+        if self.metric_fct.accepts_precomputed:
+            # Precompute the pairwise distances if needed
+            if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
+                self.precompute_distances(adata, **kwargs)
+            pwd = adata.obsp[f"{self.obsm_key}_predistances"]
+            for index_x, group_x in enumerate(fct(groups)):
+                idx_x = grouping == group_x
+                for group_y in groups[index_x:]:
+                    if group_x == group_y:
+                        dist = 0.0
+                    else:
+                        idx_y = grouping == group_y
+                        sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
+                        sub_idx = grouping[idx_x | idx_y] == group_x
+                        dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
+                    df.loc[group_x, group_y] = dist
+                    df.loc[group_y, group_x] = dist
+        else:
+            embedding = adata.obsm[self.obsm_key].copy()
+            for index_x, group_x in enumerate(fct(groups)):
+                cells_x = embedding[grouping == group_x].copy()
+                for group_y in groups[index_x:]:
+                    if group_x == group_y:
+                        dist = 0.0
+                    else:
+                        cells_y = embedding[grouping == group_y].copy()
+                        dist = self.metric_fct(cells_x, cells_y, **kwargs)
+                    df.loc[group_x, group_y] = dist
+                    df.loc[group_y, group_x] = dist
         df.index.name = groupby
         df.columns.name = groupby
         df.name = f"pairwise {self.metric}"
         return df
+
+    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", **kwargs) -> None:
+        """Precompute pairwise distances between all cells, writes to adata.obsp.
+
+        Args:
+            adata: Annotated data matrix.
+            obs_key: Column name in adata.obs.
+            cell_wise_metric: Metric to use for pairwise distances.
+            **kwargs: Keyword arguments to pass to pairwise_distances.
+
+        Returns:
+            None
+        """
+        # Precompute the pairwise distances
+        cells = adata.obsm[self.obsm_key].copy()
+        pwd = pairwise_distances(cells, cells, metric=cell_wise_metric)
+        # Write to adata.obsp
+        adata.obsp[f"{self.obsm_key}_predistances"] = pwd
 
 
 class AbstractDistance(ABC):
@@ -164,18 +204,27 @@ class Edistance(AbstractDistance):
         return 2 * delta - sigma_X - sigma_Y
 
 
-# class MMD(AbstractDistance):
-#     # TODO: implement MMD metric
-#     # e.g.
-#     # https://github.com/jindongwang/transferlearning/blob/master/code/distance/mmd_numpy_sklearn.py
-#     # https://github.com/calico/scmmd
-#     pass
+class MMD(AbstractDistance):
+    """Linear Maximum Mean Discrepancy."""
+
+    # Taken in parts from https://github.com/jindongwang/transferlearning/blob/master/code/distance/mmd_numpy_sklearn.py
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        # TODO: Lukas -> add License!!!
+        delta = X.mean(0) - Y.mean(0)
+        return delta.dot(delta.T)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("MMD cannot be called on a pairwise distance matrix.")
+
 
 # class WassersteinDistance(AbstractDistance):
 #     """Wasserstein distance metric.
-#     NOTE: I bet the Theislab OT people have a better solution for this.
+#     TODO: Implement using moscot. Should make use of precomputed distances!
 #     """
-#     # TODO: implement Wasserstein distance metric
 
 
 class PseudobulkDistance(AbstractDistance):
@@ -194,6 +243,8 @@ class PseudobulkDistance(AbstractDistance):
 
 class MeanPairwiseDistance(AbstractDistance):
     """Mean of the pairwise euclidean distance between two groups of cells."""
+
+    # NOTE: This is not a metric in the mathematical sense.
 
     def __init__(self) -> None:
         super().__init__()

@@ -64,15 +64,15 @@ class DistanceTest:
     def test_xy(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
         """Run permutation test for metrics that can not be computed using
         precomputed pairwise distances, but need the actual data points.
-        
+
         This is slower than test_precomputed.
-        
+
         Args:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
             verbose: Whether to print progress. (default: True)
-        
+
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
                 - distance: distance between the contrast group and the group
@@ -119,7 +119,9 @@ class DistanceTest:
 
         # Evaluate the test
         # count times shuffling resulted in larger distance
-        comparison_results = np.array(pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int)
+        comparison_results = np.array(
+            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int
+        )
         n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
 
@@ -149,13 +151,13 @@ class DistanceTest:
 
     def test_precomputed(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
         """Run permutation test for metrics that take precomputed distances.
-        
+
         Args:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
             verbose: Whether to print progress. (default: True)
-        
+
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
                 - distance: distance between the contrast group and the group
@@ -209,15 +211,17 @@ class DistanceTest:
             mask = adata.obs[groupby].isin([group, contrast])
             labels = adata.obs[groupby].values[mask]
             idx = labels == group
-            
+
             precomputed_distance = precomputed_distances[group]
             distance_result = distance.metric_fct.from_precomputed(precomputed_distance, idx)
-            
+
             df.loc[group, "distance"] = distance_result
 
         # Evaluate the test
         # count times shuffling resulted in larger distance
-        comparison_results = np.array(pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int)
+        comparison_results = np.array(
+            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int
+        )
         n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
 

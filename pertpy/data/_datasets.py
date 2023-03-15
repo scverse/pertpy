@@ -375,7 +375,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
 
 def distance_example_data() -> AnnData:  # pragma: no cover
     """Example dataset used to feature distances and distance_tests.
-    
+
     Processed and subsetted version of original Perturb-seq dataset by Dixit et al.
 
     Returns:
