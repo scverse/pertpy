@@ -5,9 +5,12 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from ott.geometry.geometry import Geometry
+from ott.geometry.pointcloud import PointCloud
+from ott.problems.linear.linear_problem import LinearProblem
+from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
 from sklearn.metrics import pairwise_distances
-from statsmodels.stats.multitest import multipletests
 
 
 class Distance:
@@ -19,6 +22,8 @@ class Distance:
     - "edistance": Energy distance
     - "pseudobulk": Pseudobulk distance
     - "mean_pairwise": Mean pairwise distance
+    - "mmd": Maximum mean discrepancy
+    - "wasserstein": Wasserstein distance (Earth Mover's Distance)
 
     Attributes:
         metric: Name of distance metric.
@@ -46,6 +51,8 @@ class Distance:
             metric_fct = MeanPairwiseDistance()
         elif metric == "mmd":
             metric_fct = MMD()
+        elif metric == "wasserstein":
+            metric_fct = WassersteinDistance()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -213,7 +220,6 @@ class MMD(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        # TODO: Lukas -> add License!!!
         delta = X.mean(0) - Y.mean(0)
         return delta.dot(delta.T)
 
@@ -221,10 +227,29 @@ class MMD(AbstractDistance):
         raise NotImplementedError("MMD cannot be called on a pairwise distance matrix.")
 
 
-# class WassersteinDistance(AbstractDistance):
-#     """Wasserstein distance metric.
-#     TODO: Implement using moscot. Should make use of precomputed distances!
-#     """
+class WassersteinDistance(AbstractDistance):
+    """Wasserstein distance metric (solved with entropy regularized Sinkhorn)."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        geom = PointCloud(X, Y)
+        return self.solve_ot_problem(geom, **kwargs)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        geom = Geometry(cost_matrix=P[idx, :][:, ~idx])
+        return self.solve_ot_problem(geom, **kwargs)
+
+    def solve_ot_problem(self, geom: Geometry, **kwargs):
+        # Define a linear problem with that cost structure.
+        ot_prob = LinearProblem(geom)
+        # Create a Sinkhorn solver
+        solver = Sinkhorn()
+        # Solve OT problem
+        ot = solver(ot_prob, **kwargs)
+        return ot.reg_ot_cost
 
 
 class PseudobulkDistance(AbstractDistance):
