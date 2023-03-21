@@ -256,7 +256,6 @@ and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorial
 
 ```python
 import pertpy as pt
-import scanpy as sc
 
 adata = pt.dt.distance_example_data()
 

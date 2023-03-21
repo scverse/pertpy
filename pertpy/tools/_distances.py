@@ -143,9 +143,6 @@ class Distance:
             obs_key: Column name in adata.obs.
             cell_wise_metric: Metric to use for pairwise distances.
             **kwargs: Keyword arguments to pass to pairwise_distances.
-
-        Returns:
-            None
         """
         # Precompute the pairwise distances
         cells = adata.obsm[self.obsm_key].copy()

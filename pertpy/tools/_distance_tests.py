@@ -44,7 +44,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            verbose: Whether to print progress. (default: True)
+            verbose: Whether to print progress. Defaults to True.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
