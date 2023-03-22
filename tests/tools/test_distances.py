@@ -37,4 +37,3 @@ class TestDistances:
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
-

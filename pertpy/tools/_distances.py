@@ -20,16 +20,16 @@ class Distance:
     method to compute the pairwise distances between all groups of cells.
     Currently available metrics:
     - "edistance": Energy distance (Default metric).
-        In essence, it is twice the mean pairwise distance between cells of two 
-        groups minus the mean pairwise distance between cells within each group 
-        respectively. More information can be found in 
+        In essence, it is twice the mean pairwise distance between cells of two
+        groups minus the mean pairwise distance between cells within each group
+        respectively. More information can be found in
         `Peidli et al. (2023) <https://doi.org/10.1101/2022.08.20.504663>`__.
     - "mmd": Maximum mean discrepancy
         This is the maximum mean discrepancy between the cells of two groups.
         Here, uses linear MMD. For theory on MMD in single-cell applications, see
         `Lotfollahi et al. (2019) <https://doi.org/10.48550/arXiv.1910.01791>`__.
     - "wasserstein": Wasserstein distance (Earth Mover's Distance)
-        This is the Wasserstein distance between the cells of two groups. Uses an 
+        This is the Wasserstein distance between the cells of two groups. Uses an
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
@@ -42,7 +42,7 @@ class Distance:
         metric: Name of distance metric.
         obsm_key: Name of embedding in adata.obsm to use.
         metric_fct: Distance metric function.
-    
+
     Example:
         .. code-block:: python
 
@@ -97,7 +97,7 @@ class Distance:
 
         Returns:
             float: Distance between X and Y.
-        
+
         Example:
             .. code-block:: python
 
@@ -130,7 +130,7 @@ class Distance:
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
-        
+
         Example:
             .. code-block:: python
 
@@ -179,13 +179,9 @@ class Distance:
         df.name = f"pairwise {self.metric}"
         return df
 
-    def precompute_distances(self, 
-                             adata: AnnData, 
-                             cell_wise_metric: str = "euclidean", 
-                             **kwargs
-                             ) -> None:
+    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", **kwargs) -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
-        
+
         The precomputed distances are stored in adata.obsp under the key
         '{self.obsm_key}_predistances', as they depend on the embedding used.
 

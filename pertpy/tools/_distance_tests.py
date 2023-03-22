@@ -12,9 +12,9 @@ from ._distances import Distance
 
 class DistanceTest:
     """Run permutation tests using a distance of choice between groups of cells.
-    
+
     Performs Monte-Carlo permutation testing using a distance metric of choice
-    as test statistic. Tests all groups of cells against a specified contrast 
+    as test statistic. Tests all groups of cells against a specified contrast
     group (which normally would be your "control" cells).
 
     Args:
@@ -23,7 +23,7 @@ class DistanceTest:
         obsm_key: Name of embedding to use for distance computation. (default: "X_pca")
         alpha: Significance level. (default: 0.05)
         correction: Multiple testing correction method. (default: "holm-sidak")
-    
+
     Example:
         .. code-block:: python
 
@@ -48,12 +48,9 @@ class DistanceTest:
         self.alpha = alpha
         self.correction = correction
 
-    def __call__(self, 
-                 adata: AnnData, 
-                 groupby: str, 
-                 contrast: str, 
-                 cell_wise_metric: str = "euclidean",
-                 verbose: bool = True) -> pd.DataFrame:
+    def __call__(
+        self, adata: AnnData, groupby: str, contrast: str, cell_wise_metric: str = "euclidean", verbose: bool = True
+    ) -> pd.DataFrame:
         """Run a permutation test using the specified distance metric, testing
         all groups of cells against a specified contrast group ("control").
 
@@ -70,7 +67,7 @@ class DistanceTest:
                 - significant: whether the group is significantly different from the contrast group
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
-        
+
         Example:
             .. code-block:: python
 
@@ -83,19 +80,13 @@ class DistanceTest:
         if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
             # distance matrix, but not all metrics can do that.
-            return self.test_precomputed(adata, groupby, contrast, 
-                                         cell_wise_metric, verbose)
+            return self.test_precomputed(adata, groupby, contrast, cell_wise_metric, verbose)
         else:
             return self.test_xy(adata, groupby, contrast, verbose)
 
-    def test_xy(self, 
-                adata: AnnData, 
-                groupby: str, 
-                contrast: str, 
-                verbose: bool = True
-                ) -> pd.DataFrame:
+    def test_xy(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
         """Run permutation test for metric not supporting precomputed distances.
-        
+
         Runs a permutation test for a metric that can not be computed using
         precomputed pairwise distances, but need the actual data points. This is
         generally slower than test_precomputed.
@@ -183,13 +174,9 @@ class DistanceTest:
 
         return tab
 
-    def test_precomputed(self, 
-                         adata: AnnData, 
-                         groupby: str, 
-                         contrast: str,
-                         cell_wise_metric: str = "euclidean",
-                         verbose: bool = True
-                         ) -> pd.DataFrame:
+    def test_precomputed(
+        self, adata: AnnData, groupby: str, contrast: str, cell_wise_metric: str = "euclidean", verbose: bool = True
+    ) -> pd.DataFrame:
         """Run permutation test for metrics that take precomputed distances.
 
         Args:

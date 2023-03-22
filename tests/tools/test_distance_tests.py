@@ -11,11 +11,10 @@ class TestPermutationTest:
     def adata(self):
         adata = pt.dt.distance_example_data()
         return adata
-    
+
     @mark.parametrize("distance", distances)
-    def test_DistanceTest(self, adata, distance):
-        etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", 
-                                   alpha=0.05, correction="holm-sidak")
+    def test_distancetest(self, adata, distance):
+        etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak")
         tab = etest(adata, groupby="perturbation", contrast="control")
         # Well-defined output
         assert tab.shape[1] == 5
