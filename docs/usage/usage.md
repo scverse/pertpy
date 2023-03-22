@@ -247,8 +247,8 @@ functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
 .. autosummary::
     :toctree: tools
 
-    tools.Distances
-    tools.PermutationTest
+    tools.Distance
+    tools.DistanceTest
 ```
 
 See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
