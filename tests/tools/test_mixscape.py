@@ -62,7 +62,7 @@ class TestMixscape:
         var.index.rename("index", inplace=True)
 
         X = sparse.csr_matrix(X)
-        adata = anndata.AnnData(X=X, obs=obs, var=var)
+        adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=np.float32)
         return adata
 
     def test_mixscape(self):
