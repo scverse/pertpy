@@ -11,8 +11,11 @@ from ._distances import Distance
 
 
 class DistanceTest:
-    """Runs permutation tests using a distance of choice between groups of cells,
-    testing all groups of cells against a specified contrast group ("control").
+    """Run permutation tests using a distance of choice between groups of cells.
+    
+    Performs Monte-Carlo permutation testing using a distance metric of choice
+    as test statistic. Tests all groups of cells against a specified contrast 
+    group (which normally would be your "control" cells).
 
     Args:
         metric: Distance metric to use.
@@ -20,6 +23,15 @@ class DistanceTest:
         obsm_key: Name of embedding to use for distance computation. (default: "X_pca")
         alpha: Significance level. (default: 0.05)
         correction: Multiple testing correction method. (default: "holm-sidak")
+    
+    Example:
+        .. code-block:: python
+
+            import pertpy as pt
+
+            adata = pt.dt.distance_example_data()
+            etest = pt.tl.DistanceTest('edistance', n_perms=1000)
+            tab = etest(adata, groupby='perturbation', contrast='control')
     """
 
     def __init__(
@@ -36,7 +48,12 @@ class DistanceTest:
         self.alpha = alpha
         self.correction = correction
 
-    def __call__(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
+    def __call__(self, 
+                 adata: AnnData, 
+                 groupby: str, 
+                 contrast: str, 
+                 cell_wise_metric: str = "euclidean",
+                 verbose: bool = True) -> pd.DataFrame:
         """Run a permutation test using the specified distance metric, testing
         all groups of cells against a specified contrast group ("control").
 
@@ -53,25 +70,42 @@ class DistanceTest:
                 - significant: whether the group is significantly different from the contrast group
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+        
+        Example:
+            .. code-block:: python
+
+                import pertpy as pt
+
+                adata = pt.dt.distance_example_data()
+                etest = pt.tl.DistanceTest('edistance', n_perms=1000)
+                tab = etest(adata, groupby='perturbation', contrast='control')
         """
         if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
             # distance matrix, but not all metrics can do that.
-            return self.test_precomputed(adata, groupby, contrast, verbose)
+            return self.test_precomputed(adata, groupby, contrast, 
+                                         cell_wise_metric, verbose)
         else:
             return self.test_xy(adata, groupby, contrast, verbose)
 
-    def test_xy(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
-        """Run permutation test for metrics that can not be computed using
-        precomputed pairwise distances, but need the actual data points.
-
-        This is slower than test_precomputed.
+    def test_xy(self, 
+                adata: AnnData, 
+                groupby: str, 
+                contrast: str, 
+                verbose: bool = True
+                ) -> pd.DataFrame:
+        """Run permutation test for metric not supporting precomputed distances.
+        
+        Runs a permutation test for a metric that can not be computed using
+        precomputed pairwise distances, but need the actual data points. This is
+        generally slower than test_precomputed.
 
         Args:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            verbose: Whether to print progress. (default: True)
+            cell_wise_metric: Metric to use for pairwise distances. Defaults to "euclidean".
+            verbose: Whether to print progress. Defaults to True.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -149,13 +183,20 @@ class DistanceTest:
 
         return tab
 
-    def test_precomputed(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
+    def test_precomputed(self, 
+                         adata: AnnData, 
+                         groupby: str, 
+                         contrast: str,
+                         cell_wise_metric: str = "euclidean",
+                         verbose: bool = True
+                         ) -> pd.DataFrame:
         """Run permutation test for metrics that take precomputed distances.
 
         Args:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
+            cell_wise_metric: Metric to use for pairwise distances.
             verbose: Whether to print progress. (default: True)
 
         Returns:
@@ -166,7 +207,6 @@ class DistanceTest:
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
         """
-        dist = "euclidean"  # TODO: make this an argument? This is the metric for the precomputed distances
 
         distance = Distance(self.metric, self.obsm_key)
         if not distance.metric_fct.accepts_precomputed:
@@ -181,7 +221,7 @@ class DistanceTest:
         precomputed_distances = {}
         for group in groups:
             cells = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.obsm_key].copy()
-            pwd = pairwise_distances(cells, cells, metric=dist)
+            pwd = pairwise_distances(cells, cells, metric=cell_wise_metric)
             precomputed_distances[group] = pwd
 
         # Generate the null distribution
