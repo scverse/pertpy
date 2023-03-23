@@ -120,6 +120,14 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
 
 MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
 
+CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
+bulk RNA and protein expression data.
+
+Available databases for cell line metadata:
+- The Cancer Dependency Map Project at Broad
+- The Cancer Dependency Map Project at Sanger
+
+
 ```{eval-rst}
 .. currentmodule:: pertpy
 ```
@@ -128,7 +136,7 @@ MetaData provides tooling to fetch and add more metadata to perturbations by que
 .. autosummary::
     :toctree: tools
 
-    tools.MetaData
+    tools.MetaData.CellLineMetaData
 ```
 
 ### Mixscape
