@@ -10,7 +10,7 @@ from scanpy import settings
 from pertpy.data._dataloader import _download
 
 
-class MetaData:
+class CellLineMetaData:
     """Utilities to fetch cell or perturbation metadata."""
 
     def __init__(self):
@@ -27,7 +27,43 @@ class MetaData:
             )
         self.cell_line_meta = pd.read_csv(cell_line_file_path)
 
-        # Download meta data for driver genes of the intOGen analysis from DepMap_Sanger
+        # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
+        cell_line_cancer_project_file_name = "cell_line_cancer_project.csv"
+        cell_line_cancer_project_file_path = settings.cachedir.__str__() + "/" + cell_line_cancer_project_file_name
+        if not Path(cell_line_cancer_project_file_path).exists():
+            print("[bold yellow]No cell line metadata file from The Genomics of Drug Sensitivity "
+                  "in Cancer Project found. Starting download now.")
+            _download(
+                url="https://www.cancerrxgene.org/api/celllines?list=all&sEcho=1&iColumns=7&sColumns=&"
+                    "iDisplayStart=0&iDisplayLength=25&mDataProp_0=0&mDataProp_1=1&mDataProp_2=2&mDataProp_3=3&"
+                    "mDataProp_4=4&mDataProp_5=5&mDataProp_6=6&sSearch=&bRegex=false&sSearch_0=&bRegex_0=false&"
+                    "bSearchable_0=true&sSearch_1=&bRegex_1=false&bSearchable_1=true&sSearch_2=&bRegex_2=false&"
+                    "bSearchable_2=true&sSearch_3=&bRegex_3=false&bSearchable_3=true&sSearch_4=&bRegex_4=false&"
+                    "bSearchable_4=true&sSearch_5=&bRegex_5=false&bSearchable_5=true&sSearch_6=&bRegex_6=false&"
+                    "bSearchable_6=true&iSortCol_0=0&sSortDir_0=asc&iSortingCols=1&bSortable_0=true&bSortable_1=true&"
+                    "bSortable_2=true&bSortable_3=true&bSortable_4=true&bSortable_5=true&bSortable_6=true&export=csv",
+                output_file_name=cell_line_cancer_project_file_name,
+                output_path=settings.cachedir,
+                is_zip=False,
+            )
+
+        self.cell_line_cancer_project_meta = pd.read_csv(cell_line_cancer_project_file_path)
+        # remove white space in column names
+        self.cell_line_cancer_project_meta.columns = self.cell_line_cancer_project_meta.columns.str.strip()
+        # have a column of stripped names
+        self.cell_line_cancer_project_meta['stripped_cell_line_name'] = \
+            self.cell_line_cancer_project_meta['Cell line Name'].str.replace(r'\-|\.', '', regex=True)
+        self.cell_line_cancer_project_meta['stripped_cell_line_name'] = pd.Categorical(
+            self.cell_line_cancer_project_meta['stripped_cell_line_name'].str.upper())
+        # pivot the data frame so that each cell line has only one row of metadata
+        index_col = list(set(self.cell_line_cancer_project_meta.columns) - {'Datasets', 'number of drugs'})
+        self.cell_line_cancer_project_meta = self.cell_line_cancer_project_meta.pivot(index=index_col,
+                                                                                      columns='Datasets',
+                                                                                      values='number of drugs')
+        self.cell_line_cancer_project_meta.columns.name = None
+        self.cell_line_cancer_project_meta = self.cell_line_cancer_project_meta.reset_index()
+
+        # Download metadata for driver genes of the intOGen analysis from DepMap_Sanger
         driver_gene_intOGen_file_name = "IntOGen-Drivers.zip"
         driver_gene_intOGen_file_path = (
             settings.cachedir.__str__() + "/2020-02-02_IntOGen-Drivers-20200213/Compendium_Cancer_Genes.tsv"
@@ -165,28 +201,46 @@ class MetaData:
                 "Please choose either broad or sanger."
             )
 
-    def getinfo_annotate_cell_lines(self) -> None:
+    def getinfo_annotate_cell_lines(self, cell_line_source: str = "DepMap") -> None:
         """A brief summary of cell line metadata.
+
+        Args:
+            cell_line_source: the source of cell line annotation: DepMap or Cancerrxgene. (default: "DepMap")
 
         Returns:
             None
-
         """
 
-        # Print the columns and the number of cell lines in the metadata of DepMap cell line.
-        print(
-            "Current available information in the DepMap cell line annotation: ",
-            *list(self.cell_line_meta.columns.values),
-            sep="\n- ",
-        )
-        print(f"{len(self.cell_line_meta.index)} cell lines are saved in this file")
+        # Print the columns and the number of cell lines in the cell line annotation.
+
+        if cell_line_source == "DepMap":
+            print(
+                "Current available information in the DepMap cell line annotation: ",
+                *list(self.cell_line_meta.columns.values),
+                sep="\n- ",
+            )
+            print(f"{len(self.cell_line_meta.index)} cell lines are saved in this file")
+
+        elif cell_line_source == "Cancerrxgene":
+            print(
+                "Current available information in the cell line annotation from the project "
+                "Genomics of Drug Sensitivity in Cancer: ",
+                *list(self.cell_line_cancer_project_meta.columns.values),
+                sep="\n- ",
+            )
+            print(f"{len(self.cell_line_cancer_project_meta.index)} cell lines are saved in this file")
+
+        else:
+            raise ValueError(
+                "The specified source of cell line annotation is not available. "
+                "Please choose either DepMap or Cancerrxgene."
+            )
 
     def getinfo_annotate_protein_expression(self) -> None:
         """A brief summary of protein expression data.
 
         Returns:
             None
-
         """
 
         # Print the columns and the number of proteins in the protein expression data.
@@ -215,6 +269,7 @@ class MetaData:
         cell_line_identifier: str = "DepMap_ID",
         identifier_type: str = "DepMap_ID",
         cell_line_information: list[str] = None,
+        source: str = "DepMap",
         copy: bool = False,
     ) -> anndata:
         """Fetch cell line annotation.
@@ -224,37 +279,50 @@ class MetaData:
         Args:
             adata: The data object to annotate.
             cell_line_identifier: The column of `.obs` with cell line information. (default: "DepMap_ID")
-            identifier_type: The type of cell line information, e.g. DepMap_ID, cell_line_name or stripped_cell_line_name. (default: "DepMap_ID")
+            identifier_type: The type of cell line information, e.g. DepMap_ID, cell_line_name or
+                stripped_cell_line_name. To fetch cell line metadata from Cancerrxgene, it is recommended to choose
+                "stripped_cell_line_name". (default: "DepMap_ID")
             cell_line_information: The metadata to fetch. All metadata will be fetched by default. (default: all)
+            source: The source of cell line metadata, DepMap or Cancerrxgene. (default: "DepMap")
             copy: Determines whether a copy of the `adata` is returned. (default: False)
 
         Returns:
             Returns an AnnData object with cell line annotation.
         """
+
         if copy:
             adata = adata.copy()
-        if identifier_type in self.cell_line_meta.columns:
-            # Make sure that the specified `identifier_type` can be found in the DepMap database,
-            # then we can compare these keys and fetch the corresponding metadata.
-            not_matched_identifiers = list(
-                set(adata.obs[cell_line_identifier]) - set(self.cell_line_meta[identifier_type])
+        if source == "DepMap":
+            cell_line_meta = self.cell_line_meta
+        elif source == "Cancerrxgene":
+            cell_line_meta = self.cell_line_cancer_project_meta
+        else:
+            raise ValueError(
+                "The specified source of cell line metadata is not available."
+                "Please choose either DepMap or Cancerrxgene."
+                "Default is DepMap."
             )
+
+        if identifier_type in cell_line_meta.columns:
+            """If the specified cell line type can be found in the database,
+            we can compare these keys and fetch the corresponding metadata."""
+
+            not_matched_identifiers = list(
+                set(adata.obs[cell_line_identifier]) - set(cell_line_meta[identifier_type]))
             if len(not_matched_identifiers) > 0:
-                print(
-                    "Following identifiers can not be found in DepMap cell line annotation file,"
-                    " their corresponding meta data are NA values. Please check it again:",
-                    *not_matched_identifiers,
-                    sep="\n- ",
-                )
+                print('Following identifiers can not be found in cell line annotation file,' \
+                      ' so their corresponding meta data are NA values. Please check it again:',
+                      *not_matched_identifiers, sep='\n- ')
 
             if cell_line_information is None:
-                # If no `cell_line_information` is specified, all metadata is fetched by default.
-                # Sometimes there is already different cell line information in the `adata`.
-                # To avoid redundant information, remove the duplicate information from metadata after merging.
+                """If no cell_line_information is specified, all metadata is fetched by default.
+                Sometimes there is already different cell line information in the `adata`.
+                In order to avoid redundant information,
+                we will remove the duplicate information from metadata after merging."""
                 adata.obs = (
                     adata.obs.reset_index()
                     .merge(
-                        self.cell_line_meta,
+                        cell_line_meta,
                         left_on=cell_line_identifier,
                         right_on=identifier_type,
                         how="left",
@@ -263,19 +331,20 @@ class MetaData:
                     .filter(regex="^(?!.*_fromMeta)")
                     .set_index(adata.obs.index.names)
                 )
-                # If `cell_line_identifier` and `identifier_type` have different names, there will be a column for
-                # each of them after merging, which is redundant as they refer to the same information.
-                # We will move the identifier_type column.
+                """ If cell_line_identifier and identifier_type have different names,
+                there will be a column for each of them after merging,
+                which is redundant as they refer to the same information.
+                We will move the identifier_type column."""
                 if cell_line_identifier != identifier_type:
                     del adata.obs[identifier_type]
 
-            elif set(cell_line_information).issubset(set(self.cell_line_meta.columns)):
-                # Make sure that the `cell_line_information` is specified and can be found in the DepMap database,
-                # We will subset the original metadata dataframe correspondingly and add them to the `adata`.
-                # Redundant information will be removed.
+            elif set(cell_line_information).issubset(set(cell_line_meta.columns)):
+                """If cell_line_information is specified and can be found in the DepMap database,
+                We will subset the original metadata dataframe correspondingly and add them to the `adata`.
+                Again, redundant information will be removed."""
                 if identifier_type not in cell_line_information:
                     cell_line_information.append(identifier_type)
-                cell_line_meta_part = self.cell_line_meta[cell_line_information]
+                cell_line_meta_part = cell_line_meta[cell_line_information]
                 adata.obs = (
                     adata.obs.reset_index()
                     .merge(
@@ -288,19 +357,19 @@ class MetaData:
                     .filter(regex="^(?!.*_fromMeta)")
                     .set_index(adata.obs.index.names)
                 )
+                """ Again, redundant information will be removed."""
                 if cell_line_identifier != identifier_type:
                     del adata.obs[identifier_type]
             else:
                 raise ValueError(
-                    "DepMap database doesn't contain the requested cell line metadata."
-                    "Please make sure the specified cell line metadata is available in the DepMap cell line metadata."
-                    "This can be checked by calling the function `getinfo_annotate_cell_lines`. "
-                    "Alternatively, all the metadata can be fetched by default."
+                    "The specified cell line metadata can't be found in the DepMap database."
+                    "Please give the cell line metadata available in the DepMap,"
+                    "or fetch all the metadata by default."
                 )
         else:
             raise ValueError(
-                "DepMap database doesn't contain the requested `cell_line_type`."
-                "Please make sure the specified cell line type is available in the DepMap cell line metadata."
+                "The specified cell line type is not available in the DepMap database."
+                "Please give the type of cell line information available in the DepMap."
                 "e.g. DepMap_ID, cell_line_name or stripped_cell_line_name."
                 "DepMap_ID is compared by default."
             )
@@ -447,9 +516,10 @@ class MetaData:
         cell_line_identifier: str = "DepMap_ID",
         copy: bool = False,
     ) -> anndata:
-        """Fetch CCLE expression.
+        """Fetch CCLE expression data.
 
-        For each cell, we fetch .
+         For each cell, we fetch gene expression TPM values of the protein coding genes for its corresponding DepMap
+         cell line.
 
         Args:
             adata: The data object to annotate.
