@@ -9,6 +9,7 @@ from pertpy.data._datasets import (
     datlinger_2017,
     datlinger_2021,
     dialogue_example,
+    distance_example_data,
     dixit_2016,
     dixit_2016_raw,
     dixit_2016_scperturb,

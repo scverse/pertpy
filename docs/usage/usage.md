@@ -234,6 +234,40 @@ all_results = dl.multilevel_modeling(ct_subs=ct_subs,
                                      )
 ```
 
+### Distances and Permutation Tests
+
+General purpose functions for distances and permutation tests. Reimplements
+functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Distance
+    tools.DistanceTest
+```
+
+See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
+and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html) for a more elaborate tutorial.
+
+```python
+import pertpy as pt
+
+adata = pt.dt.distance_example_data()
+
+# Pairwise distances
+distance = pt.tl.Distance(metric='edistance', obsm_key='X_pca')
+pairwise_edistance = distance.pairwise(adata, groupby='perturbation')
+
+# E-test (Permutation test using E-distance)
+etest = pt.tl.PermutationTest(metric='edistance', obsm_key='X_pca', correction='holm-sidak')
+tab = etest(adata, groupby='perturbation', contrast='control')
+```
+
 ### Representation
 
 ```{eval-rst}
