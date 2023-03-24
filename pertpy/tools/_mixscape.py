@@ -10,7 +10,7 @@ from pynndescent import NNDescent
 from rich import print
 from scanpy.tools._utils import _choose_representation
 from scipy import sparse
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 import pertpy as pt
@@ -241,7 +241,10 @@ class Mixscape:
                             X[nt_cells][:, de_genes_indices], axis=0
                         )
                         # project cells onto the perturbation vector
-                        pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        if isinstance(dat, spmatrix):
+                            pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        else:
+                            pvec = np.sum(np.multiply(dat, vec), axis=1) / np.sum(np.multiply(vec, vec))
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
                         if n_iter == 0:
                             gv = pd.DataFrame(columns=["pvec", labels])
