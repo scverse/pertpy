@@ -384,8 +384,8 @@ class Mixscape:
             else:
                 projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
 
-        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs["gene_target"])) - 1)
-        clf.fit(projected_pcs_array, adata_subset.obs["gene_target"])
+        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
+        clf.fit(projected_pcs_array, adata_subset.obs[labels])
         cell_embeddings = clf.transform(projected_pcs_array)
         adata.uns["mixscape_lda"] = cell_embeddings
 

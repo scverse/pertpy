@@ -207,16 +207,16 @@ class MixscapePlot:
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             cols = {gd: "#7d7d7d", target_gene: color}
-            p = ggplot(perturbation_score, aes(x="pvec", color="gene_target")) + geom_density() + theme_classic()
+            p = ggplot(perturbation_score, aes(x="pvec", color=labels)) + geom_density() + theme_classic()
             p_copy = copy.deepcopy(p)
             p_copy._build()
             top_r = max(p_copy.layers[0].data["density"])
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
-            perturbation_score.loc[perturbation_score["gene_target"] == gd, "y_jitter"] = np.random.uniform(
-                low=0.001, high=top_r / 10, size=sum(perturbation_score["gene_target"] == gd)
+            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = np.random.uniform(
+                low=0.001, high=top_r / 10, size=sum(perturbation_score[labels] == gd)
             )
-            perturbation_score.loc[perturbation_score["gene_target"] == target_gene, "y_jitter"] = np.random.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score["gene_target"] == target_gene)
+            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = np.random.uniform(
+                low=-top_r / 10, high=0, size=sum(perturbation_score[labels] == target_gene)
             )
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
@@ -522,7 +522,7 @@ class MixscapePlot:
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             control: Control category from the `pert_key` column. Default is 'NT'.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is 'KO'.
             lda_key: If not speficied, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
             show: Show the plot, do not return axis.
