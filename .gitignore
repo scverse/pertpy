@@ -146,3 +146,6 @@ dmypy.json
 
 # Test cache
 cache
+
+# Apple stuff
+.DS_Store

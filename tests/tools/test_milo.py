@@ -15,7 +15,7 @@ except Exception:
 
 
 class TestMilopy:
-    milo = pt.tl.Milopy()
+    milo = pt.tl.Milo()
 
     @pytest.fixture
     def adata(self):

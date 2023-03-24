@@ -16,7 +16,7 @@ from matplotlib.colors import ListedColormap
 from mudata import MuData
 from statannotations.Annotator import Annotator
 
-from pertpy.tools._base_coda import CompositionalModel2, collapse_singularities_2
+from pertpy.tools.coda._base_coda import CompositionalModel2, collapse_singularities_2
 
 sns.set_style("ticks")
 

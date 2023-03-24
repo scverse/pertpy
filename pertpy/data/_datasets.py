@@ -373,6 +373,30 @@ def dialogue_example() -> AnnData:  # pragma: no cover
     return adata
 
 
+def distance_example_data() -> AnnData:  # pragma: no cover
+    """Example dataset used to feature distances and distance_tests.
+
+    Processed and subsetted version of original Perturb-seq dataset by Dixit et al.
+
+    Returns:
+        :class:`~anndata.AnnData` object
+    """
+    output_file_name = "distances_example_data.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/39561379",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
+    else:
+        adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
 def kang_2018() -> AnnData:  # pragma: no cover
     """Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes.
 

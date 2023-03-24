@@ -73,7 +73,7 @@ class Params:
     random_state: int | None = None
 
 
-class Augurpy:
+class Augur:
     """Python implementation of Augur."""
 
     def __init__(
@@ -132,7 +132,7 @@ class Augurpy:
             raise ValueError("Less than two unique labels in dataset. At least two are needed for the analysis.")
         # dummy variables for categorical data
         if adata.obs["label"].dtype.name == "category":
-            # filter samples acording to label
+            # filter samples according to label
             if condition_label is not None and treatment_label is not None:
                 print(f"Filtering samples with {condition_label} and {treatment_label} labels.")
                 adata = AnnData.concatenate(
@@ -198,7 +198,7 @@ class Augurpy:
         return c.result
 
     def sample(self, adata: AnnData, categorical: bool, subsample_size: int, random_state: int, features: list):
-        """Sample anndata observations.
+        """Sample AnnData observations.
 
         Args:
             adata: Anndata with obs `label` and `cell_type` for label and cell type and dummie variable `y_` columns used as target
@@ -208,7 +208,7 @@ class Augurpy:
             features: features returned Anndata object
 
         Returns:
-            Subsample of anndata object of size subsample_size with given features
+            Subsample of AnnData object of size subsample_size with given features
         """
         # export subsampling.
         random.seed(random_state)

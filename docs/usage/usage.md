@@ -94,7 +94,7 @@ Example implementation:
 import pertpy as pt
 
 adata = pt.dt.sc_sim_augur()
-ag = pt.tl.Augurpy(estimator="random_forest_classifier")
+ag = pt.tl.Augur(estimator="random_forest_classifier")
 adata = ag.load(adata)
 adata, results = ag.predict(adata)
 
@@ -113,7 +113,7 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
     :toctree: tools
     :nosignatures:
 
-    tools.Augurpy
+    tools.Augur
 ```
 
 ### MetaData
@@ -165,8 +165,8 @@ import pertpy as pt
 
 mdata = pt.dt.papalexi_2021()
 ms = pt.tl.Mixscape()
-ms.pert_sign(mdata['rna'], 'perturbation', 'NT', 'replicate')
-ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+ms.mixscape(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
 ms.lda(adata=mdata['rna'], labels='gene_target', layer='X_pert')
 pt.pl.ms.lda(adata=mdata['rna'])
 ```
@@ -188,7 +188,7 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 .. autosummary::
     :toctree: tools
 
-    tools.Milopy
+    tools.Milo
 ```
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
@@ -242,10 +242,53 @@ sc.tl.umap(adata)
 dl = pt.tl.Dialogue()
 adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     adata,
-    groupby='clinical.status',
+    sample_id='clinical.status',
     celltype_key='cell.subtypes',
-    mimic_dialogue=True
+    n_counts_key="nCount_RNA",
+    normalize=True
 )
+all_results = dl.multilevel_modeling(ct_subs=ct_subs,
+                                     mcp_scores=mcps,
+                                     n_counts_key="nCount_RNA",
+                                     n_mcps=3,
+                                     sample_id="clinical.status",
+                                     confounder="gender",
+                                     formula="y ~ x + nCount_RNA",
+                                     )
+```
+
+### Distances and Permutation Tests
+
+General purpose functions for distances and permutation tests. Reimplements
+functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Distance
+    tools.DistanceTest
+```
+
+See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
+and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html) for a more elaborate tutorial.
+
+```python
+import pertpy as pt
+
+adata = pt.dt.distance_example_data()
+
+# Pairwise distances
+distance = pt.tl.Distance(metric='edistance', obsm_key='X_pca')
+pairwise_edistance = distance.pairwise(adata, groupby='perturbation')
+
+# E-test (Permutation test using E-distance)
+etest = pt.tl.PermutationTest(metric='edistance', obsm_key='X_pca', correction='holm-sidak')
+tab = etest(adata, groupby='perturbation', contrast='control')
 ```
 
 ### Representation
