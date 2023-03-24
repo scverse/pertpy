@@ -522,7 +522,7 @@ class MixscapePlot:
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             control: Control category from the `pert_key` column. Default is 'NT'.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is 'KO'.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to 'KO'.
             lda_key: If not speficied, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
             show: Show the plot, do not return axis.
