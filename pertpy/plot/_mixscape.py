@@ -118,8 +118,8 @@ class MixscapePlot:
         adata: AnnData,
         labels: str,
         target_gene: str,
+        control: str,
         layer: str | None = None,
-        control: str | None = "NT",
         method: str | None = "wilcoxon",
         subsample_number: int | None = 900,
         vmin: float | None = -2,
@@ -134,8 +134,8 @@ class MixscapePlot:
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize heatmap for.
+            control: Control category from the `pert_key` column.
             layer: Key from `adata.layers` whose value will be used to perform tests on.
-            control: Control category from the `pert_key` column. Default is 'NT'.
             method: The default method is 'wilcoxon', see `method` parameter in `scanpy.tl.rank_genes_groups` for more options.
             subsample_number: Subsample to this number of observations.
             vmin: The value representing the lower limit of the color scale. Values smaller than vmin are plotted with the same color as vmin.
@@ -504,9 +504,9 @@ class MixscapePlot:
     @staticmethod
     def lda(  # pragma: no cover
         adata: AnnData,
+        control: str,
         mixscape_class="mixscape_class",
         mixscape_class_global="mixscape_class_global",
-        control: str | None = "NT",
         perturbation_type: str | None = "KO",
         lda_key: str | None = "mixscape_lda",
         n_components: int | None = None,
@@ -518,10 +518,10 @@ class MixscapePlot:
 
         Args:
             adata: The annotated data object.
+            control: Control category from the `pert_key` column.
             labels: The column of `.obs` with target gene labels.
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
-            control: Control category from the `pert_key` column. Default is 'NT'.
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to 'KO'.
             lda_key: If not speficied, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.

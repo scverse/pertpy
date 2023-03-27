@@ -298,9 +298,9 @@ class Mixscape:
         self,
         adata: AnnData,
         labels: str,
-        mixscape_class_global="mixscape_class_global",
+        control: str,
+        mixscape_class_global: str | None = "mixscape_class_global",
         layer: str | None = None,
-        control: str | None = "NT",
         n_comps: int | None = 10,
         min_de_genes: int | None = 5,
         logfc_threshold: float | None = 0.25,
@@ -314,9 +314,9 @@ class Mixscape:
         Args:
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
+            control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Key from `adata.layers` whose value will be used to perform tests on.
-            control: Control category from the `pert_key` column. Default is 'NT'.
             n_comps: Number of principal components to use. Defaults to 10.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
