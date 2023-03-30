@@ -116,29 +116,6 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
     tools.Augur
 ```
 
-### MetaData
-
-MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
-
-CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
-bulk RNA and protein expression data.
-
-Available databases for cell line metadata:
-- The Cancer Dependency Map Project at Broad
-- The Cancer Dependency Map Project at Sanger
-
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: tools
-
-    tools.MetaData.CellLineMetaData
-```
-
 ### Mixscape
 
 A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html) Papalexi et al. [Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens](https://www.nature.com/articles/s41588-021-00778-2).
@@ -355,4 +332,27 @@ tab = etest(adata, groupby='perturbation', contrast='control')
     plot.coda.draw_tree
     plot.coda.draw_effects
     plot.coda.effects_umap
+```
+
+### MetaData
+
+MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+
+CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
+bulk RNA and protein expression data.
+
+Available databases for cell line metadata:
+
+-   The Cancer Dependency Map Project at Broad
+-   The Cancer Dependency Map Project at Sanger
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.CellLineMetaData
 ```

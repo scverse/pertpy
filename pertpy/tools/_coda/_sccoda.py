@@ -15,7 +15,7 @@ from mudata import MuData
 from numpyro.infer import Predictive
 from rich import print
 
-from pertpy.tools.coda._base_coda import CompositionalModel2, from_scanpy
+from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 config.update("jax_enable_x64", True)
 
