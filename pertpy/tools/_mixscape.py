@@ -160,7 +160,7 @@ class Mixscape:
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                     the perturbation signature for every replicate separately.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to KO.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -174,7 +174,8 @@ class Mixscape:
             Global classification result (perturbed, NP or NT)
 
             mixscape_class_p_ko: pandas.Series (`adata.obs['mixscape_class_p_ko']`).
-            Posterior probabilities used to determine if a cell is KO (default). Name of this item will change to match perturbation_type parameter setting. (>0.5) or NP
+            Posterior probabilities used to determine if a cell is KO (default).
+            Name of this item will change to match perturbation_type parameter setting. (>0.5) or NP
         """
         if copy:
             adata = adata.copy()
@@ -317,12 +318,13 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Key from `adata.layers` whose value will be used to perform tests on.
+            control: Control category from the `pert_key` column. Defaults to 'NT'.
             n_comps: Number of principal components to use. Defaults to 10.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
+            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells. Defaults to 0.25.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to KO.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -411,7 +413,7 @@ class Mixscape:
             col_names: Column names to extract the indices for
 
         Returns:
-            Set of column indices
+            Set of column indices.
         """
         perturbation_markers: dict[tuple, np.ndarray] = {}
         for split, split_mask in enumerate(split_masks):

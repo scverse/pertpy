@@ -170,6 +170,26 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
 
+Example implementation:
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+adata = pt.data.stephenson_2021_subsampled()
+adata.obs['COVID_severity'] = adata.obs['Status_on_day_collection_summary'].copy()
+adata.obs[['patient_id', 'COVID_severity']].drop_duplicates()
+adata = adata[adata.obs['Status'] != 'LPS'].copy()
+
+milo = pt.tl.Milo()
+mdata = milo.load(adata)
+sc.pp.neighbors(mdata['rna'], use_rep='X_scVI', n_neighbors=150, n_pcs=10)
+milo.make_nhoods(mdata['rna'], prop=0.1)
+mdata = milo.count_nhoods(mdata, sample_col="patient_id")
+mdata['rna'].obs['Status'] = mdata['rna'].obs['Status'].cat.reorder_categories(['Healthy', 'Covid'])
+milo.da_nhoods(mdata, design='~Status')
+```
+
 #### scCODA and tascCODA
 
 Reimplementation of scCODA for identification of compositional changes in high-throughput sequencing count data and tascCODA for sparse, tree-aggregated modeling of high-throughput sequencing data.
@@ -185,6 +205,27 @@ See [scCODA is a Bayesian model for compositional single-cell data analysis](htt
 
     tools.Sccoda
     tools.Tasccoda
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+haber_cells = pt.dt.haber_2017_regions()
+sccoda_model = pt.tl.Sccoda()
+sccoda_data = sccoda_model.load(haber_cells,
+                                type="cell_level",
+                                generate_sample_level=True,
+                                cell_type_identifier="cell_label",
+                                sample_identifier="batch",
+                                covariate_obs=["condition"])
+sccoda_data.mod["coda_salm"] = sccoda_data["coda"][sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])].copy()
+
+sccoda_data = sccoda_model.prepare(sccoda_data, modality_key="coda_salm", formula="condition", reference_cell_type="Goblet")
+sccoda_model.run_nuts(sccoda_data, modality_key="coda_salm")
+sccoda_model.summary(sccoda_data, modality_key="coda_salm")
+pt.pl.coda.effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Final Parameter")
 ```
 
 ### Multi-cellular or gene programs
@@ -332,4 +373,27 @@ tab = etest(adata, groupby='perturbation', contrast='control')
     plot.coda.draw_tree
     plot.coda.draw_effects
     plot.coda.effects_umap
+```
+
+### MetaData
+
+MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+
+CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
+bulk RNA and protein expression data.
+
+Available databases for cell line metadata:
+
+-   The Cancer Dependency Map Project at Broad
+-   The Cancer Dependency Map Project at Sanger
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.CellLineMetaData
 ```

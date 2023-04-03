@@ -233,11 +233,13 @@ class Milo:
 
         Args:
             mdata: MuData object
-            design: formula for the test, following glm syntax from R (e.g. '~ condition'). Terms should be columns in `milo_mdata[feature_key].obs`.
-            model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl"). If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group. Defaults to None.
+            design: Formula for the test, following glm syntax from R (e.g. '~ condition').
+                    Terms should be columns in `milo_mdata[feature_key].obs`.
+            model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl").
+                             If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group. Defaults to None.
             subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test. Defaults to None.
             add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default. Defaults to True.
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
             solver: The solver to fit the model to. One of "edger" (requires R, rpy2 and edgeR to be installed) or "batchglm"
 
         Returns:
@@ -251,7 +253,8 @@ class Milo:
             sample_adata = mdata["milo"]
         except KeyError:
             print(
-                "[bold red]milo_mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods() first"
+                "[bold red]milo_mdata should be a MuData object with two slots:"
+                " feature_key and 'milo' - please run milopy.count_nhoods() first"
             )
             raise
         adata = mdata[feature_key]
@@ -273,7 +276,8 @@ class Milo:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
         except AssertionError:
             print(
-                f"Values in mdata[{feature_key}].obs[{covariates}] cannot be unambiguously assigned to each sample -- each sample value should match a single covariate value"
+                f"Values in mdata[{feature_key}].obs[{covariates}] cannot be unambiguously assigned to each sample"
+                f" -- each sample value should match a single covariate value"
             )
             raise
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
@@ -365,7 +369,7 @@ class Milo:
         Args:
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
             None. Adds in place:
@@ -406,7 +410,7 @@ class Milo:
         Args:
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
             None. Adds in place:
@@ -436,7 +440,7 @@ class Milo:
         Args:
             mdata: MuData object
             new_covariates: columns in `milo_mdata[feature_key].obs` to add to `milo_mdata['milo'].obs`.
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
             None, adds columns to `milo_mdata['milo']` in place
@@ -477,7 +481,7 @@ class Milo:
         Args:
             mdata: MuData object
             basis: Name of the obsm basis to use for layout of neighbourhoods (key in `adata.obsm`). Defaults to "X_umap".
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
             - `milo_mdata['milo'].varp['nhood_connectivities']`: graph of overlap between neighbourhoods (i.e. no of shared cells)
@@ -503,7 +507,7 @@ class Milo:
         Args:
             mdata: MuData object
             layer: If provided, use `milo_mdata[feature_key][layer]` as expression matrix instead of `milo_mdata[feature_key].X`. Defaults to None.
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
             Updates adata in place to store the matrix of average expression in each neighbourhood in `milo_mdata['milo'].varm['expr']`
@@ -512,7 +516,8 @@ class Milo:
             sample_adata = mdata["milo"]
         except KeyError:
             print(
-                "milo_mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
+                "milo_mdata should be a MuData object with two slots:"
+                " feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
             )
             raise
         adata = mdata[feature_key]
