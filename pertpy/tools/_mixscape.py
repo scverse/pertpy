@@ -10,7 +10,7 @@ from pynndescent import NNDescent
 from rich import print
 from scanpy.tools._utils import _choose_representation
 from scipy import sparse
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 import pertpy as pt
@@ -242,7 +242,10 @@ class Mixscape:
                             X[nt_cells][:, de_genes_indices], axis=0
                         )
                         # project cells onto the perturbation vector
-                        pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        if isinstance(dat, spmatrix):
+                            pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        else:
+                            pvec = np.sum(np.multiply(dat, vec), axis=1) / np.sum(np.multiply(vec, vec))
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
                         if n_iter == 0:
                             gv = pd.DataFrame(columns=["pvec", labels])
@@ -296,9 +299,9 @@ class Mixscape:
         self,
         adata: AnnData,
         labels: str,
-        mixscape_class_global="mixscape_class_global",
+        control: str,
+        mixscape_class_global: str | None = "mixscape_class_global",
         layer: str | None = None,
-        control: str | None = "NT",
         n_comps: int | None = 10,
         min_de_genes: int | None = 5,
         logfc_threshold: float | None = 0.25,
@@ -312,6 +315,7 @@ class Mixscape:
         Args:
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
+            control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Key from `adata.layers` whose value will be used to perform tests on.
             control: Control category from the `pert_key` column. Defaults to 'NT'.
@@ -382,8 +386,8 @@ class Mixscape:
             else:
                 projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
 
-        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs["gene_target"])) - 1)
-        clf.fit(projected_pcs_array, adata_subset.obs["gene_target"])
+        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
+        clf.fit(projected_pcs_array, adata_subset.obs[labels])
         cell_embeddings = clf.transform(projected_pcs_array)
         adata.uns["mixscape_lda"] = cell_embeddings
 
