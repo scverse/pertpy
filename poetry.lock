@@ -4506,20 +4506,6 @@ sphinx = "*"
 test = ["pytest", "pytest-cov"]
 
 [[package]]
-name = "sphinx-autodoc-annotation"
-version = "1.0-1"
-description = "Use Python 3 annotations in sphinx-enabled docstrings"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "sphinx-autodoc-annotation-1.0-1.tar.gz", hash = "sha256:4a3d03081efe1e5f2bc9b9d00746550f45b9f543b0c79519c523168ca7f7d89a"},
-]
-
-[package.dependencies]
-sphinx = ">=1.1"
-
-[[package]]
 name = "sphinx-autodoc-typehints"
 version = "1.22"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
@@ -4685,39 +4671,6 @@ docs = ["ipython", "myst-parser", "sphinx-book-theme"]
 tests = ["ipython", "myst-parser", "pytest", "sphinx-book-theme"]
 
 [[package]]
-name = "sphinx-rtd-dark-mode"
-version = "1.2.4"
-description = "Dark mode for the Sphinx Read the Docs theme."
-category = "dev"
-optional = false
-python-versions = ">=3.4"
-files = [
-    {file = "sphinx_rtd_dark_mode-1.2.4-py3-none-any.whl", hash = "sha256:1d97c1e4f7902fb77ae86adcf72926c3b0e48a300f93eeba49266da5aeed8a29"},
-    {file = "sphinx_rtd_dark_mode-1.2.4.tar.gz", hash = "sha256:935bc1f3e62fc76eadd7d2760ac7f48bab907a97e44beda749a48a2706aeed63"},
-]
-
-[package.dependencies]
-sphinx-rtd-theme = "*"
-
-[[package]]
-name = "sphinx-rtd-theme"
-version = "0.5.1"
-description = "Read the Docs theme for Sphinx"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "sphinx_rtd_theme-0.5.1-py2.py3-none-any.whl", hash = "sha256:fa6bebd5ab9a73da8e102509a86f3fcc36dec04a0b52ea80e5a033b2aba00113"},
-    {file = "sphinx_rtd_theme-0.5.1.tar.gz", hash = "sha256:eda689eda0c7301a80cf122dad28b1861e5605cbf455558f3775e1e8200e83a5"},
-]
-
-[package.dependencies]
-sphinx = "*"
-
-[package.extras]
-dev = ["bump2version", "sphinxcontrib-httpdomain", "transifex-client"]
-
-[[package]]
 name = "sphinxcontrib-applehelp"
 version = "1.0.4"
 description = "sphinxcontrib-applehelp is a Sphinx extension which outputs Apple help books"
@@ -4830,25 +4783,6 @@ files = [
 [package.extras]
 lint = ["docutils-stubs", "flake8", "mypy"]
 test = ["pytest"]
-
-[[package]]
-name = "sphinxcontrib-spelling"
-version = "8.0.0"
-description = "Sphinx spelling extension"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "sphinxcontrib-spelling-8.0.0.tar.gz", hash = "sha256:199d0a16902ad80c387c2966dc9eb10f565b1fb15ccce17210402db7c2443e5c"},
-    {file = "sphinxcontrib_spelling-8.0.0-py3-none-any.whl", hash = "sha256:b27e0a16aef00bcfc888a6490dc3f16651f901dc475446c6882834278c8dc7b3"},
-]
-
-[package.dependencies]
-PyEnchant = ">=3.1.1"
-Sphinx = ">=3.0.0"
-
-[package.extras]
-test = ["coverage (>=4.0,!=4.4)", "pytest", "pytest-cov"]
 
 [[package]]
 name = "sphinxext-opengraph"
@@ -5643,4 +5577,4 @@ ete3 = ["ete3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<3.11"
-content-hash = "f747570faabebd73b71afa47761e6d5b8db41e4f3d36caf22e465d16ebf5c1f1"
+content-hash = "3dd3ce89fe6884325e58fbbb1474fe50458eff675b6eb7920af635ca9082785d"
