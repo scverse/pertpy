@@ -164,7 +164,7 @@ class Dialogue:
         Returns:
             A DataFrame containing the zscores indexed by the estimates.
         """
-        p_val.replace(0, min([p for p in p_val if p is not None and p > 0]))
+        p_val.replace(0, min(p for p in p_val if p is not None and p > 0))
 
         # check for all (negative) estimate values if >0 then divide p_value by 2 at same index else substract the p_value/2 from 1
         # pos_est and neg_est differ in calculation for values as negative estimation is used in neg_est
@@ -297,7 +297,7 @@ class Dialogue:
             threshold = min(zscores[ordered[min(max_length, len(zscores) - 1)]], min_threshold)
             # extract all gene names where value in column is <= threshold -> get significant genes
             genes = zscores.index
-            top_genes[mcp_name + suffix] = sorted([genes[i] for i in range(len(zscores)) if zscores[i] <= threshold])
+            top_genes[mcp_name + suffix] = sorted(genes[i] for i in range(len(zscores)) if zscores[i] <= threshold)
 
         return top_genes
 
