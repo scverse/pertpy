@@ -14,13 +14,14 @@ files = [
 
 [[package]]
 name = "adjusttext"
-version = "0.7.3"
+version = "0.8"
 description = "Iteratively adjust text position in matplotlib plots to minimize overlaps"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "adjustText-0.7.3.tar.gz", hash = "sha256:b90e275a95b4d980cbbac7967914b8d66477c09bc346a0b3c9e2125bba664b06"},
+    {file = "adjustText-0.8-py3-none-any.whl", hash = "sha256:6da99f9d739c496f79346753a3fcadb6354d8d09699cde112fed46cfb837d271"},
+    {file = "adjustText-0.8.tar.gz", hash = "sha256:bb0682bb53abb626d6afc9c1db108ccb67f2c35ddc8d20ac6a802c756c07ee17"},
 ]
 
 [package.dependencies]
@@ -5577,4 +5578,4 @@ ete3 = ["ete3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<3.11"
-content-hash = "3dd3ce89fe6884325e58fbbb1474fe50458eff675b6eb7920af635ca9082785d"
+content-hash = "ec666b018ee98a055182366a31101d237a022aa4b0489557598a975d28da23bb"
