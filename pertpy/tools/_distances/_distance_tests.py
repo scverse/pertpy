@@ -19,10 +19,10 @@ class DistanceTest:
 
     Args:
         metric: Distance metric to use.
-        n_perms: Number of permutations to run. (default: 1000)
-        obsm_key: Name of embedding to use for distance computation. (default: "X_pca")
-        alpha: Significance level. (default: 0.05)
-        correction: Multiple testing correction method. (default: "holm-sidak")
+        n_perms: Number of permutations to run. Defaults to 1000.
+        obsm_key: Name of embedding to use for distance computation. Defaults to 'X_pca'.
+        alpha: Significance level. Defaults to 0.05.
+        correction: Multiple testing correction method. Defaults to 'holm-sidak'.
 
     Example:
         .. code-block:: python
@@ -184,7 +184,7 @@ class DistanceTest:
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
             cell_wise_metric: Metric to use for pairwise distances.
-            verbose: Whether to print progress. (default: True)
+            verbose: Whether to print progress. Defaults to True.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:

@@ -542,16 +542,15 @@ class Augur:
 
         return q, pval
 
-    def select_variance(self, adata: AnnData, var_quantile: float, filter_negative_residuals: bool, span: float):
+    def select_variance(self, adata: AnnData, var_quantile: float, filter_negative_residuals: bool, span: float = 0.75):
         """Feature selection based on Augur implementation.
 
         Args:
             adata: Anndata object
-            var_quantile: the quantile below which features will be filtered, based on their residuals in a loess model;
-                defaults to `0.5`
+            var_quantile: The quantile below which features will be filtered, based on their residuals in a loess model.
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
-            span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range
-                (0, 1]. Default is 0.75
+            span: Smoothing factor, as a fraction of the number of points to take into account.
+                  Should be in the range (0, 1]. Defaults to 0.75
 
         Return:
             AnnData object with additional select_variance column in var.
@@ -635,14 +634,16 @@ class Augur:
             min_cells: minimum number of cells for a particular cell type in each condition in order to retain that type for analysis (depricated..)
             feature_perc: proportion of genes that are randomly selected as features for input to the classifier in each
                           subsample using the random gene filter
-            var_quantile: the quantile below which features will be filtered, based on their residuals in a loess model (default: `0.5`)
-            span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range (0, 1] (default: 0.75)
+            var_quantile: The quantile below which features will be filtered, based on their residuals in a loess model.
+                          Defaults to 0.5.
+            span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range (0, 1].
+                  Defaults to 0.75.
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
             n_threads: number of threads to use for parallelization
             select_variance_features: Whether to select genes based on the original Augur implementation (True)
-                                      or using scanpy's highly_variable_genes (False) (default: True9
+                                      or using scanpy's highly_variable_genes (False). Defaults to True.
             key_added: Key to add results to in .uns
-            augur_mode: one of default, velocity or permute. Setting augur_mode = "velocity" disables feature selection,
+            augur_mode: One of 'default', 'velocity' or 'permute'. Setting augur_mode = "velocity" disables feature selection,
                         assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,
                         while setting augur_mode = "permute" will generate a null distribution of AUCs for each cell type by
                         permuting the labels. Note that when setting augur_mode = "permute" n_subsample values less than 100 will be set to 500.
@@ -775,7 +776,7 @@ class Augur:
             augur2: Augurpy results from condition 2, obtained from `predict()[1]`
             permuted1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
             permuted2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
-            n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation; defaults to 50
+            n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation; Defaults to 50.
             n_permutations: the total number of mean augur scores to calculate from a background distribution
 
         Returns:

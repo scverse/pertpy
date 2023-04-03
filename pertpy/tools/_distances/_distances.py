@@ -63,8 +63,8 @@ class Distance:
         """Initialize Distance class.
 
         Args:
-            metric: Distance metric to use. (default: "edistance")
-            obsm_key: Name of embedding in adata.obsm to use. (default: "X_pca")
+            metric: Distance metric to use. Defaults to "edistance".
+            obsm_key: Name of embedding in adata.obsm to use. Defaults to "X_pca".
         """
         metric_fct: AbstractDistance = None
         if metric == "edistance":
@@ -125,8 +125,8 @@ class Distance:
             adata: Annotated data matrix.
             groupby: Column name in adata.obs.
             groups: List of groups to compute pairwise distances for.
-                If None, uses all groups. (default: None)
-            verbose: Whether to show progress bar. (default: True)
+                    If None, uses all groups. Defaults to None.
+            verbose: Whether to show progress bar. Defaults to True.
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
@@ -179,7 +179,7 @@ class Distance:
         df.name = f"pairwise {self.metric}"
         return df
 
-    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", **kwargs) -> None:
+    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean") -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
 
         The precomputed distances are stored in adata.obsp under the key
@@ -189,7 +189,6 @@ class Distance:
             adata: Annotated data matrix.
             obs_key: Column name in adata.obs.
             cell_wise_metric: Metric to use for pairwise distances.
-            **kwargs: Keyword arguments to pass to pairwise_distances.
         """
         # Precompute the pairwise distances
         cells = adata.obsm[self.obsm_key].copy()
