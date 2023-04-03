@@ -78,15 +78,6 @@ myst_enable_extensions = [
 # The master toctree document.
 master_doc = "index"
 
-autodoc_default_options = {
-    "members": True,
-    "undoc-members": True,
-    "show-inheritance": True,
-    "private-members": True,
-    "imported-members": True,
-    "show_defaults": True,
-}
-
 intersphinx_mapping = dict(
     anndata=("https://anndata.readthedocs.io/en/stable/", None),
     ipython=("https://ipython.readthedocs.io/en/stable/", None),
