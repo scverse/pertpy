@@ -114,7 +114,7 @@ Example implementation:
 import pertpy as pt
 
 adata = pt.dt.sc_sim_augur()
-ag = pt.tl.Augurpy(estimator="random_forest_classifier")
+ag = pt.tl.Augur(estimator="random_forest_classifier")
 adata = ag.load(adata)
 adata, results = ag.predict(adata)
 
@@ -133,7 +133,7 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
     :toctree: tools
     :nosignatures:
 
-    tools.Augurpy
+    tools.Augur
 ```
 
 ### Mixscape
@@ -162,8 +162,8 @@ import pertpy as pt
 
 mdata = pt.dt.papalexi_2021()
 ms = pt.tl.Mixscape()
-ms.pert_sign(mdata['rna'], 'perturbation', 'NT', 'replicate')
-ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+ms.mixscape(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
 ms.lda(adata=mdata['rna'], labels='gene_target', layer='X_pert')
 pt.pl.ms.lda(adata=mdata['rna'])
 ```
@@ -185,10 +185,30 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 .. autosummary::
     :toctree: tools
 
-    tools.Milopy
+    tools.Milo
 ```
 
 See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
+
+Example implementation:
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+adata = pt.data.stephenson_2021_subsampled()
+adata.obs['COVID_severity'] = adata.obs['Status_on_day_collection_summary'].copy()
+adata.obs[['patient_id', 'COVID_severity']].drop_duplicates()
+adata = adata[adata.obs['Status'] != 'LPS'].copy()
+
+milo = pt.tl.Milo()
+mdata = milo.load(adata)
+sc.pp.neighbors(mdata['rna'], use_rep='X_scVI', n_neighbors=150, n_pcs=10)
+milo.make_nhoods(mdata['rna'], prop=0.1)
+mdata = milo.count_nhoods(mdata, sample_col="patient_id")
+mdata['rna'].obs['Status'] = mdata['rna'].obs['Status'].cat.reorder_categories(['Healthy', 'Covid'])
+milo.da_nhoods(mdata, design='~Status')
+```
 
 #### scCODA and tascCODA
 
@@ -205,6 +225,27 @@ See [scCODA is a Bayesian model for compositional single-cell data analysis](htt
 
     tools.Sccoda
     tools.Tasccoda
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+haber_cells = pt.dt.haber_2017_regions()
+sccoda_model = pt.tl.Sccoda()
+sccoda_data = sccoda_model.load(haber_cells,
+                                type="cell_level",
+                                generate_sample_level=True,
+                                cell_type_identifier="cell_label",
+                                sample_identifier="batch",
+                                covariate_obs=["condition"])
+sccoda_data.mod["coda_salm"] = sccoda_data["coda"][sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])].copy()
+
+sccoda_data = sccoda_model.prepare(sccoda_data, modality_key="coda_salm", formula="condition", reference_cell_type="Goblet")
+sccoda_model.run_nuts(sccoda_data, modality_key="coda_salm")
+sccoda_model.summary(sccoda_data, modality_key="coda_salm")
+pt.pl.coda.effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Final Parameter")
 ```
 
 ### Multi-cellular or gene programs
@@ -239,10 +280,53 @@ sc.tl.umap(adata)
 dl = pt.tl.Dialogue()
 adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     adata,
-    groupby='clinical.status',
+    sample_id='clinical.status',
     celltype_key='cell.subtypes',
-    mimic_dialogue=True
+    n_counts_key="nCount_RNA",
+    normalize=True
 )
+all_results = dl.multilevel_modeling(ct_subs=ct_subs,
+                                     mcp_scores=mcps,
+                                     n_counts_key="nCount_RNA",
+                                     n_mcps=3,
+                                     sample_id="clinical.status",
+                                     confounder="gender",
+                                     formula="y ~ x + nCount_RNA",
+                                     )
+```
+
+### Distances and Permutation Tests
+
+General purpose functions for distances and permutation tests. Reimplements
+functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Distance
+    tools.DistanceTest
+```
+
+See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
+and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html) for a more elaborate tutorial.
+
+```python
+import pertpy as pt
+
+adata = pt.dt.distance_example_data()
+
+# Pairwise distances
+distance = pt.tl.Distance(metric='edistance', obsm_key='X_pca')
+pairwise_edistance = distance.pairwise(adata, groupby='perturbation')
+
+# E-test (Permutation test using E-distance)
+etest = pt.tl.PermutationTest(metric='edistance', obsm_key='X_pca', correction='holm-sidak')
+tab = etest(adata, groupby='perturbation', contrast='control')
 ```
 
 ### Representation
@@ -319,4 +403,27 @@ adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     plot.coda.draw_tree
     plot.coda.draw_effects
     plot.coda.effects_umap
+```
+
+### MetaData
+
+MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+
+CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
+bulk RNA and protein expression data.
+
+Available databases for cell line metadata:
+
+-   The Cancer Dependency Map Project at Broad
+-   The Cancer Dependency Map Project at Sanger
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.CellLineMetaData
 ```

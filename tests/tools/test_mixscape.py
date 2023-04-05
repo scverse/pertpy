@@ -62,7 +62,7 @@ class TestMixscape:
         var.index.rename("index", inplace=True)
 
         X = sparse.csr_matrix(X)
-        adata = anndata.AnnData(X=X, obs=obs, var=var)
+        adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=np.float32)
         return adata
 
     def test_mixscape(self):
@@ -87,7 +87,7 @@ class TestMixscape:
 
         pt.tl.kernel_pca(adata, n_comps=50)
         mixscape_identifier = pt.tl.Mixscape()
-        mixscape_identifier.pert_sign(adata, pert_key="label", control="control", use_rep="X_kpca")
+        mixscape_identifier.perturbation_signature(adata, pert_key="label", control="control", use_rep="X_kpca")
 
         assert "X_pert" in adata.layers
 
@@ -96,6 +96,6 @@ class TestMixscape:
         adata.layers["X_pert"] = adata.X
         mixscape_identifier = pt.tl.Mixscape()
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
-        mixscape_identifier.lda(adata=adata, labels="gene_target")
+        mixscape_identifier.lda(adata=adata, labels="gene_target", control="NT")
 
         assert "mixscape_lda" in adata.uns

@@ -16,7 +16,7 @@ from matplotlib.colors import ListedColormap
 from mudata import MuData
 from statannotations.Annotator import Annotator
 
-from pertpy.tools._base_coda import CompositionalModel2, collapse_singularities_2
+from pertpy.tools._coda._base_coda import CompositionalModel2, collapse_singularities_2
 
 sns.set_style("ticks")
 
@@ -902,10 +902,10 @@ class CodaPlot:
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")
         else:
-            vmin = min([data_rna.obs[effect].min() for _, effect in enumerate(effect_name)])
+            vmin = min(data_rna.obs[effect].min() for _, effect in enumerate(effect_name))
         if kwargs.get("vmax"):
             vmax = kwargs["vmax"]
             kwargs.pop("vmax")
         else:
-            vmax = max([data_rna.obs[effect].max() for _, effect in enumerate(effect_name)])
+            vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
         return sc.pl.umap(data_rna, color=effect_name, vmax=vmax, vmin=vmin, ax=ax, show=show, **kwargs)

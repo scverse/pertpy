@@ -15,7 +15,7 @@ from mudata import MuData
 from numpyro.infer import Predictive
 from rich import print
 
-from pertpy.tools._base_coda import CompositionalModel2, from_scanpy
+from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 config.update("jax_enable_x64", True)
 
@@ -189,7 +189,7 @@ class Sccoda(CompositionalModel2):
         else:
             return adata
 
-    def model(
+    def model(  # type: ignore
         self,
         counts: np.ndarray,
         covariates: np.ndarray,
@@ -271,7 +271,7 @@ class Sccoda(CompositionalModel2):
 
         return predictions
 
-    def make_arviz(
+    def make_arviz(  # type: ignore
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
