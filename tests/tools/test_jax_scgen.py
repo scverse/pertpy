@@ -38,7 +38,7 @@ def test_scgen():
     gene_list=diff_genes[:10],
     labels={"x": "predicted", "y": "ground truth"},
     save=False,
-    show=True,
+    show=False,
     legend=False,
 )
     
@@ -49,6 +49,6 @@ def test_scgen():
     gene_list=diff_genes[:10],
     labels={"x": "predicted", "y": "ground truth"},
     save=False,
-    show=True,
+    show=False,
     legend=False,
 )
