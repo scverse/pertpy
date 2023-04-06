@@ -1,7 +1,6 @@
 import scanpy as sc
 import scvi
 
-from pertpy.plot._jax_scgen import JaxscgenPlot
 from pertpy.tools.jax_scgen._jax_scgen import JaxSCGEN
 
 
