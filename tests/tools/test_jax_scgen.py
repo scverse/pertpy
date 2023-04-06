@@ -1,7 +1,6 @@
 import scanpy as sc
 import scvi
 
-from pertpy.plot._jax_scgen import JaxscgenPlot
 from pertpy.tools.jax_scgen._jax_scgen import JaxSCGEN
 
 
@@ -32,13 +31,24 @@ def test_scgen():
     sc.tl.rank_genes_groups(label_0, groupby="batch", method="wilcoxon")
     diff_genes = label_0.uns["rank_genes_groups"]["names"]["batch_1"]
 
-    JaxscgenPlot.reg_mean_plot(
-        eval_adata,
-        condition_key="batch_1",
-        axis_keys={"x": "pred", "y": "batch_1"},
-        gene_list=diff_genes[:10],
-        labels={"x": "predicted", "y": "ground truth"},
-        save=False,
-        show=False,
-        legend=False,
-    )
+    model.reg_mean_plot(
+    eval_adata,
+    condition_key="batch",
+    axis_keys={"x": "pred", "y": "batch_1"},
+    gene_list=diff_genes[:10],
+    labels={"x": "predicted", "y": "ground truth"},
+    save=False,
+    show=True,
+    legend=False,
+)
+    
+    model.reg_var_plot(
+    eval_adata,
+    condition_key="batch",
+    axis_keys={"x": "pred", "y": "batch_1"},
+    gene_list=diff_genes[:10],
+    labels={"x": "predicted", "y": "ground truth"},
+    save=False,
+    show=True,
+    legend=False,
+)
