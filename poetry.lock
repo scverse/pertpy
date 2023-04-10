@@ -2729,31 +2729,31 @@ files = [
 
 [[package]]
 name = "numpyro"
-version = "0.10.1"
+version = "0.11.0"
 description = "Pyro PPL on NumPy"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "numpyro-0.10.1-py3-none-any.whl", hash = "sha256:9833ee834c3bb1e57acd30dca6263aaf8926bf3b92f903e1a3276621fc3a184c"},
-    {file = "numpyro-0.10.1.tar.gz", hash = "sha256:dfa896f01c8df43ddd41663af2b3e2fc4aea73489e669474e83329b183b29150"},
+    {file = "numpyro-0.11.0-py3-none-any.whl", hash = "sha256:e83f45f999030465694e911cd5183d024e22c9f339d00094b8cb3fddc6a2f5f6"},
+    {file = "numpyro-0.11.0.tar.gz", hash = "sha256:d357dd1a0159f86d45c233708ad33a3d3d53431d05b4bbece1d068ae4168aa8e"},
 ]
 
 [package.dependencies]
-jax = ">=0.2.13"
-jaxlib = ">=0.1.65"
+jax = ">=0.4"
+jaxlib = ">=0.4"
 multipledispatch = "*"
 numpy = "*"
 tqdm = "*"
 
 [package.extras]
-cpu = ["jax[cpu] (>=0.2.13)"]
-cuda = ["jax[cuda] (>=0.2.13)"]
-dev = ["dm-haiku", "flax", "funsor (>=0.4.1)", "graphviz", "jaxns (==1.0.0)", "optax (>=0.0.6)", "pyyaml", "tensorflow-probability (>=0.15.0)"]
+cpu = ["jax[cpu] (>=0.4)"]
+cuda = ["jax[cuda] (>=0.4)"]
+dev = ["dm-haiku", "flax", "funsor (>=0.4.1)", "graphviz", "jaxns (==1.0.0)", "optax (>=0.0.6)", "pyyaml", "tensorflow-probability (>=0.17.0)"]
 doc = ["ipython", "nbsphinx (>=0.8.5)", "readthedocs-sphinx-search (==0.1.0)", "sphinx", "sphinx-gallery", "sphinx-rtd-theme"]
 examples = ["arviz", "jupyter", "matplotlib", "pandas", "scikit-learn", "seaborn", "wordcloud"]
-test = ["black[jupyter] (>=21.8b0)", "flake8", "isort (>=5.0)", "pyro-api (>=0.1.1)", "pytest (>=4.1)", "scipy (>=1.6,<1.7)"]
-tpu = ["jax[tpu] (>=0.2.13)"]
+test = ["black[jupyter] (>=21.8b0)", "flake8", "importlib-metadata (<5.0)", "isort (>=5.0)", "pyro-api (>=0.1.1)", "pytest (>=4.1)", "scipy (>=1.6,<1.7)"]
+tpu = ["jax[tpu] (>=0.4)"]
 
 [[package]]
 name = "opt-einsum"
@@ -5522,4 +5522,4 @@ ete3 = ["ete3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<3.11"
-content-hash = "f03afa7182ef8ed7322e09ad97c00f6465dfa63dfc032d255f45f5674a39fd99"
+content-hash = "b4b6c91c0de152215fe1418834045780718f54c385452a3e14bc2453f05282e9"
