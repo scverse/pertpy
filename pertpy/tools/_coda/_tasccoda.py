@@ -78,6 +78,10 @@ class Tasccoda(CompositionalModel2):
     ) -> MuData:
         """Prepare a MuData object for subsequent processing. If type is "cell_level", then create a compositional analysis dataset from the input adata. If type is "sample_level", generate ete tree for tascCODA models from dendrogram information or cell-level observations.
 
+        When using ``type="cell_level"``, ``adata`` needs to have a column in ``adata.obs`` that contains the cell type assignment.
+        Further, it must contain one column or a set of columns (e.g. subject id, treatment, disease status) that uniquely identify each (statistical) sample.
+        Further covariates (e.g. subject age) can either be specified via addidional column names in ``adata.obs``, a key in ``adata.uns``, or as a separate DataFrame.
+
         Args:
             adata: AnnData object.
             type: Specify the input adata type, which could be either a cell-level AnnData or an aggregated sample-level AnnData.
