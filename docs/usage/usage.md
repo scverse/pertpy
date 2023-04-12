@@ -93,6 +93,23 @@ Assigning guides based on thresholds. Each cell is assigned to the most expresse
     preprocessing.GuideAssignment
 ```
 
+Example implementation:
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+mdata = pt.data.papalexi_2021()
+gdo = mdata.mod['gdo']
+gdo.layers['counts'] = gdo.X.copy()
+sc.pp.log1p(gdo)
+
+ga = pt.pp.GuideAssignment()
+ga.assign_by_threshold(gdo, 5, layer="counts", output_layer="assigned_guides")
+
+pt.pl.guide.heatmap(gdo, layer='assigned_guides')
+```
+
 ## Tools
 
 ### Augurpy
