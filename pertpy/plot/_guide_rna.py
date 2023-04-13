@@ -37,22 +37,30 @@ class GuideRnaPlot:
             List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
             Order of cells in the y axis will be saved on adata.obs[key_to_save_order] if provided.
         """
-        grna = AnnData(adata.X if layer is None else adata.layers[layer], var=adata.var, obs=adata.obs[[]])
+        data = adata.X if layer is None else adata.layers[layer]
 
         if order_by is None:
-            grna.obs["max_guide_index"] = np.where(
-                np.array(grna.X.max(axis=1)).squeeze() != grna.X.min(), np.array(grna.X.argmax(axis=1)).squeeze(), -1
+            max_guide_index = np.where(
+                np.array(data.max(axis=1)).squeeze() != data.min(), np.array(data.argmax(axis=1)).squeeze(), -1
             )
-            order = np.argsort(grna.obs["max_guide_index"])
+            order = np.argsort(max_guide_index)
         elif isinstance(order_by, str):
             order = adata.obs[order_by]
         else:
             order = order_by
 
-        grna = grna[order].copy()
-        grna.obs["dummy_group"] = ""
+        adata.obs["_tmp_pertpy_grna_plot_dummy_group"] = ""
         if key_to_save_order is not None:
             adata.obs[key_to_save_order] = order
-        return sc.pl.heatmap(
-            grna, grna.var.index.tolist(), groupby="dummy_group", cmap="viridis", dendrogram=False, **kwds
+        axis_group = sc.pl.heatmap(
+            adata[order],
+            adata.var.index.tolist(),
+            groupby="_tmp_pertpy_grna_plot_dummy_group",
+            cmap="viridis",
+            use_raw=False,
+            dendrogram=False,
+            layer=layer,
+            **kwds,
         )
+        del adata.obs["_tmp_pertpy_grna_plot_dummy_group"]
+        return axis_group
