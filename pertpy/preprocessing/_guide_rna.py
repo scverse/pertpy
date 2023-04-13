@@ -23,11 +23,12 @@ class GuideAssignment:
 
         Args:
             adata: Annotated data matrix containing gRNA values
-            assignment_threshold: If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
+            assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
             output_layer: Assigned guide will be saved on adata.layers[output_key]. Defaults to `assigned_guides`.
             only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
+                                 Defaults to False.
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):
@@ -58,6 +59,7 @@ class GuideAssignment:
         Args:
             adata: Annotated data matrix containing gRNA values
                    assignment_threshold: If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
+            assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
             output_key: Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
