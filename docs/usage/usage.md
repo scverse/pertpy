@@ -73,6 +73,43 @@ pt.pl.cool_fancy_plot()
     data.zhao_2021
 ```
 
+## Preprocessing
+
+### Guide Assignment
+
+Simple functions for:
+
+Assigning guides based on thresholds. Each cell is assigned to the most expressed gRNA if it has at least the specified number of counts.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: preprocessing
+    :nosignatures:
+
+    preprocessing.GuideAssignment
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+mdata = pt.data.papalexi_2021()
+gdo = mdata.mod['gdo']
+gdo.layers['counts'] = gdo.X.copy()
+sc.pp.log1p(gdo)
+
+ga = pt.pp.GuideAssignment()
+ga.assign_by_threshold(gdo, 5, layer="counts", output_layer="assigned_guides")
+
+pt.pl.guide.heatmap(gdo, layer='assigned_guides')
+```
+
 ## Tools
 
 ### Augurpy
@@ -319,6 +356,16 @@ tab = etest(adata, groupby='perturbation', contrast='control')
 ```
 
 ## Plots
+
+### Preprocessing
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.guide
+
+```
 
 ### Augurpy
 
