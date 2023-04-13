@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-
 import numpy as np
 import scipy
 from anndata import AnnData
@@ -28,7 +26,7 @@ class GuideAssignment:
             assignment_threshold: If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
-            output_layer: Assigned guide will be saved on adata.layers[output_key]. Default value is `assigned_guides`.
+            output_layer: Assigned guide will be saved on adata.layers[output_key]. Defaults to `assigned_guides`.
             only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
         """
         counts = adata.X if layer is None else adata.layers[layer]
