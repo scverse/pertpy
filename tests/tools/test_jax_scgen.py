@@ -7,13 +7,13 @@ import pertpy as pt
 def test_scgen():
 
     adata = scvi.data.synthetic_iid()
-    pt.tl.JaxSCGEN.setup_anndata(
+    pt.tl.SCGEN.setup_anndata(
         adata,
         batch_key="batch",
         labels_key="labels",
     )
 
-    model = pt.tl.JaxSCGEN(adata)
+    model = pt.tl.SCGEN(adata)
     model.train(max_epochs=1, batch_size=32, early_stopping=True, early_stopping_patience=25)
 
     # batch Removal

@@ -27,7 +27,7 @@ def extractor(
     Example:
         .. code-block:: python
 
-            import scgen
+            import SCGEN
             import anndata
             train_data = anndata.read("./data/train.h5ad")
             test_data = anndata.read("./data/test.h5ad")
@@ -57,7 +57,7 @@ def balancer(
     Example:
         .. code-block:: python
 
-            import scgen
+            import SCGEN
             import anndata
             train_data = anndata.read("./train_kang.h5ad")
             train_ctrl = train_data[train_data.obs["condition"] == "control", :]

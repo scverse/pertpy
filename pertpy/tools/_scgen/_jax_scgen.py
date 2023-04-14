@@ -18,7 +18,7 @@ from ._utils import balancer, extractor
 font = {"family": "Arial", "size": 14}
 
 
-class JaxSCGEN(JaxTrainingMixin, BaseModelClass):
+class SCGEN(JaxTrainingMixin, BaseModelClass):
     """Jax Implementation of scGen model for batch removal and perturbation prediction."""
 
     def __init__(
