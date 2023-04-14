@@ -3,7 +3,7 @@ import pandas as pd
 import scanpy as sc
 from adjustText import adjust_text
 from matplotlib import pyplot
-from scipy.stats import stats
+from scipy import stats
 from scvi import REGISTRY_KEYS
 
 

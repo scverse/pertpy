@@ -5,6 +5,7 @@ from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._differential_gene_expression import DifferentialGeneExpression
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
+from pertpy.tools._jax_scgen import JaxSCGEN
 from pertpy.tools._kernel_pca import kernel_pca
 from pertpy.tools._metadata import CellLineMetaData
 from pertpy.tools._milo import Milo

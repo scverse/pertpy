@@ -1,19 +1,19 @@
 import scanpy as sc
 import scvi
 
-from pertpy.tools.jax_scgen._jax_scgen import JaxSCGEN
+import pertpy as pt
 
 
 def test_scgen():
 
     adata = scvi.data.synthetic_iid()
-    JaxSCGEN.setup_anndata(
+    pt.tl.JaxSCGEN.setup_anndata(
         adata,
         batch_key="batch",
         labels_key="labels",
     )
 
-    model = JaxSCGEN(adata)
+    model = pt.tl.JaxSCGEN(adata)
     model.train(max_epochs=1, batch_size=32, early_stopping=True, early_stopping_patience=25)
 
     # batch Removal
@@ -31,7 +31,7 @@ def test_scgen():
     sc.tl.rank_genes_groups(label_0, groupby="batch", method="wilcoxon")
     diff_genes = label_0.uns["rank_genes_groups"]["names"]["batch_1"]
 
-    model.reg_mean_plot(
+    pt.pl.scg.reg_mean_plot(
         eval_adata,
         condition_key="batch",
         axis_keys={"x": "pred", "y": "batch_1"},
@@ -42,7 +42,7 @@ def test_scgen():
         legend=False,
     )
 
-    model.reg_var_plot(
+    pt.pl.scg.reg_var_plot(
         eval_adata,
         condition_key="batch",
         axis_keys={"x": "pred", "y": "batch_1"},
