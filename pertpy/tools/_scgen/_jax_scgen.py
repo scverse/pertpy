@@ -4,7 +4,6 @@ from typing import Any, Sequence
 
 import jax.numpy as jnp
 import numpy as np
-import torch
 from anndata import AnnData
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
@@ -133,7 +132,6 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
     def _avg_vector(self, adata):
         return np.mean(self.get_latent_representation(adata), axis=0)
 
-    @torch.no_grad()
     def get_decoded_expression(
         self,
         adata: AnnData | None = None,
@@ -148,13 +146,12 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         scdl = self._make_data_loader(adata=adata, indices=indices, batch_size=batch_size)
         decoded = []
         for tensors in scdl:
-            _, generative_outputs = self.module(tensors, compute_loss=False)
-            px = generative_outputs["px"].cpu()
+            _, generative_outputs = self.module.as_bound()(tensors, compute_loss=False)
+            px = generative_outputs["px"]
             decoded.append(px)
 
-        return torch.cat(decoded).numpy()
+        return jnp.concatenate(decoded)
 
-    @torch.no_grad()
     def batch_removal(self, adata: AnnData | None = None) -> AnnData:
         """Removes batch effects.
 
