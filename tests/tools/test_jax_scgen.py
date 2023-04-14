@@ -32,23 +32,23 @@ def test_scgen():
     diff_genes = label_0.uns["rank_genes_groups"]["names"]["batch_1"]
 
     model.reg_mean_plot(
-    eval_adata,
-    condition_key="batch",
-    axis_keys={"x": "pred", "y": "batch_1"},
-    gene_list=diff_genes[:10],
-    labels={"x": "predicted", "y": "ground truth"},
-    save=False,
-    show=False,
-    legend=False,
-)
-    
+        eval_adata,
+        condition_key="batch",
+        axis_keys={"x": "pred", "y": "batch_1"},
+        gene_list=diff_genes[:10],
+        labels={"x": "predicted", "y": "ground truth"},
+        save=False,
+        show=False,
+        legend=False,
+    )
+
     model.reg_var_plot(
-    eval_adata,
-    condition_key="batch",
-    axis_keys={"x": "pred", "y": "batch_1"},
-    gene_list=diff_genes[:10],
-    labels={"x": "predicted", "y": "ground truth"},
-    save=False,
-    show=False,
-    legend=False,
-)
+        eval_adata,
+        condition_key="batch",
+        axis_keys={"x": "pred", "y": "batch_1"},
+        gene_list=diff_genes[:10],
+        labels={"x": "predicted", "y": "ground truth"},
+        save=False,
+        show=False,
+        legend=False,
+    )

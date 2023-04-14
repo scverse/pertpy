@@ -15,8 +15,8 @@ copyright = "2021, Lukas Heumos, Theislab"
 author = "Lukas Heumos"
 github_repo = "pertpy"
 
-version = "0.2.0"
-release = "0.2.0"
+version = "0.4.0"
+release = "0.4.0"
 
 extensions = [
     "myst_parser",
@@ -86,7 +86,6 @@ intersphinx_mapping = dict(
     pandas=("https://pandas.pydata.org/docs/", None),
     python=("https://docs.python.org/3", None),
     scipy=("https://docs.scipy.org/doc/scipy/reference/", None),
-    sklearn=("https://scikit-learn.org/stable/", None),
     torch=("https://pytorch.org/docs/master/", None),
     scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
     pytorch_lightning=("https://pytorch-lightning.readthedocs.io/en/stable/", None),
@@ -174,5 +173,10 @@ nbsphinx_prolog = r"""
 )
 nbsphinx_thumbnails = {
     "tutorials/notebooks/mixscape": "_static/tutorials/mixscape.png",
-    "tutorials/notebooks/augurpy": "_static/tutorials/augur.png",
+    "tutorials/notebooks/augur": "_static/tutorials/augur.png",
+    "tutorials/notebooks/sccoda": "_static/tutorials/sccoda.png",
+    "tutorials/notebooks/sccoda_extended": "_static/tutorials/sccoda_extended.png",
+    "tutorials/notebooks/tasccoda": "_static/tutorials/tasccoda.png",
+    "tutorials/notebooks/milo": "_static/tutorials/milo.png",
+    "tutorials/notebooks/dialogue": "_static/tutorials/dialogue.png",
 }

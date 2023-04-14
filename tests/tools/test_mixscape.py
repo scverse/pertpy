@@ -62,12 +62,13 @@ class TestMixscape:
         var.index.rename("index", inplace=True)
 
         X = sparse.csr_matrix(X)
-        adata = anndata.AnnData(X=X, obs=obs, var=var)
+        adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=np.float32)
         return adata
 
     def test_mixscape(self):
         adata = self.make_test_adata()
         mixscape_identifier = pt.tl.Mixscape()
+        adata.layers["X_pert"] = adata.X
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
         np_result = adata.obs["mixscape_class_global"] == "NP"
         np_result_correct = np_result[num_cells_per_group : num_cells_per_group * 2]
@@ -86,14 +87,15 @@ class TestMixscape:
 
         pt.tl.kernel_pca(adata, n_comps=50)
         mixscape_identifier = pt.tl.Mixscape()
-        mixscape_identifier.pert_sign(adata, pert_key="label", control="control", use_rep="X_kpca")
+        mixscape_identifier.perturbation_signature(adata, pert_key="label", control="control", use_rep="X_kpca")
 
         assert "X_pert" in adata.layers
 
     def test_lda(self):
         adata = self.make_test_adata()
+        adata.layers["X_pert"] = adata.X
         mixscape_identifier = pt.tl.Mixscape()
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
-        mixscape_identifier.lda(adata=adata, labels="gene_target")
+        mixscape_identifier.lda(adata=adata, labels="gene_target", control="NT")
 
         assert "mixscape_lda" in adata.uns

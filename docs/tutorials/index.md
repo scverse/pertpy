@@ -17,7 +17,12 @@ For questions about the usage of pertpy use [Github Discussions].
 .. nbgallery::
 
    notebooks/mixscape
-   notebooks/augurpy
+   notebooks/augur
+   notebooks/sccoda
+   notebooks/sccoda_extended
+   notebooks/tasccoda
+   notebooks/milo
+   notebooks/dialogue
 
 ```
 

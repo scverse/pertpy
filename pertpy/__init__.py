@@ -2,7 +2,7 @@
 
 __author__ = "Lukas Heumos"
 __email__ = "lukas.heumos@posteo.net"
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 
 
 from pypi_latest import PypiLatest
@@ -12,4 +12,5 @@ pertpy_pypi_latest.check_latest()
 
 from . import data as dt
 from . import plot as pl
+from . import preprocessing as pp
 from . import tools as tl

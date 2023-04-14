@@ -1,5 +1,5 @@
 Sphinx
-sphinx-automodapi>
+sphinx-automodapi
 sphinx-autodoc-annotation
 sphinx_last_updated_by_git
 sphinxcontrib-spelling
@@ -14,3 +14,5 @@ myst-parser
 sphinx-remove-toctrees
 sphinx-design
 sphinxext-opengraph
+ete3
+pyqt5

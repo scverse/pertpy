@@ -4,20 +4,13 @@ from typing import Any, Sequence
 
 import jax.numpy as jnp
 import numpy as np
-
 import pandas as pd
-
 import scanpy as sc
-
 import torch
-
 from adjustText import adjust_text
-
 from anndata import AnnData
-
 from matplotlib import pyplot
 from scipy.stats import stats
-
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
 from scvi.data.fields import CategoricalObsField, LayerField
@@ -330,7 +323,6 @@ class JaxSCGEN(JaxTrainingMixin, BaseModelClass):
 
         return self.module.as_numpy_array(latent)
 
-    
     def reg_mean_plot(
         self,
         adata,
@@ -447,7 +439,6 @@ class JaxSCGEN(JaxTrainingMixin, BaseModelClass):
         else:
             return r_value**2
 
-    
     def reg_var_plot(
         self,
         adata,

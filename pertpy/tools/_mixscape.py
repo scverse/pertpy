@@ -7,9 +7,10 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from pynndescent import NNDescent
+from rich import print
 from scanpy.tools._utils import _choose_representation
 from scipy import sparse
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 import pertpy as pt
@@ -23,7 +24,7 @@ class Mixscape:
     def __init__(self):
         pass
 
-    def pert_sign(
+    def perturbation_signature(
         self,
         adata: AnnData,
         pert_key: str,
@@ -153,13 +154,13 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             new_class_name: Name of mixscape classification to be stored in `.obs`.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            layer: Key from adata.layers whose value will be used to perform tests on.
+            layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                     the perturbation signature for every replicate separately.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to KO.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -173,7 +174,8 @@ class Mixscape:
             Global classification result (perturbed, NP or NT)
 
             mixscape_class_p_ko: pandas.Series (`adata.obs['mixscape_class_p_ko']`).
-            Posterior probabilities used to determine if a cell is KO (default). Name of this item will change to match perturbation_type parameter setting. (>0.5) or NP
+            Posterior probabilities used to determine if a cell is KO (default).
+            Name of this item will change to match perturbation_type parameter setting. (>0.5) or NP
         """
         if copy:
             adata = adata.copy()
@@ -194,7 +196,13 @@ class Mixscape:
         if layer is not None:
             X = adata_comp.layers[layer]
         else:
-            X = adata_comp.X
+            try:
+                X = adata_comp.layers["X_pert"]
+            except KeyError:
+                print(
+                    '[bold yellow]No "X_pert" found in .layers! -- Please run pert_sign first to calculate perturbation signature!'
+                )
+                raise
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
         adata.obs[new_class_name] = adata.obs[labels].astype(str)
@@ -234,7 +242,10 @@ class Mixscape:
                             X[nt_cells][:, de_genes_indices], axis=0
                         )
                         # project cells onto the perturbation vector
-                        pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        if isinstance(dat, spmatrix):
+                            pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        else:
+                            pvec = np.sum(np.multiply(dat, vec), axis=1) / np.sum(np.multiply(vec, vec))
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
                         if n_iter == 0:
                             gv = pd.DataFrame(columns=["pvec", labels])
@@ -288,9 +299,9 @@ class Mixscape:
         self,
         adata: AnnData,
         labels: str,
-        mixscape_class_global="mixscape_class_global",
+        control: str,
+        mixscape_class_global: str | None = "mixscape_class_global",
         layer: str | None = None,
-        control: str | None = "NT",
         n_comps: int | None = 10,
         min_de_genes: int | None = 5,
         logfc_threshold: float | None = 0.25,
@@ -304,15 +315,16 @@ class Mixscape:
         Args:
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
+            control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Key from `adata.layers` whose value will be used to perform tests on.
-            control: Control category from the `pert_key` column. Default is 'NT'.
+            control: Control category from the `pert_key` column. Defaults to 'NT'.
             n_comps: Number of principal components to use. Defaults to 10.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
+            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells. Defaults to 0.25.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to KO.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -374,8 +386,8 @@ class Mixscape:
             else:
                 projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
 
-        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs["gene_target"])) - 1)
-        clf.fit(projected_pcs_array, adata_subset.obs["gene_target"])
+        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
+        clf.fit(projected_pcs_array, adata_subset.obs[labels])
         cell_embeddings = clf.transform(projected_pcs_array)
         adata.uns["mixscape_lda"] = cell_embeddings
 
@@ -383,8 +395,17 @@ class Mixscape:
             return adata
 
     def _get_perturbation_markers(
-        self, adata, split_masks, categories, labels, control, layer, pval_cutoff, min_de_genes, logfc_threshold
-    ):
+        self,
+        adata: AnnData,
+        split_masks: list[np.ndarray],
+        categories: list[str],
+        labels: str,
+        control: str,
+        layer: str,
+        pval_cutoff: float,
+        min_de_genes: float,
+        logfc_threshold: float,
+    ) -> dict[tuple, np.ndarray]:
         """determine gene sets across all splits/groups through differential gene expression
 
         Args:
@@ -392,7 +413,7 @@ class Mixscape:
             col_names: Column names to extract the indices for
 
         Returns:
-            Set of column indices
+            Set of column indices.
         """
         perturbation_markers: dict[tuple, np.ndarray] = {}  # type: ignore
         for split, split_mask in enumerate(split_masks):

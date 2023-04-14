@@ -41,7 +41,7 @@ class MixscapePlot:
     @staticmethod
     def barplot(  # pragma: no cover
         adata: AnnData,
-        control: str = "NT",
+        guide_rna_column: str,
         mixscape_class_global="mixscape_class_global",
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
@@ -58,7 +58,7 @@ class MixscapePlot:
 
         Args:
             adata: The annotated data object.
-            control: Control category from the `pert_key` column. Default is 'NT'.
+            guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels. The format must be <gene_target>g<#>. For example, 'STAT2g1' and 'ATF2g1'.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             show: Show the plot, do not return axis.
             save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
@@ -68,20 +68,20 @@ class MixscapePlot:
         """
         if mixscape_class_global not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
-        count = pd.crosstab(index=adata.obs[mixscape_class_global], columns=adata.obs[control])
+        count = pd.crosstab(index=adata.obs[mixscape_class_global], columns=adata.obs[guide_rna_column])
         all_cells_percentage = pd.melt(count / count.sum(), ignore_index=False).reset_index()
         KO_cells_percentage = all_cells_percentage[all_cells_percentage[mixscape_class_global] == "KO"]
         KO_cells_percentage = KO_cells_percentage.sort_values("value", ascending=False)
 
-        new_levels = KO_cells_percentage[control]
-        all_cells_percentage[control] = pd.Categorical(
-            all_cells_percentage[control], categories=new_levels, ordered=False
+        new_levels = KO_cells_percentage[guide_rna_column]
+        all_cells_percentage[guide_rna_column] = pd.Categorical(
+            all_cells_percentage[guide_rna_column], categories=new_levels, ordered=False
         )
         all_cells_percentage[mixscape_class_global] = pd.Categorical(
             all_cells_percentage[mixscape_class_global], categories=["NT", "NP", "KO"], ordered=False
         )
-        all_cells_percentage["gene"] = all_cells_percentage[control].str.rsplit("g", expand=True)[0]
-        all_cells_percentage["guide_number"] = all_cells_percentage[control].str.rsplit("g", expand=True)[1]
+        all_cells_percentage["gene"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[0]
+        all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
         all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
         NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
 
@@ -118,8 +118,8 @@ class MixscapePlot:
         adata: AnnData,
         labels: str,
         target_gene: str,
+        control: str,
         layer: str | None = None,
-        control: str | None = "NT",
         method: str | None = "wilcoxon",
         subsample_number: int | None = 900,
         vmin: float | None = -2,
@@ -134,8 +134,8 @@ class MixscapePlot:
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize heatmap for.
+            control: Control category from the `pert_key` column.
             layer: Key from `adata.layers` whose value will be used to perform tests on.
-            control: Control category from the `pert_key` column. Default is 'NT'.
             method: The default method is 'wilcoxon', see `method` parameter in `scanpy.tl.rank_genes_groups` for more options.
             subsample_number: Subsample to this number of observations.
             vmin: The value representing the lower limit of the color scale. Values smaller than vmin are plotted with the same color as vmin.
@@ -207,16 +207,16 @@ class MixscapePlot:
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             cols = {gd: "#7d7d7d", target_gene: color}
-            p = ggplot(perturbation_score, aes(x="pvec", color="gene_target")) + geom_density() + theme_classic()
+            p = ggplot(perturbation_score, aes(x="pvec", color=labels)) + geom_density() + theme_classic()
             p_copy = copy.deepcopy(p)
             p_copy._build()
             top_r = max(p_copy.layers[0].data["density"])
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
-            perturbation_score.loc[perturbation_score["gene_target"] == gd, "y_jitter"] = np.random.uniform(
-                low=0.001, high=top_r / 10, size=sum(perturbation_score["gene_target"] == gd)
+            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = np.random.uniform(
+                low=0.001, high=top_r / 10, size=sum(perturbation_score[labels] == gd)
             )
-            perturbation_score.loc[perturbation_score["gene_target"] == target_gene, "y_jitter"] = np.random.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score["gene_target"] == target_gene)
+            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = np.random.uniform(
+                low=-top_r / 10, high=0, size=sum(perturbation_score[labels] == target_gene)
             )
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
@@ -504,9 +504,9 @@ class MixscapePlot:
     @staticmethod
     def lda(  # pragma: no cover
         adata: AnnData,
+        control: str,
         mixscape_class="mixscape_class",
         mixscape_class_global="mixscape_class_global",
-        control: str | None = "NT",
         perturbation_type: str | None = "KO",
         lda_key: str | None = "mixscape_lda",
         n_components: int | None = None,
@@ -518,11 +518,11 @@ class MixscapePlot:
 
         Args:
             adata: The annotated data object.
+            control: Control category from the `pert_key` column.
             labels: The column of `.obs` with target gene labels.
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
-            control: Control category from the `pert_key` column. Default is 'NT'.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to 'KO'.
             lda_key: If not speficied, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
             show: Show the plot, do not return axis.
@@ -530,9 +530,9 @@ class MixscapePlot:
             **kwds: Additional arguments to `scanpy.pl.umap`.
         """
         if mixscape_class not in adata.obs:
-            raise ValueError(f'Did not find .obs["{mixscape_class}"]. Please run `pt.tl.mixscape` first.')
+            raise ValueError(f'Did not find .obs["{mixscape_class!r}"]. Please run `pt.tl.mixscape` first.')
         if lda_key not in adata.uns:
-            raise ValueError(f'Did not find .uns["{lda_key}"]. Run `pt.tl.neighbors` first.')
+            raise ValueError(f'Did not find .uns["{lda_key!r}"]. Run `pt.tl.neighbors` first.')
 
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
