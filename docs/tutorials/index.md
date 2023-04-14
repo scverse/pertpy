@@ -16,6 +16,7 @@ For questions about the usage of pertpy use [Github Discussions].
 ```{eval-rst}
 .. nbgallery::
 
+   notebooks/guide_rna_assignment
    notebooks/mixscape
    notebooks/augur
    notebooks/sccoda
@@ -23,7 +24,10 @@ For questions about the usage of pertpy use [Github Discussions].
    notebooks/tasccoda
    notebooks/milo
    notebooks/dialogue
-
+   notebooks/distances
+   notebooks/distance_tests
+   notebooks/scgen_perturbation_prediction
+   notebooks/scgen_batch_removal
 ```
 
 ### Glossary

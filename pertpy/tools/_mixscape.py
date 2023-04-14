@@ -415,7 +415,7 @@ class Mixscape:
         Returns:
             Set of column indices.
         """
-        perturbation_markers: dict[tuple, np.ndarray] = {}
+        perturbation_markers: dict[tuple, np.ndarray] = {}  # type: ignore
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
             # get gene sets for each split
