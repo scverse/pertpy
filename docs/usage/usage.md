@@ -114,7 +114,8 @@ pt.pl.guide.heatmap(gdo, layer='assigned_guides')
 
 ### Augurpy
 
-The Python implementation of [Augur R package](https://github.com/neurorestore/Augur) Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
+The Python implementation of [Augur R package](https://github.com/neurorestore/Augur)
+Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
 
 Augurpy aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
 The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are
@@ -155,7 +156,8 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
 
 ### Mixscape
 
-A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html) Papalexi et al. [Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens](https://www.nature.com/articles/s41588-021-00778-2).
+A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html)
+Papalexi et al. [Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens](https://www.nature.com/articles/s41588-021-00778-2).
 
 Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
 Next, it determines which targeted cells were affected by the genetic perturbation (=KO) and which targeted cells were not (=NP) with the use of mixture models.
@@ -269,7 +271,7 @@ pt.pl.coda.effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Fin
 
 #### DIALOGUE
 
-A Python implementation of DIALOGUE for the discovery of multicellular programs.
+A **work in progress (!)** Python implementation of DIALOGUE for the discovery of multicellular programs.
 See [DIALOGUE maps multicellular programs in tissue from single-cell or spatial transcriptomics data](https://www.nature.com/articles/s41587-022-01288-0) for more details on the methodology.
 
 ```{eval-rst}
@@ -294,22 +296,21 @@ sc.pp.pca(adata)
 sc.pp.neighbors(adata)
 sc.tl.umap(adata)
 
-dl = pt.tl.Dialogue()
+
+
+dl = pt.tl.Dialogue(sample_id = "clinical.status",
+                   celltype_key = "cell.subtypes",
+                   n_counts_key = "nCount_RNA",
+                   n_mpcs = 3)
 adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
     adata,
-    sample_id='clinical.status',
-    celltype_key='cell.subtypes',
-    n_counts_key="nCount_RNA",
     normalize=True
 )
-all_results = dl.multilevel_modeling(ct_subs=ct_subs,
+all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs,
                                      mcp_scores=mcps,
-                                     n_counts_key="nCount_RNA",
-                                     n_mcps=3,
-                                     sample_id="clinical.status",
+                                     ws_dict=ws,
                                      confounder="gender",
-                                     formula="y ~ x + nCount_RNA",
-                                     )
+                                   )
 ```
 
 ### Distances and Permutation Tests
@@ -344,6 +345,30 @@ pairwise_edistance = distance.pairwise(adata, groupby='perturbation')
 # E-test (Permutation test using E-distance)
 etest = pt.tl.PermutationTest(metric='edistance', obsm_key='X_pca', correction='holm-sidak')
 tab = etest(adata, groupby='perturbation', contrast='control')
+```
+
+### MetaData
+
+MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+We are currently implementing several sources with more to come.
+
+CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
+bulk RNA and protein expression data.
+
+Available databases for cell line metadata:
+
+-   The Cancer Dependency Map Project at Broad
+-   The Cancer Dependency Map Project at Sanger
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.CellLineMetaData
 ```
 
 ### Representation
@@ -420,27 +445,4 @@ tab = etest(adata, groupby='perturbation', contrast='control')
     plot.coda.draw_tree
     plot.coda.draw_effects
     plot.coda.effects_umap
-```
-
-### MetaData
-
-MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
-
-CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
-bulk RNA and protein expression data.
-
-Available databases for cell line metadata:
-
--   The Cancer Dependency Map Project at Broad
--   The Cancer Dependency Map Project at Sanger
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: tools
-
-    tools.CellLineMetaData
 ```

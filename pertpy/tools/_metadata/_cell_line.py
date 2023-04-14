@@ -4,6 +4,7 @@ from pathlib import Path
 
 import anndata
 import pandas as pd
+from anndata import AnnData
 from rich import print
 from scanpy import settings
 
@@ -242,26 +243,26 @@ class CellLineMetaData:
 
     def annotate_cell_lines(
         self,
-        adata: anndata,
+        adata: AnnData,
         cell_line_identifier: str = "DepMap_ID",
         identifier_type: str = "DepMap_ID",
         cell_line_information: list[str] = None,
         source: str = "DepMap",
         copy: bool = False,
-    ) -> anndata:
+    ) -> AnnData:
         """Fetch cell line annotation.
 
         For each cell, we fetch cell line annotation from Dependency Map (DepMap).
 
         Args:
-            adata: The data object to annotate.
+            adata: The AnnData object to annotate.
             cell_line_identifier: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
             identifier_type: The type of cell line information, e.g. DepMap_ID, cell_line_name or
                 stripped_cell_line_name. To fetch cell line metadata from Cancerrxgene, it is recommended to choose
                 "stripped_cell_line_name". Defaults to "DepMap_ID".
             cell_line_information: The metadata to fetch. All metadata will be fetched by default. Defaults to None (=all).
             source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            copy: Determines whether a copy of the AnnData object is returned. Defaults to False.
 
         Returns:
             Returns an AnnData object with cell line annotation.
@@ -355,13 +356,13 @@ class CellLineMetaData:
 
     def annotate_bulk_rna_expression(
         self,
-        adata: anndata,
+        adata: AnnData,
         cell_line_identifier: str = "cell_line_name",
         identifier_type: str = "model_name",
         bulk_rna_source: str = "broad",
         bulk_rna_information: str = "read_count",
         copy: bool = False,
-    ) -> anndata:
+    ) -> AnnData:
         """Fetch bulk rna expression.
 
         For each cell, we fetch bulk rna expression from either Broad or Sanger cell line.
@@ -423,11 +424,11 @@ class CellLineMetaData:
 
     def annotate_protein_expression(
         self,
-        adata: anndata,
+        adata: AnnData,
         cell_line_identifier: str = "cell_line_name",
         identifier_type: str = "model_name",
         copy: bool = False,
-    ) -> anndata:
+    ) -> AnnData:
         """Fetch protein expression.
 
         For each cell, we fetch protein intensity values acquired using data-independent acquisition mass spectrometry (DIA-MS).
@@ -482,10 +483,10 @@ class CellLineMetaData:
 
     def annotate_ccle_expression(
         self,
-        adata: anndata,
+        adata: AnnData,
         cell_line_identifier: str = "DepMap_ID",
         copy: bool = False,
-    ) -> anndata:
+    ) -> AnnData:
         """Fetch CCLE expression data.
 
          For each cell, we fetch gene expression TPM values of the protein coding genes for its corresponding DepMap
