@@ -112,16 +112,18 @@ pt.pl.guide.heatmap(gdo, layer='assigned_guides')
 
 ## Tools
 
-### Augurpy
+### Cell type prioritization
+
+#### Augur
 
 The Python implementation of [Augur R package](https://github.com/neurorestore/Augur)
 Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
 
-Augurpy aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
+Augur aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
 The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are
 more easily separated into perturbed and unperturbed than cell types with little or no response.
 This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type.
-Augurpy trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and
+Augur trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and
 then prioritizes cell type response according to metric scores measuring the accuracy of the model.
 For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient
 is used as a proxy for how accurate the model is which in turn approximates perturbation response.
@@ -140,7 +142,7 @@ adata, results = ag.predict(adata)
 results['summary_metrics']
 ```
 
-See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augurpy.html) for a more elaborate tutorial.
+See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augur.html) for a more elaborate tutorial.
 
 ```{eval-rst}
 .. currentmodule:: pertpy
@@ -154,7 +156,9 @@ See [augurpy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteboo
     tools.Augur
 ```
 
-### Mixscape
+### Pooled CRISPR screens
+
+#### Mixscape
 
 A Python implementation of [Mixscape](https://satijalab.org/seurat/articles/mixscape_vignette.html)
 Papalexi et al. [Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens](https://www.nature.com/articles/s41588-021-00778-2).
@@ -191,7 +195,7 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
 
 ### Compositional analysis
 
-#### Milopy
+#### Milo
 
 A Python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scverse pipelines for single-cell analysis.
 See [Differential abundance testing on single-cell data using k-nearest neighbor graphs](https://www.nature.com/articles/s41587-021-01033-z) for details on the statistical framework.
@@ -207,7 +211,7 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
     tools.Milo
 ```
 
-See [milopy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milopy.html) for a more elaborate tutorial.
+See [milo tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milo.html) for a more elaborate tutorial.
 
 Example implementation:
 
@@ -371,6 +375,52 @@ Available databases for cell line metadata:
     tools.CellLineMetaData
 ```
 
+### Response prediction
+
+#### scGen
+
+Reimplementation of scGen for perturbation response prediction of scRNA-seq data in Jax.
+See [scGen predicts single-cell perturbation responses](https://www.nature.com/articles/s41592-019-0494-8) for more details.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.SCGEN
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+train = pt.dt.kang_2018()
+
+train_new = train[~((train.obs["cell_type"] == "CD4T") &
+                    (train.obs["condition"] == "stimulated"))]
+train_new = train_new.copy()
+
+pt.tl.SCGEN.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
+model = pt.tl.SCGEN(train_new)
+model.train(
+    max_epochs=100,
+    batch_size=32
+)
+
+pred, delta = model.predict(
+    ctrl_key='control',
+    stim_key='stimulated',
+    celltype_to_predict='CD4T'
+)
+pred.obs['condition'] = 'pred'
+```
+
+See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html) for a more elaborate tutorial.
+
 ### Representation
 
 ```{eval-rst}
@@ -392,7 +442,9 @@ Available databases for cell line metadata:
 
 ```
 
-### Augurpy
+### Cell type prioritization
+
+#### Augur
 
 ```{eval-rst}
 .. autosummary::
@@ -405,7 +457,9 @@ Available databases for cell line metadata:
 
 ```
 
-### Mixscape
+### Pooled CRISPR screens
+
+#### Mixscape
 
 ```{eval-rst}
 .. autosummary::
@@ -420,7 +474,7 @@ Available databases for cell line metadata:
 
 ### Compositional analysis
 
-#### Milopy
+#### Milo
 
 ```{eval-rst}
 .. autosummary::
@@ -445,4 +499,17 @@ Available databases for cell line metadata:
     plot.coda.draw_tree
     plot.coda.draw_effects
     plot.coda.effects_umap
+```
+
+### Response prediction
+
+#### scGen
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.scg.reg_mean_plot
+    plot.scg.reg_var_plot
+    plot.scg.binary_classifier
 ```
