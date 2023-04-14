@@ -1,0 +1,80 @@
+﻿pertpy.tools.Milo
+=================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: Milo
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.Milo.add_covariate_to_nhoods_var
+    ~pertpy.tools.Milo.add_nhood_expression
+    ~pertpy.tools.Milo.annotate_nhoods
+    ~pertpy.tools.Milo.annotate_nhoods_continuous
+    ~pertpy.tools.Milo.build_nhood_graph
+    ~pertpy.tools.Milo.count_nhoods
+    ~pertpy.tools.Milo.da_nhoods
+    ~pertpy.tools.Milo.load
+    ~pertpy.tools.Milo.make_nhoods
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+add_covariate_to_nhoods_var
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.add_covariate_to_nhoods_var
+add_nhood_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.add_nhood_expression
+annotate_nhoods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.annotate_nhoods
+annotate_nhoods_continuous
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.annotate_nhoods_continuous
+build_nhood_graph
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.build_nhood_graph
+count_nhoods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.count_nhoods
+da_nhoods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.da_nhoods
+load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.load
+make_nhoods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Milo.make_nhoods
+
+

@@ -1,0 +1,45 @@
+﻿pertpy.tools.Distance
+=====================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: Distance
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.Distance.pairwise
+    ~pertpy.tools.Distance.precompute_distances
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+pairwise
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Distance.pairwise
+precompute_distances
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Distance.precompute_distances
+
+

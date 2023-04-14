@@ -1,0 +1,45 @@
+﻿pertpy.tools.DistanceTest
+=========================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: DistanceTest
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.DistanceTest.test_precomputed
+    ~pertpy.tools.DistanceTest.test_xy
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+test_precomputed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DistanceTest.test_precomputed
+test_xy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DistanceTest.test_xy
+
+

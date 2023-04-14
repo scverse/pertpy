@@ -1,0 +1,40 @@
+﻿pertpy.plot.guide
+=================
+
+.. currentmodule:: pertpy.plot
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: guide
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.plot.guide.heatmap
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+heatmap
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: guide.heatmap
+
+

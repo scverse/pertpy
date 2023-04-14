@@ -1,0 +1,6 @@
+﻿pertpy.plot.scg.binary\_classifier
+==================================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: scg.binary_classifier

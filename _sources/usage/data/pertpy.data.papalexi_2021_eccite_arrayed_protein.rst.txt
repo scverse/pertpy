@@ -1,6 +1,0 @@
-﻿pertpy.data.papalexi\_2021\_eccite\_arrayed\_protein
-====================================================
-
-.. currentmodule:: pertpy.data
-
-.. autofunction:: papalexi_2021_eccite_arrayed_protein

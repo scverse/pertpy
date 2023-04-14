@@ -1,0 +1,50 @@
+﻿pertpy.tools.Dialogue
+=====================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: Dialogue
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.Dialogue.calculate_multifactor_PMD
+    ~pertpy.tools.Dialogue.load
+    ~pertpy.tools.Dialogue.multilevel_modeling
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+calculate_multifactor_PMD
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Dialogue.calculate_multifactor_PMD
+load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Dialogue.load
+multilevel_modeling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Dialogue.multilevel_modeling
+
+

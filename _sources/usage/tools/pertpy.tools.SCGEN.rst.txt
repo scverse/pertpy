@@ -1,0 +1,167 @@
+﻿pertpy.tools.SCGEN
+==================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: SCGEN
+
+
+
+Attributes table
+~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.SCGEN.adata
+    ~pertpy.tools.SCGEN.adata_manager
+    ~pertpy.tools.SCGEN.device
+    ~pertpy.tools.SCGEN.history
+    ~pertpy.tools.SCGEN.is_trained
+    ~pertpy.tools.SCGEN.test_indices
+    ~pertpy.tools.SCGEN.train_indices
+    ~pertpy.tools.SCGEN.validation_indices
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.SCGEN.batch_removal
+    ~pertpy.tools.SCGEN.convert_legacy_save
+    ~pertpy.tools.SCGEN.get_anndata_manager
+    ~pertpy.tools.SCGEN.get_decoded_expression
+    ~pertpy.tools.SCGEN.get_from_registry
+    ~pertpy.tools.SCGEN.get_latent_representation
+    ~pertpy.tools.SCGEN.load
+    ~pertpy.tools.SCGEN.load_registry
+    ~pertpy.tools.SCGEN.predict
+    ~pertpy.tools.SCGEN.register_manager
+    ~pertpy.tools.SCGEN.save
+    ~pertpy.tools.SCGEN.setup_anndata
+    ~pertpy.tools.SCGEN.to_device
+    ~pertpy.tools.SCGEN.train
+    ~pertpy.tools.SCGEN.view_anndata_setup
+    ~pertpy.tools.SCGEN.view_setup_args
+
+
+
+
+
+Attributes
+~~~~~~~~~~~
+
+
+adata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.adata
+adata_manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.adata_manager
+device
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.device
+history
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.history
+is_trained
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.is_trained
+test_indices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.test_indices
+train_indices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.train_indices
+validation_indices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoattribute:: SCGEN.validation_indices
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+batch_removal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.batch_removal
+convert_legacy_save
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.convert_legacy_save
+get_anndata_manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.get_anndata_manager
+get_decoded_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.get_decoded_expression
+get_from_registry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.get_from_registry
+get_latent_representation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.get_latent_representation
+load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.load
+load_registry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.load_registry
+predict
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.predict
+register_manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.register_manager
+save
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.save
+setup_anndata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.setup_anndata
+to_device
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.to_device
+train
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.train
+view_anndata_setup
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.view_anndata_setup
+view_setup_args
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.view_setup_args
+
+

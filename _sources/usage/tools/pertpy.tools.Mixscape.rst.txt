@@ -20,7 +20,7 @@ Methods table
 
     ~pertpy.tools.Mixscape.lda
     ~pertpy.tools.Mixscape.mixscape
-    ~pertpy.tools.Mixscape.pert_sign
+    ~pertpy.tools.Mixscape.perturbation_signature
 
 
 
@@ -42,9 +42,9 @@ mixscape
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automethod:: Mixscape.mixscape
-pert_sign
+perturbation_signature
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automethod:: Mixscape.pert_sign
+.. automethod:: Mixscape.perturbation_signature
 
 

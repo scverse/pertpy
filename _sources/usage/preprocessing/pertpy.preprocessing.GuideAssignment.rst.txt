@@ -1,0 +1,45 @@
+﻿pertpy.preprocessing.GuideAssignment
+====================================
+
+.. currentmodule:: pertpy.preprocessing
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: GuideAssignment
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.preprocessing.GuideAssignment.assign_by_threshold
+    ~pertpy.preprocessing.GuideAssignment.assign_to_max_guide
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+assign_by_threshold
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: GuideAssignment.assign_by_threshold
+assign_to_max_guide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: GuideAssignment.assign_to_max_guide
+
+

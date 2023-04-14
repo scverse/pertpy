@@ -1,0 +1,6 @@
+﻿pertpy.plot.scg.reg\_mean\_plot
+===============================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: scg.reg_mean_plot

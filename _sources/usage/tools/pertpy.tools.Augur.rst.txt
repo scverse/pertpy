@@ -1,0 +1,105 @@
+﻿pertpy.tools.Augur
+==================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: Augur
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.Augur.average_metrics
+    ~pertpy.tools.Augur.ccc_score
+    ~pertpy.tools.Augur.cox_compare
+    ~pertpy.tools.Augur.create_estimator
+    ~pertpy.tools.Augur.cross_validate_subsample
+    ~pertpy.tools.Augur.draw_subsample
+    ~pertpy.tools.Augur.load
+    ~pertpy.tools.Augur.predict
+    ~pertpy.tools.Augur.predict_differential_prioritization
+    ~pertpy.tools.Augur.run_cross_validation
+    ~pertpy.tools.Augur.sample
+    ~pertpy.tools.Augur.select_highly_variable
+    ~pertpy.tools.Augur.select_variance
+    ~pertpy.tools.Augur.set_scorer
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+average_metrics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.average_metrics
+ccc_score
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.ccc_score
+cox_compare
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.cox_compare
+create_estimator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.create_estimator
+cross_validate_subsample
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.cross_validate_subsample
+draw_subsample
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.draw_subsample
+load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.load
+predict
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.predict
+predict_differential_prioritization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.predict_differential_prioritization
+run_cross_validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.run_cross_validation
+sample
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.sample
+select_highly_variable
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.select_highly_variable
+select_variance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.select_variance
+set_scorer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Augur.set_scorer
+
+

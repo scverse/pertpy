@@ -1,0 +1,80 @@
+﻿pertpy.tools.CellLineMetaData
+=============================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: CellLineMetaData
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.CellLineMetaData.annotate_bulk_rna_expression
+    ~pertpy.tools.CellLineMetaData.annotate_ccle_expression
+    ~pertpy.tools.CellLineMetaData.annotate_cell_lines
+    ~pertpy.tools.CellLineMetaData.annotate_protein_expression
+    ~pertpy.tools.CellLineMetaData.getinfo_annotate_bulk_rna_expression
+    ~pertpy.tools.CellLineMetaData.getinfo_annotate_ccle_expression
+    ~pertpy.tools.CellLineMetaData.getinfo_annotate_cell_lines
+    ~pertpy.tools.CellLineMetaData.getinfo_annotate_driver_genes
+    ~pertpy.tools.CellLineMetaData.getinfo_annotate_protein_expression
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+annotate_bulk_rna_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.annotate_bulk_rna_expression
+annotate_ccle_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.annotate_ccle_expression
+annotate_cell_lines
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.annotate_cell_lines
+annotate_protein_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.annotate_protein_expression
+getinfo_annotate_bulk_rna_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.getinfo_annotate_bulk_rna_expression
+getinfo_annotate_ccle_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.getinfo_annotate_ccle_expression
+getinfo_annotate_cell_lines
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.getinfo_annotate_cell_lines
+getinfo_annotate_driver_genes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.getinfo_annotate_driver_genes
+getinfo_annotate_protein_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: CellLineMetaData.getinfo_annotate_protein_expression
+
+

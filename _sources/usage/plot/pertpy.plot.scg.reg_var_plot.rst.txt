@@ -1,0 +1,6 @@
+﻿pertpy.plot.scg.reg\_var\_plot
+==============================
+
+.. currentmodule:: pertpy.plot
+
+.. automethod:: scg.reg_var_plot

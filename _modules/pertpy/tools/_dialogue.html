@@ -1,0 +1,1141 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
+
+    <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
+        <title>pertpy.tools._dialogue - pertpy</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/override.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/sphinx_gallery.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #003262;
+  --color-brand-content: #003262per;
+  --admonition-font-size: var(--font-size-normal);
+  --admonition-title-font-size: var(--font-size-normal);
+  --code-font-size: var(--font-size--small);
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">pertpy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../usage/usage.html">Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.adamson_2016_pilot.html">pertpy.data.adamson_2016_pilot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.adamson_2016_upr_epistasis.html">pertpy.data.adamson_2016_upr_epistasis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.adamson_2016_upr_perturb_seq.html">pertpy.data.adamson_2016_upr_perturb_seq</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.aissa_2021.html">pertpy.data.aissa_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.bhattacherjee.html">pertpy.data.bhattacherjee</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.burczynski_crohn.html">pertpy.data.burczynski_crohn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.chang_2021.html">pertpy.data.chang_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.datlinger_2017.html">pertpy.data.datlinger_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.datlinger_2021.html">pertpy.data.datlinger_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_rna.html">pertpy.data.frangieh_2021_rna</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gasperini_2019_atscale.html">pertpy.data.gasperini_2019_atscale</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gasperini_2019_highmoi.html">pertpy.data.gasperini_2019_highmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gasperini_2019_lowmoi.html">pertpy.data.gasperini_2019_lowmoi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.gehring_2019.html">pertpy.data.gehring_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.haber_2017_regions.html">pertpy.data.haber_2017_regions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.kang_2018.html">pertpy.data.kang_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.mcfarland_2020.html">pertpy.data.mcfarland_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.norman_2019.html">pertpy.data.norman_2019</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.norman_2019_raw.html">pertpy.data.norman_2019_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.papalexi_2021.html">pertpy.data.papalexi_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.replogle_2022_k562_essential.html">pertpy.data.replogle_2022_k562_essential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.replogle_2022_k562_gwps.html">pertpy.data.replogle_2022_k562_gwps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.replogle_2022_rpe1.html">pertpy.data.replogle_2022_rpe1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.sc_sim_augur.html">pertpy.data.sc_sim_augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schiebinger_2019_16day.html">pertpy.data.schiebinger_2019_16day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schiebinger_2019_18day.html">pertpy.data.schiebinger_2019_18day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr8.html">pertpy.data.schraivogel_2020_tap_screen_chr8</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr11.html">pertpy.data.schraivogel_2020_tap_screen_chr11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.sciplex3_raw.html">pertpy.data.sciplex3_raw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.shifrut_2018.html">pertpy.data.shifrut_2018</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.smillie.html">pertpy.data.smillie</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex2.html">pertpy.data.srivatsan_2020_sciplex2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex3.html">pertpy.data.srivatsan_2020_sciplex3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex4.html">pertpy.data.srivatsan_2020_sciplex4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.stephenson_2021_subsampled.html">pertpy.data.stephenson_2021_subsampled</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2019_day7neuron.html">pertpy.data.tian_2019_day7neuron</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2019_ipsc.html">pertpy.data.tian_2019_ipsc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2021_crispra.html">pertpy.data.tian_2021_crispra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.tian_2021_crispri.html">pertpy.data.tian_2021_crispri</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.weinreb_2020.html">pertpy.data.weinreb_2020</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.xie_2017.html">pertpy.data.xie_2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.zhao_2021.html">pertpy.data.zhao_2021</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/preprocessing/pertpy.preprocessing.GuideAssignment.html">pertpy.preprocessing.GuideAssignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Augur.html">pertpy.tools.Augur</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Mixscape.html">pertpy.tools.Mixscape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Milo.html">pertpy.tools.Milo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Sccoda.html">pertpy.tools.Sccoda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Tasccoda.html">pertpy.tools.Tasccoda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Dialogue.html">pertpy.tools.Dialogue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.Distance.html">pertpy.tools.Distance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.DistanceTest.html">pertpy.tools.DistanceTest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.CellLineMetaData.html">pertpy.tools.CellLineMetaData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.SCGEN.html">pertpy.tools.SCGEN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/tools/pertpy.tools.kernel_pca.html">pertpy.tools.kernel_pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.guide.html">pertpy.plot.guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.dp_scatter.html">pertpy.plot.ag.dp_scatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.important_features.html">pertpy.plot.ag.important_features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.lollipop.html">pertpy.plot.ag.lollipop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ag.scatterplot.html">pertpy.plot.ag.scatterplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.violin.html">pertpy.plot.ms.violin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.perturbscore.html">pertpy.plot.ms.perturbscore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.heatmap.html">pertpy.plot.ms.heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.barplot.html">pertpy.plot.ms.barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.ms.lda.html">pertpy.plot.ms.lda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.nhood_graph.html">pertpy.plot.milo.nhood_graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.nhood.html">pertpy.plot.milo.nhood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.da_beeswarm.html">pertpy.plot.milo.da_beeswarm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.milo.nhood_counts_by_cond.html">pertpy.plot.milo.nhood_counts_by_cond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.stacked_barplot.html">pertpy.plot.coda.stacked_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.effects_barplot.html">pertpy.plot.coda.effects_barplot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.boxplots.html">pertpy.plot.coda.boxplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.rel_abundance_dispersion_plot.html">pertpy.plot.coda.rel_abundance_dispersion_plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.draw_tree.html">pertpy.plot.coda.draw_tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.draw_effects.html">pertpy.plot.coda.draw_effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.coda.effects_umap.html">pertpy.plot.coda.effects_umap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.scg.reg_mean_plot.html">pertpy.plot.scg.reg_mean_plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.scg.reg_var_plot.html">pertpy.plot.scg.reg_var_plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/plot/pertpy.plot.scg.binary_classifier.html">pertpy.plot.scg.binary_classifier</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for pertpy.tools._dialogue</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">import</span> <span class="nn">anndata</span> <span class="k">as</span> <span class="nn">ad</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">statsmodels.formula.api</span> <span class="k">as</span> <span class="nn">smf</span>
+<span class="kn">import</span> <span class="nn">statsmodels.stats.multitest</span> <span class="k">as</span> <span class="nn">ssm</span>
+<span class="kn">from</span> <span class="nn">anndata</span> <span class="kn">import</span> <span class="n">AnnData</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">DataFrame</span>
+<span class="kn">from</span> <span class="nn">rich</span> <span class="kn">import</span> <span class="nb">print</span>
+<span class="kn">from</span> <span class="nn">rich.console</span> <span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">rich.live</span> <span class="kn">import</span> <span class="n">Live</span>
+<span class="kn">from</span> <span class="nn">rich.progress</span> <span class="kn">import</span> <span class="n">BarColumn</span><span class="p">,</span> <span class="n">Progress</span><span class="p">,</span> <span class="n">SpinnerColumn</span><span class="p">,</span> <span class="n">TaskProgressColumn</span><span class="p">,</span> <span class="n">TextColumn</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">nnls</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span> <span class="nn">sparsecca</span> <span class="kn">import</span> <span class="n">lp_pmd</span><span class="p">,</span> <span class="n">multicca_permute</span><span class="p">,</span> <span class="n">multicca_pmd</span>
+
+
+<div class="viewcode-block" id="Dialogue"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue">[docs]</a><span class="k">class</span> <span class="nc">Dialogue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Python implementation of DIALOGUE&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">celltype_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_counts_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_mpcs</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor for Dialogue.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sample_id: The sample ID key in AnnData.obs which is used for pseudobulk determination.</span>
+<span class="sd">            celltype_key: The key in AnnData.obs which contains the cell type column.</span>
+<span class="sd">            n_counts_key: The key of the number of counts in Anndata.obs . Also commonly the size factor.</span>
+<span class="sd">            n_mpcs: Number of PMD components which corresponds to the number of determined MCPs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span> <span class="o">=</span> <span class="n">sample_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">celltype_key</span> <span class="o">=</span> <span class="n">celltype_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_counts_key</span> <span class="o">=</span> <span class="n">n_counts_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_mcps</span> <span class="o">=</span> <span class="n">n_mpcs</span>
+
+    <span class="k">def</span> <span class="nf">_get_pseudobulks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">groupby</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;median&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;median&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return cell-averaged data by groupby.</span>
+
+<span class="sd">        Copied from `https://github.com/schillerlab/sc-toolbox/blob/397e80dc5e8fb8017b75f6c3fa634a1e1213d484/sc_toolbox/tools/__init__.py#L458`</span>
+
+<span class="sd">        # TODO: Replace with decoupler&#39;s implementation</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            groupby: The key to groupby for pseudobulks</span>
+<span class="sd">            strategy: The pseudobulking strategy. One of &quot;median&quot; or &quot;mean&quot;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Pandas DataFrame of pseudobulk counts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pseudobulk</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Genes&quot;</span><span class="p">:</span> <span class="n">adata</span><span class="o">.</span><span class="n">var_names</span><span class="o">.</span><span class="n">values</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">groupby</span><span class="p">]</span> <span class="o">==</span> <span class="n">category</span>
+            <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;median&quot;</span><span class="p">:</span>
+                <span class="n">pseudobulk</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+            <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+                <span class="n">pseudobulk</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">A1</span>
+
+        <span class="n">pseudobulk</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pseudobulk</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;Genes&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pseudobulk</span>
+
+    <span class="k">def</span> <span class="nf">_pseudobulk_pca</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">groupby</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_components</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return cell-averaged PCA components.</span>
+
+<span class="sd">        TODO: consider merging with `get_pseudobulks`</span>
+<span class="sd">        TODO: DIALOGUE recommends running PCA on each cell type separately before running PMD - this should be implemented as an option here.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            groupby: The key to groupby for pseudobulks</span>
+<span class="sd">            n_components: The number of PCA components</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A pseudobulk of PCA components.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">aggr</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">groupby</span><span class="p">]</span> <span class="o">==</span> <span class="n">category</span>
+            <span class="n">aggr</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;X_pca&quot;</span><span class="p">][:,</span> <span class="p">:</span><span class="n">n_components</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">aggr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aggr</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">aggr</span>
+
+    <span class="k">def</span> <span class="nf">_scale_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pseudobulks</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Row-wise mean center and scale by the standard deviation.</span>
+
+<span class="sd">        TODO: the `scale` function we implemented to match the R `scale` fn should already contain this functionality.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pseudobulks: The pseudobulk PCA components.</span>
+<span class="sd">            normalize: Whether to mimic DIALOGUE behavior or not.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The scaled count matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># DIALOGUE doesn&#39;t scale the data before passing to multicca, unlike what is recommended by sparsecca.</span>
+        <span class="c1"># However, performing this scaling _does_ increase overall correlation of the end result</span>
+        <span class="c1"># WHEN SAMPLE ORDER AND DIALOGUE2+3 PROCESSING IS IGNORED.</span>
+        <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pseudobulks</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">((</span><span class="n">pseudobulks</span> <span class="o">-</span> <span class="n">pseudobulks</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">pseudobulks</span><span class="o">.</span><span class="n">std</span><span class="p">())</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_concat_adata_mcp_scores</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">ct_subs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AnnData</span><span class="p">],</span> <span class="n">mcp_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">celltype_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Concatenates the AnnData object with the mcp scores.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: The AnnData object to append mcp scores to.</span>
+<span class="sd">            mcp_scores: The MCP scores dictionary.</span>
+<span class="sd">            celltype_key: Key of the cell type column in obs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            AnnData object with concatenated MCP scores in obs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">__concat_obs</span><span class="p">(</span><span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">mcp_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
+            <span class="n">mcp_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;mcp_</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">mcp_df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+            <span class="n">new_obs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">,</span> <span class="n">mcp_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">obs</span> <span class="o">=</span> <span class="n">new_obs</span>
+
+            <span class="k">return</span> <span class="n">adata</span>
+
+        <span class="n">ad_mcp</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ct</span><span class="p">:</span> <span class="n">__concat_obs</span><span class="p">(</span><span class="n">ct_subs</span><span class="p">[</span><span class="n">ct</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mcp_scores</span><span class="p">[</span><span class="n">ct</span><span class="p">]))</span> <span class="k">for</span> <span class="n">ct</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">celltype_key</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span>
+        <span class="p">}</span>
+
+        <span class="n">adata</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">ad_mcp</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">adata</span>
+
+    <span class="k">def</span> <span class="nf">_get_abundant_elements_from_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">min_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a list from `elements` that occur more than `min_count` times.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            series: To extract the top most frequent elements included in the final output</span>
+<span class="sd">                      (i.e. the index in the computed frequency table) from</span>
+<span class="sd">            min_count: Threshold specifying the minimum element count for an element in the frequency table (inclusive)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of elements that occur more than `min_count` times.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">frequency</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+        <span class="n">abundant_elements</span> <span class="o">=</span> <span class="n">frequency</span><span class="p">[</span><span class="n">frequency</span> <span class="o">&gt;=</span> <span class="n">min_count</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">abundant_elements</span>
+
+    <span class="k">def</span> <span class="nf">_get_cor_zscores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">estimate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">p_val</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Given estimate and p_values calculate zscore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            estimate: Hierarchical modeling estimate results.</span>
+<span class="sd">            p_val: p-values of the Hierarchical modeling.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A DataFrame containing the zscores indexed by the estimates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p_val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">p_val</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="c1"># check for all (negative) estimate values if &gt;0 then divide p_value by 2 at same index else substract the p_value/2 from 1</span>
+        <span class="c1"># pos_est and neg_est differ in calculation for values as negative estimation is used in neg_est</span>
+        <span class="n">pos_est</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">p_val</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">estimate</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">p_val</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">estimate</span><span class="p">))],</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;pos_est&quot;</span><span class="p">],</span>
+        <span class="p">)</span>  <span class="c1"># significant in pos_est will be positive</span>
+        <span class="n">neg_est</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">p_val</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span> <span class="k">if</span> <span class="o">-</span><span class="n">estimate</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">p_val</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">estimate</span><span class="p">))],</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;neg_est&quot;</span><span class="p">],</span>
+        <span class="p">)</span>  <span class="c1"># significant in neg_est will be negative</span>
+        <span class="n">onesided_p_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">pos_est</span><span class="p">,</span> <span class="n">neg_est</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># calculate zscores</span>
+        <span class="n">z_scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;neg_est&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;pos_est&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="k">else</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;pos_est&quot;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">onesided_p_vals</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+            <span class="p">],</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;z_score&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">z_scores</span> <span class="o">=</span> <span class="n">z_scores</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">estimate</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">z_scores</span>
+
+    <span class="k">def</span> <span class="nf">_formula_hlm</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">x_labels</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">x_tme</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">sample_obs</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">return_all</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Applies a mixed linear model using the specified formula (MCP scores used for the dependent var) and returns the coefficient and p-value</span>
+
+<span class="sd">        TODO: reduce runtime? Maybe we can use an approximation or something that isn&#39;t statsmodels.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            y: Dataframe containing the MCP score for an individual gene</span>
+<span class="sd">            x_labels: Dataframe with other .obs values needed for fitting the formula, specifically `n_counts_key`.</span>
+<span class="sd">            x_tme: Transcript mean expression of `x`, with a respectively labeled column.</span>
+<span class="sd">            formula: The mixedlm formula.</span>
+<span class="sd">            sample_obs: Sample identifier in the obs dataframe, such as a confounder (treated as random effect)</span>
+<span class="sd">            return_all: Whether to return model summary (estimate and p-value) or alternatively a list of the coefficient/p-value for x only</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The determined coefficients and p-values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">formula_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x_tme</span><span class="p">,</span> <span class="n">x_labels</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span>
+        <span class="p">)</span>  <span class="c1"># TODO: sometimes these have mismatched sizes and they shouldn&#39;t... currently fixed with join=inner</span>
+
+        <span class="n">mdf</span> <span class="o">=</span> <span class="n">smf</span><span class="o">.</span><span class="n">mixedlm</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">formula_data</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">formula_data</span><span class="p">[</span><span class="n">sample_obs</span><span class="p">])</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">return_all</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;estimate&quot;</span><span class="p">:</span> <span class="n">mdf</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="s2">&quot;p_val&quot;</span><span class="p">:</span> <span class="n">mdf</span><span class="o">.</span><span class="n">pvalues</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">mdf</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">mdf</span><span class="o">.</span><span class="n">pvalues</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="nf">_mixed_effects</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">scores</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">x_labels</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">tme</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">genes_in_mcp</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">confounder</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Determines z-scores, estimates and p-values with adjusted p-values and booleans marking if a gene is up or downregulated.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            scores: A single MCP&#39;s scores with genes names in the index.</span>
+<span class="sd">            x_labels: Dataframe that must contain a column named &#39;x&#39; containing average expression values by sample</span>
+<span class="sd">            tme: Transcript mean expression of `x`.</span>
+<span class="sd">            genes_in_mcp: Up and down genes for this MCP.</span>
+<span class="sd">            formula: Formula for hierachical modeling.</span>
+<span class="sd">            confounder: Any model confounders.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            DataFrame with z-scores, estimates, p-values, adjusted p-values and booleans</span>
+<span class="sd">            marking whether a gene is up (True) or downregulated (False).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scores</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span>
+
+        <span class="n">hlm_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;estimate&quot;</span><span class="p">,</span> <span class="s2">&quot;p_val&quot;</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">expr_data</span> <span class="ow">in</span> <span class="n">tme</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">genes_in_mcp</span><span class="p">]</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">tme_gene</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">expr_data</span><span class="p">})</span>
+            <span class="n">hlm_result</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula_hlm</span><span class="p">(</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">scores</span><span class="p">,</span> <span class="n">x_labels</span><span class="o">=</span><span class="n">x_labels</span><span class="p">,</span> <span class="n">x_tme</span><span class="o">=</span><span class="n">tme_gene</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="n">formula</span><span class="p">,</span> <span class="n">sample_obs</span><span class="o">=</span><span class="n">confounder</span>
+            <span class="p">)</span>
+
+        <span class="n">hlm_result</span><span class="p">[</span><span class="s2">&quot;z_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cor_zscores</span><span class="p">(</span><span class="n">hlm_result</span><span class="p">[</span><span class="s2">&quot;estimate&quot;</span><span class="p">],</span> <span class="n">hlm_result</span><span class="p">[</span><span class="s2">&quot;p_val&quot;</span><span class="p">])[</span><span class="s2">&quot;z_score&quot;</span><span class="p">]</span>
+
+        <span class="n">mt_results</span> <span class="o">=</span> <span class="n">ssm</span><span class="o">.</span><span class="n">multipletests</span><span class="p">(</span>
+            <span class="n">hlm_result</span><span class="p">[</span><span class="s2">&quot;p_val&quot;</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fdr_bh&quot;</span><span class="p">,</span> <span class="n">is_sorted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">returnsorted</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">hlm_result</span><span class="p">[</span><span class="s2">&quot;p_adjust&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mt_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">hlm_result</span>
+
+    <span class="k">def</span> <span class="nf">_get_top_cor</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">mcp_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">min_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;z_score&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Determines the significant up- and downregulated genes by the passed index column.</span>
+
+<span class="sd">        TODO: This function will eventually get merged with a second version from Faye. Talk to Yuge about it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            df: Dataframe with rowsindex being the gene names and column with name &lt;index&gt; containing floats.</span>
+<span class="sd">            mcp_name: Name of mcp which was used for calculation of column value.</span>
+<span class="sd">            max_length: Value needed to later decide at what index the threshold value should be extracted from column.</span>
+<span class="sd">            min_threshold: Minimal threshold to select final scores by if it is smaller than calculated threshold.</span>
+<span class="sd">            index: Column index to use eto calculate the significant genes. Defaults to `z_score`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            According to the values in a df column (default: zscore) the significant up and downregulated gene names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">min_threshold</span> <span class="o">=</span> <span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">min_threshold</span><span class="p">)</span>
+        <span class="n">zscores_neg</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">index</span><span class="p">]</span>
+        <span class="n">zscores_pos</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">score</span> <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">zscores_neg</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="n">top_genes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">zscores_pos</span><span class="p">,</span> <span class="s2">&quot;.up&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">zscores_neg</span><span class="p">,</span> <span class="s2">&quot;.down&quot;</span><span class="p">)]:</span>
+            <span class="n">zscores</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">suffix</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">ordered</span> <span class="o">=</span> <span class="n">zscores</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+            <span class="c1"># TODO: There is an off by one error here (1 too many)</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">zscores</span><span class="p">[</span><span class="n">ordered</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">max_length</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">zscores</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]],</span> <span class="n">min_threshold</span><span class="p">)</span>
+            <span class="c1"># extract all gene names where value in column is &lt;= threshold -&gt; get significant genes</span>
+            <span class="n">genes</span> <span class="o">=</span> <span class="n">zscores</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">top_genes</span><span class="p">[</span><span class="n">mcp_name</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">genes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">zscores</span><span class="p">))</span> <span class="k">if</span> <span class="n">zscores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">top_genes</span>
+
+    <span class="k">def</span> <span class="nf">_apply_HLM_per_MCP_for_one_pair</span><span class="p">(</span>  <span class="c1"># noqa: N802</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mcp_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">scores_df</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">ct_data</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+        <span class="n">tme</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">sig</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">n_counts</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">confounder</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Applies hierarchical modeling for a single MCP.</span>
+
+<span class="sd">        TODO: separate the sig calculation so that this whole function is more tractable</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mcp_name: The name of the MCP to model.</span>
+<span class="sd">            scores: The MCP scores for a cell type. Number of MCPs x number of features.</span>
+<span class="sd">            ct_data: The AnnData object containing the metadata and labels in obs.</span>
+<span class="sd">            tme: Transcript mean expression in `x`.</span>
+<span class="sd">            sig: DataFrame containing a series of up and downregulated MCPs.</span>
+<span class="sd">            n_counts: The key of the gene counts.</span>
+<span class="sd">            formula: The formula of the hierarchical modeling.</span>
+<span class="sd">            confounder: Any modeling confounders.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The HLM results together with significant up/downregulated genes per MCP</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">HLM_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixed_effects</span><span class="p">(</span>
+            <span class="n">scores</span><span class="o">=</span><span class="n">scores_df</span><span class="p">[[</span><span class="n">mcp_name</span><span class="p">]],</span>
+            <span class="n">x_labels</span><span class="o">=</span><span class="n">ct_data</span><span class="o">.</span><span class="n">obs</span><span class="p">[[</span><span class="n">n_counts</span><span class="p">,</span> <span class="n">confounder</span><span class="p">]],</span>
+            <span class="n">tme</span><span class="o">=</span><span class="n">tme</span><span class="p">,</span>
+            <span class="n">genes_in_mcp</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">sig</span><span class="p">[</span><span class="n">mcp_name</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">sig</span><span class="p">[</span><span class="n">mcp_name</span><span class="p">][</span><span class="s2">&quot;down&quot;</span><span class="p">]),</span>
+            <span class="n">formula</span><span class="o">=</span><span class="n">formula</span><span class="p">,</span>
+            <span class="n">confounder</span><span class="o">=</span><span class="n">confounder</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">HLM_result</span><span class="p">[</span><span class="s2">&quot;up&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">gene</span> <span class="ow">in</span> <span class="n">sig</span><span class="p">[</span><span class="n">mcp_name</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">HLM_result</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+
+        <span class="c1"># extract significant up and downregulated genes</span>
+        <span class="n">sig_genes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_top_cor</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">HLM_result</span><span class="p">,</span> <span class="n">mcp_name</span><span class="o">=</span><span class="n">mcp_name</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">min_threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">HLM_result</span><span class="p">[</span><span class="s2">&quot;program&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mcp_name</span>
+
+        <span class="k">return</span> <span class="n">HLM_result</span><span class="p">,</span> <span class="n">sig_genes</span>
+
+    <span class="k">def</span> <span class="nf">_get_residuals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mimics DIALOGUE.get.residuals.&quot;&quot;&quot;</span>
+        <span class="n">resid</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">y_sub</span> <span class="ow">in</span> <span class="n">y</span><span class="p">:</span>
+            <span class="n">lr</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">y_sub</span><span class="p">)</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">lr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">resid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_sub</span> <span class="o">-</span> <span class="n">pred</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">resid</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_iterative_nnls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A_orig</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_orig</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">feature_ranks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solves non-negative least squares separately for different feature categories.</span>
+
+<span class="sd">        Mimics DLG.iterative.nnls.</span>
+<span class="sd">        Variables are notated according to:</span>
+
+<span class="sd">            `argmin|Ax - y|`</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            A_orig:</span>
+<span class="sd">            y_orig:</span>
+<span class="sd">            feature_ranks:</span>
+<span class="sd">            n_iter: Passed to scipy.optimize.nnls. Defaults to 1000.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Returns the aggregated coefficients from nnls.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: Consider moving this internally to cca_sig</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y_orig</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">sig_ranks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">feature_ranks</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">sig_ranks</span> <span class="o">=</span> <span class="p">[</span><span class="n">rank</span> <span class="k">for</span> <span class="n">rank</span> <span class="ow">in</span> <span class="n">sig_ranks</span> <span class="k">if</span> <span class="n">rank</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">]</span>  <span class="c1"># code coverage only with n_mcps &gt; 3</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature_ranks</span> <span class="o">==</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">sig_ranks</span> <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">feature_ranks</span> <span class="o">==</span> <span class="n">r</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+
+        <span class="c1"># TODO: The few type ignores are dangerous and should be checked! They could be bugs.</span>
+        <span class="n">insig_mask</span> <span class="o">=</span> <span class="n">feature_ranks</span> <span class="o">&lt;</span> <span class="n">sig_ranks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># type: ignore # TODO: rename variable after better understanding</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">insig_mask</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># such as genes with 0 rank, or those below 1/3</span>
+            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">insig_mask</span><span class="p">)</span>
+            <span class="n">sig_ranks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;insig&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+
+        <span class="n">x_final</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">A_orig</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">Ax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">A_orig</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">mask</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sig_ranks</span><span class="p">,</span> <span class="n">masks</span><span class="p">):</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="n">A_orig</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">coef_nnls</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nnls</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">n_iter</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">A</span> <span class="o">@</span> <span class="n">coef_nnls</span>  <span class="c1"># residuals</span>
+            <span class="n">Ax</span> <span class="o">+=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">coef_nnls</span>
+            <span class="n">x_final</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">coef_nnls</span>
+
+        <span class="k">return</span> <span class="n">x_final</span>
+
+    <span class="k">def</span> <span class="nf">_corr2_coeff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+        <span class="c1"># Rowwise mean of input arrays &amp; subtract from input arrays themselves</span>
+        <span class="n">A_mA</span> <span class="o">=</span> <span class="n">A</span> <span class="o">-</span> <span class="n">A</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">B_mB</span> <span class="o">=</span> <span class="n">B</span> <span class="o">-</span> <span class="n">B</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="c1"># Sum of squares across rows</span>
+        <span class="n">ssA</span> <span class="o">=</span> <span class="p">(</span><span class="n">A_mA</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ssB</span> <span class="o">=</span> <span class="p">(</span><span class="n">B_mB</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Finally get corr coeff</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A_mA</span><span class="p">,</span> <span class="n">B_mB</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ssA</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">ssB</span><span class="p">[</span><span class="kc">None</span><span class="p">]))</span>
+
+    <span class="k">def</span> <span class="nf">_get_top_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">min_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        TODO: needs check for correctness and variable renaming</span>
+<span class="sd">        TODO: Confirm that this doesn&#39;t return duplicate gene names</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            m: Any DataFrame of Gene name as index with variable columns.</span>
+<span class="sd">            max_length: Maximum number of correlated elements.</span>
+<span class="sd">            min_threshold: p-value threshold  # TODO confirm</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Indices of the top elements</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m_pos</span> <span class="o">=</span> <span class="o">-</span><span class="n">m</span>
+        <span class="n">m_neg</span> <span class="o">=</span> <span class="n">m</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">m_pos</span><span class="p">,</span> <span class="n">m_neg</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>  <span class="c1"># check if the colnames has any significance, they are just split .up and .down in dialogue</span>
+        <span class="n">top_l</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>  <span class="c1"># TODO: names are not very descriptive -&gt; improve</span>
+            <span class="n">mi</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+            <span class="n">ci</span> <span class="o">=</span> <span class="n">mi</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">mi</span><span class="p">)[</span><span class="nb">min</span><span class="p">(</span><span class="n">max_length</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mi</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]]</span>
+            <span class="n">min_threshold</span> <span class="o">=</span> <span class="n">min_threshold</span> <span class="k">if</span> <span class="n">min_threshold</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">ci</span><span class="p">,</span> <span class="n">min_threshold</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">min_threshold</span>
+            <span class="n">top_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">b</span><span class="p">])</span>  <span class="c1"># the index is actually rownames which are genes**</span>
+        <span class="k">return</span> <span class="n">top_l</span>  <span class="c1"># returns indices as different appended lists</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_cca_sig</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ct_subs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">mcp_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">ws_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">n_counts_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">max_genes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]:</span>
+        <span class="c1"># TODO this whole function should be standalone</span>
+        <span class="c1"># It will contain the calculation of up/down + calculation (new final mcp scores)</span>
+        <span class="c1"># Ensure that it&#39;ll still fit/work with the hierarchical multilevel_modeling</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine the up and down genes per MCP.&quot;&quot;&quot;</span>
+        <span class="c1"># TODO: something is slightly slow here</span>
+        <span class="n">cca_sig_results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">new_mcp_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ct</span> <span class="ow">in</span> <span class="n">ct_subs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">ct_adata</span> <span class="o">=</span> <span class="n">ct_subs</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span>
+            <span class="n">conf_m</span> <span class="o">=</span> <span class="n">ct_adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">n_counts_key</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># defining this for the millionth time</span>
+
+            <span class="n">R_cca_gene_cor1_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corr2_coeff</span><span class="p">(</span>
+                <span class="n">ct_adata</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">mcp_scores</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+            <span class="p">)</span>  <span class="c1"># TODO: there are some nans here, also in R</span>
+
+            <span class="c1"># get genes that are most positively and negatively correlated across all MCPS</span>
+            <span class="n">top_ele</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_top_elements</span><span class="p">(</span>  <span class="c1"># TODO: consider renaming for clarify</span>
+                <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">R_cca_gene_cor1_x</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">ct_adata</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">index</span><span class="p">),</span> <span class="n">max_length</span><span class="o">=</span><span class="n">max_genes</span><span class="p">,</span> <span class="n">min_threshold</span><span class="o">=</span><span class="mf">0.05</span>
+            <span class="p">)</span>
+            <span class="n">top_cor_genes_flattened</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">lst</span> <span class="ow">in</span> <span class="n">top_ele</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">]</span>
+            <span class="n">top_cor_genes_flattened</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">top_cor_genes_flattened</span><span class="p">))</span>  <span class="c1"># aka the mysterious g1 in R</span>
+
+            <span class="c1"># MAJOR TODO: I&#39;ve only used normal correlation instead of partial correlation as we wait on the implementation</span>
+            <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">spearmanr</span>
+
+            <span class="k">def</span> <span class="nf">_pcor_mat</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;spearman&quot;</span><span class="p">):</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                MAJOR TODO: I&#39;ve only used normal correlation instead of partial correlation as we wait on the implementation</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">correlations</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># R</span>
+                <span class="n">pvals</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># P</span>
+                <span class="k">for</span> <span class="n">x2</span> <span class="ow">in</span> <span class="n">v2</span><span class="p">:</span>
+                    <span class="n">c</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">x1</span> <span class="ow">in</span> <span class="n">v1</span><span class="p">:</span>
+                        <span class="n">corr</span><span class="p">,</span> <span class="n">pval</span> <span class="o">=</span> <span class="n">spearmanr</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+                        <span class="n">c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pval</span><span class="p">)</span>
+                    <span class="n">correlations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+                    <span class="n">pvals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+                <span class="c1"># TODO needs reshape</span>
+                <span class="c1">#     mt_results = ssm.multipletests(</span>
+                <span class="c1">#         pvals, alpha=0.05, method=&#39;fdr_bh&#39;, is_sorted=False, returnsorted=False)</span>
+                <span class="c1">#     pvals_adjusted = mt_results[1].tolist()</span>
+
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">correlations</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pvals</span><span class="p">)</span>  <span class="c1"># pvals_adjusted</span>
+
+            <span class="n">C1</span><span class="p">,</span> <span class="n">P1</span> <span class="o">=</span> <span class="n">_pcor_mat</span><span class="p">(</span><span class="n">ct_adata</span><span class="p">[:,</span> <span class="n">top_cor_genes_flattened</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">mcp_scores</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">conf_m</span><span class="p">)</span>
+            <span class="n">C1</span><span class="p">[</span><span class="n">P1</span> <span class="o">&gt;</span> <span class="p">(</span><span class="mf">0.05</span> <span class="o">/</span> <span class="n">ct_adata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># why?</span>
+
+            <span class="n">cca_sig_unformatted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_top_elements</span><span class="p">(</span>  <span class="c1"># 3 up, 3 dn, for each mcp</span>
+                <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">C1</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">top_cor_genes_flattened</span><span class="p">),</span> <span class="n">max_length</span><span class="o">=</span><span class="n">max_genes</span><span class="p">,</span> <span class="n">min_threshold</span><span class="o">=</span><span class="mf">0.05</span>
+            <span class="p">)</span>
+
+            <span class="c1"># TODO: probably format the up and down within get_top_elements</span>
+            <span class="n">cca_sig</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cca_sig_unformatted</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)):</span>
+                <span class="n">cca_sig</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;MCP</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cca_sig_unformatted</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span>
+                <span class="n">cca_sig</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;MCP</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;down&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cca_sig_unformatted</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">cca_sig</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cca_sig</span><span class="p">)</span>
+            <span class="n">cca_sig_results</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span> <span class="o">=</span> <span class="n">cca_sig</span>
+
+            <span class="c1"># This is basically DIALOGUE 3 now</span>
+            <span class="n">pre_r_scores</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">ct</span><span class="p">:</span> <span class="n">ct_subs</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;X_pca&quot;</span><span class="p">][:,</span> <span class="p">:</span><span class="mi">50</span><span class="p">]</span> <span class="o">@</span> <span class="n">ws_dict</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ct</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ct_subs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="c1"># TODO This is a recalculation and not a new calculation</span>
+            <span class="p">}</span>
+
+            <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mcp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cca_sig</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="c1"># TODO: I&#39;m suspicious about how this code holds up given duplicate var_names - should test</span>
+                <span class="n">pre_r_score</span> <span class="o">=</span> <span class="n">pre_r_scores</span><span class="p">[</span><span class="n">ct</span><span class="p">][:,</span> <span class="n">i</span><span class="p">]</span>  <span class="c1"># noqa: F841</span>
+                <span class="c1"># TODO we should fix _get_top_elements to return the directionality</span>
+                <span class="c1"># TODO this should be casted somewhere else</span>
+                <span class="n">sig_mcp_genes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cca_sig</span><span class="p">[</span><span class="n">mcp</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">cca_sig</span><span class="p">[</span><span class="n">mcp</span><span class="p">][</span><span class="s2">&quot;down&quot;</span><span class="p">])</span>
+                <span class="c1"># deuniqued_gene_indices = [top_cor_genes_flattened.index(g) for g in sig_mcp_genes]</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">ct_adata</span><span class="p">[:,</span> <span class="n">sig_mcp_genes</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+                <span class="n">zscore</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span>
+                    <span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">)</span>  <span class="c1"># adjusted ddof to match R even though it&#39;s wrong</span>
+                <span class="n">zscores</span> <span class="o">=</span> <span class="n">zscore</span><span class="o">.</span><span class="n">T</span>
+
+                <span class="c1"># zscores = zscore.T[deuniqued_gene_indices]  # t(r1@zscores[gene.pval$genes,])  should really check this line, so troll</span>
+
+                <span class="n">new_b</span> <span class="o">=</span> <span class="p">[</span><span class="n">gene</span> <span class="ow">in</span> <span class="n">cca_sig</span><span class="p">[</span><span class="n">mcp</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">sig_mcp_genes</span><span class="p">]</span>
+                <span class="n">zscores</span><span class="p">[</span><span class="n">new_b</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">zscores</span><span class="p">[</span><span class="n">new_b</span><span class="p">]</span>
+                <span class="c1"># coef = self._iterative_nnls(zscores, pre_r_score, pvals_mcp[&#39;Nf&#39;].values)</span>
+                <span class="c1"># scores = zscores.T @ coef</span>
+                <span class="c1"># TODO: The line below has to be new_mcp_scores.append(scores) after we implemented the NF value caluation</span>
+                <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zscores</span><span class="p">)</span>
+            <span class="n">new_mcp_scores</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span> <span class="o">=</span> <span class="n">scores</span>
+
+        <span class="k">return</span> <span class="n">cca_sig_results</span><span class="p">,</span> <span class="n">new_mcp_scores</span>
+
+<div class="viewcode-block" id="Dialogue.load"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+        <span class="n">ct_order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">agg_pca</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Separates cell into AnnDatas by celltype_key and creates the multifactor PMD input.</span>
+
+<span class="sd">        Mimics DIALOGUE&#39;s `make.cell.types` and the pre-processing that occurs in DIALOGUE1.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: AnnData object generate celltype objects for</span>
+<span class="sd">            ct_order: The order of cell types</span>
+<span class="sd">            agg_pca: Whether to aggregate pseudobulks with PCA or not. Defaults to True.</span>
+<span class="sd">            normalize: Whether to mimic DIALOGUE behavior or not. Defaults to True.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A celltype_label:array dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ct_subs</span> <span class="o">=</span> <span class="p">{</span><span class="n">ct</span><span class="p">:</span> <span class="n">adata</span><span class="p">[</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">celltype_key</span><span class="p">]</span> <span class="o">==</span> <span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">ct</span> <span class="ow">in</span> <span class="n">ct_order</span><span class="p">}</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pseudobulk_pca</span> <span class="k">if</span> <span class="n">agg_pca</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_pseudobulks</span>
+        <span class="n">ct_aggr</span> <span class="o">=</span> <span class="p">{</span><span class="n">ct</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">ct</span><span class="p">,</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">ct_subs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>  <span class="c1"># type: ignore</span>
+
+        <span class="c1"># TODO: implement check (as in https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L114-L119)</span>
+        <span class="c1"># that there are at least 5 share samples here</span>
+
+        <span class="c1"># TODO: https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L121-L131</span>
+        <span class="n">ct_preprocess</span> <span class="o">=</span> <span class="p">{</span><span class="n">ct</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_data</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="k">for</span> <span class="n">ct</span><span class="p">,</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">ct_aggr</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">mcca_in</span> <span class="o">=</span> <span class="p">[</span><span class="n">ct_preprocess</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span> <span class="k">for</span> <span class="n">ct</span> <span class="ow">in</span> <span class="n">ct_order</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">mcca_in</span><span class="p">,</span> <span class="n">ct_subs</span></div>
+
+<div class="viewcode-block" id="Dialogue.calculate_multifactor_PMD"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.calculate_multifactor_PMD">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_multifactor_PMD</span><span class="p">(</span>  <span class="c1"># noqa: N802</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
+        <span class="n">penalties</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ct_order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">agg_pca</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;lp&quot;</span><span class="p">,</span> <span class="s2">&quot;bs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bs&quot;</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">AnnData</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Runs multifactor PMD.</span>
+
+<span class="sd">        Currently mimics DIALOGUE1.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            adata: AnnData object to calculate PMD for.</span>
+<span class="sd">            sample_id: Key to use for pseudobulk determination.</span>
+<span class="sd">            penalties: PMD penalties.</span>
+<span class="sd">            ct_order: The order of cell types.</span>
+<span class="sd">            agg_pca: Whether to calculate cell-averaged PCA components.</span>
+<span class="sd">            solver: Which solver to use for PMD. Must be one of &quot;lp&quot; (linear programming) or &quot;bs&quot; (binary search).</span>
+<span class="sd">                    For differences between these to please refer to https://github.com/theislab/sparsecca/blob/main/examples/linear_programming_multicca.ipynb</span>
+<span class="sd">                    Defaults to &#39;bs&#39;.</span>
+<span class="sd">            normalize: Whether to mimic DIALOGUE as close as possible</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MCP scores  # TODO this requires more detail</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># IMPORTANT NOTE: the order in which matrices are passed to multicca matters. As such,</span>
+        <span class="c1"># it is important here that to obtain the same result as in R, we pass the matrices in</span>
+        <span class="c1"># in the same order.</span>
+        <span class="k">if</span> <span class="n">ct_order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cell_types</span> <span class="o">=</span> <span class="n">ct_order</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ct_order</span> <span class="o">=</span> <span class="n">cell_types</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">celltype_key</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span>
+
+        <span class="n">mcca_in</span><span class="p">,</span> <span class="n">ct_subs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">ct_order</span><span class="o">=</span><span class="n">cell_types</span><span class="p">,</span> <span class="n">agg_pca</span><span class="o">=</span><span class="n">agg_pca</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">)</span>
+
+        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">mcca_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">penalties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">penalties</span> <span class="o">=</span> <span class="n">multicca_permute</span><span class="p">(</span>
+                <span class="n">mcca_in</span><span class="p">,</span> <span class="n">penalties</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">nperms</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">niter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">standardize</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)[</span><span class="s2">&quot;bestpenalties&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">penalties</span> <span class="o">=</span> <span class="n">penalties</span>
+
+        <span class="k">if</span> <span class="n">solver</span> <span class="o">==</span> <span class="s2">&quot;bs&quot;</span><span class="p">:</span>
+            <span class="n">ws</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">multicca_pmd</span><span class="p">(</span><span class="n">mcca_in</span><span class="p">,</span> <span class="n">penalties</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_mcps</span><span class="p">,</span> <span class="n">standardize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">niter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">mimic_R</span><span class="o">=</span><span class="n">normalize</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">solver</span> <span class="o">==</span> <span class="s2">&quot;lp&quot;</span><span class="p">:</span>
+            <span class="n">ws</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lp_pmd</span><span class="p">(</span><span class="n">mcca_in</span><span class="p">,</span> <span class="n">penalties</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_mcps</span><span class="p">,</span> <span class="n">standardize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mimic_R</span><span class="o">=</span><span class="n">normalize</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Please select a valid solver. Must be one of &quot;lp&quot; or &quot;bs&quot;.&#39;</span><span class="p">)</span>
+        <span class="n">ws_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">ct</span><span class="p">:</span> <span class="n">ws</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ct</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ct_order</span><span class="p">)}</span>
+
+        <span class="n">pre_r_scores</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ct</span><span class="p">:</span> <span class="n">ct_subs</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;X_pca&quot;</span><span class="p">][:,</span> <span class="p">:</span><span class="mi">50</span><span class="p">]</span> <span class="o">@</span> <span class="n">ws</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ct</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cell_types</span><span class="p">)</span>  <span class="c1"># TODO change from 50</span>
+        <span class="p">}</span>
+
+        <span class="c1"># TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it&#39;s not at all</span>
+        <span class="c1"># matched at this point in the function and requires references to internals that shouldn&#39;t need exposing (ct_subs)</span>
+
+        <span class="n">mcp_scores</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ct</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_residuals</span><span class="p">(</span><span class="n">ct_subs</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_counts_key</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">pre_r_scores</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ct</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cell_types</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="n">adata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_concat_adata_mcp_scores</span><span class="p">(</span>
+            <span class="n">adata</span><span class="p">,</span> <span class="n">ct_subs</span><span class="o">=</span><span class="n">ct_subs</span><span class="p">,</span> <span class="n">mcp_scores</span><span class="o">=</span><span class="n">mcp_scores</span><span class="p">,</span> <span class="n">celltype_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">celltype_key</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">adata</span><span class="p">,</span> <span class="n">mcp_scores</span><span class="p">,</span> <span class="n">ws_dict</span><span class="p">,</span> <span class="n">ct_subs</span></div>
+
+<div class="viewcode-block" id="Dialogue.multilevel_modeling"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.multilevel_modeling">[docs]</a>    <span class="k">def</span> <span class="nf">multilevel_modeling</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ct_subs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">mcp_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">ws_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">confounder</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ct_subs: The DIALOGUE cell type objects.</span>
+<span class="sd">            mcp_scores: The determined MCP scores from the PMD step.</span>
+<span class="sd">            confounder: Any modeling confounders.</span>
+<span class="sd">            formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Pandas DataFrame containing:</span>
+<span class="sd">            - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2</span>
+<span class="sd">            - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps</span>
+<span class="sd">            TODO: Describe both returns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cell_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ct_subs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="c1"># all possible pairs of cell types with out pairing same cell type</span>
+        <span class="n">pairs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">cell_types</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">formula</span><span class="p">:</span>
+            <span class="n">formula</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;y ~ x + </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_counts_key</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="c1"># Hierarchical modeling expects DataFrames</span>
+        <span class="n">mcp_cell_types</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;MCP</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">cell_types</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_mcps</span><span class="p">)}</span>
+        <span class="n">mcp_scores_df</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># noqa: F841</span>
+            <span class="n">ct</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">ct_subs</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">mcp_cell_types</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">ct</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mcp_scores</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># run HLM for each pair</span>
+        <span class="n">all_results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">mlm_progress</span> <span class="o">=</span> <span class="n">Progress</span><span class="p">(</span>
+            <span class="n">SpinnerColumn</span><span class="p">(),</span>
+            <span class="n">TextColumn</span><span class="p">(</span><span class="s2">&quot;[progress.description]</span><span class="si">{task.description}</span><span class="s2">&quot;</span><span class="p">),</span>
+            <span class="n">BarColumn</span><span class="p">(),</span>
+            <span class="n">TaskProgressColumn</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">mixed_model_progress</span> <span class="o">=</span> <span class="n">Progress</span><span class="p">(</span>
+            <span class="n">SpinnerColumn</span><span class="p">(),</span>
+            <span class="n">TextColumn</span><span class="p">(</span><span class="s2">&quot;[progress.description]</span><span class="si">{task.description}</span><span class="s2">&quot;</span><span class="p">),</span>
+            <span class="n">BarColumn</span><span class="p">(),</span>
+            <span class="n">TaskProgressColumn</span><span class="p">(),</span>
+            <span class="n">transient</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">Group</span><span class="p">(</span><span class="n">mlm_progress</span><span class="p">,</span> <span class="n">mixed_model_progress</span><span class="p">)</span>
+        <span class="n">live</span> <span class="o">=</span> <span class="n">Live</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">live</span><span class="p">:</span>
+            <span class="n">mlm_task</span> <span class="o">=</span> <span class="n">mlm_progress</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="s2">&quot;[bold blue]Running multilevel modeling&quot;</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">:</span>
+                <span class="n">cell_type_1</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">cell_type_2</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">mlm_progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mlm_task</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;[bold blue]</span><span class="si">{</span><span class="n">cell_type_1</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">cell_type_2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="n">ct_data_1</span> <span class="o">=</span> <span class="n">ct_subs</span><span class="p">[</span><span class="n">cell_type_1</span><span class="p">]</span>
+                <span class="n">ct_data_2</span> <span class="o">=</span> <span class="n">ct_subs</span><span class="p">[</span><span class="n">cell_type_2</span><span class="p">]</span>
+
+                <span class="c1"># equivalent to dialogue2.pair</span>
+                <span class="n">mcps</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">mcp</span><span class="p">,</span> <span class="n">cell_type_list</span> <span class="ow">in</span> <span class="n">mcp_cell_types</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">cell_type_1</span> <span class="ow">in</span> <span class="n">cell_type_list</span> <span class="ow">and</span> <span class="n">cell_type_2</span> <span class="ow">in</span> <span class="n">cell_type_list</span><span class="p">:</span>
+                        <span class="n">mcps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mcp</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mcps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[bold red]No shared MCPs between </span><span class="si">{</span><span class="n">cell_type_1</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">cell_type_2</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[bold blue]</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mcps</span><span class="p">)</span><span class="si">}</span><span class="s2"> MCPs identified for </span><span class="si">{</span><span class="n">cell_type_1</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">cell_type_2</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+                <span class="n">new_mcp_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
+                <span class="n">cca_sig</span><span class="p">,</span> <span class="n">new_mcp_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_cca_sig</span><span class="p">(</span>
+                    <span class="n">ct_subs</span><span class="p">,</span> <span class="n">mcp_scores</span><span class="o">=</span><span class="n">mcp_scores</span><span class="p">,</span> <span class="n">ws_dict</span><span class="o">=</span><span class="n">ws_dict</span><span class="p">,</span> <span class="n">n_counts_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_counts_key</span>
+                <span class="p">)</span>
+
+                <span class="n">sig_1</span> <span class="o">=</span> <span class="n">cca_sig</span><span class="p">[</span>  <span class="c1"># noqa: F841</span>
+                    <span class="n">cell_type_1</span>
+                <span class="p">]</span>  <span class="c1"># TODO: only need the up and down genes from this here per MCP</span>
+                <span class="n">sig_2</span> <span class="o">=</span> <span class="n">cca_sig</span><span class="p">[</span><span class="n">cell_type_2</span><span class="p">]</span>  <span class="c1"># noqa: F841</span>
+                <span class="c1"># only use samples which have a minimum number of cells (default 2) in both cell types</span>
+                <span class="n">sample_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                    <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_abundant_elements_from_series</span><span class="p">(</span><span class="n">ct_data_1</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">]))</span>
+                    <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_abundant_elements_from_series</span><span class="p">(</span><span class="n">ct_data_2</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">]))</span>
+                <span class="p">)</span>
+
+                <span class="c1"># subset cell types to valid samples (set.cell.types)</span>
+                <span class="n">ct_data_1</span> <span class="o">=</span> <span class="n">ct_data_1</span><span class="p">[</span><span class="n">ct_data_1</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">sample_ids</span><span class="p">)]</span>
+                <span class="n">ct_data_2</span> <span class="o">=</span> <span class="n">ct_data_2</span><span class="p">[</span><span class="n">ct_data_2</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">sample_ids</span><span class="p">)]</span>
+
+                <span class="c1"># TODO: shouldn&#39;t need this aligning step for cells. corresponds to @scores / y</span>
+                <span class="c1">#     scores_1 = cca_scores[cell_type_1].loc[ct_data_1.obs.index]</span>
+                <span class="c1">#     scores_2 = cca_scores[cell_type_2].loc[ct_data_2.obs.index]</span>
+
+                <span class="c1"># indexes into the average sample expression per gene with the sample id per cell. corresponds to @tme / x</span>
+                <span class="c1"># TODO: Why is the sample_id type check failing?</span>
+                <span class="n">tme_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_pseudobulks</span><span class="p">(</span><span class="n">ct_data_2</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                    <span class="p">:,</span> <span class="n">ct_data_1</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">]</span>
+                <span class="p">]</span>  <span class="c1"># unclear why we do this</span>
+                <span class="n">tme_1</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">ct_data_1</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span>
+                <span class="n">tme_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_pseudobulks</span><span class="p">(</span><span class="n">ct_data_1</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                    <span class="p">:,</span> <span class="n">ct_data_2</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">]</span>
+                <span class="p">]</span>
+                <span class="n">tme_2</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">ct_data_2</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span>
+
+                <span class="n">merged_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+                <span class="n">mm_task</span> <span class="o">=</span> <span class="n">mixed_model_progress</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="s2">&quot;[bold blue]Determining mixed effects&quot;</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">mcps</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">mcp</span> <span class="ow">in</span> <span class="n">mcps</span><span class="p">:</span>
+                    <span class="n">mixed_model_progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mm_task</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;[bold blue]Determining mixed effects for </span><span class="si">{</span><span class="n">mcp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                    <span class="c1"># TODO Check that the genes in result{sig_genes_1] are different and if so note that somewhere and explain why</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;HLM_result_1&quot;</span><span class="p">],</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;sig_genes_1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_HLM_per_MCP_for_one_pair</span><span class="p">(</span>
+                        <span class="n">mcp_name</span><span class="o">=</span><span class="n">mcp</span><span class="p">,</span>
+                        <span class="n">scores_df</span><span class="o">=</span><span class="n">mcp_scores_df</span><span class="p">[</span><span class="n">cell_type_2</span><span class="p">],</span>
+                        <span class="n">ct_data</span><span class="o">=</span><span class="n">ct_data_2</span><span class="p">,</span>
+                        <span class="n">tme</span><span class="o">=</span><span class="n">tme_2</span><span class="p">,</span>
+                        <span class="n">sig</span><span class="o">=</span><span class="n">sig_1</span><span class="p">,</span>
+                        <span class="n">n_counts</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_counts_key</span><span class="p">,</span>
+                        <span class="n">formula</span><span class="o">=</span><span class="n">formula</span><span class="p">,</span>
+                        <span class="n">confounder</span><span class="o">=</span><span class="n">confounder</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;HLM_result_2&quot;</span><span class="p">],</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;sig_genes_2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_HLM_per_MCP_for_one_pair</span><span class="p">(</span>
+                        <span class="n">mcp_name</span><span class="o">=</span><span class="n">mcp</span><span class="p">,</span>
+                        <span class="n">scores_df</span><span class="o">=</span><span class="n">mcp_scores_df</span><span class="p">[</span><span class="n">cell_type_1</span><span class="p">],</span>
+                        <span class="n">ct_data</span><span class="o">=</span><span class="n">ct_data_1</span><span class="p">,</span>
+                        <span class="n">tme</span><span class="o">=</span><span class="n">tme_1</span><span class="p">,</span>
+                        <span class="n">sig</span><span class="o">=</span><span class="n">sig_2</span><span class="p">,</span>
+                        <span class="n">n_counts</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_counts_key</span><span class="p">,</span>
+                        <span class="n">formula</span><span class="o">=</span><span class="n">formula</span><span class="p">,</span>
+                        <span class="n">confounder</span><span class="o">=</span><span class="n">confounder</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">merged_results</span><span class="p">[</span><span class="n">mcp</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+
+                    <span class="n">mixed_model_progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mm_task</span><span class="p">,</span> <span class="n">advance</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">mixed_model_progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mm_task</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">mlm_progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mlm_task</span><span class="p">,</span> <span class="n">advance</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># merge results - TODO, but probably don&#39;t need</span>
+                <span class="c1">#     merged_results[&#39;HLM_result_1&#39;] = pd.concat([merged_result[mcp][&#39;HLM_result_1&#39;] for mcp in mcps])</span>
+                <span class="c1">#     merged_results[&#39;HLM_result_2&#39;] = pd.concat([merged_result[mcp][&#39;HLM_result_2&#39;] for mcp in mcps])</span>
+                <span class="c1">#     merged_results[&#39;sig_genes_1&#39;] = [**merged_result[mcp][&#39;sig_genes_1&#39;] for mcp in mcps]</span>
+                <span class="c1">#     merged_results[&#39;sig_genes_2&#39;] = [**merged_result[mcp][&#39;sig_genes_2&#39;] for mcp in mcps]</span>
+
+                <span class="n">all_results</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cell_type_1</span><span class="si">}</span><span class="s2">_vs_</span><span class="si">{</span><span class="n">cell_type_2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged_results</span>
+
+        <span class="k">return</span> <span class="n">all_results</span><span class="p">,</span> <span class="n">new_mcp_scores</span></div></div>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021, Lukas Heumos, Theislab
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/scripts/furo.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    </body>
+</html>
