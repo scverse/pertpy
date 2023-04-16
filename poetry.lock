@@ -274,22 +274,22 @@ files = [
 
 [[package]]
 name = "attrs"
-version = "22.2.0"
+version = "23.1.0"
 description = "Classes Without Boilerplate"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "attrs-22.2.0-py3-none-any.whl", hash = "sha256:29e95c7f6778868dbd49170f98f8818f78f3dc5e0e37c0b1f474e3561b240836"},
-    {file = "attrs-22.2.0.tar.gz", hash = "sha256:c9227bfc2f01993c03f68db37d1d15c9690188323c067c641f1a35ca58185f99"},
+    {file = "attrs-23.1.0-py3-none-any.whl", hash = "sha256:1f28b4522cdc2fb4256ac1a020c78acf9cba2c6b461ccd2c126f3aa8e8335d04"},
+    {file = "attrs-23.1.0.tar.gz", hash = "sha256:6279836d581513a26f1bf235f9acd333bc9115683f14f7e8fae46c98fc50e015"},
 ]
 
 [package.extras]
-cov = ["attrs[tests]", "coverage-enable-subprocess", "coverage[toml] (>=5.3)"]
-dev = ["attrs[docs,tests]"]
-docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-towncrier", "towncrier", "zope.interface"]
-tests = ["attrs[tests-no-zope]", "zope.interface"]
-tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy (>=0.971,<0.990)", "mypy (>=0.971,<0.990)", "pympler", "pympler", "pytest (>=4.3.0)", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-mypy-plugins", "pytest-xdist[psutil]", "pytest-xdist[psutil]"]
+cov = ["attrs[tests]", "coverage[toml] (>=5.3)"]
+dev = ["attrs[docs,tests]", "pre-commit"]
+docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-towncrier", "towncrier", "zope-interface"]
+tests = ["attrs[tests-no-zope]", "zope-interface"]
+tests-no-zope = ["cloudpickle", "hypothesis", "mypy (>=1.1.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
 
 [[package]]
 name = "babel"
@@ -1821,14 +1821,14 @@ files = [
 
 [[package]]
 name = "importlib-metadata"
-version = "6.3.0"
+version = "6.4.1"
 description = "Read metadata from Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "importlib_metadata-6.3.0-py3-none-any.whl", hash = "sha256:8f8bd2af397cf33bd344d35cfe7f489219b7d14fc79a3f854b75b8417e9226b0"},
-    {file = "importlib_metadata-6.3.0.tar.gz", hash = "sha256:23c2bcae4762dfb0bbe072d358faec24957901d75b6c4ab11172c0c982532402"},
+    {file = "importlib_metadata-6.4.1-py3-none-any.whl", hash = "sha256:63ace321e24167d12fbb176b6015f4dbe06868c54a2af4f15849586afb9027fd"},
+    {file = "importlib_metadata-6.4.1.tar.gz", hash = "sha256:eb1a7933041f0f85c94cd130258df3fb0dec060ad8c1c9318892ef4192c47ce1"},
 ]
 
 [package.dependencies]
@@ -2647,28 +2647,31 @@ files = [
 
 [[package]]
 name = "mizani"
-version = "0.8.1"
+version = "0.9.0"
 description = "Scales for Python"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mizani-0.8.1-py3-none-any.whl", hash = "sha256:a45f16d1bb420bd92361284252fd29c5e52a20662ad96dfe7a15141a4ca4c287"},
-    {file = "mizani-0.8.1.tar.gz", hash = "sha256:8ad0a0efa52f1bcdf41f675b64a8c0f7cd24e763d53baced6613f20bd6ed4928"},
+    {file = "mizani-0.9.0-py3-none-any.whl", hash = "sha256:04bbacb945975d51569e0b98dd14d07410eb3b28a9ead4e66893dec5349b80c7"},
+    {file = "mizani-0.9.0.tar.gz", hash = "sha256:37fd4f4c94bf1158cacf6c14478d87b98a4ff511c57b0cfdc34cbe494385f970"},
 ]
 
 [package.dependencies]
 "backports.zoneinfo" = {version = "*", markers = "python_version < \"3.9\""}
 matplotlib = ">=3.5.0"
 numpy = ">=1.19.0"
-palettable = "*"
 pandas = ">=1.3.5"
 scipy = ">=1.5.0"
-tzdata = {version = "*", markers = "platform_system == \"Windows\""}
+tzdata = {version = "*", markers = "platform_system == \"Windows\" or platform_system == \"Emscripten\""}
 
 [package.extras]
-doc = ["numpydoc (>=0.9.1)", "sphinx (>=4.5.0)"]
-testing = ["flake8", "pytest-cov"]
+all = ["mizani[build]", "mizani[dev]", "mizani[doc]", "mizani[lint]", "mizani[test]"]
+build = ["build", "wheel"]
+dev = ["notebook", "twine"]
+doc = ["numpydoc (>=0.9.1)", "sphinx (>=6.1.0)"]
+lint = ["black (>=23.1.0)", "ruff"]
+test = ["pytest-cov"]
 
 [[package]]
 name = "ml-collections"
@@ -3655,18 +3658,6 @@ files = [
 ]
 
 [[package]]
-name = "palettable"
-version = "3.3.1"
-description = "Color palettes for Python"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "palettable-3.3.1-py2.py3-none-any.whl", hash = "sha256:3e427b2b3e3b9f8765003bbcd0730fe7fafa24c54005fb1306e62c20e34d53d2"},
-    {file = "palettable-3.3.1.tar.gz", hash = "sha256:3ec242270e4ad045c03d037e5b28f477cc2d0acb7fd59269ad6e0d756acc5ea6"},
-]
-
-[[package]]
 name = "pandas"
 version = "2.0.0"
 description = "Powerful data structures for data analysis, time series, and statistics"
@@ -3999,6 +3990,18 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "ply"
+version = "3.11"
+description = "Python Lex & Yacc"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"},
+    {file = "ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3"},
+]
+
+[[package]]
 name = "pre-commit"
 version = "3.2.2"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -4313,6 +4316,40 @@ scikit-learn = ">=0.18"
 scipy = ">=1.0"
 
 [[package]]
+name = "pyomo"
+version = "6.5.0"
+description = "Pyomo: Python Optimization Modeling Objects"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "Pyomo-6.5.0-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:9c4b63e221f4018020ad80c66bf1dea28a249121a52728cbb2f0dce8dd44d29d"},
+    {file = "Pyomo-6.5.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d2a8fe8d576f501d52c63ff3d6a70844b154a289a985fbadda50bea76606df94"},
+    {file = "Pyomo-6.5.0-cp310-cp310-win_amd64.whl", hash = "sha256:72df6fd46e18a9f152556ef1515d347d15a46d35660d7c5c1372440e4e61ea8a"},
+    {file = "Pyomo-6.5.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:5eae96848c9568138234381d9856042ffd89548873bfa88fd180cf4ab3fdc060"},
+    {file = "Pyomo-6.5.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6544cb5bb9916aee7222cb66e5179c86baef52e1be2cc7ca0e5b97fc20cb1768"},
+    {file = "Pyomo-6.5.0-cp311-cp311-win_amd64.whl", hash = "sha256:518e986c435f7f15157f72819ecc0676a6c6f568178a359e56999b3be94998da"},
+    {file = "Pyomo-6.5.0-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:08a2fedc40db8855a43eff8e6c4c8803cdf5d80f1b327c16cc590ed843ad3797"},
+    {file = "Pyomo-6.5.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bb8947b2a183dccfaada3f192712e15b1f6cafa3565baf4ff8be590e297904a4"},
+    {file = "Pyomo-6.5.0-cp37-cp37m-win_amd64.whl", hash = "sha256:d90fc7c5444e0bbb617a788c32105082265a3803f718ef7f745477b51e9f7b5a"},
+    {file = "Pyomo-6.5.0-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:068a1ab45e5050f349d50ffa502e7013fe153aabac97bc094f19f3973be297d7"},
+    {file = "Pyomo-6.5.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f300acc614fa3450c85e5a6ea534b87bc6c17ce6f055515efba4fede7a0812b2"},
+    {file = "Pyomo-6.5.0-cp38-cp38-win_amd64.whl", hash = "sha256:938a69a1226445f7d81784b28245d1182146252276139a3bf4fdcbe1b932cca6"},
+    {file = "Pyomo-6.5.0-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:950a470633dceef2b104403f6e56e44ad897ea1423831ce9d7254de3a18c9810"},
+    {file = "Pyomo-6.5.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:65118a187ea067ce9fedf19ef61dba0dfd571744595b9d19e6c16e086187b120"},
+    {file = "Pyomo-6.5.0-cp39-cp39-win_amd64.whl", hash = "sha256:ed454fbfd691ea95af004d74776acf6d26f22b382ef412a3348e12e1e822834a"},
+    {file = "Pyomo-6.5.0.tar.gz", hash = "sha256:5a23e775bba9fdbad22698fa1a841e662482edc979f2dea41cc6c54b1bb4b968"},
+]
+
+[package.dependencies]
+ply = "*"
+
+[package.extras]
+docs = ["Sphinx (>2)", "numpy", "scipy", "sphinx-copybutton", "sphinx-rtd-theme (>0.5)", "sphinxcontrib-jsmath", "sphinxcontrib-napoleon"]
+optional = ["casadi", "dill", "ipython", "matplotlib (!=3.6.1)", "networkx", "numdifftools", "numpy", "openpyxl", "pandas", "pint", "plotly", "python-louvain", "pywin32", "pyyaml", "scipy", "seaborn", "sympy", "xlrd", "z3-solver"]
+tests = ["coverage", "parameterized", "pybind11", "pytest", "pytest-parallel"]
+
+[[package]]
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
@@ -4503,14 +4540,14 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "7.3.0"
+version = "7.3.1"
 description = "pytest: simple powerful testing with Python"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-7.3.0-py3-none-any.whl", hash = "sha256:933051fa1bfbd38a21e73c3960cebdad4cf59483ddba7696c48509727e17f201"},
-    {file = "pytest-7.3.0.tar.gz", hash = "sha256:58ecc27ebf0ea643ebfdf7fb1249335da761a00c9f955bcd922349bcb68ee57d"},
+    {file = "pytest-7.3.1-py3-none-any.whl", hash = "sha256:3799fa815351fea3a5e96ac7e503a96fa51cc9942c3753cda7651b93c1cfa362"},
+    {file = "pytest-7.3.1.tar.gz", hash = "sha256:434afafd78b1d78ed0addf160ad2b77a30d35d4bdf8af234fe621919d9ed15e3"},
 ]
 
 [package.dependencies]
@@ -5352,29 +5389,26 @@ files = [
 
 [[package]]
 name = "sparsecca"
-version = "0.2.0"
-description = ""
+version = "0.3.0"
+description = "A full implementation of sparse CCA."
 category = "main"
 optional = false
 python-versions = ">=3.8"
-files = []
-develop = false
+files = [
+    {file = "sparsecca-0.3.0-py3-none-any.whl", hash = "sha256:e732fc781972a14201593f7b894d81fd2b2022b021c8071b7f00c15aa6001e55"},
+    {file = "sparsecca-0.3.0.tar.gz", hash = "sha256:05b27132d7164b124f704db84b98c558444397737e6bf77c0befd5203c8f8606"},
+]
 
 [package.dependencies]
 numpy = "*"
 pandas = "*"
+pyomo = "*"
 statsmodels = "*"
 
 [package.extras]
-dev = ["build", "bump2version", "isort", "pre-commit", "twine"]
-rpy2 = ["rpy2 (>=3)"]
-test = ["codecov", "pytest", "pytest-cov", "pytest-icdiff"]
-
-[package.source]
-type = "git"
-url = "https://github.com/theislab/sparsecca"
-reference = "HEAD"
-resolved_reference = "10789947393900d93ee9cd2d19b4a8aec7c510dc"
+dev = ["bump2version", "pre-commit", "twine (>=4.0.2)"]
+doc = ["ipykernel", "ipython", "myst-nb", "sphinx (>=4)", "sphinx-autodoc-typehints", "sphinx-book-theme (>=0.3.3)", "sphinx-copybutton", "sphinxcontrib-bibtex (>=1.0.0)"]
+test = ["codecov", "pytest", "pytest-cov"]
 
 [[package]]
 name = "sphinx"
@@ -6794,4 +6828,4 @@ ete3 = ["ete3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<3.11"
-content-hash = "95b5ba56eb12afe3dc01df74b0fce9a851307257861cd0c93b6f8198ce232b79"
+content-hash = "9668853cc74cd8868859b94c92fa800fee9e0454dd5ffe6df085fea3b55439c4"
