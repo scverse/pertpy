@@ -10,11 +10,7 @@
 
 # pertpy
 
-## Features
-
--   Differential cell type perturbation analysis with Augurpy
--   Analysis of CRISPR-KO screens with Mixscape
--   Compositional analysis with Milo and tascCODA
+![pertpy-wide1](https://user-images.githubusercontent.com/21954664/235677503-0c72f90d-3f6d-4a16-a1ff-ff8c11a540fb.png)
 
 ## Installation
 
