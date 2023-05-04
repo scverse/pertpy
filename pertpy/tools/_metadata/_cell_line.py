@@ -201,7 +201,7 @@ class CellLineMetaData:
         """A brief summary of cell line metadata.
 
         Args:
-            cell_line_source: the source of cell line annotation: DepMap or Cancerrxgene. (default: "DepMap")
+            cell_line_source: the source of cell line annotation: DepMap or Cancerrxgene. Defaults to "DepMap".
         """
         if cell_line_source == "DepMap":
             print(
