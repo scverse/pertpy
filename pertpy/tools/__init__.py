@@ -6,9 +6,10 @@ from pertpy.tools._differential_gene_expression import DifferentialGeneExpressio
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
 from pertpy.tools._kernel_pca import kernel_pca
-from pertpy.tools._metadata import CellLineMetaData
+from pertpy.tools._metadata._cell_line import CellLineMetaData
 from pertpy.tools._milo import Milo
 from pertpy.tools._mixscape import Mixscape
+from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 from pertpy.tools._scgen import SCGEN
 
 try:
