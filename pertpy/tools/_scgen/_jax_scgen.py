@@ -5,6 +5,7 @@ from typing import Any, Sequence
 import jax.numpy as jnp
 import numpy as np
 from anndata import AnnData
+from jax import Array
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
 from scvi.data.fields import CategoricalObsField, LayerField
@@ -137,7 +138,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         adata: AnnData | None = None,
         indices: Sequence[int] | None = None,
         batch_size: int | None = None,
-    ) -> np.ndarray:
+    ) -> Array:
         """Get decoded expression."""
         if self.is_trained_ is False:
             raise RuntimeError("Please train the model first.")
@@ -202,6 +203,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
                 batch_list[study].X = delta + batch_list[study].X
                 temp_cell[batch_ind[study]].X = batch_list[study].X
             shared_ct.append(temp_cell)
+
         all_shared_ann = AnnData.concatenate(*shared_ct, batch_key="concat_batch", index_unique=None)
         if "concat_batch" in all_shared_ann.obs.columns:
             del all_shared_ann.obs["concat_batch"]
@@ -241,6 +243,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
                 corrected.raw = adata_raw
             corrected.obsm["latent"] = all_corrected_data.X
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
+
             return corrected
 
     @classmethod
