@@ -24,10 +24,6 @@ You can install _pertpy_ via [pip] from [PyPI]:
 $ pip install pertpy
 ```
 
-## Usage
-
-Please see [Usage] for details.
-
 ## Credits
 
 This package was created with [cookietemple] using [Cookiecutter] based on [Hypermodern_Python_Cookiecutter].
