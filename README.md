@@ -12,6 +12,10 @@
 
 ![pertpy-wide1](https://user-images.githubusercontent.com/21954664/235677503-0c72f90d-3f6d-4a16-a1ff-ff8c11a540fb.png)
 
+## Documentation
+
+Please read the [documentation](https://pertpy.readthedocs.io/en/latest).
+
 ## Installation
 
 You can install _pertpy_ via [pip] from [PyPI]:
