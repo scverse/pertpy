@@ -6297,4 +6297,4 @@ ete3 = ["ete3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<3.11"
-content-hash = "333697c6841e1e6c2d414bd27ccfb6cc6630a021e1d4547b2640c9d6f6a64492"
+content-hash = "5f2e3510dd3960bd52c14c665d4d533f22f3c2ce36578a35882866418ac91380"
