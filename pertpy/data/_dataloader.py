@@ -57,6 +57,9 @@ def _download(  # pragma: no cover
                 file.write(data)
                 progress.update(task, advance=block_size)
 
+        # force the progress bar to 100% at the end
+        progress.update(task, completed=total, refresh=True)
+
     if is_zip:
         output_path = output_path or tempfile.gettempdir()
         with ZipFile(download_to_path, "r") as zip_obj:
