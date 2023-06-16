@@ -88,7 +88,7 @@ class TestMetaData:
             len(pt_metadata.bulk_rna_broad.gene_id.unique()),
         )
 
-        pt_metadata.annotate_bulk_rna_expression(adata, bulk_rna_source="sanger")
+        pt_metadata.annotate_bulk_rna_expression(adata, cell_line_source="sanger")
 
         assert len(adata.obsm) == 2
         assert adata.obsm["bulk_rna_expression_sanger"].shape == (

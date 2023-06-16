@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
-import anndata
 import pandas as pd
 from anndata import AnnData
 from rich import print
@@ -65,6 +65,7 @@ class CellLineMetaData:
         )
         self.cl_cancer_project_meta.columns.name = None
         self.cl_cancer_project_meta = self.cl_cancer_project_meta.reset_index()
+        self.cl_cancer_project_meta = self.cl_cancer_project_meta.rename(columns={"Cell line Name": "cell_line_name"})
 
         # Download metadata for driver genes of the intOGen analysis from DepMap_Sanger
         driver_gene_intOGen_file_name = "IntOGen-Drivers.zip"
@@ -83,6 +84,7 @@ class CellLineMetaData:
                 is_zip=True,
             )
         self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
+        self.driver_gene_intOGen.rename(columns=lambda x: x.lower(), inplace=True)
 
         # Download metadata for driver genes of the COSMIC Tier 1 gene
         self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
@@ -102,6 +104,10 @@ class CellLineMetaData:
                 is_zip=True,
             )
         self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path)
+        self.bulk_rna_sanger.drop(["data_source", "gene_symbol"], axis=1, inplace=True)
+        self.bulk_rna_sanger[["model_id", "model_name", "gene_id"]] = self.bulk_rna_sanger[
+            ["model_id", "model_name", "gene_id"]
+        ].astype("category")
 
         bulk_rna_broad_file_name = "rnaseq_broad.zip"
         bulk_rna_broad_file_path = settings.cachedir.__str__() + "/rnaseq_broad_20210317.csv"
@@ -117,6 +123,13 @@ class CellLineMetaData:
                 is_zip=True,
             )
         self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path)
+        # gene symbol can not be the column name of fetched bulk rna expression data
+        # there are 37263 unique gene ids
+        # but 37262 unique gene symbols (SEPTIN4)
+        self.bulk_rna_broad.drop(["data_source", "gene_symbol"], axis=1, inplace=True)
+        self.bulk_rna_broad[["model_id", "model_name", "gene_id"]] = self.bulk_rna_broad[
+            ["model_id", "model_name", "gene_id"]
+        ].astype("category")
 
         # Download proteomics data from ProCan-DepMapSanger
         proteomics_file_name = "Proteomics_20221214.zip"
@@ -133,6 +146,9 @@ class CellLineMetaData:
                 is_zip=True,
             )
         self.proteomics_data = pd.read_csv(proteomics_file_path)
+        self.proteomics_data[["uniprot_id", "model_id", "model_name", "symbol"]] = self.proteomics_data[
+            ["uniprot_id", "model_id", "model_name", "symbol"]
+        ].astype("category")
 
         # Download CCLE expression data from DepMap
         ccle_expr_file_name = "CCLE_expression.csv"
@@ -147,107 +163,240 @@ class CellLineMetaData:
             )
         self.ccle_expr = pd.read_csv(ccle_expr_file_path, index_col=0)
 
-    def getinfo_annotate_driver_genes(self, driver_gene_set: str = "intOGen") -> None:
-        """A brief summary of genes in cancer driver annotation data.
-
-        Args:
-            driver_gene_set: gene set for cancer driver annotation: intOGen or COSMIC. Defaults to "intOGen".
-        """
-        if driver_gene_set == "intOGen":
-            print(
-                "Current available information in the DepMap_Sanger driver gene annotation for intOGen genes: ",
-                *list(self.driver_gene_intOGen.columns.values),
-                sep="\n- ",
-            )
-            print(f"{len(self.driver_gene_intOGen.index)} driver genes are saved in this file")
-        if driver_gene_set == "COSMIC":
-            print(
-                "Current available information in the DepMap_Sanger driver gene annotation for COSMIC Tier 1 genes: ",
-                *list(self.driver_gene_cosmic.columns.values),
-                sep="\n- ",
-            )
-            print(f"{len(self.driver_gene_cosmic.index)} driver genes are saved in this file")
-
-    def getinfo_annotate_bulk_rna_expression(self, cell_line_source: str = "broad") -> None:
-        """A brief summary of bulk RNA expression data.
-
-        Args:
-            cell_line_source: the source of RNA-seq data: broad or sanger. Defaults to"broad".
-        """
-        if cell_line_source == "broad":
-            print(
-                "Current available information in the RNA-Seq Data for broad cell line only: ",
-                *list(self.bulk_rna_broad.columns.values),
-                sep="\n- ",
-            )
-            print(f"{len(self.bulk_rna_broad.model_name.unique())} unique cell lines are saved in this file.")
-            print(f"{len(self.bulk_rna_broad.gene_id.unique())} unique genes are saved in this file")
-
-        elif cell_line_source == "sanger":
-            print(
-                "Current available information in the RNA-Seq Data for Sanger cell line only: ",
-                *list(self.bulk_rna_sanger.columns.values),
-                sep="\n- ",
-            )
-            print(f"{len(self.bulk_rna_sanger.model_name.unique())} unique cell lines are saved in this file.")
-            print(f"{len(self.bulk_rna_sanger.gene_id.unique())} unique genes are saved in this file.")
-        else:
-            raise ValueError(
-                "The specified source of bulk rna expression data is not available. "
-                "Please choose either broad or sanger."
-            )
-
-    def getinfo_annotate_cell_lines(self, cell_line_source: str = "DepMap") -> None:
+    def lookup_cell_lines(
+        self,
+        cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
+        reference_id: str = "DepMap_ID",
+        query_id_list: list[str] | None = None,
+    ) -> None:
         """A brief summary of cell line metadata.
 
         Args:
-            cell_line_source: the source of cell line annotation: DepMap or Cancerrxgene. Defaults to "DepMap".
+            cell_line_source: the source of cell line annotation, DepMap or Cancerrxgene. Defaults tp "DepMap".
+            reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or
+                stripped_cell_line_name. If fetch cell line metadata from Cancerrxgene, it is recommended to choose
+                "stripped_cell_line_name". Defaults to "DepMap_ID".
+            query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
+                metadata. Defaults to None.
         """
         if cell_line_source == "DepMap":
+            print("To summarize: in the DepMap cell line annotation you can find: ")
+            print(f"{len(self.cell_line_meta.index)} cell lines")
             print(
-                "Current available information in the DepMap cell line annotation: ",
+                f"{len(self.cell_line_meta.columns)} meta data, including ",
                 *list(self.cell_line_meta.columns.values),
                 sep="\n- ",
             )
-            print(f"{len(self.cell_line_meta.index)} cell lines are saved in this file")
-
-        elif cell_line_source == "Cancerrxgene":
+            print("Overview of possible cell line reference identifiers: ")
             print(
-                "Current available information in the cell line annotation from the project "
-                "Genomics of Drug Sensitivity in Cancer: ",
+                self.cell_line_meta[["DepMap_ID", "cell_line_name", "stripped_cell_line_name", "CCLE_Name"]]
+                .head()
+                .to_string()
+            )
+        else:
+            print(
+                "To summarize: in the cell line annotation from the project Genomics of Drug Sensitivity in Cancer",
+                "you can find: ",
+            )
+            print(f"{len(self.cl_cancer_project_meta.index)} cell lines")
+            print(
+                f"{len(self.cl_cancer_project_meta.columns)} meta data, including ",
                 *list(self.cl_cancer_project_meta.columns.values),
                 sep="\n- ",
             )
-            print(f"{len(self.cl_cancer_project_meta.index)} cell lines are saved in this file")
-
-        else:
-            raise ValueError(
-                "The specified source of cell line annotation is not available. "
-                "Please choose either DepMap or Cancerrxgene."
+            print("Overview of possible cell line reference identifiers: ")
+            print(
+                self.cl_cancer_project_meta[["cell_line_name", "stripped_cell_line_name", "Model ID", "COSMIC ID"]]
+                .head()
+                .to_string()
             )
 
-    def getinfo_annotate_protein_expression(self) -> None:
-        """A brief summary of protein expression data."""
+        print("Default parameters to annotate cell line metadata: ")
+        default_param = {
+            "query_id": "DepMap_ID",
+            "reference_id": "DepMap_ID",
+            "cell_line_information": "None",
+            "cell_line_source": "DepMap",
+        }
+        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
+
+        if query_id_list is not None:
+            identifier_num_all = len(query_id_list)
+            if cell_line_source == "DepMap":
+                if reference_id not in self.cell_line_meta.columns:
+                    raise ValueError(
+                        f"The specified `reference_id` {reference_id} is not available in the DepMap cell line annotation data. "
+                    )
+                not_matched_identifiers = list(set(query_id_list) - set(self.cell_line_meta[reference_id]))
+            else:
+                if reference_id not in self.cl_cancer_project_meta.columns:
+                    raise ValueError(
+                        f"The specified `reference_id` {reference_id} is not available in the cell line annotation from the project Genomics of Drug Sensitivity in Cancer. "
+                    )
+                not_matched_identifiers = list(set(query_id_list) - set(self.cl_cancer_project_meta[reference_id]))
+
+            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+
+    def lookup_bulk_rna_expression(
+        self,
+        cell_line_source: Literal["broad", "sanger"] = "broad",
+        reference_id: Literal["model_name", "model_id"] = "model_name",
+        query_id_list: list[str] | None = None,
+    ) -> None:
+        """A brief summary of bulk RNA expression data.
+
+        Args:
+            cell_line_source: the source of RNA-seq data, broad or sanger. Defaults to "broad".
+            reference_id: The type of cell line identifier in the meta data, model_name, or model_id.
+                Defaults to "model_name".
+            query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
+                metadata. Defaults to None.
+        """
+        if cell_line_source == "broad":
+            print("To summarize: in the RNA-Seq Data for broad cell line only, you can find: ")
+            print(f"{len(self.bulk_rna_broad.model_name.unique())} cell lines")
+            print(f"{len(self.bulk_rna_broad.gene_id.unique())} genes")
+            print(
+                f"{len(self.bulk_rna_broad.columns)} meta data, including ",
+                *list(self.bulk_rna_broad.columns.values),
+                sep="\n- ",
+            )
+            print("Overview of possible cell line reference identifiers: ")
+            print(self.bulk_rna_broad[["model_id", "model_name"]].head().to_string())
+
+        else:
+            print("To summarize: in the RNA-Seq Data for Sanger cell line only, you can find: ")
+            print(f"{len(self.bulk_rna_sanger.model_name.unique())} cell lines")
+            print(f"{len(self.bulk_rna_sanger.gene_id.unique())} genes")
+            print(
+                f"{len(self.bulk_rna_sanger.columns)} meta data, including ",
+                *list(self.bulk_rna_sanger.columns.values),
+                sep="\n- ",
+            )
+            print("Overview of possible cell line reference identifiers: ")
+            print(self.bulk_rna_sanger[["model_id", "model_name"]].head().to_string())
+
+        print("Default parameters to annotate bulk RNA expression: ")
+        default_param = {
+            "query_id": "cell_line_name",
+            "reference_id": "model_name",
+            "cell_line_source": "broad",
+            "bulk_rna_information": "read_count",
+        }
+        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
+
+        if query_id_list is not None:
+            identifier_num_all = len(query_id_list)
+            if cell_line_source == "broad":
+                if reference_id not in self.bulk_rna_broad.columns:
+                    raise ValueError(
+                        f"The specified `reference_id` {reference_id} is not available in the RNA-Seq Data for broad cell line. "
+                    )
+                not_matched_identifiers = list(set(query_id_list) - set(self.bulk_rna_broad[reference_id]))
+            else:
+                if reference_id not in self.bulk_rna_sanger.columns:
+                    raise ValueError(
+                        f"The specified `reference_id` {reference_id} is not available in the RNA-Seq Data for Sanger cell line. "
+                    )
+                not_matched_identifiers = list(set(query_id_list) - set(self.bulk_rna_sanger[reference_id]))
+
+            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+
+    def lookup_protein_expression(
+        self, reference_id: Literal["model_name", "model_id"] = "model_name", query_id_list: list[str] | None = None
+    ) -> None:
+        """A brief summary of protein expression data.
+
+        Args:
+            reference_id: The type of cell line identifier in the meta data, model_name or model_id.
+                Defaults to "model_name".
+            query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
+                metadata. Defaults to None.
+
+        """
+        print("To summarize: in the proteomics data you can find: ")
+        print(f"{len(self.proteomics_data.model_name.unique())} cell lines")
+        print(f"{len(self.proteomics_data.uniprot_id.unique())} proteins")
         print(
-            "Current available information in the proteomics data: ",
+            f"{len(self.proteomics_data.columns)} meta data, including ",
             *list(self.proteomics_data.columns.values),
             sep="\n- ",
         )
-        print(f"{len(self.proteomics_data.model_name.unique())} unique cell lines are saved in this file.")
-        print(f"{len(self.proteomics_data.uniprot_id.unique())} unique proteins are saved in this file.")
+        print("Overview of possible cell line reference identifiers: ")
+        print(self.proteomics_data[["model_id", "model_name"]].head().to_string())
 
-    def getinfo_annotate_ccle_expression(self) -> None:
-        """A brief summary of CCLE expression data."""
-        print(f" Expression of {len(self.ccle_expr.columns.unique())} genes is saved in this file.")
-        print(f"{len(self.ccle_expr.index.unique())} unique cell lines are available in this file.")
+        print("Default parameters to annotate protein expression: ")
+        default_param = {
+            "query_id": "cell_line_name",
+            "reference_id": "model_name",
+            "bulk_rna_information": "read_count",
+            "protein_information": "protein_intensity",
+            "protein_id": "uniprot_id",
+        }
+        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
+
+        if query_id_list is not None:
+            identifier_num_all = len(query_id_list)
+
+            if reference_id not in self.proteomics_data.columns:
+                raise ValueError(
+                    f"The specified `reference_id` {reference_id} is not available in the proteomics data. "
+                )
+            not_matched_identifiers = list(set(query_id_list) - set(self.proteomics_data[reference_id]))
+            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+
+    def lookup_ccle_expression(self, query_id_list: list[str] | None = None) -> None:
+        """A brief summary of CCLE expression data.
+
+        Args:
+            query_id_list: A list of unique cell line identifiers (here DepMap_ID) to test the number of
+                matched ids present in the metadata. Defaults to None.
+
+        """
+        print("To summarize: in the CCLE expression data you can find: ")
+        print(f"{len(self.ccle_expr.index.unique())} cell lines")
+        print(f"{len(self.ccle_expr.columns.unique())} genes")
+        print("Only DepMap_ID is allowed to use as `reference_id`")
+
+        if query_id_list is not None:
+            identifier_num_all = len(query_id_list)
+            not_matched_identifiers = list(set(query_id_list) - set(self.ccle_expr.index))
+            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+
+    def lookup_driver_genes(self, driver_gene_set: Literal["intOGen", "cosmic"] = "intOGen") -> None:
+        """A brief summary of genes in cancer driver annotation data.
+
+        Args:
+            driver_gene_set: gene set for cancer driver annotation: intOGen or cosmic. Defaults to "intOGen".
+        """
+        if driver_gene_set == "intOGen":
+            print("To summarize: in the DepMap_Sanger driver gene annotation for intOGen genes, you can find: ")
+            print(f"{len(self.driver_gene_intOGen.index)} driver genes")
+            print(
+                f"{len(self.driver_gene_intOGen.columns)} meta data including: ",
+                *list(self.driver_gene_intOGen.columns.values),
+                sep="\n- ",
+            )
+        else:
+            print("To summarize: in the DepMap_Sanger driver gene annotation for COSMIC Tier 1 genes, you can find: ")
+            print(f"{len(self.driver_gene_cosmic.index)} driver genes")
+            print(
+                f"{len(self.driver_gene_cosmic.columns)} meta data including: ",
+                *list(self.driver_gene_cosmic.columns.values),
+                sep="\n- ",
+            )
 
     def annotate_cell_lines(
         self,
         adata: AnnData,
-        cell_line_identifier: str = "DepMap_ID",
-        identifier_type: str = "DepMap_ID",
-        cell_line_information: list[str] = None,
-        source: str = "DepMap",
+        query_id: str = "DepMap_ID",
+        reference_id: str = "DepMap_ID",
+        cell_line_information: list[str] | None = None,
+        cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         copy: bool = False,
     ) -> AnnData:
         """Fetch cell line annotation.
@@ -255,14 +404,14 @@ class CellLineMetaData:
         For each cell, we fetch cell line annotation from Dependency Map (DepMap).
 
         Args:
-            adata: The AnnData object to annotate.
-            cell_line_identifier: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
-            identifier_type: The type of cell line information, e.g. DepMap_ID, cell_line_name or
-                stripped_cell_line_name. To fetch cell line metadata from Cancerrxgene, it is recommended to choose
+            adata: The data object to annotate.
+            query_id: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
+            reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or
+                stripped_cell_line_name. If fetch cell line metadata from Cancerrxgene, it is recommended to choose
                 "stripped_cell_line_name". Defaults to "DepMap_ID".
             cell_line_information: The metadata to fetch. All metadata will be fetched by default. Defaults to None (=all).
-            source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
-            copy: Determines whether a copy of the AnnData object is returned. Defaults to False.
+            cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
+            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
             Returns an AnnData object with cell line annotation.
@@ -270,25 +419,40 @@ class CellLineMetaData:
         if copy:
             adata = adata.copy()
 
-        if source == "DepMap":
+        if cell_line_source == "DepMap":
             cell_line_meta = self.cell_line_meta
-        elif source == "Cancerrxgene":
-            cell_line_meta = self.cl_cancer_project_meta
         else:
-            raise ValueError(
-                "The specified source of cell line metadata is not available."
-                "Please choose either DepMap or Cancerrxgene. Default is DepMap."
-            )
+            if query_id == "DepMap_ID":
+                print(
+                    "To annotate cell line metadata from Cancerrxgene, ",
+                    "we use `stripped_cell_line_name` as reference indentifier. ",
+                    "Please make sure to use the matched cell_line_information. ",
+                    sep="\n- ",
+                )
+            cell_line_meta = self.cl_cancer_project_meta
 
-        if identifier_type in cell_line_meta.columns:
+        if query_id not in adata.obs.columns:
+            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`. " "Please check again. ")
+
+        if reference_id in cell_line_meta.columns:
             # If the specified cell line type can be found in the database,
             # we can compare these keys and fetch the corresponding metadata.
+            identifier_num_all = len(adata.obs[query_id].unique())
+            not_matched_identifiers = list(set(adata.obs[query_id]) - set(cell_line_meta[reference_id]))
+            if len(not_matched_identifiers) == identifier_num_all:
+                raise ValueError(
+                    "All the identifiers present in adata.obs could not be found in the cell line annotation file, ",
+                    "Stop annotating cell line annotation. Please check it again.",
+                )
 
-            not_matched_identifiers = list(set(adata.obs[cell_line_identifier]) - set(cell_line_meta[identifier_type]))
             if len(not_matched_identifiers) > 0:
+                print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
                 print(
-                    "Following identifiers can not be found in cell line annotation file,"
-                    " so their corresponding meta data are NA values. Please check it again:",
+                    f"But following {len(not_matched_identifiers)} identifiers can't be found in the cell line annotation file. "
+                )
+                print(
+                    "Resulting in NA values for their corresponding metadata. ",
+                    "Please check again: ",
                     *not_matched_identifiers,
                     sep="\n- ",
                 )
@@ -298,58 +462,57 @@ class CellLineMetaData:
                 # Sometimes there is already different cell line information in the `adata`.
                 # To avoid redundant information we will remove the duplicate information from metadata after merging.
                 adata.obs = (
-                    adata.obs.reset_index()
-                    .merge(
+                    adata.obs.merge(
                         cell_line_meta,
-                        left_on=cell_line_identifier,
-                        right_on=identifier_type,
+                        left_on=query_id,
+                        right_on=reference_id,
                         how="left",
                         suffixes=("", "_fromMeta"),
                     )
                     .filter(regex="^(?!.*_fromMeta)")
-                    .set_index(adata.obs.index.names)
+                    .set_index(adata.obs.index)
                 )
-                # If cell_line_identifier and identifier_type have different names,
+                # If query_id and reference_id have different names,
                 # there will be a column for each of them after merging,
                 # which is redundant as they refer to the same information.
-                # We will move the identifier_type column.
-                if cell_line_identifier != identifier_type:
-                    del adata.obs[identifier_type]
+                # We will move the reference_id column.
+                if query_id != reference_id:
+                    del adata.obs[reference_id]
 
             elif set(cell_line_information).issubset(set(cell_line_meta.columns)):
                 # If cell_line_information is specified and can be found in the DepMap database,
                 # We will subset the original metadata dataframe correspondingly and add them to the `adata`.
                 # Again, redundant information will be removed.
-                if identifier_type not in cell_line_information:
-                    cell_line_information.append(identifier_type)
+                if reference_id not in cell_line_information:
+                    cell_line_information.append(reference_id)
                 cell_line_meta_part = cell_line_meta[cell_line_information]
                 adata.obs = (
-                    adata.obs.reset_index()
-                    .merge(
+                    adata.obs.merge(
                         cell_line_meta_part,
-                        left_on=cell_line_identifier,
-                        right_on=identifier_type,
+                        left_on=query_id,
+                        right_on=reference_id,
                         how="left",
                         suffixes=("", "_fromMeta"),
                     )
                     .filter(regex="^(?!.*_fromMeta)")
-                    .set_index(adata.obs.index.names)
+                    .set_index(adata.obs.index)
                 )
                 # Again, redundant information will be removed.
-                if cell_line_identifier != identifier_type:
-                    del adata.obs[identifier_type]
+                if query_id != reference_id:
+                    del adata.obs[reference_id]
             else:
                 raise ValueError(
-                    "The specified cell line metadata can't be found in the DepMap database."
-                    "Please give the cell line metadata available in the DepMap,"
-                    "or fetch all the metadata by default."
+                    f"The requested cell line metadata {cell_line_information} can't be found in the database. "
+                    "Please specify the available cell line metadata in the chosen database, "
+                    "or fetch all the metadata by default. "
+                    "The function`lookup_cell_lines()` provides further ."
                 )
         else:
             raise ValueError(
-                "The specified cell line type is not available in the DepMap database."
-                "Please give the type of cell line information available in the DepMap."
-                "e.g. DepMap_ID, cell_line_name or stripped_cell_line_name."
-                "DepMap_ID is compared by default."
+                f"The requested cell line type {reference_id} is currently unavailable in the database. "
+                "Please refer to the available cell line information in the chosen database. "
+                "e.g. DepMap_ID, cell_line_name or stripped_cell_line_name. "
+                "DepMap_ID is compared by default. "
             )
 
         return adata
@@ -357,10 +520,10 @@ class CellLineMetaData:
     def annotate_bulk_rna_expression(
         self,
         adata: AnnData,
-        cell_line_identifier: str = "cell_line_name",
-        identifier_type: str = "model_name",
-        bulk_rna_source: str = "broad",
-        bulk_rna_information: str = "read_count",
+        query_id: str = "cell_line_name",
+        reference_id: Literal["model_name", "model_id"] = "model_name",
+        cell_line_source: Literal["broad", "sanger"] = "broad",
+        bulk_rna_information: Literal["read_count", "fpkm"] = "read_count",
         copy: bool = False,
     ) -> AnnData:
         """Fetch bulk rna expression.
@@ -369,10 +532,10 @@ class CellLineMetaData:
 
         Args:
             adata: The data object to annotate.
-            cell_line_identifier: The column of `.obs` with cell line information. Defaults to "cell_line_name".
-            identifier_type: The type of cell line information, e.g. model_name or model_id. Defaults to "model_name".
-            bulk_rna_source: The bulk rna expression data from either Broad or Sanger cell line. Defaults to "broad".
-            bulk_rna_information: The metadata to fetch. Defaults to "read_count".
+            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
+            reference_id: The type of cell line identifier in the meta data, model_name or model_id. Defaults to "model_name".
+            cell_line_source: The bulk rna expression data from either broad or sanger cell line. Defaults to "broad".
+            bulk_rna_information: The metadata to fetch, read_count or fpkm. Defaults to "read_count".
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -380,53 +543,59 @@ class CellLineMetaData:
         """
         if copy:
             adata = adata.copy()
-        if bulk_rna_source == "broad":
-            bulk_rna = self.bulk_rna_broad
-        elif bulk_rna_source == "sanger":
-            bulk_rna = self.bulk_rna_sanger
-        else:
-            raise ValueError(
-                "The specified source of bulk rna expression data is not available. "
-                "Please choose either broad or sanger."
-            )
+        bulk_rna = self.bulk_rna_broad if cell_line_source == "broad" else self.bulk_rna_sanger
 
         # Make sure that the specified `cell_line_type` can be found in the bulk rna expression data,
         # then we can compare these keys and fetch the corresponding metadata.
-        if cell_line_identifier not in adata.obs.columns:
+        if query_id not in adata.obs.columns:
             raise ValueError(
-                "The specified `cell_line_identifier` can't be found in the `adata.obs`. "
-                "Please fetch the cell line metadata first using the function "
-                "`annotate_cell_lines()`."
+                "The specified `query_id` {query_id} can't be found in the `adata.obs`. "
+                "Please check again. "
+                "Alternatively, if you don't have the reference identifier required by the metadata, ",
+                "it is recommend to call the function `annotate_cell_lines()` first to fetch more cell line annotation, "
+                "e.g. cell line name, DepMap ID.",
             )
 
-        if identifier_type not in bulk_rna.columns:
+        if reference_id not in bulk_rna.columns:
             raise ValueError(
-                "The specified `identifier_type` can't be found in the metadata. "
-                "Please check the available `identifier_type` in the bulk expression data using "
-                "the function getinfo_annotate_bulk_rna_expression()."
+                "The specified `reference_id` {reference_id} is not available in the bulk RNA expression data. "
+                "Please check the available `reference_id` in the metadata, e.g.  "
+                "by calling the function lookup_bulk_rna_expression()."
+            )
+        identifier_num_all = len(adata.obs[query_id].unique())
+        not_matched_identifiers = list(set(adata.obs[query_id]) - set(bulk_rna[reference_id]))
+
+        if len(not_matched_identifiers) == identifier_num_all:
+            raise ValueError(
+                "All the identifiers present in adata.obs could not be found in the bulk RNA expression data, ",
+                "Stop annotating bulk RNA expression data. Please check it again.",
             )
 
-        not_matched_identifiers = list(set(adata.obs[cell_line_identifier]) - set(bulk_rna[identifier_type]))
         if len(not_matched_identifiers) > 0:
             print(
-                "[bold yellow]Following identifiers can not be found in bulk RNA expression data,"
-                " their corresponding meta data are NA values. Please check it again:",
+                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can't be found in bulk RNA expression data. "
+            )
+            print(
+                "Resulting in NA values for their corresponding metadata. ",
+                "Please check again: ",
                 *not_matched_identifiers,
                 sep="\n- ",
             )
-
-        rna_exp = pd.pivot(bulk_rna, index=identifier_type, columns="gene_id", values=bulk_rna_information)
-        rna_exp = rna_exp.reindex(adata.obs[cell_line_identifier])
-        rna_exp = rna_exp.set_index(adata.obs.index)
-        adata.obsm["bulk_rna_expression_" + bulk_rna_source] = rna_exp
+        bulk_rna = bulk_rna[[reference_id, "gene_id", bulk_rna_information]]
+        rna_exp = pd.pivot(bulk_rna, index=reference_id, columns="gene_id", values=bulk_rna_information)
+        rna_exp = rna_exp.reindex(adata.obs[query_id])
+        rna_exp.index = adata.obs.index
+        adata.obsm["bulk_rna_expression_" + cell_line_source] = rna_exp
 
         return adata
 
     def annotate_protein_expression(
         self,
         adata: AnnData,
-        cell_line_identifier: str = "cell_line_name",
-        identifier_type: str = "model_name",
+        query_id: str = "cell_line_name",
+        reference_id: Literal["model_name", "model_id"] = "model_name",
+        protein_information: Literal["protein_intensity", "zscore"] = "protein_intensity",
+        protein_id: Literal["uniprot_id", "symbol"] = "uniprot_id",
         copy: bool = False,
     ) -> AnnData:
         """Fetch protein expression.
@@ -435,8 +604,10 @@ class CellLineMetaData:
 
         Args:
             adata: The data object to annotate.
-            cell_line_identifier: The column of `.obs` with cell line information. Defaults to "cell_line_name".
-            identifier_type: The type of cell line information, e.g. model_name or model_id. Defaults to "model_name".
+            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
+            reference_id: The type of cell line identifier in the meta data, model_name or model_id. Defaults to "model_name".
+            protein_information: The type of protein expression data to fetch, protein_intensity or zscore. Defaults to "protein_intensity".
+            protein_id: The protein identifier saved in the fetched meta data, uniprot_id or symbol. Defaults to "uniprot_id".
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -447,44 +618,54 @@ class CellLineMetaData:
 
         # Make sure that the specified `cell_line_type` can be found in the protein expression data,
         # then we can compare these keys and fetch the corresponding metadata.
-        if cell_line_identifier not in adata.obs.columns:
+        if query_id not in adata.obs.columns:
             raise ValueError(
-                "The specified `cell_line_identifier` can't be found in the `adata.obs`. "
-                "Please fetch the cell line meta data first using the function "
-                "`annotate_cell_lines()`."
+                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. ",
+                "Please check again. ",
+                "Alternatively, if you don't have the reference identifier required by the metadata, ",
+                "it is recommend to call the function `annotate_cell_lines()` first to fetch more cell line annotation, ",
+                "e.g. cell line name, DepMap ID.",
             )
 
-        if identifier_type not in self.proteomics_data.columns:
+        if reference_id not in self.proteomics_data.columns:
             raise ValueError(
-                "The specified `identifier_type` can't be found in the meta data. "
-                "Please check the available identifier types in the protein expression data calling "
-                "the function `getinfo_annotate_protein_expression()`."
+                f"The specified `reference_id`{reference_id} can't be found in the protein expression data. "
+                "Please check the available `reference_id` in the metadata, e.g.  "
+                "by calling the function lookup_protein_expression()."
+            )
+        identifier_num_all = len(adata.obs[query_id].unique())
+        not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.proteomics_data[reference_id]))
+
+        if len(not_matched_identifiers) == identifier_num_all:
+            raise ValueError(
+                "All the identifiers present in adata.obs could not be found in the protein expression file, ",
+                "Stop annotating protein expression metadata. Please check it again.",
             )
 
-        not_matched_identifiers = list(
-            set(adata.obs[cell_line_identifier]) - set(self.proteomics_data[identifier_type])
-        )
         if len(not_matched_identifiers) > 0:
+            print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
             print(
-                "[bold yellow]Following identifiers can not be found in the protein expression data,"
-                " their corresponding meta data are NA values. Please check it again:",
+                f"[bold yellow]But following {len(not_matched_identifiers)} identifiers can't be found in the protein expression data. "
+            )
+            print(
+                "Resulting in NA values for their corresponding metadata. ",
+                "Please check again: ",
                 *not_matched_identifiers,
                 sep="\n- ",
             )
         # convert the original protein intensities table from long format to wide format, group by the cell lines
-        prot_exp = pd.pivot(
-            self.proteomics_data, index=identifier_type, columns="uniprot_id", values="protein_intensity"
-        )
-        prot_exp = prot_exp.reindex(adata.obs[cell_line_identifier])
-        prot_exp = prot_exp.set_index(adata.obs.index)
-        adata.obsm["proteomics_protein_intensity"] = prot_exp
+        prot_exp = self.proteomics_data[[reference_id, protein_id, protein_information]]
+        prot_exp = pd.pivot(prot_exp, index=reference_id, columns=protein_id, values=protein_information)
+        prot_exp = prot_exp.reindex(adata.obs[query_id])
+        prot_exp.index = adata.obs.index
+        adata.obsm["proteomics_" + protein_information] = prot_exp
 
         return adata
 
     def annotate_ccle_expression(
         self,
         adata: AnnData,
-        cell_line_identifier: str = "DepMap_ID",
+        query_id: str = "DepMap_ID",
         copy: bool = False,
     ) -> AnnData:
         """Fetch CCLE expression data.
@@ -494,7 +675,7 @@ class CellLineMetaData:
 
         Args:
             adata: The data object to annotate.
-            cell_line_identifier: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
+            query_id: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -505,14 +686,14 @@ class CellLineMetaData:
 
         # Make sure that the specified cell line type can be found in the CCLE expression data,
         # then we can compare these keys and fetch the corresponding metadata.
-        if cell_line_identifier not in adata.obs.columns:
+        if query_id not in adata.obs.columns:
             raise ValueError(
-                "The specified `cell_line_identifier` can't be found in the `adata.obs`. "
+                "The specified `query_id` can't be found in the `adata.obs`. "
                 "Please fetch the cell line meta data first using the function "
                 "`annotate_cell_lines()`."
             )
 
-        not_matched_identifiers = list(set(adata.obs[cell_line_identifier]) - set(self.ccle_expr.index))
+        not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.ccle_expr.index))
         if len(not_matched_identifiers) > 0:
             print(
                 "[bold yellow]Following identifiers can not be found in the CCLE expression data,"
@@ -521,8 +702,8 @@ class CellLineMetaData:
                 sep="\n- ",
             )
 
-        ccle_expression = self.ccle_expr.reindex(adata.obs[cell_line_identifier])
-        ccle_expression = ccle_expression.set_index(adata.obs.index)
+        ccle_expression = self.ccle_expr.reindex(adata.obs[query_id])
+        ccle_expression.index = adata.obs.index
         adata.obsm["CCLE_expression"] = ccle_expression
 
         return adata
