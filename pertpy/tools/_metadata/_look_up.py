@@ -1,12 +1,14 @@
 from __future__ import annotations
-from typing import Literal
+
 from pathlib import Path
-from scanpy import settings
+from typing import Literal
+
 import pandas as pd
+from scanpy import settings
+
 
 class LookUp:
-    def __init__(self,
-                 type: str = "cell_line"):
+    def __init__(self, type: str = "cell_line"):
         self.type = "cell_line"
         if type == "cell_line":
             cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
@@ -14,11 +16,13 @@ class LookUp:
                 raise ValueError("CellLineMetaData was not sucessfully initialized!")
             self.cell_line_meta = pd.read_csv(cell_line_file_path)
 
-            cell_line_cancer_project_file_path = settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
+            cell_line_cancer_project_file_path = (
+                settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
+            )
             if not Path(cell_line_cancer_project_file_path).exists():
                 raise ValueError("CellLineMetaData was not sucessfully initialized!")
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_file_path)
-            
+
             driver_gene_intOGen_file_path = (
                 settings.cachedir.__str__() + "/2020-02-02_IntOGen-Drivers-20200213/Compendium_Cancer_Genes.tsv"
             )
@@ -28,12 +32,12 @@ class LookUp:
             self.driver_gene_intOGen.rename(columns=lambda x: x.lower(), inplace=True)
 
             self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
-        
+
             bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_sanger_20210316_trimm.csv"
             if not Path(bulk_rna_sanger_file_path).exists():
                 raise ValueError("CellLineMetaData was not sucessfully initialized!")
             self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0)
-        
+
             bulk_rna_broad_file_path = settings.cachedir.__str__() + "/rnaseq_broad_20210317_trimm.csv"
             if not Path(bulk_rna_broad_file_path).exists():
                 raise ValueError("CellLineMetaData was not sucessfully initialized!")
@@ -43,17 +47,17 @@ class LookUp:
             if not Path(proteomics_file_path).exists():
                 raise ValueError("CellLineMetaData was not sucessfully initialized!")
             self.proteomics_data = pd.read_csv(proteomics_file_path, index_col=0)
-        
+
             ccle_expr_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
             if not Path(ccle_expr_file_path).exists():
                 raise ValueError("CellLineMetaData was not sucessfully initialized!")
             self.ccle_expr = pd.read_csv(ccle_expr_file_path, index_col=0)
-              
+
     def cell_lines(
         self,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         reference_id: str = "DepMap_ID",
-        query_id_list: list[str]| None = None,
+        query_id_list: list[str] | None = None,
     ) -> None:
         """A brief summary of cell line metadata.
 
@@ -68,7 +72,7 @@ class LookUp:
         # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
-        
+
         if cell_line_source == "DepMap":
             print("To summarize: in the DepMap cell line annotation you can find: ")
             print(f"{len(self.cell_line_meta.index)} cell lines")
@@ -146,7 +150,7 @@ class LookUp:
         # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
-        
+
         if cell_line_source == "broad":
             print("To summarize: in the RNA-Seq Data for broad cell line only, you can find: ")
             print(f"{len(self.bulk_rna_broad.model_name.unique())} cell lines")
@@ -213,7 +217,7 @@ class LookUp:
         # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
-        
+
         print("To summarize: in the proteomics data you can find: ")
         print(f"{len(self.proteomics_data.model_name.unique())} cell lines")
         print(f"{len(self.proteomics_data.uniprot_id.unique())} proteins")
@@ -257,7 +261,7 @@ class LookUp:
         # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
-        
+
         print("To summarize: in the CCLE expression data you can find: ")
         print(f"{len(self.ccle_expr.index.unique())} cell lines")
         print(f"{len(self.ccle_expr.columns.unique())} genes")
@@ -278,7 +282,7 @@ class LookUp:
         # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
-        
+
         if driver_gene_set == "intOGen":
             print("To summarize: in the DepMap_Sanger driver gene annotation for intOGen genes, you can find: ")
             print(f"{len(self.driver_gene_intOGen.index)} driver genes")
@@ -295,4 +299,3 @@ class LookUp:
                 *list(self.driver_gene_cosmic.columns.values),
                 sep="\n- ",
             )
-

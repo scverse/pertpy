@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Literal
+
 import pandas as pd
 from anndata import AnnData
 from rich import print
 from scanpy import settings
-from ._look_up import LookUp
+
 from pertpy.data._dataloader import _download
-import os
+
+from ._look_up import LookUp
+
 
 class CellLineMetaData:
     """Utilities to fetch cell line metadata."""
@@ -28,7 +32,9 @@ class CellLineMetaData:
 
         # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
         cell_line_cancer_project_file_path = settings.cachedir.__str__() + "/cell_line_cancer_project.csv"
-        cell_line_cancer_project_transformed_path = settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
+        cell_line_cancer_project_transformed_path = (
+            settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
+        )
         if not Path(cell_line_cancer_project_transformed_path).exists():
             if not Path(cell_line_cancer_project_file_path).exists():
                 print(
@@ -51,7 +57,9 @@ class CellLineMetaData:
 
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_file_path)
             self.cl_cancer_project_meta.columns = self.cl_cancer_project_meta.columns.str.strip()
-            self.cl_cancer_project_meta["stripped_cell_line_name"] = self.cl_cancer_project_meta["Cell line Name"].str.replace(r"\-|\.", "", regex=True)
+            self.cl_cancer_project_meta["stripped_cell_line_name"] = self.cl_cancer_project_meta[
+                "Cell line Name"
+            ].str.replace(r"\-|\.", "", regex=True)
             self.cl_cancer_project_meta["stripped_cell_line_name"] = pd.Categorical(
                 self.cl_cancer_project_meta["stripped_cell_line_name"].str.upper()
             )
@@ -62,13 +70,14 @@ class CellLineMetaData:
             )
             self.cl_cancer_project_meta.columns.name = None
             self.cl_cancer_project_meta = self.cl_cancer_project_meta.reset_index()
-            self.cl_cancer_project_meta = self.cl_cancer_project_meta.rename(columns={"Cell line Name": "cell_line_name"})
+            self.cl_cancer_project_meta = self.cl_cancer_project_meta.rename(
+                columns={"Cell line Name": "cell_line_name"}
+            )
             self.cl_cancer_project_meta.to_csv(cell_line_cancer_project_transformed_path)
             os.remove(cell_line_cancer_project_file_path)
 
         else:
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_transformed_path, index_col=0)
-            
 
         # Download metadata for driver genes of the intOGen analysis from DepMap_Sanger
         driver_gene_intOGen_file_path = (
@@ -88,7 +97,7 @@ class CellLineMetaData:
             os.remove(settings.cachedir.__str__() + "/IntOGen-Drivers.zip")
         self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
         self.driver_gene_intOGen.rename(columns=lambda x: x.lower(), inplace=True)
-            
+
         # Download metadata for driver genes of the COSMIC Tier 1 gene
         self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
 
@@ -112,7 +121,8 @@ class CellLineMetaData:
             self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path)
             self.bulk_rna_sanger.drop(["data_source", "gene_symbol"], axis=1, inplace=True)
             self.bulk_rna_sanger[["model_id", "model_name", "gene_id"]] = self.bulk_rna_sanger[
-                ["model_id", "model_name", "gene_id"]].astype("category")
+                ["model_id", "model_name", "gene_id"]
+            ].astype("category")
             self.bulk_rna_sanger.to_csv(bulk_rna_sanger_trimm_path)
             os.remove(bulk_rna_sanger_file_path)
         else:
@@ -141,7 +151,8 @@ class CellLineMetaData:
             # but 37262 unique gene symbols (SEPTIN4)
             self.bulk_rna_broad.drop(["data_source", "gene_symbol"], axis=1, inplace=True)
             self.bulk_rna_broad[["model_id", "model_name", "gene_id"]] = self.bulk_rna_broad[
-                ["model_id", "model_name", "gene_id"]].astype("category")
+                ["model_id", "model_name", "gene_id"]
+            ].astype("category")
             self.bulk_rna_broad.to_csv(bulk_rna_broad_trimm_path)
             os.remove(bulk_rna_broad_file_path)
         else:
@@ -501,8 +512,6 @@ class CellLineMetaData:
         adata.obsm["CCLE_expression"] = ccle_expression
 
         return adata
-    
-    def lookup(self):
-       return LookUp(type = "cell_line") 
 
-    
+    def lookup(self):
+        return LookUp(type="cell_line")
