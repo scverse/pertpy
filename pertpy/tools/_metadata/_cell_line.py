@@ -377,12 +377,12 @@ class CellLineMetaData:
             )
 
         if len(not_matched_identifiers) > 0:
+            print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
             print(
                 f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can't be found in bulk RNA expression data. "
             )
             print(
-                "Resulting in NA values for their corresponding metadata. ",
-                "Please check again: ",
+                "Resulting in NA values for their corresponding metadata. Please check again: ",
                 *not_matched_identifiers,
                 sep="\n- ",
             )
@@ -453,8 +453,7 @@ class CellLineMetaData:
                 f"[bold yellow]But following {len(not_matched_identifiers)} identifiers can't be found in the protein expression data. "
             )
             print(
-                "Resulting in NA values for their corresponding metadata. ",
-                "Please check again: ",
+                "Resulting in NA values for their corresponding metadata. Please check again: ",
                 *not_matched_identifiers,
                 sep="\n- ",
             )
@@ -513,5 +512,15 @@ class CellLineMetaData:
 
         return adata
 
-    def lookup(self):
+    def lookup(self) -> LookUp:
+        """Generate LookUp object for CellLineMetaData.
+
+        The LookUp object provides an overview of the metadata to annotate.
+        Each annotate_{metadata} function has a corresponding lookup function in the LookUp object,
+        where users can search the reference_id in the metadata and
+        compare with the query_id in their own data.
+
+        Returns:
+            Returns a LookUp object specific for cell line annotation.
+        """
         return LookUp(type="cell_line")

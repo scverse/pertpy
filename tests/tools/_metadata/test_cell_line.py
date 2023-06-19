@@ -21,8 +21,8 @@ class TestMetaData:
         cell_line = {
             "DepMap_ID": ["ACH-000016"] * NUM_CELLS_PER_ID
             + ["ACH-000049"] * NUM_CELLS_PER_ID
-            + ["ACH-000130"] * NUM_CELLS_PER_ID
-            + ["ACH-000216"] * NUM_CELLS_PER_ID
+            + ["ACH-001208"] * NUM_CELLS_PER_ID
+            + ["ACH-000956"] * NUM_CELLS_PER_ID
         }
         cell_line = pd.DataFrame(cell_line)
         obs = pd.concat([cell_line], axis=1)
@@ -49,8 +49,8 @@ class TestMetaData:
         stripped_cell_line_name = (
             ["SLR21"] * NUM_CELLS_PER_ID
             + ["HEKTE"] * NUM_CELLS_PER_ID
-            + ["NALM19"] * NUM_CELLS_PER_ID
-            + ["JHESOAD1"] * NUM_CELLS_PER_ID
+            + ["TK10"] * NUM_CELLS_PER_ID
+            + ["22RV1"] * NUM_CELLS_PER_ID
         )
 
         assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
@@ -58,7 +58,6 @@ class TestMetaData:
     def test_ccle_expression_annotation(self):
         adata = self.make_test_adata()
         pt_metadata = pt.tl.CellLineMetaData()
-        pt_metadata.annotate_cell_lines(adata)
         pt_metadata.annotate_ccle_expression(adata)
 
         assert len(adata.obsm) == 1
@@ -68,7 +67,7 @@ class TestMetaData:
         adata = self.make_test_adata()
         pt_metadata = pt.tl.CellLineMetaData()
         pt_metadata.annotate_cell_lines(adata)
-        pt_metadata.annotate_protein_expression(adata)
+        pt_metadata.annotate_protein_expression(adata, query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 1
         assert adata.obsm["proteomics_protein_intensity"].shape == (
@@ -80,7 +79,7 @@ class TestMetaData:
         adata = self.make_test_adata()
         pt_metadata = pt.tl.CellLineMetaData()
         pt_metadata.annotate_cell_lines(adata)
-        pt_metadata.annotate_bulk_rna_expression(adata)
+        pt_metadata.annotate_bulk_rna_expression(adata, query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 1
         assert adata.obsm["bulk_rna_expression_broad"].shape == (
@@ -88,7 +87,7 @@ class TestMetaData:
             len(pt_metadata.bulk_rna_broad.gene_id.unique()),
         )
 
-        pt_metadata.annotate_bulk_rna_expression(adata, cell_line_source="sanger")
+        pt_metadata.annotate_bulk_rna_expression(adata, cell_line_source="sanger", query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 2
         assert adata.obsm["bulk_rna_expression_sanger"].shape == (
