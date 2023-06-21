@@ -74,7 +74,6 @@ class CellLineMetaData:
                 columns={"Cell line Name": "cell_line_name"}
             )
             self.cl_cancer_project_meta.to_csv(cell_line_cancer_project_transformed_path)
-            os.remove(cell_line_cancer_project_file_path)
 
         else:
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_transformed_path, index_col=0)
@@ -94,9 +93,8 @@ class CellLineMetaData:
                 output_path=settings.cachedir,
                 is_zip=True,
             )
-            os.remove(settings.cachedir.__str__() + "/IntOGen-Drivers.zip")
         self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
-        self.driver_gene_intOGen.rename(columns=lambda x: x.lower(), inplace=True)
+        self.driver_gene_intOGen.rename(columns=lambda col: col.lower(), inplace=True)
 
         # Download metadata for driver genes of the COSMIC Tier 1 gene
         self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
@@ -109,7 +107,7 @@ class CellLineMetaData:
             if not Path(bulk_rna_sanger_file_path).exists():
                 print(
                     "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
-                    " Starting download now."
+                    " Starting download now..."
                 )
                 _download(
                     url="https://cog.sanger.ac.uk/cmp/download/rnaseq_sanger_20210316.zip",
@@ -117,14 +115,12 @@ class CellLineMetaData:
                     output_path=settings.cachedir,
                     is_zip=True,
                 )
-                os.remove(settings.cachedir.__str__() + "/rnaseq_sanger.zip")
             self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path)
             self.bulk_rna_sanger.drop(["data_source", "gene_symbol"], axis=1, inplace=True)
             self.bulk_rna_sanger[["model_id", "model_name", "gene_id"]] = self.bulk_rna_sanger[
                 ["model_id", "model_name", "gene_id"]
             ].astype("category")
             self.bulk_rna_sanger.to_csv(bulk_rna_sanger_trimm_path)
-            os.remove(bulk_rna_sanger_file_path)
         else:
             self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_trimm_path, index_col=0)
 
@@ -143,7 +139,6 @@ class CellLineMetaData:
                     output_path=settings.cachedir,
                     is_zip=True,
                 )
-                os.remove(settings.cachedir.__str__() + "/rnaseq_broad.zip")
             self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path)
 
             # gene symbol can not be the column name of fetched bulk rna expression data
@@ -154,7 +149,6 @@ class CellLineMetaData:
                 ["model_id", "model_name", "gene_id"]
             ].astype("category")
             self.bulk_rna_broad.to_csv(bulk_rna_broad_trimm_path)
-            os.remove(bulk_rna_broad_file_path)
         else:
             self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_trimm_path, index_col=0)
 
@@ -173,13 +167,11 @@ class CellLineMetaData:
                     output_path=settings.cachedir,
                     is_zip=True,
                 )
-                os.remove(settings.cachedir.__str__() + "/Proteomics_20221214.zip")
             self.proteomics_data = pd.read_csv(proteomics_file_path)
             self.proteomics_data[["uniprot_id", "model_id", "model_name", "symbol"]] = self.proteomics_data[
                 ["uniprot_id", "model_id", "model_name", "symbol"]
             ].astype("category")
             self.proteomics_data.to_csv(proteomics_trimm_path)
-            os.remove(proteomics_file_path)
         else:
             self.proteomics_data = pd.read_csv(proteomics_trimm_path, index_col=0)
 
@@ -227,13 +219,13 @@ class CellLineMetaData:
         if cell_line_source == "DepMap":
             cell_line_meta = self.cell_line_meta
         else:
-            if query_id == "DepMap_ID":
-                print(
-                    "To annotate cell line metadata from Cancerrxgene, ",
-                    "we use `stripped_cell_line_name` as reference indentifier. ",
-                    "Please make sure to use the matched cell_line_information. ",
-                    sep="\n- ",
-                )
+            query_id = "stripped_cell_line_name"
+            print(
+                "To annotate cell line metadata from Cancerrxgene, ",
+                "we use `stripped_cell_line_name` as reference indentifier. ",
+                "Please make sure to use the matched cell_line_information. ",
+                sep="\n- ",
+            )
             cell_line_meta = self.cl_cancer_project_meta
 
         if query_id not in adata.obs.columns:

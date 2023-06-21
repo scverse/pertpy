@@ -29,7 +29,7 @@ class LookUp:
             if not Path(driver_gene_intOGen_file_path).exists():
                 raise ValueError("CellLineMetaData was not sucessfully initialized!")
             self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
-            self.driver_gene_intOGen.rename(columns=lambda x: x.lower(), inplace=True)
+            self.driver_gene_intOGen.rename(columns=lambda col: col.lower(), inplace=True)
 
             self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
 
@@ -69,9 +69,9 @@ class LookUp:
             query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
                 metadata. Defaults to None.
         """
-        # only availble for CellLineMetaData.lookup
+        # only available for CellLineMetaData.lookup
         if self.type != "cell_line":
-            raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
+            raise ValueError("This is not a LookUp object specifically for CellLineMetaData!")
 
         if cell_line_source == "DepMap":
             print("To summarize: in the DepMap cell line annotation you can find: ")
