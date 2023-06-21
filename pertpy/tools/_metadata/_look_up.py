@@ -2,56 +2,24 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Literal
+from urllib.request import urlopen
 
 import pandas as pd
 from scanpy import settings
 
 
 class LookUp:
-    def __init__(self, type: str = "cell_line"):
-        self.type = "cell_line"
+    def __init__(self, type: str = "cell_line", transfer_metadata: list[pd.DataFrame] | None = None):
         if type == "cell_line":
-            cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
-            if not Path(cell_line_file_path).exists():
-                raise ValueError("CellLineMetaData was not sucessfully initialized!")
-            self.cell_line_meta = pd.read_csv(cell_line_file_path)
-
-            cell_line_cancer_project_file_path = (
-                settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
-            )
-            if not Path(cell_line_cancer_project_file_path).exists():
-                raise ValueError("CellLineMetaData was not sucessfully initialized!")
-            self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_file_path)
-
-            driver_gene_intOGen_file_path = (
-                settings.cachedir.__str__() + "/2020-02-02_IntOGen-Drivers-20200213/Compendium_Cancer_Genes.tsv"
-            )
-            if not Path(driver_gene_intOGen_file_path).exists():
-                raise ValueError("CellLineMetaData was not sucessfully initialized!")
-            self.driver_gene_intOGen = pd.read_table(driver_gene_intOGen_file_path)
-            self.driver_gene_intOGen.rename(columns=lambda col: col.lower(), inplace=True)
-
-            self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
-
-            bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_sanger_20210316_trimm.csv"
-            if not Path(bulk_rna_sanger_file_path).exists():
-                raise ValueError("CellLineMetaData was not sucessfully initialized!")
-            self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0)
-
-            bulk_rna_broad_file_path = settings.cachedir.__str__() + "/rnaseq_broad_20210317_trimm.csv"
-            if not Path(bulk_rna_broad_file_path).exists():
-                raise ValueError("CellLineMetaData was not sucessfully initialized!")
-            self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
-
-            proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214_trimm.csv"
-            if not Path(proteomics_file_path).exists():
-                raise ValueError("CellLineMetaData was not sucessfully initialized!")
-            self.proteomics_data = pd.read_csv(proteomics_file_path, index_col=0)
-
-            ccle_expr_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
-            if not Path(ccle_expr_file_path).exists():
-                raise ValueError("CellLineMetaData was not sucessfully initialized!")
-            self.ccle_expr = pd.read_csv(ccle_expr_file_path, index_col=0)
+            self.type = type
+            self.cell_line_meta = transfer_metadata[0]
+            self.cl_cancer_project_meta = transfer_metadata[1]
+            self.driver_gene_intogen = transfer_metadata[2]
+            self.driver_gene_cosmic = transfer_metadata[3]
+            self.bulk_rna_sanger = transfer_metadata[4]
+            self.bulk_rna_broad = transfer_metadata[5]
+            self.proteomics_data = transfer_metadata[6]
+            self.ccle_expr = transfer_metadata[7]
 
     def cell_lines(
         self,
@@ -87,6 +55,14 @@ class LookUp:
                 .head()
                 .to_string()
             )
+            print("Default parameters to annotate cell line metadata: ")
+            default_param = {
+                "cell_line_source": "DepMap",
+                "query_id": "DepMap_ID",
+                "reference_id": "DepMap_ID",
+                "cell_line_information": "None",
+            }
+            print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
         else:
             print(
                 "To summarize: in the cell line annotation from the project Genomics of Drug Sensitivity in Cancer",
@@ -105,14 +81,15 @@ class LookUp:
                 .to_string()
             )
 
-        print("Default parameters to annotate cell line metadata: ")
-        default_param = {
-            "query_id": "DepMap_ID",
-            "reference_id": "DepMap_ID",
-            "cell_line_information": "None",
-            "cell_line_source": "DepMap",
-        }
-        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
+            print("Default is to annotate cell line meta data from DepMap database. ")
+            print("However, to annotate cell line meta data from the project Genomics of Drug Sensitivity in Cancer, ")
+            print("Default parameters are:")
+            default_param = {
+                "query_id": "stripped_cell_line_name",
+                "reference_id": "stripped_cell_line_name",
+                "cell_line_information": "None",
+            }
+            print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
 
         if query_id_list is not None:
             identifier_num_all = len(query_id_list)
@@ -123,6 +100,12 @@ class LookUp:
                     )
                 not_matched_identifiers = list(set(query_id_list) - set(self.cell_line_meta[reference_id]))
             else:
+                if reference_id == "DepMap_ID":
+                    print(
+                        "To annotate cell line metadata from Cancerrxgene, ",
+                        "we use `stripped_cell_line_name` as reference indentifier. ",
+                    )
+                    reference_id = "stripped_cell_line_name"
                 if reference_id not in self.cl_cancer_project_meta.columns:
                     raise ValueError(
                         f"The specified `reference_id` {reference_id} is not available in the cell line annotation from the project Genomics of Drug Sensitivity in Cancer. "
@@ -273,22 +256,22 @@ class LookUp:
             print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
-    def driver_genes(self, driver_gene_set: Literal["intOGen", "cosmic"] = "intOGen") -> None:
+    def driver_genes(self, driver_gene_set: Literal["intogen", "cosmic"] = "intogen") -> None:
         """A brief summary of genes in cancer driver annotation data.
 
         Args:
-            driver_gene_set: gene set for cancer driver annotation: intOGen or cosmic. Defaults to "intOGen".
+            driver_gene_set: gene set for cancer driver annotation: intogen or cosmic. Defaults to "intogen".
         """
         # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
 
-        if driver_gene_set == "intOGen":
-            print("To summarize: in the DepMap_Sanger driver gene annotation for intOGen genes, you can find: ")
-            print(f"{len(self.driver_gene_intOGen.index)} driver genes")
+        if driver_gene_set == "intogen":
+            print("To summarize: in the DepMap_Sanger driver gene annotation for intogen genes, you can find: ")
+            print(f"{len(self.driver_gene_intogen.index)} driver genes")
             print(
-                f"{len(self.driver_gene_intOGen.columns)} meta data including: ",
-                *list(self.driver_gene_intOGen.columns.values),
+                f"{len(self.driver_gene_intogen.columns)} meta data including: ",
+                *list(self.driver_gene_intogen.columns.values),
                 sep="\n- ",
             )
         else:
