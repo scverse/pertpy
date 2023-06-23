@@ -743,13 +743,7 @@ class CodaPlot:
         # Collapse tree singularities
         tree2 = collapse_singularities_2(tree)
 
-        node_effs = (
-            data.uns["scCODA_params"]["node_df"]
-            .loc[
-                (covariate + "_node",),
-            ]
-            .copy()
-        )
+        node_effs = data.uns["scCODA_params"]["node_df"].loc[(covariate + "_node",),].copy()
         node_effs.index = node_effs.index.get_level_values("Node")
 
         covariates = data.uns["scCODA_params"]["covariate_names"]
@@ -759,9 +753,7 @@ class CodaPlot:
             (covariates, data.var.index.tolist()),
             names=["Covariate", "Cell Type"],
         )
-        leaf_effs = eff_df.loc[
-            (covariate,),
-        ].copy()
+        leaf_effs = eff_df.loc[(covariate,),].copy()
         leaf_effs.index = leaf_effs.index.get_level_values("Cell Type")
 
         # Add effect values

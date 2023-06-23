@@ -87,7 +87,6 @@ class JaxSCGENVAE(JaxBaseModuleClass):
 
     # def generative(self, x, z, batch_index) -> dict:
     def generative(self, z) -> dict:
-
         px = self.decoder(z)
         return dict(px=px)
 
@@ -116,7 +115,10 @@ class JaxSCGENVAE(JaxBaseModuleClass):
         n_samples=1,
     ):
         inference_kwargs = dict(n_samples=n_samples)
-        inference_outputs, generative_outputs, = self.forward(
+        (
+            inference_outputs,
+            generative_outputs,
+        ) = self.forward(
             tensors,
             inference_kwargs=inference_kwargs,
             compute_loss=False,
