@@ -33,10 +33,9 @@ class CodaPlot:
         cmap: Optional[ListedColormap] = cm.tab20,
         show_legend: Optional[bool] = True,
     ) -> plt.Axes:
-        """Plots a stacked barplot for one (discrete) covariate
+        """Plots a stacked barplot for one (discrete) covariate.
 
         Typical use (only inside stacked_barplot): plot_one_stackbar(data.X, data.var.index, "xyz", data.obs.index)
-
 
         Args:
             y: The count data, collapsed onto the level of interest. i.e. a binary covariate has two rows, one for each group, containing the count mean of each cell type
@@ -99,7 +98,6 @@ class CodaPlot:
 
         Usage: plot_feature_stackbars(data, ["cov1", "cov2", "cov3"])
 
-
         Args:
             data: AnnData object or MuData object.
             feature_name: The name of the covariate to plot. If feature_name=="samples", one bar for every sample will be plotted
@@ -118,8 +116,7 @@ class CodaPlot:
         if isinstance(data, AnnData):
             data = data
 
-        # cell type names
-        type_names = data.var.index
+        ct_names = data.var.index
 
         # option to plot one stacked barplot per sample
         if feature_name == "samples":
@@ -154,7 +151,7 @@ class CodaPlot:
 
             ax = CodaPlot.__stackbar(
                 feature_totals,
-                type_names=type_names,
+                type_names=ct_names,
                 title=feature_name,
                 level_names=levels,
                 figsize=figsize,
@@ -196,7 +193,7 @@ class CodaPlot:
             dpi: Figure size. Defaults to 100.
             cmap: The seaborn color map for the barplot. Defaults to cm.tab20.
             level_order: Custom ordering of bars on the x-axis. Defaults to None.
-            args_barplot: Arguments passed to sns.barplot. Defaults to {}.
+            args_barplot: Arguments passed to sns.barplot. Defaults to None.
 
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
@@ -247,7 +244,7 @@ class CodaPlot:
                             "Cell Type": "zero",
                             "value": 0,
                         }
-                        plot_df = plot_df.append(new_row, ignore_index=True)
+                        plot_df = pd.concat([plot_df, pd.DataFrame([new_row])], ignore_index=True)
                     plot_df["covariate_"] = pd.Categorical(plot_df["Covariate"], covariate_names)
                     plot_df = plot_df.sort_values(["covariate_"])
         if not plot_zero_cell_type:
