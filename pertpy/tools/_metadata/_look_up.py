@@ -20,6 +20,8 @@ class LookUp:
             self.bulk_rna_broad = transfer_metadata[5]
             self.proteomics_data = transfer_metadata[6]
             self.ccle_expr = transfer_metadata[7]
+            self.drug_response_gdsc1 = transfer_metadata[8]
+            self.drug_response_gdsc2 = transfer_metadata[9]
 
     def cell_lines(
         self,
@@ -255,6 +257,70 @@ class LookUp:
             not_matched_identifiers = list(set(query_id_list) - set(self.ccle_expr.index))
             print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+
+    def drug_response(
+        self,
+        gdsc_dataset: Literal[1, 2] = 1,
+        reference_id: Literal["cell_line_name", "sanger_model_id", "cosmic_id"] = "cell_line_name",
+        query_id_list: list[str] | None = None,
+        reference_perturbation: Literal["drug_name", "drug_id"] = "drug_name",
+        query_perturbation_list: list[str] | None = None,
+    ) -> None:
+        """A brief summary of drug response data.
+
+        Args:
+            gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1.
+            reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id. Defaults to "cell_line_name".
+            query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the metadata. Defaults to None.
+            reference_perturbation: The perturbation information in the meta data, drug_name or drug_id. Defaults to "drug_name".
+            query_perturbation_list: A list of unique perturbation types to test the number of matched ones present in the metadata. Defaults to None.
+
+        """
+        # only availble for CellLineMetaData.lookup
+        if self.type != "cell_line":
+            raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
+        if gdsc_dataset == 1:
+            gdsc_data = self.drug_response_gdsc1
+        else:
+            gdsc_data = self.drug_response_gdsc2
+        print(f"To summarize: in the drug reponse GDSC{gdsc_dataset} data you can find: ")
+        print(f"{len(gdsc_data.cell_line_name.unique())} cell lines")
+        print(f"{len(gdsc_data.drug_id.unique())} different drugs ids")
+        print(f"{len(gdsc_data.drug_name.unique())} different drugs names")
+
+        print("Overview of possible cell line reference identifiers: ")
+        print(gdsc_data[["cell_line_name", "sanger_model_id", "cosmic_id"]].head().to_string())
+        print("Overview of possible perturbation reference identifiers: ")
+        print(gdsc_data[["drug_name", "drug_id"]].head().to_string())
+        print("Default parameters to annotate cell line metadata: ")
+        default_param = {
+            "gdsc_dataset": "1",
+            "query_id": "cell_line_name",
+            "reference_id": "cell_line_name",
+            "query_perturbation": "perturbation",
+            "reference_perturbation": "drug_name",
+        }
+        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
+
+        if query_id_list is not None:
+            if reference_id not in gdsc_data.columns:
+                raise ValueError(
+                    f"The specified `reference_id` {reference_id} is not available in the GDSC drug response data. "
+                )
+            identifier_num_all = len(query_id_list)
+            not_matched_identifiers = list(set(query_id_list) - set(gdsc_data[reference_id]))
+            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+
+        if query_perturbation_list is not None:
+            if reference_perturbation not in gdsc_data.columns:
+                raise ValueError(
+                    f"The specified `reference_perturbation` {reference_perturbation} is not available in the GDSC drug response data. "
+                )
+            identifier_num_all = len(query_perturbation_list)
+            not_matched_identifiers = list(set(query_perturbation_list) - set(gdsc_data[reference_perturbation]))
+            print(f"{len(not_matched_identifiers)} perturbation types are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} perturbation types are found! ")
 
     def driver_genes(self, driver_gene_set: Literal["intogen", "cosmic"] = "intogen") -> None:
         """A brief summary of genes in cancer driver annotation data.

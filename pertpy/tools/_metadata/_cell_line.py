@@ -187,6 +187,39 @@ class CellLineMetaData:
             )
         self.ccle_expr = pd.read_csv(ccle_expr_file_path, index_col=0)
 
+        # Download GDSC drug response data
+        drug_response_gdsc1_file_path = settings.cachedir.__str__() + "/ic50_gdsc1.xlsx"
+        if not Path(drug_response_gdsc1_file_path).exists():
+            print(
+                "[bold yellow]No metadata file was found for drug response data of GDSC1 dataset."
+                " Starting download now."
+            )
+            _download(
+                url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx",
+                output_file_name="ic50_gdsc1.xlsx",
+                output_path=settings.cachedir,
+                is_zip=False,
+            )
+        self.drug_response_gdsc1 = pd.read_excel(drug_response_gdsc1_file_path)
+        self.drug_response_gdsc1.rename(columns=lambda col: col.lower(), inplace=True)
+        self.drug_response_gdsc1 = self.drug_response_gdsc1.rename(columns={"ln_ic50": "IC50"})
+
+        drug_response_gdsc2_file_path = settings.cachedir.__str__() + "/ic50_gdsc2.xlsx"
+        if not Path(drug_response_gdsc2_file_path).exists():
+            print(
+                "[bold yellow]No metadata file was found for drug response data of GDSC2 dataset."
+                " Starting download now."
+            )
+            _download(
+                url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC2_fitted_dose_response_24Jul22.xlsx",
+                output_file_name="ic50_gdsc2.xlsx",
+                output_path=settings.cachedir,
+                is_zip=False,
+            )
+        self.drug_response_gdsc2 = pd.read_excel(drug_response_gdsc2_file_path)
+        self.drug_response_gdsc2.rename(columns=lambda col: col.lower(), inplace=True)
+        self.drug_response_gdsc2 = self.drug_response_gdsc2.rename(columns={"ln_ic50": "IC50"})
+
     def annotate_cell_lines(
         self,
         adata: AnnData,
@@ -503,14 +536,14 @@ class CellLineMetaData:
                 f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
                 "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. \n"
                 "If the desired query ID is not available, you can fetch the cell line metadata \n"
-                "using the `annotate_cell_lines()` function before calling annotate_ccle_expression(). \n"
+                "using the `annotate_cell_lines()` function before calling `annotate_ccle_expression()`. \n"
                 "This will help ensure that the required query ID is included in your data."
             )
 
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.ccle_expr.index))
         if len(not_matched_identifiers) > 0:
             print(
-                "[bold yellow]Following identifiers can not be found in the CCLE expression data,"
+                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can not be found in the CCLE expression data,"
                 " their corresponding meta data are NA values. Please check it again:",
                 *not_matched_identifiers,
                 sep="\n- ",
@@ -519,18 +552,88 @@ class CellLineMetaData:
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
                 f"You are attempting to match the query id {query_id} in the adata.obs to the DepMap_id in the metadata. \n"
-                "However, none of the query IDs could be found in the proteomics data. \n"
+                "However, none of the query IDs could be found in the CCLE expression data. \n"
                 "It is recommended to stop the annotation process. \n"
                 "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
                 "By using the `LookUp.ccle_expression()` method, \n"
                 "you can obtain the count of matched identifiers in the adata for different query IDs. \n"
-                "Additionally, you can call the CellLineMetaData.annotate_cell_lines function to \n"
+                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to \n"
                 "acquire DepMap_ID information that can be used for annotation purposes."
             )
 
         ccle_expression = self.ccle_expr.reindex(adata.obs[query_id])
         ccle_expression.index = adata.obs.index
         adata.obsm["CCLE_expression"] = ccle_expression
+
+        return adata
+
+    def annotate_from_gdsc(
+        self,
+        adata: AnnData,
+        query_id: str = "cell_line_name",
+        reference_id: Literal["cell_line_name", "sanger_model_id", "cosmic_id"] = "cell_line_name",
+        query_perturbation: str = "perturbation",
+        reference_perturbation: Literal["drug_name", "drug_id"] = "drug_name",
+        gdsc_dataset: Literal[1, 2] = 1,
+        copy: bool = False,
+    ) -> AnnData:
+        """Fetch drug response data.
+
+        For each cell, we fetch drug response data as natural log of the fitted IC50 for its corresponding cell line and perturbation from GDSC fitted data results file.
+
+        Args:
+            adata: The data object to annotate.
+            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
+            reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id. Defaults to "cell_line_name".
+            query_perturbation: The column of `.obs` with perturbation information. Defaults to "perturbation".
+            reference_perturbation: The type of perturbation in the meta data, drug_name or drug_id. Defaults to "drug_name".
+            gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1.
+            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+
+        Returns:
+            Returns an AnnData object with drug reponse annotation.
+        """
+        if copy:
+            adata = adata.copy()
+        if query_id not in adata.obs.columns:
+            raise ValueError(
+                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
+                "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. \n"
+                "If the desired query ID is not available, you can fetch the cell line metadata \n"
+                "using the `annotate_cell_lines()` function before calling `annotate_from_gdsc()`. \n"
+                "This will help ensure that the required query ID is included in your data."
+            )
+        if gdsc_dataset == 1:
+            gdsc_data = self.drug_response_gdsc1
+        else:
+            gdsc_data = self.drug_response_gdsc2
+        not_matched_identifiers = list(set(adata.obs[query_id]) - set(gdsc_data[reference_id]))
+        if len(not_matched_identifiers) > 0:
+            print(
+                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can not be found in the drug response data for GDSC{gdsc_dataset},"
+                " their corresponding meta data are NA values. Please check it again:",
+                *not_matched_identifiers,
+                sep="\n- ",
+            )
+        identifier_num_all = len(adata.obs[query_id].unique())
+        if len(not_matched_identifiers) == identifier_num_all:
+            raise ValueError(
+                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
+                "However, none of the query IDs could be found in the drug response data. \n"
+                "It is recommended to stop the annotation process. \n"
+                "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
+                "By using the `LookUp.drug_response_gdsc()` method, \n"
+                "you can obtain the count of matched identifiers in the adata for different query IDs. \n"
+                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to \n"
+                "acquire more cell line information that can be used for annotation purposes."
+            )
+        ic50_gdsc = gdsc_data.drop_duplicates(subset=[reference_id, reference_perturbation])
+        adata.obs = adata.obs.merge(
+            ic50_gdsc[[reference_id, reference_perturbation, "IC50"]],
+            how="left",
+            left_on=[query_id, query_perturbation],
+            right_on=[reference_id, reference_perturbation],
+        ).set_index(adata.obs.index)
 
         return adata
 
@@ -556,5 +659,7 @@ class CellLineMetaData:
                 self.bulk_rna_broad,
                 self.proteomics_data,
                 self.ccle_expr,
+                self.drug_response_gdsc1,
+                self.drug_response_gdsc2,
             ],
         )
