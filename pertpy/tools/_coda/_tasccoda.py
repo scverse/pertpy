@@ -305,7 +305,7 @@ class Tasccoda(CompositionalModel2):
         else:
             return adata
 
-    def set_init_mcmc_states(
+    def set_init_mcmc_states(  # type: ignore
         self,
         rng_key: None,
         ref_index: np.ndarray,
