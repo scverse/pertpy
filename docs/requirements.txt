@@ -13,3 +13,4 @@ furo
 myst-parser
 ete3
 pyqt5
+sphinx-remove-toctrees
