@@ -473,13 +473,9 @@ class CompositionalModel2(ABC):
             def insert_row(idx, df, df_insert):
                 return pd.concat(
                     [
-                        df.iloc[
-                            :idx,
-                        ],
+                        df.iloc[:idx,],
                         df_insert,
-                        df.iloc[
-                            idx:,
-                        ],
+                        df.iloc[idx:,],
                     ]
                 ).reset_index(drop=True)
 
@@ -1364,8 +1360,7 @@ def from_scanpy(
     covariate_obs: list[str] | None = None,
     covariate_df: pd.DataFrame | None = None,
 ) -> AnnData:
-    """
-    Creates a compositional analysis dataset from a single anndata object, as it is produced by e.g. scanpy.
+    """Creates a compositional analysis dataset from a single AnnData object, as it is produced by e.g. scanpy.
 
     The anndata object needs to have a column in adata.obs that contains the cell type assignment.
     Further, it must contain one column or a set of columns (e.g. subject id, treatment, disease status) that uniquely identify each (statistical) sample.
@@ -1383,9 +1378,7 @@ def from_scanpy(
 
     Returns:
         AnnData: A data set with cells aggregated to the (sample x cell type) level
-
     """
-
     if type(sample_identifier) == str:
         sample_identifier = [sample_identifier]
 

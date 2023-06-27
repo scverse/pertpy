@@ -6,7 +6,6 @@ import pertpy as pt
 
 
 def test_scgen():
-
     adata = scvi.data.synthetic_iid()
     pt.tl.SCGEN.setup_anndata(
         adata,

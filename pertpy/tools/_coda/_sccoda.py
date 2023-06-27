@@ -54,7 +54,7 @@ class Sccoda(CompositionalModel2):
         self,
         adata: AnnData,
         type: Literal["cell_level", "sample_level"],
-        generate_sample_level: bool = False,
+        generate_sample_level: bool = True,
         cell_type_identifier: str = None,
         sample_identifier: str = None,
         covariate_uns: str | None = None,
@@ -72,6 +72,7 @@ class Sccoda(CompositionalModel2):
         Args:
             adata: AnnData object.
             type : Specify the input adata type, which could be either a cell-level AnnData or an aggregated sample-level AnnData.
+            generate_sample_level: Whether to generate an AnnData object on the sample level or create an empty AnnData object.
             cell_type_identifier: If type is "cell_level", specify column name in adata.obs that specifies the cell types. Defaults to None.
             sample_identifier: If type is "cell_level", specify column name in adata.obs that specifies the sample. Defaults to None.
             covariate_uns: If type is "cell_level", specify key for adata.uns, where covariate values are stored. Defaults to None.
@@ -99,7 +100,6 @@ class Sccoda(CompositionalModel2):
                     covariate_obs=["condition"],
                 )
         """
-
         if type == "cell_level":
             if generate_sample_level:
                 adata_coda = from_scanpy(

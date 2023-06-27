@@ -6,7 +6,7 @@ from anndata import AnnData
 import pertpy as pt
 
 
-def test_simple_differential_response():
+def test_differential_response():
     X = np.random.rand(10, 5)
     obs = pd.DataFrame(
         {
@@ -28,8 +28,8 @@ def test_simple_differential_response():
 
     # Compute the differential response
     adata = adata[:, :3]
-    ps = pt.tl.PerturbationSpace()
-    adata = ps.simple_differential_response(adata, copy=True)
+    ps = pt.tl.PerturbationSpace(method="differential")
+    adata = ps(adata, copy=True)
 
     # Test that the differential response was computed correctly
     expected_diff_matrix = adata.X - np.mean(adata.X[1:, :], axis=0)
@@ -37,7 +37,7 @@ def test_simple_differential_response():
 
     # Check that the function raises an error if the reference key is not found
     with pytest.raises(ValueError):
-        ps.simple_differential_response(
+        ps(
             adata,
             target_col="perturbations",
             reference_key="not_found",

@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
-from pynndescent import NNDescent
 from rich import print
 from scanpy.tools._utils import _choose_representation
 from scipy import sparse
@@ -86,6 +85,8 @@ class Mixscape:
 
             R_split = R[split_mask]
             R_control = R[control_mask_split]
+
+            from pynndescent import NNDescent  # saves a lot of import time
 
             eps = kwargs.pop("epsilon", 0.1)
             nn_index = NNDescent(R_control, **kwargs)

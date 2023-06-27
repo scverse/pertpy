@@ -1,7 +1,7 @@
 # Contributor Guide
 
 Thank you for your interest in improving this project.
-This project is open-source under the [Apache2.0 license] and
+This project is open-source under the MIT license and
 highly welcomes contributions in the form of bug reports, feature requests, and pull requests.
 
 Here is a list of important resources for contributors:
@@ -120,7 +120,6 @@ $ nox --session=pre-commit -- install
 It is recommended to open an issue before starting work on anything.
 This will allow a chance to talk it over with the owners and validate your approach.
 
-[apache2.0 license]: https://opensource.org/licenses/Apache2.0
 [code of conduct]: https://github.com/theislab/pertpy/CODE_OF_CONDUCT.md
 [documentation]: https://pertpy.readthedocs.io/
 [issue tracker]: https://github.com/theislab/pertpy/issues

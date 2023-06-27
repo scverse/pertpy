@@ -59,7 +59,7 @@ class Distance:
         self,
         metric: str = "edistance",
         obsm_key: str = "X_pca",
-    ) -> None:
+    ):
         """Initialize Distance class.
 
         Args:
@@ -233,7 +233,6 @@ class AbstractDistance(ABC):
         raise NotImplementedError("Metric class is abstract.")
 
 
-# Specific distance metrics
 class Edistance(AbstractDistance):
     """Edistance metric."""
 
