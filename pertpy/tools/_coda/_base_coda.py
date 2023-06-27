@@ -61,6 +61,8 @@ class CompositionalModel2(ABC):
 
     - `model`: The model formulation
 
+    - `set_init_mcmc_states`: A function to set the initial state of the MCMC algorithm
+
     - `make_arviz`: A function to generate an arviz result object
     """
 
@@ -287,11 +289,13 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
-        sample_adata = self.set_init_mcmc_states(rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata)
+        sample_adata = self.set_init_mcmc_states(
+            rng_key,
+            sample_adata.uns["scCODA_params"]["reference_index"],
+            sample_adata
+        )
         init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
-        nuts_kernel = NUTS(self.model,
-                           init_strategy=initialization.init_to_value(values=init_params),
-                           *args, **kwargs)
+        nuts_kernel = NUTS(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
         sample_adata.uns["scCODA_params"]["mcmc"]["num_warmup"] = num_warmup
@@ -341,9 +345,13 @@ class CompositionalModel2(ABC):
             rng_key = random.PRNGKey(rng_key)
 
         # Set up HMC kernel
-        sample_adata = self.set_init_mcmc_states(rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata)
+        sample_adata = self.set_init_mcmc_states(
+            rng_key,
+            sample_adata.uns["scCODA_params"]["reference_index"],
+            sample_adata
+        )
         init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
-        hmc_kernel = HMC(self.model, init_strategy=initialization.init_to_value(values=init_params), *args, **kwargs)
+        hmc_kernel = HMC(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
 
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
