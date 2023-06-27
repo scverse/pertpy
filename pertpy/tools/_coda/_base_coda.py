@@ -16,7 +16,7 @@ from jax._src.prng import PRNGKeyArray
 from jax._src.typing import Array
 from jax.config import config
 from mudata import MuData
-from numpyro.infer import HMC, MCMC, NUTS
+from numpyro.infer import HMC, MCMC, NUTS, initialization
 from rich import box, print
 from rich.console import Console
 from rich.table import Table
@@ -74,6 +74,10 @@ class CompositionalModel2(ABC):
 
     @abstractmethod
     def model(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def set_init_mcmc_states(self, *args, **kwargs):
         pass
 
     def prepare(
@@ -213,7 +217,6 @@ class CompositionalModel2(ABC):
             numpyro_n_total,
             jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
             sample_adata,
-            init_params=sample_adata.uns["scCODA_params"]["mcmc"]["init_params"],
             extra_fields=extra_fields,
         )
 
@@ -284,7 +287,11 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
-        nuts_kernel = NUTS(self.model, *args, **kwargs)
+        sample_adata = self.set_init_mcmc_states(rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata)
+        init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
+        nuts_kernel = NUTS(self.model,
+                           init_strategy=initialization.init_to_value(values=init_params),
+                           *args, **kwargs)
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
         sample_adata.uns["scCODA_params"]["mcmc"]["num_warmup"] = num_warmup
@@ -334,7 +341,9 @@ class CompositionalModel2(ABC):
             rng_key = random.PRNGKey(rng_key)
 
         # Set up HMC kernel
-        hmc_kernel = HMC(self.model, *args, **kwargs)
+        sample_adata = self.set_init_mcmc_states(rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata)
+        init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
+        hmc_kernel = HMC(self.model, init_strategy=initialization.init_to_value(values=init_params), *args, **kwargs)
 
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
