@@ -193,6 +193,41 @@ class Sccoda(CompositionalModel2):
         else:
             return adata
 
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData):  # type: ignore
+        """
+        Sets initial MCMC state values for scCODA model
+
+        Args:
+            rng_key: RNG value to be set
+            ref_index: Index of reference feature
+            sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
+
+        Returns:
+            Return AnnData
+        """
+
+        # data dimensions
+        N, D = sample_adata.obsm["covariate_matrix"].shape
+        P = sample_adata.X.shape[1]
+
+        # Sizes of different parameter matrices
+        alpha_size = [P]
+        sigma_size = [D, 1]
+        beta_nobl_size = [D, P - 1]
+
+        # Initial MCMC states
+        if rng_key is not None:
+            np.random.seed(rng_key)
+
+        sample_adata.uns["scCODA_params"]["mcmc"]["init_params"] = {
+            "sigma_d": np.ones(dtype=np.float64, shape=sigma_size),
+            "b_offset": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "ind_raw": np.zeros(dtype=np.float64, shape=beta_nobl_size),
+            "alpha": np.random.normal(0.0, 1.0, alpha_size),
+        }
+
+        return sample_adata
+
     def model(  # type: ignore
         self,
         counts: np.ndarray,
@@ -217,19 +252,6 @@ class Sccoda(CompositionalModel2):
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
         P = sample_adata.X.shape[1]
-
-        # Sizes of different parameter matrices
-        alpha_size = [P]
-        sigma_size = [D, 1]
-        beta_nobl_size = [D, P - 1]
-
-        # Initial MCMC states
-        sample_adata.uns["scCODA_params"]["mcmc"]["init_params"] = {
-            "sigma_d": np.ones(dtype=np.float64, shape=sigma_size),
-            "b_offset": np.random.normal(0.0, 1.0, beta_nobl_size),
-            "ind_raw": np.zeros(dtype=np.float64, shape=beta_nobl_size),
-            "alpha": np.random.normal(0.0, 1.0, alpha_size),
-        }
 
         # numpyro plates for all dimensions
         covariate_axis = npy.plate("covs", D, dim=-2)

@@ -305,6 +305,64 @@ class Tasccoda(CompositionalModel2):
         else:
             return adata
 
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData):  # type: ignore
+        """
+        Sets initial MCMC state values for scCODA model
+
+        Args:
+            rng_key: RNG value to be set
+            ref_index: Index of reference feature
+            sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
+
+        Returns:
+            Return AnnData
+        """
+        N, D = sample_adata.obsm["covariate_matrix"].shape
+        P = sample_adata.X.shape[1]
+        T = sample_adata.uns["scCODA_params"]["T"]
+
+        # Reference nodes must be sorted by index
+        ref_index = np.sort(ref_index)
+        num_ref_nodes = len(ref_index)
+
+        # Sizes of different parameter matrices
+        alpha_size = [P]
+        beta_nobl_size = [D, T - num_ref_nodes]
+
+        # spike-and-slab LASSO parameters
+        lambda_0 = sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_0"]
+        # tree-based scaled penalty
+        penalty_scale_factor = np.array(
+            (
+                1
+                / (
+                    1
+                    + np.exp(
+                        -1
+                        * sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["phi"]
+                        * (sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["node_leaves"] / P - 0.5)
+                    )
+                )
+            ),
+        )
+        lambda_1 = 2 * sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1"] * penalty_scale_factor
+        sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1_scaled"] = lambda_1
+
+        # Initial MCMC states
+        if rng_key is not None:
+            np.random.seed(rng_key)
+
+        sample_adata.uns["scCODA_params"]["mcmc"]["init_params"] = {
+            "a_0": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_0,
+            "b_raw_0": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "a_1": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_1,
+            "b_raw_1": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "theta": np.ones(dtype=np.float64, shape=1) * 0.5,
+            "alpha": np.random.normal(0.0, 1.0, alpha_size),
+        }
+
+        return sample_adata
+
     def model(  # type: ignore
         self,
         counts: np.ndarray,
@@ -326,52 +384,20 @@ class Tasccoda(CompositionalModel2):
             predictions (see numpyro documentation for details on models)
         """
         # data dimensions
-        dtype = "float64"
-
         N, D = sample_adata.obsm["covariate_matrix"].shape
         P = sample_adata.X.shape[1]
         T = sample_adata.uns["scCODA_params"]["T"]
 
         # spike-and-slab LASSO parameters
         lambda_0 = sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_0"]
-        # tree-based scaled penalty
-        penalty_scale_factor = np.array(
-            (
-                1
-                / (
-                    1
-                    + np.exp(
-                        -1
-                        * sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["phi"]
-                        * (sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["node_leaves"] / P - 0.5)
-                    )
-                )
-            ),
-            dtype,
-        )
-        lambda_1 = 2 * sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1"] * penalty_scale_factor
-        sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1_scaled"] = lambda_1
+        lambda_1 = sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1_scaled"]
 
         # Reference nodes must be sorted by index
         ref_index = jnp.sort(ref_index)
         num_ref_nodes = len(ref_index)
 
-        # Sizes of different parameter matrices
-        alpha_size = [P]
-        beta_nobl_size = [D, T - num_ref_nodes]
-
         # Size of inferred parameter matrix
         d = D * (T - num_ref_nodes)
-
-        # Initial MCMC states
-        sample_adata.uns["scCODA_params"]["mcmc"]["init_params"] = {
-            "a_0": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_0,
-            "b_raw_0": np.random.normal(0.0, 1.0, beta_nobl_size),
-            "a_1": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_1,
-            "b_raw_1": np.random.normal(0.0, 1.0, beta_nobl_size),
-            "theta": np.ones(dtype=np.float64, shape=1) * 0.5,
-            "alpha": np.random.normal(0.0, 1.0, alpha_size),
-        }
 
         # numpyro plates for all dimensions
         covariate_axis = npy.plate("covs", D, dim=-2)
