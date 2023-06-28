@@ -193,12 +193,7 @@ class Sccoda(CompositionalModel2):
         else:
             return adata
 
-    def set_init_mcmc_states(  # type: ignore
-        self,
-        rng_key: None,
-        ref_index: np.ndarray,
-        sample_adata: AnnData
-    ):
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData):  # type: ignore
         """
         Sets initial MCMC state values for scCODA model
 

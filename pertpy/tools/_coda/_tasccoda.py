@@ -305,12 +305,7 @@ class Tasccoda(CompositionalModel2):
         else:
             return adata
 
-    def set_init_mcmc_states(  # type: ignore
-        self,
-        rng_key: None,
-        ref_index: np.ndarray,
-        sample_adata: AnnData
-    ):
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData):  # type: ignore
         """
         Sets initial MCMC state values for scCODA model
 
@@ -343,10 +338,10 @@ class Tasccoda(CompositionalModel2):
                 / (
                     1
                     + np.exp(
-                    -1
-                    * sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["phi"]
-                    * (sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["node_leaves"] / P - 0.5)
-                )
+                        -1
+                        * sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["phi"]
+                        * (sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["node_leaves"] / P - 0.5)
+                    )
                 )
             ),
         )

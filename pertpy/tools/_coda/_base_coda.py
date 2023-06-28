@@ -290,9 +290,7 @@ class CompositionalModel2(ABC):
 
         # Set up NUTS kernel
         sample_adata = self.set_init_mcmc_states(
-            rng_key,
-            sample_adata.uns["scCODA_params"]["reference_index"],
-            sample_adata
+            rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata
         )
         init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
         nuts_kernel = NUTS(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
@@ -346,9 +344,7 @@ class CompositionalModel2(ABC):
 
         # Set up HMC kernel
         sample_adata = self.set_init_mcmc_states(
-            rng_key,
-            sample_adata.uns["scCODA_params"]["reference_index"],
-            sample_adata
+            rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata
         )
         init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
         hmc_kernel = HMC(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
