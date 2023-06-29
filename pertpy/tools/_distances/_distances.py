@@ -10,7 +10,9 @@ from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
-from sklearn.metrics import pairwise_distances
+from scipy.spatial.distance import cosine
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import pairwise_distances, r2_score
 
 
 class Distance:
@@ -71,6 +73,16 @@ class Distance:
             metric_fct = Edistance()
         elif metric == "pseudobulk":
             metric_fct = PseudobulkDistance()
+        elif metric == "pseudobulk_absolute":
+            metric_fct = PseudobulkAbsoluteDistance()
+        elif metric == "pseudobulk_pearson":
+            metric_fct = PseudobulkPearsonDistance()
+        elif metric == "pseudobulk_spearman":
+            metric_fct = PseudobulkSpearmanDistance()
+        elif metric == "pseudobulk_cosine":
+            metric_fct = PseudobulkCosineDistance()
+        elif metric == "pseudobulk_r2":
+            metric_fct = PseudobulkR2Score()
         elif metric == "mean_pairwise":
             metric_fct = MeanPairwiseDistance()
         elif metric == "mmd":
@@ -309,6 +321,20 @@ class PseudobulkDistance(AbstractDistance):
         raise NotImplementedError("PseudobulkDistance cannot be called on a pairwise distance matrix.")
 
 
+class PseudobulkAbsoluteDistance(AbstractDistance):
+    """Absolute (Norm-1) distance between pseudobulk vectors."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("PseudobulkAbsoluteDistance cannot be called on a pairwise distance matrix.")
+
+
 class MeanPairwiseDistance(AbstractDistance):
     """Mean of the pairwise euclidean distance between two groups of cells."""
 
@@ -323,3 +349,61 @@ class MeanPairwiseDistance(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         return P[idx, :][:, ~idx].mean()
+
+
+class PseudobulkPearsonDistance(AbstractDistance):
+    """Pearson distance between pseudobulk vectors."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return 1 - pearsonr(X.mean(axis=0), Y.mean(axis=0))[0]
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("PseudobulkPearsonDistance cannot be called on a pairwise distance matrix.")
+
+
+class PseudobulkSpearmanDistance(AbstractDistance):
+    """Spearman distance between pseudobulk vectors."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return 1 - spearmanr(X.mean(axis=0), Y.mean(axis=0))[0]
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("PseudobulkSpearmanDistance cannot be called on a pairwise distance matrix.")
+
+
+class PseudobulkCosineDistance(AbstractDistance):
+    """Cosine distance between pseudobulk vectors."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return cosine(X.mean(axis=0), Y.mean(axis=0))
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("PseudobulkCosineDistance cannot be called on a pairwise distance matrix.")
+
+
+class PseudobulkR2Score(AbstractDistance):
+    """Coefficient of determination across genes between pseudobulk vectors."""
+
+    # NOTE: This is not a distance metric but a similarity metric.
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return r2_score(X.mean(axis=0), Y.mean(axis=0))
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("PseudobulkR2Score cannot be called on a pairwise distance matrix.")
