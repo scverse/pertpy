@@ -89,6 +89,8 @@ class Distance:
             metric_fct = MMD()
         elif metric == "wasserstein":
             metric_fct = WassersteinDistance()
+        elif metric == "kl_divergence":
+            metric_fct = KLDivergence()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -407,3 +409,25 @@ class PseudobulkR2Score(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("PseudobulkR2Score cannot be called on a pairwise distance matrix.")
+
+
+class KLDivergence(AbstractDistance):
+    """Average of KL divergence between gene distributions of two groups"""
+
+    # NOTE: This results to an approximation of KL-Divergence by calculating histogram over bins
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, bins=10, **kwargs) -> float:
+        kl_all = []
+        for i in range(X.shape[1]):
+            x_hist, bin_edges = np.histogram(X[:, i], bins=bins, density=True)
+            y_hist, _ = np.histogram(Y[:, i], bins=bin_edges, density=True)
+            kl = np.sum(np.where(x_hist != 0, np.diff(bin_edges) * x_hist * np.log(x_hist / y_hist), 0))
+            kl_all.append(kl)
+        return sum(kl_all) / len(kl_all)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("KLDivergence cannot be called on a pairwise distance matrix.")
