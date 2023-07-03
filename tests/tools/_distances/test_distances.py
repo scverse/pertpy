@@ -4,8 +4,16 @@ from pytest import fixture, mark
 
 import pertpy as pt
 
-actual_distances = ["edistance", "pseudobulk", "wasserstein"]
-pseudo_distances = ["mean_pairwise", "mmd"]
+actual_distances = [
+    "edistance",
+    "pseudobulk",
+    "pseudobulk_absolute",
+    "pseudobulk_pearson",
+    "pseudobulk_spearman",
+    "pseudobulk_cosine",
+    "wasserstein",
+]
+pseudo_distances = ["mean_pairwise", "mmd", "pseudobulk_r2"]
 
 
 class TestDistances:

@@ -403,7 +403,7 @@ class PseudobulkR2Score(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return r2_score(X.mean(axis=0), Y.mean(axis=0))
+        return 1 - r2_score(X.mean(axis=0), Y.mean(axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("PseudobulkR2Score cannot be called on a pairwise distance matrix.")

@@ -3,7 +3,18 @@ from pytest import fixture, mark
 
 import pertpy as pt
 
-distances = ["edistance", "pseudobulk", "mmd", "wasserstein", "mean_pairwise"]
+distances = [
+    "edistance",
+    "pseudobulk",
+    "pseudobulk_absolute",
+    "pseudobulk_pearson",
+    "pseudobulk_spearman",
+    "pseudobulk_cosine",
+    "wasserstein",
+    "mean_pairwise",
+    "mmd",
+    "pseudobulk_r2",
+]
 
 
 class TestPermutationTest:
