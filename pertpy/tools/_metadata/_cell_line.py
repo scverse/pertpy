@@ -19,6 +19,7 @@ class CellLineMetaData:
 
     def __init__(self):
         # Download cell line metadata from DepMap
+        # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
         cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
         if not Path(cell_line_file_path).exists():
             print("[bold yellow]No DepMap metadata file found. Starting download now.")
@@ -31,6 +32,7 @@ class CellLineMetaData:
         self.cell_line_meta = pd.read_csv(cell_line_file_path)
 
         # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
+        # Source: https://www.cancerrxgene.org/celllines
         cell_line_cancer_project_file_path = settings.cachedir.__str__() + "/cell_line_cancer_project.csv"
         cell_line_cancer_project_transformed_path = (
             settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
@@ -78,87 +80,62 @@ class CellLineMetaData:
         else:
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_transformed_path, index_col=0)
 
-        # Download metadata for driver genes of the intogen analysis from DepMap_Sanger
-        driver_gene_intogen_file_path = (
-            settings.cachedir.__str__() + "/2020-02-02_IntOGen-Drivers-20200213/Compendium_Cancer_Genes.tsv"
-        )
-        if not Path(driver_gene_intogen_file_path).exists():
+        # Download metadata for driver genes from DepMap_Sanger
+        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
+        gene_annotation_file_path = settings.cachedir.__str__() + "/gene_identifiers_20191101.csv"
+        if not Path(gene_annotation_file_path).exists():
+            print("[bold yellow]No metadata file was found for gene annotation." " Starting download now.")
+            _download(
+                url="https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv",
+                output_file_name="gene_identifiers_20191101.csv",
+                output_path=settings.cachedir,
+                is_zip=False,
+            )
+        self.gene_annotation = pd.read_table(gene_annotation_file_path)
+
+        # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute fro DepMap.Sanger
+        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
+        bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624.csv"
+        if not Path(bulk_rna_sanger_file_path).exists():
             print(
-                "[bold yellow]No metadata file was found for driver genes of the intogen analysis."
-                " Starting download now."
+                "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
+                " Starting download now..."
             )
             _download(
-                url="https://www.intogen.org/download?file=IntOGen-Drivers-20200201.zip",
-                output_file_name="IntOGen-Drivers.zip",
+                url="https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip",
+                output_file_name="rnaseq_sanger.zip",
                 output_path=settings.cachedir,
                 is_zip=True,
             )
-        self.driver_gene_intogen = pd.read_table(driver_gene_intogen_file_path)
-        self.driver_gene_intogen.rename(columns=lambda col: col.lower(), inplace=True)
+        self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, skiprows=[2, 3], header=[0, 1], index_col=[0, 1])
+        self.bulk_rna_sanger = self.bulk_rna_sanger.T
+        self.bulk_rna_sanger.index = self.bulk_rna_sanger.index.droplevel("model_id")
+        self.bulk_rna_sanger.columns = self.bulk_rna_sanger.columns.droplevel("gene_id")
 
-        # Download metadata for driver genes of the COSMIC Tier 1 gene
-        self.driver_gene_cosmic = pd.read_csv("https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1")
+        # Download CCLE expression data from DepMap
+        # Source: https://depmap.org/portal/download/all/  (DepMap Public 22Q2)
+        # bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
+        bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression_full.csv"
+        if not Path(bulk_rna_broad_file_path).exists():
+            print("[bold yellow]No metadata file was found for CCLE expression data." " Starting download now.")
+            _download(
+                # url="https://figshare.com/ndownloader/files/34989919",
+                url="https://figshare.com/ndownloader/files/34989922",
+                # output_file_name="CCLE_expression.csv",
+                output_file_name="CCLE_expression_full.csv",
+                output_path=settings.cachedir,
+                is_zip=False,
+            )
+        self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
 
-        # Download bulk RNA-seq data collated from the Wellcome Sanger Institute and the Broad Institute
-        bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_sanger_20210316.csv"
-        bulk_rna_sanger_trimm_path = settings.cachedir.__str__() + "/rnaseq_sanger_20210316_trimm.csv"
-
-        if not Path(bulk_rna_sanger_trimm_path).exists():
-            if not Path(bulk_rna_sanger_file_path).exists():
-                print(
-                    "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
-                    " Starting download now..."
-                )
-                _download(
-                    url="https://cog.sanger.ac.uk/cmp/download/rnaseq_sanger_20210316.zip",
-                    output_file_name="rnaseq_sanger.zip",
-                    output_path=settings.cachedir,
-                    is_zip=True,
-                )
-            self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path)
-            self.bulk_rna_sanger.drop(["data_source", "gene_symbol"], axis=1, inplace=True)
-            self.bulk_rna_sanger[["model_id", "model_name", "gene_id"]] = self.bulk_rna_sanger[
-                ["model_id", "model_name", "gene_id"]
-            ].astype("category")
-            self.bulk_rna_sanger.to_csv(bulk_rna_sanger_trimm_path)
-        else:
-            self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_trimm_path, index_col=0)
-
-        bulk_rna_broad_file_path = settings.cachedir.__str__() + "/rnaseq_broad_20210317.csv"
-        bulk_rna_broad_trimm_path = settings.cachedir.__str__() + "/rnaseq_broad_20210317_trimm.csv"
-
-        if not Path(bulk_rna_broad_trimm_path).exists():
-            if not Path(bulk_rna_broad_file_path).exists():
-                print(
-                    "[bold yellow]No metadata file was found for bulk RNA-seq data of broad cell line."
-                    " Starting download now."
-                )
-                _download(
-                    url="https://cog.sanger.ac.uk/cmp/download/rnaseq_broad_20210317.zip",
-                    output_file_name="rnaseq_broad.zip",
-                    output_path=settings.cachedir,
-                    is_zip=True,
-                )
-            self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path)
-
-            # gene symbol can not be the column name of fetched bulk rna expression data
-            # there are 37263 unique gene ids
-            # but 37262 unique gene symbols (SEPTIN4)
-            self.bulk_rna_broad.drop(["data_source", "gene_symbol"], axis=1, inplace=True)
-            self.bulk_rna_broad[["model_id", "model_name", "gene_id"]] = self.bulk_rna_broad[
-                ["model_id", "model_name", "gene_id"]
-            ].astype("category")
-            self.bulk_rna_broad.to_csv(bulk_rna_broad_trimm_path)
-        else:
-            self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_trimm_path, index_col=0)
-
-        # Download proteomics data from ProCan-DepMapSanger
+        # Download proteomics data from DepMap.Sanger
+        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
         proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214.csv"
         proteomics_trimm_path = settings.cachedir.__str__() + "/proteomics_all_20221214_trimm.csv"
         if not Path(proteomics_trimm_path).exists():
             if not Path(proteomics_file_path).exists():
                 print(
-                    "[bold yellow]No metadata file was found for proteomics data (ProCan-DepMapSanger)."
+                    "[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger)."
                     " Starting download now."
                 )
                 _download(
@@ -175,19 +152,8 @@ class CellLineMetaData:
         else:
             self.proteomics_data = pd.read_csv(proteomics_trimm_path, index_col=0)
 
-        # Download CCLE expression data from DepMap
-        ccle_expr_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
-        if not Path(ccle_expr_file_path).exists():
-            print("[bold yellow]No metadata file was found for CCLE expression data." " Starting download now.")
-            _download(
-                url="https://figshare.com/ndownloader/files/34989919",
-                output_file_name="CCLE_expression.csv",
-                output_path=settings.cachedir,
-                is_zip=False,
-            )
-        self.ccle_expr = pd.read_csv(ccle_expr_file_path, index_col=0)
-
         # Download GDSC drug response data
+        # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
         drug_response_gdsc1_file_path = settings.cachedir.__str__() + "/ic50_gdsc1.xlsx"
         if not Path(drug_response_gdsc1_file_path).exists():
             print(
@@ -201,8 +167,12 @@ class CellLineMetaData:
                 is_zip=False,
             )
         self.drug_response_gdsc1 = pd.read_excel(drug_response_gdsc1_file_path)
+        self.drug_response_gdsc1 = self.drug_response_gdsc1.iloc[:, [3, 4, 5, 7, 8, 15, 16]]
         self.drug_response_gdsc1.rename(columns=lambda col: col.lower(), inplace=True)
-        self.drug_response_gdsc1 = self.drug_response_gdsc1.rename(columns={"ln_ic50": "IC50"})
+        self.drug_response_gdsc1 = self.drug_response_gdsc1.loc[
+            self.drug_response_gdsc1.groupby(["cell_line_name", "drug_name"])["auc"].idxmax()
+        ]
+        self.drug_response_gdsc1 = self.drug_response_gdsc1.reset_index(drop=True)
 
         drug_response_gdsc2_file_path = settings.cachedir.__str__() + "/ic50_gdsc2.xlsx"
         if not Path(drug_response_gdsc2_file_path).exists():
@@ -217,8 +187,12 @@ class CellLineMetaData:
                 is_zip=False,
             )
         self.drug_response_gdsc2 = pd.read_excel(drug_response_gdsc2_file_path)
+        self.drug_response_gdsc2 = self.drug_response_gdsc2.iloc[:, [3, 4, 5, 7, 8, 15, 16]]
         self.drug_response_gdsc2.rename(columns=lambda col: col.lower(), inplace=True)
-        self.drug_response_gdsc2 = self.drug_response_gdsc2.rename(columns={"ln_ic50": "IC50"})
+        self.drug_response_gdsc2 = self.drug_response_gdsc2.loc[
+            self.drug_response_gdsc2.groupby(["cell_line_name", "drug_name"])["auc"].idxmax()
+        ]
+        self.drug_response_gdsc2 = self.drug_response_gdsc2.reset_index(drop=True)
 
     def annotate_cell_lines(
         self,
@@ -256,10 +230,10 @@ class CellLineMetaData:
             if query_id == "DepMap_ID":
                 query_id = "stripped_cell_line_name"
                 print(
-                    "To annotate cell line metadata from Cancerrxgene, ",
-                    "we use `stripped_cell_line_name` as reference and query indentifier. ",
-                    "Please make sure that `stripped_cell_line_name` is available in the adata.obs. ",
-                    "or use the DepMap as cell_line_source to annotate the cell line first ",
+                    "`stripped_cell_line_name` is used as reference and query indentifier ",
+                    " to annotate cell line metadata from Cancerrxgene. "
+                    "So please make sure that `stripped_cell_line_name` is available in the adata.obs. ",
+                    "or use the DepMap as `cell_line_source` to annotate the cell line first ",
                 )
             cell_line_meta = self.cl_cancer_project_meta
 
@@ -275,7 +249,7 @@ class CellLineMetaData:
                 raise ValueError(
                     f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
                     "However, none of the query IDs could be found in the cell line annotation data. \n"
-                    "It is recommended to stop the annotation process. \n"
+                    "The annotation process has been halted. \n"
                     "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
                     "By using the `LookUp.cell_line()` method, \n"
                     "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs."
@@ -284,10 +258,10 @@ class CellLineMetaData:
             if len(not_matched_identifiers) > 0:
                 print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
                 print(
-                    f"But following {len(not_matched_identifiers)} identifiers can't be found in the cell line annotation file. "
+                    f"But following {len(not_matched_identifiers)} identifiers can't be found in the cell line annotation, "
                 )
                 print(
-                    "Resulting in NA values for their corresponding metadata. ",
+                    "leading to the presence of NA values for their respective metadata.",
                     "Please check again: ",
                     *not_matched_identifiers,
                     sep="\n- ",
@@ -340,9 +314,9 @@ class CellLineMetaData:
         else:
             raise ValueError(
                 f"The requested cell line type {reference_id} is currently unavailable in the database. \n"
-                "Please refer to the available reference identifier in the chosen database. \n"
+                "To solve ths issue, please refer to the available reference identifier in the chosen database. \n"
                 "DepMap_ID is compared by default. \n"
-                "To solve the issue, you can also call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
+                "Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
                 "By using the `LookUp.cell_line()` method, you can obtain the available reference identifiers in the metadata. \n"
             )
 
@@ -352,9 +326,7 @@ class CellLineMetaData:
         self,
         adata: AnnData,
         query_id: str = "cell_line_name",
-        reference_id: Literal["model_name", "model_id"] = "model_name",
-        cell_line_source: Literal["broad", "sanger"] = "broad",
-        bulk_rna_information: Literal["read_count", "fpkm"] = "read_count",
+        cell_line_source: Literal["broad", "sanger"] = "sanger",
         copy: bool = False,
     ) -> AnnData:
         """Fetch bulk rna expression.
@@ -363,10 +335,8 @@ class CellLineMetaData:
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
-            reference_id: The type of cell line identifier in the meta data, model_name or model_id. Defaults to "model_name".
-            cell_line_source: The bulk rna expression data from either broad or sanger cell line. Defaults to "broad".
-            bulk_rna_information: The metadata to fetch, read_count or fpkm. Defaults to "read_count".
+            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
+            cell_line_source: The bulk rna expression data from either broad or sanger cell line. Defaults to "sanger".
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -374,7 +344,6 @@ class CellLineMetaData:
         """
         if copy:
             adata = adata.copy()
-        bulk_rna = self.bulk_rna_broad if cell_line_source == "broad" else self.bulk_rna_sanger
 
         # Make sure that the specified `cell_line_type` can be found in the bulk rna expression data,
         # then we can compare these keys and fetch the corresponding metadata.
@@ -387,21 +356,28 @@ class CellLineMetaData:
                 "This will help ensure that the required query ID is included in your data,  e.g. stripped_cell_line_name, DepMap ID."
             )
 
-        if reference_id not in bulk_rna.columns:
-            raise ValueError(
-                "The specified `reference_id` {reference_id} is not available in the bulk RNA expression data. \n"
-                "Please use the reference identifier available in the metadata. \n"
-                "To solve the issue, you can call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.bulk_rna_expression()` method, you can obtain the available reference identifiers in the metadata. \n"
-            )
         identifier_num_all = len(adata.obs[query_id].unique())
-        not_matched_identifiers = list(set(adata.obs[query_id]) - set(bulk_rna[reference_id]))
+        if cell_line_source == "sanger":
+            reference_id = "model_name"
+            not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_sanger.index))
+        else:
+            reference_id = "DepMap_ID"
+            print(
+                "To annotate bulk RNA expression data from Broad Institue, ",
+                "`DepMap_ID` is used as default reference and query indentifier if no `reference_id` is given. ",
+                "Please make sure that `DepMap_ID` is available in the adata.obs. ",
+                "Alternatively, use the `annotate_cell_lines()` function to annotate the cell line first ",
+            )
+
+            if query_id == "cell_line_name":
+                query_id = "DepMap_ID"
+            not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_broad.index))
 
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
                 f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
                 "However, none of the query IDs could be found in the bulk RNA expression data. \n"
-                "It is recommended to stop the annotation process. \n"
+                "The annotation process has been halted. \n"
                 "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
                 "By using the `LookUp.bulk_rna_expression()` method, \n"
                 "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. \n"
@@ -412,18 +388,23 @@ class CellLineMetaData:
         if len(not_matched_identifiers) > 0:
             print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
             print(
-                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can't be found in bulk RNA expression data. "
+                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can't be found in bulk RNA expression data, "
             )
             print(
-                "Resulting in NA values for their corresponding metadata. Please check again: ",
+                "leading to the presence of NA values for their respective metadata. Please check again: ",
                 *not_matched_identifiers,
                 sep="\n- ",
             )
-        bulk_rna = bulk_rna[[reference_id, "gene_id", bulk_rna_information]]
-        rna_exp = pd.pivot(bulk_rna, index=reference_id, columns="gene_id", values=bulk_rna_information)
-        rna_exp = rna_exp.reindex(adata.obs[query_id])
-        rna_exp.index = adata.obs.index
-        adata.obsm["bulk_rna_expression_" + cell_line_source] = rna_exp
+        print("hi")
+        if cell_line_source == "sanger":
+            sanger_rna_exp = self.bulk_rna_sanger[self.bulk_rna_sanger.index.isin(adata.obs[query_id])]
+            sanger_rna_exp = sanger_rna_exp.reindex(adata.obs[query_id])
+            sanger_rna_exp.index = adata.obs.index
+            adata.obsm["bulk_rna_expression_sanger"] = sanger_rna_exp
+        else:
+            ccle_expression = self.bulk_rna_broad.reindex(adata.obs[query_id])
+            ccle_expression.index = adata.obs.index
+            adata.obsm["bulk_rna_expression_broad"] = ccle_expression
 
         return adata
 
@@ -468,8 +449,8 @@ class CellLineMetaData:
         if reference_id not in self.proteomics_data.columns:
             raise ValueError(
                 f"The specified `reference_id`{reference_id} can't be found in the protein expression data. \n"
-                "Please use the reference identifier available in the metadata.  \n"
-                "To solve the issue, you can call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
+                "To solve the issue, please use the reference identifier available in the metadata.  \n"
+                "Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
                 "By using the `LookUp.protein_expression()` method, you can obtain the available reference identifiers in the metadata. "
             )
 
@@ -480,7 +461,7 @@ class CellLineMetaData:
             raise ValueError(
                 f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
                 "However, none of the query IDs could be found in the proteomics data. \n"
-                "It is recommended to stop the annotation process. \n"
+                "The annotation process has been halted. \n"
                 "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
                 "By using the `LookUp.protein_expression()` method, \n"
                 "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. \n"
@@ -491,10 +472,10 @@ class CellLineMetaData:
         if len(not_matched_identifiers) > 0:
             print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
             print(
-                f"[bold yellow]But following {len(not_matched_identifiers)} identifiers can't be found in the protein expression data. "
+                f"[bold yellow]But following {len(not_matched_identifiers)} identifiers can't be found in the protein expression data, "
             )
             print(
-                "Resulting in NA values for their corresponding metadata. Please check again: ",
+                "leading to the presence of NA values for their respective metadata. Please check again: ",
                 *not_matched_identifiers,
                 sep="\n- ",
             )
@@ -504,66 +485,6 @@ class CellLineMetaData:
         prot_exp = prot_exp.reindex(adata.obs[query_id])
         prot_exp.index = adata.obs.index
         adata.obsm["proteomics_" + protein_information] = prot_exp
-
-        return adata
-
-    def annotate_ccle_expression(
-        self,
-        adata: AnnData,
-        query_id: str = "DepMap_ID",
-        copy: bool = False,
-    ) -> AnnData:
-        """Fetch CCLE expression data.
-
-         For each cell, we fetch gene expression TPM values of the protein coding genes for its corresponding DepMap
-         cell line.
-
-        Args:
-            adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
-
-        Returns:
-            Returns an AnnData object with CCLE expression annotation.
-        """
-        if copy:
-            adata = adata.copy()
-
-        # Make sure that the specified cell line type can be found in the CCLE expression data,
-        # then we can compare these keys and fetch the corresponding metadata.
-        if query_id not in adata.obs.columns:
-            raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. \n"
-                "If the desired query ID is not available, you can fetch the cell line metadata \n"
-                "using the `annotate_cell_lines()` function before calling `annotate_ccle_expression()`. \n"
-                "This will help ensure that the required query ID is included in your data."
-            )
-
-        not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.ccle_expr.index))
-        if len(not_matched_identifiers) > 0:
-            print(
-                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can not be found in the CCLE expression data,"
-                " their corresponding meta data are NA values. Please check it again:",
-                *not_matched_identifiers,
-                sep="\n- ",
-            )
-        identifier_num_all = len(adata.obs[query_id].unique())
-        if len(not_matched_identifiers) == identifier_num_all:
-            raise ValueError(
-                f"You are attempting to match the query id {query_id} in the adata.obs to the DepMap_id in the metadata. \n"
-                "However, none of the query IDs could be found in the CCLE expression data. \n"
-                "It is recommended to stop the annotation process. \n"
-                "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.ccle_expression()` method, \n"
-                "you can obtain the count of matched identifiers in the adata for different query IDs. \n"
-                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to \n"
-                "acquire DepMap_ID information that can be used for annotation purposes."
-            )
-
-        ccle_expression = self.ccle_expr.reindex(adata.obs[query_id])
-        ccle_expression.index = adata.obs.index
-        adata.obsm["CCLE_expression"] = ccle_expression
 
         return adata
 
@@ -611,7 +532,7 @@ class CellLineMetaData:
         if len(not_matched_identifiers) > 0:
             print(
                 f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can not be found in the drug response data for GDSC{gdsc_dataset},"
-                " their corresponding meta data are NA values. Please check it again:",
+                "leading to the presence of NA values for their respective metadata. Please check it again:",
                 *not_matched_identifiers,
                 sep="\n- ",
             )
@@ -620,16 +541,15 @@ class CellLineMetaData:
             raise ValueError(
                 f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
                 "However, none of the query IDs could be found in the drug response data. \n"
-                "It is recommended to stop the annotation process. \n"
+                "The annotation process has been halted. \n"
                 "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
                 "By using the `LookUp.drug_response_gdsc()` method, \n"
                 "you can obtain the count of matched identifiers in the adata for different query IDs. \n"
                 "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to \n"
                 "acquire more cell line information that can be used for annotation purposes."
             )
-        ic50_gdsc = gdsc_data.drop_duplicates(subset=[reference_id, reference_perturbation])
         adata.obs = adata.obs.merge(
-            ic50_gdsc[[reference_id, reference_perturbation, "IC50"]],
+            gdsc_data[[reference_id, reference_perturbation, "ln_ic50"]],
             how="left",
             left_on=[query_id, query_perturbation],
             right_on=[reference_id, reference_perturbation],
@@ -653,12 +573,10 @@ class CellLineMetaData:
             transfer_metadata=[
                 self.cell_line_meta,
                 self.cl_cancer_project_meta,
-                self.driver_gene_intogen,
-                self.driver_gene_cosmic,
+                self.gene_annotation,
                 self.bulk_rna_sanger,
                 self.bulk_rna_broad,
                 self.proteomics_data,
-                self.ccle_expr,
                 self.drug_response_gdsc1,
                 self.drug_response_gdsc2,
             ],

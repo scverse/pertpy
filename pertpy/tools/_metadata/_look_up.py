@@ -14,14 +14,12 @@ class LookUp:
             self.type = type
             self.cell_line_meta = transfer_metadata[0]
             self.cl_cancer_project_meta = transfer_metadata[1]
-            self.driver_gene_intogen = transfer_metadata[2]
-            self.driver_gene_cosmic = transfer_metadata[3]
-            self.bulk_rna_sanger = transfer_metadata[4]
-            self.bulk_rna_broad = transfer_metadata[5]
-            self.proteomics_data = transfer_metadata[6]
-            self.ccle_expr = transfer_metadata[7]
-            self.drug_response_gdsc1 = transfer_metadata[8]
-            self.drug_response_gdsc2 = transfer_metadata[9]
+            self.gene_annotation = transfer_metadata[2]
+            self.bulk_rna_sanger = transfer_metadata[3]
+            self.bulk_rna_broad = transfer_metadata[4]
+            self.proteomics_data = transfer_metadata[5]
+            self.drug_response_gdsc1 = transfer_metadata[6]
+            self.drug_response_gdsc2 = transfer_metadata[7]
 
     def cell_lines(
         self,
@@ -84,7 +82,7 @@ class LookUp:
             )
 
             print("Default is to annotate cell line meta data from DepMap database. ")
-            print("However, to annotate cell line meta data from the project Genomics of Drug Sensitivity in Cancer, ")
+            print("When annotating cell line meta data from the project Genomics of Drug Sensitivity in Cancer, ")
             print("Default parameters are:")
             default_param = {
                 "query_id": "stripped_cell_line_name",
@@ -104,8 +102,7 @@ class LookUp:
             else:
                 if reference_id == "DepMap_ID":
                     print(
-                        "To annotate cell line metadata from Cancerrxgene, ",
-                        "we use `stripped_cell_line_name` as reference indentifier. ",
+                        "`stripped_cell_line_name` is used as reference indentifier to annotate cell line metadata from Cancerrxgene. ",
                     )
                     reference_id = "stripped_cell_line_name"
                 if reference_id not in self.cl_cancer_project_meta.columns:
@@ -119,16 +116,13 @@ class LookUp:
 
     def bulk_rna_expression(
         self,
-        cell_line_source: Literal["broad", "sanger"] = "broad",
-        reference_id: Literal["model_name", "model_id"] = "model_name",
+        cell_line_source: Literal["broad", "sanger"] = "sanger",
         query_id_list: list[str] | None = None,
     ) -> None:
         """A brief summary of bulk RNA expression data.
 
         Args:
-            cell_line_source: the source of RNA-seq data, broad or sanger. Defaults to "broad".
-            reference_id: The type of cell line identifier in the meta data, model_name, or model_id.
-                Defaults to "model_name".
+            cell_line_source: the source of RNA-seq data, broad or sanger. Defaults to "sanger".
             query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
                 metadata. Defaults to None.
         """
@@ -137,52 +131,27 @@ class LookUp:
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
 
         if cell_line_source == "broad":
-            print("To summarize: in the RNA-Seq Data for broad cell line only, you can find: ")
-            print(f"{len(self.bulk_rna_broad.model_name.unique())} cell lines")
-            print(f"{len(self.bulk_rna_broad.gene_id.unique())} genes")
-            print(
-                f"{len(self.bulk_rna_broad.columns)} meta data, including ",
-                *list(self.bulk_rna_broad.columns.values),
-                sep="\n- ",
-            )
-            print("Overview of possible cell line reference identifiers: ")
-            print(self.bulk_rna_broad[["model_id", "model_name"]].head().to_string())
-
+            bulk_rna = self.bulk_rna_broad
+            reference_id = "DepMap_ID"
         else:
-            print("To summarize: in the RNA-Seq Data for Sanger cell line only, you can find: ")
-            print(f"{len(self.bulk_rna_sanger.model_name.unique())} cell lines")
-            print(f"{len(self.bulk_rna_sanger.gene_id.unique())} genes")
-            print(
-                f"{len(self.bulk_rna_sanger.columns)} meta data, including ",
-                *list(self.bulk_rna_sanger.columns.values),
-                sep="\n- ",
-            )
-            print("Overview of possible cell line reference identifiers: ")
-            print(self.bulk_rna_sanger[["model_id", "model_name"]].head().to_string())
+            bulk_rna = self.bulk_rna_sanger
+            reference_id = "model_name"
+
+        print(f"To summarize: in the RNA-Seq Data from {cell_line_source} institute, you can find: ")
+        print(f"{len(bulk_rna.index)} cell lines")
+        print(f"{len(bulk_rna.columns)} genes")
+        print(f"Only {reference_id} is allowed to use as `reference_id`")
 
         print("Default parameters to annotate bulk RNA expression: ")
         default_param = {
             "query_id": "cell_line_name",
-            "reference_id": "model_name",
-            "cell_line_source": "broad",
-            "bulk_rna_information": "read_count",
+            "cell_line_source": "sanger",
         }
         print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
 
         if query_id_list is not None:
             identifier_num_all = len(query_id_list)
-            if cell_line_source == "broad":
-                if reference_id not in self.bulk_rna_broad.columns:
-                    raise ValueError(
-                        f"The specified `reference_id` {reference_id} is not available in the RNA-Seq Data for broad cell line. "
-                    )
-                not_matched_identifiers = list(set(query_id_list) - set(self.bulk_rna_broad[reference_id]))
-            else:
-                if reference_id not in self.bulk_rna_sanger.columns:
-                    raise ValueError(
-                        f"The specified `reference_id` {reference_id} is not available in the RNA-Seq Data for Sanger cell line. "
-                    )
-                not_matched_identifiers = list(set(query_id_list) - set(self.bulk_rna_sanger[reference_id]))
+            not_matched_identifiers = list(set(query_id_list) - set(bulk_rna.index))
 
             print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
@@ -232,29 +201,6 @@ class LookUp:
                     f"The specified `reference_id` {reference_id} is not available in the proteomics data. "
                 )
             not_matched_identifiers = list(set(query_id_list) - set(self.proteomics_data[reference_id]))
-            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
-
-    def ccle_expression(self, query_id_list: list[str] | None = None) -> None:
-        """A brief summary of CCLE expression data.
-
-        Args:
-            query_id_list: A list of unique cell line identifiers (here DepMap_ID) to test the number of
-                matched ids present in the metadata. Defaults to None.
-
-        """
-        # only availble for CellLineMetaData.lookup
-        if self.type != "cell_line":
-            raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
-
-        print("To summarize: in the CCLE expression data you can find: ")
-        print(f"{len(self.ccle_expr.index.unique())} cell lines")
-        print(f"{len(self.ccle_expr.columns.unique())} genes")
-        print("Only DepMap_ID is allowed to use as `reference_id`")
-
-        if query_id_list is not None:
-            identifier_num_all = len(query_id_list)
-            not_matched_identifiers = list(set(query_id_list) - set(self.ccle_expr.index))
             print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
@@ -322,29 +268,41 @@ class LookUp:
             print(f"{len(not_matched_identifiers)} perturbation types are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} perturbation types are found! ")
 
-    def driver_genes(self, driver_gene_set: Literal["intogen", "cosmic"] = "intogen") -> None:
-        """A brief summary of genes in cancer driver annotation data.
+    def genes_annotation(
+        self,
+        reference_id: Literal["gene_id", "ensembl_gene_id", "hgnc_id", "hgnc_symbol"] = "ensembl_gene_id",
+        query_id_list: list[str] | None = None,
+    ) -> None:
+        """A brief summary of gene annotation metadata
 
         Args:
-            driver_gene_set: gene set for cancer driver annotation: intogen or cosmic. Defaults to "intogen".
+            reference_id: The type of gene identifier in the meta data, gene_id, ensembl_gene_id, hgnc_id, hgnc_symbol. Defaults to "ensembl_gene_id".
+            query_id_list: A list of unique gene identifiers to test the number of matched ids present in the metadata. Defaults to None.
+
         """
         # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
 
-        if driver_gene_set == "intogen":
-            print("To summarize: in the DepMap_Sanger driver gene annotation for intogen genes, you can find: ")
-            print(f"{len(self.driver_gene_intogen.index)} driver genes")
-            print(
-                f"{len(self.driver_gene_intogen.columns)} meta data including: ",
-                *list(self.driver_gene_intogen.columns.values),
-                sep="\n- ",
-            )
-        else:
-            print("To summarize: in the DepMap_Sanger driver gene annotation for COSMIC Tier 1 genes, you can find: ")
-            print(f"{len(self.driver_gene_cosmic.index)} driver genes")
-            print(
-                f"{len(self.driver_gene_cosmic.columns)} meta data including: ",
-                *list(self.driver_gene_cosmic.columns.values),
-                sep="\n- ",
-            )
+        print("To summarize: in the DepMap_Sanger gene annotation file, you can find: ")
+        print(f"{len(self.gene_annotation.index)} driver genes")
+        print(
+            f"{len(self.gene_annotation.columns)} meta data including: ",
+            *list(self.gene_annotation.columns.values),
+            sep="\n- ",
+        )
+        print("Overview of gene annotation: ")
+        print(self.gene_annotation.head().to_string())
+        """
+        #not implemented yet
+        print("Default parameters to annotate gene annotation: ")
+        default_param = {
+            "query_id": "ensembl_gene_id",
+        }
+        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
+        if query_id_list is not None:
+            identifier_num_all = len(query_id_list)
+            not_matched_identifiers = list(set(query_id_list) - set(self.gene_annotation[reference_id]))
+            print(f"{len(not_matched_identifiers)} genes are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} genes are found! ")
+        """
