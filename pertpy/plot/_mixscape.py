@@ -32,8 +32,6 @@ from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
 
-import pertpy as pt
-
 
 class MixscapePlot:
     """Plotting functions for Mixscape."""

@@ -84,21 +84,18 @@ class Sccoda(CompositionalModel2):
         Returns:
             MuData: MuData object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.haber_2017_regions()
-                sccoda = pt.tl.Sccoda()
-                mdata = sccoda.load(
-                    adata,
-                    type="cell_level",
-                    generate_sample_level=True,
-                    cell_type_identifier="cell_label",
-                    sample_identifier="batch",
-                    covariate_obs=["condition"],
-                )
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(
+            >>>     adata,
+            >>>     type="cell_level",
+            >>>     generate_sample_level=True,
+            >>>     cell_type_identifier="cell_label",
+            >>>     sample_identifier="batch",
+            >>>     covariate_obs=["condition"],
+            >>> )
         """
         if type == "cell_level":
             if generate_sample_level:
@@ -147,22 +144,20 @@ class Sccoda(CompositionalModel2):
             - `adata.uns["scCODA_params"]["model_type"]` or `data[modality_key].uns["scCODA_params"]["model_type"]`: String indicating the model type ("classic")
             - `adata.uns["scCODA_params"]["select_type"]` or `data[modality_key].uns["scCODA_params"]["select_type"]`: String indicating the type of spike_and_slab selection ("spikeslab")
 
-        Example:
-            .. code-block:: python
+        Examples:
+            >>> import pertpy as pt
 
-                import pertpy as pt
-
-                adata = pt.dt.haber_2017_regions()
-                sccoda = pt.tl.Sccoda()
-                mdata = sccoda.load(
-                    adata,
-                    type="cell_level",
-                    generate_sample_level=True,
-                    cell_type_identifier="cell_label",
-                    sample_identifier="batch",
-                    covariate_obs=["condition"],
-                )
-                mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(
+            >>>     adata,
+            >>>     type="cell_level",
+            >>>     generate_sample_level=True,
+            >>>     cell_type_identifier="cell_label",
+            >>>     sample_identifier="batch",
+            >>>     covariate_obs=["condition"],
+            >>> )
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
         """
         if isinstance(data, MuData):
             adata = data[modality_key]
@@ -193,7 +188,7 @@ class Sccoda(CompositionalModel2):
         else:
             return adata
 
-    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData):  # type: ignore
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:  # type: ignore
         """
         Sets initial MCMC state values for scCODA model
 
@@ -203,9 +198,8 @@ class Sccoda(CompositionalModel2):
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
 
         Returns:
-            Return AnnData
+            Return AnnData object.
         """
-
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
         P = sample_adata.X.shape[1]
@@ -317,27 +311,24 @@ class Sccoda(CompositionalModel2):
         Returns:
             az.InferenceData: arviz_data with all MCMC information
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.haber_2017_regions()
-                sccoda = pt.tl.Sccoda()
-                adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
-                mdata_salm = sccoda.load(
-                    adata_salm,
-                    type="cell_level",
-                    generate_sample_level=True,
-                    cell_type_identifier="cell_label",
-                    sample_identifier="batch",
-                    covariate_obs=["condition"],
-                )
-                mdata_salm = sccoda.prepare(
-                    mdata_salm, formula="condition", reference_cell_type="Goblet"
-                )
-                sccoda.run_nuts(mdata_salm)
-                sccoda.make_arviz(mdata_salm, num_prior_samples=100)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata_salm = sccoda.load(
+            >>>     adata_salm,
+            >>>     type="cell_level",
+            >>>     generate_sample_level=True,
+            >>>     cell_type_identifier="cell_label",
+            >>>     sample_identifier="batch",
+            >>>     covariate_obs=["condition"],
+            >>> )
+            >>> mdata_salm = sccoda.prepare(
+            >>>     mdata_salm, formula="condition", reference_cell_type="Goblet"
+            >>> )
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> sccoda.make_arviz(mdata_salm, num_prior_samples=100)
         """
         if isinstance(data, MuData):
             try:
@@ -430,23 +421,20 @@ class Sccoda(CompositionalModel2):
         **kwargs,
     ):
         """
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.haber_2017_regions()
-                sccoda = pt.tl.Sccoda()
-                mdata = sccoda.load(
-                    adata,
-                    type="cell_level",
-                    generate_sample_level=True,
-                    cell_type_identifier="cell_label",
-                    sample_identifier="batch",
-                    covariate_obs=["condition"],
-                )
-                mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
-                sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(
+            >>>     adata,
+            >>>     type="cell_level",
+            >>>     generate_sample_level=True,
+            >>>     cell_type_identifier="cell_label",
+            >>>     sample_identifier="batch",
+            >>>     covariate_obs=["condition"],
+            >>> )
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000)
         """
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
@@ -454,27 +442,24 @@ class Sccoda(CompositionalModel2):
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.haber_2017_regions()
-                sccoda = pt.tl.Sccoda()
-                adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
-                mdata_salm = sccoda.load(
-                    adata_salm,
-                    type="cell_level",
-                    generate_sample_level=True,
-                    cell_type_identifier="cell_label",
-                    sample_identifier="batch",
-                    covariate_obs=["condition"],
-                )
-                mdata_salm = sccoda.prepare(
-                    mdata_salm, formula="condition", reference_cell_type="Goblet"
-                )
-                sccoda.run_nuts(mdata_salm)
-                sccoda.credible_effects(mdata_salm)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata_salm = sccoda.load(
+            >>>     adata_salm,
+            >>>     type="cell_level",
+            >>>     generate_sample_level=True,
+            >>>     cell_type_identifier="cell_label",
+            >>>     sample_identifier="batch",
+            >>>     covariate_obs=["condition"],
+            >>> )
+            >>> mdata_salm = sccoda.prepare(
+            >>>     mdata_salm, formula="condition", reference_cell_type="Goblet"
+            >>> )
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> sccoda.credible_effects(mdata_salm)
         """
         return super().credible_effects(data, modality_key, est_fdr)
 
@@ -482,27 +467,24 @@ class Sccoda(CompositionalModel2):
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.haber_2017_regions()
-                sccoda = pt.tl.Sccoda()
-                adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
-                mdata_salm = sccoda.load(
-                    adata_salm,
-                    type="cell_level",
-                    generate_sample_level=True,
-                    cell_type_identifier="cell_label",
-                    sample_identifier="batch",
-                    covariate_obs=["condition"],
-                )
-                mdata_salm = sccoda.prepare(
-                    mdata_salm, formula="condition", reference_cell_type="Goblet"
-                )
-                sccoda.run_nuts(mdata_salm)
-                sccoda.summary(mdata_salm)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata_salm = sccoda.load(
+            >>>     adata_salm,
+            >>>     type="cell_level",
+            >>>     generate_sample_level=True,
+            >>>     cell_type_identifier="cell_label",
+            >>>     sample_identifier="batch",
+            >>>     covariate_obs=["condition"],
+            >>> )
+            >>> mdata_salm = sccoda.prepare(
+            >>>     mdata_salm, formula="condition", reference_cell_type="Goblet"
+            >>> )
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> sccoda.summary(mdata_salm)
         """
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
@@ -510,28 +492,26 @@ class Sccoda(CompositionalModel2):
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """
-        Example:
-            .. code-block:: python
+        Examples:
+            >>> import pertpy as pt
 
-                import pertpy as pt
-
-                adata = pt.dt.haber_2017_regions()
-                sccoda = pt.tl.Sccoda()
-                adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
-                mdata_salm = sccoda.load(
-                    adata_salm,
-                    type="cell_level",
-                    generate_sample_level=True,
-                    cell_type_identifier="cell_label",
-                    sample_identifier="batch",
-                    covariate_obs=["condition"],
-                )
-                mdata_salm = sccoda.prepare(
-                    mdata_salm, formula="condition", reference_cell_type="Goblet"
-                )
-                sccoda.run_nuts(mdata_salm)
-                sccoda.set_fdr(mdata_salm, est_fdr=0.4)
-                sccoda.summary(mdata_salm)
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata_salm = sccoda.load(
+            >>>     adata_salm,
+            >>>     type="cell_level",
+            >>>     generate_sample_level=True,
+            >>>     cell_type_identifier="cell_label",
+            >>>     sample_identifier="batch",
+            >>>     covariate_obs=["condition"],
+            >>> )
+            >>> mdata_salm = sccoda.prepare(
+            >>>     mdata_salm, formula="condition", reference_cell_type="Goblet"
+            >>> )
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> sccoda.set_fdr(mdata_salm, est_fdr=0.4)
+            >>> sccoda.summary(mdata_salm)
         """
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
