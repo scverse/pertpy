@@ -33,7 +33,7 @@ class PerturbationSpace:
 
     def __init__(
         self,
-        method: Literal["differential", "centroid", "pseudobulk"] = "pseudobulk",
+        method: Literal["differential", "centroid", "pseudobulk", "classifier"] = "pseudobulk",
     ):
         """Initialize PerturbationSpace class.
 
@@ -53,6 +53,10 @@ class PerturbationSpace:
             from pertpy.tools._perturbation_space._simple import PseudobulkSpace
 
             method_fct = PseudobulkSpace()  # type: ignore
+        elif method == "classifier":
+            from pertpy.tools._perturbation_space._discriminator_classifier import DiscriminatorClassifierSpace
+
+            method_fct = DiscriminatorClassifierSpace()  # type: ignore
         else:
             raise ValueError(f"Method {method} not recognized.")
         self.method_fct = method_fct
@@ -105,3 +109,12 @@ class PerturbationSpace:
         }
 
         return self.method_fct(adata, **method_kwargs)  # type: ignore
+    
+    # def train(self):
+        
+    #     if self.method == "classifier":
+    #         self.method_fct.train()
+    #     else:
+    #         raise ValueError(f"Method {self.method} does not need training!.")
+            
+            

@@ -10,6 +10,7 @@ from pertpy.tools._metadata._cell_line import CellLineMetaData
 from pertpy.tools._milo import Milo
 from pertpy.tools._mixscape import Mixscape
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._scgen import SCGEN
 
 try:
