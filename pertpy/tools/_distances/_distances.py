@@ -117,7 +117,7 @@ class Distance:
         groupby: str,
         groups: list[str] | None = None,
         verbose: bool = True,
-        n_jobs: int = 1, 
+        n_jobs: int = 1,
         **kwargs,
     ) -> pd.DataFrame:
         """Get pairwise distances between groups of cells.
