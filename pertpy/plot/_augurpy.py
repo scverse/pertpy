@@ -23,6 +23,7 @@ class AugurpyPlot:
             return_figure: if `True` returns figure of the plot
 
         Returns:
+            Axes of the plot.
         """
         x = results["mean_augur_score1"]
         y = results["mean_augur_score2"]
