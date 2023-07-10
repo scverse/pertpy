@@ -4859,18 +4859,18 @@ test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeo
 
 [[package]]
 name = "scvi-tools"
-version = "1.0.0"
+version = "1.0.2"
 description = "Deep probabilistic analysis of single-cell omics data."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "scvi_tools-1.0.0-py3-none-any.whl", hash = "sha256:08151167a303b360f036553f6c625ad6493a33b7fc5731ff97a2312375fbc12b"},
-    {file = "scvi_tools-1.0.0.tar.gz", hash = "sha256:e4b61ac7cc679fc48f487e8ade030ccd9c7a0fa4f603d5f3ca8327d57d3a764c"},
+    {file = "scvi_tools-1.0.2-py3-none-any.whl", hash = "sha256:1549ac4b4430a03c5c8eea3488e3c846fce9f8aedbb01aef5cf948ecdad5f9d6"},
+    {file = "scvi_tools-1.0.2.tar.gz", hash = "sha256:2aa9b6cb57e8fa8bb90de025c22d01fe1e61607b48df8be4a2d4bc5d60114fd4"},
 ]
 
 [package.dependencies]
 anndata = ">=0.7.5"
-chex = "*"
+chex = "<=0.1.8"
 docrep = ">=0.3.2"
 flax = "*"
 h5py = ">=2.9.0"
@@ -4879,7 +4879,7 @@ jaxlib = ">=0.4.3"
 lightning = ">=2.0,<2.1"
 ml-collections = ">=0.1.1"
 mudata = ">=0.1.2"
-numpy = ">=1.17.0"
+numpy = ">=1.21.0"
 numpyro = ">=0.12.1"
 optax = "*"
 pandas = ">=1.0"
@@ -4894,7 +4894,7 @@ tqdm = ">=4.56.0"
 xarray = ">=2023.2.0"
 
 [package.extras]
-autotune = ["hyperopt (>=0.2)", "ipython", "ray[tune] (>=2.2.0)", "scib-metrics (>=0.3)"]
+autotune = ["hyperopt (>=0.2)", "ipython", "ray[tune] (>=2.5.0)", "scib-metrics (>=0.3)"]
 census = ["cellxgene-census"]
 dev = ["black", "cellxgene-census", "flake8", "genomepy", "jupyter", "loompy (>=3.0.6)", "nbconvert", "nbformat", "pre-commit", "pymde", "pytest", "pytest-cov", "ruff", "scanpy (>=1.6)"]
 docs = ["ipython", "myst-nb", "myst-parser", "sphinx (>=4.1)", "sphinx-autodoc-typehints", "sphinx-book-theme (>=1.0.1)", "sphinx-copybutton", "sphinx-design", "sphinx-hoverxref", "sphinxcontrib-bibtex (>=1.0.0)", "sphinxext-opengraph"]
