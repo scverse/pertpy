@@ -28,7 +28,7 @@ def test_clustering():
 
     # Compute clustering at observation level
     ps = pt.tl.ClusteringSpace(method="K-Means")
-    adata = ps(adata, copy=True)
+    adata = ps(adata, n_cluster=4, copy=True)
     
     ps = pt.tl.ClusteringSpace(method="DBSCAN")
     adata = ps(adata, copy=True)
@@ -38,5 +38,3 @@ def test_clustering():
     
     results = ps.evaluate(adata, true_label_col='perturbations', cluster_col='DBSCAN')
     np.testing.assert_equal(len(results), 3)    
-
-test_clustering()

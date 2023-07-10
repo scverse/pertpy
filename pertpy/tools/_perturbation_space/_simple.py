@@ -63,7 +63,13 @@ class CentroidSpace:
 class PseudobulkSpace:
     """Determines pseudobulks of an AnnData object."""
 
-    def __call__(self, adata: AnnData, target_col: str = "perturbations", layer_key: str = None, *args, **kwargs):
+    def __call__(
+        self, 
+        adata: AnnData, 
+        target_col: str = "perturbations", 
+        layer_key: str = None, 
+        *args, 
+        **kwargs):
         
         # Create a DataFrame from the .obs attribute of the AnnData object
         obs_df = adata.obs
@@ -99,8 +105,19 @@ class PseudobulkSpace:
 class KMeansSpace:
     """Cluster the given data using K-Means"""
     
-    def __call__(self, adata: AnnData, layer_key: str = None, embedding_key: str = "X_umap", n_clusters = 3, *args, **kwargs) -> AnnData:
+    def __call__(
+        self, 
+        adata: AnnData, 
+        layer_key: str = None, 
+        embedding_key: str = None, 
+        copy: bool = False,
+        n_clusters = 3, 
+        *args, 
+        **kwargs) -> AnnData:
         # TODO pass kwargs
+        
+        if copy:
+            adata = adata.copy()
         
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():
@@ -126,8 +143,18 @@ class KMeansSpace:
 class DBScanSpace:
     """Cluster the given data using K-Means"""
     
-    def __call__(self, adata: AnnData, layer_key: str = None, embedding_key: str = "X_umap", *args, **kwargs) -> AnnData:
+    def __call__(
+        self, 
+        adata: AnnData, 
+        layer_key: str = None, 
+        embedding_key: str = "X_umap", 
+        copy: bool = True,
+        *args, 
+        **kwargs) -> AnnData:
         # TODO pass kwargs
+        
+        if copy:
+            adata = adata.copy()
         
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():

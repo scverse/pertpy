@@ -110,11 +110,5 @@ class PerturbationSpace:
 
         return self.method_fct(adata, **method_kwargs)  # type: ignore
     
-    # def train(self):
-        
-    #     if self.method == "classifier":
-    #         self.method_fct.train()
-    #     else:
-    #         raise ValueError(f"Method {self.method} does not need training!.")
             
             
