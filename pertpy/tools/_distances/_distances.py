@@ -117,6 +117,7 @@ class Distance:
         groupby: str,
         groups: list[str] | None = None,
         verbose: bool = True,
+        n_jobs: int = 1,
         **kwargs,
     ) -> pd.DataFrame:
         """Get pairwise distances between groups of cells.
@@ -148,7 +149,7 @@ class Distance:
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
-                self.precompute_distances(adata, **kwargs)
+                self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = adata.obsp[f"{self.obsm_key}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
@@ -179,7 +180,7 @@ class Distance:
         df.name = f"pairwise {self.metric}"
         return df
 
-    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean") -> None:
+    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", n_jobs: int = None) -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
 
         The precomputed distances are stored in adata.obsp under the key
@@ -192,7 +193,7 @@ class Distance:
         """
         # Precompute the pairwise distances
         cells = adata.obsm[self.obsm_key].copy()
-        pwd = pairwise_distances(cells, cells, metric=cell_wise_metric)
+        pwd = pairwise_distances(cells, cells, metric=cell_wise_metric, n_jobs=n_jobs)
         # Write to adata.obsp
         adata.obsp[f"{self.obsm_key}_predistances"] = pwd
 

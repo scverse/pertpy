@@ -24,14 +24,11 @@ class DistanceTest:
         alpha: Significance level. Defaults to 0.05.
         correction: Multiple testing correction method. Defaults to 'holm-sidak'.
 
-    Example:
-        .. code-block:: python
-
-            import pertpy as pt
-
-            adata = pt.dt.distance_example_data()
-            etest = pt.tl.DistanceTest('edistance', n_perms=1000)
-            tab = etest(adata, groupby='perturbation', contrast='control')
+    Examples:
+        >>> import pertpy as pt
+        >>> adata = pt.dt.distance_example_data()
+        >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
+        >>> tab = etest(adata, groupby='perturbation', contrast='control')
     """
 
     def __init__(
@@ -68,14 +65,11 @@ class DistanceTest:
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.distance_example_data()
-                etest = pt.tl.DistanceTest('edistance', n_perms=1000)
-                tab = etest(adata, groupby='perturbation', contrast='control')
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
+            >>> tab = etest(adata, groupby='perturbation', contrast='control')
         """
         if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
@@ -194,7 +188,6 @@ class DistanceTest:
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
         """
-
         distance = Distance(self.metric, self.obsm_key)
         if not distance.metric_fct.accepts_precomputed:
             raise ValueError(f"Metric {self.metric} does not accept precomputed distances.")

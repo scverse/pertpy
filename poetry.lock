@@ -3412,13 +3412,13 @@ dev = ["black", "mypy", "pytest"]
 
 [[package]]
 name = "ott-jax"
-version = "0.4.1"
+version = "0.4.2"
 description = "Optimal Transport Tools in JAX."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ott-jax-0.4.1.tar.gz", hash = "sha256:00381149f2414ed0f4a73a3e1613922a772b5ada550b16706dd117f8c903bba6"},
-    {file = "ott_jax-0.4.1-py3-none-any.whl", hash = "sha256:ef291036d859b0f31e5682b9ad293e513d3fa3ba56cb101283b844b5e10e784c"},
+    {file = "ott-jax-0.4.2.tar.gz", hash = "sha256:071fdd5fca23558bbb0c71f7251de5549ea40cca25c108262c01e6f3de0ba5b9"},
+    {file = "ott_jax-0.4.2-py3-none-any.whl", hash = "sha256:ddede698fc1748021cb4ad1c84ee8a87fdcab8925d7447a892528db663fd0a84"},
 ]
 
 [package.dependencies]
@@ -3427,7 +3427,7 @@ jax = ">=0.1.67"
 jaxlib = ">=0.1.47"
 jaxopt = ">=0.5.5"
 lineax = {version = ">=0.0.1", markers = "python_version >= \"3.9\""}
-numpy = ">=1.18.4,<1.23.0 || >1.23.0"
+numpy = ">=1.18.4,<1.25.0 || >1.25.0"
 optax = ">=0.1.1"
 
 [package.extras]
@@ -4303,6 +4303,7 @@ optional = false
 python-versions = ">=3.6"
 files = [
     {file = "python-igraph-0.10.4.tar.gz", hash = "sha256:b4458f0429e3eaf7d5510c0fc5e00cdf08d0ff2f2a9110ed0f5aa567872fc02c"},
+    {file = "python_igraph-0.10.4-py3-none-any.whl", hash = "sha256:6c7201635e18a09bf28b4f5c6780e76aaa704ef1f5e12e1bc9d61eb1467234e5"},
 ]
 
 [package.dependencies]
@@ -4372,13 +4373,13 @@ files = [
 
 [[package]]
 name = "pyupgrade"
-version = "3.7.0"
+version = "3.9.0"
 description = "A tool to automatically upgrade syntax for newer versions."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.8.1"
 files = [
-    {file = "pyupgrade-3.7.0-py2.py3-none-any.whl", hash = "sha256:696c1e6ebec6697297d3e45ae511ecedb5b17d31e5212a20bc892ba51b1c0b6d"},
-    {file = "pyupgrade-3.7.0.tar.gz", hash = "sha256:94841f8550547349aec108ad03fcdb19b64e4ef68fd21f5d0038826eb6dbe5f3"},
+    {file = "pyupgrade-3.9.0-py2.py3-none-any.whl", hash = "sha256:1807e324a1432f05a830bc1847095c90b604c91de66237fff55cb98b99d4da10"},
+    {file = "pyupgrade-3.9.0.tar.gz", hash = "sha256:a4c7132f4614f7acbacb756275c8a7881ad418f8a1c6ff6512c30dcf4c98f500"},
 ]
 
 [package.dependencies]
@@ -4822,30 +4823,30 @@ test = ["pytest-cov"]
 
 [[package]]
 name = "scipy"
-version = "1.11.0"
+version = "1.11.1"
 description = "Fundamental algorithms for scientific computing in Python"
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "scipy-1.11.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:2e4f14c11fbf825319dbd7f467639a241e7c956c34edb1e036ec7bb6271e4f7b"},
-    {file = "scipy-1.11.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:b269ed44e2e2e43611f2ae95ba551fd98abbdc1a7ea8268f72f75876982368c4"},
-    {file = "scipy-1.11.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2c29bae479b17d85208dfdfc67e50d5944ee23211f236728aadde9b0b7c1c33e"},
-    {file = "scipy-1.11.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a53f9cebcfda6158c241c35a559407a4ef6b8cb0863eb4144958fe0a0b7c3dae"},
-    {file = "scipy-1.11.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:ebf4b2ea26d50312731ddba2406389c5ddcbff9d777cf3277ea11decc81e5dfb"},
-    {file = "scipy-1.11.0-cp310-cp310-win_amd64.whl", hash = "sha256:894ced9a2cdb050ff5e392f274617af46dca896d5c9112fa4a2019929554d321"},
-    {file = "scipy-1.11.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:7a92bd3cd4acad2e0e0b360176d5ec68b100983c8145add8a8233acddf4e5fcc"},
-    {file = "scipy-1.11.0-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:586608ea35206257d4e0ce6f154a6cfef71723b2c1f6d40de5e0b0e8a81cd2ff"},
-    {file = "scipy-1.11.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d8e631c3c49c24f30828580b8126fe3be5cca5409dad5b797418a5b8965eeafa"},
-    {file = "scipy-1.11.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ccc70892ea674f93183c5c4139557b611e42f644dd755da4b19ca974ab770672"},
-    {file = "scipy-1.11.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:80015b8928f91bd40377b2b1010ba2e09b03680cbfc291208740494aeb8debf2"},
-    {file = "scipy-1.11.0-cp311-cp311-win_amd64.whl", hash = "sha256:6302c7cba5bf99c901653ff158746625526cc438f058bce41514d7469b79b2c3"},
-    {file = "scipy-1.11.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:c61ea63124da6a3cff38126426912cc86420898b4902a9bc5e5b6524547a6dcb"},
-    {file = "scipy-1.11.0-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:684d44607eacd5dd367c7a9e76e922523fa9c0a7f2379a4d0fc4d70d751464cc"},
-    {file = "scipy-1.11.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f0c9c160d117fe71cd2a12ef21cce8e0475ade2fd97c761ef327b9839089bd16"},
-    {file = "scipy-1.11.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:83867a63515c4e3fce3272d81200dda614d70f4c3a22f047d84021bfe83d7929"},
-    {file = "scipy-1.11.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:6666a1e31b2123a077f0dc7ab1053e36479cfd457fb9f5c367e7198505c6607a"},
-    {file = "scipy-1.11.0-cp39-cp39-win_amd64.whl", hash = "sha256:fad4006248513528e0c496de295a9f4d2b65086cc0e388f748e7dbf49fa12760"},
-    {file = "scipy-1.11.0.tar.gz", hash = "sha256:f9b0248cb9d08eead44cde47cbf6339f1e9aa0dfde28f5fb27950743e317bd5d"},
+    {file = "scipy-1.11.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:aec8c62fbe52914f9cf28d846cf0401dd80ab80788bbab909434eb336ed07c04"},
+    {file = "scipy-1.11.1-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:3b9963798df1d8a52db41a6fc0e6fa65b1c60e85d73da27ae8bb754de4792481"},
+    {file = "scipy-1.11.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3e8eb42db36526b130dfbc417609498a6192381abc1975b91e3eb238e0b41c1a"},
+    {file = "scipy-1.11.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:366a6a937110d80dca4f63b3f5b00cc89d36f678b2d124a01067b154e692bab1"},
+    {file = "scipy-1.11.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:08d957ca82d3535b3b9ba6c8ff355d78fe975271874e2af267cb5add5bd78625"},
+    {file = "scipy-1.11.1-cp310-cp310-win_amd64.whl", hash = "sha256:e866514bc2d660608447b6ba95c8900d591f2865c07cca0aa4f7ff3c4ca70f30"},
+    {file = "scipy-1.11.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ba94eeef3c9caa4cea7b402a35bb02a5714ee1ee77eb98aca1eed4543beb0f4c"},
+    {file = "scipy-1.11.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:512fdc18c65f76dadaca139348e525646d440220d8d05f6d21965b8d4466bccd"},
+    {file = "scipy-1.11.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cce154372f0ebe88556ed06d7b196e9c2e0c13080ecb58d0f35062dc7cc28b47"},
+    {file = "scipy-1.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b4bb943010203465ac81efa392e4645265077b4d9e99b66cf3ed33ae12254173"},
+    {file = "scipy-1.11.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:249cfa465c379c9bb2c20123001e151ff5e29b351cbb7f9c91587260602c58d0"},
+    {file = "scipy-1.11.1-cp311-cp311-win_amd64.whl", hash = "sha256:ffb28e3fa31b9c376d0fb1f74c1f13911c8c154a760312fbee87a21eb21efe31"},
+    {file = "scipy-1.11.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:39154437654260a52871dfde852adf1b93b1d1bc5dc0ffa70068f16ec0be2624"},
+    {file = "scipy-1.11.1-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:b588311875c58d1acd4ef17c983b9f1ab5391755a47c3d70b6bd503a45bfaf71"},
+    {file = "scipy-1.11.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d51565560565a0307ed06fa0ec4c6f21ff094947d4844d6068ed04400c72d0c3"},
+    {file = "scipy-1.11.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b41a0f322b4eb51b078cb3441e950ad661ede490c3aca66edef66f4b37ab1877"},
+    {file = "scipy-1.11.1-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:396fae3f8c12ad14c5f3eb40499fd06a6fef8393a6baa352a652ecd51e74e029"},
+    {file = "scipy-1.11.1-cp39-cp39-win_amd64.whl", hash = "sha256:be8c962a821957fdde8c4044efdab7a140c13294997a407eaee777acf63cbf0c"},
+    {file = "scipy-1.11.1.tar.gz", hash = "sha256:fb5b492fa035334fd249f0973cc79ecad8b09c604b42a127a677b45a9a3d4289"},
 ]
 
 [package.dependencies]
@@ -4858,18 +4859,18 @@ test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeo
 
 [[package]]
 name = "scvi-tools"
-version = "1.0.0"
+version = "1.0.2"
 description = "Deep probabilistic analysis of single-cell omics data."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "scvi_tools-1.0.0-py3-none-any.whl", hash = "sha256:08151167a303b360f036553f6c625ad6493a33b7fc5731ff97a2312375fbc12b"},
-    {file = "scvi_tools-1.0.0.tar.gz", hash = "sha256:e4b61ac7cc679fc48f487e8ade030ccd9c7a0fa4f603d5f3ca8327d57d3a764c"},
+    {file = "scvi_tools-1.0.2-py3-none-any.whl", hash = "sha256:1549ac4b4430a03c5c8eea3488e3c846fce9f8aedbb01aef5cf948ecdad5f9d6"},
+    {file = "scvi_tools-1.0.2.tar.gz", hash = "sha256:2aa9b6cb57e8fa8bb90de025c22d01fe1e61607b48df8be4a2d4bc5d60114fd4"},
 ]
 
 [package.dependencies]
 anndata = ">=0.7.5"
-chex = "*"
+chex = "<=0.1.8"
 docrep = ">=0.3.2"
 flax = "*"
 h5py = ">=2.9.0"
@@ -4878,7 +4879,7 @@ jaxlib = ">=0.4.3"
 lightning = ">=2.0,<2.1"
 ml-collections = ">=0.1.1"
 mudata = ">=0.1.2"
-numpy = ">=1.17.0"
+numpy = ">=1.21.0"
 numpyro = ">=0.12.1"
 optax = "*"
 pandas = ">=1.0"
@@ -4893,7 +4894,7 @@ tqdm = ">=4.56.0"
 xarray = ">=2023.2.0"
 
 [package.extras]
-autotune = ["hyperopt (>=0.2)", "ipython", "ray[tune] (>=2.2.0)", "scib-metrics (>=0.3)"]
+autotune = ["hyperopt (>=0.2)", "ipython", "ray[tune] (>=2.5.0)", "scib-metrics (>=0.3)"]
 census = ["cellxgene-census"]
 dev = ["black", "cellxgene-census", "flake8", "genomepy", "jupyter", "loompy (>=3.0.6)", "nbconvert", "nbformat", "pre-commit", "pymde", "pytest", "pytest-cov", "ruff", "scanpy (>=1.6)"]
 docs = ["ipython", "myst-nb", "myst-parser", "sphinx (>=4.1)", "sphinx-autodoc-typehints", "sphinx-book-theme (>=1.0.1)", "sphinx-copybutton", "sphinx-design", "sphinx-hoverxref", "sphinxcontrib-bibtex (>=1.0.0)", "sphinxext-opengraph"]
