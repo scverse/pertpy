@@ -6,9 +6,11 @@ __version__ = "0.5.0"
 
 import warnings
 
+from matplotlib import MatplotlibDeprecationWarning
 from numba import NumbaDeprecationWarning
 
 warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
+warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
 from . import data as dt
 from . import plot as pl

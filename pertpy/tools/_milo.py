@@ -395,7 +395,9 @@ class Milo:
 
         anno_dummies = pd.get_dummies(adata.obs[anno_col])
         anno_count = adata.obsm["nhoods"].T.dot(csr_matrix(anno_dummies.values))
-        anno_frac = np.array(anno_count / anno_count.sum(1))
+        anno_count_dense = anno_count.toarray()
+        anno_sum = anno_count_dense.sum(1)
+        anno_frac = np.divide(anno_count_dense, anno_sum[:, np.newaxis])
 
         anno_frac_dataframe = pd.DataFrame(anno_frac, columns=anno_dummies.columns, index=sample_adata.var_names)
         sample_adata.varm["frac_annotation"] = anno_frac_dataframe.values
