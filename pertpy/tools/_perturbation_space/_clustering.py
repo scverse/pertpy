@@ -1,43 +1,44 @@
-from typing import Literal, List
+from typing import List, Literal
 
 from anndata import AnnData
 from sklearn.metrics import pairwise_distances
 
-class ClusteringSpace:
+from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+
+
+class ClusteringSpace(PerturbationSpace):
     """Applies various clustering techniques to an embedding."""
 
     def __init__(
-        self,
-        method: Literal["dendrogram", "k-means", "dbscan", "spectral clustering", "gaussian mixture"]
-        ):
-
+        self, method: Literal["dendrogram", "k-means", "dbscan", "spectral clustering", "gaussian mixture"] = "k-means"
+    ):
         """Initialize ClusteringSpace class.
-            Args:
-                adata: The AnnData object with the data to cluster.
-                method: ClusteringSpace method to use. Defaults to 'K-Means'.
+
+        Args:
+            method: ClusteringSpace method to use. Defaults to 'K-Means'.
         """
 
-        if method == "K-Means":
+        if method.lower() == "k-means":
             from pertpy.tools._perturbation_space._simple import KMeansSpace
 
-            method_fct = KMeansSpace()
-        elif method == "DBSCAN":
+            method_fct = KMeansSpace()  # type: ignore
+        elif method.lower() == "dbscan":
             from pertpy.tools._perturbation_space._simple import DBScanSpace
 
             method_fct = DBScanSpace()  # type: ignore
-        elif method == "pseudobulk":
+        elif method.lower() == "pseudobulk":
             from pertpy.tools._perturbation_space._simple import PseudobulkSpace
 
             method_fct = PseudobulkSpace()  # type: ignore
-        elif method == "classifier":
+        elif method.lower() == "classifier":
             from pertpy.tools._perturbation_space._discriminator_classifier import DiscriminatorClassifierSpace
 
             method_fct = DiscriminatorClassifierSpace()  # type: ignore
         else:
             raise ValueError(f"Method {method} not recognized.")
-        self.method_fct = method_fct   
-        
-    def __call__(
+        self.method_fct = method_fct
+
+    def __call__(  # type: ignore
         self,
         adata: AnnData,
         *,
@@ -79,47 +80,49 @@ class ClusteringSpace:
         }
 
         return self.method_fct(adata, **method_kwargs)  # type: ignore
-    
+
     def evaluate(
-        self, 
+        self,
         adata: AnnData,
         true_label_col: str,
         cluster_col: str,
-        metrics: List[str] = ['nmi', 'ari', 'asw'],
+        metrics: List[str] = None,
         **kwargs,
     ):
         """Evaluation of previously computed clustering against ground truth labels
 
         Args:
-            adata (AnnData): adata that contains the clustered data and the cluster labels
-            true_label_col (str): ground truth labels
-            cluster_col (str): cluster computed labels
-            metrics (List[str], optional): Defaults to ['nmi', 'ari', 'asw'].
+            adata: adata that contains the clustered data and the cluster labels
+            true_label_col: ground truth labels
+            cluster_col: cluster computed labels
+            metrics: Defaults to ['nmi', 'ari', 'asw'].
         """
-        
+        if metrics is None:
+            metrics = ["nmi", "ari", "asw"]
         true_labels = adata.obs[true_label_col]
-        
+
         results = {}
         for metric in metrics:
-            if metric == 'nmi':
+            if metric == "nmi":
                 from pertpy.tools._perturbation_space._metrics import nmi
-                
+
                 nmi_score = nmi(true_labels=true_labels, predicted_labels=adata.obs[cluster_col], **kwargs)
-                results['nmi'] = nmi_score
-                
-            if metric == 'ari':
+                results["nmi"] = nmi_score
+
+            if metric == "ari":
                 from pertpy.tools._perturbation_space._metrics import ari
-                
+
                 ari_score = ari(true_labels=true_labels, predicted_labels=adata.obs[cluster_col])
-                results['ari'] = ari_score
-                
-            if metric == 'asw':
+                results["ari"] = ari_score
+
+            if metric == "asw":
                 from pertpy.tools._perturbation_space._metrics import asw
-                #TODO pass kwargs
-                
-                distances = pairwise_distances(self.method_fct.X, metric='euclidean')
+
+                # TODO pass kwargs
+
+                distances = pairwise_distances(self.method_fct.X, metric="euclidean")
 
                 asw_score = asw(pairwise_distances=distances, labels=true_labels)
-                results['asw'] = asw_score
-                
+                results["asw"] = asw_score
+
         return results
