@@ -3412,13 +3412,13 @@ dev = ["black", "mypy", "pytest"]
 
 [[package]]
 name = "ott-jax"
-version = "0.4.1"
+version = "0.4.2"
 description = "Optimal Transport Tools in JAX."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ott-jax-0.4.1.tar.gz", hash = "sha256:00381149f2414ed0f4a73a3e1613922a772b5ada550b16706dd117f8c903bba6"},
-    {file = "ott_jax-0.4.1-py3-none-any.whl", hash = "sha256:ef291036d859b0f31e5682b9ad293e513d3fa3ba56cb101283b844b5e10e784c"},
+    {file = "ott-jax-0.4.2.tar.gz", hash = "sha256:071fdd5fca23558bbb0c71f7251de5549ea40cca25c108262c01e6f3de0ba5b9"},
+    {file = "ott_jax-0.4.2-py3-none-any.whl", hash = "sha256:ddede698fc1748021cb4ad1c84ee8a87fdcab8925d7447a892528db663fd0a84"},
 ]
 
 [package.dependencies]
@@ -3427,7 +3427,7 @@ jax = ">=0.1.67"
 jaxlib = ">=0.1.47"
 jaxopt = ">=0.5.5"
 lineax = {version = ">=0.0.1", markers = "python_version >= \"3.9\""}
-numpy = ">=1.18.4,<1.23.0 || >1.23.0"
+numpy = ">=1.18.4,<1.25.0 || >1.25.0"
 optax = ">=0.1.1"
 
 [package.extras]
