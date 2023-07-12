@@ -1,4 +1,5 @@
 from typing import List, Literal
+from abc import ABC, abstractmethod
 
 from anndata import AnnData
 from sklearn.metrics import pairwise_distances
@@ -6,80 +7,12 @@ from sklearn.metrics import pairwise_distances
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
 
-class ClusteringSpace(PerturbationSpace):
+class ClusteringSpace(ABC):
     """Applies various clustering techniques to an embedding."""
-
-    def __init__(
-        self, method: Literal["dendrogram", "k-means", "dbscan", "spectral clustering", "gaussian mixture"] = "k-means"
-    ):
-        """Initialize ClusteringSpace class.
-
-        Args:
-            method: ClusteringSpace method to use. Defaults to 'K-Means'.
-        """
-
-        if method.lower() == "k-means":
-            from pertpy.tools._perturbation_space._simple import KMeansSpace
-
-            method_fct = KMeansSpace()  # type: ignore
-        elif method.lower() == "dbscan":
-            from pertpy.tools._perturbation_space._simple import DBScanSpace
-
-            method_fct = DBScanSpace()  # type: ignore
-        elif method.lower() == "pseudobulk":
-            from pertpy.tools._perturbation_space._simple import PseudobulkSpace
-
-            method_fct = PseudobulkSpace()  # type: ignore
-        elif method.lower() == "classifier":
-            from pertpy.tools._perturbation_space._discriminator_classifier import DiscriminatorClassifierSpace
-
-            method_fct = DiscriminatorClassifierSpace()  # type: ignore
-        else:
-            raise ValueError(f"Method {method} not recognized.")
-        self.method_fct = method_fct
-
-    def __call__(  # type: ignore
-        self,
-        adata: AnnData,
-        *,
-        reference_key: str = "control",
-        layer_key: str = None,
-        new_layer_key: str = None,
-        embedding_key: str = None,
-        new_embedding_key: str = None,
-        copy: bool = False,
-        **kwargs,
-    ) -> AnnData:
-        """Compute clustering space.
-
-        Args:
-            adata: The AnnData object that contains the data.
-            layer_key: The layer of which to use the transcription values for to determine the perturbation space.
-            embedding_key: The obsm matrix of which to use the embedding values for to determine the perturbation space.
-
-        Returns:
-            The determined perturbation space inside an AnnData object.
-            # TODO add more detail
-
-        Examples:
-            >>> import pertpy as pt
-
-            >>> adata = pt.dt.papalexi_2021()["rna"]
-            >>> clsp = pt.tl.ClusteringSpace(method='K-Means')
-            >>> perturbation_space = clsp()
-            >>> TODO add something here
-        """
-        method_kwargs = {
-            "reference_key": reference_key,
-            "layer_key": layer_key,
-            "new_layer_key": new_layer_key,
-            "embedding_key": embedding_key,
-            "new_embedding_key": new_embedding_key,
-            "copy": copy,
-            **kwargs,
-        }
-
-        return self.method_fct(adata, **method_kwargs)  # type: ignore
+    
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError
 
     def evaluate(
         self,
@@ -120,7 +53,10 @@ class ClusteringSpace(PerturbationSpace):
 
                 # TODO pass kwargs
 
-                distances = pairwise_distances(self.method_fct.X, metric="euclidean")
+                if 'distances' not in kwargs.keys():
+                    distances = pairwise_distances(self.X, metric="euclidean")
+                else:
+                    distances = kwargs['distances']
 
                 asw_score = asw(pairwise_distances=distances, labels=true_labels)
                 results["asw"] = asw_score
