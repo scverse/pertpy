@@ -13,7 +13,7 @@ from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._discriminator_classifier import DiscriminatorClassifierSpace
 from pertpy.tools._perturbation_space._simple import (
     CentroidSpace,
-    DBScanSpace,
+    DBSCANSpace,
     DifferentialSpace,
     KMeansSpace,
     PseudobulkSpace,
