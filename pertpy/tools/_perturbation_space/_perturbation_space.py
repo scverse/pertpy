@@ -26,14 +26,17 @@ class PerturbationSpace(ABC):
         new_embedding_key: str = "differential_response",
         copy: bool = False,
     ):
-        """
-            Takes as input an Anndata object of size cells x genes. 
-            The .obs column 'target_col' stores the label of the perturbation applied to each cell.
-            The label 'reference_key' indicates the control perturbation
-            If 'layer_key' is specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
-            If 'embedding_key' is specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
-            If 'copy' is True, create a new Anndata, otherwise update the existent
-            Return a Anndata of size cells x genes with the differential expression in the selected .X, layer or embedding.
+        """Subtract mean of the control from the perturbation.
+        
+        Args:
+            adata: Anndata object of size cells x genes
+            target_col: .obs column that stores the label of the perturbation applied to each cell.
+            reference_key: indicates the control perturbation
+            layer_key: if specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
+            new_layer_key: the results are stored in the given layer 
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
+            new_embedding_key: the results are stored in a new embedding named as 'new_embedding_key'
+            copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
         """
         
         if reference_key not in adata.obs[target_col].unique():

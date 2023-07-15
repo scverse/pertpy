@@ -26,18 +26,34 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         target_col: str = "perturbations",
         layer_key: str = None,
         hidden_dim: list[int] = None,
-        dropout: int = 0,
+        dropout: float = 0.,
         batch_norm: bool = True,
-        *args,
-        **kwargs,
+        batch_size: int = 256,
+        test_split_size: float = 0.2,
+        validation_split_size: float = 0.25
     ):
+        """It creates a model with the specified parameters (hidden_dim, dropout, batch_norm).
+        It creates dataloaders and fixes the unbalance in the classes due to control.
+        Uses GPU if available
+        
+        Args:
+            adata: anndata of size cells x genes
+            target_col: .obs column that stores the perturbations. Defaults to "perturbations".
+            layer_key: layer to use . Defaults to None.
+            hidden_dim: list of hidden layers of the neural network. For instance: [512, 256]. 
+            dropout: amount of dropout applied, constant for all layers. Defaults to 0.
+            batch_norm: Defaults to True.
+            batch_size: Defaults to 256.
+            test_size_split: Default to 0.2
+            validation_size_split: size of the validation split taking into account that is taking with respect to the resultant train split. Default to 0.25.
+        """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
 
         if hidden_dim is None:
             hidden_dim = [512]
 
-        # Handling classes
+        # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
         labels = adata.obs[target_col]
         label_encoder = LabelEncoder()
@@ -48,48 +64,63 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         X = list(range(0, adata.n_obs))
         y = adata.obs[target_col]
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split_size, stratify=y)
         X_train, X_val, y_train, y_val = train_test_split(
-            X_train, y_train, test_size=0.25, stratify=y_train
-        )  # 0.8 x 0.25 = 0.2
+            X_train, y_train, test_size=validation_split_size, stratify=y_train
+        ) 
+        # val_split_size_total = (1 - test_split_size) * validation_split_size
 
-        train_dataset = PerturbationDataset(
+        train_dataset = PLDataset(
             adata=adata[X_train], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
-        val_dataset = PerturbationDataset(
+        val_dataset = PLDataset(
             adata=adata[X_val], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
-        test_dataset = PerturbationDataset(
+        test_dataset = PLDataset(
             adata=adata[X_test], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )  # we don't need to pass y_test since the label selection is done inside
 
         # Fix class unbalance (likely to happen in perturbation datasets)
+        # Usually control cells are overrepresented in such amount that predicting control all time would give good results
+        # Cells with rare perturbations are sampled more
         class_weights = 1.0 / torch.bincount(torch.tensor(train_dataset.labels.values))
         train_weights = class_weights[train_dataset.labels]
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
-        self.train_dataloader = DataLoader(train_dataset, batch_size=128, sampler=train_sampler, num_workers=4)
-        self.test_dataloader = DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=4)
-        self.valid_dataloader = DataLoader(val_dataset, batch_size=128, shuffle=True, num_workers=4)
+        self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=4)
+        self.test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+        self.valid_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
         # Define the network
         sizes = [adata.n_vars] + hidden_dim + [n_classes]
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.net = MLP(sizes=sizes, dropout=dropout, batch_norm=batch_norm, device=self.device)
 
-        # Define total dataset and dataloader for getting embeddings
-        total_dataset = PerturbationDataset(
+        # Define a dataset that gathers all the data and dataloader for getting embeddings
+        total_dataset = PLDataset(
             adata=adata, target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
-        self.total_dataloader = DataLoader(total_dataset, batch_size=512, shuffle=False, num_workers=4)
+        self.entire_dataset = DataLoader(total_dataset, batch_size=batch_size*2, shuffle=False, num_workers=4)
 
         return self
 
-    def train(self, max_epochs: int = 40, val_check: int = 5, patience: int = 2):
+    def train(self, 
+              max_epochs: int = 40, 
+              val_epochs_check: int = 5, 
+              patience: int = 2):
+        
+        """Trains and test the defined model in the _call_ step. 
+        
+            Args:
+                max_epochs: max epochs for training. Default to 40
+                val_epochs_check: check in validation dataset each val_epochs_check epochs
+                patience: patience before the early stopping flag is activated
+        """
+        
         self.trainer = pl.Trainer(
             min_epochs=1,
             max_epochs=max_epochs,
-            check_val_every_n_epoch=val_check,
+            check_val_every_n_epoch=val_epochs_check,
             callbacks=[EarlyStopping(monitor="validation_loss", mode="min", patience=patience)],
             accelerator="cpu",
         )
@@ -102,9 +133,14 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         self.trainer.test(model=self.model, dataloaders=self.test_dataloader)
 
     def get_embeddings(self):
+        
+        """Access to the embeddings of the last layer and extract them as perturbational embeddings.
+        Returns an AnnData whose X is the perturbational embeddings and whose .obs['perturbations'] are the names of the perturbations.
+        """
+        
         with torch.no_grad():
             self.model.eval()
-            for dataset_count, batch in enumerate(self.total_dataloader):
+            for dataset_count, batch in enumerate(self.entire_dataset):
                 emb, y = self.model.get_embeddings(batch)
                 batch_adata = AnnData(X=emb.cpu().numpy())
                 batch_adata.obs["perturbations"] = y
@@ -132,14 +168,12 @@ class MLP(torch.nn.Module):
     ) -> None:
         """
         Args:
-            sizes (list): size of layers
-            dropout (int, optional): Dropout probability. Defaults to 0.0.
-            batch_norm (bool, optional): batch norm. Defaults to True.
-            layer_norm (bool, optional): layern norm, common in Transformers
-            last_layer_act (str, optional): activation function of last layer. Defaults to "linear".
-            device (torch.device, optional)
-        Raises:
-            ValueError: _description_
+            sizes: size of layers
+            dropout: Dropout probability. Defaults to 0.0.
+            batch_norm: batch norm. Defaults to True.
+            layer_norm: layern norm, common in Transformers
+            last_layer_act: activation function of last layer. Defaults to "linear".
+            device: Default to 'cpu'
         """
         super().__init__()
         layers = []
@@ -190,7 +224,7 @@ def init_weights(m):
         m.bias.data.fill_(0.01)
 
 
-class PerturbationDataset(Dataset):
+class PLDataset(Dataset):
     """
     Dataset for perturbation classification. Needed for training a model that classifies the perturbed cells and takes as perturbation embedding the second to last layer.
     """
@@ -265,13 +299,7 @@ class PerturbationClassifier(pl.LightningModule):
             last_layer_act=self.hparams.last_layer_act,
         )
 
-        print(self.net, flush=True)
-
     def forward(self, x):
-        """
-        Inputs:
-            x - Input features of shape [Batch, SeqLen, 1]
-        """
         x = self.net(x)
         return x
 

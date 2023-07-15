@@ -14,7 +14,7 @@ class ClusteringSpace(ABC):
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
 
-    def evaluate(
+    def evaluate_clustering(
         self,
         adata: AnnData,
         true_label_col: str,
@@ -22,13 +22,14 @@ class ClusteringSpace(ABC):
         metrics: List[str] = None,
         **kwargs,
     ):
-        """Evaluation of previously computed clustering against ground truth labels
+        """Evaluation of previously computed clustering against ground truth labels. It returns the
+        Normalized Mutual Info score (nmi), Adjusted Rank Index (ari) and Average-Width Silhouette score (aws).
 
         Args:
             adata: adata that contains the clustered data and the cluster labels
             true_label_col: ground truth labels
             cluster_col: cluster computed labels
-            metrics: Defaults to ['nmi', 'ari', 'asw'].
+            metrics: Metrics to compute defaults to ['nmi', 'ari', 'asw'].
         """
         if metrics is None:
             metrics = ["nmi", "ari", "asw"]

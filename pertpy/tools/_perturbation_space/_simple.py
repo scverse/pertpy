@@ -22,15 +22,17 @@ class DifferentialSpace(PerturbationSpace):
         copy: bool = False,
         **kwargs,
     ):
-        """
-            Takes as input an Anndata object of size cells x genes. 
-            The .obs column 'target_col' stores the label of the perturbation applied to each cell.
-            The label 'reference_key' indicates the control perturbation
-            If 'layer_key' is specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
-            If 'layer_key' and if 'new_layer_key', the results are stored in a new layer named as 'new_layer_key'
-            If 'embedding_key' is specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
-            If 'embedding_key' and if 'new_embedding_key', the results are stored in a new embedding named as 'new_embedding_key'
-            If copy is True, returns a new Anndata of same size with the new column; otherwise it updates the initial adata
+        """Subtract mean of the control from the perturbation.
+        
+        Args:
+            adata: Anndata object of size cells x genes
+            target_col: .obs column that stores the label of the perturbation applied to each cell.
+            reference_key: indicates the control perturbation
+            layer_key: if specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
+            new_layer_key: the results are stored in the given layer 
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
+            new_embedding_key: the results are stored in a new embedding named as 'new_embedding_key'
+            copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
         """
         
         if reference_key not in adata.obs[target_col].unique():
@@ -94,18 +96,16 @@ class PseudobulkSpace(PerturbationSpace):
         layer_key: str = None, 
         embedding_key: str = None,
         **kwargs):  # type: ignore
-        """
-            Takes as input an Anndata object of size cells x genes. 
-            The .obs column 'target_col' stores the label of the perturbation applied to each cell.
-            If 'layer_key' is specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
-            If 'embedding_key' is specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
-            Returns an new Anndata object in which each observation is a perturbation and its X the pseudobulk
-        """
+        """Determines pseudobulks of an AnnData object.
         
-        # Create a DataFrame from the .obs attribute of the AnnData object
-        obs_df = adata.obs
-        # Group the observations based on the 'condition' column
-        grouped = obs_df.groupby(target_col)
+        Args:
+            adata: Anndata object of size cells x genes
+            target_col: .obs column that stores the label of the perturbation applied to each cell.
+            layer_key: if specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
+        """
+    
+        grouped = adata.obs.groupby(target_col)
 
         if layer_key:
             if layer_key in adata.layers.keys():
@@ -124,24 +124,24 @@ class PseudobulkSpace(PerturbationSpace):
             if embedding_key in adata.obsm.keys():
                 X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
                 index = []
-                i = 0
+                pert_index = 0
                 for group_name, group_data in grouped:
                     indices = group_data.index
                     index.append(group_name)
                     X[i, :] = np.mean(adata[indices].obsm[embedding_key], axis=0)
-                    i += 1
+                    pert_index += 1
             else:
                 raise ValueError(f"Layer {embedding_key!r} does not exist in the .layers attribute.")
             
         else:
             X = np.empty((len(adata.obs[target_col].unique()), adata.X.shape[1]))
             index = []
-            i = 0
+            pert_index = 0
             for group_name, group_data in grouped:
                 indices = group_data.index
                 index.append(group_name)
                 X[i, :] = np.mean(adata[indices].X, axis=0)
-                i += 1
+                pert_index += 1
 
         ps_data = AnnData(X=X)
         ps_data.obs_names = index
@@ -163,12 +163,13 @@ class KMeansSpace(ClusteringSpace):
         **kwargs,
     ) -> AnnData:
         """
-            Takes as input an Anndata object of size cells x genes. 
-            If 'layer_key' is specified and exists in the adata, the clustering is done with that layer. Otherwise, computation is done with .X
-            If 'embedding_key' is specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
-            It stores the labels of the clustering in a new .obs column named 'k-means' if 'cluster_key' not specified
-            If copy is True, returns a new Anndata of same size with the new column; otherwise it updates the initial adata
-            If return_object is True, returns the clustering object 
+        Args:
+            adata: Anndata object of size cells x genes
+            layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
+            cluster_key: name of the .obs column to store the cluster labels. Default 'k-means'
+            copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
+            return_object: if True returns the clustering object
         """
 
         if copy:
@@ -215,12 +216,13 @@ class DBSCANSpace(ClusteringSpace):
         **kwargs
     ) -> AnnData:
         """
-            Takes as input an Anndata object of size cells x genes. 
-            If 'layer_key' is specified and exists in the adata, the clustering is done with that layer. Otherwise, computation is done with .X
-            If 'embedding_key' is specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
-            It stores the labels of the clustering in a new .obs column named 'dbscan' if 'cluster_key' not specified
-            If copy is True, returns a new Anndata of same size with the new column; otherwise it updates the initial adata
-            If return_object is True, returns the clustering object        
+        Args:
+            adata: Anndata object of size cells x genes
+            layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
+            cluster_key: name of the .obs column to store the cluster labels. Default 'k-means'
+            copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
+            return_object: if True returns the clustering object
         """
 
         if copy:
