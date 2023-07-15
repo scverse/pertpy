@@ -66,7 +66,7 @@ class CentroidSpace(PerturbationSpace):
         self,
         adata: AnnData, 
         embedding_key: str = "X_umap", 
-        **kwargs) -> AnnData:  # type: ignore
+        ) -> AnnData:  # type: ignore
         """
             Takes as input an Anndata object of size cells x genes. 
             If 'embedding_key' is specified and exists in the adata, the clustering is done with that embedding. Otherwise, it raises error
@@ -95,7 +95,7 @@ class PseudobulkSpace(PerturbationSpace):
         target_col: str = "perturbations", 
         layer_key: str = None, 
         embedding_key: str = None,
-        **kwargs):  # type: ignore
+        )  -> AnnData:  # type: ignore
         """Determines pseudobulks of an AnnData object.
         
         Args:

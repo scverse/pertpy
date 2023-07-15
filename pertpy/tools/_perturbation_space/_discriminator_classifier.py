@@ -160,7 +160,7 @@ class MLP(torch.nn.Module):
     def __init__(
         self,
         sizes: list[int],
-        dropout: int = 0,
+        dropout: float = 0.0,
         batch_norm: bool = True,
         layer_norm: bool = False,
         last_layer_act: str = "linear",
@@ -272,7 +272,7 @@ class PerturbationClassifier(pl.LightningModule):
         self,
         model: torch.nn.Module,
         layers: list = [512],  # noqa
-        dropout: int = 0,
+        dropout: float = 0.0,
         batch_norm: bool = True,
         layer_norm: bool = False,
         last_layer_act: str = "linear",
