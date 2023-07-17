@@ -1,5 +1,5 @@
-from typing import List, Literal
 from abc import ABC, abstractmethod
+from typing import List, Literal
 
 from anndata import AnnData
 from sklearn.metrics import pairwise_distances
@@ -9,7 +9,10 @@ from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpa
 
 class ClusteringSpace(ABC):
     """Applies various clustering techniques to an embedding."""
-    
+
+    def __init__(self):
+        self.X = None
+
     @abstractmethod
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
@@ -54,10 +57,10 @@ class ClusteringSpace(ABC):
 
                 # TODO pass kwargs
 
-                if 'distances' not in kwargs.keys():
+                if "distances" not in kwargs.keys():
                     distances = pairwise_distances(self.X, metric="euclidean")
                 else:
-                    distances = kwargs['distances']
+                    distances = kwargs["distances"]
 
                 asw_score = asw(pairwise_distances=distances, labels=true_labels)
                 results["asw"] = asw_score
