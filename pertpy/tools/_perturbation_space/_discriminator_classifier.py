@@ -32,20 +32,22 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         test_split_size: float = 0.2,
         validation_split_size: float = 0.25,
     ):
-        """It creates a model with the specified parameters (hidden_dim, dropout, batch_norm).
-        It creates dataloaders and fixes the unbalance in the classes due to control.
-        Uses GPU if available
+        """Creates a model with the specified parameters (hidden_dim, dropout, batch_norm).
+
+        It further creates dataloaders and fixes the unbalance in the classes due to control.
+        Sets the device to a GPU if available.
 
         Args:
-            adata: anndata of size cells x genes
+            adata: AnnData object of size cells x genes
             target_col: .obs column that stores the perturbations. Defaults to "perturbations".
-            layer_key: layer to use . Defaults to None.
+            layer_key: Layer to use. Defaults to None.
             hidden_dim: list of hidden layers of the neural network. For instance: [512, 256].
             dropout: amount of dropout applied, constant for all layers. Defaults to 0.
-            batch_norm: Defaults to True.
-            batch_size: Defaults to 256.
-            test_size_split: Default to 0.2
-            validation_size_split: size of the validation split taking into account that is taking with respect to the resultant train split. Default to 0.25.
+            batch_norm: Whether to apply batch normalization. Defaults to True.
+            batch_size: The batch size. Defaults to 256.
+            test_split_size: Default to 0.2
+            validation_split_size: Size of the validation split taking into account that is taking with respect to the resultant train split.
+                                   Defaults to 0.25.
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
