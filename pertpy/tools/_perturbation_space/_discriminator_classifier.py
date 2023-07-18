@@ -26,26 +26,28 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         target_col: str = "perturbations",
         layer_key: str = None,
         hidden_dim: list[int] = None,
-        dropout: float = 0.,
+        dropout: float = 0.0,
         batch_norm: bool = True,
         batch_size: int = 256,
         test_split_size: float = 0.2,
-        validation_split_size: float = 0.25
+        validation_split_size: float = 0.25,
     ):
-        """It creates a model with the specified parameters (hidden_dim, dropout, batch_norm).
-        It creates dataloaders and fixes the unbalance in the classes due to control.
-        Uses GPU if available
-        
+        """Creates a model with the specified parameters (hidden_dim, dropout, batch_norm).
+
+        It further creates dataloaders and fixes the unbalance in the classes due to control.
+        Sets the device to a GPU if available.
+
         Args:
-            adata: anndata of size cells x genes
+            adata: AnnData object of size cells x genes
             target_col: .obs column that stores the perturbations. Defaults to "perturbations".
-            layer_key: layer to use . Defaults to None.
-            hidden_dim: list of hidden layers of the neural network. For instance: [512, 256]. 
+            layer_key: Layer to use. Defaults to None.
+            hidden_dim: list of hidden layers of the neural network. For instance: [512, 256].
             dropout: amount of dropout applied, constant for all layers. Defaults to 0.
-            batch_norm: Defaults to True.
-            batch_size: Defaults to 256.
-            test_size_split: Default to 0.2
-            validation_size_split: size of the validation split taking into account that is taking with respect to the resultant train split. Default to 0.25.
+            batch_norm: Whether to apply batch normalization. Defaults to True.
+            batch_size: The batch size. Defaults to 256.
+            test_split_size: Default to 0.2
+            validation_split_size: Size of the validation split taking into account that is taking with respect to the resultant train split.
+                                   Defaults to 0.25.
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
@@ -70,7 +72,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split_size, stratify=y)
         X_train, X_val, y_train, y_val = train_test_split(
             X_train, y_train, test_size=validation_split_size, stratify=y_train
-        ) 
+        )
         # val_split_size_total = (1 - test_split_size) * validation_split_size
 
         train_dataset = PLDataset(
@@ -102,23 +104,19 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         total_dataset = PLDataset(
             adata=adata, target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
-        self.entire_dataset = DataLoader(total_dataset, batch_size=batch_size*2, shuffle=False, num_workers=4)
+        self.entire_dataset = DataLoader(total_dataset, batch_size=batch_size * 2, shuffle=False, num_workers=4)
 
         return self
 
-    def train(self, 
-              max_epochs: int = 40, 
-              val_epochs_check: int = 5, 
-              patience: int = 2):
-        
-        """Trains and test the defined model in the _call_ step. 
-        
-            Args:
-                max_epochs: max epochs for training. Default to 40
-                val_epochs_check: check in validation dataset each val_epochs_check epochs
-                patience: patience before the early stopping flag is activated
+    def train(self, max_epochs: int = 40, val_epochs_check: int = 5, patience: int = 2):
+        """Trains and test the defined model in the _call_ step.
+
+        Args:
+            max_epochs: max epochs for training. Default to 40
+            val_epochs_check: check in validation dataset each val_epochs_check epochs
+            patience: patience before the early stopping flag is activated
         """
-        
+
         self.trainer = pl.Trainer(
             min_epochs=1,
             max_epochs=max_epochs,
@@ -136,11 +134,10 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         self.trainer.test(model=self.model, dataloaders=self.test_dataloader)
 
     def get_embeddings(self):
-        
         """Access to the embeddings of the last layer and extract them as perturbational embeddings.
         Returns an AnnData whose X is the perturbational embeddings and whose .obs['perturbations'] are the names of the perturbations.
         """
-        
+
         with torch.no_grad():
             self.model.eval()
             for dataset_count, batch in enumerate(self.entire_dataset):

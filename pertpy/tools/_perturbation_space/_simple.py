@@ -3,8 +3,8 @@ from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
 import decoupler as dc
 
-from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
+from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
 
 class DifferentialSpace(PerturbationSpace):
@@ -24,18 +24,18 @@ class DifferentialSpace(PerturbationSpace):
         **kwargs,
     ):
         """Subtract mean of the control from the perturbation.
-        
+
         Args:
             adata: Anndata object of size cells x genes
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             reference_key: indicates the control perturbation
             layer_key: if specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
-            new_layer_key: the results are stored in the given layer 
+            new_layer_key: the results are stored in the given layer
             embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
             new_embedding_key: the results are stored in a new embedding named as 'new_embedding_key'
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
         """
-        
+
         if reference_key not in adata.obs[target_col].unique():
             raise ValueError(
                 f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."
@@ -69,13 +69,14 @@ class CentroidSpace(PerturbationSpace):
         target_col: str = "perturbations", 
         embedding_key: str = "X_umap", 
         ) -> AnnData:  # type: ignore
-        """
-            Takes as input an Anndata object of size cells x genes. 
+        """Takes as input an Anndata object of size cells x genes with a precomputed embedding and compute the centroids of the embedding.
+            
+        Args:
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             embedding_key: if specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, raises error.
             Returns an new Anndata object in which each observation is a perturbation and its X the centroid
         """
-        
+
         if embedding_key not in adata.obsm_keys():
             raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
         
@@ -110,7 +111,7 @@ class PseudobulkSpace(PerturbationSpace):
         **kwargs
         )  -> AnnData:  # type: ignore
         """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
-        
+
         Args:
             adata: Anndata object of size cells x genes
             target_col: .obs column that stores the label of the perturbation applied to each cell.
@@ -151,6 +152,7 @@ class KMeansSpace(ClusteringSpace):
         **kwargs,
     ) -> AnnData:
         """
+        
         Args:
             adata: Anndata object of size cells x genes
             layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
@@ -162,9 +164,9 @@ class KMeansSpace(ClusteringSpace):
 
         if copy:
             adata = adata.copy()
-            
+
         if cluster_key is None:
-            cluster_key = 'k-means'
+            cluster_key = "k-means"
 
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():
@@ -186,7 +188,7 @@ class KMeansSpace(ClusteringSpace):
 
         if return_object:
             return adata, clustering
-        
+
         return adata
 
 
@@ -199,11 +201,12 @@ class DBSCANSpace(ClusteringSpace):
         layer_key: str = None, 
         embedding_key: str = None, 
         cluster_key: str = None,
-        copy: bool = True, 
+        copy: bool = True,
         return_object: bool = False,
-        **kwargs
+        **kwargs,
     ) -> AnnData:
         """
+        
         Args:
             adata: Anndata object of size cells x genes
             layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
@@ -215,9 +218,9 @@ class DBSCANSpace(ClusteringSpace):
 
         if copy:
             adata = adata.copy()
-            
+
         if cluster_key is None:
-            cluster_key = 'dbscan'
+            cluster_key = "dbscan"
 
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():
@@ -239,5 +242,5 @@ class DBSCANSpace(ClusteringSpace):
 
         if return_object:
             return adata, clustering
-        
+
         return adata

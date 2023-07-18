@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from anndata import AnnData
+
 import numpy as np
+from anndata import AnnData
 
 
 class PerturbationSpace(ABC):
@@ -15,7 +16,7 @@ class PerturbationSpace(ABC):
     def __call__(self, *args, **kwargs):
         return 
         #raise NotImplementedError
-    
+
     def compute_differential_expression(  # type: ignore
         self,
         adata: AnnData,
@@ -28,18 +29,18 @@ class PerturbationSpace(ABC):
         copy: bool = False,
     ):
         """Subtract mean of the control from the perturbation.
-        
+
         Args:
             adata: Anndata object of size cells x genes
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             reference_key: indicates the control perturbation
             layer_key: if specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
-            new_layer_key: the results are stored in the given layer 
+            new_layer_key: the results are stored in the given layer
             embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
             new_embedding_key: the results are stored in a new embedding named as 'new_embedding_key'
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
         """
-        
+
         if reference_key not in adata.obs[target_col].unique():
             raise ValueError(
                 f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."

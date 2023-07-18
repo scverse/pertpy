@@ -88,20 +88,20 @@ def test_pseudobulk_response():
         
 def test_centroid_umap_response():
     X = np.zeros((10, 5))
-    
+
     pert_index = [
-                "control",
-                "target1",
-                "target1",
-                "target2",
-                "target2",
-                "target1",
-                "target1",
-                "target2",
-                "target2",
-                "target2",
-            ]
-    
+        "control",
+        "target1",
+        "target1",
+        "target2",
+        "target2",
+        "target1",
+        "target1",
+        "target2",
+        "target2",
+        "target2",
+    ]
+
     for i, value in enumerate(pert_index):
         if value == "control":
             X[i, :] = 0
@@ -109,22 +109,19 @@ def test_centroid_umap_response():
             X[i, :] = 10
         elif value == "target2":
             X[i, :] = 30
-            
-    obs = pd.DataFrame(
-        {
-            "perturbations": pert_index
-        }
-    )
+
+    obs = pd.DataFrame({"perturbations": pert_index})
 
     adata = AnnData(X, obs=obs)
-    adata.obsm['X_umap'] = X
+    adata.obsm["X_umap"] = X
 
     # Compute the differential response
+
     ps = pt.tl.CentroidSpace()
     psadata = ps.compute(adata, embedding_key='X_umap')
 
     # Test that the pseudobulk response was computed correctly
-    adata_target1 = adata[adata.obs.perturbations == "target1"].obsm['X_umap'].mean(0)
+    adata_target1 = adata[adata.obs.perturbations == "target1"].obsm["X_umap"].mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
 
     # Check that the function raises an error if the layer key is not found
