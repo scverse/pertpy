@@ -28,6 +28,7 @@ For questions about the usage of pertpy use [Github Discussions].
    notebooks/distance_tests
    notebooks/scgen_perturbation_prediction
    notebooks/scgen_batch_removal
+   notebooks/ontology_mapping
 ```
 
 ### Glossary
