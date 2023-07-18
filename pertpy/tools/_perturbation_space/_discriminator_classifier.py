@@ -20,7 +20,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
     (simple MLP or logistic regression and take the penultimate layer as feature space and apply pseudo bulking approach above)
     """
 
-    def __call__(  # type: ignore
+    def setup(  # type: ignore
         self,
         adata: AnnData,
         target_col: str = "perturbations",
@@ -49,6 +49,9 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
+        
+        if target_col not in adata.obs:
+            raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
 
         if hidden_dim is None:
             hidden_dim = [512]
@@ -93,8 +96,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
         # Define the network
         sizes = [adata.n_vars] + hidden_dim + [n_classes]
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.net = MLP(sizes=sizes, dropout=dropout, batch_norm=batch_norm, device=self.device)
+        self.net = MLP(sizes=sizes, dropout=dropout, batch_norm=batch_norm)
 
         # Define a dataset that gathers all the data and dataloader for getting embeddings
         total_dataset = PLDataset(
@@ -121,8 +123,9 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             min_epochs=1,
             max_epochs=max_epochs,
             check_val_every_n_epoch=val_epochs_check,
-            callbacks=[EarlyStopping(monitor="validation_loss", mode="min", patience=patience)],
-            accelerator="cpu",
+            callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=patience)],
+            devices="auto",
+            accelerator="auto",
         )
 
         self.model = PerturbationClassifier(model=self.net)
@@ -164,7 +167,6 @@ class MLP(torch.nn.Module):
         batch_norm: bool = True,
         layer_norm: bool = False,
         last_layer_act: str = "linear",
-        device: torch.device = "cpu",
     ) -> None:
         """
         Args:
@@ -173,7 +175,6 @@ class MLP(torch.nn.Module):
             batch_norm: batch norm. Defaults to True.
             layer_norm: layern norm, common in Transformers
             last_layer_act: activation function of last layer. Defaults to "linear".
-            device: Default to 'cpu'
         """
         super().__init__()
         layers = []
@@ -198,14 +199,11 @@ class MLP(torch.nn.Module):
         self.network = torch.nn.Sequential(*layers)
 
         self.network.apply(init_weights)
-        self.device = device
-        self.to(device)
 
         self.sizes = sizes
         self.batch_norm = batch_norm
         self.layer_norm = layer_norm
         self.last_layer_act = last_layer_act
-        print(self.network, flush=True)
 
     def forward(self, x) -> torch.Tensor:
         if self.activation == "ReLU":

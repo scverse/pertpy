@@ -11,11 +11,12 @@ class PerturbationSpace(ABC):
     whereas in a perturbation space, data points summarize whole perturbations.
     """
 
-    @abstractmethod
+    #@abstractmethod
     def __call__(self, *args, **kwargs):
-        raise NotImplementedError
+        return 
+        #raise NotImplementedError
     
-    def differential_expression(  # type: ignore
+    def compute_differential_expression(  # type: ignore
         self,
         adata: AnnData,
         target_col: str = "perturbations",

@@ -39,18 +39,18 @@ def test_clustering():
 
     # Compute clustering at observation level
     ps = pt.tl.KMeansSpace()
-    adata = ps(adata, n_clusters=3, copy=True)
+    adata = ps.compute(adata, n_clusters=3, copy=True)
 
     ps = pt.tl.DBSCANSpace()
-    adata = ps(adata, min_samples=1, copy=True)
+    adata = ps.compute(adata, min_samples=1, copy=True)
 
-    results = ps.evaluate_clustering(adata, true_label_col="perturbations", cluster_col="k-means")
+    results = ps.evaluate_clustering(adata, true_label_col="perturbations", cluster_col="k-means", metric="l1")
     np.testing.assert_equal(len(results), 3)
     np.testing.assert_allclose(results['nmi'], 0.99, rtol=0.1)
     np.testing.assert_allclose(results['ari'], 0.99, rtol=0.1)
     np.testing.assert_allclose(results['asw'], 0.99, rtol=0.1)
 
-    results = ps.evaluate_clustering(adata, true_label_col="perturbations", cluster_col="dbscan")
+    results = ps.evaluate_clustering(adata, true_label_col="perturbations", cluster_col="dbscan", metric="l1")
     np.testing.assert_equal(len(results), 3)
     np.testing.assert_allclose(results['nmi'], 0.99, rtol=0.1)
     np.testing.assert_allclose(results['ari'], 0.99, rtol=0.1)

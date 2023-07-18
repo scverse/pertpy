@@ -10,9 +10,10 @@ from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpa
 class ClusteringSpace(ABC):
     """Applies various clustering techniques to an embedding."""
     
-    @abstractmethod
+    #@abstractmethod
     def __call__(self, *args, **kwargs):
-        raise NotImplementedError
+        #raise NotImplementedError
+        return 
 
     def evaluate_clustering(
         self,
@@ -39,8 +40,11 @@ class ClusteringSpace(ABC):
         for metric in metrics:
             if metric == "nmi":
                 from pertpy.tools._perturbation_space._metrics import nmi
+                
+                if not 'average_method' in kwargs:
+                    kwargs['average_method'] = 'arithmetic' # by default in sklearn implementation
 
-                nmi_score = nmi(true_labels=true_labels, predicted_labels=adata.obs[cluster_col], **kwargs)
+                nmi_score = nmi(true_labels=true_labels, predicted_labels=adata.obs[cluster_col], average_method=kwargs['average_method'])
                 results["nmi"] = nmi_score
 
             if metric == "ari":
@@ -52,14 +56,20 @@ class ClusteringSpace(ABC):
             if metric == "asw":
                 from pertpy.tools._perturbation_space._metrics import asw
 
-                # TODO pass kwargs
+                if "metric" not in kwargs.keys():
+                    kwargs['metric'] = "euclidean"
+                if "distances" not in kwargs.keys():
+                    distances = pairwise_distances(self.X, metric=kwargs['metric'])
+                if "sample_size" not in kwargs.keys():
+                    kwargs['sample_size'] = None
+                if "random_state" not in kwargs.keys():
+                    kwargs['random_state'] = None
 
-                if 'distances' not in kwargs.keys():
-                    distances = pairwise_distances(self.X, metric="euclidean")
-                else:
-                    distances = kwargs['distances']
-
-                asw_score = asw(pairwise_distances=distances, labels=true_labels)
+                asw_score = asw(pairwise_distances=distances, 
+                                labels=true_labels, 
+                                metric=kwargs['metric'], 
+                                sample_size=kwargs['sample_size'], 
+                                random_state=kwargs['random_state'])
                 results["asw"] = asw_score
 
         return results
