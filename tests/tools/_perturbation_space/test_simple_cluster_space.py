@@ -55,5 +55,3 @@ def test_clustering():
     np.testing.assert_allclose(results["nmi"], 0.99, rtol=0.1)
     np.testing.assert_allclose(results["ari"], 0.99, rtol=0.1)
     np.testing.assert_allclose(results["asw"], 0.99, rtol=0.1)
-
-test_clustering()
