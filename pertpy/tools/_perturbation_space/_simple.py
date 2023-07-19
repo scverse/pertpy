@@ -1,67 +1,225 @@
+from __future__ import annotations
+
+import decoupler as dc
 import numpy as np
 from anndata import AnnData
+from sklearn.cluster import DBSCAN, KMeans
+
+from pertpy.tools._perturbation_space._clustering import ClusteringSpace
+from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
 
-class DifferentialSpace:
-    """Subtract mean of the control from the perturbation."""
-
-    def __call__(
+class CentroidSpace(PerturbationSpace):
+    def compute(
         self,
         adata: AnnData,
         target_col: str = "perturbations",
-        reference_key: str = "control",
-        *,
         layer_key: str = None,
-        new_layer_key: str = "differential_response",
-        embedding_key: str = None,
-        new_embedding_key: str = "differential_response",
-        copy: bool = False,
-        **kwargs,
-    ):
-        if reference_key not in adata.obs[target_col].unique():
-            raise ValueError(
-                f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."
-            )
+        embedding_key: str = "X_umap",
+    ) -> AnnData:  # type: ignore
+        """Computes the centroids of a pre-computed embedding such as UMAP.
 
-        if copy:
-            adata = adata.copy()
+        Args:
+            adata: Anndata object of size cells x genes
+            target_col: .obs column that stores the label of the perturbation applied to each cell.
+            layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
+            embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+        """
 
-        control_mask = adata.obs[target_col] == reference_key
+        X = None
+        if layer_key is not None and embedding_key is not None:
+            raise ValueError("Please, select just either layer or embedding for computation.")
 
-        if layer_key:
-            diff_matrix = adata.layers[layer_key] - np.mean(adata.layers[layer_key][~control_mask, :], axis=0)
-            adata[new_layer_key] = diff_matrix
+        if embedding_key is not None:
+            if embedding_key not in adata.obsm_keys():
+                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
+            else:
+                X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
 
-        elif embedding_key:
-            diff_matrix = adata.obsm[embedding_key] - np.mean(adata.obsm[embedding_key][~control_mask, :], axis=0)
-            adata.obsm[new_embedding_key] = diff_matrix
-        else:
-            diff_matrix = adata.X - np.mean(adata.X[~control_mask, :], axis=0)
-            adata.X = diff_matrix
+        if layer_key is not None:
+            if layer_key not in adata.layers.keys():
+                raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
+            else:
+                X = np.empty((len(adata.obs[target_col].unique()), adata.layers[layer_key].shape[1]))
 
-        return adata
+        if target_col not in adata.obs:
+            raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
 
+        grouped = adata.obs.groupby(target_col)
 
-class CentroidSpace:
-    """Determines the centroids of a pre-computed embedding (e.g. UMAP)."""
+        if X is None:
+            X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
 
-    def __call__(self, adata: AnnData, embedding_key: str = "X_umap", *args, **kwargs) -> AnnData:
-        # TODO test this
-        if embedding_key not in adata.obsm_keys():
-            raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
+        index = []
+        pert_index = 0
+        for group_name, group_data in grouped:
+            indices = group_data.index
+            if layer_key is not None:
+                points = adata[indices].layers[layer_key]
+            elif embedding_key is not None:
+                points = adata[indices].obsm[embedding_key]
+            else:
+                points = adata[indices].X
+            index.append(group_name)
+            centroid = np.mean(points, axis=0)  # find centroid of cloud of points
+            closest_point = min(
+                points, key=lambda point: np.linalg.norm(point - centroid)
+            )  # Find the point in the array closest to the centroid
+            X[pert_index, :] = closest_point
+            pert_index += 1
 
-        embedding = adata.obsm[embedding_key]
-        centroids = np.mean(embedding, axis=0)
-
-        ps_adata = adata.copy()
-        ps_adata.X = centroids.reshape(1, -1)
+        ps_adata = AnnData(X=X)
+        ps_adata.obs_names = index
 
         return ps_adata
 
 
-class PseudobulkSpace:
-    """Determines pseudobulks of an AnnData object."""
+class PseudobulkSpace(PerturbationSpace):
+    def compute(
+        self,
+        adata: AnnData,
+        target_col: str = "perturbations",
+        layer_key: str = None,
+        embedding_key: str = None,
+        **kwargs,
+    ) -> AnnData:  # type: ignore
+        """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
 
-    def __call__(self, *args, **kwargs):
-        # TODO implement
-        pass
+        Args:
+            adata: Anndata object of size cells x genes
+            target_col: .obs column that stores the label of the perturbation applied to each cell.
+            layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
+            embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+        """
+        if "groups_col" not in kwargs:
+            kwargs["groups_col"] = "perturbations"
+
+        if layer_key is not None and embedding_key is not None:
+            raise ValueError("Please, select just either layer or embedding for computation.")
+
+        if layer_key is not None and layer_key not in adata.layers.keys():
+            raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
+
+        if target_col not in adata.obs:
+            raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
+
+        if embedding_key is not None:
+            if embedding_key not in adata.obsm_keys():
+                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
+            else:
+                adata_emb = AnnData(X=adata.obsm[embedding_key])
+                adata_emb.obs_names = adata.obs_names
+                adata_emb.obs = adata.obs
+                adata = adata_emb
+
+        ps_adata = dc.get_pseudobulk(adata, sample_col=target_col, layer=layer_key, **kwargs)  # type: ignore
+
+        return ps_adata
+
+
+class KMeansSpace(ClusteringSpace):
+    def compute(  # type: ignore
+        self,
+        adata: AnnData,
+        layer_key: str = None,
+        embedding_key: str = None,
+        cluster_key: str = None,
+        copy: bool = False,
+        return_object: bool = False,
+        **kwargs,
+    ) -> tuple[AnnData, object] | AnnData:
+        """Computes K-Means clustering of the expression values.
+
+        Args:
+            adata: Anndata object of size cells x genes
+            layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
+            cluster_key: name of the .obs column to store the cluster labels. Default 'k-means'
+            copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
+            return_object: if True returns the clustering object
+            **kwargs: Are passed to sklearn's KMeans.
+        """
+        if copy:
+            adata = adata.copy()
+
+        if cluster_key is None:
+            cluster_key = "k-means"
+
+        if layer_key is not None and embedding_key is not None:
+            raise ValueError("Please, select just either layer or embedding for computation.")
+
+        if embedding_key is not None:
+            if embedding_key not in adata.obsm_keys():
+                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
+            else:
+                self.X = adata.obsm[embedding_key]
+
+        elif layer_key is not None:
+            if layer_key not in adata.layers.keys():
+                raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
+            else:
+                self.X = adata.layers[layer_key]
+
+        else:
+            self.X = adata.X
+
+        clustering = KMeans(**kwargs).fit(self.X)
+        adata.obs[cluster_key] = clustering.labels_
+
+        if return_object:
+            return adata, clustering
+
+        return adata
+
+
+class DBSCANSpace(ClusteringSpace):
+    """Cluster the given data using DBSCAN"""
+
+    def compute(  # type: ignore
+        self,
+        adata: AnnData,
+        layer_key: str = None,
+        embedding_key: str = None,
+        cluster_key: str = None,
+        copy: bool = True,
+        return_object: bool = False,
+        **kwargs,
+    ) -> tuple[AnnData, object | AnnData]:
+        """Computes a clustering using Density-based spatial clustering of applications (DBSCAN).
+
+        Args:
+            adata: Anndata object of size cells x genes
+            layer_key: If specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
+            cluster_key: name of the .obs column to store the cluster labels. Defaults to 'k-means'
+            copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
+            return_object: if True returns the clustering object
+        """
+        if copy:
+            adata = adata.copy()
+
+        if cluster_key is None:
+            cluster_key = "dbscan"
+
+        if embedding_key is not None:
+            if embedding_key not in adata.obsm_keys():
+                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
+            else:
+                self.X = adata.obsm[embedding_key]
+
+        elif layer_key is not None:
+            if layer_key not in adata.obsm_keys():
+                raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
+            else:
+                self.X = adata.layers[layer_key]
+
+        else:
+            self.X = adata.X
+
+        clustering = DBSCAN(**kwargs).fit(self.X)
+        adata.obs[cluster_key] = clustering.labels_
+
+        if return_object:
+            return adata, clustering
+
+        return adata
