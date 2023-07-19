@@ -13,23 +13,61 @@ class CentroidSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
+        target_col: str = "perturbations",
+        layer_key: str = None, 
         embedding_key: str = "X_umap",
     ) -> AnnData:  # type: ignore
         """Computes the centroids of a pre-computed embedding such as UMAP.
 
         Args:
+            adata: Anndata object of size cells x genes
+            target_col: .obs column that stores the label of the perturbation applied to each cell.
+            layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-        Returns:
-            A new Anndata object in which each observation is a perturbation and its X the centroid.
         """
-        if embedding_key not in adata.obsm_keys():
-            raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-
-        embedding = adata.obsm[embedding_key]
-        centroids = np.mean(embedding, axis=0)
-
-        ps_adata = adata.copy()
-        ps_adata.X = centroids.reshape(1, -1)
+        
+        X = None
+        if layer_key is not None and embedding_key is not None:
+            raise ValueError(f"Please, select just either layer or embedding for computation.")
+        
+        if embedding_key is not None:
+            if embedding_key not in adata.obsm_keys():
+                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
+            else:
+                X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
+                
+        if layer_key is not None:
+            if layer_key not in adata.layers.keys():
+                raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
+            else:
+                X = np.empty((len(adata.obs[target_col].unique()), adata.layers[layer_key].shape[1]))
+        
+        if target_col not in adata.obs:
+            raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
+        
+        grouped = adata.obs.groupby(target_col)
+        
+        if X is None:
+            X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
+        
+        index = []
+        pert_index = 0
+        for group_name, group_data in grouped:
+            indices = group_data.index
+            if layer_key is not None:
+                points = adata[indices].layers[layer_key]
+            elif embedding_key is not None:
+                points = adata[indices].obsm[embedding_key]
+            else:
+                points = adata[indices].X
+            index.append(group_name)
+            centroid = np.mean(points, axis=0) # find centroid of cloud of points
+            closest_point = min(points, key=lambda point: np.linalg.norm(point - centroid)) # Find the point in the array closest to the centroid
+            X[pert_index, :] = closest_point
+            pert_index += 1
+            
+        ps_adata = AnnData(X=X)
+        ps_adata.obs_names = index
 
         return ps_adata
 
@@ -50,7 +88,6 @@ class PseudobulkSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            mode: How to perform the pseudobulk. Available options are sum, mean or median.
         """
         if "groups_col" not in kwargs:
             kwargs["groups_col"] = "perturbations"

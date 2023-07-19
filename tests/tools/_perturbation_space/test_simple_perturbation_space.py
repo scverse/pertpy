@@ -101,6 +101,7 @@ def test_pseudobulk_response():
             adata,
             target_col="perturbations",
             embedding_key="not_found",
+            layer_key="not_found",
         )
 
 
@@ -140,6 +141,13 @@ def test_centroid_umap_response():
     # Test that the pseudobulk response was computed correctly
     adata_target1 = adata[adata.obs.perturbations == "target1"].obsm["X_umap"].mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
+    
+    ps = pt.tl.CentroidSpace()
+    psadata = ps.compute(adata) # if nothing specific, compute with X, and X and X_umap are the same
+
+    # Test that the pseudobulk response was computed correctly
+    adata_target1 = adata[adata.obs.perturbations == "target1"].obsm["X_umap"].mean(0)
+    np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
 
     # Check that the function raises an error if the embedding key is not found
     with pytest.raises(ValueError):
@@ -147,4 +155,13 @@ def test_centroid_umap_response():
             adata,
             target_col="perturbations",
             embedding_key="not_found",
+        )
+        
+    # Check that the function raises an error if the layer key and embedding key are used at the same time
+    with pytest.raises(ValueError):
+        ps.compute(
+            adata,
+            target_col="perturbations",
+            embedding_key="not_found",
+            layer_key="not_found",
         )
