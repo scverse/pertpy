@@ -14,7 +14,7 @@ class CentroidSpace(PerturbationSpace):
         self,
         adata: AnnData,
         target_col: str = "perturbations",
-        layer_key: str = None, 
+        layer_key: str = None,
         embedding_key: str = "X_umap",
     ) -> AnnData:  # type: ignore
         """Computes the centroids of a pre-computed embedding such as UMAP.
@@ -25,31 +25,31 @@ class CentroidSpace(PerturbationSpace):
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
         """
-        
+
         X = None
         if layer_key is not None and embedding_key is not None:
-            raise ValueError(f"Please, select just either layer or embedding for computation.")
-        
+            raise ValueError("Please, select just either layer or embedding for computation.")
+
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
             else:
                 X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
-                
+
         if layer_key is not None:
             if layer_key not in adata.layers.keys():
                 raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
             else:
                 X = np.empty((len(adata.obs[target_col].unique()), adata.layers[layer_key].shape[1]))
-        
+
         if target_col not in adata.obs:
             raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
-        
+
         grouped = adata.obs.groupby(target_col)
-        
+
         if X is None:
             X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
-        
+
         index = []
         pert_index = 0
         for group_name, group_data in grouped:
@@ -61,11 +61,13 @@ class CentroidSpace(PerturbationSpace):
             else:
                 points = adata[indices].X
             index.append(group_name)
-            centroid = np.mean(points, axis=0) # find centroid of cloud of points
-            closest_point = min(points, key=lambda point: np.linalg.norm(point - centroid)) # Find the point in the array closest to the centroid
+            centroid = np.mean(points, axis=0)  # find centroid of cloud of points
+            closest_point = min(
+                points, key=lambda point: np.linalg.norm(point - centroid)
+            )  # Find the point in the array closest to the centroid
             X[pert_index, :] = closest_point
             pert_index += 1
-            
+
         ps_adata = AnnData(X=X)
         ps_adata.obs_names = index
 
@@ -74,12 +76,12 @@ class CentroidSpace(PerturbationSpace):
 
 class PseudobulkSpace(PerturbationSpace):
     def compute(
-        self, 
-        adata: AnnData, 
-        target_col: str = "perturbations", 
-        layer_key: str = None, 
-        embedding_key: str = None, 
-        **kwargs
+        self,
+        adata: AnnData,
+        target_col: str = "perturbations",
+        layer_key: str = None,
+        embedding_key: str = None,
+        **kwargs,
     ) -> AnnData:  # type: ignore
         """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
 
@@ -93,14 +95,14 @@ class PseudobulkSpace(PerturbationSpace):
             kwargs["groups_col"] = "perturbations"
 
         if layer_key is not None and embedding_key is not None:
-            raise ValueError(f"Please, select just either layer or embedding for computation.")
+            raise ValueError("Please, select just either layer or embedding for computation.")
 
         if layer_key is not None and layer_key not in adata.layers.keys():
             raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
-        
+
         if target_col not in adata.obs:
             raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
-        
+
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
@@ -136,18 +138,15 @@ class KMeansSpace(ClusteringSpace):
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's KMeans.
-
-        Returns:
-
         """
         if copy:
             adata = adata.copy()
 
         if cluster_key is None:
             cluster_key = "k-means"
-            
+
         if layer_key is not None and embedding_key is not None:
-            raise ValueError(f"Please, select just either layer or embedding for computation.")
+            raise ValueError("Please, select just either layer or embedding for computation.")
 
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():
