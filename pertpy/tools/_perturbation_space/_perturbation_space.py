@@ -4,7 +4,7 @@ import numpy as np
 from anndata import AnnData
 
 
-class PerturbationSpace(ABC):
+class PerturbationSpace:
     """Implements various ways of interacting with PerturbationSpaces.
 
     We differentiate between a cell space and a perturbation space.
@@ -12,35 +12,29 @@ class PerturbationSpace(ABC):
     whereas in a perturbation space, data points summarize whole perturbations.
     """
 
-    #@abstractmethod
-    def __call__(self, *args, **kwargs):
-        return 
-        #raise NotImplementedError
-
-    def compute_differential_expression(  # type: ignore
+    def compute_control_diff(  # type: ignore
         self,
         adata: AnnData,
         target_col: str = "perturbations",
         reference_key: str = "control",
         layer_key: str = None,
-        new_layer_key: str = "differential_response",
+        new_layer_key: str = "control_diff",
         embedding_key: str = None,
-        new_embedding_key: str = "differential_response",
+        new_embedding_key: str = "control_diff",
         copy: bool = False,
     ):
         """Subtract mean of the control from the perturbation.
 
         Args:
-            adata: Anndata object of size cells x genes
-            target_col: .obs column that stores the label of the perturbation applied to each cell.
-            reference_key: indicates the control perturbation
-            layer_key: if specified and exists in the adata, the pseudobulk computation is done by using it. Otherwise, computation is done with .X
-            new_layer_key: the results are stored in the given layer
-            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, computation is done with .X
-            new_embedding_key: the results are stored in a new embedding named as 'new_embedding_key'
-            copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
+            adata: Anndata object of size cells x genes.
+            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
+            reference_key: The key of the control values. Defaults to 'control'.
+            layer_key: Key of the AnnData layer to use for computation. Defaults to the `X` matrix otherwise.
+            new_layer_key: the results are stored in the given layer. Defaults to 'differential diff'.
+            embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control diff'.
+            copy: If True returns a new Anndata of same size with the new column; otherwise it updates the initial AnnData object.
         """
-
         if reference_key not in adata.obs[target_col].unique():
             raise ValueError(
                 f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."

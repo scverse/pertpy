@@ -14,13 +14,13 @@ from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpa
 
 
 class DiscriminatorClassifierSpace(PerturbationSpace):
-    """Leveraging discriminator classifier: The idea here is that we fit either a regressor model for gene expression (see Supplemental Materials.
+    """Leveraging discriminator classifier: The idea here is that we fit either a regressor model for gene expression.
     here https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7289078/ (Dose-response analysis) and Sup 17-19)
     and we use either coefficient of the model for each perturbation as a feature or train a classifier example
-    (simple MLP or logistic regression and take the penultimate layer as feature space and apply pseudo bulking approach above)
+    (simple MLP or logistic regression and take the penultimate layer as feature space and apply pseudobulking approach)
     """
 
-    def setup(  # type: ignore
+    def load(  # type: ignore
         self,
         adata: AnnData,
         target_col: str = "perturbations",
@@ -34,7 +34,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
     ):
         """Creates a model with the specified parameters (hidden_dim, dropout, batch_norm).
 
-        It further creates dataloaders and fixes the unbalance in the classes due to control.
+        It further creates dataloaders and fixes class imbalance due to control.
         Sets the device to a GPU if available.
 
         Args:
@@ -45,15 +45,15 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             dropout: amount of dropout applied, constant for all layers. Defaults to 0.
             batch_norm: Whether to apply batch normalization. Defaults to True.
             batch_size: The batch size. Defaults to 256.
-            test_split_size: Default to 0.2
+            test_split_size: Default to 0.2.
             validation_split_size: Size of the validation split taking into account that is taking with respect to the resultant train split.
                                    Defaults to 0.25.
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
-        
+
         if target_col not in adata.obs:
-            raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
+            raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
 
         if hidden_dim is None:
             hidden_dim = [512]
@@ -73,7 +73,6 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         X_train, X_val, y_train, y_val = train_test_split(
             X_train, y_train, test_size=validation_split_size, stratify=y_train
         )
-        # val_split_size_total = (1 - test_split_size) * validation_split_size
 
         train_dataset = PLDataset(
             adata=adata[X_train], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
@@ -86,7 +85,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         )  # we don't need to pass y_test since the label selection is done inside
 
         # Fix class unbalance (likely to happen in perturbation datasets)
-        # Usually control cells are overrepresented in such amount that predicting control all time would give good results
+        # Usually control cells are overrepresented such that predicting control all time would give good results
         # Cells with rare perturbations are sampled more
         class_weights = 1.0 / torch.bincount(torch.tensor(train_dataset.labels.values))
         train_weights = class_weights[train_dataset.labels]
@@ -109,14 +108,13 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         return self
 
     def train(self, max_epochs: int = 40, val_epochs_check: int = 5, patience: int = 2):
-        """Trains and test the defined model in the _call_ step.
+        """Trains and test the defined model in the load step.
 
         Args:
             max_epochs: max epochs for training. Default to 40
             val_epochs_check: check in validation dataset each val_epochs_check epochs
             patience: patience before the early stopping flag is activated
         """
-
         self.trainer = pl.Trainer(
             min_epochs=1,
             max_epochs=max_epochs,
@@ -133,11 +131,12 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         )
         self.trainer.test(model=self.model, dataloaders=self.test_dataloader)
 
-    def get_embeddings(self):
-        """Access to the embeddings of the last layer and extract them as perturbational embeddings.
-        Returns an AnnData whose X is the perturbational embeddings and whose .obs['perturbations'] are the names of the perturbations.
-        """
+    def get_embeddings(self) -> AnnData:
+        """Access to the embeddings of the last layer.
 
+        Returns:
+            AnnData whose `X` attribute is the perturbation embedding and whose .obs['perturbations'] are the names of the perturbations.
+        """
         with torch.no_grad():
             self.model.eval()
             for dataset_count, batch in enumerate(self.entire_dataset):
@@ -170,7 +169,7 @@ class MLP(torch.nn.Module):
             sizes: size of layers
             dropout: Dropout probability. Defaults to 0.0.
             batch_norm: batch norm. Defaults to True.
-            layer_norm: layern norm, common in Transformers
+            layer_norm: layern norm, common in Transformers. Defaults to False.
             last_layer_act: activation function of last layer. Defaults to "linear".
         """
         super().__init__()
@@ -221,7 +220,8 @@ def init_weights(m):
 
 class PLDataset(Dataset):
     """
-    Dataset for perturbation classification. Needed for training a model that classifies the perturbed cells and takes as perturbation embedding the second to last layer.
+    Dataset for perturbation classification.
+    Needed for training a model that classifies the perturbed cells and takes as perturbation embedding the second to last layer.
     """
 
     def __init__(
@@ -233,9 +233,9 @@ class PLDataset(Dataset):
     ):
         """
         Args:
-            adata: anndata with observations and labels
-            target_col: key with the perturbation labels numerically encoded
-            label_col: key with the perturbation labels
+            adata: AnnData object with observations and labels.
+            target_col: key with the perturbation labels numerically encoded. Defaults to 'perturbations'.
+            label_col: key with the perturbation labels. Defaults to 'perturbations'.
             layer_key: key of the layer to be used as data, otherwise .X
         """
 
@@ -251,9 +251,7 @@ class PLDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        """
-        Returns a sample and corresponding perturbations applied (labels)
-        """
+        """Returns a sample and corresponding perturbations applied (labels)"""
 
         sample = self.data[idx].A if scipy.sparse.issparse(self.data) else self.data[idx]
         num_label = self.labels[idx]

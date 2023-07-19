@@ -7,16 +7,11 @@ from sklearn.metrics import pairwise_distances
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
 
-class ClusteringSpace(ABC):
+class ClusteringSpace(PerturbationSpace):
     """Applies various clustering techniques to an embedding."""
 
     def __init__(self):
         self.X = None
-
-    #@abstractmethod
-    def __call__(self, *args, **kwargs):
-        #raise NotImplementedError
-        return 
 
     def evaluate_clustering(
         self,
@@ -26,14 +21,13 @@ class ClusteringSpace(ABC):
         metrics: List[str] = None,
         **kwargs,
     ):
-        """Evaluation of previously computed clustering against ground truth labels. It returns the
-        Normalized Mutual Info score (nmi), Adjusted Rank Index (ari) and Average-Width Silhouette score (aws).
+        """Evaluation of previously computed clustering against ground truth labels.
 
         Args:
-            adata: adata that contains the clustered data and the cluster labels
-            true_label_col: ground truth labels
-            cluster_col: cluster computed labels
-            metrics: Metrics to compute defaults to ['nmi', 'ari', 'asw'].
+            adata: AnnData object that contains the clustered data and the cluster labels.
+            true_label_col: ground truth labels.
+            cluster_col: cluster computed labels.
+            metrics: Metrics to compute. Defaults to ['nmi', 'ari', 'asw'].
         """
         if metrics is None:
             metrics = ["nmi", "ari", "asw"]
@@ -43,11 +37,15 @@ class ClusteringSpace(ABC):
         for metric in metrics:
             if metric == "nmi":
                 from pertpy.tools._perturbation_space._metrics import nmi
-                
-                if not 'average_method' in kwargs:
-                    kwargs['average_method'] = 'arithmetic' # by default in sklearn implementation
 
-                nmi_score = nmi(true_labels=true_labels, predicted_labels=adata.obs[cluster_col], average_method=kwargs['average_method'])
+                if "average_method" not in kwargs:
+                    kwargs["average_method"] = "arithmetic"  # by default in sklearn implementation
+
+                nmi_score = nmi(
+                    true_labels=true_labels,
+                    predicted_labels=adata.obs[cluster_col],
+                    average_method=kwargs["average_method"],
+                )
                 results["nmi"] = nmi_score
 
             if metric == "ari":
@@ -60,20 +58,22 @@ class ClusteringSpace(ABC):
                 from pertpy.tools._perturbation_space._metrics import asw
 
                 if "metric" not in kwargs.keys():
-                    kwargs['metric'] = "euclidean"
+                    kwargs["metric"] = "euclidean"
                 if "distances" not in kwargs.keys():
-                    distances = pairwise_distances(self.X, metric=kwargs['metric'])
+                    distances = pairwise_distances(self.X, metric=kwargs["metric"])
                 if "sample_size" not in kwargs.keys():
-                    kwargs['sample_size'] = None
+                    kwargs["sample_size"] = None
                 if "random_state" not in kwargs.keys():
-                    kwargs['random_state'] = None
+                    kwargs["random_state"] = None
 
-                asw_score = asw(pairwise_distances=distances, 
-                                labels=true_labels, 
-                                metric=kwargs['metric'], 
-                                sample_size=kwargs['sample_size'], 
-                                random_state=kwargs['random_state'])
- 
+                asw_score = asw(
+                    pairwise_distances=distances,
+                    labels=true_labels,
+                    metric=kwargs["metric"],
+                    sample_size=kwargs["sample_size"],
+                    random_state=kwargs["random_state"],
+                )
+
                 results["asw"] = asw_score
 
         return results
