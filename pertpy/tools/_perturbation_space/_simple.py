@@ -13,13 +13,11 @@ class CentroidSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
-        target_col: str = "perturbations",
         embedding_key: str = "X_umap",
     ) -> AnnData:  # type: ignore
         """Computes the centroids of a pre-computed embedding such as UMAP.
 
         Args:
-            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
         Returns:
             A new Anndata object in which each observation is a perturbation and its X the centroid.
@@ -27,29 +25,23 @@ class CentroidSpace(PerturbationSpace):
         if embedding_key not in adata.obsm_keys():
             raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
 
-        if target_col not in adata.obs:
-            raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
+        embedding = adata.obsm[embedding_key]
+        centroids = np.mean(embedding, axis=0)
 
-        grouped = adata.obs.groupby(target_col)
-
-        X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
-        index = []
-        pert_index = 0
-        for group_name, group_data in grouped:
-            indices = group_data.index
-            index.append(group_name)
-            X[pert_index, :] = np.mean(adata[indices].obsm[embedding_key], axis=0)
-            pert_index += 1
-
-        ps_adata = AnnData(X=X)
-        ps_adata.obs_names = index
+        ps_adata = adata.copy()
+        ps_adata.X = centroids.reshape(1, -1)
 
         return ps_adata
 
 
 class PseudobulkSpace(PerturbationSpace):
     def compute(
-        self, adata: AnnData, target_col: str = "perturbations", layer_key: str = None, **kwargs
+        self, 
+        adata: AnnData, 
+        target_col: str = "perturbations", 
+        layer_key: str = None, 
+        embedding_key: str = None, 
+        **kwargs
     ) -> AnnData:  # type: ignore
         """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
 
@@ -57,16 +49,29 @@ class PseudobulkSpace(PerturbationSpace):
             adata: Anndata object of size cells x genes
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
+            embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
             mode: How to perform the pseudobulk. Available options are sum, mean or median.
         """
         if "groups_col" not in kwargs:
             kwargs["groups_col"] = "perturbations"
 
+        if layer_key is not None and embedding_key is not None:
+            raise ValueError(f"Please, select just either layer or embedding for computation.")
+
         if layer_key is not None and layer_key not in adata.layers.keys():
             raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
-
+        
         if target_col not in adata.obs:
             raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
+        
+        if embedding_key is not None:
+            if embedding_key not in adata.obsm_keys():
+                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
+            else:
+                adata_emb = AnnData(X=adata.obsm[embedding_key])
+                adata_emb.obs_names = adata.obs_names
+                adata_emb.obs = adata.obs
+                adata = adata_emb
 
         ps_adata = dc.get_pseudobulk(adata, sample_col=target_col, layer=layer_key, **kwargs)  # type: ignore
 
@@ -103,6 +108,9 @@ class KMeansSpace(ClusteringSpace):
 
         if cluster_key is None:
             cluster_key = "k-means"
+            
+        if layer_key is not None and embedding_key is not None:
+            raise ValueError(f"Please, select just either layer or embedding for computation.")
 
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():
