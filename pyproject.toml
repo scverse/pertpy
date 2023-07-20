@@ -41,6 +41,7 @@ pyqt5 = {version = "^5.15.9", optional = true}
 ott-jax = "^0.4.0"
 sparsecca = ">=0.3.0"
 numba = "^0.57.1"
+igraph = "<0.10.4"  # newer versions break leidenalg. Remove ASAP.
 
 [tool.poetry.dev-dependencies]
 black = ">=22.12.0"
