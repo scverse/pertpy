@@ -45,7 +45,7 @@ def ari(true_labels: np.ndarray, predicted_labels: np.ndarray) -> float:
 def asw(
     pairwise_distances: ArrayLike,
     labels: ArrayLike,
-    metric: str = "euclidian",
+    metric: str = "euclidean",
     sample_size: int = None,
     random_state: int = None,
     **kwargs
