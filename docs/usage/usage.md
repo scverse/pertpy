@@ -438,7 +438,15 @@ Various modules for calculating and evaluating perturbation spaces.
     tools.PseudobulkSpace
 ```
 
-BLA
+Example implementation:
+
+```python
+import pertpy as pt
+
+# TODO will be added soon.
+```
+
+See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html) for a more elaborate tutorial.
 
 ## Plots
 
