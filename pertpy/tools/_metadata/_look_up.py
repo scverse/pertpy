@@ -280,7 +280,7 @@ class LookUp:
             query_id_list: A list of unique gene identifiers to test the number of matched ids present in the metadata. Defaults to None.
 
         """
-        # only availble for CellLineMetaData.lookup
+        # only available for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
 
