@@ -460,21 +460,6 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
 
 ```
 
-### Cell type prioritization
-
-#### Augur
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.ag.dp_scatter
-    plot.ag.important_features
-    plot.ag.lollipop
-    plot.ag.scatterplot
-
-```
-
 ### Pooled CRISPR screens
 
 #### Mixscape
@@ -520,6 +505,19 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
 ```
 
 ### Response prediction
+
+#### Augur
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.ag.dp_scatter
+    plot.ag.important_features
+    plot.ag.lollipop
+    plot.ag.scatterplot
+
+```
 
 #### scGen
 
