@@ -149,3 +149,6 @@ cache
 
 # Apple stuff
 .DS_Store
+
+lightning_logs/*
+*/lightning_logs/*

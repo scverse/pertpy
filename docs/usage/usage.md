@@ -99,7 +99,7 @@ Example implementation:
 import pertpy as pt
 import scanpy as sc
 
-mdata = pt.data.papalexi_2021()
+mdata = pt.dt.papalexi_2021()
 gdo = mdata.mod['gdo']
 gdo.layers['counts'] = gdo.X.copy()
 sc.pp.log1p(gdo)
@@ -111,50 +111,6 @@ pt.pl.guide.heatmap(gdo, layer='assigned_guides')
 ```
 
 ## Tools
-
-### Cell type prioritization
-
-#### Augur
-
-The Python implementation of [Augur R package](https://github.com/neurorestore/Augur)
-Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
-
-Augur aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
-The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are
-more easily separated into perturbed and unperturbed than cell types with little or no response.
-This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type.
-Augur trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and
-then prioritizes cell type response according to metric scores measuring the accuracy of the model.
-For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient
-is used as a proxy for how accurate the model is which in turn approximates perturbation response.
-
-Example implementation:
-
-```python
-import pertpy as pt
-
-adata = pt.dt.sc_sim_augur()
-ag = pt.tl.Augur(estimator="random_forest_classifier")
-adata = ag.load(adata)
-adata, results = ag.predict(adata)
-
-# metrics for each cell type
-results['summary_metrics']
-```
-
-See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augur.html) for a more elaborate tutorial.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: tools
-    :nosignatures:
-
-    tools.Augur
-```
 
 ### Pooled CRISPR screens
 
@@ -219,7 +175,7 @@ Example implementation:
 import pertpy as pt
 import scanpy as sc
 
-adata = pt.data.stephenson_2021_subsampled()
+adata = pt.dt.stephenson_2021_subsampled()
 adata.obs['COVID_severity'] = adata.obs['Status_on_day_collection_summary'].copy()
 adata.obs[['patient_id', 'COVID_severity']].drop_duplicates()
 adata = adata[adata.obs['Status'] != 'LPS'].copy()
@@ -319,8 +275,8 @@ all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs,
 
 ### Distances and Permutation Tests
 
-General purpose functions for distances and permutation tests. Reimplements
-functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
+General purpose functions for distances and permutation tests.
+Reimplements functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
 
 ```{eval-rst}
 .. currentmodule:: pertpy
@@ -377,6 +333,48 @@ Available databases for cell line metadata:
 
 ### Response prediction
 
+#### Augur
+
+The Python implementation of [Augur R package](https://github.com/neurorestore/Augur)
+Skinnider, M.A., Squair, J.W., Kathe, C. et al. [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1). Nat Biotechnol 39, 30–34 (2021).
+
+Augur aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
+The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are
+more easily separated into perturbed and unperturbed than cell types with little or no response.
+This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type.
+Augur trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and
+then prioritizes cell type response according to metric scores measuring the accuracy of the model.
+For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient
+is used as a proxy for how accurate the model is which in turn approximates perturbation response.
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+adata = pt.dt.sc_sim_augur()
+ag = pt.tl.Augur(estimator="random_forest_classifier")
+adata = ag.load(adata)
+adata, results = ag.predict(adata)
+
+# metrics for each cell type
+results['summary_metrics']
+```
+
+See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augur.html) for a more elaborate tutorial.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+    :nosignatures:
+
+    tools.Augur
+```
+
 #### scGen
 
 Reimplementation of scGen for perturbation response prediction of scRNA-seq data in Jax.
@@ -419,16 +417,36 @@ pred, delta = model.predict(
 pred.obs['condition'] = 'pred'
 ```
 
-See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html) for a more elaborate tutorial.
+See [scgen tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html) for a more elaborate tutorial.
 
-### Representation
+### Perturbation space
+
+Various modules for calculating and evaluating perturbation spaces.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
 
 ```{eval-rst}
 .. autosummary::
     :toctree: tools
 
-    tools.kernel_pca
+    tools.DiscriminatorClassifierSpace
+    tools.CentroidSpace
+    tools.DBSCANSpace
+    tools.KMeansSpace
+    tools.PseudobulkSpace
 ```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+# TODO will be added soon.
+```
+
+See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html) for a more elaborate tutorial.
 
 ## Plots
 
@@ -439,21 +457,6 @@ See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks
     :toctree: plot
 
     plot.guide
-
-```
-
-### Cell type prioritization
-
-#### Augur
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.ag.dp_scatter
-    plot.ag.important_features
-    plot.ag.lollipop
-    plot.ag.scatterplot
 
 ```
 
@@ -502,6 +505,19 @@ See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks
 ```
 
 ### Response prediction
+
+#### Augur
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.ag.dp_scatter
+    plot.ag.important_features
+    plot.ag.lollipop
+    plot.ag.scatterplot
+
+```
 
 #### scGen
 
