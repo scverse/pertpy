@@ -297,7 +297,6 @@ class JaxscgenPlot:
             bins=50,
         )
         pyplot.hist(dot_sal, label=stim_key, bins=50)
-        # pyplot.legend(loc=1, prop={'size': 7})
         pyplot.axvline(0, color="k", linestyle="dashed", linewidth=1)
         pyplot.title("  ", fontsize=fontsize)
         pyplot.xlabel("  ", fontsize=fontsize)

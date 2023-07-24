@@ -82,7 +82,7 @@ class TestMixscape:
         assert sum(np_result_correct) > accuracy_threshold * num_cells_per_group
         assert sum(ko_result_correct) > accuracy_threshold * num_cells_per_group
 
-    def test_pert_sign(self):
+    def test_perturbation_signature(self):
         adata = self.make_test_adata()
 
         pt.tl.kernel_pca(adata, n_comps=50)

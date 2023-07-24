@@ -101,18 +101,15 @@ class Tasccoda(CompositionalModel2):
         Returns:
             MuData: MuData object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.smillie()
-                tasccoda = pt.tl.Tasccoda()
-                mdata = tasccoda.load(
-                    adata, type="sample_level",
-                    levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-                    key_added="lineage", add_level_name=True
-                )
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
         """
 
         if type == "cell_level":
@@ -174,21 +171,18 @@ class Tasccoda(CompositionalModel2):
             - `adata.uns["scCODA_params"]["model_type"]` or `data[modality_key].uns["scCODA_params"]["model_type"]`: String indicating the model type ("classic")
             - `adata.uns["scCODA_params"]["select_type"]` or `data[modality_key].uns["scCODA_params"]["select_type"]`: String indicating the type of spike_and_slab selection ("spikeslab")
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.smillie()
-                tasccoda = pt.tl.Tasccoda()
-                mdata = tasccoda.load(
-                    adata, type="sample_level",
-                    levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-                    key_added="lineage", add_level_name=True
-                )
-                mdata = tasccoda.prepare(
-                    mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-                )
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
         """
         if pen_args is None:
             pen_args = {"lambda_1": 5}
@@ -305,7 +299,7 @@ class Tasccoda(CompositionalModel2):
         else:
             return adata
 
-    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData):  # type: ignore
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:  # type: ignore
         """
         Sets initial MCMC state values for scCODA model
 
@@ -468,23 +462,20 @@ class Tasccoda(CompositionalModel2):
         Returns:
             arviz.InferenceData: arviz_data
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.smillie()
-                tasccoda = pt.tl.Tasccoda()
-                mdata = tasccoda.load(
-                    adata, type="sample_level",
-                    levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-                    key_added="lineage", add_level_name=True
-                )
-                mdata = tasccoda.prepare(
-                    mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-                )
-                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
-                tasccoda.make_arviz(mdata)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+            >>> tasccoda.make_arviz(mdata)
         """
         if isinstance(data, MuData):
             try:
@@ -581,22 +572,19 @@ class Tasccoda(CompositionalModel2):
         **kwargs,
     ):
         """
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.smillie()
-                tasccoda = pt.tl.Tasccoda()
-                mdata = tasccoda.load(
-                    adata, type="sample_level",
-                    levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-                    key_added="lineage", add_level_name=True
-                )
-                mdata = tasccoda.prepare(
-                    mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-                )
-                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
         """
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
@@ -604,23 +592,20 @@ class Tasccoda(CompositionalModel2):
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.smillie()
-                tasccoda = pt.tl.Tasccoda()
-                mdata = tasccoda.load(
-                    adata, type="sample_level",
-                    levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-                    key_added="lineage", add_level_name=True
-                )
-                mdata = tasccoda.prepare(
-                    mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-                )
-                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
-                tasccoda.summary(mdata)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+            >>> tasccoda.summary(mdata)
         """
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
@@ -628,23 +613,20 @@ class Tasccoda(CompositionalModel2):
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.smillie()
-                tasccoda = pt.tl.Tasccoda()
-                mdata = tasccoda.load(
-                    adata, type="sample_level",
-                    levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-                    key_added="lineage", add_level_name=True
-                )
-                mdata = tasccoda.prepare(
-                    mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-                )
-                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
-                tasccoda.credible_effects(mdata)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+            >>> tasccoda.credible_effects(mdata)
         """
         return super().credible_effects(data, modality_key, est_fdr)
 
@@ -652,23 +634,20 @@ class Tasccoda(CompositionalModel2):
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.smillie()
-                tasccoda = pt.tl.Tasccoda()
-                mdata = tasccoda.load(
-                    adata, type="sample_level",
-                    levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-                    key_added="lineage", add_level_name=True
-                )
-                mdata = tasccoda.prepare(
-                    mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-                )
-                tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
-                tasccoda.set_fdr(mdata_salm, est_fdr=0.4)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+            >>> tasccoda.set_fdr(mdata_salm, est_fdr=0.4)
         """
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
