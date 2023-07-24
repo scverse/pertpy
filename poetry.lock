@@ -3714,18 +3714,18 @@ test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.3.1)", "pytest-
 
 [[package]]
 name = "plotnine"
-version = "0.12.1"
+version = "0.12.2"
 description = "A Grammar of Graphics for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "plotnine-0.12.1-py3-none-any.whl", hash = "sha256:f0989d1f368925082d543efcfc1cfb7236de8341cc6138ae65b856d70f77106a"},
-    {file = "plotnine-0.12.1.tar.gz", hash = "sha256:be852c6e50e331ad250151dc4120f269ee9ae5e795f67030f7794718b502592a"},
+    {file = "plotnine-0.12.2-py3-none-any.whl", hash = "sha256:0d192942903de2bff0f30a022cc469127ffc507334d0c504bb4aba73953d6424"},
+    {file = "plotnine-0.12.2.tar.gz", hash = "sha256:f6a8878f8a7d44ba6644785efc9d1e18ac17abc1dd3815fd88015105d9ef99d6"},
 ]
 
 [package.dependencies]
 matplotlib = ">=3.6.0"
-mizani = ">=0.9.0"
+mizani = ">0.9.0,<0.10.0"
 numpy = ">=1.23.0"
 pandas = ">=1.5.0"
 patsy = ">=0.5.1"
