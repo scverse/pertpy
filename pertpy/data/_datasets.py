@@ -212,7 +212,7 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data
     """
-    output_file_name = "frangieh_2021.h5ad"
+    output_file_name = "frangieh_2021_raw.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
