@@ -7,13 +7,13 @@ import pertpy as pt
 actual_distances = [
     "edistance",
     "pseudobulk",
-    "pseudobulk_absolute",
-    "pseudobulk_pearson",
-    "pseudobulk_spearman",
-    "pseudobulk_cosine",
+    "mean_absolute_distance",
+    "pearson_distance",
+    "spearman_distance",
+    "cosine_distance",
     "wasserstein",
 ]
-pseudo_distances = ["mean_pairwise", "mmd", "pseudobulk_r2"]
+pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test"]
 
 
 class TestDistances:

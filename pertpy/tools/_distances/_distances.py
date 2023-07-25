@@ -73,16 +73,16 @@ class Distance:
             metric_fct = Edistance()
         elif metric == "pseudobulk":
             metric_fct = PseudobulkDistance()
-        elif metric == "pseudobulk_absolute":
-            metric_fct = PseudobulkAbsoluteDistance()
-        elif metric == "pseudobulk_pearson":
-            metric_fct = PseudobulkPearsonDistance()
-        elif metric == "pseudobulk_spearman":
-            metric_fct = PseudobulkSpearmanDistance()
-        elif metric == "pseudobulk_cosine":
-            metric_fct = PseudobulkCosineDistance()
-        elif metric == "pseudobulk_r2":
-            metric_fct = PseudobulkR2Score()
+        elif metric == "mean_absolute_distance":
+            metric_fct = MeanAbsoluteDistance()
+        elif metric == "pearson_distance":
+            metric_fct = PearsonDistance()
+        elif metric == "spearman_distance":
+            metric_fct = SpearmanDistance()
+        elif metric == "cosine_distance":
+            metric_fct = CosineDistance()
+        elif metric == "r2_distance":
+            metric_fct = R2ScoreDistance()
         elif metric == "mean_pairwise":
             metric_fct = MeanPairwiseDistance()
         elif metric == "mmd":
@@ -91,6 +91,8 @@ class Distance:
             metric_fct = WassersteinDistance()
         elif metric == "kl_divergence":
             metric_fct = KLDivergence()
+        elif metric == "t_test":
+            metric_fct = TTestDistance()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -323,7 +325,7 @@ class PseudobulkDistance(AbstractDistance):
         raise NotImplementedError("PseudobulkDistance cannot be called on a pairwise distance matrix.")
 
 
-class PseudobulkAbsoluteDistance(AbstractDistance):
+class MeanAbsoluteDistance(AbstractDistance):
     """Absolute (Norm-1) distance between pseudobulk vectors."""
 
     def __init__(self) -> None:
@@ -334,7 +336,7 @@ class PseudobulkAbsoluteDistance(AbstractDistance):
         return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("PseudobulkAbsoluteDistance cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("MeanAbsoluteDistance cannot be called on a pairwise distance matrix.")
 
 
 class MeanPairwiseDistance(AbstractDistance):
@@ -353,7 +355,7 @@ class MeanPairwiseDistance(AbstractDistance):
         return P[idx, :][:, ~idx].mean()
 
 
-class PseudobulkPearsonDistance(AbstractDistance):
+class PearsonDistance(AbstractDistance):
     """Pearson distance between pseudobulk vectors."""
 
     def __init__(self) -> None:
@@ -364,10 +366,10 @@ class PseudobulkPearsonDistance(AbstractDistance):
         return 1 - pearsonr(X.mean(axis=0), Y.mean(axis=0))[0]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("PseudobulkPearsonDistance cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("PearsonDistance cannot be called on a pairwise distance matrix.")
 
 
-class PseudobulkSpearmanDistance(AbstractDistance):
+class SpearmanDistance(AbstractDistance):
     """Spearman distance between pseudobulk vectors."""
 
     def __init__(self) -> None:
@@ -378,10 +380,10 @@ class PseudobulkSpearmanDistance(AbstractDistance):
         return 1 - spearmanr(X.mean(axis=0), Y.mean(axis=0))[0]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("PseudobulkSpearmanDistance cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("SpearmanDistance cannot be called on a pairwise distance matrix.")
 
 
-class PseudobulkCosineDistance(AbstractDistance):
+class CosineDistance(AbstractDistance):
     """Cosine distance between pseudobulk vectors."""
 
     def __init__(self) -> None:
@@ -392,10 +394,10 @@ class PseudobulkCosineDistance(AbstractDistance):
         return cosine(X.mean(axis=0), Y.mean(axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("PseudobulkCosineDistance cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("CosineDistance cannot be called on a pairwise distance matrix.")
 
 
-class PseudobulkR2Score(AbstractDistance):
+class R2ScoreDistance(AbstractDistance):
     """Coefficient of determination across genes between pseudobulk vectors."""
 
     # NOTE: This is not a distance metric but a similarity metric.
@@ -405,14 +407,19 @@ class PseudobulkR2Score(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return 1 - r2_score(X.mean(axis=0), Y.mean(axis=0))
+        return r2_score(X.mean(axis=0), Y.mean(axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("PseudobulkR2Score cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
 
 
 class KLDivergence(AbstractDistance):
-    """Average of KL divergence between gene distributions of two groups"""
+    """Average of KL divergence between gene distributions of two groups
+
+    Assuming a Gaussian distribution for each gene in each group, calculates
+    the KL divergence between them and averages over all genes
+
+    """
 
     # NOTE: This results to an approximation of KL-Divergence by calculating histogram over bins
 
@@ -420,14 +427,38 @@ class KLDivergence(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, bins=10, **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         kl_all = []
         for i in range(X.shape[1]):
-            x_hist, bin_edges = np.histogram(X[:, i], bins=bins, density=True)
-            y_hist, _ = np.histogram(Y[:, i], bins=bin_edges, density=True)
-            kl = np.sum(np.where(x_hist != 0, np.diff(bin_edges) * x_hist * np.log(x_hist / y_hist), 0))
+            x_mean, x_std = X[:, i].mean(), X[:, i].std()
+            y_mean, y_std = Y[:, i].mean(), Y[:, i].std()
+            kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
             kl_all.append(kl)
         return sum(kl_all) / len(kl_all)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("KLDivergence cannot be called on a pairwise distance matrix.")
+
+
+class TTestDistance(AbstractDistance):
+    """Average of T test statistic between two groups assuming unequal variances"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, bins=10, **kwargs) -> float:
+        t_test_all = []
+        n1 = X.shape[0]
+        n2 = Y.shape[0]
+        for i in range(X.shape[1]):
+            m1, v1 = X[:, i].mean(), X[:, i].std() ** 2 * n1 / (n1 - 1)
+            m2, v2 = Y[:, i].mean(), Y[:, i].std() ** 2 * n2 / (n2 - 1)
+            vn1 = v1 / n1
+            vn2 = v2 / n2
+            t = (m1 - m2) / np.sqrt(vn1 + vn2)
+            t_test_all.append(abs(t))
+        return sum(t_test_all) / len(t_test_all)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
