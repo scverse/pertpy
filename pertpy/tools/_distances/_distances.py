@@ -13,6 +13,7 @@ from rich.progress import track
 from scipy.spatial.distance import cosine
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances, r2_score
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 
 class Distance:
@@ -26,19 +27,36 @@ class Distance:
         groups minus the mean pairwise distance between cells within each group
         respectively. More information can be found in
         `Peidli et al. (2023) <https://doi.org/10.1101/2022.08.20.504663>`__.
+    - "pseudobulk": Pseudobulk distance.
+        This is the euclidean distance between the means of cells from two groups.
+    - "mean_absolute_distance": Pseudobulk mean absolute distance.
+        This is the mean absolute distance between the means of cells from two groups.
+    - "pearson_distance": Pearson distance.
+        This is the pearson distance between the means of cells from two groups.
+    - "spearman_distance": Spearman distance.
+        This is the spearman distance between the means of cells from two groups.
+    - "cosine_distance": Cosine distance.
+        This is the cosine distance between the means of cells from two groups.
+    - "r2_distance": coefficient of determination distance.
+        This is the coefficient of determination distance between the means of cells from two groups.
+    - "mean_pairwise": Mean pairwise distance.
+        This is the mean of the pairwise euclidean distances between cells of two groups.
+    - "mean_pairwise": Mean pairwise distance.
+        This is the mean of the pairwise euclidean distances between cells of two groups.
     - "mmd": Maximum mean discrepancy
         This is the maximum mean discrepancy between the cells of two groups.
-        Here, uses linear MMD. For theory on MMD in single-cell applications, see
+        Here, uses linear, rbf, and quadratic polynomial MMD. For theory on MMD in single-cell applications, see
         `Lotfollahi et al. (2019) <https://doi.org/10.48550/arXiv.1910.01791>`__.
     - "wasserstein": Wasserstein distance (Earth Mover's Distance)
         This is the Wasserstein distance between the cells of two groups. Uses an
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
-    - "pseudobulk": Pseudobulk distance.
-        This is the euclidean distance between the means of cells from two groups.
-    - "mean_pairwise": Mean pairwise distance.
-        This is the mean of the pairwise euclidean distances between cells of two groups.
+    - "kl_divergence": Kullback–Leibler divergence distance.
+        This is the Kullback–Leibler divergence of the gaussian distributions between cells of two groups.
+        Here we fit a gaussian distribution over each group of cells and then calculate the KL divergence
+    - "t_test": t-test statistic.
+        This is the t-test statistic measure between cells of two groups.
 
     Attributes:
         metric: Name of distance metric.
@@ -278,9 +296,23 @@ class MMD(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        delta = X.mean(0) - Y.mean(0)
-        return delta.dot(delta.T)
+    def __call__(self, X: np.ndarray, Y: np.ndarray, kernel="linear", **kwargs) -> float:
+        if kernel == "linear":
+            XX = np.dot(X, X.T)
+            YY = np.dot(Y, Y.T)
+            XY = np.dot(X, Y.T)
+        elif kernel == "rbf":
+            XX = rbf_kernel(X, X, gamma=1.0)
+            YY = rbf_kernel(Y, Y, gamma=1.0)
+            XY = rbf_kernel(X, Y, gamma=1.0)
+        elif kernel == "poly":
+            XX = polynomial_kernel(X, X, degree=2, gamma=1.0, coef0=0)
+            YY = polynomial_kernel(Y, Y, degree=2, gamma=1.0, coef0=0)
+            XY = polynomial_kernel(X, Y, degree=2, gamma=1.0, coef0=0)
+        else:
+            raise ValueError(f"Kernel {kernel} not recognized.")
+
+        return XX.mean() + YY.mean() - 2 * XY.mean()
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MMD cannot be called on a pairwise distance matrix.")
