@@ -27,13 +27,12 @@ def test_differential_response():
     adata = AnnData(X, obs=obs)
 
     # Compute the differential response
-    adata = adata[:, :3]
     ps = pt.tl.PseudobulkSpace()
-    adata = ps.compute_control_diff(adata, copy=True)
+    ps_adata = ps.compute_control_diff(adata, copy=True)
 
     # Test that the differential response was computed correctly
-    expected_diff_matrix = adata.X - np.mean(adata.X[1:, :], axis=0)
-    np.testing.assert_allclose(adata.X, expected_diff_matrix, rtol=1e-4)
+    expected_diff_matrix = adata.X - adata.X[0, :]
+    np.testing.assert_allclose(ps_adata.X, expected_diff_matrix, rtol=1e-4)
 
     # Check that the function raises an error if the reference key is not found
     with pytest.raises(ValueError):
@@ -69,7 +68,7 @@ def test_pseudobulk_response():
     )
     adata = AnnData(X, obs=obs)
 
-    # Compute the differential response
+    # Compute the pseudobulk
     ps = pt.tl.PseudobulkSpace()
     psadata = ps.compute(adata, mode="mean", min_cells=0, min_counts=0)
 
@@ -77,12 +76,13 @@ def test_pseudobulk_response():
     adata_target1 = adata[adata.obs.perturbations == "target1"].X.mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
 
+    # Test in UMAP space
     adata.obsm["X_umap"] = X
 
-    # Compute the differential response
+    # Compute the pseudobulk
     ps = pt.tl.PseudobulkSpace()
     psadata = ps.compute(adata, embedding_key="X_umap", mode="mean", min_cells=0, min_counts=0)
-
+    
     # Test that the pseudobulk response was computed correctly
     adata_target1 = adata[adata.obs.perturbations == "target1"].obsm["X_umap"].mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
@@ -134,18 +134,18 @@ def test_centroid_umap_response():
     adata = AnnData(X, obs=obs)
     adata.obsm["X_umap"] = X
 
-    # Compute the differential response
+    # Compute the centroids
     ps = pt.tl.CentroidSpace()
     psadata = ps.compute(adata, embedding_key="X_umap")
 
-    # Test that the pseudobulk response was computed correctly
+    # Test that the centroids response was computed correctly
     adata_target1 = adata[adata.obs.perturbations == "target1"].obsm["X_umap"].mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
 
     ps = pt.tl.CentroidSpace()
     psadata = ps.compute(adata)  # if nothing specific, compute with X, and X and X_umap are the same
 
-    # Test that the pseudobulk response was computed correctly
+    # Test that the centroids response was computed correctly
     adata_target1 = adata[adata.obs.perturbations == "target1"].obsm["X_umap"].mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
 
@@ -165,3 +165,89 @@ def test_centroid_umap_response():
             embedding_key="not_found",
             layer_key="not_found",
         )
+
+
+def test_linear_operations():
+    X = np.random.rand(10, 5)
+    obs = pd.DataFrame(
+        {
+            "perturbations": [
+                "control",
+                "target1",
+                "target1",
+                "target2",
+                "target2",
+                "target1",
+                "target1",
+                "target2",
+                "target2",
+                "target2",
+            ]
+        }
+    )
+    adata = AnnData(X, obs=obs)
+    adata.obsm["X_umap"] = X
+
+    # Compute the pseudobulk
+    ps = pt.tl.PseudobulkSpace()
+    psadata = ps.compute(adata, mode="mean", min_cells=0, min_counts=0)
+    
+    psadata_umap = ps.compute(adata, mode="mean", min_cells=0, min_counts=0, embedding_key="X_umap")
+    psadata.obsm["X_umap"] = psadata_umap.X
+    
+    # Do summation
+    ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], process_data=True)
+    
+    # Test in X
+    test = data_compare["control"].X + data_compare["target1"].X + data_compare["target2"].X
+    np.testing.assert_allclose(test, ps_adata["target1+target2"].X, rtol=1e-4)
+    
+    # Test in UMAP
+    test = data_compare["control"].obsm["X_umap_control_diff"] + data_compare["target1"].obsm["X_umap_control_diff"] + data_compare["target2"].obsm["X_umap_control_diff"]
+    np.testing.assert_allclose(test, ps_adata["target1+target2"].obsm["X_umap"], rtol=1e-4)
+    
+    # Do subtraction
+    ps_adata, data_compare = ps.subtract(psadata, reference_key="target1", perturbations=["target2"], process_data=True)
+    
+    # Test in X
+    test = data_compare["target1"].X - data_compare["target2"].X
+    np.testing.assert_allclose(test, ps_adata["target1-target2"].X, rtol=1e-4)
+    
+    # Operations after differential expression, do the results match?
+    ps_adata = ps.compute_control_diff(psadata, copy=True)
+    
+    # Do summation
+    ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"])
+    
+    # Test in X
+    test = ps_adata["control"].X + ps_adata["target1"].X + ps_adata["target2"].X
+    np.testing.assert_allclose(test, ps_adata2["target1+target2"].X, rtol=1e-4)
+    
+    # Do subtract
+    ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"])
+    ps_vector = ps_adata2["target1-target1"].X
+    np.testing.assert_allclose(ps_adata2["control"].X, ps_adata2["target1-target1"].X, rtol=1e-4)
+    
+    ps_adata2, data_compare = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], process_data=True)
+    ps_inner_vector = ps_adata2["target1-target1"].X
+    
+    # Compare process data vs pseudobulk before, should be the same
+    np.testing.assert_allclose(ps_inner_vector, ps_vector, rtol=1e-4)
+    
+    # Check result in UMAP
+    np.testing.assert_allclose(data_compare["control"].obsm["X_umap_control_diff"], ps_adata2["target1-target1"].obsm["X_umap"], rtol=1e-4)
+
+    # Check that the function raises an error if the perturbation is not found
+    with pytest.raises(ValueError):
+        ps.add(
+            ps_adata,
+            perturbations=["target1", "target3"],
+        )
+
+    # Check that the function raises an error if some key is not found
+    with pytest.raises(ValueError):
+        ps.add(
+            ps_adata,
+            perturbations=["target1", "target3"],
+        )
+        

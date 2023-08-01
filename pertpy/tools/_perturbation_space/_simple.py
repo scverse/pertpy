@@ -208,7 +208,7 @@ class DBSCANSpace(ClusteringSpace):
                 self.X = adata.obsm[embedding_key]
 
         elif layer_key is not None:
-            if layer_key not in adata.obsm_keys():
+            if layer_key not in adata.layers.keys():
                 raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
             else:
                 self.X = adata.layers[layer_key]
