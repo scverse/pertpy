@@ -103,7 +103,7 @@ class PerturbationSpace:
             adata: AnnData,
             perturbations: list, 
             reference_key: str = "control",
-            process_data: bool = False,
+            ensure_consistency: bool = False,
             ):
         """Add perturbations linearly. Assumes input of size n_perts x dimensionality
 
@@ -111,7 +111,7 @@ class PerturbationSpace:
             adata: Anndata object of size n_perts x dim.
             perturbations: List of perturbations to sum
             reference_key: perturbation source from which the perturbation summation starts
-            process_data: if True, runs differential expression in all data matrices to ensure consistency of linear space
+            ensure_consistency: if True, runs differential expression in all data matrices to ensure consistency of linear space
         """
         
         new_pert_name = ""
@@ -122,8 +122,8 @@ class PerturbationSpace:
                 )
                 new_pert_name += perturbation+"+"
         
-        if not process_data:
-            print("Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with process_data=True")
+        if not ensure_consistency:
+            print("Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True")
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
             
@@ -181,7 +181,7 @@ class PerturbationSpace:
                     key_name = key.rstrip("_control_diff") 
                 new_pert.obsm[key_name] = data['embeddings'][key]
         
-        if process_data:
+        if ensure_consistency:
             return new_pert, adata
         return new_pert
 
@@ -189,7 +189,7 @@ class PerturbationSpace:
             adata: AnnData,
             perturbations: list, 
             reference_key: str = "control", # Usually, "control" is not the reference used, but some perturbation
-            process_data: bool = False,
+            ensure_consistency: bool = False,
             ):
         """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
 
@@ -197,7 +197,7 @@ class PerturbationSpace:
             adata: Anndata object of size n_perts x dim.
             perturbations: List of perturbations to subtract
             reference_key: perturbation source from which the perturbation subtraction starts
-            process_data: if True, runs differential expression in all data matrices to ensure consistency of linear space
+            ensure_consistency: if True, runs differential expression in all data matrices to ensure consistency of linear space
         """
         
         new_pert_name = reference_key+"-"
@@ -208,8 +208,8 @@ class PerturbationSpace:
                 )
                 new_pert_name += perturbation+"-"
         
-        if not process_data:
-            print("Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with process_data=True")
+        if not ensure_consistency:
+            print("Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True")
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
                 
@@ -267,6 +267,6 @@ class PerturbationSpace:
                     key_name = key.rstrip("_control_diff") 
                 new_pert.obsm[key_name] = data['embeddings'][key]
         
-        if process_data:
+        if ensure_consistency:
             return new_pert, adata
         return new_pert
