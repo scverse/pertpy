@@ -10,8 +10,6 @@ from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpa
 
 
 class CentroidSpace(PerturbationSpace):
-    """Computes the centroids per perturbation of a pre-computed embedding."""
-
     def compute(
         self,
         adata: AnnData,
@@ -77,8 +75,6 @@ class CentroidSpace(PerturbationSpace):
 
 
 class PseudobulkSpace(PerturbationSpace):
-    """Determines pseudobulks using decoupler."""
-
     def compute(
         self,
         adata: AnnData,
@@ -122,8 +118,6 @@ class PseudobulkSpace(PerturbationSpace):
 
 
 class KMeansSpace(ClusteringSpace):
-    """Computes K-Means clustering of the expression values."""
-
     def compute(  # type: ignore
         self,
         adata: AnnData,
@@ -214,7 +208,7 @@ class DBSCANSpace(ClusteringSpace):
                 self.X = adata.obsm[embedding_key]
 
         elif layer_key is not None:
-            if layer_key not in adata.obsm_keys():
+            if layer_key not in adata.layers.keys():
                 raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
             else:
                 self.X = adata.layers[layer_key]
