@@ -196,7 +196,7 @@ def test_linear_operations():
     psadata.obsm["X_umap"] = psadata_umap.X
     
     # Do summation
-    ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], process_data=True)
+    ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], ensure_consistency=True)
     
     # Test in X
     test = data_compare["control"].X + data_compare["target1"].X + data_compare["target2"].X
@@ -207,7 +207,7 @@ def test_linear_operations():
     np.testing.assert_allclose(test, ps_adata["target1+target2"].obsm["X_umap"], rtol=1e-4)
     
     # Do subtraction
-    ps_adata, data_compare = ps.subtract(psadata, reference_key="target1", perturbations=["target2"], process_data=True)
+    ps_adata, data_compare = ps.subtract(psadata, reference_key="target1", perturbations=["target2"], ensure_consistency=True)
     
     # Test in X
     test = data_compare["target1"].X - data_compare["target2"].X
@@ -228,7 +228,7 @@ def test_linear_operations():
     ps_vector = ps_adata2["target1-target1"].X
     np.testing.assert_allclose(ps_adata2["control"].X, ps_adata2["target1-target1"].X, rtol=1e-4)
     
-    ps_adata2, data_compare = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], process_data=True)
+    ps_adata2, data_compare = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=True)
     ps_inner_vector = ps_adata2["target1-target1"].X
     
     # Compare process data vs pseudobulk before, should be the same

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -127,7 +128,7 @@ class PerturbationSpace:
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
             
-        data = {}
+        data: Dict[str, np.array] = {}
         
         for local_layer_key in adata.layers.keys():
             data['layers'] = {}
@@ -213,7 +214,7 @@ class PerturbationSpace:
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
                 
-        data = {}
+        data: Dict[str, np.array] = {}
         
         for local_layer_key in adata.layers.keys():
             data['layers'] = {}
