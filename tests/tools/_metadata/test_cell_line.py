@@ -7,7 +7,6 @@ from scipy import sparse
 
 import pertpy as pt
 
-
 NUM_CELLS = 100
 NUM_GENES = 100
 NUM_CELLS_PER_ID = NUM_CELLS // 4
@@ -15,7 +14,7 @@ NUM_CELLS_PER_ID = NUM_CELLS // 4
 
 class TestMetaData:
     pt_metadata = pt.tl.CellLineMetaData()
-    
+
     @pytest.fixture
     def make_test_adata(self) -> AnnData:
         np.random.seed(1)
