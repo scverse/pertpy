@@ -1,9 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import Dict
+from __future__ import annotations
+
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from rich import print
 
 
 class PerturbationSpace:
@@ -62,23 +64,26 @@ class PerturbationSpace:
         num_control = control_mask.sum()
 
         if layer_key:
-            control_expression = np.mean(adata.layers[layer_key][control_mask, :], axis=0)
             if num_control == 1:
                 control_expression = adata.layers[layer_key][control_mask, :]
+            else:
+                control_expression = np.mean(adata.layers[layer_key][control_mask, :], axis=0)
             diff_matrix = adata.layers[layer_key] - control_expression
             adata.layers[new_layer_key] = diff_matrix
 
         if embedding_key:
-            control_expression = np.mean(adata.obsm[embedding_key][control_mask, :], axis=0)
             if num_control == 1:
                 control_expression = adata.obsm[embedding_key][control_mask, :]
+            else:
+                control_expression = np.mean(adata.obsm[embedding_key][control_mask, :], axis=0)
             diff_matrix = adata.obsm[embedding_key] - control_expression
             adata.obsm[new_embedding_key] = diff_matrix
 
         if (not layer_key and not embedding_key) or all_data:
-            control_expression = np.mean(adata.X[control_mask, :], axis=0)
             if num_control == 1:
                 control_expression = adata.X[control_mask, :]
+            else:
+                control_expression = np.mean(adata.X[control_mask, :], axis=0)
             diff_matrix = adata.X - control_expression
             adata.X = diff_matrix
 
@@ -106,7 +111,7 @@ class PerturbationSpace:
     def add(
         self,
         adata: AnnData,
-        perturbations: list,
+        perturbations: Iterable[str],
         reference_key: str = "control",
         ensure_consistency: bool = False,
     ):
@@ -114,11 +119,10 @@ class PerturbationSpace:
 
         Args:
             adata: Anndata object of size n_perts x dim.
-            perturbations: List of perturbations to sum
-            reference_key: perturbation source from which the perturbation summation starts
-            ensure_consistency: if True, runs differential expression in all data matrices to ensure consistency of linear space
+            perturbations: Perturbations to add.
+            reference_key: perturbation source from which the perturbation summation starts.
+            ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
         """
-
         new_pert_name = ""
         for perturbation in perturbations:
             if perturbation not in adata.obs_names:
@@ -129,12 +133,14 @@ class PerturbationSpace:
 
         if not ensure_consistency:
             print(
-                "Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True"
+                "[bold yellow]Operation might be done in non-consistent space (perturbation - perturbation != control). \n"
+                "Subtract control perturbation needed for consistency of space in all data representations. \n"
+                "Run with ensure_consistency=True"
             )
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
 
-        data: Dict[str, np.array] = {}
+        data: dict[str, np.array] = {}
 
         for local_layer_key in adata.layers.keys():
             data["layers"] = {}
@@ -164,50 +170,50 @@ class PerturbationSpace:
 
         original_data = adata.X.copy()
         new_data = np.concatenate((original_data, control))
-        new_pert = AnnData(X=new_data)
+        new_perturbation = AnnData(X=new_data)
 
         original_obs_names = adata.obs_names
         new_obs_names = original_obs_names.append(pd.Index([new_pert_name[:-1]]))
-        new_pert.obs_names = new_obs_names
+        new_perturbation.obs_names = new_obs_names
 
         new_obs = adata.obs.copy()
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs
-        new_pert.obs = new_obs
+        new_perturbation.obs = new_obs
 
         if "layers" in data.keys():
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
                     key_name = key.remove_suffix("_control_diff")
-                new_pert.layers[key_name] = data["layers"][key]
+                new_perturbation.layers[key_name] = data["layers"][key]
 
         if "embeddings" in data.keys():
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
                     key_name = key.remove_suffix("_control_diff")
-                new_pert.obsm[key_name] = data["embeddings"][key]
+                new_perturbation.obsm[key_name] = data["embeddings"][key]
 
         if ensure_consistency:
-            return new_pert, adata
-        return new_pert
+            return new_perturbation, adata
+
+        return new_perturbation
 
     def subtract(
         self,
         adata: AnnData,
-        perturbations: list,
-        reference_key: str = "control",  # Usually, "control" is not the reference used, but some perturbation
+        perturbations: Iterable[str],
+        reference_key: str = "control",
         ensure_consistency: bool = False,
     ):
         """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
             adata: Anndata object of size n_perts x dim.
-            perturbations: List of perturbations to subtract
-            reference_key: perturbation source from which the perturbation subtraction starts
-            ensure_consistency: if True, runs differential expression in all data matrices to ensure consistency of linear space
+            perturbations: Perturbations to subtract,
+            reference_key: Perturbation source from which the perturbation subtraction starts
+            ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
         """
-
         new_pert_name = reference_key + "-"
         for perturbation in perturbations:
             if perturbation not in adata.obs_names:
@@ -218,12 +224,14 @@ class PerturbationSpace:
 
         if not ensure_consistency:
             print(
-                "Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True"
+                "[bold yellow]Operation might be done in non-consistent space (perturbation - perturbation != control).\n"
+                "Subtract control perturbation needed for consistency of space in all data representations.\n"
+                "Run with ensure_consistency=True"
             )
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
 
-        data: Dict[str, np.array] = {}
+        data: dict[str, np.array] = {}
 
         for local_layer_key in adata.layers.keys():
             data["layers"] = {}
@@ -253,30 +261,31 @@ class PerturbationSpace:
 
         original_data = adata.X.copy()
         new_data = np.concatenate((original_data, control))
-        new_pert = AnnData(X=new_data)
+        new_perturbation = AnnData(X=new_data)
 
         original_obs_names = adata.obs_names
         new_obs_names = original_obs_names.append(pd.Index([new_pert_name[:-1]]))
-        new_pert.obs_names = new_obs_names
+        new_perturbation.obs_names = new_obs_names
 
         new_obs = adata.obs.copy()
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs
-        new_pert.obs = new_obs
+        new_perturbation.obs = new_obs
 
         if "layers" in data.keys():
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
                     key_name = key.remove_suffix("_control_diff")
-                new_pert.layers[key_name] = data["layers"][key]
+                new_perturbation.layers[key_name] = data["layers"][key]
 
         if "embeddings" in data.keys():
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
                     key_name = key.remove_suffix("_control_diff")
-                new_pert.obsm[key_name] = data["embeddings"][key]
+                new_perturbation.obsm[key_name] = data["embeddings"][key]
 
         if ensure_consistency:
-            return new_pert, adata
-        return new_pert
+            return new_perturbation, adata
+
+        return new_perturbation

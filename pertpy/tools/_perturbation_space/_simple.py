@@ -10,6 +10,8 @@ from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpa
 
 
 class CentroidSpace(PerturbationSpace):
+    """Computes the centroids per perturbation of a pre-computed embedding."""
+
     def compute(
         self,
         adata: AnnData,
@@ -75,6 +77,8 @@ class CentroidSpace(PerturbationSpace):
 
 
 class PseudobulkSpace(PerturbationSpace):
+    """Determines pseudobulks using decoupler."""
+
     def compute(
         self,
         adata: AnnData,
@@ -118,6 +122,8 @@ class PseudobulkSpace(PerturbationSpace):
 
 
 class KMeansSpace(ClusteringSpace):
+    """Computes K-Means clustering of the expression values."""
+
     def compute(  # type: ignore
         self,
         adata: AnnData,
