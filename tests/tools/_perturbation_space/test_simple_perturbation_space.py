@@ -82,7 +82,7 @@ def test_pseudobulk_response():
     # Compute the pseudobulk
     ps = pt.tl.PseudobulkSpace()
     psadata = ps.compute(adata, embedding_key="X_umap", mode="mean", min_cells=0, min_counts=0)
-    
+
     # Test that the pseudobulk response was computed correctly
     adata_target1 = adata[adata.obs.perturbations == "target1"].obsm["X_umap"].mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
@@ -191,51 +191,61 @@ def test_linear_operations():
     # Compute the pseudobulk
     ps = pt.tl.PseudobulkSpace()
     psadata = ps.compute(adata, mode="mean", min_cells=0, min_counts=0)
-    
+
     psadata_umap = ps.compute(adata, mode="mean", min_cells=0, min_counts=0, embedding_key="X_umap")
     psadata.obsm["X_umap"] = psadata_umap.X
-    
+
     # Do summation
     ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], ensure_consistency=True)
-    
+
     # Test in X
     test = data_compare["control"].X + data_compare["target1"].X + data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1+target2"].X, rtol=1e-4)
-    
+
     # Test in UMAP
-    test = data_compare["control"].obsm["X_umap_control_diff"] + data_compare["target1"].obsm["X_umap_control_diff"] + data_compare["target2"].obsm["X_umap_control_diff"]
+    test = (
+        data_compare["control"].obsm["X_umap_control_diff"]
+        + data_compare["target1"].obsm["X_umap_control_diff"]
+        + data_compare["target2"].obsm["X_umap_control_diff"]
+    )
     np.testing.assert_allclose(test, ps_adata["target1+target2"].obsm["X_umap"], rtol=1e-4)
-    
+
     # Do subtraction
-    ps_adata, data_compare = ps.subtract(psadata, reference_key="target1", perturbations=["target2"], ensure_consistency=True)
-    
+    ps_adata, data_compare = ps.subtract(
+        psadata, reference_key="target1", perturbations=["target2"], ensure_consistency=True
+    )
+
     # Test in X
     test = data_compare["target1"].X - data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1-target2"].X, rtol=1e-4)
-    
+
     # Operations after differential expression, do the results match?
     ps_adata = ps.compute_control_diff(psadata, copy=True)
-    
+
     # Do summation
     ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"])
-    
+
     # Test in X
     test = ps_adata["control"].X + ps_adata["target1"].X + ps_adata["target2"].X
     np.testing.assert_allclose(test, ps_adata2["target1+target2"].X, rtol=1e-4)
-    
+
     # Do subtract
     ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"])
     ps_vector = ps_adata2["target1-target1"].X
     np.testing.assert_allclose(ps_adata2["control"].X, ps_adata2["target1-target1"].X, rtol=1e-4)
-    
-    ps_adata2, data_compare = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=True)
+
+    ps_adata2, data_compare = ps.subtract(
+        ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=True
+    )
     ps_inner_vector = ps_adata2["target1-target1"].X
-    
+
     # Compare process data vs pseudobulk before, should be the same
     np.testing.assert_allclose(ps_inner_vector, ps_vector, rtol=1e-4)
-    
+
     # Check result in UMAP
-    np.testing.assert_allclose(data_compare["control"].obsm["X_umap_control_diff"], ps_adata2["target1-target1"].obsm["X_umap"], rtol=1e-4)
+    np.testing.assert_allclose(
+        data_compare["control"].obsm["X_umap_control_diff"], ps_adata2["target1-target1"].obsm["X_umap"], rtol=1e-4
+    )
 
     # Check that the function raises an error if the perturbation is not found
     with pytest.raises(ValueError):
@@ -250,4 +260,3 @@ def test_linear_operations():
             ps_adata,
             perturbations=["target1", "target3"],
         )
-        

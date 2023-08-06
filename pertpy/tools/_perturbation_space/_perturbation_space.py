@@ -13,9 +13,10 @@ class PerturbationSpace:
     Visually speaking, in cell spaces single dota points in an embeddings summarize a cell,
     whereas in a perturbation space, data points summarize whole perturbations.
     """
+
     def __init__(self):
         self.control_diff_computed = False
-    
+
     def compute_control_diff(  # type: ignore
         self,
         adata: AnnData,
@@ -45,15 +46,14 @@ class PerturbationSpace:
             raise ValueError(
                 f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."
             )
-            
+
         if embedding_key is not None and embedding_key not in adata.obsm_keys():
             raise ValueError(
                 f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."
             )
-            
+
         if layer_key is not None and layer_key not in adata.layers.keys():
-                raise ValueError(f"Layer {layer_key!r} does not exist in the anndata."
-            )
+            raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
 
         if copy:
             adata = adata.copy()
@@ -74,38 +74,42 @@ class PerturbationSpace:
                 control_expression = adata.obsm[embedding_key][control_mask, :]
             diff_matrix = adata.obsm[embedding_key] - control_expression
             adata.obsm[new_embedding_key] = diff_matrix
-            
+
         if (not layer_key and not embedding_key) or all_data:
             control_expression = np.mean(adata.X[control_mask, :], axis=0)
             if num_control == 1:
                 control_expression = adata.X[control_mask, :]
             diff_matrix = adata.X - control_expression
             adata.X = diff_matrix
-            
+
         if all_data:
-            
             layers_keys = list(adata.layers.keys())
             for local_layer_key in layers_keys:
                 if local_layer_key != layer_key and local_layer_key != new_layer_key:
-                    diff_matrix = adata.layers[local_layer_key] - np.mean(adata.layers[local_layer_key][control_mask, :], axis=0)
-                    adata.layers[local_layer_key+"_control_diff"] = diff_matrix
-                    
+                    diff_matrix = adata.layers[local_layer_key] - np.mean(
+                        adata.layers[local_layer_key][control_mask, :], axis=0
+                    )
+                    adata.layers[local_layer_key + "_control_diff"] = diff_matrix
+
             embedding_keys = list(adata.obsm_keys())
             for local_embedding_key in embedding_keys:
                 if local_embedding_key != embedding_key and local_embedding_key != new_embedding_key:
-                    diff_matrix = adata.obsm[local_embedding_key] - np.mean(adata.obsm[local_embedding_key][control_mask, :], axis=0)
-                    adata.obsm[local_embedding_key+"_control_diff"] = diff_matrix
-            
+                    diff_matrix = adata.obsm[local_embedding_key] - np.mean(
+                        adata.obsm[local_embedding_key][control_mask, :], axis=0
+                    )
+                    adata.obsm[local_embedding_key + "_control_diff"] = diff_matrix
+
         self.control_diff_computed = True
 
         return adata
 
-    def add(self, 
-            adata: AnnData,
-            perturbations: list, 
-            reference_key: str = "control",
-            ensure_consistency: bool = False,
-            ):
+    def add(
+        self,
+        adata: AnnData,
+        perturbations: list,
+        reference_key: str = "control",
+        ensure_consistency: bool = False,
+    ):
         """Add perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
@@ -114,84 +118,87 @@ class PerturbationSpace:
             reference_key: perturbation source from which the perturbation summation starts
             ensure_consistency: if True, runs differential expression in all data matrices to ensure consistency of linear space
         """
-        
+
         new_pert_name = ""
         for perturbation in perturbations:
-                if perturbation not in adata.obs_names:
-                    raise ValueError(
+            if perturbation not in adata.obs_names:
+                raise ValueError(
                     f"Perturbation {reference_key} not found in adata.obs_names. {reference_key} must be in adata.obs_names."
                 )
-                new_pert_name += perturbation+"+"
-        
+            new_pert_name += perturbation + "+"
+
         if not ensure_consistency:
-            print("Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True")
+            print(
+                "Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True"
+            )
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
-            
+
         data: Dict[str, np.array] = {}
-        
+
         for local_layer_key in adata.layers.keys():
-            data['layers'] = {}
-            control_local = adata[reference_key].layers[local_layer_key].copy()  
+            data["layers"] = {}
+            control_local = adata[reference_key].layers[local_layer_key].copy()
             for perturbation in perturbations:
                 control_local += adata[perturbation].layers[local_layer_key]
             original_data = adata.layers[local_layer_key].copy()
             new_data = np.concatenate((original_data, control_local))
-            data['layers'][local_layer_key] = new_data
-            
+            data["layers"][local_layer_key] = new_data
+
         for local_embedding_key in adata.obsm_keys():
-            data['embeddings'] = {}
-            control_local = adata[reference_key].obsm[local_embedding_key].copy()  
+            data["embeddings"] = {}
+            control_local = adata[reference_key].obsm[local_embedding_key].copy()
             for perturbation in perturbations:
                 control_local += adata[perturbation].obsm[local_embedding_key]
             original_data = adata.obsm[local_embedding_key].copy()
             new_data = np.concatenate((original_data, control_local))
-            data['embeddings'][local_embedding_key] = new_data
-        
+            data["embeddings"][local_embedding_key] = new_data
+
         # Operate in X
-        control = adata[reference_key].X.copy()    
+        control = adata[reference_key].X.copy()
         for perturbation in perturbations:
             control += adata[perturbation].X
-                
+
         # Fill all obs fields with NaNs
         new_pert_obs = [np.nan for _ in adata.obs]
-                
+
         original_data = adata.X.copy()
         new_data = np.concatenate((original_data, control))
         new_pert = AnnData(X=new_data)
-        
+
         original_obs_names = adata.obs_names
         new_obs_names = original_obs_names.append(pd.Index([new_pert_name[:-1]]))
         new_pert.obs_names = new_obs_names
-        
+
         new_obs = adata.obs.copy()
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs
         new_pert.obs = new_obs
-        
-        if 'layers' in data.keys():
-            for key in data['layers']:
+
+        if "layers" in data.keys():
+            for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
-                    key_name = key.rstrip("_control_diff") 
-                new_pert.layers[key_name] = data['layers'][key]
-                
-        if 'embeddings' in data.keys():
+                    key_name = key.remove_suffix("_control_diff")
+                new_pert.layers[key_name] = data["layers"][key]
+
+        if "embeddings" in data.keys():
             key_name = key
-            for key in data['embeddings']:
+            for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
-                    key_name = key.rstrip("_control_diff") 
-                new_pert.obsm[key_name] = data['embeddings'][key]
-        
+                    key_name = key.remove_suffix("_control_diff")
+                new_pert.obsm[key_name] = data["embeddings"][key]
+
         if ensure_consistency:
             return new_pert, adata
         return new_pert
 
-    def subtract(self, 
-            adata: AnnData,
-            perturbations: list, 
-            reference_key: str = "control", # Usually, "control" is not the reference used, but some perturbation
-            ensure_consistency: bool = False,
-            ):
+    def subtract(
+        self,
+        adata: AnnData,
+        perturbations: list,
+        reference_key: str = "control",  # Usually, "control" is not the reference used, but some perturbation
+        ensure_consistency: bool = False,
+    ):
         """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
@@ -200,74 +207,76 @@ class PerturbationSpace:
             reference_key: perturbation source from which the perturbation subtraction starts
             ensure_consistency: if True, runs differential expression in all data matrices to ensure consistency of linear space
         """
-        
-        new_pert_name = reference_key+"-"
+
+        new_pert_name = reference_key + "-"
         for perturbation in perturbations:
-                if perturbation not in adata.obs_names:
-                    raise ValueError(
+            if perturbation not in adata.obs_names:
+                raise ValueError(
                     f"Perturbation {reference_key} not found in adata.obs_names. {reference_key} must be in adata.obs_names."
                 )
-                new_pert_name += perturbation+"-"
-        
+            new_pert_name += perturbation + "-"
+
         if not ensure_consistency:
-            print("Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True")
+            print(
+                "Operation might be done in non-consistent space (perturbation - perturbation != control). \nSubtract control perturbation needed for consistency of space in all data representations. \nRun with ensure_consistency=True"
+            )
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True)
-                
+
         data: Dict[str, np.array] = {}
-        
+
         for local_layer_key in adata.layers.keys():
-            data['layers'] = {}
-            control_local = adata[reference_key].layers[local_layer_key].copy()  
+            data["layers"] = {}
+            control_local = adata[reference_key].layers[local_layer_key].copy()
             for perturbation in perturbations:
                 control_local -= adata[perturbation].layers[local_layer_key]
             original_data = adata.layers[local_layer_key].copy()
             new_data = np.concatenate((original_data, control_local))
-            data['layers'][local_layer_key] = new_data
-            
+            data["layers"][local_layer_key] = new_data
+
         for local_embedding_key in adata.obsm_keys():
-            data['embeddings'] = {}
-            control_local = adata[reference_key].obsm[local_embedding_key].copy()  
+            data["embeddings"] = {}
+            control_local = adata[reference_key].obsm[local_embedding_key].copy()
             for perturbation in perturbations:
                 control_local -= adata[perturbation].obsm[local_embedding_key]
             original_data = adata.obsm[local_embedding_key].copy()
             new_data = np.concatenate((original_data, control_local))
-            data['embeddings'][local_embedding_key] = new_data
-        
+            data["embeddings"][local_embedding_key] = new_data
+
         # Operate in X
-        control = adata[reference_key].X.copy()    
+        control = adata[reference_key].X.copy()
         for perturbation in perturbations:
             control -= adata[perturbation].X
-                
+
         # Fill all obs fields with NaNs
         new_pert_obs = [np.nan for _ in adata.obs]
-                
+
         original_data = adata.X.copy()
         new_data = np.concatenate((original_data, control))
         new_pert = AnnData(X=new_data)
-        
+
         original_obs_names = adata.obs_names
         new_obs_names = original_obs_names.append(pd.Index([new_pert_name[:-1]]))
         new_pert.obs_names = new_obs_names
-        
+
         new_obs = adata.obs.copy()
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs
         new_pert.obs = new_obs
-        
-        if 'layers' in data.keys():
-            for key in data['layers']:
+
+        if "layers" in data.keys():
+            for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
-                    key_name = key.rstrip("_control_diff") 
-                new_pert.layers[key_name] = data['layers'][key]
-                
-        if 'embeddings' in data.keys():
+                    key_name = key.remove_suffix("_control_diff")
+                new_pert.layers[key_name] = data["layers"][key]
+
+        if "embeddings" in data.keys():
             key_name = key
-            for key in data['embeddings']:
+            for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
-                    key_name = key.rstrip("_control_diff") 
-                new_pert.obsm[key_name] = data['embeddings'][key]
-        
+                    key_name = key.remove_suffix("_control_diff")
+                new_pert.obsm[key_name] = data["embeddings"][key]
+
         if ensure_consistency:
             return new_pert, adata
         return new_pert

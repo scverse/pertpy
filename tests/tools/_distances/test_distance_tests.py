@@ -18,7 +18,7 @@ class TestPermutationTest:
         tab = etest(adata, groupby="perturbation", contrast="control")
         # Well-defined output
         assert tab.shape[1] == 5
-        assert type(tab) == DataFrame
+        assert isinstance(tab, DataFrame)
         # p-values are in [0,1]
         assert tab["pvalue"].min() >= 0
         assert tab["pvalue"].max() <= 1

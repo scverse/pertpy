@@ -198,7 +198,7 @@ class Tasccoda(CompositionalModel2):
             raise ValueError("Please specify the key in .uns that contains the tree structure!")
 
         # toytree tree - only for legacy reasons, can be removed in the final version
-        if type(adata.uns[tree_key]) == tt.tree:
+        if isinstance(adata.uns[tree_key], tt.tree):
             # Collapse singularities in the tree
             phy_tree = collapse_singularities(adata.uns[tree_key])
 
@@ -232,7 +232,7 @@ class Tasccoda(CompositionalModel2):
                 pen_args["node_leaves"] = np.delete(np.array(node_leaves[:-1]), refs)
 
         # ete tree
-        elif type(adata.uns[tree_key]) == ete.Tree:
+        elif isinstance(adata.uns[tree_key], ete.Tree):
             # Collapse singularities in the tree
             phy_tree = collapse_singularities_2(adata.uns[tree_key])
 
