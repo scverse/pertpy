@@ -986,7 +986,7 @@ class CompositionalModel2(ABC):
         model_type = sample_adata.uns["scCODA_params"]["model_type"]
 
         # If other than None for est_fdr is specified, recalculate intercept and effect DataFrames
-        if type(est_fdr) == float:
+        if isinstance(est_fdr, float):
             if est_fdr < 0 or est_fdr > 1:
                 raise ValueError("est_fdr must be between 0 and 1!")
             else:
@@ -1353,7 +1353,7 @@ def from_scanpy(
     Returns:
         AnnData: A data set with cells aggregated to the (sample x cell type) level
     """
-    if type(sample_identifier) == str:
+    if isinstance(sample_identifier, str):
         sample_identifier = [sample_identifier]
 
     if covariate_obs:
@@ -1362,7 +1362,7 @@ def from_scanpy(
         covariate_obs = sample_identifier  # type: ignore
 
     # join sample identifiers
-    if type(sample_identifier) == list:
+    if isinstance(sample_identifier, list):
         adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
 
