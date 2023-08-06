@@ -168,6 +168,7 @@ def test_centroid_umap_response():
 
 
 def test_linear_operations():
+    """Tests add/subtract and other linear operations."""
     X = np.random.rand(10, 5)
     obs = pd.DataFrame(
         {
@@ -188,21 +189,21 @@ def test_linear_operations():
     adata = AnnData(X, obs=obs)
     adata.obsm["X_umap"] = X
 
-    # Compute the pseudobulk
+    # Compute pseudobulk
     ps = pt.tl.PseudobulkSpace()
     psadata = ps.compute(adata, mode="mean", min_cells=0, min_counts=0)
 
     psadata_umap = ps.compute(adata, mode="mean", min_cells=0, min_counts=0, embedding_key="X_umap")
     psadata.obsm["X_umap"] = psadata_umap.X
 
-    # Do summation
+    # Perform summation
     ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], ensure_consistency=True)
 
     # Test in X
     test = data_compare["control"].X + data_compare["target1"].X + data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1+target2"].X, rtol=1e-4)
 
-    # Test in UMAP
+    # Test in UMAP embedding
     test = (
         data_compare["control"].obsm["X_umap_control_diff"]
         + data_compare["target1"].obsm["X_umap_control_diff"]
@@ -210,7 +211,7 @@ def test_linear_operations():
     )
     np.testing.assert_allclose(test, ps_adata["target1+target2"].obsm["X_umap"], rtol=1e-4)
 
-    # Do subtraction
+    # Perform subtraction
     ps_adata, data_compare = ps.subtract(
         psadata, reference_key="target1", perturbations=["target2"], ensure_consistency=True
     )
@@ -219,7 +220,7 @@ def test_linear_operations():
     test = data_compare["target1"].X - data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1-target2"].X, rtol=1e-4)
 
-    # Operations after differential expression, do the results match?
+    # Operations after control diff, do the results match?
     ps_adata = ps.compute_control_diff(psadata, copy=True)
 
     # Do summation
