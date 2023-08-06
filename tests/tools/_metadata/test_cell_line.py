@@ -1,10 +1,12 @@
 import anndata
 import numpy as np
 import pandas as pd
+import pytest
 from anndata import AnnData
 from scipy import sparse
 
 import pertpy as pt
+
 
 NUM_CELLS = 100
 NUM_GENES = 100
@@ -12,6 +14,9 @@ NUM_CELLS_PER_ID = NUM_CELLS // 4
 
 
 class TestMetaData:
+    pt_metadata = pt.tl.CellLineMetaData()
+    
+    @pytest.fixture
     def make_test_adata(self) -> AnnData:
         np.random.seed(1)
 
@@ -40,13 +45,10 @@ class TestMetaData:
 
         return adata
 
-    def test_cell_line_annotation(self):
-        adata = self.make_test_adata()
-        pt_metadata = pt.tl.CellLineMetaData()
-        pt_metadata.annotate_cell_lines(adata=adata)
-
-        assert len(adata.obs.columns) == len(pt_metadata.cell_line_meta.columns)
-        assert set(pt_metadata.cell_line_meta.columns).issubset(adata.obs)
+    def test_cell_line_annotation(self, adata):
+        self.pt_metadata.annotate_cell_lines(adata=adata)
+        assert len(adata.obs.columns) == len(self.pt_metadata.cell_line_meta.columns)
+        assert set(self.pt_metadata.cell_line_meta.columns).issubset(adata.obs)
         stripped_cell_line_name = (
             ["SLR21"] * NUM_CELLS_PER_ID
             + ["HEKTE"] * NUM_CELLS_PER_ID
@@ -56,44 +58,36 @@ class TestMetaData:
 
         assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
 
-    def test_metadata(self):
-        pt_metadata = pt.tl.CellLineMetaData()
-        self.test_gdsc_annotation(pt_metadata)
-        self.test_protein_expression_annotation(pt_metadata)
-        self.test_bulk_rna_expression_annotation(pt_metadata)
+    def test_gdsc_annotation(self, adata):
+        self.pt_metadata.annotate_cell_lines(adata)
+        self.pt_metadata.annotate_from_gdsc(adata, query_id="stripped_cell_line_name")
+        assert "drug_name" in adata.obs
+        assert "ln_ic50" in adata.obs
 
-    def test_gdsc_annotation(self, pt_metadata):
-        adata = self.make_test_adata()
-        pt_metadata.annotate_cell_lines(adata)
-        pt_metadata.annotate_from_gdsc(adata, query_id="stripped_cell_line_name")
-        assert pd.Series(["drug_name", "ln_ic50"]).isin(adata.obs.columns).all()
-
-    def test_protein_expression_annotation(self, pt_metadata):
-        adata = self.make_test_adata()
-        pt_metadata.annotate_cell_lines(adata)
-        pt_metadata.annotate_protein_expression(adata, query_id="stripped_cell_line_name")
+    def test_protein_expression_annotation(self, adata):
+        self.pt_metadata.annotate_cell_lines(adata)
+        self.pt_metadata.annotate_protein_expression(adata, query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 1
         assert adata.obsm["proteomics_protein_intensity"].shape == (
             NUM_GENES,
-            len(pt_metadata.proteomics_data.uniprot_id.unique()),
+            len(self.pt_metadata.proteomics_data.uniprot_id.unique()),
         )
 
-    def test_bulk_rna_expression_annotation(self, pt_metadata):
-        adata = self.make_test_adata()
-        pt_metadata.annotate_cell_lines(adata)
-        pt_metadata.annotate_bulk_rna_expression(adata, query_id="DepMap_ID", cell_line_source="broad")
+    def test_bulk_rna_expression_annotation(self, adata):
+        self.pt_metadata.annotate_cell_lines(adata)
+        self.pt_metadata.annotate_bulk_rna_expression(adata, query_id="DepMap_ID", cell_line_source="broad")
 
         assert len(adata.obsm) == 1
         assert adata.obsm["bulk_rna_expression_broad"].shape == (
             NUM_GENES,
-            pt_metadata.bulk_rna_broad.shape[1],
+            self.pt_metadata.bulk_rna_broad.shape[1],
         )
 
-        pt_metadata.annotate_bulk_rna_expression(adata, query_id="stripped_cell_line_name")
+        self.pt_metadata.annotate_bulk_rna_expression(adata, query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 2
         assert adata.obsm["bulk_rna_expression_sanger"].shape == (
             NUM_GENES,
-            pt_metadata.bulk_rna_sanger.shape[1],
+            self.pt_metadata.bulk_rna_sanger.shape[1],
         )
