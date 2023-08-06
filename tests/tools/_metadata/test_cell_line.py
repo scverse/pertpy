@@ -28,6 +28,7 @@ class TestMetaData:
         obs = pd.concat([cell_line], axis=1)
         obs = obs.set_index(np.arange(NUM_GENES))
         obs.index.rename("index", inplace=True)
+        obs["perturbation"] = "Midostaurin"
 
         var_data = {"gene_name": ["gene" + str(i) for i in range(1, NUM_GENES + 1)]}
         var = pd.DataFrame(var_data)
@@ -55,17 +56,20 @@ class TestMetaData:
 
         assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
 
-    def test_ccle_expression_annotation(self):
-        adata = self.make_test_adata()
+    def test_metadata(self):
         pt_metadata = pt.tl.CellLineMetaData()
-        pt_metadata.annotate_ccle_expression(adata)
+        self.test_gdsc_annotation(pt_metadata)
+        self.test_protein_expression_annotation(pt_metadata)
+        self.test_bulk_rna_expression_annotation(pt_metadata)
 
-        assert len(adata.obsm) == 1
-        assert adata.obsm["CCLE_expression"].shape == (NUM_CELLS, len(pt_metadata.ccle_expr.columns))
-
-    def test_protein_expression_annotation(self):
+    def test_gdsc_annotation(self, pt_metadata):
         adata = self.make_test_adata()
-        pt_metadata = pt.tl.CellLineMetaData()
+        pt_metadata.annotate_cell_lines(adata)
+        pt_metadata.annotate_from_gdsc(adata, query_id="stripped_cell_line_name")
+        assert pd.Series(["drug_name", "ln_ic50"]).isin(adata.obs.columns).all()
+
+    def test_protein_expression_annotation(self, pt_metadata):
+        adata = self.make_test_adata()
         pt_metadata.annotate_cell_lines(adata)
         pt_metadata.annotate_protein_expression(adata, query_id="stripped_cell_line_name")
 
@@ -75,22 +79,21 @@ class TestMetaData:
             len(pt_metadata.proteomics_data.uniprot_id.unique()),
         )
 
-    def test_bulk_rna_expression_annotation(self):
+    def test_bulk_rna_expression_annotation(self, pt_metadata):
         adata = self.make_test_adata()
-        pt_metadata = pt.tl.CellLineMetaData()
         pt_metadata.annotate_cell_lines(adata)
-        pt_metadata.annotate_bulk_rna_expression(adata, query_id="stripped_cell_line_name")
+        pt_metadata.annotate_bulk_rna_expression(adata, query_id="DepMap_ID", cell_line_source="broad")
 
         assert len(adata.obsm) == 1
         assert adata.obsm["bulk_rna_expression_broad"].shape == (
             NUM_GENES,
-            len(pt_metadata.bulk_rna_broad.gene_id.unique()),
+            pt_metadata.bulk_rna_broad.shape[1],
         )
 
-        pt_metadata.annotate_bulk_rna_expression(adata, cell_line_source="sanger", query_id="stripped_cell_line_name")
+        pt_metadata.annotate_bulk_rna_expression(adata, query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 2
         assert adata.obsm["bulk_rna_expression_sanger"].shape == (
             NUM_GENES,
-            len(pt_metadata.bulk_rna_sanger.gene_id.unique()),
+            pt_metadata.bulk_rna_sanger.shape[1],
         )

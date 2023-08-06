@@ -6,6 +6,7 @@ from typing import Literal
 
 import pandas as pd
 from anndata import AnnData
+from remotezip import RemoteZip
 from rich import print
 from scanpy import settings
 
@@ -27,6 +28,7 @@ class CellLineMetaData:
                 url="https://ndownloader.figshare.com/files/35020903",
                 output_file_name="sample_info.csv",
                 output_path=settings.cachedir,
+                block_size=4096,
                 is_zip=False,
             )
         self.cell_line_meta = pd.read_csv(cell_line_file_path)
@@ -54,6 +56,7 @@ class CellLineMetaData:
                     "bSortable_2=true&bSortable_3=true&bSortable_4=true&bSortable_5=true&bSortable_6=true&export=csv",
                     output_file_name="cell_line_cancer_project.csv",
                     output_path=settings.cachedir,
+                    block_size=4096,
                     is_zip=False,
                 )
 
@@ -89,24 +92,31 @@ class CellLineMetaData:
                 url="https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv",
                 output_file_name="gene_identifiers_20191101.csv",
                 output_path=settings.cachedir,
+                block_size=4096,
                 is_zip=False,
             )
         self.gene_annotation = pd.read_table(gene_annotation_file_path)
 
         # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute fro DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
+
         bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624.csv"
         if not Path(bulk_rna_sanger_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
                 " Starting download now..."
             )
+            with RemoteZip("https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip") as zip_file:
+                zip_file.extract("rnaseq_read_count_20220624.csv", path=settings.cachedir)
+
+        """
             _download(
                 url="https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip",
                 output_file_name="rnaseq_sanger.zip",
                 output_path=settings.cachedir,
                 is_zip=True,
             )
+        """
         self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, skiprows=[2, 3], header=[0, 1], index_col=[0, 1])
         self.bulk_rna_sanger = self.bulk_rna_sanger.T
         self.bulk_rna_sanger.index = self.bulk_rna_sanger.index.droplevel("model_id")
@@ -124,6 +134,7 @@ class CellLineMetaData:
                 # output_file_name="CCLE_expression.csv",
                 output_file_name="CCLE_expression_full.csv",
                 output_path=settings.cachedir,
+                block_size=4096,
                 is_zip=False,
             )
         self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
@@ -138,12 +149,16 @@ class CellLineMetaData:
                     "[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger)."
                     " Starting download now."
                 )
+                with RemoteZip("https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip") as zip_file:
+                    zip_file.extract("proteomics_all_20221214.csv", path=settings.cachedir)
+                """
                 _download(
                     url="https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip",
                     output_file_name="Proteomics_20221214.zip",
                     output_path=settings.cachedir,
                     is_zip=True,
                 )
+                """
             self.proteomics_data = pd.read_csv(proteomics_file_path)
             self.proteomics_data[["uniprot_id", "model_id", "model_name", "symbol"]] = self.proteomics_data[
                 ["uniprot_id", "model_id", "model_name", "symbol"]
@@ -164,6 +179,7 @@ class CellLineMetaData:
                 url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx",
                 output_file_name="ic50_gdsc1.xlsx",
                 output_path=settings.cachedir,
+                block_size=4096,
                 is_zip=False,
             )
         self.drug_response_gdsc1 = pd.read_excel(drug_response_gdsc1_file_path)
@@ -184,6 +200,7 @@ class CellLineMetaData:
                 url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC2_fitted_dose_response_24Jul22.xlsx",
                 output_file_name="ic50_gdsc2.xlsx",
                 output_path=settings.cachedir,
+                block_size=4096,
                 is_zip=False,
             )
         self.drug_response_gdsc2 = pd.read_excel(drug_response_gdsc2_file_path)
@@ -395,7 +412,6 @@ class CellLineMetaData:
                 *not_matched_identifiers,
                 sep="\n- ",
             )
-        print("hi")
         if cell_line_source == "sanger":
             sanger_rna_exp = self.bulk_rna_sanger[self.bulk_rna_sanger.index.isin(adata.obs[query_id])]
             sanger_rna_exp = sanger_rna_exp.reindex(adata.obs[query_id])
@@ -548,12 +564,17 @@ class CellLineMetaData:
                 "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to \n"
                 "acquire more cell line information that can be used for annotation purposes."
             )
-        adata.obs = adata.obs.merge(
-            gdsc_data[[reference_id, reference_perturbation, "ln_ic50"]],
-            how="left",
-            left_on=[query_id, query_perturbation],
-            right_on=[reference_id, reference_perturbation],
-        ).set_index(adata.obs.index)
+        adata.obs = (
+            adata.obs.merge(
+                gdsc_data[[reference_id, reference_perturbation, "ln_ic50"]],
+                how="left",
+                left_on=[query_id, query_perturbation],
+                right_on=[reference_id, reference_perturbation],
+                suffixes=("", "_fromMeta"),
+            )
+            .filter(regex="^(?!.*_fromMeta)")
+            .set_index(adata.obs.index)
+        )
 
         return adata
 
