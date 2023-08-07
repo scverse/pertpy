@@ -15,8 +15,8 @@ copyright = "2021, Lukas Heumos, Theislab"
 author = "Lukas Heumos"
 github_repo = "pertpy"
 
-version = "0.5.0"
-release = "0.5.0"
+version = "0.6.0"
+release = "0.6.0"
 
 extensions = [
     "myst_parser",
@@ -33,7 +33,6 @@ extensions = [
     "sphinx_gallery.load_style",
     "sphinx_remove_toctrees",
     "sphinx_design",
-    "sphinxext.opengraph",
 ]
 
 # remove_from_toctrees = ["tutorials/notebooks/*", "api/reference/*"]
@@ -184,4 +183,5 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/distance_tests": "_static/tutorials/distances_tests.png",
     "tutorials/notebooks/scgen_perturbation_prediction": "_static/tutorials/scgen_perturbation_prediction.png",
     "tutorials/notebooks/scgen_batch_removal": "_static/tutorials/scgen_batch_removal.png",
+    "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
 }

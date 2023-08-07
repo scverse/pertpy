@@ -16,7 +16,7 @@ from jax._src.prng import PRNGKeyArray
 from jax._src.typing import Array
 from jax.config import config
 from mudata import MuData
-from numpyro.infer import HMC, MCMC, NUTS
+from numpyro.infer import HMC, MCMC, NUTS, initialization
 from rich import box, print
 from rich.console import Console
 from rich.table import Table
@@ -26,8 +26,7 @@ config.update("jax_enable_x64", True)
 
 
 class CompositionalModel2(ABC):
-    """
-    General compositional model framework for scCODA-type models
+    """General compositional model framework for scCODA-type models.
 
     This class serves as a template for scCODA-style models. It handles:
 
@@ -61,6 +60,8 @@ class CompositionalModel2(ABC):
 
     - `model`: The model formulation
 
+    - `set_init_mcmc_states`: A function to set the initial state of the MCMC algorithm
+
     - `make_arviz`: A function to generate an arviz result object
     """
 
@@ -74,6 +75,10 @@ class CompositionalModel2(ABC):
 
     @abstractmethod
     def model(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def set_init_mcmc_states(self, *args, **kwargs):
         pass
 
     def prepare(
@@ -96,7 +101,7 @@ class CompositionalModel2(ABC):
                 to be considered as a possible reference cell type. Defaults to 0.05.
 
         Returns:
-            AnnData
+            AnnData object that is ready for CODA models.
         """
         dtype = "float64"
 
@@ -213,7 +218,6 @@ class CompositionalModel2(ABC):
             numpyro_n_total,
             jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
             sample_adata,
-            init_params=sample_adata.uns["scCODA_params"]["mcmc"]["init_params"],
             extra_fields=extra_fields,
         )
 
@@ -284,7 +288,11 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
-        nuts_kernel = NUTS(self.model, *args, **kwargs)
+        sample_adata = self.set_init_mcmc_states(
+            rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata
+        )
+        init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
+        nuts_kernel = NUTS(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
         sample_adata.uns["scCODA_params"]["mcmc"]["num_warmup"] = num_warmup
@@ -334,7 +342,11 @@ class CompositionalModel2(ABC):
             rng_key = random.PRNGKey(rng_key)
 
         # Set up HMC kernel
-        hmc_kernel = HMC(self.model, *args, **kwargs)
+        sample_adata = self.set_init_mcmc_states(
+            rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata
+        )
+        init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
+        hmc_kernel = HMC(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
 
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
@@ -464,13 +476,9 @@ class CompositionalModel2(ABC):
             def insert_row(idx, df, df_insert):
                 return pd.concat(
                     [
-                        df.iloc[
-                            :idx,
-                        ],
+                        df.iloc[:idx,],
                         df_insert,
-                        df.iloc[
-                            idx:,
-                        ],
+                        df.iloc[idx:,],
                     ]
                 ).reset_index(drop=True)
 
@@ -556,7 +564,8 @@ class CompositionalModel2(ABC):
         node_df: pd.DataFrame = None,
     ) -> pd.DataFrame:
         """Evaluation of MCMC results for effect parameters. This function is only used within self.summary_prepare.
-            This function also calculates the posterior inclusion probability for each effect and decides whether effects are significant.
+
+        This function also calculates the posterior inclusion probability for each effect and decides whether effects are significant.
 
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
@@ -977,7 +986,7 @@ class CompositionalModel2(ABC):
         model_type = sample_adata.uns["scCODA_params"]["model_type"]
 
         # If other than None for est_fdr is specified, recalculate intercept and effect DataFrames
-        if type(est_fdr) == float:
+        if isinstance(est_fdr, float):
             if est_fdr < 0 or est_fdr > 1:
                 raise ValueError("est_fdr must be between 0 and 1!")
             else:
@@ -1003,25 +1012,19 @@ class CompositionalModel2(ABC):
 def get_a(
     tree: tt.tree,
 ) -> tuple[np.ndarray, int]:
-    """
-    Calculate ancestor matrix from a toytree tree
+    """Calculate ancestor matrix from a toytree tree
 
-    Parameters
-    ----------
-    tree
-        A toytree tree object
+    Args:
+        tree: A toytree tree object.
 
-    Returns
-    -------
-    Ancestor matrix and number of nodes without root node
-
-    A
-        Ancestor matrix (numpy array)
-    T
-        number of nodes in the tree, excluding the root node
+    Returns:
+        Ancestor matrix and number of nodes without root node
+        A
+            Ancestor matrix (numpy array)
+        T
+            number of nodes in the tree, excluding the root node
     """
     # Builds ancestor matrix
-
     n_tips = tree.ntips
     n_nodes = tree.nnodes
 
@@ -1047,22 +1050,17 @@ def get_a(
 
 
 def collapse_singularities(tree: tt.tree) -> tt.tree:
+    """Collapses (deletes) nodes in a toytree tree that are singularities (have only one child).
+
+    Args:
+        tree: A toytree tree object
+
+    Returns:
+        A toytree tree without singularities
+
+        tree_new
+            A toytree tree
     """
-    Collapses (deletes) nodes in a toytree tree that are singularities (have only one child).
-
-    Parameters
-    ----------
-    tree
-        A toytree tree object
-
-    Returns
-    -------
-    A toytree tree without singularities
-
-    tree_new
-        A toytree tree
-    """
-
     A, _ = get_a(tree)
     A_T = A.T
     unq, count = np.unique(A_T, axis=0, return_counts=True)
@@ -1115,25 +1113,17 @@ def traverse(df_, a, i, innerl):
 
 
 def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> str:
-    """
-    Converts a pandas DataFrame with hierarchical information into a newick string.
+    """Converts a pandas DataFrame with hierarchical information into a newick string.
+
     Adapted from https://stackoverflow.com/questions/15343338/how-to-convert-a-data-frame-to-tree-structure-object-such-as-dendrogram
 
-    Parameters
-    ----------
-    df
-        Pandas DataFrame that has one row for each leaf of the tree and columns that indicate a hierarchical ordering. See the tascCODA tutorial for an example.
-    levels
-        list that indicates how the columns in df are ordered as tree levels. Begins with the root level, ends with the leaf level
-    inner_label
-        Indicator whether labels for inner nodes should be included in the newick string
+    Args:
+        df: Pandas DataFrame that has one row for each leaf of the tree and columns that indicate a hierarchical ordering. See the tascCODA tutorial for an example.
+        levels: List that indicates how the columns in df are ordered as tree levels. Begins with the root level, ends with the leaf level
+        inner_label: Indicator whether labels for inner nodes should be included in the newick string
 
-    Returns
-    -------
-    Newick string describing the tree structure from df
-
-    newick
-        A newick string
+    Returns:
+        Newick string describing the tree structure from df
     """
     df_tax = df.loc[:, [x for x in levels if x in df.columns]]
 
@@ -1151,28 +1141,22 @@ def get_a_2(
     leaf_order: list[str] = None,
     node_order: list[str] = None,
 ) -> tuple[np.ndarray, int]:
-    """
-    Calculate ancestor matrix from a ete3 tree
+    """Calculate ancestor matrix from a ete3 tree.
 
-    Parameters
-    ----------
-    tree
-        A ete3 tree object
-    leaf_order
-        List of leaf names how they should appear as the rows of the ancestor matrix.
-        If None, the ordering will be as in `tree.iter_leaves()`
-    node_order
-        List of node names how they should appear as the columns of the ancestor matrix
-        If None, the ordering will be as in `tree.iter_descendants()`
+    Args:
+        tree: A ete3 tree object.
+        leaf_order: List of leaf names how they should appear as the rows of the ancestor matrix.
+                    If None, the ordering will be as in `tree.iter_leaves()`
+        node_order: List of node names how they should appear as the columns of the ancestor matrix
+                    If None, the ordering will be as in `tree.iter_descendants()`
 
-    Returns
-    -------
-    Ancestor matrix and number of nodes without root node
+    Returns:
+            Ancestor matrix and number of nodes without root node
 
-    A
-        Ancestor matrix (numpy array)
-    T
-        number of nodes in the tree, excluding the root node
+        A
+            Ancestor matrix (numpy array)
+        T
+            number of nodes in the tree, excluding the root node
     """
     n_tips = len(tree.get_leaves())
     n_nodes = len(tree.get_descendants())
@@ -1204,20 +1188,13 @@ def get_a_2(
 
 
 def collapse_singularities_2(tree: ete.Tree) -> ete.Tree:
-    """
-    Collapses (deletes) nodes in a ete3 tree that are singularities (have only one child).
+    """Collapses (deletes) nodes in a ete3 tree that are singularities (have only one child).
 
-    Parameters
-    ----------
-    tree
-        A ete3 tree object
+    Args:
+        tree: A ete3 tree object
 
-    Returns
-    -------
-    A ete3 tree without singularities
-
-    tree
-        A ete3 tree
+    Returns:
+        A ete3 tree without singularities.
     """
     for node in tree.iter_descendants():
         if len(node.get_children()) == 1:
@@ -1231,6 +1208,7 @@ def linkage_to_newick(
     labels: list[str],
 ) -> str:
     """Convert a linkage matrix to newick tree string.
+
     Adapted from https://stackoverflow.com/a/31878514/20299702.
 
     Args:
@@ -1269,6 +1247,7 @@ def import_tree(
     key_added: str = "tree",
 ):
     """Generate ete tree for tascCODA models from dendrogram information or cell-level observations.
+
     Trees can either be generated from scipy dendrogram information e.g. from scanpy.tl.dendrogram,
     or from hierarchical information for each cell type - either saved in `.obs` of the cell-level data object, or in `.var` of the aggregated data.
 
@@ -1355,8 +1334,7 @@ def from_scanpy(
     covariate_obs: list[str] | None = None,
     covariate_df: pd.DataFrame | None = None,
 ) -> AnnData:
-    """
-    Creates a compositional analysis dataset from a single anndata object, as it is produced by e.g. scanpy.
+    """Creates a compositional analysis dataset from a single AnnData object, as it is produced by e.g. scanpy.
 
     The anndata object needs to have a column in adata.obs that contains the cell type assignment.
     Further, it must contain one column or a set of columns (e.g. subject id, treatment, disease status) that uniquely identify each (statistical) sample.
@@ -1374,10 +1352,8 @@ def from_scanpy(
 
     Returns:
         AnnData: A data set with cells aggregated to the (sample x cell type) level
-
     """
-
-    if type(sample_identifier) == str:
+    if isinstance(sample_identifier, str):
         sample_identifier = [sample_identifier]
 
     if covariate_obs:
@@ -1386,7 +1362,7 @@ def from_scanpy(
         covariate_obs = sample_identifier  # type: ignore
 
     # join sample identifiers
-    if type(sample_identifier) == list:
+    if isinstance(sample_identifier, list):
         adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
 

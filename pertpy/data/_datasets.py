@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import muon as mu
 import scanpy as sc
 from anndata import AnnData
 from mudata import MuData
@@ -38,6 +37,8 @@ def papalexi_2021() -> MuData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the ECCITE-seq dataset
     """
+    import muon as mu
+
     output_file_name = "papalexi_2021.h5mu"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
@@ -211,7 +212,7 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data
     """
-    output_file_name = "frangieh_2021.h5ad"
+    output_file_name = "frangieh_2021_raw.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(

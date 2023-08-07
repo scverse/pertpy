@@ -50,7 +50,6 @@ class FlaxEncoder(nn.Module):
 
 
 class FlaxDecoder(nn.Module):
-
     n_output: int
     n_layers: int = 1
     n_hidden: int = 128

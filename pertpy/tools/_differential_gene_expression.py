@@ -94,4 +94,4 @@ class DifferentialGeneExpression:
             * unadjusted p-value
             * adjusted p-value
         """
-        pass
+        raise NotImplementedError
