@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pertpy"
-version = "0.5.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.6.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Perturbation Analysis in the scverse ecosystem."
 authors = ["Lukas Heumos <lukas.heumos@posteo.net>"]
 license = "MIT"
