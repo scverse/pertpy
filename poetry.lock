@@ -919,33 +919,6 @@ python-dateutil = "*"
 pytz = "*"
 
 [[package]]
-name = "debugpy"
-version = "1.6.7"
-description = "An implementation of the Debug Adapter Protocol for Python"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "debugpy-1.6.7-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:b3e7ac809b991006ad7f857f016fa92014445085711ef111fdc3f74f66144096"},
-    {file = "debugpy-1.6.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e3876611d114a18aafef6383695dfc3f1217c98a9168c1aaf1a02b01ec7d8d1e"},
-    {file = "debugpy-1.6.7-cp310-cp310-win32.whl", hash = "sha256:33edb4afa85c098c24cc361d72ba7c21bb92f501104514d4ffec1fb36e09c01a"},
-    {file = "debugpy-1.6.7-cp310-cp310-win_amd64.whl", hash = "sha256:ed6d5413474e209ba50b1a75b2d9eecf64d41e6e4501977991cdc755dc83ab0f"},
-    {file = "debugpy-1.6.7-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:38ed626353e7c63f4b11efad659be04c23de2b0d15efff77b60e4740ea685d07"},
-    {file = "debugpy-1.6.7-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:279d64c408c60431c8ee832dfd9ace7c396984fd7341fa3116aee414e7dcd88d"},
-    {file = "debugpy-1.6.7-cp37-cp37m-win32.whl", hash = "sha256:dbe04e7568aa69361a5b4c47b4493d5680bfa3a911d1e105fbea1b1f23f3eb45"},
-    {file = "debugpy-1.6.7-cp37-cp37m-win_amd64.whl", hash = "sha256:f90a2d4ad9a035cee7331c06a4cf2245e38bd7c89554fe3b616d90ab8aab89cc"},
-    {file = "debugpy-1.6.7-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:5224eabbbeddcf1943d4e2821876f3e5d7d383f27390b82da5d9558fd4eb30a9"},
-    {file = "debugpy-1.6.7-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bae1123dff5bfe548ba1683eb972329ba6d646c3a80e6b4c06cd1b1dd0205e9b"},
-    {file = "debugpy-1.6.7-cp38-cp38-win32.whl", hash = "sha256:9cd10cf338e0907fdcf9eac9087faa30f150ef5445af5a545d307055141dd7a4"},
-    {file = "debugpy-1.6.7-cp38-cp38-win_amd64.whl", hash = "sha256:aaf6da50377ff4056c8ed470da24632b42e4087bc826845daad7af211e00faad"},
-    {file = "debugpy-1.6.7-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:0679b7e1e3523bd7d7869447ec67b59728675aadfc038550a63a362b63029d2c"},
-    {file = "debugpy-1.6.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:de86029696e1b3b4d0d49076b9eba606c226e33ae312a57a46dca14ff370894d"},
-    {file = "debugpy-1.6.7-cp39-cp39-win32.whl", hash = "sha256:d71b31117779d9a90b745720c0eab54ae1da76d5b38c8026c654f4a066b0130a"},
-    {file = "debugpy-1.6.7-cp39-cp39-win_amd64.whl", hash = "sha256:c0ff93ae90a03b06d85b2c529eca51ab15457868a377c4cc40a23ab0e4e552a3"},
-    {file = "debugpy-1.6.7-py2.py3-none-any.whl", hash = "sha256:53f7a456bc50706a0eaabecf2d3ce44c4d5010e46dfc65b6b81a518b42866267"},
-    {file = "debugpy-1.6.7.zip", hash = "sha256:c4c2f0810fa25323abfdfa36cbbbb24e5c3b1a42cb762782de64439c575d67f2"},
-]
-
-[[package]]
 name = "decorator"
 version = "5.1.1"
 description = "Decorators for Humans"
@@ -1785,39 +1758,6 @@ python-editor = ">=1.0.4"
 readchar = ">=3.0.6"
 
 [[package]]
-name = "ipykernel"
-version = "6.25.0"
-description = "IPython Kernel for Jupyter"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "ipykernel-6.25.0-py3-none-any.whl", hash = "sha256:f0042e867ac3f6bca1679e6a88cbd6a58ed93a44f9d0866aecde6efe8de76659"},
-    {file = "ipykernel-6.25.0.tar.gz", hash = "sha256:e342ce84712861be4b248c4a73472be4702c1b0dd77448bfd6bcfb3af9d5ddf9"},
-]
-
-[package.dependencies]
-appnope = {version = "*", markers = "platform_system == \"Darwin\""}
-comm = ">=0.1.1"
-debugpy = ">=1.6.5"
-ipython = ">=7.23.1"
-jupyter-client = ">=6.1.12"
-jupyter-core = ">=4.12,<5.0.dev0 || >=5.1.dev0"
-matplotlib-inline = ">=0.1"
-nest-asyncio = "*"
-packaging = "*"
-psutil = "*"
-pyzmq = ">=20"
-tornado = ">=6.1"
-traitlets = ">=5.4.0"
-
-[package.extras]
-cov = ["coverage[toml]", "curio", "matplotlib", "pytest-cov", "trio"]
-docs = ["myst-parser", "pydata-sphinx-theme", "sphinx", "sphinx-autodoc-typehints", "sphinxcontrib-github-alt", "sphinxcontrib-spelling", "trio"]
-pyqt5 = ["pyqt5"]
-pyside6 = ["pyside6"]
-test = ["flaky", "ipyparallel", "pre-commit", "pytest (>=7.0)", "pytest-asyncio", "pytest-cov", "pytest-timeout"]
-
-[[package]]
 name = "ipython"
 version = "8.14.0"
 description = "IPython: Productive Interactive Computing"
@@ -1858,17 +1798,17 @@ test-extra = ["curio", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.21)", "pa
 
 [[package]]
 name = "ipywidgets"
-version = "8.0.7"
+version = "8.1.0"
 description = "Jupyter interactive widgets"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "ipywidgets-8.0.7-py3-none-any.whl", hash = "sha256:e0aed0c95a1e55b6a123f64305245578bdc09e52965a34941c2b6a578b8c64a0"},
-    {file = "ipywidgets-8.0.7.tar.gz", hash = "sha256:50ace0a8886e9a0d68b980db82f94c25d55d21ff2340ed36f802dd9365e94acf"},
+    {file = "ipywidgets-8.1.0-py3-none-any.whl", hash = "sha256:6c8396cc7b8c95dfb4e9ab0054f48c002f045e7e5d7ae523f559d64e525a98ab"},
+    {file = "ipywidgets-8.1.0.tar.gz", hash = "sha256:ce97dd90525b3066fd00094690964e7eac14cf9b7745d35565b5eeac20cce687"},
 ]
 
 [package.dependencies]
-ipykernel = ">=4.5.1"
+comm = ">=0.1.3"
 ipython = ">=6.1.0"
 jupyterlab-widgets = ">=3.0.7,<3.1.0"
 traitlets = ">=4.3.1"
