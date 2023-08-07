@@ -16,7 +16,7 @@ class TestMetaData:
     pt_metadata = pt.tl.CellLineMetaData()
 
     @pytest.fixture
-    def make_test_adata(self) -> AnnData:
+    def adata(self) -> AnnData:
         np.random.seed(1)
 
         X = np.random.normal(0, 1, (NUM_CELLS, NUM_GENES))
