@@ -500,11 +500,11 @@ class CellLineMetaData:
             reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id. Defaults to "cell_line_name".
             query_perturbation: The column of `.obs` with perturbation information. Defaults to "perturbation".
             reference_perturbation: The type of perturbation in the meta data, drug_name or drug_id. Defaults to "drug_name".
-            gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1.
+            gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1. The GDSC1 dataset updates previous releases with additional drug screening data from the Wellcome Sanger Institute and Massachusetts General Hospital. It covers 970 Cell lines and 403 Compounds with 333292 IC50s. GDSC2 is new and has 243,466 IC50 results from the latest screening at the Wellcome Sanger Institute using improved experimental procedures.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
-            Returns an AnnData object with drug reponse annotation.
+            Returns an AnnData object with drug response annotation.
         """
         if copy:
             adata = adata.copy()
