@@ -46,7 +46,9 @@ class TestMetaData:
 
     def test_cell_line_annotation(self, adata):
         self.pt_metadata.annotate_cell_lines(adata=adata)
-        assert len(adata.obs.columns) == len(self.pt_metadata.cell_line_meta.columns)
+        assert (
+            len(adata.obs.columns) == len(self.pt_metadata.cell_line_meta.columns) + 1
+        )  # due to the perturbation column
         assert set(self.pt_metadata.cell_line_meta.columns).issubset(adata.obs)
         stripped_cell_line_name = (
             ["SLR21"] * NUM_CELLS_PER_ID
