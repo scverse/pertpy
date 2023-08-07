@@ -12,6 +12,7 @@ build:
     jobs:
         post_install:
             - pip install .
+            - pip install docs/requirements.txt
 
 submodules:
     include: all
