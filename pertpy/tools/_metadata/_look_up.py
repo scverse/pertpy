@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Literal
-from urllib.request import urlopen
 
 import pandas as pd
-from scanpy import settings
+from rich import print
 
 
 class LookUp:
@@ -37,25 +35,24 @@ class LookUp:
             query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
                 metadata. Defaults to None.
         """
-        # only available for CellLineMetaData.lookup
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specifically for CellLineMetaData!")
 
         if cell_line_source == "DepMap":
-            print("To summarize: in the DepMap cell line annotation you can find: ")
-            print(f"{len(self.cell_line_meta.index)} cell lines")
             print(
+                "[bold blue]The DepMap cell line annotation contains:\n"
+                f"{len(self.cell_line_meta.index)} cell lines, "
                 f"{len(self.cell_line_meta.columns)} meta data, including ",
                 *list(self.cell_line_meta.columns.values),
                 sep="\n- ",
             )
-            print("Overview of possible cell line reference identifiers: ")
+            print("[bold blue]Overview of possible cell line reference identifiers:")
             print(
                 self.cell_line_meta[["DepMap_ID", "cell_line_name", "stripped_cell_line_name", "CCLE_Name"]]
                 .head()
                 .to_string()
             )
-            print("Default parameters to annotate cell line metadata: ")
+            print("[bold blue]Default parameters to annotate cell line metadata:")
             default_param = {
                 "cell_line_source": "DepMap",
                 "query_id": "DepMap_ID",
@@ -65,25 +62,20 @@ class LookUp:
             print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
         else:
             print(
-                "To summarize: in the cell line annotation from the project Genomics of Drug Sensitivity in Cancer",
-                "you can find: ",
-            )
-            print(f"{len(self.cl_cancer_project_meta.index)} cell lines")
-            print(
+                "[bold blue]The Genomics of Drug Sensitivity in cancer database contains"
+                f"{len(self.cl_cancer_project_meta.index)} cell lines"
                 f"{len(self.cl_cancer_project_meta.columns)} meta data, including ",
                 *list(self.cl_cancer_project_meta.columns.values),
                 sep="\n- ",
             )
-            print("Overview of possible cell line reference identifiers: ")
+            print("[bold blue]Overview of possible cell line reference identifiers: ")
             print(
                 self.cl_cancer_project_meta[["cell_line_name", "stripped_cell_line_name", "Model ID", "COSMIC ID"]]
                 .head()
                 .to_string()
             )
 
-            print("Default is to annotate cell line meta data from DepMap database. ")
-            print("When annotating cell line meta data from the project Genomics of Drug Sensitivity in Cancer, ")
-            print("Default parameters are:")
+            print("[bold blue]Default parameters for Genomics of Drug sensitivity in Cancer are:")
             default_param = {
                 "query_id": "stripped_cell_line_name",
                 "reference_id": "stripped_cell_line_name",
@@ -101,13 +93,11 @@ class LookUp:
                 not_matched_identifiers = list(set(query_id_list) - set(self.cell_line_meta[reference_id]))
             else:
                 if reference_id == "DepMap_ID":
-                    print(
-                        "`stripped_cell_line_name` is used as reference indentifier to annotate cell line metadata from Cancerrxgene. ",
-                    )
                     reference_id = "stripped_cell_line_name"
                 if reference_id not in self.cl_cancer_project_meta.columns:
                     raise ValueError(
-                        f"The specified `reference_id` {reference_id} is not available in the cell line annotation from the project Genomics of Drug Sensitivity in Cancer. "
+                        f"The specified `reference_id` {reference_id} is not available "
+                        f"in the cell line annotation from the project Genomics of Drug Sensitivity in Cancer. "
                     )
                 not_matched_identifiers = list(set(query_id_list) - set(self.cl_cancer_project_meta[reference_id]))
 
@@ -126,9 +116,8 @@ class LookUp:
             query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
                 metadata. Defaults to None.
         """
-        # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
-            raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
+            raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
 
         if cell_line_source == "broad":
             bulk_rna = self.bulk_rna_broad
@@ -137,12 +126,14 @@ class LookUp:
             bulk_rna = self.bulk_rna_sanger
             reference_id = "model_name"
 
-        print(f"To summarize: in the RNA-Seq Data from {cell_line_source} institute, you can find: ")
-        print(f"{len(bulk_rna.index)} cell lines")
-        print(f"{len(bulk_rna.columns)} genes")
-        print(f"Only {reference_id} is allowed to use as `reference_id`")
+        print(
+            f"RNA-Seq Data from {cell_line_source} institute contains:\n"
+            f"{len(bulk_rna.index)} cell lines, "
+            f"{len(bulk_rna.columns)} genes "
+            f"Only {reference_id} is allowed to use as `reference_id`"
+        )
 
-        print("Default parameters to annotate bulk RNA expression: ")
+        print("[bold blue]Default parameters to annotate bulk RNA expression: ")
         default_param = {
             "query_id": "cell_line_name",
             "cell_line_source": "sanger",
@@ -166,24 +157,22 @@ class LookUp:
                 Defaults to "model_name".
             query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the
                 metadata. Defaults to None.
-
         """
-        # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
-            raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
+            raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
 
-        print("To summarize: in the proteomics data you can find: ")
-        print(f"{len(self.proteomics_data.model_name.unique())} cell lines")
-        print(f"{len(self.proteomics_data.uniprot_id.unique())} proteins")
         print(
+            "The proteomics data contains:\n"
+            f"{len(self.proteomics_data.model_name.unique())} cell lines, "
+            f"{len(self.proteomics_data.uniprot_id.unique())} proteins "
             f"{len(self.proteomics_data.columns)} meta data, including ",
             *list(self.proteomics_data.columns.values),
             sep="\n- ",
         )
-        print("Overview of possible cell line reference identifiers: ")
+        print("[bold blue]Overview of possible cell line reference identifiers: ")
         print(self.proteomics_data[["model_id", "model_name"]].head().to_string())
 
-        print("Default parameters to annotate protein expression: ")
+        print("[bold blue]Default parameters to annotate protein expression: ")
         default_param = {
             "query_id": "cell_line_name",
             "reference_id": "model_name",
@@ -201,8 +190,8 @@ class LookUp:
                     f"The specified `reference_id` {reference_id} is not available in the proteomics data. "
                 )
             not_matched_identifiers = list(set(query_id_list) - set(self.proteomics_data[reference_id]))
-            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+            print(f"[bold blue]{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            print(f"[bold yellow]{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
     def drug_response(
         self,
@@ -220,25 +209,25 @@ class LookUp:
             query_id_list: A list of unique cell line identifiers to test the number of matched ids present in the metadata. Defaults to None.
             reference_perturbation: The perturbation information in the meta data, drug_name or drug_id. Defaults to "drug_name".
             query_perturbation_list: A list of unique perturbation types to test the number of matched ones present in the metadata. Defaults to None.
-
         """
-        # only availble for CellLineMetaData.lookup
         if self.type != "cell_line":
-            raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
+            raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
         if gdsc_dataset == 1:
             gdsc_data = self.drug_response_gdsc1
         else:
             gdsc_data = self.drug_response_gdsc2
-        print(f"To summarize: in the drug reponse GDSC{gdsc_dataset} data you can find: ")
-        print(f"{len(gdsc_data.cell_line_name.unique())} cell lines")
-        print(f"{len(gdsc_data.drug_id.unique())} different drugs ids")
-        print(f"{len(gdsc_data.drug_name.unique())} different drugs names")
+        print(
+            f"The drug response GDSC{gdsc_dataset} data contains:\n"
+            f"{len(gdsc_data.cell_line_name.unique())} cell lines, "
+            f"{len(gdsc_data.drug_id.unique())} different drugs ids, and "
+            f"{len(gdsc_data.drug_name.unique())} different drugs names"
+        )
 
-        print("Overview of possible cell line reference identifiers: ")
+        print("[bold blue]Overview of possible cell line reference identifiers: ")
         print(gdsc_data[["cell_line_name", "sanger_model_id", "cosmic_id"]].head().to_string())
-        print("Overview of possible perturbation reference identifiers: ")
+        print("[bold blue]Overview of possible perturbation reference identifiers: ")
         print(gdsc_data[["drug_name", "drug_id"]].head().to_string())
-        print("Default parameters to annotate cell line metadata: ")
+        print("[bold blue]Default parameters to annotate cell line metadata: ")
         default_param = {
             "gdsc_dataset": "1",
             "query_id": "cell_line_name",
@@ -278,11 +267,9 @@ class LookUp:
         Args:
             reference_id: The type of gene identifier in the meta data, gene_id, ensembl_gene_id, hgnc_id, hgnc_symbol. Defaults to "ensembl_gene_id".
             query_id_list: A list of unique gene identifiers to test the number of matched ids present in the metadata. Defaults to None.
-
         """
-        # only available for CellLineMetaData.lookup
         if self.type != "cell_line":
-            raise ValueError("This is not a LookUp object spefic for CellLineMetaData!")
+            raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
 
         print("To summarize: in the DepMap_Sanger gene annotation file, you can find: ")
         print(f"{len(self.gene_annotation.index)} driver genes")
