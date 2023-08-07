@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Literal
 
@@ -99,7 +98,6 @@ class CellLineMetaData:
 
         # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute fro DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
-
         bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624.csv"
         if not Path(bulk_rna_sanger_file_path).exists():
             print(
@@ -109,14 +107,6 @@ class CellLineMetaData:
             with RemoteZip("https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip") as zip_file:
                 zip_file.extract("rnaseq_read_count_20220624.csv", path=settings.cachedir)
 
-        """
-            _download(
-                url="https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip",
-                output_file_name="rnaseq_sanger.zip",
-                output_path=settings.cachedir,
-                is_zip=True,
-            )
-        """
         self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, skiprows=[2, 3], header=[0, 1], index_col=[0, 1])
         self.bulk_rna_sanger = self.bulk_rna_sanger.T
         self.bulk_rna_sanger.index = self.bulk_rna_sanger.index.droplevel("model_id")
@@ -127,11 +117,9 @@ class CellLineMetaData:
         # bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
         bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression_full.csv"
         if not Path(bulk_rna_broad_file_path).exists():
-            print("[bold yellow]No metadata file was found for CCLE expression data." " Starting download now.")
+            print("[bold yellow]No metadata file was found for CCLE expression data. Starting download now.")
             _download(
-                # url="https://figshare.com/ndownloader/files/34989919",
                 url="https://figshare.com/ndownloader/files/34989922",
-                # output_file_name="CCLE_expression.csv",
                 output_file_name="CCLE_expression_full.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -151,14 +139,6 @@ class CellLineMetaData:
                 )
                 with RemoteZip("https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip") as zip_file:
                     zip_file.extract("proteomics_all_20221214.csv", path=settings.cachedir)
-                """
-                _download(
-                    url="https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip",
-                    output_file_name="Proteomics_20221214.zip",
-                    output_path=settings.cachedir,
-                    is_zip=True,
-                )
-                """
             self.proteomics_data = pd.read_csv(proteomics_file_path)
             self.proteomics_data[["uniprot_id", "model_id", "model_name", "symbol"]] = self.proteomics_data[
                 ["uniprot_id", "model_id", "model_name", "symbol"]
@@ -247,7 +227,7 @@ class CellLineMetaData:
             if query_id == "DepMap_ID":
                 query_id = "stripped_cell_line_name"
                 print(
-                    "`stripped_cell_line_name` is used as reference and query indentifier ",
+                    "[bold blue]`stripped_cell_line_name` is used as reference and query indentifier ",
                     " to annotate cell line metadata from Cancerrxgene. "
                     "So please make sure that `stripped_cell_line_name` is available in the adata.obs. ",
                     "or use the DepMap as `cell_line_source` to annotate the cell line first ",
@@ -264,21 +244,19 @@ class CellLineMetaData:
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(cell_line_meta[reference_id]))
             if len(not_matched_identifiers) == identifier_num_all:
                 raise ValueError(
-                    f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
-                    "However, none of the query IDs could be found in the cell line annotation data. \n"
-                    "The annotation process has been halted. \n"
-                    "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                    "By using the `LookUp.cell_line()` method, \n"
+                    f"Attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata.\n"
+                    "However, none of the query IDs could be found in the cell line annotation data.\n"
+                    "The annotation process has been halted.\n"
+                    "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
+                    "By using the `LookUp.cell_line()` method, "
                     "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs."
                 )
 
             if len(not_matched_identifiers) > 0:
-                print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
                 print(
-                    f"But following {len(not_matched_identifiers)} identifiers can't be found in the cell line annotation, "
-                )
-                print(
-                    "leading to the presence of NA values for their respective metadata.",
+                    f"[bold blue]There are {identifier_num_all} identifiers in `adata.obs`."
+                    f"However, {len(not_matched_identifiers)} identifiers can't be found in the cell line annotation,"
+                    "leading to the presence of NA values for their respective metadata.\n",
                     "Please check again: ",
                     *not_matched_identifiers,
                     sep="\n- ",
@@ -286,7 +264,7 @@ class CellLineMetaData:
 
             if cell_line_information is None:
                 # If no cell_line_information is specified, all metadata is fetched by default.
-                # Sometimes there is already different cell line information in the `adata`.
+                # Sometimes there is already different cell line information in the AnnData object.
                 # To avoid redundant information we will remove the duplicate information from metadata after merging.
                 adata.obs = (
                     adata.obs.merge(
@@ -308,7 +286,7 @@ class CellLineMetaData:
 
             elif set(cell_line_information).issubset(set(cell_line_meta.columns)):
                 # If cell_line_information is specified and can be found in the DepMap database,
-                # We will subset the original metadata dataframe correspondingly and add them to the `adata`.
+                # We will subset the original metadata dataframe correspondingly and add them to the AnnData object.
                 # Again, redundant information will be removed.
                 if reference_id not in cell_line_information:
                     cell_line_information.append(reference_id)
@@ -330,11 +308,11 @@ class CellLineMetaData:
 
         else:
             raise ValueError(
-                f"The requested cell line type {reference_id} is currently unavailable in the database. \n"
-                "To solve ths issue, please refer to the available reference identifier in the chosen database. \n"
-                "DepMap_ID is compared by default. \n"
-                "Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.cell_line()` method, you can obtain the available reference identifiers in the metadata. \n"
+                f"The requested cell line type {reference_id} is currently unavailable in the database.\n"
+                "To solve ths issue, please refer to the available reference identifier in the chosen database.\n"
+                "DepMap_ID is compared by default.\n"
+                "Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
+                "By using the `LookUp.cell_line()` method, you can obtain the available reference identifiers in the metadata."
             )
 
         return adata
@@ -366,11 +344,11 @@ class CellLineMetaData:
         # then we can compare these keys and fetch the corresponding metadata.
         if query_id not in adata.obs.columns:
             raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. \n"
-                "If the desired query ID is not available, you can fetch the cell line metadata \n"
-                "using the `annotate_cell_lines()` function before calling annotate_ccle_expression(). \n"
-                "This will help ensure that the required query ID is included in your data,  e.g. stripped_cell_line_name, DepMap ID."
+                f"The specified `query_id` {query_id} can't be found in the `adata.obs`.\n"
+                "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation.\n"
+                "If the desired query ID is not available, you can fetch the cell line metadata "
+                "using the `annotate_cell_lines()` function before calling annotate_ccle_expression(). "
+                "This will help ensure that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
             )
 
         identifier_num_all = len(adata.obs[query_id].unique())
@@ -392,13 +370,13 @@ class CellLineMetaData:
 
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
-                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
-                "However, none of the query IDs could be found in the bulk RNA expression data. \n"
-                "The annotation process has been halted. \n"
-                "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.bulk_rna_expression()` method, \n"
-                "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. \n"
-                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function \n"
+                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata."
+                "However, none of the query IDs could be found in the bulk RNA expression data.\n"
+                "The annotation process has been halted.\n"
+                "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
+                "By using the `LookUp.bulk_rna_expression()` method, "
+                "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs.\n"
+                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function "
                 "to acquire more possible query IDs that can be used for annotation purposes."
             )
 
@@ -475,22 +453,20 @@ class CellLineMetaData:
 
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
-                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
+                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata."
                 "However, none of the query IDs could be found in the proteomics data. \n"
                 "The annotation process has been halted. \n"
                 "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.protein_expression()` method, \n"
+                "By using the `LookUp.protein_expression()` method, "
                 "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. \n"
-                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines` function \n"
+                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines` function "
                 "to acquire more possible query IDs that can be used for annotation purposes."
             )
 
         if len(not_matched_identifiers) > 0:
-            print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
             print(
-                f"[bold yellow]But following {len(not_matched_identifiers)} identifiers can't be found in the protein expression data, "
-            )
-            print(
+                f"[bold yellow]There are {identifier_num_all} identifiers in `adata.obs`. "
+                f"However {len(not_matched_identifiers)} identifiers can't be found in the protein expression data, "
                 "leading to the presence of NA values for their respective metadata. Please check again: ",
                 *not_matched_identifiers,
                 sep="\n- ",
@@ -536,8 +512,8 @@ class CellLineMetaData:
             raise ValueError(
                 f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
                 "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. \n"
-                "If the desired query ID is not available, you can fetch the cell line metadata \n"
-                "using the `annotate_cell_lines()` function before calling `annotate_from_gdsc()`. \n"
+                "If the desired query ID is not available, you can fetch the cell line metadata "
+                "using the `annotate_cell_lines()` function before calling `annotate_from_gdsc()`. "
                 "This will help ensure that the required query ID is included in your data."
             )
         if gdsc_dataset == 1:
