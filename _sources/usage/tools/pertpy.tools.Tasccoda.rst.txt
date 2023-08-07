@@ -29,6 +29,7 @@ Methods table
     ~pertpy.tools.Tasccoda.run_hmc
     ~pertpy.tools.Tasccoda.run_nuts
     ~pertpy.tools.Tasccoda.set_fdr
+    ~pertpy.tools.Tasccoda.set_init_mcmc_states
     ~pertpy.tools.Tasccoda.summary
     ~pertpy.tools.Tasccoda.summary_prepare
 
@@ -88,6 +89,10 @@ set_fdr
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automethod:: Tasccoda.set_fdr
+set_init_mcmc_states
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Tasccoda.set_init_mcmc_states
 summary
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

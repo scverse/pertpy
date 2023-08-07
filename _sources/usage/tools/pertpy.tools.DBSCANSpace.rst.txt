@@ -1,0 +1,60 @@
+﻿pertpy.tools.DBSCANSpace
+========================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: DBSCANSpace
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.DBSCANSpace.add
+    ~pertpy.tools.DBSCANSpace.compute
+    ~pertpy.tools.DBSCANSpace.compute_control_diff
+    ~pertpy.tools.DBSCANSpace.evaluate_clustering
+    ~pertpy.tools.DBSCANSpace.subtract
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+add
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DBSCANSpace.add
+compute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DBSCANSpace.compute
+compute_control_diff
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DBSCANSpace.compute_control_diff
+evaluate_clustering
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DBSCANSpace.evaluate_clustering
+subtract
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DBSCANSpace.subtract
+
+

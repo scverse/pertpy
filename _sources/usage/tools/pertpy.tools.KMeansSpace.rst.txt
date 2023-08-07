@@ -1,0 +1,60 @@
+﻿pertpy.tools.KMeansSpace
+========================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: KMeansSpace
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.KMeansSpace.add
+    ~pertpy.tools.KMeansSpace.compute
+    ~pertpy.tools.KMeansSpace.compute_control_diff
+    ~pertpy.tools.KMeansSpace.evaluate_clustering
+    ~pertpy.tools.KMeansSpace.subtract
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+add
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: KMeansSpace.add
+compute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: KMeansSpace.compute
+compute_control_diff
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: KMeansSpace.compute_control_diff
+evaluate_clustering
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: KMeansSpace.evaluate_clustering
+subtract
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: KMeansSpace.subtract
+
+

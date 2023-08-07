@@ -34,6 +34,7 @@ Methods table
 
     ~pertpy.tools.SCGEN.batch_removal
     ~pertpy.tools.SCGEN.convert_legacy_save
+    ~pertpy.tools.SCGEN.deregister_manager
     ~pertpy.tools.SCGEN.get_anndata_manager
     ~pertpy.tools.SCGEN.get_decoded_expression
     ~pertpy.tools.SCGEN.get_from_registry
@@ -107,6 +108,10 @@ convert_legacy_save
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automethod:: SCGEN.convert_legacy_save
+deregister_manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: SCGEN.deregister_manager
 get_anndata_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -1,0 +1,65 @@
+﻿pertpy.tools.DiscriminatorClassifierSpace
+=========================================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: DiscriminatorClassifierSpace
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.DiscriminatorClassifierSpace.add
+    ~pertpy.tools.DiscriminatorClassifierSpace.compute_control_diff
+    ~pertpy.tools.DiscriminatorClassifierSpace.get_embeddings
+    ~pertpy.tools.DiscriminatorClassifierSpace.load
+    ~pertpy.tools.DiscriminatorClassifierSpace.subtract
+    ~pertpy.tools.DiscriminatorClassifierSpace.train
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+add
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DiscriminatorClassifierSpace.add
+compute_control_diff
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DiscriminatorClassifierSpace.compute_control_diff
+get_embeddings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DiscriminatorClassifierSpace.get_embeddings
+load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DiscriminatorClassifierSpace.load
+subtract
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DiscriminatorClassifierSpace.subtract
+train
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: DiscriminatorClassifierSpace.train
+
+

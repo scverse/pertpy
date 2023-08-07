@@ -29,6 +29,7 @@ Methods table
     ~pertpy.tools.Sccoda.run_hmc
     ~pertpy.tools.Sccoda.run_nuts
     ~pertpy.tools.Sccoda.set_fdr
+    ~pertpy.tools.Sccoda.set_init_mcmc_states
     ~pertpy.tools.Sccoda.summary
     ~pertpy.tools.Sccoda.summary_prepare
 
@@ -88,6 +89,10 @@ set_fdr
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automethod:: Sccoda.set_fdr
+set_init_mcmc_states
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: Sccoda.set_init_mcmc_states
 summary
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

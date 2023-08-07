@@ -1,0 +1,55 @@
+﻿pertpy.tools.PseudobulkSpace
+============================
+
+.. currentmodule:: pertpy.tools
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: PseudobulkSpace
+
+
+
+
+
+
+
+Methods table
+~~~~~~~~~~~~~
+
+.. autosummary::
+
+    ~pertpy.tools.PseudobulkSpace.add
+    ~pertpy.tools.PseudobulkSpace.compute
+    ~pertpy.tools.PseudobulkSpace.compute_control_diff
+    ~pertpy.tools.PseudobulkSpace.subtract
+
+
+
+
+
+
+
+
+
+Methods
+~~~~~~~
+
+
+add
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: PseudobulkSpace.add
+compute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: PseudobulkSpace.compute
+compute_control_diff
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: PseudobulkSpace.compute_control_diff
+subtract
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: PseudobulkSpace.subtract
+
+
