@@ -94,7 +94,7 @@ class CellLineMetaData:
                 block_size=4096,
                 is_zip=False,
             )
-        self.gene_annotation = pd.read_table(gene_annotation_file_path)
+        self.gene_annotation = pd.read_table(gene_annotation_file_path, delimiter=",")
 
         # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute fro DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
