@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import namedtuple
 from typing import Literal
 
 import pandas as pd
@@ -8,11 +9,6 @@ from rich import print
 
 class LookUp:
     """Generate LookUp object for different type of metadata."""
-
-    class LookUpDict(dict):
-        """Create a simple dictionary for LookUp object"""
-
-        __getattr__ = dict.get
 
     def __init__(self, type: str = "cell_line", transfer_metadata: list[pd.DataFrame] | None = None):
         """
@@ -33,6 +29,12 @@ class LookUp:
             self.drug_response_gdsc1 = transfer_metadata[6]
             self.drug_response_gdsc2 = transfer_metadata[7]
 
+            cell_line_annotation = namedtuple(
+                "cell_line_annotation",
+                "n_cell_line cell_line n_metadata metadata reference_id reference_id_example default_parameter",
+            )
+            cell_lines = namedtuple("cell_lines", ["depmap", "cancerrxgene"])
+
             depmap_data = {
                 "n_cell_line": len(self.cell_line_meta.index),
                 "n_metadata": len(self.cell_line_meta.columns),
@@ -40,8 +42,14 @@ class LookUp:
                 "metadata": self.cell_line_meta.columns.values,
                 "reference_id": ["DepMap_ID", "cell_line_name", "stripped_cell_line_name", "CCLE_Name"],
                 "reference_id_example": "DepMap_ID: ACH-000016 | cell_line_name: SLR 21 | stripped_cell_line_name: SLR21 | CCLE_Name: SLR21_KIDNEY",
+                "default_parameter": {
+                    "cell_line_source": "DepMap",
+                    "query_id": "DepMap_ID",
+                    "reference_id": "DepMap_ID",
+                    "cell_line_information": "None",
+                },
             }
-            depmap_dict = self.LookUpDict(depmap_data)
+            depmap_record = cell_line_annotation(**depmap_data)
 
             cancerrxgene_data = {
                 "n_cell_line": len(self.cl_cancer_project_meta.index),
@@ -50,9 +58,20 @@ class LookUp:
                 "metadata": self.cl_cancer_project_meta.columns.values,
                 "reference_id": ["cell_line_name", "stripped_cell_line_name", "Model ID", "COSMIC ID"],
                 "reference_id_example": "cell_line_name: SNU-283 | stripped_cell_line_name: SNU283 | Model ID: SIDM00215 | COSMIC ID: 1659929",
+                "default_parameter": {
+                    "query_id": "stripped_cell_line_name",
+                    "reference_id": "stripped_cell_line_name",
+                    "cell_line_information": "None",
+                },
             }
-            cancerrxgene_dict = self.LookUpDict(cancerrxgene_data)
-            self.cell_lines_dict = self.LookUpDict({"depmap": depmap_dict, "cancerrxgene": cancerrxgene_dict})
+            ccancerrxgene_record = cell_line_annotation(**cancerrxgene_data)
+            self.cell_lines = cell_lines(depmap_record, ccancerrxgene_record)
+
+            bulk_rna_annotation = namedtuple(
+                "bulk_rna_annotation",
+                "n_cell_line cell_line n_gene gene reference_id reference_id_example default_parameter",
+            )
+            bulk_rna_expression = namedtuple("bulk_rna_expression", ["broad", "sanger"])
 
             broad_data = {
                 "n_cell_line": len(self.bulk_rna_broad.index),
@@ -61,8 +80,9 @@ class LookUp:
                 "gene": self.bulk_rna_broad.columns.values,
                 "reference_id": "DepMap_ID",
                 "reference_id_example": "DepMap_ID: ACH-001113",
+                "default_parameter": {"query_id": "DepMap_ID", "cell_line_source": "broad"},
             }
-            broad_dict = self.LookUpDict(broad_data)
+            broad_record = bulk_rna_annotation(**broad_data)
 
             sanger_data = {
                 "n_cell_line": len(self.bulk_rna_sanger.index),
@@ -71,10 +91,15 @@ class LookUp:
                 "gene": self.bulk_rna_sanger.columns.values,
                 "reference_id": "model_name",
                 "reference_id_example": "model_name: MEC-1",
+                "default_parameter": {"query_id": "cell_line_name", "cell_line_source": "sanger"},
             }
-            sanger_dict = self.LookUpDict(sanger_data)
-            self.bulk_rna_dict = self.LookUpDict({"broad": broad_dict, "sanger": sanger_dict})
+            sanger_record = bulk_rna_annotation(**sanger_data)
+            self.bulk_rna = bulk_rna_expression(broad_record, sanger_record)
 
+            proteomics = namedtuple(
+                "proteomics",
+                "n_cell_line cell_line n_protein protein metadata reference_id reference_id_example default_parameter",
+            )
             proteomics_data = {
                 "n_cell_line": len(self.proteomics_data["model_name"].unique()),
                 "n_protein": len(self.proteomics_data.uniprot_id.unique()),
@@ -83,8 +108,21 @@ class LookUp:
                 "metadata": self.proteomics_data.columns.values,
                 "reference_id": ["model_id", "model_name"],
                 "reference_id_example": "model_id: SIDM00483 | model_name: SK-GT-4",
+                "default_parameter": {
+                    "query_id": "cell_line_name",
+                    "reference_id": "model_name",
+                    "bulk_rna_information": "read_count",
+                    "protein_information": "protein_intensity",
+                    "protein_id": "uniprot_id",
+                },
             }
-            self.proteomics_dict = self.LookUpDict(proteomics_data)
+            self.proteomics = proteomics(**proteomics_data)
+
+            drug_response_annotation = namedtuple(
+                "drug_response_annotation",
+                "n_cell_line cell_line n_drug drug_name metadata reference_id reference_id_example default_parameter",
+            )
+            drug_response = namedtuple("drug_response", ["gdsc1", "gdsc2"])
 
             gdsc1_data = {
                 "n_cell_line": len(self.drug_response_gdsc1["cell_line_name"].unique()),
@@ -94,25 +132,39 @@ class LookUp:
                 "metadata": self.drug_response_gdsc1.columns.values,
                 "reference_id": ["cell_line_name", "sanger_model_id", "cosmic_id"],
                 "reference_id_example": "cell_line_name: ES5 | sanger_model_id: SIDM00263 | cosmic_id: 684057",
+                "default_parameter": {
+                    "gdsc_dataset": "1",
+                    "query_id": "cell_line_name",
+                    "reference_id": "cell_line_name",
+                    "query_perturbation": "perturbation",
+                    "reference_perturbation": "drug_name",
+                },
             }
-            gdsc1_dict = self.LookUpDict(gdsc1_data)
+            gdsc1_dict = drug_response_annotation(**gdsc1_data)
 
             gdsc2_data = {
                 "n_cell_line": len(self.drug_response_gdsc2["cell_line_name"].unique()),
-                "n_drug_": len(self.drug_response_gdsc2.drug_name.unique()),
+                "n_drug": len(self.drug_response_gdsc2.drug_name.unique()),
                 "cell_line": self.drug_response_gdsc2.cell_line_name.unique(),
                 "drug_name": self.drug_response_gdsc2.drug_name.unique(),
                 "metadata": self.drug_response_gdsc2.columns.values,
                 "reference_id": ["cell_line_name", "sanger_model_id", "cosmic_id"],
                 "reference_id_example": "cell_line_name: PFSK-1 | sanger_model_id: SIDM01132 | cosmic_id: 683667",
+                "default_parameter": {
+                    "gdsc_dataset": "1",
+                    "query_id": "cell_line_name",
+                    "reference_id": "cell_line_name",
+                    "query_perturbation": "perturbation",
+                    "reference_perturbation": "drug_name",
+                },
             }
-            gdsc2_dict = self.LookUpDict(gdsc2_data)
+            gdsc2_dict = drug_response_annotation(**gdsc2_data)
 
-            self.drug_response_dict = self.LookUpDict({"gdsc1": gdsc1_dict, "gdsc2": gdsc2_dict})
+            self.drug_response = drug_response(gdsc1_dict, gdsc2_dict)
         else:
             raise NotImplementedError
 
-    def cell_lines(
+    def available_cell_lines(
         self,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         reference_id: str = "DepMap_ID",
@@ -131,24 +183,6 @@ class LookUp:
         """
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specifically for CellLineMetaData!")
-
-        if cell_line_source == "DepMap":
-            print("[bold blue]Default parameters to annotate cell line metadata:")
-            default_param = {
-                "cell_line_source": "DepMap",
-                "query_id": "DepMap_ID",
-                "reference_id": "DepMap_ID",
-                "cell_line_information": "None",
-            }
-            print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
-        else:
-            print("[bold blue]Default parameters for Genomics of Drug sensitivity in Cancer are:")
-            default_param = {
-                "query_id": "stripped_cell_line_name",
-                "reference_id": "stripped_cell_line_name",
-                "cell_line_information": "None",
-            }
-            print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
 
         if query_id_list is not None:
             identifier_num_all = len(query_id_list)
@@ -171,7 +205,7 @@ class LookUp:
             print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
-    def bulk_rna_expression(
+    def available_bulk_rna_expression(
         self,
         cell_line_source: Literal["broad", "sanger"] = "sanger",
         query_id_list: list[str] | None = None,
@@ -191,13 +225,6 @@ class LookUp:
         else:
             bulk_rna = self.bulk_rna_sanger
 
-        print("[bold blue]Default parameters to annotate bulk RNA expression: ")
-        default_param = {
-            "query_id": "cell_line_name",
-            "cell_line_source": "sanger",
-        }
-        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
-
         if query_id_list is not None:
             identifier_num_all = len(query_id_list)
             not_matched_identifiers = list(set(query_id_list) - set(bulk_rna.index))
@@ -205,7 +232,7 @@ class LookUp:
             print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
-    def protein_expression(
+    def available_protein_expression(
         self, reference_id: Literal["model_name", "model_id"] = "model_name", query_id_list: list[str] | None = None
     ) -> None:
         """A brief summary of protein expression data.
@@ -219,16 +246,6 @@ class LookUp:
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
 
-        print("[bold blue]Default parameters to annotate protein expression: ")
-        default_param = {
-            "query_id": "cell_line_name",
-            "reference_id": "model_name",
-            "bulk_rna_information": "read_count",
-            "protein_information": "protein_intensity",
-            "protein_id": "uniprot_id",
-        }
-        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
-
         if query_id_list is not None:
             identifier_num_all = len(query_id_list)
 
@@ -240,7 +257,7 @@ class LookUp:
             print(f"[bold blue]{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"[bold yellow]{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
-    def drug_response(
+    def available_drug_response(
         self,
         gdsc_dataset: Literal[1, 2] = 1,
         reference_id: Literal["cell_line_name", "sanger_model_id", "cosmic_id"] = "cell_line_name",
@@ -265,16 +282,6 @@ class LookUp:
         else:
             gdsc_data = self.drug_response_gdsc2
 
-        print("[bold blue]Default parameters to annotate cell line metadata: ")
-        default_param = {
-            "gdsc_dataset": "1",
-            "query_id": "cell_line_name",
-            "reference_id": "cell_line_name",
-            "query_perturbation": "perturbation",
-            "reference_perturbation": "drug_name",
-        }
-        print("\n".join(f"- {k}: {v}" for k, v in default_param.items()))
-
         if query_id_list is not None:
             if reference_id not in gdsc_data.columns:
                 raise ValueError(
@@ -295,7 +302,7 @@ class LookUp:
             print(f"{len(not_matched_identifiers)} perturbation types are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} perturbation types are found! ")
 
-    def genes_annotation(
+    def available_genes_annotation(
         self,
         reference_id: Literal["gene_id", "ensembl_gene_id", "hgnc_id", "hgnc_symbol"] = "ensembl_gene_id",
         query_id_list: list[str] | None = None,
