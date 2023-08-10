@@ -109,7 +109,9 @@ class CellLineMetaData:
 
         self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, skiprows=[2, 3], header=[0, 1], index_col=[0, 1])
         # remove unnecessary space in read count values
-        self.bulk_rna_sanger = self.bulk_rna_sanger.applymap(lambda x: int(x.replace(' ', '')) if isinstance(x, str) else x)
+        self.bulk_rna_sanger = self.bulk_rna_sanger.applymap(
+            lambda x: int(x.replace(" ", "")) if isinstance(x, str) else x
+        )
         self.bulk_rna_sanger = self.bulk_rna_sanger.T
         self.bulk_rna_sanger.index = self.bulk_rna_sanger.index.droplevel("model_id")
         self.bulk_rna_sanger.columns = self.bulk_rna_sanger.columns.droplevel("gene_id")
