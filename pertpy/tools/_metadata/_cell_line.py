@@ -108,7 +108,9 @@ class CellLineMetaData:
                 zip_file.extract("rnaseq_read_count_20220624.csv", path=settings.cachedir)
 
         self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, skiprows=[2, 3], header=[0, 1], index_col=[0, 1])
-        # remove unnecessary space in read count values
+
+        # issue: read count values contain random whitespace, not sure what it supposes to mean
+        # solution: remove the white space and convert to int before depmap updates the metadata
         self.bulk_rna_sanger = self.bulk_rna_sanger.applymap(
             lambda x: int(x.replace(" ", "")) if isinstance(x, str) else x
         )
