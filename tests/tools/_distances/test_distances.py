@@ -11,7 +11,7 @@ pseudo_distances = ["mean_pairwise", "mmd"]
 class TestDistances:
     @fixture
     def adata(self):
-        adata = pt.dt.distance_example_data()
+        adata = pt.dt.distance_example()
         return adata
 
     @mark.parametrize("distance", actual_distances)

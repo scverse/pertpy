@@ -26,7 +26,7 @@ class DistanceTest:
 
     Examples:
         >>> import pertpy as pt
-        >>> adata = pt.dt.distance_example_data()
+        >>> adata = pt.dt.distance_example()
         >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
         >>> tab = etest(adata, groupby='perturbation', contrast='control')
     """
@@ -67,7 +67,7 @@ class DistanceTest:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
             >>> tab = etest(adata, groupby='perturbation', contrast='control')
         """

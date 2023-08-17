@@ -15,7 +15,7 @@ def burczynski_crohn() -> AnnData:  # pragma: no cover
     cells from 42 healthy individuals, 59 CD patients, and 26 UC patients by
     hybridization to microarrays interrogating more than 22,000 sequences.
 
-    Reference:
+    References:
         Burczynski et al., "Molecular classification of Crohn's disease and
         ulcerative colitis patients using transcriptional profiles in peripheral blood mononuclear cells"
         J Mol Diagn 8, 51 (2006). PMID:16436634.
@@ -29,13 +29,13 @@ def burczynski_crohn() -> AnnData:  # pragma: no cover
 def papalexi_2021() -> MuData:  # pragma: no cover
     """ECCITE-seq dataset of 11 gRNAs generated from stimulated THP-1 cell line.
 
-    Reference:
+    References:
         Papalexi, E., Mimitou, E.P., Butler, A.W. et al. Characterizing the molecular regulation
         of inhibitory immune checkpoints with multimodal single-cell screens.
         Nat Genet 53, 322–331 (2021). https://doi.org/10.1038/s41588-021-00778-2
 
     Returns:
-        :class:`~anndata.AnnData` object of the ECCITE-seq dataset
+        :class:`~mudata.MuData` object of the ECCITE-seq dataset
     """
     import muon as mu
 
@@ -56,9 +56,10 @@ def papalexi_2021() -> MuData:  # pragma: no cover
 
 
 def sc_sim_augur() -> AnnData:  # pragma: no cover
-    """Simulated test dataset used the usage example for the Augur.
+    """Simulated test dataset used in Augur example vignettes.
 
-    https://github.com/neurorestore/Augur
+    References:
+        Obtained from https://github.com/neurorestore/Augur
 
     Returns:
         :class:`~anndata.AnnData` object of a simulated single-cell RNA seq dataset
@@ -86,7 +87,7 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
     collected a three time points: Maintance, 48h after cocaine withdrawal and
     15 days after cocaine withdrawal.
 
-    Reference:
+    References:
         Bhattacherjee A, Djekidel MN, Chen R, Chen W, Tuesta LM, Zhang Y. Cell
         type-specific transcriptional programs in mouse prefrontal cortex during
         adolescence and addiction. Nat Commun. 2019 Sep 13;10(1):4169.
@@ -114,7 +115,7 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
 def sciplex3_raw() -> AnnData:  # pragma: no cover
     """Raw sciplex3 perturbation dataset curated for perturbation modeling.
 
-    Reference:
+    References:
         Srivatsan SR, McFaline-Figueroa JL, Ramani V, Saunders L, Cao J, Packer J,
         Pliner HA, Jackson DL, Daza RM, Christiansen L, Zhang F, Steemers F,
         Shendure J, Trapnell C. Massively multiplex chemical transcriptomics at
@@ -143,12 +144,12 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
 def smillie() -> AnnData:  # pragma: no cover
     """scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
 
-    Reference:
+    References:
         Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
         Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
 
     Returns:
-        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
+        :class:`~anndata.AnnData` object of the dataset.
     """
     output_file_name = "smillie.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -173,13 +174,13 @@ def frangieh_2021() -> AnnData:  # pragma: no cover
     chosen by their membership in an immune evasion program that is associated with
     immunotherapy resistance in patients.
 
-    Reference:
+    References:
         Frangieh, C.J., Melms, J.C., Thakore, P.I. et al. Multimodal pooled Perturb-CITE-seq
         screens in patient models define mechanisms of cancer immune evasion.
         Nat Genet 53, 332–341 (2021). https://doi.org/10.1038/s41588-021-00779-1
 
     Returns:
-        :class:`~anndata.AnnData` object of a Perturb-CITE-seq data
+        :class:`~anndata.AnnData` object of the Perturb-CITE-seq data.
     """
     output_file_name = "frangieh_2021.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -204,13 +205,13 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
     chosen by their membership in an immune evasion program that is associated with
     immunotherapy resistance in patients.
 
-    Reference:
+    References:
         Frangieh, C.J., Melms, J.C., Thakore, P.I. et al. Multimodal pooled Perturb-CITE-seq
         screens in patient models define mechanisms of cancer immune evasion.
         Nat Genet 53, 332–341 (2021). https://doi.org/10.1038/s41588-021-00779-1
 
     Returns:
-        :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data
+        :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data.
     """
     output_file_name = "frangieh_2021_raw.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -235,13 +236,13 @@ def dixit_2016_raw() -> AnnData:  # pragma: no cover
     unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post transduction,
     and 13 days at a higher MOI of perturbations.
 
-    Reference:
+    References:
         Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with
         Scalable Single-Cell RNA Profiling of Pooled Genetic Screens.
         Cell 2016 Dec 15;167(7):1853-1866.e17. DOI:https://doi.org/10.1016/j.cell.2016.11.038
 
     Returns:
-        :class:`~anndata.AnnData` object of raw Perturb-seq data
+        :class:`~anndata.AnnData` object of raw Perturb-seq data.
     """
     output_file_name = "dixit_2016_raw.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -263,10 +264,10 @@ def dixit_2016() -> AnnData:  # pragma: no cover
     """Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.
 
     scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens
-    unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post trasnduction,
+    unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post transduction,
     and 13 days at a higher MOI of perturbations.
 
-    Reference:
+    References:
         Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with
         Scalable Single-Cell RNA Profiling of Pooled Genetic Screens.
         Cell 2016 Dec 15;167(7):1853-1866.e17. DOI:https://doi.org/10.1016/j.cell.2016.11.038
@@ -296,13 +297,13 @@ def norman_2019() -> AnnData:  # pragma: no cover
     Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
     overexpressing genes alone or in combination
 
-    Reference:
+    References:
         Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
         single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
-        :class:`~anndata.AnnData` object of sc pooled CRISPR screening
+        :class:`~anndata.AnnData` object of single-cell pooled CRISPR screening.
     """
     output_file_name = "norman_2019.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -326,13 +327,13 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
     Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of
     overexpressing genes alone or in combination
 
-    Reference:
+    References:
         Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
         single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
-        :class:`~anndata.AnnData` object of sc pooled CRISPR screening
+        :class:`~anndata.AnnData` object of raw single-cell pooled CRISPR screening
     """
     output_file_name = "norman_2019_raw.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
@@ -351,9 +352,10 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
 
 
 def dialogue_example() -> AnnData:  # pragma: no cover
-    """Example dataset used to feature DIALOGUE.
+    """Example dataset used in DIALOGUE vignettes.
 
-    https://github.com/livnatje/DIALOGUE/wiki/Example
+    References:
+        https://github.com/livnatje/DIALOGUE/wiki/Example
 
     Returns:
         :class:`~anndata.AnnData` object
@@ -374,7 +376,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
     return adata
 
 
-def distance_example_data() -> AnnData:  # pragma: no cover
+def distance_example() -> AnnData:  # pragma: no cover
     """Example dataset used to feature distances and distance_tests.
 
     Processed and subsetted version of original Perturb-seq dataset by Dixit et al.
@@ -407,7 +409,7 @@ def kang_2018() -> AnnData:  # pragma: no cover
     directly following thaw, while samples 2.1 and 2.2 were cultured for 6 hours with (B) or
     without (A) IFN-beta stimulation prior to loading on the 10x Single Cell instrument.
 
-    Reference:
+    References:
         Kang, H., Subramaniam, M., Targ, S. et al. Multiplexed droplet single-cell RNA-sequencing
         using natural genetic variation.
         Nat Biotechnol 36, 89–94 (2018). https://doi.org/10.1038/nbt.4042
@@ -438,7 +440,7 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     Here the dataset was downsampled to approx. 500 cells per donor and cells were mapped to a reference atlas of healthy PBMCs from 12 studies
     with scArches.
 
-    Reference:
+    References:
         Stephenson, E., Reynolds, G., Botting, R. A., et al. (2021).
         Single-cell multi-omics analysis of the immune response in COVID-19.
         Nature Medicine, 27(5). https://doi.org/10.1038/s41591-021-01329-2
@@ -466,7 +468,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     Epithelial cells from the small intestine and organoids of mice.
     Some of the cells were also subject to Salmonella or Heligmosomoides polygyrus infection (day 3 and day 10).
 
-    Reference:
+    References:
         Haber, Adam L. et al. “A single-cell survey of the small intestinal epithelium” Nature vol. 551 (2017): 333-339
         doi:10.1038/nature24489
 
@@ -494,8 +496,9 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
     In a pilot experiment, single-cell RNA-seq was performed on a pool of individually transduced chronic
     myeloid leukemia cells (K562) carrying 8 distinct guide barcodes, analyzing ∼6,000 cells total.
 
-    Source paper:
-        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub
+    References:
+        Publication: https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -526,8 +529,9 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
     treated with thapsigargin. Control cells were treated with DMSO. Transcriptomes
     of ∼15,000 cells were sequenced.
 
-    Source paper:
-        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub
+    References:
+        Publication: https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb preparedsingle-cell perturbation data
@@ -549,15 +553,16 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
 
 
 def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
-    """Transcriptomics of 65000 cells that were subject to 91 sgRNAs targeting 82 genes.
+    """Transcriptomics measurements of 65000 cells that were subject to 91 sgRNAs targeting 82 genes.
 
     In UPR Perturb-seq experiment, Perturb-seq was applied to a small CRISPRi library
     of 91 sgRNAs targeting 82 genes. sgRNAs were delivered via pooled transduction
     using a mixture of separately prepared lentiviruses, and ∼65,000 transcriptomes
     were collected in one large pooled experiment.
 
-    Source paper:
-        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub
+    References:
+        Publication: https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -584,8 +589,9 @@ def aissa_2021() -> AnnData:  # pragma: no cover
     In this study 848 PC9 cells subjected to consecutive erlotinib treatment (for
     1, 2, 4, 9, and 11 days) and 756 control cells were analysed using Drop-seq.
 
-    Source paper:
-        https://www.nature.com/articles/s41467-021-21884-z
+    References:
+        Publication: https://www.nature.com/articles/s41467-021-21884-z \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -615,7 +621,7 @@ def chang_2021() -> AnnData:  # pragma: no cover
     transduced into five different cell lines (PC9, MCF-10A, MDA-MB-231, NCI-H358 and NCI-H1373).
     Transduced cells were selected with puromycin only, mixed together and profiled by 10x scRNA-seq.
 
-    Source paper:
+    References:
         https://www.nature.com/articles/s41587-021-01005-3
 
     Returns:
@@ -638,7 +644,7 @@ def chang_2021() -> AnnData:  # pragma: no cover
 
 
 def datlinger_2017() -> AnnData:  # pragma: no cover
-    """Transcriptpmics of 5905 Jurkat cells induced with anti-CD3 and anti-CD28 antibodies.
+    """Transcriptomics measurements of 5905 Jurkat cells induced with anti-CD3 and anti-CD28 antibodies.
 
     For CROP-seq, Jurkat cells were transduced with a gRNA library targeting high-level
     regulators of T cell receptor signaling and a set of transcription factors. After 10
@@ -647,8 +653,9 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
     measuring TCR activation for each gene knockout. The dataset comprises 5,905 high-quality
     single-cell transcriptomes with uniquely assigned gRNAs.
 
-    Source paper:
-        https://www.nature.com/articles/nmeth.4177
+    References:
+        Publication: https://www.nature.com/articles/nmeth.4177 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -670,7 +677,7 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
 
 
 def datlinger_2021() -> AnnData:  # pragma: no cover
-    """Transcriptomics of 151788 nuclei of four cell lines.
+    """Transcriptomics measurements of 151788 nuclei of four cell lines.
 
     A large-scale scifi-RNA-seq experiment was performed with 383,000 nuclei loaded into
     a single microfluidic channel of the Chromium system. Four human cell lines (HEK293T,
@@ -679,7 +686,8 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
     resulted in 151,788 single-cell transcriptomes passing quality control.
 
     Source paper:
-        https://doi.org/10.1038/s41592-021-01153-z
+        Publication: https://doi.org/10.1038/s41592-021-01153-z \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
      Returns:
          :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -689,38 +697,6 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
     if not Path(output_file_path).exists():
         _download(
             url="https://zenodo.org/record/7278143/files/DatlingerBock2021.h5ad?download=1",
-            output_file_name=output_file_name,
-            output_path=settings.datasetdir,
-            is_zip=False,
-        )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
-
-    return adata
-
-
-def dixit_2016_scperturb() -> AnnData:  # pragma: no cover
-    """Transcriptomics of 200000 bone marrow-derived dendritic K562 cells.
-
-    Six Perturb-seq experiments were performed, analyzing 200,000 cells. In bone
-    marrow-derived dendritic cells (BMDCs), 24 transcription factors (TFs) were targeted
-    and the effects pre-stimulation (0 hr) and at 3 hr post-lipopolysaccharide (LPS) were
-    measured. In K562 cells, 14 TFs and 10 cell-cycle regulators were targeted in separate
-    pooled experiments. For K562 TFs, experiments were performed using lower and higher MOI
-    and at two time points. Reference scRNA-seq data from unperturbed cells were collected separately.
-
-    Source paper:
-        https://doi.org/10.1016/j.cell.2016.11.038
-
-    Returns:
-        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
-    """
-    output_file_name = "dixit_2016_scperturb.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
-    if not Path(output_file_path).exists():
-        _download(
-            url="https://zenodo.org/record/7278143/files/DixitRegev2016.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -742,8 +718,9 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
     by their membership in an immune evasion program that is associated with immunotherapy
     resistance in patients.
 
-    Source paper:
-        https://doi.org/10.1038/s41588-021-00779-1
+    References:
+        Publication: https://doi.org/10.1038/s41588-021-00779-1 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -775,7 +752,8 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
     resistance in patients.
 
     Source paper:
-        https://doi.org/10.1038/s41588-021-00779-1
+        Publication: https://doi.org/10.1038/s41588-021-00779-1 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -803,8 +781,9 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
     with no strong a priori hypothesis as to their target gene(s) in 254,974 cells of chronic
     myelogenous leukemia cell line K562, with CRISPRi as the mode of perturbation.
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2018.11.029
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2018.11.029 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -833,8 +812,9 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
     K562, with CRISPRi as the mode of perturbation, where K562 cells were transduced
     at a high MOI (pilot library MOI = ∼15).
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2018.11.029
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2018.11.029 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -863,8 +843,9 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
     with CRISPRi as the mode of perturbation, where K562 cells were transduced at a
     low MOI (pilot library MOI = ∼1).
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2018.11.029
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2018.11.029 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -892,8 +873,9 @@ def gehring_2019() -> AnnData:  # pragma: no cover
     stem cells (NSCs), consisting of a pair of drug-triples with 4 drugs in total at 3
     or 4 different concentractions.
 
-    Source paper:
-        https://doi.org/10.1038/s41587-019-0372-z
+    References:
+        Publication: https://doi.org/10.1038/s41587-019-0372-z \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of a scPerturb prepared single-cell dataset
@@ -922,8 +904,9 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
     co-treated pools of cancer cell lines. The responses of pools of 24–99 cell lines to
     a range of different drugs were profiled, as well as to CRISPR perturbations.
 
-    Source paper:
-        https://doi.org/10.1038/s41467-020-17440-w
+    References:
+        Publication: https://doi.org/10.1038/s41467-020-17440-w \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -952,8 +935,9 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
     measured in K562 cells to obtain viral titers. CRISPRi K562 cells were transduced
     and 20Q1 Cancer Dependency Map common essential genes were targeted at day 7 after transduction.
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2022.05.013
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2022.05.013 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -984,8 +968,9 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
     empirically measured in K562 cells to obtain viral titers. CRISPRi K562 cells were transduced
     and all expressed genes were targeted at day 8 after transduction
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2022.05.013
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2022.05.013 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1015,8 +1000,9 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
     ZIM3 KRAB-dCas9-P2A-BFP were transduced. 20Q1 Cancer Dependency Map common essential
     genes were targeted at day 7 after transduction.
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2022.05.013
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2022.05.013 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1047,8 +1033,9 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
     and 7,387 unique transcripts per cell.
 
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2019.01.006
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2019.01.006 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -1077,8 +1064,9 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
     ∼12 hours across an 18-day time course (and every 6 hours between days 8 and 9). Overall, 259,155 cells
     were profiled.
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2019.01.006
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2019.01.006 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -1107,8 +1095,9 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
     in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes
     within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.
 
-    Source paper:
-        https://doi.org/10.1038/s41592-020-0837-5
+    References:
+        Publication: https://doi.org/10.1038/s41592-020-0837-5 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -1137,8 +1126,9 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
     in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes
     within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.
 
-    Source paper:
-        https://doi.org/10.1038/s41592-020-0837-5
+    References:
+        Publication: https://doi.org/10.1038/s41592-020-0837-5 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1168,8 +1158,9 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
     to explore transcriptional changes downstream of CRISPR-KO. Dataset includes CD8
     T cells from two donors, for two conditions: with TCR stimulation or No stimulation.
 
-    Source paper:
-        https://doi.org/10.1016/j.cell.2018.10.024
+    References:
+        Publication: https://doi.org/10.1016/j.cell.2018.10.024 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1200,8 +1191,9 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
     doses in triplicate for a total of 84 drug–dose–replicate combinations and additional
     vehicle controls. Nuclei from each well were labelled and subjected to sci-RNA-seq.
 
-    Source paper:
-        https://doi.org/10.1126/science.aax6234
+    References:
+        Publication: https://doi.org/10.1126/science.aax6234 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1230,8 +1222,9 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
     adenocarcinoma)exposed to 188 compounds, profiling ~650,000 single-cell
     transcriptomes across ~5000 independent samples in one experiment.
 
-    Source paper:
-        https://doi.org/10.1126/science.aax6234
+    References:
+        Publication: https://doi.org/10.1126/science.aax6234 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1263,8 +1256,9 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
     supplementation was capable of blocking pracinostat-treated cells from reaching
     the end of the HDAC inhibitor trajectory.
 
-    Source paper:
-        https://doi.org/10.1126/science.aax6234
+    References:
+        Publication: https://doi.org/10.1126/science.aax6234 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1296,8 +1290,9 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
     from ∼91,000 mean reads per cell, the median number of ∼4,600 genes detected per cell and
     ∼8,400 cells to which a unique sgRNA could be assigned after quality control.
 
-    Source paper:
-        https://doi.org/10.1016/j.neuron.2019.07.014
+    References:
+        Publication: https://doi.org/10.1016/j.neuron.2019.07.014 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1329,8 +1324,9 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
     from ∼84,000 mean reads per cell, the median number of ∼5,000 genes detected per cell and
     ∼15,000 cells to which a unique sgRNA could be assigned after quality control.
 
-    Source paper:
-        https://doi.org/10.1016/j.neuron.2019.07.014
+    References:
+        Publication: https://doi.org/10.1016/j.neuron.2019.07.014 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1360,8 +1356,9 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
     CROP-seq sgRNA library, approximately 50,000 CRISPRi neurons were loaded into
     10X chips with about 25,000 input cells per lane.
 
-    Source paper:
-        https://doi.org/10.1038/s41593-021-00862-0
+    References:
+        Publication: https://doi.org/10.1038/s41593-021-00862-0 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
@@ -1391,9 +1388,9 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
     CROP-seq sgRNA library, approximately 98,000 CRISPRi neurons were loaded into
     10X chips with about 25,000 input cells per lane.
 
-
-    Source paper:
-        https://doi.org/10.1038/s41593-021-00862-0
+    References:
+        Publication: https://doi.org/10.1038/s41593-021-00862-0 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1420,6 +1417,10 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
     The authors developed a tool called LARRY (lineage and RNA recovery) and applied
     it to mouse embryonic stem cells under different cytokine conditions across time.
 
+    References:
+        Publication: https://www.science.org/doi/10.1126/science.aaw3381 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
+
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
@@ -1440,14 +1441,15 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
 
 
 def xie_2017() -> AnnData:  # pragma: no cover
-    """Transcriptomics of 51448 cells generated with Mosaic-seq.
+    """Single-cell transcriptomics of 51448 cells generated with Mosaic-seq.
 
     Mosaic-seq was applied to 71 constituent enhancers from 15 super-enhancers, this
     analysis of 51,448 sgRNA-induced transcriptomes finds that only a small number of
     constituents are major effectors of target gene expression.
 
-    Source paper:
-        https://doi.org/10.1016/j.molcel.2017.03.007
+    References:
+        Publication: https://doi.org/10.1016/j.molcel.2017.03.007 \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
@@ -1471,14 +1473,15 @@ def xie_2017() -> AnnData:  # pragma: no cover
 def zhao_2021() -> AnnData:  # pragma: no cover
     """Multiplexed drug perturbation from freshly resected tumors.
 
-    Source paper:
-        https://doi.org/10.1186/s13073-021-00894-y
-
     This study combines multiplexed drug perturbation in acute slice culture from freshly
     resected tumors with scRNA-seq to profile transcriptome-wide drug responses in
     individual patients. They applied this approach to drug perturbations on slices derived
     from six glioblastoma (GBM) resections to identify conserved drug responses and to one
     additional GBM resection to identify patient-specific responses.
+
+    References:
+        Publication: https://doi.org/10.1186/s13073-021-00894-y \
+        Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data

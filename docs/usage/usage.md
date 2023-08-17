@@ -16,7 +16,7 @@ pt.pl.cool_fancy_plot()
 .. currentmodule:: pertpy
 ```
 
-## Data
+## Datasets
 
 ```{eval-rst}
 .. autosummary::
@@ -34,7 +34,6 @@ pt.pl.cool_fancy_plot()
     data.dialogue_example
     data.dixit_2016
     data.dixit_2016_raw
-    data.dixit_2016_scperturb
     data.frangieh_2021
     data.frangieh_2021_protein
     data.frangieh_2021_raw
@@ -296,7 +295,7 @@ and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorial
 ```python
 import pertpy as pt
 
-adata = pt.dt.distance_example_data()
+adata = pt.dt.distance_example()
 
 # Pairwise distances
 distance = pt.tl.Distance(metric='edistance', obsm_key='X_pca')
