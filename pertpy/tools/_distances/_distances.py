@@ -11,9 +11,11 @@ from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
 from scipy.spatial.distance import cosine
+from scipy.special import gammaln
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 
 class Distance:
@@ -111,6 +113,8 @@ class Distance:
             metric_fct = KLDivergence()
         elif metric == "t_test":
             metric_fct = TTestDistance()
+        elif metric == "nb_nll":
+            metric_fct = NBNLL()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -491,6 +495,43 @@ class TTestDistance(AbstractDistance):
             t = (m1 - m2) / np.sqrt(vn1 + vn2)
             t_test_all.append(abs(t))
         return sum(t_test_all) / len(t_test_all)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
+
+
+class NBNLL(AbstractDistance):
+    """
+    Average of Negative Log likelihood (scalar) of group B cells
+    according to a NB distribution fitted over group A
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, bins=10, **kwargs) -> float:
+        if X.dtype.kind != "i" or Y.dtype.kind != "i":
+            raise ValueError("The NB NLL distance only applies for raw count inputs")
+        nlls = []
+        for i in range(X.shape[1]):
+            x, y = X[:, i], Y[:, i]
+            nb_params = NegativeBinomialP(x, np.ones_like(x)).fit().params
+            mu = np.repeat(np.exp(nb_params[0]), x.shape[0])
+            theta = np.repeat(1 / nb_params[1], x.shape[0])
+
+            # calculate the nll of y
+            eps = np.repeat(1e-8, x.shape[0])
+            log_theta_mu_eps = np.log(theta + mu + eps)
+            nll = (
+                theta * (np.log(theta + eps) - log_theta_mu_eps)
+                + y * (np.log(mu + eps) - log_theta_mu_eps)
+                + gammaln(y + theta)
+                - gammaln(theta)
+                - gammaln(y + 1)
+            )
+            nlls.append(nll.mean())
+        return sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
