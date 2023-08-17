@@ -14,11 +14,12 @@ packages = [
 classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
 
 
 [tool.poetry.dependencies]
-python = ">=3.9.0,<3.11"
+python = ">=3.9.0,<3.12"
 rich = ">=10.11.0"
 PyYAML = ">=5.4.1"
 scanpy = {extras = ["leiden"], version = "^1.9.3"}
