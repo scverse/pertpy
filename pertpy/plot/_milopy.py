@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-from anndata import AnnData
 from mudata import MuData
 
 
@@ -23,7 +24,7 @@ class MilopyPlot:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding)
 
         Args:
@@ -86,7 +87,7 @@ class MilopyPlot:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """Visualize cells in a neighbourhood.
 
         Args:
@@ -109,7 +110,8 @@ class MilopyPlot:
         feature_key: str | None = "rna",
         anno_col: str = "nhood_annotation",
         alpha: float = 0.1,
-        subset_nhoods: list = None,
+        subset_nhoods: list[str] = None,
+        palette: str | Sequence[str] | dict[str, str] | None = None,
     ):
         """Plot beeswarm plot of logFC against nhood labels
 
@@ -118,13 +120,15 @@ class MilopyPlot:
             anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
             alpha: Significance threshold. (default: 0.1)
             subset_nhoods: List of nhoods to plot. If None, plot all nhoods. (default: None)
+            palette: Name of Seaborn color palette for violinplots.
+                     Defaults to pre-defined category colors for violinplots.
         """
         try:
             nhood_adata = mdata["milo"].T.copy()
         except KeyError:
-            print(
-                "mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
-            )
+            raise RuntimeError(
+                "mdata should be a MuData object with two slots: feature_key and 'milo'. Run 'milopy.count_nhoods(adata)' first."
+            ) from None
 
         if subset_nhoods is not None:
             nhood_adata = nhood_adata[subset_nhoods]
@@ -132,20 +136,16 @@ class MilopyPlot:
         try:
             nhood_adata.obs[anno_col]
         except KeyError:
-            print(
-                'Cannot find {a} in adata.uns["nhood_adata"].obs -- \
-                    please run milopy.utils.annotate_nhoods(adata, anno_col) first'.format(
-                    a=anno_col
-                )
-            )
+            raise RuntimeError(
+                f"Unable to find {anno_col} in mdata.uns['nhood_adata']. Run 'milopy.utils.annotate_nhoods(adata, anno_col)' first"
+            ) from None
 
         try:
             nhood_adata.obs["logFC"]
         except KeyError:
-            print(
-                'Cannot find `logFC` in adata.uns["nhood_adata"].obs -- \
-                    please run milopy.core.da_nhoods(adata) first'
-            )
+            raise RuntimeError(
+                "Unable to find 'logFC' in mdata.uns['nhood_adata'].obs. Run 'core.da_nhoods(adata)' first."
+            ) from None
 
         sorted_annos = (
             nhood_adata.obs[[anno_col, "logFC"]].groupby(anno_col).median().sort_values("logFC", ascending=True).index
@@ -153,14 +153,14 @@ class MilopyPlot:
 
         anno_df = nhood_adata.obs[[anno_col, "logFC", "SpatialFDR"]].copy()
         anno_df["is_signif"] = anno_df["SpatialFDR"] < alpha
-        # anno_df['across_organs'] = ["Significant across organs" if x else "" for x in (keep_nhoods & signif_nhoods)]
         anno_df = anno_df[anno_df[anno_col] != "nan"]
 
         try:
             obs_col = nhood_adata.uns["annotation_obs"]
-            anno_palette = dict(
-                zip(mdata[feature_key].obs[obs_col].cat.categories, mdata[feature_key].uns[f"{obs_col}_colors"])
-            )
+            if palette is None:
+                palette = dict(
+                    zip(mdata[feature_key].obs[obs_col].cat.categories, mdata[feature_key].uns[f"{obs_col}_colors"])
+                )
             sns.violinplot(
                 data=anno_df,
                 y=anno_col,
@@ -169,7 +169,7 @@ class MilopyPlot:
                 size=190,
                 inner=None,
                 orient="h",
-                palette=anno_palette,
+                palette=palette,
                 linewidth=0,
                 scale="width",
             )
@@ -196,7 +196,7 @@ class MilopyPlot:
             orient="h",
             alpha=0.5,
         )
-        plt.legend(loc="upper left", title=f"< {int(alpha*100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
+        plt.legend(loc="upper left", title=f"< {int(alpha * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
     @staticmethod
@@ -205,7 +205,6 @@ class MilopyPlot:
         test_var: str,
         subset_nhoods: list = None,
         log_counts: bool = False,
-        feature_key: str | None = "rna",
     ):
         """Plot boxplot of cell numbers vs condition of interest
 
@@ -218,9 +217,9 @@ class MilopyPlot:
         try:
             nhood_adata = mdata["milo"].T.copy()
         except KeyError:
-            print(
-                "milo_mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
-            )
+            raise RuntimeError(
+                "mdata should be a MuData object with two slots: feature_key and 'milo'. Run milopy.count_nhoods(mdata) first"
+            ) from None
 
         if subset_nhoods is None:
             subset_nhoods = nhood_adata.obs_names
