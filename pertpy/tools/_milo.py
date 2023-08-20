@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import random
 import re
-from typing import List, Literal
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -36,6 +36,7 @@ class Milo:
         """Prepare a MuData object for subsequent processing.
 
         Args:
+        ----
             input: AnnData
             feature_key: Key to store the cell-level AnnData object in the MuData object
         Returns:
@@ -61,6 +62,7 @@ class Milo:
         Thus, multiple neighbourhoods may be collapsed to prevent over-sampling the graph space.
 
         Args:
+        ----
             data: AnnData object with KNN graph defined in `obsp` or MuData object with a modality with KNN graph defined in `obsp`
             neighbors_key: The key in `adata.obsp` or `mdata[feature_key].obsp` to use as KNN graph.
                            If not specified, `make_nhoods` looks .obsp[‘connectivities’] for connectivities (default storage places for `scanpy.pp.neighbors`).
@@ -72,6 +74,7 @@ class Milo:
             copy: Determines whether a copy of the `adata` is returned. (default: False)
 
         Returns:
+        -------
             If `copy=True`, returns the copy of `adata` with the result in `.obs`, `.obsm`, and `.uns`.
             Otherwise:
 
@@ -173,11 +176,13 @@ class Milo:
         """Builds a sample-level AnnData object storing the matrix of cell counts per sample per neighbourhood.
 
         Args:
+        ----
             data: AnnData object with neighbourhoods defined in `obsm['nhoods']` or MuData object with a modality with neighbourhoods defined in `obsm['nhoods']`
             sample_col: Column in adata.obs that contains sample information
             feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
 
         Returns:
+        -------
             MuData object storing the original (i.e. rna) AnnData in `mudata[feature_key]`
             and the compositional anndata storing the neighbourhood cell counts in `mudata['milo']`.
             Here:
@@ -232,6 +237,7 @@ class Milo:
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
 
         Args:
+        ----
             mdata: MuData object
             design: Formula for the test, following glm syntax from R (e.g. '~ condition').
                     Terms should be columns in `milo_mdata[feature_key].obs`.
@@ -243,6 +249,7 @@ class Milo:
             solver: The solver to fit the model to. One of "edger" (requires R, rpy2 and edgeR to be installed) or "batchglm"
 
         Returns:
+        -------
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
             - `logFC` stores the log fold change in cell abundance (coefficient from the GLM)
             - `PValue` stores the p-value for the QLF test before multiple testing correction
@@ -351,7 +358,7 @@ class Milo:
 
         # Save outputs
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
-        if any([col in sample_adata.var.columns for col in res.columns]):
+        if any(col in sample_adata.var.columns for col in res.columns):
             sample_adata.var = sample_adata.var.drop(res.columns, axis=1)
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
 
@@ -367,11 +374,13 @@ class Milo:
         """Assigns a categorical label to neighbourhoods, based on the most frequent label among cells in each neighbourhood. This can be useful to stratify DA testing results by cell types or samples.
 
         Args:
+        ----
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
             feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
+        -------
             None. Adds in place:
             - `milo_mdata['milo'].var["nhood_annotation"]`: assigning a label to each nhood
             - `milo_mdata['milo'].var["nhood_annotation_frac"]` stores the fraciton of cells in the neighbourhood with the assigned label
@@ -410,11 +419,13 @@ class Milo:
         """Assigns a continuous value to neighbourhoods, based on mean cell level covariate stored in adata.obs. This can be useful to correlate DA log-foldChanges with continuous covariates such as pseudotime, gene expression scores etc...
 
         Args:
+        ----
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
             feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
+        -------
             None. Adds in place:
             - `milo_mdata['milo'].var["nhood_{anno_col}"]`: assigning a continuous value to each nhood
         """
@@ -440,11 +451,13 @@ class Milo:
         """Add covariate from cell-level obs to sample-level obs. These should be covariates for which a single value can be assigned to each sample.
 
         Args:
+        ----
             mdata: MuData object
             new_covariates: columns in `milo_mdata[feature_key].obs` to add to `milo_mdata['milo'].obs`.
             feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
+        -------
             None, adds columns to `milo_mdata['milo']` in place
         """
         try:
@@ -478,14 +491,16 @@ class Milo:
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
 
     def build_nhood_graph(self, mdata: MuData, basis: str = "X_umap", feature_key: str | None = "rna"):
-        """Build graph of neighbourhoods used for visualization of DA results
+        """Build graph of neighbourhoods used for visualization of DA results.
 
         Args:
+        ----
             mdata: MuData object
             basis: Name of the obsm basis to use for layout of neighbourhoods (key in `adata.obsm`). Defaults to "X_umap".
             feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
+        -------
             - `milo_mdata['milo'].varp['nhood_connectivities']`: graph of overlap between neighbourhoods (i.e. no of shared cells)
             - `milo_mdata['milo'].var["Nhood_size"]`: number of cells in neighbourhoods
         """
@@ -507,11 +522,13 @@ class Milo:
         """Calculates the mean expression in neighbourhoods of each feature.
 
         Args:
+        ----
             mdata: MuData object
             layer: If provided, use `milo_mdata[feature_key][layer]` as expression matrix instead of `milo_mdata[feature_key].X`. Defaults to None.
             feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
+        -------
             Updates adata in place to store the matrix of average expression in each neighbourhood in `milo_mdata['milo'].varm['expr']`
         """
         try:
@@ -540,7 +557,7 @@ class Milo:
     def _setup_rpy2(
         self,
     ):
-        """Set up rpy2 to run edgeR"""
+        """Set up rpy2 to run edgeR."""
         numpy2ri.activate()
         pandas2ri.activate()
         edgeR = self._try_import_bioc_library("edgeR")
@@ -557,6 +574,7 @@ class Milo:
         """Import R packages.
 
         Args:
+        ----
             name (str): R packages name
         """
         try:
@@ -574,6 +592,7 @@ class Milo:
         """FDR correction weighted on inverse of connectivity of neighbourhoods. The distance to the k-th nearest neighbor is used as a measure of connectivity.
 
         Args:
+        ----
             sample_adata: Sample-level AnnData.
             neighbors_key: The key in `adata.obsp` to use as KNN graph. Defaults to None.
         """

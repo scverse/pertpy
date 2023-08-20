@@ -32,6 +32,7 @@ class JaxscgenPlot:
         """Plots mean matching figure for a set of specific genes.
 
         Args:
+        ----
             adata:  AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
                     AnnData object used to initialize the model. Must have been setup with `batch_key` and `labels_key`,
                     corresponding to batch and cell type metadata, respectively.
@@ -94,7 +95,7 @@ class JaxscgenPlot:
                 texts,
                 x=x,
                 y=y,
-                arrowprops=dict(arrowstyle="->", color="grey", lw=0.5),
+                arrowprops={"arrowstyle": "->", "color": "grey", "lw": 0.5},
                 force_points=(0.0, 0.0),
             )
         if legend:
@@ -148,6 +149,7 @@ class JaxscgenPlot:
         """Plots variance matching figure for a set of specific genes.
 
         Args:
+        ----
             adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
                    AnnData object used to initialize the model. Must have been setup with `batch_key` and `labels_key`,
                    corresponding to batch and cell type metadata, respectively.
@@ -266,6 +268,7 @@ class JaxscgenPlot:
         cell and plots the dot product results between delta and latent representation.
 
         Args:
+        ----
             scgen: ScGen object that was trained.
             adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
                    AnnData object used to initialize the model. Must have been setup with `batch_key` and `labels_key`,

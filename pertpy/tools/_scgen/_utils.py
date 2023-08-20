@@ -14,6 +14,7 @@ def extractor(
     """Returns a list of `data` files while filtering for a specific `cell_type`.
 
     Args:
+    ----
         data: `~anndata.AnnData` Annotated data matrix
         cell_type: Specific cell type to be extracted from `data`.
         condition_key: Key for `.obs` of `data` where conditions can be found.
@@ -22,16 +23,21 @@ def extractor(
         stim_key: Key for `stimulated` part of the `data` found in `condition_key`.
 
     Returns:
+    -------
         List of `data` files while filtering for a specific `cell_type`.
 
     Example:
+    -------
         .. code-block:: python
 
             import SCGEN
             import anndata
+
             train_data = anndata.read("./data/train.h5ad")
             test_data = anndata.read("./data/test.h5ad")
-            train_data_extracted_list = extractor(train_data, "CD4T", "conditions", "cell_type", "control", "stimulated")
+            train_data_extracted_list = extractor(
+                train_data, "CD4T", "conditions", "cell_type", "control", "stimulated"
+            )
     """
     cell_with_both_condition = data[data.obs[cell_type_key] == cell_type]
     condition_1 = data[(data.obs[cell_type_key] == cell_type) & (data.obs[condition_key] == ctrl_key)]
@@ -48,17 +54,21 @@ def balancer(
     """Makes cell type populations equal.
 
     Args:
+    ----
         adata: `~anndata.AnnData` Annotated data matrix.
         cell_type_key: key for `.obs` of `data` where cell types can be found.
 
     Returns:
+    -------
         Equal cell type population Annotated data matrix.
 
     Example:
+    -------
         .. code-block:: python
 
             import SCGEN
             import anndata
+
             train_data = anndata.read("./train_kang.h5ad")
             train_ctrl = train_data[train_data.obs["condition"] == "control", :]
             train_ctrl = balancer(train_ctrl, "conditions", "cell_type")

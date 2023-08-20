@@ -18,6 +18,7 @@ def kernel_pca(
     See also :class:`~sklearn.decomposition.KernelPCA`.
 
     Args:
+    ----
         adata: The annotated data object.
         n_comps: Number of components. If None, all non-zero components are kept.
         kernel: Kernel used for PCA.
@@ -26,6 +27,7 @@ def kernel_pca(
         **kwargs: Additional arguments for the `KernelPCA` transformer.
 
     Returns:
+    -------
         If `copy=True`, returns the copy of `adata` with kernel pca in `.obsm["X_kpca"]`.
         Otherwise writes kernel pca directly to `.obsm["X_kpca"]` of the provided `adata`.
         If `return_transformer=True`, returns also the fitted `KernelPCA` transformer.

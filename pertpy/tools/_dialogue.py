@@ -21,12 +21,13 @@ from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 
 
 class Dialogue:
-    """Python implementation of DIALOGUE"""
+    """Python implementation of DIALOGUE."""
 
     def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int):
         """Constructor for Dialogue.
 
         Args:
+        ----
             sample_id: The sample ID key in AnnData.obs which is used for pseudobulk determination.
             celltype_key: The key in AnnData.obs which contains the cell type column.
             n_counts_key: The key of the number of counts in Anndata.obs . Also commonly the size factor.
@@ -47,10 +48,12 @@ class Dialogue:
         # TODO: Replace with decoupler's implementation
 
         Args:
+        ----
             groupby: The key to groupby for pseudobulks
             strategy: The pseudobulking strategy. One of "median" or "mean"
 
         Returns:
+        -------
             A Pandas DataFrame of pseudobulk counts
         """
         pseudobulk = {"Genes": adata.var_names.values}
@@ -73,10 +76,12 @@ class Dialogue:
         TODO: DIALOGUE recommends running PCA on each cell type separately before running PMD - this should be implemented as an option here.
 
         Args:
+        ----
             groupby: The key to groupby for pseudobulks
             n_components: The number of PCA components
 
         Returns:
+        -------
             A pseudobulk of PCA components.
         """
         aggr = {}
@@ -95,10 +100,12 @@ class Dialogue:
         TODO: the `scale` function we implemented to match the R `scale` fn should already contain this functionality.
 
         Args:
+        ----
             pseudobulks: The pseudobulk PCA components.
             normalize: Whether to mimic DIALOGUE behavior or not.
 
         Returns:
+        -------
             The scaled count matrix.
         """
         # DIALOGUE doesn't scale the data before passing to multicca, unlike what is recommended by sparsecca.
@@ -115,11 +122,13 @@ class Dialogue:
         """Concatenates the AnnData object with the mcp scores.
 
         Args:
+        ----
             adata: The AnnData object to append mcp scores to.
             mcp_scores: The MCP scores dictionary.
             celltype_key: Key of the cell type column in obs.
 
         Returns:
+        -------
             AnnData object with concatenated MCP scores in obs.
         """
 
@@ -142,11 +151,13 @@ class Dialogue:
         """Returns a list from `elements` that occur more than `min_count` times.
 
         Args:
+        ----
             series: To extract the top most frequent elements included in the final output
                       (i.e. the index in the computed frequency table) from
             min_count: Threshold specifying the minimum element count for an element in the frequency table (inclusive)
 
         Returns:
+        -------
             A list of elements that occur more than `min_count` times.
         """
         frequency = series.value_counts()
@@ -158,10 +169,12 @@ class Dialogue:
         """Given estimate and p_values calculate zscore.
 
         Args:
+        ----
             estimate: Hierarchical modeling estimate results.
             p_val: p-values of the Hierarchical modeling.
 
         Returns:
+        -------
             A DataFrame containing the zscores indexed by the estimates.
         """
         p_val.replace(0, min(p for p in p_val if p is not None and p > 0))
@@ -199,11 +212,12 @@ class Dialogue:
         sample_obs: str,
         return_all: bool = False,
     ):
-        """Applies a mixed linear model using the specified formula (MCP scores used for the dependent var) and returns the coefficient and p-value
+        """Applies a mixed linear model using the specified formula (MCP scores used for the dependent var) and returns the coefficient and p-value.
 
         TODO: reduce runtime? Maybe we can use an approximation or something that isn't statsmodels.
 
         Args:
+        ----
             y: Dataframe containing the MCP score for an individual gene
             x_labels: Dataframe with other .obs values needed for fitting the formula, specifically `n_counts_key`.
             x_tme: Transcript mean expression of `x`, with a respectively labeled column.
@@ -212,6 +226,7 @@ class Dialogue:
             return_all: Whether to return model summary (estimate and p-value) or alternatively a list of the coefficient/p-value for x only
 
         Returns:
+        -------
             The determined coefficients and p-values.
         """
         formula_data = pd.concat(
@@ -237,6 +252,7 @@ class Dialogue:
         """Determines z-scores, estimates and p-values with adjusted p-values and booleans marking if a gene is up or downregulated.
 
         Args:
+        ----
             scores: A single MCP's scores with genes names in the index.
             x_labels: Dataframe that must contain a column named 'x' containing average expression values by sample
             tme: Transcript mean expression of `x`.
@@ -245,6 +261,7 @@ class Dialogue:
             confounder: Any model confounders.
 
         Returns:
+        -------
             DataFrame with z-scores, estimates, p-values, adjusted p-values and booleans
             marking whether a gene is up (True) or downregulated (False).
         """
@@ -275,6 +292,7 @@ class Dialogue:
         TODO: This function will eventually get merged with a second version from Faye. Talk to Yuge about it.
 
         Args:
+        ----
             df: Dataframe with rowsindex being the gene names and column with name <index> containing floats.
             mcp_name: Name of mcp which was used for calculation of column value.
             max_length: Value needed to later decide at what index the threshold value should be extracted from column.
@@ -282,6 +300,7 @@ class Dialogue:
             index: Column index to use eto calculate the significant genes. Defaults to `z_score`.
 
         Returns:
+        -------
             According to the values in a df column (default: zscore) the significant up and downregulated gene names
         """
         min_threshold = -abs(min_threshold)
@@ -301,7 +320,7 @@ class Dialogue:
 
         return top_genes
 
-    def _apply_HLM_per_MCP_for_one_pair(  # noqa: N802
+    def _apply_HLM_per_MCP_for_one_pair(
         self,
         mcp_name: str,
         scores_df: dict,
@@ -317,6 +336,7 @@ class Dialogue:
         TODO: separate the sig calculation so that this whole function is more tractable
 
         Args:
+        ----
             mcp_name: The name of the MCP to model.
             scores: The MCP scores for a cell type. Number of MCPs x number of features.
             ct_data: The AnnData object containing the metadata and labels in obs.
@@ -327,6 +347,7 @@ class Dialogue:
             confounder: Any modeling confounders.
 
         Returns:
+        -------
             The HLM results together with significant up/downregulated genes per MCP
         """
         HLM_result = self._mixed_effects(
@@ -366,12 +387,14 @@ class Dialogue:
             `argmin|Ax - y|`
 
         Args:
+        ----
             A_orig:
             y_orig:
             feature_ranks:
             n_iter: Passed to scipy.optimize.nnls. Defaults to 1000.
 
         Returns:
+        -------
             Returns the aggregated coefficients from nnls.
         """
         # TODO: Consider moving this internally to cca_sig
@@ -411,17 +434,17 @@ class Dialogue:
         return np.dot(A_mA, B_mB.T) / np.sqrt(np.dot(ssA[:, None], ssB[None]))
 
     def _get_top_elements(self, m: pd.DataFrame, max_length: int, min_threshold: float):
-        """
-
-        TODO: needs check for correctness and variable renaming
-        TODO: Confirm that this doesn't return duplicate gene names
+        """TODO: needs check for correctness and variable renaming
+        TODO: Confirm that this doesn't return duplicate gene names.
 
         Args:
+        ----
             m: Any DataFrame of Gene name as index with variable columns.
             max_length: Maximum number of correlated elements.
             min_threshold: p-value threshold  # TODO confirm
 
         Returns:
+        -------
             Indices of the top elements
         """
         m_pos = -m
@@ -449,7 +472,6 @@ class Dialogue:
         # TODO this whole function should be standalone
         # It will contain the calculation of up/down + calculation (new final mcp scores)
         # Ensure that it'll still fit/work with the hierarchical multilevel_modeling
-
         """Determine the up and down genes per MCP."""
         # TODO: something is slightly slow here
         cca_sig_results: dict[Any, dict[str, Any]] = {}
@@ -473,9 +495,7 @@ class Dialogue:
             from scipy.stats import spearmanr
 
             def _pcor_mat(v1, v2, v3, method="spearman"):
-                """
-                MAJOR TODO: I've only used normal correlation instead of partial correlation as we wait on the implementation
-                """
+                """MAJOR TODO: I've only used normal correlation instead of partial correlation as we wait on the implementation."""
                 correlations = []  # R
                 pvals = []  # P
                 for x2 in v2:
@@ -556,12 +576,14 @@ class Dialogue:
         Mimics DIALOGUE's `make.cell.types` and the pre-processing that occurs in DIALOGUE1.
 
         Args:
+        ----
             adata: AnnData object generate celltype objects for
             ct_order: The order of cell types
             agg_pca: Whether to aggregate pseudobulks with PCA or not. Defaults to True.
             normalize: Whether to mimic DIALOGUE behavior or not. Defaults to True.
 
         Returns:
+        -------
             A celltype_label:array dictionary.
         """
         ct_subs = {ct: adata[adata.obs[self.celltype_key] == ct].copy() for ct in ct_order}
@@ -578,7 +600,7 @@ class Dialogue:
 
         return mcca_in, ct_subs
 
-    def calculate_multifactor_PMD(  # noqa: N802
+    def calculate_multifactor_PMD(
         self,
         adata: AnnData,
         penalties: list[int] = None,
@@ -592,6 +614,7 @@ class Dialogue:
         Currently mimics DIALOGUE1.
 
         Args:
+        ----
             adata: AnnData object to calculate PMD for.
             sample_id: Key to use for pseudobulk determination.
             penalties: PMD penalties.
@@ -603,6 +626,7 @@ class Dialogue:
             normalize: Whether to mimic DIALOGUE as close as possible
 
         Returns:
+        -------
             MCP scores  # TODO this requires more detail
         """
         # IMPORTANT NOTE: the order in which matrices are passed to multicca matters. As such,
@@ -660,12 +684,14 @@ class Dialogue:
         """Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.
 
         Args:
+        ----
             ct_subs: The DIALOGUE cell type objects.
             mcp_scores: The determined MCP scores from the PMD step.
             confounder: Any modeling confounders.
             formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.
 
         Returns:
+        -------
             A Pandas DataFrame containing:
             - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
@@ -681,7 +707,7 @@ class Dialogue:
 
         # Hierarchical modeling expects DataFrames
         mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(self.n_mcps)}
-        mcp_scores_df = {  # noqa: F841
+        mcp_scores_df = {
             ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=mcp_cell_types.keys())
             for ct, v in mcp_scores.items()
         }
@@ -731,10 +757,8 @@ class Dialogue:
                     ct_subs, mcp_scores=mcp_scores, ws_dict=ws_dict, n_counts_key=self.n_counts_key
                 )
 
-                sig_1 = cca_sig[  # noqa: F841
-                    cell_type_1
-                ]  # TODO: only need the up and down genes from this here per MCP
-                sig_2 = cca_sig[cell_type_2]  # noqa: F841
+                sig_1 = cca_sig[cell_type_1]  # TODO: only need the up and down genes from this here per MCP
+                sig_2 = cca_sig[cell_type_2]
                 # only use samples which have a minimum number of cells (default 2) in both cell types
                 sample_ids = list(
                     set(self._get_abundant_elements_from_series(ct_data_1.obs[self.sample_id]))

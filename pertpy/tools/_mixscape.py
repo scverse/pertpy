@@ -43,6 +43,7 @@ class Mixscape:
         neighbors from the mRNA expression profile of each cell.
 
         Args:
+        ----
             adata: The annotated data object.
             pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
             control: Control category from the `pert_key` column.
@@ -61,6 +62,7 @@ class Mixscape:
             **kwargs: Additional arguments for the `NNDescent` class from `pynndescent`.
 
         Returns:
+        -------
             If `copy=True`, returns the copy of `adata` with the perturbation signature in `.layers["X_pert"]`.
             Otherwise writes the perturbation signature directly to `.layers["X_pert"]` of the provided `adata`.
         """
@@ -149,6 +151,7 @@ class Mixscape:
         The implementation resembles https://satijalab.org/seurat/reference/runmixscape
 
         Args:
+        ----
             adata: The annotated data object.
             pert_key: The column of `.obs` with perturbation categories, should also contain `control`.
             labels: The column of `.obs` with target gene labels.
@@ -165,6 +168,7 @@ class Mixscape:
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
+        -------
             If `copy=True`, returns the copy of `adata` with the classification result in `.obs`.
             Otherwise writes the results directly to `.obs` of the provided `adata`.
 
@@ -314,6 +318,7 @@ class Mixscape:
         """Linear Discriminant Analysis on pooled CRISPR screen data. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
+        ----
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
             control: Control category from the `pert_key` column.
@@ -329,6 +334,7 @@ class Mixscape:
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
+        -------
             If `copy=True`, returns the copy of `adata` with the LDA result in `.uns`.
             Otherwise writes the results directly to `.uns` of the provided `adata`.
 
@@ -407,13 +413,15 @@ class Mixscape:
         min_de_genes: float,
         logfc_threshold: float,
     ) -> dict[tuple, np.ndarray]:
-        """determine gene sets across all splits/groups through differential gene expression
+        """Determine gene sets across all splits/groups through differential gene expression.
 
         Args:
+        ----
             adata: :class:`~anndata.AnnData` object
             col_names: Column names to extract the indices for
 
         Returns:
+        -------
             Set of column indices.
         """
         perturbation_markers: dict[tuple, np.ndarray] = {}  # type: ignore
@@ -439,34 +447,36 @@ class Mixscape:
         return perturbation_markers
 
     def _get_column_indices(self, adata, col_names):
-        """Fetches the column indices in X for a given list of column names
+        """Fetches the column indices in X for a given list of column names.
 
         Args:
+        ----
             adata: :class:`~anndata.AnnData` object
             col_names: Column names to extract the indices for
 
         Returns:
+        -------
             Set of column indices
         """
         if isinstance(col_names, str):  # pragma: no cover
             col_names = [col_names]
 
-        indices = list()
+        indices = []
         for idx, col in enumerate(adata.var_names):
             if col in col_names:
                 indices.append(idx)
 
         return indices
 
-    def _define_normal_mixscape(
-        self, X: np.ndarray | sparse.spmatrix | pd.DataFrame | None
-    ) -> list[float]:  # noqa: N803
+    def _define_normal_mixscape(self, X: np.ndarray | sparse.spmatrix | pd.DataFrame | None) -> list[float]:
         """Calculates the mean and standard deviation of a matrix.
 
         Args:
+        ----
             X: The matrix to calculate the properties for.
 
         Returns:
+        -------
             Mean and standard deviation of the matrix.
         """
         mu = X.mean()

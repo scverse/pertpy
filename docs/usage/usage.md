@@ -99,14 +99,14 @@ import pertpy as pt
 import scanpy as sc
 
 mdata = pt.dt.papalexi_2021()
-gdo = mdata.mod['gdo']
-gdo.layers['counts'] = gdo.X.copy()
+gdo = mdata.mod["gdo"]
+gdo.layers["counts"] = gdo.X.copy()
 sc.pp.log1p(gdo)
 
 ga = pt.pp.GuideAssignment()
 ga.assign_by_threshold(gdo, 5, layer="counts", output_layer="assigned_guides")
 
-pt.pl.guide.heatmap(gdo, layer='assigned_guides')
+pt.pl.guide.heatmap(gdo, layer="assigned_guides")
 ```
 
 ## Tools
@@ -140,10 +140,10 @@ import pertpy as pt
 
 mdata = pt.dt.papalexi_2021()
 ms = pt.tl.Mixscape()
-ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-ms.mixscape(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
-ms.lda(adata=mdata['rna'], labels='gene_target', layer='X_pert')
-pt.pl.ms.lda(adata=mdata['rna'])
+ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
+ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+ms.lda(adata=mdata["rna"], labels="gene_target", layer="X_pert")
+pt.pl.ms.lda(adata=mdata["rna"])
 ```
 
 See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
@@ -175,17 +175,19 @@ import pertpy as pt
 import scanpy as sc
 
 adata = pt.dt.stephenson_2021_subsampled()
-adata.obs['COVID_severity'] = adata.obs['Status_on_day_collection_summary'].copy()
-adata.obs[['patient_id', 'COVID_severity']].drop_duplicates()
-adata = adata[adata.obs['Status'] != 'LPS'].copy()
+adata.obs["COVID_severity"] = adata.obs["Status_on_day_collection_summary"].copy()
+adata.obs[["patient_id", "COVID_severity"]].drop_duplicates()
+adata = adata[adata.obs["Status"] != "LPS"].copy()
 
 milo = pt.tl.Milo()
 mdata = milo.load(adata)
-sc.pp.neighbors(mdata['rna'], use_rep='X_scVI', n_neighbors=150, n_pcs=10)
-milo.make_nhoods(mdata['rna'], prop=0.1)
+sc.pp.neighbors(mdata["rna"], use_rep="X_scVI", n_neighbors=150, n_pcs=10)
+milo.make_nhoods(mdata["rna"], prop=0.1)
 mdata = milo.count_nhoods(mdata, sample_col="patient_id")
-mdata['rna'].obs['Status'] = mdata['rna'].obs['Status'].cat.reorder_categories(['Healthy', 'Covid'])
-milo.da_nhoods(mdata, design='~Status')
+mdata["rna"].obs["Status"] = (
+    mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
+)
+milo.da_nhoods(mdata, design="~Status")
 ```
 
 #### scCODA and tascCODA
@@ -212,18 +214,29 @@ import pertpy as pt
 
 haber_cells = pt.dt.haber_2017_regions()
 sccoda_model = pt.tl.Sccoda()
-sccoda_data = sccoda_model.load(haber_cells,
-                                type="cell_level",
-                                generate_sample_level=True,
-                                cell_type_identifier="cell_label",
-                                sample_identifier="batch",
-                                covariate_obs=["condition"])
-sccoda_data.mod["coda_salm"] = sccoda_data["coda"][sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])].copy()
+sccoda_data = sccoda_model.load(
+    haber_cells,
+    type="cell_level",
+    generate_sample_level=True,
+    cell_type_identifier="cell_label",
+    sample_identifier="batch",
+    covariate_obs=["condition"],
+)
+sccoda_data.mod["coda_salm"] = sccoda_data["coda"][
+    sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])
+].copy()
 
-sccoda_data = sccoda_model.prepare(sccoda_data, modality_key="coda_salm", formula="condition", reference_cell_type="Goblet")
+sccoda_data = sccoda_model.prepare(
+    sccoda_data,
+    modality_key="coda_salm",
+    formula="condition",
+    reference_cell_type="Goblet",
+)
 sccoda_model.run_nuts(sccoda_data, modality_key="coda_salm")
 sccoda_model.summary(sccoda_data, modality_key="coda_salm")
-pt.pl.coda.effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Final Parameter")
+pt.pl.coda.effects_barplot(
+    sccoda_data, modality_key="coda_salm", parameter="Final Parameter"
+)
 ```
 
 ### Multi-cellular or gene programs
@@ -256,20 +269,19 @@ sc.pp.neighbors(adata)
 sc.tl.umap(adata)
 
 
-
-dl = pt.tl.Dialogue(sample_id = "clinical.status",
-                   celltype_key = "cell.subtypes",
-                   n_counts_key = "nCount_RNA",
-                   n_mpcs = 3)
-adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(
-    adata,
-    normalize=True
+dl = pt.tl.Dialogue(
+    sample_id="clinical.status",
+    celltype_key="cell.subtypes",
+    n_counts_key="nCount_RNA",
+    n_mpcs=3,
 )
-all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs,
-                                     mcp_scores=mcps,
-                                     ws_dict=ws,
-                                     confounder="gender",
-                                   )
+adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
+all_results, new_mcps = dl.multilevel_modeling(
+    ct_subs=ct_subs,
+    mcp_scores=mcps,
+    ws_dict=ws,
+    confounder="gender",
+)
 ```
 
 ### Distances and Permutation Tests
@@ -298,12 +310,14 @@ import pertpy as pt
 adata = pt.dt.distance_example()
 
 # Pairwise distances
-distance = pt.tl.Distance(metric='edistance', obsm_key='X_pca')
-pairwise_edistance = distance.pairwise(adata, groupby='perturbation')
+distance = pt.tl.Distance(metric="edistance", obsm_key="X_pca")
+pairwise_edistance = distance.pairwise(adata, groupby="perturbation")
 
 # E-test (Permutation test using E-distance)
-etest = pt.tl.PermutationTest(metric='edistance', obsm_key='X_pca', correction='holm-sidak')
-tab = etest(adata, groupby='perturbation', contrast='control')
+etest = pt.tl.PermutationTest(
+    metric="edistance", obsm_key="X_pca", correction="holm-sidak"
+)
+tab = etest(adata, groupby="perturbation", contrast="control")
 ```
 
 ### MetaData
@@ -357,7 +371,7 @@ adata = ag.load(adata)
 adata, results = ag.predict(adata)
 
 # metrics for each cell type
-results['summary_metrics']
+results["summary_metrics"]
 ```
 
 See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augur.html) for a more elaborate tutorial.
@@ -397,23 +411,19 @@ import pertpy as pt
 
 train = pt.dt.kang_2018()
 
-train_new = train[~((train.obs["cell_type"] == "CD4T") &
-                    (train.obs["condition"] == "stimulated"))]
+train_new = train[
+    ~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))
+]
 train_new = train_new.copy()
 
 pt.tl.SCGEN.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
 model = pt.tl.SCGEN(train_new)
-model.train(
-    max_epochs=100,
-    batch_size=32
-)
+model.train(max_epochs=100, batch_size=32)
 
 pred, delta = model.predict(
-    ctrl_key='control',
-    stim_key='stimulated',
-    celltype_to_predict='CD4T'
+    ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T"
 )
-pred.obs['condition'] = 'pred'
+pred.obs["condition"] = "pred"
 ```
 
 See [scgen tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html) for a more elaborate tutorial.

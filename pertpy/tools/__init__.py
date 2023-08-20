@@ -11,7 +11,7 @@ from pertpy.tools._mixscape import Mixscape
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._discriminator_classifier import DiscriminatorClassifierSpace
 from pertpy.tools._perturbation_space._simple import CentroidSpace, DBSCANSpace, KMeansSpace, PseudobulkSpace
-from pertpy.tools._scgen import SCGEN
+from pertpy.tools._scgen._jax_scgen import SCGEN
 
 try:
     from pertpy.tools._coda._sccoda import Sccoda

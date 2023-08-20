@@ -22,6 +22,7 @@ class GuideAssignment:
         This function expects unnormalized data as input.
 
         Args:
+        ----
             adata: Annotated data matrix containing gRNA values
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
@@ -57,6 +58,7 @@ class GuideAssignment:
         This function expects unnormalized data as input.
 
         Args:
+        ----
             adata: Annotated data matrix containing gRNA values
                    assignment_threshold: If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
             assignment_threshold: The count threshold that is required for an assignment to be viable.

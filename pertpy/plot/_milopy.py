@@ -25,9 +25,10 @@ class MilopyPlot:
         save: bool | str | None = None,
         **kwargs,
     ) -> None:
-        """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding)
+        """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding).
 
         Args:
+        ----
             mdata: MuData object
             alpha: Significance threshold. (default: 0.1)
             min_logFC: Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods. (default: 0)
@@ -91,6 +92,7 @@ class MilopyPlot:
         """Visualize cells in a neighbourhood.
 
         Args:
+        ----
             mdata: MuData object with feature_key slot, storing neighbourhood assignments in `mdata[feature_key].obsm['nhoods']`
             ix: index of neighbourhood to visualize
             basis: Embedding to use for visualization. Defaults to "X_umap".
@@ -98,7 +100,6 @@ class MilopyPlot:
             save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
         """
-
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
         sc.pl.embedding(
             mdata[feature_key], basis, color="Nhood", size=30, title="Nhood" + str(ix), show=show, save=save, **kwargs
@@ -113,9 +114,10 @@ class MilopyPlot:
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
     ):
-        """Plot beeswarm plot of logFC against nhood labels
+        """Plot beeswarm plot of logFC against nhood labels.
 
         Args:
+        ----
             mdata: MuData object
             anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
             alpha: Significance threshold. (default: 0.1)
@@ -173,7 +175,7 @@ class MilopyPlot:
                 linewidth=0,
                 scale="width",
             )
-        except BaseException:
+        except BaseException:  # noqa: BLE001
             sns.violinplot(
                 data=anno_df,
                 y=anno_col,
@@ -206,9 +208,10 @@ class MilopyPlot:
         subset_nhoods: list = None,
         log_counts: bool = False,
     ):
-        """Plot boxplot of cell numbers vs condition of interest
+        """Plot boxplot of cell numbers vs condition of interest.
 
         Args:
+        ----
             mdata: MuData object storing cell level and nhood level information
             test_var: Name of column in adata.obs storing condition of interest (y-axis for boxplot)
             subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods. (default: None)

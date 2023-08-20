@@ -61,6 +61,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         """Predicts the cell type provided by the user in stimulated condition.
 
         Args:
+        ----
             ctrl_key: Key for `control` part of the `data` found in `condition_key`.
             stim_key: Key for `stimulated` part of the `data` found in `condition_key`.
             adata_to_predict: Adata for unperturbed cells you want to be predicted.
@@ -68,6 +69,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             restrict_arithmetic_to: Dictionary of celltypes you want to be observed for prediction.
 
         Returns:
+        -------
             `np nd-array` of predicted cells in primary space.
         delta: float
             Difference between stimulated and control cells in latent space
@@ -157,11 +159,13 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         """Removes batch effects.
 
         Args:
+        ----
             adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
                    AnnData object used to initialize the model. Must have been setup with `batch_key` and `labels_key`,
                    corresponding to batch and cell type metadata, respectively.
 
         Returns:
+        -------
             corrected: `~anndata.AnnData`
             AnnData of corrected gene expression in adata.X and corrected latent space in adata.obsm["latent"].
             A reference to the original AnnData is in `corrected.raw` if the input adata had no `raw` attribute.
@@ -290,12 +294,14 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         """Return the latent representation for each cell.
 
         Args:
+        ----
             adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
                    AnnData object used to initialize the model.
             indices: Indices of cells in adata to use. If `None`, all cells are used.
             batch_size: Minibatch size for data loading into model. Defaults to `scvi.settings.batch_size`.
 
         Returns:
+        -------
             Low-dimensional representation for each cell
         """
         self._check_if_trained(warn=False)

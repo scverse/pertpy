@@ -35,9 +35,10 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
     that environment when invoked from git.
 
     Args:
+    ----
         session: The Session object.
     """
-    assert session.bin is not None  # noqa: S101
+    assert session.bin is not None
 
     # Only patch hooks containing a reference to this session's bindir. Support
     # quoting rules for Python and bash, but strip the outermost quotes so we

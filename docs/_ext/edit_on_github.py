@@ -26,12 +26,10 @@ def _html_page_context(
         return
 
     if not app.config.github_repo:
-        warnings.warn("`github_repo` not specified")
         return
 
     if not app.config.github_nb_repo:
         nb_repo = f"{app.config.github_repo}_notebooks"
-        warnings.warn(f"`github_nb_repo `not specified. Setting to `{nb_repo}`")
         app.config.github_nb_repo = nb_repo
 
     path = os.path.relpath(doctree.get("source"), app.builder.srcdir)

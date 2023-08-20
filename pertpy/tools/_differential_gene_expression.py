@@ -32,6 +32,7 @@ class DifferentialGeneExpression:
         for more details
 
         Args:
+        ----
             adata: Input AnnData object.
             sample_col: Column of obs where to extract the samples names.
             groups_col: Column of obs where to extract the groups names.
@@ -44,6 +45,7 @@ class DifferentialGeneExpression:
             dtype: Type of float used.
 
         Returns:
+        -------
             Returns new AnnData object with unormalized pseudobulk profiles per sample and group.
         """
         pseudobulk_adata = dc.get_pseudobulk(
@@ -74,6 +76,7 @@ class DifferentialGeneExpression:
         """Perform differential expression analysis.
 
         Args:
+        ----
             adata: single-cell or pseudobulk AnnData object
             groupby: Column in adata.obs that contains the factor to test, e.g. `treatment`.
                      For simple statistical tests (t-test, wilcoxon), it is sufficient to specify groupby.
@@ -86,7 +89,9 @@ class DifferentialGeneExpression:
             inplace: if True, save the result in `adata.varm[key_added]`
             key_added: Key under which the result is saved in `adata.varm` if inplace is True.
                        If set to None this defaults to `de_{method}_{groupby}`.
+
         Returns:
+        -------
             Depending on the method a Pandas DataFrame containing at least:
             * gene_id
             * log2 fold change

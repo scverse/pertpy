@@ -34,6 +34,7 @@ class PerturbationSpace:
         """Subtract mean of the control from the perturbation.
 
         Args:
+        ----
             adata: Anndata object of size cells x genes.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
             reference_key: The key of the control values. Defaults to 'control'.
@@ -115,9 +116,10 @@ class PerturbationSpace:
         reference_key: str = "control",
         ensure_consistency: bool = False,
     ):
-        """Add perturbations linearly. Assumes input of size n_perts x dimensionality
+        """Add perturbations linearly. Assumes input of size n_perts x dimensionality.
 
         Args:
+        ----
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to add.
             reference_key: perturbation source from which the perturbation summation starts.
@@ -206,9 +208,10 @@ class PerturbationSpace:
         reference_key: str = "control",
         ensure_consistency: bool = False,
     ):
-        """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
+        """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality.
 
         Args:
+        ----
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to subtract,
             reference_key: Perturbation source from which the perturbation subtraction starts

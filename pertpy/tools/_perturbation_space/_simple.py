@@ -22,12 +22,12 @@ class CentroidSpace(PerturbationSpace):
         """Computes the centroids of a pre-computed embedding such as UMAP.
 
         Args:
+        ----
             adata: Anndata object of size cells x genes
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
         """
-
         X = None
         if layer_key is not None and embedding_key is not None:
             raise ValueError("Please, select just either layer or embedding for computation.")
@@ -90,6 +90,7 @@ class PseudobulkSpace(PerturbationSpace):
         """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
 
         Args:
+        ----
             adata: Anndata object of size cells x genes
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
@@ -137,6 +138,7 @@ class KMeansSpace(ClusteringSpace):
         """Computes K-Means clustering of the expression values.
 
         Args:
+        ----
             adata: Anndata object of size cells x genes
             layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
             embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
@@ -179,7 +181,7 @@ class KMeansSpace(ClusteringSpace):
 
 
 class DBSCANSpace(ClusteringSpace):
-    """Cluster the given data using DBSCAN"""
+    """Cluster the given data using DBSCAN."""
 
     def compute(  # type: ignore
         self,
@@ -194,6 +196,7 @@ class DBSCANSpace(ClusteringSpace):
         """Computes a clustering using Density-based spatial clustering of applications (DBSCAN).
 
         Args:
+        ----
             adata: Anndata object of size cells x genes
             layer_key: If specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
             embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X

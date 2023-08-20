@@ -39,6 +39,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         Sets the device to a GPU if available.
 
         Args:
+        ----
             adata: AnnData object of size cells x genes
             target_col: .obs column that stores the perturbations. Defaults to "perturbations".
             layer_key: Layer to use. Defaults to None.
@@ -112,6 +113,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         """Trains and test the defined model in the load step.
 
         Args:
+        ----
             max_epochs: max epochs for training. Default to 40
             val_epochs_check: check in validation dataset each val_epochs_check epochs
             patience: patience before the early stopping flag is activated
@@ -135,7 +137,8 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
     def get_embeddings(self) -> AnnData:
         """Access to the embeddings of the last layer.
 
-        Returns:
+        Returns
+        -------
             AnnData whose `X` attribute is the perturbation embedding and whose .obs['perturbations'] are the names of the perturbations.
         """
         with torch.no_grad():
@@ -153,9 +156,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
 
 class MLP(torch.nn.Module):
-    """
-    A multilayer perceptron with ReLU activations, optional Dropout and optional BatchNorm.
-    """
+    """A multilayer perceptron with ReLU activations, optional Dropout and optional BatchNorm."""
 
     def __init__(
         self,
@@ -165,8 +166,8 @@ class MLP(torch.nn.Module):
         layer_norm: bool = False,
         last_layer_act: str = "linear",
     ) -> None:
-        """
-        Args:
+        """Args:
+        ----
             sizes: size of layers
             dropout: Dropout probability. Defaults to 0.0.
             batch_norm: batch norm. Defaults to True.
@@ -220,8 +221,7 @@ def init_weights(m):
 
 
 class PLDataset(Dataset):
-    """
-    Dataset for perturbation classification.
+    """Dataset for perturbation classification.
     Needed for training a model that classifies the perturbed cells and takes as perturbation embedding the second to last layer.
     """
 
@@ -232,14 +232,13 @@ class PLDataset(Dataset):
         label_col: str = "perturbations",
         layer_key: str = None,
     ):
-        """
-        Args:
+        """Args:
+        ----
             adata: AnnData object with observations and labels.
             target_col: key with the perturbation labels numerically encoded. Defaults to 'perturbations'.
             label_col: key with the perturbation labels. Defaults to 'perturbations'.
-            layer_key: key of the layer to be used as data, otherwise .X
+            layer_key: key of the layer to be used as data, otherwise .X.
         """
-
         if layer_key:
             self.data = adata.layers[layer_key]
         else:
@@ -252,8 +251,7 @@ class PLDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        """Returns a sample and corresponding perturbations applied (labels)"""
-
+        """Returns a sample and corresponding perturbations applied (labels)."""
         sample = self.data[idx].A if scipy.sparse.issparse(self.data) else self.data[idx]
         num_label = self.labels[idx]
         str_label = self.pert_labels[idx]
@@ -273,9 +271,8 @@ class PerturbationClassifier(pl.LightningModule):
         lr=1e-4,
         seed=42,
     ):
-        """
-        Inputs:
-            layers - list: layers of the MLP
+        """Inputs:
+        layers - list: layers of the MLP.
         """
         super().__init__()
         self.save_hyperparameters()
@@ -339,9 +336,8 @@ class PerturbationClassifier(pl.LightningModule):
         return loss
 
     def embedding(self, x):
-        """
-        Inputs:
-            x - Input features of shape [Batch, SeqLen, 1]
+        """Inputs:
+        x - Input features of shape [Batch, SeqLen, 1].
         """
         x = self.net.embedding(x)
         return x

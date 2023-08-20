@@ -1,5 +1,4 @@
-from abc import ABC, abstractmethod
-from typing import List, Literal
+from typing import List
 
 from anndata import AnnData
 from sklearn.metrics import pairwise_distances
@@ -24,6 +23,7 @@ class ClusteringSpace(PerturbationSpace):
         """Evaluation of previously computed clustering against ground truth labels.
 
         Args:
+        ----
             adata: AnnData object that contains the clustered data and the cluster labels.
             true_label_col: ground truth labels.
             cluster_col: cluster computed labels.

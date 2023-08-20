@@ -23,10 +23,12 @@ class FlaxEncoder(nn.Module):
         """Forward pass.
 
         Args:
+        ----
             x: The input data matrix.
             training: Whether
 
         Returns:
+        -------
             Mean and variance.
         """
         training = nn.merge_param("training", self.training, training)
@@ -64,13 +66,14 @@ class FlaxDecoder(nn.Module):
         """Forward pass.
 
         Args:
+        ----
             x: Input data.
             training:
 
         Returns:
+        -------
             Decoded data.
         """
-
         training = nn.merge_param("training", self.training, training)
 
         for _ in range(self.n_layers):

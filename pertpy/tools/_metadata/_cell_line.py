@@ -211,6 +211,7 @@ class CellLineMetaData:
         For each cell, we fetch cell line annotation from Dependency Map (DepMap).
 
         Args:
+        ----
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
             reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or
@@ -221,6 +222,7 @@ class CellLineMetaData:
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
+        -------
             Returns an AnnData object with cell line annotation.
         """
         if copy:
@@ -335,12 +337,14 @@ class CellLineMetaData:
         For each cell, we fetch bulk rna expression from either Broad or Sanger cell line.
 
         Args:
+        ----
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
             cell_line_source: The bulk rna expression data from either broad or sanger cell line. Defaults to "sanger".
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
+        -------
             Returns an AnnData object with bulk rna expression annotation.
         """
         if copy:
@@ -423,6 +427,7 @@ class CellLineMetaData:
         For each cell, we fetch protein intensity values acquired using data-independent acquisition mass spectrometry (DIA-MS).
 
         Args:
+        ----
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
             reference_id: The type of cell line identifier in the meta data, model_name or model_id. Defaults to "model_name".
@@ -431,6 +436,7 @@ class CellLineMetaData:
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
+        -------
             Returns an AnnData object with protein expression annotation.
         """
         if copy:
@@ -502,6 +508,7 @@ class CellLineMetaData:
         For each cell, we fetch drug response data as natural log of the fitted IC50 for its corresponding cell line and perturbation from GDSC fitted data results file.
 
         Args:
+        ----
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
             reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id. Defaults to "cell_line_name".
@@ -511,6 +518,7 @@ class CellLineMetaData:
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
+        -------
             Returns an AnnData object with drug response annotation.
         """
         if copy:
@@ -569,7 +577,8 @@ class CellLineMetaData:
         where users can search the reference_id in the metadata and
         compare with the query_id in their own data.
 
-        Returns:
+        Returns
+        -------
             Returns a LookUp object specific for cell line annotation.
         """
         return LookUp(

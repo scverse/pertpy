@@ -55,7 +55,7 @@ class JaxSCGENVAE(JaxBaseModuleClass):
     def _get_inference_input(self, tensors: dict[str, jnp.ndarray]):
         x = tensors[REGISTRY_KEYS.X_KEY]
 
-        input_dict = dict(x=x)
+        input_dict = {"x": x}
         return input_dict
 
     def inference(self, x: jnp.ndarray, n_samples: int = 1) -> dict:
@@ -67,7 +67,7 @@ class JaxSCGENVAE(JaxBaseModuleClass):
         sample_shape = () if n_samples == 1 else (n_samples,)
         z = qz.rsample(z_rng, sample_shape=sample_shape)
 
-        return dict(qz=qz, z=z)
+        return {"qz": qz, "z": z}
 
     def _get_generative_input(
         self,
@@ -78,17 +78,17 @@ class JaxSCGENVAE(JaxBaseModuleClass):
         z = inference_outputs["z"]
         # batch_index = tensors[REGISTRY_KEYS.BATCH_KEY]
 
-        input_dict = dict(
+        input_dict = {
             # x=x,
-            z=z,
+            "z": z,
             # batch_index=batch_index,
-        )
+        }
         return input_dict
 
     # def generative(self, x, z, batch_index) -> dict:
     def generative(self, z) -> dict:
         px = self.decoder(z)
-        return dict(px=px)
+        return {"px": px}
 
     def loss(self, tensors, inference_outputs, generative_outputs):
         x = tensors[REGISTRY_KEYS.X_KEY]
@@ -114,7 +114,7 @@ class JaxSCGENVAE(JaxBaseModuleClass):
         tensors,
         n_samples=1,
     ):
-        inference_kwargs = dict(n_samples=n_samples)
+        inference_kwargs = {"n_samples": n_samples}
         (
             inference_outputs,
             generative_outputs,

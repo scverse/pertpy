@@ -1,8 +1,7 @@
 import numpy as np
+import pertpy as pt
 from pandas import DataFrame
 from pytest import fixture, mark
-
-import pertpy as pt
 
 actual_distances = ["edistance", "pseudobulk", "wasserstein"]
 pseudo_distances = ["mean_pairwise", "mmd"]

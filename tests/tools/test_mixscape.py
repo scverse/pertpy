@@ -3,9 +3,8 @@ from pathlib import Path
 import anndata
 import numpy as np
 import pandas as pd
-from scipy import sparse
-
 import pertpy as pt
+from scipy import sparse
 
 CWD = Path(__file__).parent.resolve()
 
