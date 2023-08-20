@@ -26,8 +26,7 @@ jobs:
                   poetry --version
 
             - name: Build package
-              run: |
-                  poetry build --ansi
+              run: poetry build --ansi
 
             - name: Publish package on PyPI
               uses: pypa/gh-action-pypi-publish@v1.8.10
