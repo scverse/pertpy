@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
@@ -184,14 +184,14 @@ class PerturbationSpace:
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.layers[key_name] = data["layers"][key]
 
         if "embeddings" in data.keys():
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.obsm[key_name] = data["embeddings"][key]
 
         if ensure_consistency:
@@ -275,14 +275,14 @@ class PerturbationSpace:
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.layers[key_name] = data["layers"][key]
 
         if "embeddings" in data.keys():
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.obsm[key_name] = data["embeddings"][key]
 
         if ensure_consistency:

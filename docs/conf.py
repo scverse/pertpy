@@ -54,6 +54,8 @@ exclude_patterns = [
 nbsphinx_execute = "never"
 
 templates_path = ["_templates"]
+bibtex_bibfiles = ["references.bib"]
+nitpicky = True  # Warn about broken links
 # source_suffix = ".md"
 
 # Generate the API documentation when building
@@ -77,22 +79,22 @@ myst_enable_extensions = [
 # The master toctree document.
 master_doc = "index"
 
-intersphinx_mapping = dict(
-    anndata=("https://anndata.readthedocs.io/en/stable/", None),
-    ipython=("https://ipython.readthedocs.io/en/stable/", None),
-    matplotlib=("https://matplotlib.org/", None),
-    numpy=("https://numpy.org/doc/stable/", None),
-    pandas=("https://pandas.pydata.org/docs/", None),
-    python=("https://docs.python.org/3", None),
-    scipy=("https://docs.scipy.org/doc/scipy/reference/", None),
-    torch=("https://pytorch.org/docs/master/", None),
-    scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
-    pytorch_lightning=("https://pytorch-lightning.readthedocs.io/en/stable/", None),
-    pyro=("http://docs.pyro.ai/en/stable/", None),
-    pymde=("https://pymde.org/", None),
-    flax=("https://flax.readthedocs.io/en/latest/", None),
-    jax=("https://jax.readthedocs.io/en/latest/", None),
-)
+intersphinx_mapping = {
+    "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
+    "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
+    "matplotlib": ("https://matplotlib.org/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "python": ("https://docs.python.org/3", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "torch": ("https://pytorch.org/docs/master/", None),
+    "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
+    "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
+    "pyro": ("http://docs.pyro.ai/en/stable/", None),
+    "pymde": ("https://pymde.org/", None),
+    "flax": ("https://flax.readthedocs.io/en/latest/", None),
+    "jax": ("https://jax.readthedocs.io/en/latest/", None),
+}
 
 language = "en"
 
@@ -126,6 +128,8 @@ html_theme_options = {
 html_static_path = ["_static"]
 html_css_files = ["css/override.css", "css/sphinx_gallery.css"]
 html_show_sphinx = False
+
+sphinx_gallery_conf = {"nested_sections=": False}
 
 
 nbsphinx_prolog = r"""

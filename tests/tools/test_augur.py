@@ -2,12 +2,11 @@ from math import isclose
 from pathlib import Path
 
 import numpy as np
+import pertpy as pt
 import pytest
 import scanpy as sc
-from sklearn.ensemble import RandomForestRegressor
-
-import pertpy as pt
 from pertpy.tools._augur import Params
+from sklearn.ensemble import RandomForestRegressor
 
 CWD = Path(__file__).parent.resolve()
 

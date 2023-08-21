@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import random
 import re
-from typing import List, Literal
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -351,7 +351,7 @@ class Milo:
 
         # Save outputs
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
-        if any([col in sample_adata.var.columns for col in res.columns]):
+        if any(col in sample_adata.var.columns for col in res.columns):
             sample_adata.var = sample_adata.var.drop(res.columns, axis=1)
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
 
