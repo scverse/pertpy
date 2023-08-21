@@ -1622,41 +1622,51 @@ optional = false
 python-versions = ">=3.7"
 files = [
     {file = "igraph-0.10.6-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:eca5d01773a8b48bb585fb972c8afcf0cbfb791627a6706ccf56c0685b8ccca7"},
+    {file = "igraph-0.10.6-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ca05a065108d126771d4867c1e6867fdc340f86f9634978de1326aa2de782138"},
     {file = "igraph-0.10.6-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:81c4809ae45406cb81f985b643d8c9516c0394fa5f0aabe9a617f6506501c97e"},
     {file = "igraph-0.10.6-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7edef14bed493d104213e95a21252f6ac9374fb1383966244c9fb3c615927317"},
+    {file = "igraph-0.10.6-cp37-cp37m-musllinux_1_1_aarch64.whl", hash = "sha256:96cdb8fdd9be3e4bd741b71436286f011f39bf7477cf7406d0d5ad9afa55f812"},
     {file = "igraph-0.10.6-cp37-cp37m-musllinux_1_1_i686.whl", hash = "sha256:62a39bcebfe863c607642e110c4846de9631caa4ce1c6e2e11fae9b1d66904dd"},
     {file = "igraph-0.10.6-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:c21f39fd40f7a0534442cb52e7dc07ee59aad4e52238a3b1c5fcb76f880d9648"},
     {file = "igraph-0.10.6-cp37-cp37m-win32.whl", hash = "sha256:1deb496ccf6a71d07f4952e05b6aea3dd10e18abae9aadcbfd88f640cc804fa1"},
     {file = "igraph-0.10.6-cp37-cp37m-win_amd64.whl", hash = "sha256:527319db746f22adefba3ccbe1e7fba485edd14339af7c953e34e329f04d423f"},
     {file = "igraph-0.10.6-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:0a753a48f96c48d01944221f189b989a03151f6e0e37862675248612e45ddd18"},
     {file = "igraph-0.10.6-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:c08023eb9a3df384e5d8285ec8a60d0e5c1738c6d139a0b51ac5da024538d466"},
+    {file = "igraph-0.10.6-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7e737d4946e30bf561272a394d3c35181d453ab605a9650812200510b92b58b8"},
     {file = "igraph-0.10.6-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:82bacc57b40e6f2f1e7550073a283af38ed1ca9654f68796376eea1413988768"},
     {file = "igraph-0.10.6-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:53c0d0000f57c920549626b48e4b81685c268795df3657251763e50b83e8dac5"},
+    {file = "igraph-0.10.6-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:1a3dcf7b23e05dc7b1cf258bd82a52ed9a71e36ccc091480475bfe210ab60a17"},
     {file = "igraph-0.10.6-cp38-cp38-musllinux_1_1_i686.whl", hash = "sha256:da6009f347bdf14191bb65352a9eb5b1e2ba9014d928306b60b460dc549d21c8"},
     {file = "igraph-0.10.6-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:d1a935f7cb7a7490eef225bb5072ba3208cddf4a26aab9395f21a5a6082ed48f"},
     {file = "igraph-0.10.6-cp38-cp38-win32.whl", hash = "sha256:3e93a2d6ac310d8f6b258aa659f1e2c36ed6a5c2982f79425e33a0d370df95c6"},
     {file = "igraph-0.10.6-cp38-cp38-win_amd64.whl", hash = "sha256:2913d91d9aeae107295fe238e1fe73d1150fca51b4e863c0442904dfb36f0d5a"},
     {file = "igraph-0.10.6-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:eb97640e9e71913015e7073341a5f6b4017fe025222950873c507d4ee97670f9"},
     {file = "igraph-0.10.6-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:409f377ea828d73bdf8da1e8372492db570efea765508eb091ec827492604ab7"},
+    {file = "igraph-0.10.6-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a4d88c6b392e70d1e8b9fb7747b545c9837b0232105ace379e63a6b08d987f23"},
     {file = "igraph-0.10.6-cp39-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:053cdff880e46dca5a754777a5b2d68e904e82e831c6eb8ba7fdaed8d004a888"},
     {file = "igraph-0.10.6-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:868b558ca3d3363e0864246c20a9e937f849125103bd5e1e45e5f233121c1632"},
+    {file = "igraph-0.10.6-cp39-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:ad8a9245d1d27f50003c387105a52a9794b070fcc448f23fd58f7288126500ea"},
     {file = "igraph-0.10.6-cp39-abi3-musllinux_1_1_i686.whl", hash = "sha256:6142060215c7bc5007f65ceffaa2ae1d84d0ef45bd9cbe8bc0670380200beb0f"},
     {file = "igraph-0.10.6-cp39-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:434f71859d39bfe7285c1ff02486492cf0d9236e50d2b0efd3f3fb316f106ebe"},
     {file = "igraph-0.10.6-cp39-abi3-win32.whl", hash = "sha256:f375b5e9faea3381c9bb878195cbfc83444a13fb357f8e6c5767d2d9e3745e26"},
     {file = "igraph-0.10.6-cp39-abi3-win_amd64.whl", hash = "sha256:69d21b26599c86c6b937138280b13306f9b4e380498cc13896c603985c5ee80a"},
     {file = "igraph-0.10.6-pp310-pypy310_pp73-macosx_10_9_x86_64.whl", hash = "sha256:06ca4879236cbb52dd33ddb8e5d562b387f91607fe2bc5f277054778560448c2"},
+    {file = "igraph-0.10.6-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:95b1b02a3d0c321339f2ed7283f37a22591c3b6a084393748369d5815aafe0a9"},
     {file = "igraph-0.10.6-pp310-pypy310_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:a1cc73149e5ae448054c04050e5cfcdd9d886f72883ec9ca11185e16f62df2b1"},
     {file = "igraph-0.10.6-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:521e9a1ab869d65cdc7713f2649794e8076c2d6b210dcad37ac6bcaffaf858de"},
     {file = "igraph-0.10.6-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:547f5e815063e68acd1efedf31ccb3f204a7d6e80fdddd96cb18b11610744912"},
     {file = "igraph-0.10.6-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:4f1a33d7bf8ebaaa0f6401db437e23c3fe90b13c042897fa6123e0cf63605149"},
+    {file = "igraph-0.10.6-pp37-pypy37_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e1d3a0882224dafadb259a0e660650779a7714f3d931a03127af43ef05a4d6e2"},
     {file = "igraph-0.10.6-pp37-pypy37_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:169d7f1f8f1a39d1fa965dba0cab69b0d03de4b5e3272b196c60c3104a7e2735"},
     {file = "igraph-0.10.6-pp37-pypy37_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:71a03c57550066a5cbf6fc6621d470fbf4abcf33ecb975a21e13e09cf45b965b"},
     {file = "igraph-0.10.6-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:b3e038f78324e138869358bf17f9e57bcd665f7ddf6ed4b5f83fcbfc782f5059"},
     {file = "igraph-0.10.6-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:936c681b3d6c507f3d1008c37d7ce6ef570d0ad932a94af1d512609da72a8ec1"},
+    {file = "igraph-0.10.6-pp38-pypy38_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:47637170741eb48550a18dc1072d354476866a3d6bc30b260a23acc04d15168f"},
     {file = "igraph-0.10.6-pp38-pypy38_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3bb368af87b5ea1877baf0cc337e6d83bb688f1f81c9f75973da92c30a4106c3"},
     {file = "igraph-0.10.6-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b40da28b2ed1b35d24794996ff38ed3292ddaeea8cbeb48da146df0bf32021ae"},
     {file = "igraph-0.10.6-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:81fbd93bbe81127aa98247a777a4eb2902443079254696d5aaa0a146cff88663"},
     {file = "igraph-0.10.6-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:3296e013c695488c313daa218aa5861dcd3623f298935f2f6f48b2bf1e65e5d0"},
+    {file = "igraph-0.10.6-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4c743703ff6a9907deddf3f15ddb7a4e0d525a0055e5cf29ac2143b865fdf6c2"},
     {file = "igraph-0.10.6-pp39-pypy39_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ddbbdaab269700d35969feaab73b9cbf7c55daa7711aaa01e0f9c598c9b8fbe1"},
     {file = "igraph-0.10.6-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:26ae1fe7e4e55a851cdffcd302d9ad530303e47676424ee422dbede7450f948f"},
     {file = "igraph-0.10.6-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:1a21dae12de610474b5b64f92822f3da4af2cedd60413b56aa55cc165dc0c763"},
@@ -3594,6 +3604,7 @@ files = [
     {file = "Pillow-10.0.0-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:3b08d4cc24f471b2c8ca24ec060abf4bebc6b144cb89cba638c720546b1cf538"},
     {file = "Pillow-10.0.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:d737a602fbd82afd892ca746392401b634e278cb65d55c4b7a8f48e9ef8d008d"},
     {file = "Pillow-10.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:3a82c40d706d9aa9734289740ce26460a11aeec2d9c79b7af87bb35f0073c12f"},
+    {file = "Pillow-10.0.0-cp311-cp311-win_arm64.whl", hash = "sha256:bc2ec7c7b5d66b8ec9ce9f720dbb5fa4bace0f545acd34870eff4a369b44bf37"},
     {file = "Pillow-10.0.0-cp312-cp312-macosx_10_10_x86_64.whl", hash = "sha256:d80cf684b541685fccdd84c485b31ce73fc5c9b5d7523bf1394ce134a60c6883"},
     {file = "Pillow-10.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:76de421f9c326da8f43d690110f0e79fe3ad1e54be811545d7d91898b4c8493e"},
     {file = "Pillow-10.0.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:81ff539a12457809666fef6624684c008e00ff6bf455b4b89fd00a140eecd640"},
@@ -3603,6 +3614,7 @@ files = [
     {file = "Pillow-10.0.0-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:d50b6aec14bc737742ca96e85d6d0a5f9bfbded018264b3b70ff9d8c33485551"},
     {file = "Pillow-10.0.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:00e65f5e822decd501e374b0650146063fbb30a7264b4d2744bdd7b913e0cab5"},
     {file = "Pillow-10.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:f31f9fdbfecb042d046f9d91270a0ba28368a723302786c0009ee9b9f1f60199"},
+    {file = "Pillow-10.0.0-cp312-cp312-win_arm64.whl", hash = "sha256:1ce91b6ec08d866b14413d3f0bbdea7e24dfdc8e59f562bb77bc3fe60b6144ca"},
     {file = "Pillow-10.0.0-cp38-cp38-macosx_10_10_x86_64.whl", hash = "sha256:349930d6e9c685c089284b013478d6f76e3a534e36ddfa912cde493f235372f3"},
     {file = "Pillow-10.0.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:3a684105f7c32488f7153905a4e3015a3b6c7182e106fe3c37fbb5ef3e6994c3"},
     {file = "Pillow-10.0.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b4f69b3700201b80bb82c3a97d5e9254084f6dd5fb5b16fc1a7b974260f89f43"},
@@ -5333,13 +5345,13 @@ theme-sbt = ["sphinx-book-theme (>=1.0,<2.0)"]
 
 [[package]]
 name = "sphinx-gallery"
-version = "0.13.0"
+version = "0.14.0"
 description = "A `Sphinx <https://www.sphinx-doc.org/en/master/>`_ extension that builds an HTML gallery of examples from any set of Python scripts."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "sphinx-gallery-0.13.0.tar.gz", hash = "sha256:4756f92e079128b08cbc7a57922cc904b3d442b1abfa73ec6471ad24f3c5b4b2"},
-    {file = "sphinx_gallery-0.13.0-py3-none-any.whl", hash = "sha256:5bedfa4998b4158d5affc7d1df6796e4b1e834b16680001dac992af1304d8ed9"},
+    {file = "sphinx-gallery-0.14.0.tar.gz", hash = "sha256:2a4a0aaf032955508e1d0f3495199a3c7819ce420e71096bff0bca551a4043c2"},
+    {file = "sphinx_gallery-0.14.0-py3-none-any.whl", hash = "sha256:55b3ad1f378abd126232c166192270ac0a3ef615dec10b66c961ed2967be1df6"},
 ]
 
 [package.dependencies]
