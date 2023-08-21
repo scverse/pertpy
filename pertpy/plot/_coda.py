@@ -1,5 +1,5 @@
 import os
-from typing import List, Literal, Optional, Tuple, Union
+from typing import Literal, Optional, Union
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -25,10 +25,10 @@ class CodaPlot:
     @staticmethod
     def __stackbar(  # pragma: no cover
         y: np.ndarray,
-        type_names: List[str],
+        type_names: list[str],
         title: str,
-        level_names: List[str],
-        figsize: Optional[Tuple[float, float]] = None,
+        level_names: list[str],
+        figsize: Optional[tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[ListedColormap] = cm.tab20,
         show_legend: Optional[bool] = True,
@@ -88,11 +88,11 @@ class CodaPlot:
         data: Union[AnnData, MuData],
         feature_name: str,
         modality_key: str = "coda",
-        figsize: Optional[Tuple[float, float]] = None,
+        figsize: Optional[tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[ListedColormap] = cm.tab20,
         show_legend: Optional[bool] = True,
-        level_order: List[str] = None,
+        level_order: list[str] = None,
     ) -> plt.Axes:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
@@ -162,18 +162,18 @@ class CodaPlot:
         return ax
 
     @staticmethod
-    def effects_barplot(  # noqa: C901 # pragma: no cover
+    def effects_barplot(  # pragma: no cover
         data: Union[AnnData, MuData],
         modality_key: str = "coda",
-        covariates: Optional[Union[str, List]] = None,
+        covariates: Optional[Union[str, list]] = None,
         parameter: Literal["log2-fold change", "Final Parameter", "Expected Sample"] = "log2-fold change",
         plot_facets: bool = True,
         plot_zero_covariate: bool = True,
         plot_zero_cell_type: bool = False,
-        figsize: Optional[Tuple[float, float]] = None,
+        figsize: Optional[tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[Union[str, ListedColormap]] = cm.tab20,
-        level_order: List[str] = None,
+        level_order: list[str] = None,
         args_barplot: Optional[dict] = None,
     ) -> Optional[Union[plt.Axes, sns.axisgrid.FacetGrid]]:
         """Barplot visualization for effects.
@@ -325,7 +325,7 @@ class CodaPlot:
             return ax
 
     @staticmethod
-    def boxplots(  # noqa: C901 # pragma: no cover
+    def boxplots(  # pragma: no cover
         data: Union[AnnData, MuData],
         feature_name: str,
         modality_key: str = "coda",
@@ -337,11 +337,11 @@ class CodaPlot:
         cell_types: Optional[list] = None,
         args_boxplot: Optional[dict] = None,
         args_swarmplot: Optional[dict] = None,
-        figsize: Optional[Tuple[float, float]] = None,
+        figsize: Optional[tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         cmap: Optional[str] = "Blues",
         show_legend: Optional[bool] = True,
-        level_order: List[str] = None,
+        level_order: list[str] = None,
     ) -> Optional[Union[plt.Axes, sns.axisgrid.FacetGrid]]:
         """Grouped boxplot visualization. The cell counts for each cell type are shown as a group of boxplots,
             with intra--group separation by a covariate from data.obs.
@@ -543,7 +543,7 @@ class CodaPlot:
         default_color: Optional[str] = "Grey",
         abundant_color: Optional[str] = "Red",
         label_cell_types: bool = True,
-        figsize: Optional[Tuple[float, float]] = None,
+        figsize: Optional[tuple[float, float]] = None,
         dpi: Optional[int] = 100,
         ax: Axes = None,
     ) -> plt.Axes:
@@ -692,7 +692,7 @@ class CodaPlot:
             return tree, tree_style
 
     @staticmethod
-    def draw_effects(  # noqa: C901 # pragma: no cover
+    def draw_effects(  # pragma: no cover
         data: Union[AnnData, MuData],
         covariate: str,
         modality_key: str = "coda",

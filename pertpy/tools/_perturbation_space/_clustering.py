@@ -1,6 +1,3 @@
-from abc import ABC, abstractmethod
-from typing import List, Literal
-
 from anndata import AnnData
 from sklearn.metrics import pairwise_distances
 
@@ -18,7 +15,7 @@ class ClusteringSpace(PerturbationSpace):
         adata: AnnData,
         true_label_col: str,
         cluster_col: str,
-        metrics: List[str] = None,
+        metrics: list[str] = None,
         **kwargs,
     ):
         """Evaluation of previously computed clustering against ground truth labels.

@@ -451,16 +451,14 @@ class Mixscape:
         if isinstance(col_names, str):  # pragma: no cover
             col_names = [col_names]
 
-        indices = list()
+        indices = []
         for idx, col in enumerate(adata.var_names):
             if col in col_names:
                 indices.append(idx)
 
         return indices
 
-    def _define_normal_mixscape(
-        self, X: np.ndarray | sparse.spmatrix | pd.DataFrame | None
-    ) -> list[float]:  # noqa: N803
+    def _define_normal_mixscape(self, X: np.ndarray | sparse.spmatrix | pd.DataFrame | None) -> list[float]:
         """Calculates the mean and standard deviation of a matrix.
 
         Args:

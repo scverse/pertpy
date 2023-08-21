@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -173,7 +173,7 @@ class MilopyPlot:
                 linewidth=0,
                 scale="width",
             )
-        except BaseException:
+        except BaseException:  # noqa: BLE001
             sns.violinplot(
                 data=anno_df,
                 y=anno_col,

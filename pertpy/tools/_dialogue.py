@@ -301,7 +301,7 @@ class Dialogue:
 
         return top_genes
 
-    def _apply_HLM_per_MCP_for_one_pair(  # noqa: N802
+    def _apply_HLM_per_MCP_for_one_pair(
         self,
         mcp_name: str,
         scores_df: dict,
@@ -578,7 +578,7 @@ class Dialogue:
 
         return mcca_in, ct_subs
 
-    def calculate_multifactor_PMD(  # noqa: N802
+    def calculate_multifactor_PMD(
         self,
         adata: AnnData,
         penalties: list[int] = None,
@@ -681,7 +681,7 @@ class Dialogue:
 
         # Hierarchical modeling expects DataFrames
         mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(self.n_mcps)}
-        mcp_scores_df = {  # noqa: F841
+        mcp_scores_df = {
             ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=mcp_cell_types.keys())
             for ct, v in mcp_scores.items()
         }
@@ -731,10 +731,8 @@ class Dialogue:
                     ct_subs, mcp_scores=mcp_scores, ws_dict=ws_dict, n_counts_key=self.n_counts_key
                 )
 
-                sig_1 = cca_sig[  # noqa: F841
-                    cell_type_1
-                ]  # TODO: only need the up and down genes from this here per MCP
-                sig_2 = cca_sig[cell_type_2]  # noqa: F841
+                sig_1 = cca_sig[cell_type_1]  # TODO: only need the up and down genes from this here per MCP
+                sig_2 = cca_sig[cell_type_2]
                 # only use samples which have a minimum number of cells (default 2) in both cell types
                 sample_ids = list(
                     set(self._get_abundant_elements_from_series(ct_data_1.obs[self.sample_id]))

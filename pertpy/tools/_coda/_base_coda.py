@@ -412,7 +412,14 @@ class CompositionalModel2(ABC):
         else:
             raise ValueError("No valid model type!")
 
-        summ = az.summary(data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False), var_names=var_names, kind="stats", stat_funcs={"median": np.median}, *args, **kwargs)  # type: ignore
+        summ = az.summary(
+            data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False),
+            var_names=var_names,
+            kind="stats",
+            stat_funcs={"median": np.median},
+            *args,  # noqa: B026
+            **kwargs,
+        )  # type: ignore
 
         effect_df = summ.loc[summ.index.str.match("|".join([r"beta\["]))].copy()
         intercept_df = summ.loc[summ.index.str.match("|".join([r"alpha\["]))].copy()
@@ -467,7 +474,9 @@ class CompositionalModel2(ABC):
 
             res = az.convert_to_inference_data(np.array([b_raw_sel]))
 
-            summary_sel = az.summary(data=res, kind="stats", var_names=["x"], skipna=True, *args, **kwargs)  # type: ignore
+            summary_sel = az.summary(
+                data=res, kind="stats", var_names=["x"], skipna=True, *args, **kwargs  # noqa: B026
+            )
 
             ref_index = sample_adata.uns["scCODA_params"]["reference_index"]
             n_conditions = len(covariates)

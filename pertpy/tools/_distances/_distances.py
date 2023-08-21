@@ -49,9 +49,9 @@ class Distance:
             import pertpy as pt
 
             adata = pt.dt.distance_example_data()
-            Distance = pt.tools.Distance(metric='edistance')
-            X = adata.obsm['X_pca'][adata.obs['perturbation'] == 'p-sgCREB1-2']
-            Y = adata.obsm['X_pca'][adata.obs['perturbation'] == 'control']
+            Distance = pt.tools.Distance(metric="edistance")
+            X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+            Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
             D = Distance(X, Y)
     """
 
@@ -104,9 +104,9 @@ class Distance:
                 import pertpy as pt
 
                 adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric='edistance')
-                X = adata.obsm['X_pca'][adata.obs['perturbation'] == 'p-sgCREB1-2']
-                Y = adata.obsm['X_pca'][adata.obs['perturbation'] == 'control']
+                Distance = pt.tools.Distance(metric="edistance")
+                X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+                Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
                 D = Distance(X, Y)
         """
         return self.metric_fct(X, Y, **kwargs)
@@ -138,8 +138,8 @@ class Distance:
                 import pertpy as pt
 
                 adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric='edistance')
-                pairwise_df = distance.pairwise(adata, groupby='perturbation')
+                Distance = pt.tools.Distance(metric="edistance")
+                pairwise_df = distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()

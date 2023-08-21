@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import copy
 from collections import OrderedDict
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -312,7 +313,7 @@ class MixscapePlot:
         return p2
 
     @staticmethod
-    def violin(  # noqa: C901  pragma: no cover
+    def violin(  # pragma: no cover
         adata: AnnData,
         target_gene_idents: str | list[str],
         keys: str | Sequence[str] = "mixscape_class_p_ko",

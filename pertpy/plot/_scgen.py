@@ -94,7 +94,7 @@ class JaxscgenPlot:
                 texts,
                 x=x,
                 y=y,
-                arrowprops=dict(arrowstyle="->", color="grey", lw=0.5),
+                arrowprops={"arrowstyle": "->", "color": "grey", "lw": 0.5},
                 force_points=(0.0, 0.0),
             )
         if legend:

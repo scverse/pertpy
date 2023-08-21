@@ -1,8 +1,7 @@
+import pertpy as pt
 import scanpy as sc
 import scvi
 from anndata import AnnData
-
-import pertpy as pt
 
 
 def test_scgen():
