@@ -54,6 +54,8 @@ exclude_patterns = [
 nbsphinx_execute = "never"
 
 templates_path = ["_templates"]
+bibtex_bibfiles = ["references.bib"]
+nitpicky = True  # Warn about broken links
 # source_suffix = ".md"
 
 # Generate the API documentation when building
