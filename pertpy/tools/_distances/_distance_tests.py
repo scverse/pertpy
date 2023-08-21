@@ -18,7 +18,6 @@ class DistanceTest:
     group (which normally would be your "control" cells).
 
     Args:
-    ----
         metric: Distance metric to use.
         n_perms: Number of permutations to run. Defaults to 1000.
         obsm_key: Name of embedding to use for distance computation. Defaults to 'X_pca'.
@@ -26,7 +25,6 @@ class DistanceTest:
         correction: Multiple testing correction method. Defaults to 'holm-sidak'.
 
     Examples:
-    --------
         >>> import pertpy as pt
         >>> adata = pt.dt.distance_example()
         >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
@@ -54,14 +52,12 @@ class DistanceTest:
         all groups of cells against a specified contrast group ("control").
 
         Args:
-        ----
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
             verbose: Whether to print progress. Defaults to True.
 
         Returns:
-        -------
             pandas.DataFrame: Results of the permutation test, with columns:
                 - distance: distance between the contrast group and the group
                 - pvalue: p-value of the permutation test
@@ -70,7 +66,6 @@ class DistanceTest:
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
 
         Examples:
-        --------
             >>> import pertpy as pt
             >>> adata = pt.dt.distance_example()
             >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
@@ -91,7 +86,6 @@ class DistanceTest:
         generally slower than test_precomputed.
 
         Args:
-        ----
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
@@ -99,7 +93,6 @@ class DistanceTest:
             verbose: Whether to print progress. Defaults to True.
 
         Returns:
-        -------
             pandas.DataFrame: Results of the permutation test, with columns:
                 - distance: distance between the contrast group and the group
                 - pvalue: p-value of the permutation test
@@ -181,7 +174,6 @@ class DistanceTest:
         """Run permutation test for metrics that take precomputed distances.
 
         Args:
-        ----
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
@@ -189,7 +181,6 @@ class DistanceTest:
             verbose: Whether to print progress. Defaults to True.
 
         Returns:
-        -------
             pandas.DataFrame: Results of the permutation test, with columns:
                 - distance: distance between the contrast group and the group
                 - pvalue: p-value of the permutation test

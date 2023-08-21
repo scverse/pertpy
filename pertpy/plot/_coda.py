@@ -38,7 +38,6 @@ class CodaPlot:
         Typical use (only inside stacked_barplot): plot_one_stackbar(data.X, data.var.index, "xyz", data.obs.index)
 
         Args:
-        ----
             y: The count data, collapsed onto the level of interest. i.e. a binary covariate has two rows, one for each group, containing the count mean of each cell type
             type_names: The names of all cell types
             title: Plot title, usually the covariate's name
@@ -49,7 +48,6 @@ class CodaPlot:
             show_legend: If True, adds a legend. Defaults to True.
 
         Returns:
-        -------
             A :class:`~matplotlib.axes.Axes` object
         """
         n_bars, n_types = y.shape
@@ -101,7 +99,6 @@ class CodaPlot:
         Usage: plot_feature_stackbars(data, ["cov1", "cov2", "cov3"])
 
         Args:
-        ----
             data: AnnData object or MuData object.
             feature_name: The name of the covariate to plot. If feature_name=="samples", one bar for every sample will be plotted
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
@@ -112,7 +109,6 @@ class CodaPlot:
             level_order: Custom ordering of bars on the x-axis. Defaults to None.
 
         Returns:
-        -------
             A :class:`~matplotlib.axes.Axes` object
         """
         if isinstance(data, MuData):
@@ -186,7 +182,6 @@ class CodaPlot:
         The covariates groups can either be ordered along the x-axis of a single plot (plot_facets=False) or as plot facets (plot_facets=True).
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             covariates: The name of the covariates in data.obs to plot. Defaults to None.
@@ -201,7 +196,6 @@ class CodaPlot:
             args_barplot: Arguments passed to sns.barplot. Defaults to None.
 
         Returns:
-        -------
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
         """
         if args_barplot is None:
@@ -353,7 +347,6 @@ class CodaPlot:
             with intra--group separation by a covariate from data.obs.
 
         Args:
-        ----
             data: AnnData object or MuData object
             feature_name: The name of the feature in data.obs to plot
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
@@ -372,7 +365,6 @@ class CodaPlot:
             level_order: Custom ordering of bars on the x-axis. Defaults to None.
 
         Returns:
-        -------
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
         """
         if args_boxplot is None:
@@ -560,7 +552,6 @@ class CodaPlot:
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda". Defaults to "coda".
             abundant_threshold: Presence threshold for abundant cell types. Defaults to 0.9.
@@ -572,7 +563,6 @@ class CodaPlot:
             ax: A matplotlib axes object. Only works if plotting a single component. Defaults to None.
 
         Returns:
-        -------
             A :class:`~matplotlib.axes.Axes` object
         """
         if isinstance(data, MuData):
@@ -664,7 +654,6 @@ class CodaPlot:
         """Plot a tree using input ete3 tree object.
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             tree: A ete3 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
@@ -678,7 +667,6 @@ class CodaPlot:
             dpi: Dots per inches. Defaults to 90.
 
         Returns:
-        -------
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
         """
         if isinstance(data, MuData):
@@ -723,7 +711,6 @@ class CodaPlot:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:
-        ----
             data: AnnData object or MuData object.
             covariate: The covariate, whose effects should be plotted.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
@@ -740,7 +727,6 @@ class CodaPlot:
             dpi: Dots per inches. Defaults to 90.
 
         Returns:
-        -------
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
         """
         if isinstance(data, MuData):
@@ -883,7 +869,6 @@ class CodaPlot:
         """Plot a UMAP visualization colored by effect strength. Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData (default is data['rna']) depending on the cluster they were assigned to.
 
         Args:
-        ----
             data: AnnData object or MuData object.
             effect_name: The name of the effect results in .varm of aggregated sample-level AnnData (default is data['coda']) to plot
             cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']). To assign cell types' effects to original cells.
@@ -894,7 +879,6 @@ class CodaPlot:
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
 
         Returns:
-        -------
             If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
         """
         data_rna = data[modality_key_1]

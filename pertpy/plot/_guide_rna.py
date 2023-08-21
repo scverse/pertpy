@@ -23,8 +23,7 @@ class GuideRnaPlot:
         plots before and after analysis of the guide RNA expression.
         Note: This function expects a log-normalized or binary data.
 
-        Args:
-        ----
+         Args:
              adata: Annotated data matrix containing gRNA values
              layer: Key to the layer containing log normalized count values of the gRNAs.
                     adata.X is used if layer is None.
@@ -35,8 +34,7 @@ class GuideRnaPlot:
              key_to_save_order: The obs key to save cell orders in the current plot. Only saves if not None.
              kwds: Are passed to sc.pl.heatmap.
 
-        Returns:
-        -------
+         Returns:
              List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
              Order of cells in the y axis will be saved on adata.obs[key_to_save_order] if provided.
         """

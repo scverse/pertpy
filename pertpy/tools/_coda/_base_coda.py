@@ -91,7 +91,6 @@ class CompositionalModel2(ABC):
         """Handles data preprocessing, covariate matrix creation, reference selection, and zero count replacement.
 
         Args:
-        ----
             sample_adata: anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             formula: R-style formula for building the covariate matrix.
                 Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.
@@ -102,7 +101,6 @@ class CompositionalModel2(ABC):
                 to be considered as a possible reference cell type. Defaults to 0.05.
 
         Returns:
-        -------
             AnnData object that is ready for CODA models.
         """
         dtype = "float64"
@@ -183,10 +181,9 @@ class CompositionalModel2(ABC):
         *args,
         **kwargs,
     ):
-        """Background function that executes any numpyro MCMC algorithm and processes its results.
+        """Background function that executes any numpyro MCMC algorithm and processes its results
 
         Args:
-        ----
             sample_adata: anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             kernel: A `numpyro.infer.mcmc.MCMCKernel` object
             rng_key: The rng state used. If None, a random state will be selected
@@ -195,7 +192,6 @@ class CompositionalModel2(ABC):
             kwargs: Passed to `numpyro.infer.mcmc.MCMC`
 
         Returns:
-        -------
             Saves all results into `sample_adata` and generates `self.mcmc` as a class attribute. If copy==True, return a copy of adata.
         """
         dtype = "float64"
@@ -263,7 +259,6 @@ class CompositionalModel2(ABC):
         """Run No-U-turn sampling (Hoffman and Gelman, 2014), an efficient version of Hamiltonian Monte Carlo sampling to infer optimal model parameters.
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             num_samples: Number of sampled values after burn-in. Defaults to 10000.
@@ -272,7 +267,6 @@ class CompositionalModel2(ABC):
             copy: Return a copy instead of writing to adata. Defaults to False.
 
         Returns:
-        -------
             Calls `self.__run_mcmc`
         """
         if isinstance(data, MuData):
@@ -322,7 +316,6 @@ class CompositionalModel2(ABC):
         """Run standard Hamiltonian Monte Carlo sampling (Neal, 2011) to infer optimal model parameters.
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             num_samples: Number of sampled values after burn-in. Defaults to 20000.
@@ -371,14 +364,12 @@ class CompositionalModel2(ABC):
             This function builds on and supports all functionalities from ``az.summary``.
 
         Args:
-        ----
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             est_fdr: Desired FDR value. Defaults to 0.05.
             args: Passed to ``az.summary``
             kwargs: Passed to ``az.summary``
 
         Returns:
-        -------
             Tuple[pd.DataFrame, pd.DataFrame] or Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Intercept, effect and node-level DataFrames
 
             intercept_df
@@ -586,7 +577,6 @@ class CompositionalModel2(ABC):
         This function also calculates the posterior inclusion probability for each effect and decides whether effects are significant.
 
         Args:
-        ----
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             intercept_df: Intercept summary, see ``summary_prepare``
             effect_df: Effect summary, see ``summary_prepare``
@@ -596,7 +586,6 @@ class CompositionalModel2(ABC):
             node_df: If using tree aggregation, the node-level effect DataFrame must be passed. Defaults to None.
 
         Returns:
-        -------
             pd.DataFrame:  effect DataFrame with inclusion probability, final parameters, expected sample.
         """
         # Data dimensions
@@ -690,15 +679,13 @@ class CompositionalModel2(ABC):
         node_df: pd.DataFrame,
     ) -> pd.DataFrame:
         """Evaluation of MCMC results for node-level effect parameters. This function is only used within self.summary_prepare.
-            This function determines whether node-level effects are credible or not.
+            This function determines whether node-level effects are credible or not
 
         Args:
-        ----
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             node_df: Node-level effect summary, see ``summary_prepare``
 
         Returns:
-        -------
             pd.DataFrame: node-level effect DataFrame with inclusion threshold, final parameters, significance indicator
         """
         # calculate inclusion threshold
@@ -727,12 +714,10 @@ class CompositionalModel2(ABC):
         """Evaluation of MCMC results for intercepts. This function is only used within self.summary_prepare.
 
         Args:
-        ----
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             intercept_df: Intercept summary, see ``summary_prepare``
 
         Returns:
-        -------
             pd.DataFrame: intercept DataFrame with expected sample, final parameters
         """
         intercept_df = intercept_df.rename(columns={"mean": "final_parameter"})
@@ -749,7 +734,6 @@ class CompositionalModel2(ABC):
         """Printing method for the summary.
 
         Args:
-        ----
             data: AnnData object or MuData object.
             extended: If True, return the extended summary with additional statistics. Defaults to False.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
@@ -881,17 +865,16 @@ class CompositionalModel2(ABC):
                 console.print(table)
 
     def get_intercept_df(self, data: AnnData | MuData, modality_key: str = "coda"):
-        """Get intercept dataframe as printed in the extended summary.
+        """Get intercept dataframe as printed in the extended summary
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
 
         Returns:
-        -------
             pd.DataFrame: Intercept data frame.
         """
+
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]
@@ -904,17 +887,16 @@ class CompositionalModel2(ABC):
         return sample_adata.varm["intercept_df"]
 
     def get_effect_df(self, data: AnnData | MuData, modality_key: str = "coda"):
-        """Get effect dataframe as printed in the extended summary.
+        """Get effect dataframe as printed in the extended summary
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
 
         Returns:
-        -------
             pd.DataFrame: Effect data frame.
         """
+
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]
@@ -938,17 +920,16 @@ class CompositionalModel2(ABC):
         return effect_df
 
     def get_node_df(self, data: AnnData | MuData, modality_key: str = "coda"):
-        """Get node effect dataframe as printed in the extended summary of a tascCODA model.
+        """Get node effect dataframe as printed in the extended summary of a tascCODA model
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
 
         Returns:
-        -------
             pd.DataFrame: Node effect data frame.
         """
+
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]
@@ -962,10 +943,9 @@ class CompositionalModel2(ABC):
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """Direct posterior probability approach to calculate credible effects while keeping the expected FDR at a certain level
-            Note: Does not work for spike-and-slab LASSO selection method.
+            Note: Does not work for spike-and-slab LASSO selection method
 
         Args:
-        ----
             data: AnnData object or MuData object.
             est_fdr: Desired FDR value.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
@@ -973,7 +953,6 @@ class CompositionalModel2(ABC):
             kwargs: passed to self.summary_prepare
 
         Returns:
-        -------
             Adjusts intercept_df and effect_df
         """
         if isinstance(data, MuData):
@@ -992,16 +971,14 @@ class CompositionalModel2(ABC):
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """Decides which effects of the scCODA model are credible based on an adjustable inclusion probability threshold.
-            Note: Parameter est_fdr has no effect for spike-and-slab LASSO selection method.
+            Note: Parameter est_fdr has no effect for spike-and-slab LASSO selection method
 
         Args:
-        ----
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             est_fdr: Estimated false discovery rate. Must be between 0 and 1. Defaults to None.
 
         Returns:
-        -------
             pd.Series: Credible effect decision series which includes boolean values indicate whether effects are credible under inc_prob_threshold.
         """
         if isinstance(data, MuData):
@@ -1044,14 +1021,12 @@ class CompositionalModel2(ABC):
 def get_a(
     tree: tt.tree,
 ) -> tuple[np.ndarray, int]:
-    """Calculate ancestor matrix from a toytree tree.
+    """Calculate ancestor matrix from a toytree tree
 
     Args:
-    ----
         tree: A toytree tree object.
 
     Returns:
-    -------
         Ancestor matrix and number of nodes without root node
         A
             Ancestor matrix (numpy array)
@@ -1087,11 +1062,9 @@ def collapse_singularities(tree: tt.tree) -> tt.tree:
     """Collapses (deletes) nodes in a toytree tree that are singularities (have only one child).
 
     Args:
-    ----
         tree: A toytree tree object
 
     Returns:
-    -------
         A toytree tree without singularities
 
         tree_new
@@ -1127,8 +1100,9 @@ def collapse_singularities(tree: tt.tree) -> tt.tree:
 
 
 def traverse(df_, a, i, innerl):
-    """Helper function for df2newick
-    Adapted from https://stackoverflow.com/questions/15343338/how-to-convert-a-data-frame-to-tree-structure-object-such-as-dendrogram.
+    """
+    Helper function for df2newick
+    Adapted from https://stackoverflow.com/questions/15343338/how-to-convert-a-data-frame-to-tree-structure-object-such-as-dendrogram
     """
     if i + 1 < df_.shape[1]:
         a_inner = pd.unique(df_.loc[np.where(df_.iloc[:, i] == a)].iloc[:, i + 1])
@@ -1153,13 +1127,11 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
     Adapted from https://stackoverflow.com/questions/15343338/how-to-convert-a-data-frame-to-tree-structure-object-such-as-dendrogram
 
     Args:
-    ----
         df: Pandas DataFrame that has one row for each leaf of the tree and columns that indicate a hierarchical ordering. See the tascCODA tutorial for an example.
         levels: List that indicates how the columns in df are ordered as tree levels. Begins with the root level, ends with the leaf level
         inner_label: Indicator whether labels for inner nodes should be included in the newick string
 
     Returns:
-    -------
         Newick string describing the tree structure from df
     """
     df_tax = df.loc[:, [x for x in levels if x in df.columns]]
@@ -1181,7 +1153,6 @@ def get_a_2(
     """Calculate ancestor matrix from a ete3 tree.
 
     Args:
-    ----
         tree: A ete3 tree object.
         leaf_order: List of leaf names how they should appear as the rows of the ancestor matrix.
                     If None, the ordering will be as in `tree.iter_leaves()`
@@ -1189,7 +1160,6 @@ def get_a_2(
                     If None, the ordering will be as in `tree.iter_descendants()`
 
     Returns:
-    -------
             Ancestor matrix and number of nodes without root node
 
         A
@@ -1230,11 +1200,9 @@ def collapse_singularities_2(tree: ete.Tree) -> ete.Tree:
     """Collapses (deletes) nodes in a ete3 tree that are singularities (have only one child).
 
     Args:
-    ----
         tree: A ete3 tree object
 
     Returns:
-    -------
         A ete3 tree without singularities.
     """
     for node in tree.iter_descendants():
@@ -1253,12 +1221,10 @@ def linkage_to_newick(
     Adapted from https://stackoverflow.com/a/31878514/20299702.
 
     Args:
-    ----
         Z: linkage matrix
         labels: leaf labels
 
     Returns:
-    -------
         str: Newick string describing the tree structure
     """
     tree = sp_hierarchy.to_tree(Z, False)
@@ -1295,13 +1261,11 @@ def import_tree(
     or from hierarchical information for each cell type - either saved in `.obs` of the cell-level data object, or in `.var` of the aggregated data.
 
     Notes:
-    -----
     - Either `dendrogram_key`, `levels_orig` or `levels_agg` must be not None. Priority is `dendrogram_key` -> `levels_orig` -> `levels_agg`
     - If `data` is a MuData object, `modality_1` and `modality_2` must be specified
     - The node names of the generated tree must be unique. Often, setting `add_level_name=True` is enough to achieve that.
 
     Args:
-    ----
         data: A tascCODA-compatible data object.
         modality_1: If `data` is MuData, specifiy the modality name to the original cell level anndata object. Defaults to None.
         modality_2: If `data` is MuData, specifiy the modality name to the aggregated level anndata object. Defaults to None.
@@ -1313,7 +1277,6 @@ def import_tree(
         copy: Return a copy instead of writing to `data`. Defaults to False.
 
     Returns:
-    -------
         Updates data with the following:
 
         See `key_added` parameter description for the storage path of tree.
@@ -1389,7 +1352,6 @@ def from_scanpy(
     NOTE: The order of samples in the returned dataset is determined by the first occurence of cells from each sample in `adata`
 
     Args:
-    ----
         adata: An anndata object from scanpy
         cell_type_identifier: column name in adata.obs that specifies the cell types
         sample_identifier: column name or list of column names in adata.obs that uniquely identify each sample
@@ -1398,7 +1360,6 @@ def from_scanpy(
         covariate_df: DataFrame with covariates
 
     Returns:
-    -------
         AnnData: A data set with cells aggregated to the (sample x cell type) level
     """
     if isinstance(sample_identifier, str):

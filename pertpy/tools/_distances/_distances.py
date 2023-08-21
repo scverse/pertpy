@@ -39,13 +39,11 @@ class Distance:
         This is the mean of the pairwise euclidean distances between cells of two groups.
 
     Attributes:
-    ----------
         metric: Name of distance metric.
         obsm_key: Name of embedding in adata.obsm to use.
         metric_fct: Distance metric function.
 
     Example:
-    -------
         .. code-block:: python
 
             import pertpy as pt
@@ -65,7 +63,6 @@ class Distance:
         """Initialize Distance class.
 
         Args:
-        ----
             metric: Distance metric to use. Defaults to "edistance".
             obsm_key: Name of embedding in adata.obsm to use. Defaults to "X_pca".
         """
@@ -95,16 +92,13 @@ class Distance:
         """Compute distance between vectors X and Y.
 
         Args:
-        ----
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
 
         Returns:
-        -------
             float: Distance between X and Y.
 
         Example:
-        -------
             .. code-block:: python
 
                 import pertpy as pt
@@ -129,7 +123,6 @@ class Distance:
         """Get pairwise distances between groups of cells.
 
         Args:
-        ----
             adata: Annotated data matrix.
             groupby: Column name in adata.obs.
             groups: List of groups to compute pairwise distances for.
@@ -137,11 +130,9 @@ class Distance:
             verbose: Whether to show progress bar. Defaults to True.
 
         Returns:
-        -------
             pd.DataFrame: Dataframe with pairwise distances.
 
         Example:
-        -------
             .. code-block:: python
 
                 import pertpy as pt
@@ -196,7 +187,6 @@ class Distance:
         '{self.obsm_key}_predistances', as they depend on the embedding used.
 
         Args:
-        ----
             adata: Annotated data matrix.
             obs_key: Column name in adata.obs.
             cell_wise_metric: Metric to use for pairwise distances.
@@ -221,12 +211,10 @@ class AbstractDistance(ABC):
         """Compute distance between vectors X and Y.
 
         Args:
-        ----
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
 
         Returns:
-        -------
             float: Distance between X and Y.
         """
         raise NotImplementedError("Metric class is abstract.")
@@ -236,13 +224,11 @@ class AbstractDistance(ABC):
         """Compute a distance between vectors X and Y with precomputed distances.
 
         Args:
-        ----
             P: Pairwise distance matrix of shape (n_samples, n_samples).
             idx: Boolean array of shape (n_samples,) indicating which
             samples belong to X (or Y, since each metric is symmetric).
 
         Returns:
-        -------
             float: Distance between X and Y.
         """
         raise NotImplementedError("Metric class is abstract.")

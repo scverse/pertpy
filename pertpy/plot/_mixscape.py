@@ -56,7 +56,6 @@ class MixscapePlot:
         """Barplot to visualize perturbation scores calculated from RunMixscape function.
 
         Args:
-        ----
             adata: The annotated data object.
             guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels. The format must be <gene_target>g<#>. For example, 'STAT2g1' and 'ATF2g1'.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
@@ -64,7 +63,6 @@ class MixscapePlot:
             save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
 
         Returns:
-        -------
             If show is False, return ggplot object used to draw the plot.
         """
         if mixscape_class_global not in adata.obs:
@@ -132,7 +130,6 @@ class MixscapePlot:
         """Heatmap plot using mixscape results. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
-        ----
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize heatmap for.
@@ -181,7 +178,6 @@ class MixscapePlot:
         https://satijalab.org/seurat/reference/plotperturbscore
 
         Args:
-        ----
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize perturbation scores for.
@@ -193,7 +189,6 @@ class MixscapePlot:
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Default is KO.
 
         Returns:
-        -------
             The ggplot object used for drawn.
         """
         if "mixscape" not in adata.uns:
@@ -344,7 +339,6 @@ class MixscapePlot:
         """Violin plot using mixscape results. Requires `pt.tl.mixscape` to be run first.
 
         Args:
-        ----
             adata: The annotated data object.
             target_gene: Target gene name to plot.
             keys: Keys for accessing variables of `.var_names` or fields of `.obs`. Default is 'mixscape_class_p_ko'.
@@ -361,7 +355,6 @@ class MixscapePlot:
             **kwds: Additional arguments to `seaborn.violinplot`.
 
         Returns:
-        -------
             A :class:`~matplotlib.axes.Axes` object if `ax` is `None` else `None`.
         """
         if isinstance(target_gene_idents, str):
@@ -523,7 +516,6 @@ class MixscapePlot:
         """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
-        ----
             adata: The annotated data object.
             control: Control category from the `pert_key` column.
             labels: The column of `.obs` with target gene labels.

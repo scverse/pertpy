@@ -14,7 +14,6 @@ def extractor(
     """Returns a list of `data` files while filtering for a specific `cell_type`.
 
     Args:
-    ----
         data: `~anndata.AnnData` Annotated data matrix
         cell_type: Specific cell type to be extracted from `data`.
         condition_key: Key for `.obs` of `data` where conditions can be found.
@@ -23,11 +22,9 @@ def extractor(
         stim_key: Key for `stimulated` part of the `data` found in `condition_key`.
 
     Returns:
-    -------
         List of `data` files while filtering for a specific `cell_type`.
 
     Example:
-    -------
         .. code-block:: python
 
             import SCGEN
@@ -54,16 +51,13 @@ def balancer(
     """Makes cell type populations equal.
 
     Args:
-    ----
         adata: `~anndata.AnnData` Annotated data matrix.
         cell_type_key: key for `.obs` of `data` where cell types can be found.
 
     Returns:
-    -------
         Equal cell type population Annotated data matrix.
 
     Example:
-    -------
         .. code-block:: python
 
             import SCGEN

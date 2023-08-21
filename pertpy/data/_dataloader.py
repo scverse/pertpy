@@ -21,7 +21,6 @@ def _download(  # pragma: no cover
     """Downloads a dataset irrespective of the format.
 
     Args:
-    ----
         url: URL to download
         output_file_name: Name of the downloaded file
         output_path: Path to download/extract the files to (default: OS tmpdir)

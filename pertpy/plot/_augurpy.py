@@ -17,14 +17,12 @@ class AugurpyPlot:
         """Plot result of differential prioritization.
 
         Args:
-        ----
             results: Results after running differential prioritization.
             top_n: optionally, the number of top prioritized cell types to label in the plot
             ax: optionally, axes used to draw plot
             return_figure: if `True` returns figure of the plot
 
         Returns:
-        -------
             Axes of the plot.
         """
         x = results["mean_augur_score1"]
@@ -61,7 +59,6 @@ class AugurpyPlot:
         """Plot a lollipop plot of the n features with largest feature importances.
 
         Args:
-        ----
             results: results after running `predict()` as dictionary or the AnnData object.
             key: Key in the AnnData object of the results
             top_n: n number feature importance values to plot. Default is 10.
@@ -69,7 +66,6 @@ class AugurpyPlot:
             return_figure: if `True` returns figure of the plot, default is `False`
 
         Returns:
-        -------
             Axes of the plot.
         """
         if isinstance(data, AnnData):
@@ -110,14 +106,12 @@ class AugurpyPlot:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
-        ----
             results: results after running `predict()` as dictionary or the AnnData object.
             key: Key in the AnnData object of the results
             ax: optionally, axes used to draw plot
             return_figure: if `True` returns figure of the plot
 
         Returns:
-        -------
             Axes of the plot.
         """
         if isinstance(data, AnnData):
@@ -154,14 +148,12 @@ class AugurpyPlot:
         """Create scatterplot with two augur results.
 
         Args:
-        ----
             results1: results after running `predict()`
             results2: results after running `predict()`
             top_n: optionally, the number of top prioritized cell types to label in the plot
             return_figure: if `True` returns figure of the plot
 
         Returns:
-        -------
             Axes of the plot.
         """
         cell_types = results1["summary_metrics"].columns
