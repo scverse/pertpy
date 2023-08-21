@@ -73,7 +73,7 @@ doc = [
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",
     "sphinx-remove-toctrees",
-    "sphinx-deisgn",
+    "sphinx-design",
     "sphinx-last-updated-by-git",
     "sphinx-automodapi",
     "sphinxext-opengraph",
