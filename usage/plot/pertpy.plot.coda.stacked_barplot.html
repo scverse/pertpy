@@ -1,11 +1,11 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="pertpy.plot.coda.effects_barplot" href="pertpy.plot.coda.effects_barplot.html" /><link rel="prev" title="pertpy.plot.milo.nhood_counts_by_cond" href="pertpy.plot.milo.nhood_counts_by_cond.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>pertpy.plot.coda.stacked_barplot - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
@@ -179,7 +179,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -259,7 +258,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
@@ -299,10 +298,10 @@
         </div>
         <article role="main">
           <section id="pertpy-plot-coda-stacked-barplot">
-<h1>pertpy.plot.coda.stacked_barplot<a class="headerlink" href="#pertpy-plot-coda-stacked-barplot" title="Permalink to this heading">#</a></h1>
+<h1>pertpy.plot.coda.stacked_barplot<a class="headerlink" href="#pertpy-plot-coda-stacked-barplot" title="Link to this heading">#</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.plot.coda.stacked_barplot">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">coda.</span></span><span class="sig-name descname"><span class="pre">stacked_barplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key='coda'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap=&lt;matplotlib.colors.ListedColormap</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_legend=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_order=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.plot.coda.stacked_barplot" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">coda.</span></span><span class="sig-name descname"><span class="pre">stacked_barplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modality_key='coda'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap=&lt;matplotlib.colors.ListedColormap</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_legend=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_order=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.plot.coda.stacked_barplot" title="Link to this definition">#</a></dt>
 <dd><p>Plots a stacked barplot for all levels of a covariate or all samples (if feature_name==”samples”).</p>
 <p>Usage: plot_feature_stackbars(data, [“cov1”, “cov2”, “cov3”])</p>
 <dl class="field-list simple">
@@ -311,11 +310,11 @@
 <li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MuData</span></code>]) – AnnData object or MuData object.</p></li>
 <li><p><strong>feature_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The name of the covariate to plot. If feature_name==”samples”, one bar for every sample will be plotted</p></li>
 <li><p><strong>modality_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – If data is a MuData object, specify which modality to use. Defaults to “coda”.</p></li>
-<li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – Figure size. Defaults to None.</p></li>
+<li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]) – Figure size. Defaults to None.</p></li>
 <li><p><strong>dpi</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Dpi setting. Defaults to 100.</p></li>
 <li><p><strong>cmap</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.colors.ListedColormap.html#matplotlib.colors.ListedColormap" title="(in Matplotlib v3.7.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ListedColormap</span></code></a>]) – The matplotlib color map for the barplot. Defaults to cm.tab20.</p></li>
 <li><p><strong>show_legend</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]) – If True, adds a legend. Defaults to True.</p></li>
-<li><p><strong>level_order</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – Custom ordering of bars on the x-axis. Defaults to None.</p></li>
+<li><p><strong>level_order</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – Custom ordering of bars on the x-axis. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -396,9 +395,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>

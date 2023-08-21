@@ -1,11 +1,11 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="pertpy.data.adamson_2016_pilot" href="data/pertpy.data.adamson_2016_pilot.html" /><link rel="prev" title="Installation" href="../installation.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>Usage - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
@@ -179,7 +179,6 @@
 <li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -259,7 +258,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
@@ -299,7 +298,7 @@
         </div>
         <article role="main">
           <section class="tex2jax_ignore mathjax_ignore" id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h1>
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading">#</a></h1>
 <p>Import the pertpy API as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
 </pre></div>
@@ -308,8 +307,8 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pt</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">cool_fancy_plot</span><span class="p">()</span>
 </pre></div>
 </div>
-<section id="data">
-<h2>Data<a class="headerlink" href="#data" title="Permalink to this heading">#</a></h2>
+<section id="datasets">
+<h2>Datasets<a class="headerlink" href="#datasets" title="Link to this heading">#</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -320,7 +319,7 @@
 <td><p>15000 K562 cells with UPR sensor genes knocked out and treated with thapsigargin.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.adamson_2016_upr_perturb_seq.html#pertpy.data.adamson_2016_upr_perturb_seq" title="pertpy.data.adamson_2016_upr_perturb_seq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.adamson_2016_upr_perturb_seq</span></code></a>()</p></td>
-<td><p>Transcriptomics of 65000 cells that were subject to 91 sgRNAs targeting 82 genes.</p></td>
+<td><p>Transcriptomics measurements of 65000 cells that were subject to 91 sgRNAs targeting 82 genes.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.aissa_2021.html#pertpy.data.aissa_2021" title="pertpy.data.aissa_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.aissa_2021</span></code></a>()</p></td>
 <td><p>Transcriptomics of 848 P99 cells subject to consecutive erlotinib and 756 control cells.</p></td>
@@ -335,13 +334,13 @@
 <td><p>Transcriptomics of 5 different cell lines that were induced with a unique TraCe-seq barcode.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.datlinger_2017.html#pertpy.data.datlinger_2017" title="pertpy.data.datlinger_2017"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.datlinger_2017</span></code></a>()</p></td>
-<td><p>Transcriptpmics of 5905 Jurkat cells induced with anti-CD3 and anti-CD28 antibodies.</p></td>
+<td><p>Transcriptomics measurements of 5905 Jurkat cells induced with anti-CD3 and anti-CD28 antibodies.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.datlinger_2021.html#pertpy.data.datlinger_2021" title="pertpy.data.datlinger_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.datlinger_2021</span></code></a>()</p></td>
-<td><p>Transcriptomics of 151788 nuclei of four cell lines.</p></td>
+<td><p>Transcriptomics measurements of 151788 nuclei of four cell lines.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.dialogue_example.html#pertpy.data.dialogue_example" title="pertpy.data.dialogue_example"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.dialogue_example</span></code></a>()</p></td>
-<td><p>Example dataset used to feature DIALOGUE.</p></td>
+<td><p>Example dataset used in DIALOGUE vignettes.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.dixit_2016.html#pertpy.data.dixit_2016" title="pertpy.data.dixit_2016"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.dixit_2016</span></code></a>()</p></td>
 <td><p>Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.</p></td>
@@ -349,115 +348,112 @@
 <tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.dixit_2016_raw.html#pertpy.data.dixit_2016_raw" title="pertpy.data.dixit_2016_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.dixit_2016_raw</span></code></a>()</p></td>
 <td><p>Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.dixit_2016_scperturb.html#pertpy.data.dixit_2016_scperturb" title="pertpy.data.dixit_2016_scperturb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.dixit_2016_scperturb</span></code></a>()</p></td>
-<td><p>Transcriptomics of 200000 bone marrow-derived dendritic K562 cells.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021.html#pertpy.data.frangieh_2021" title="pertpy.data.frangieh_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021.html#pertpy.data.frangieh_2021" title="pertpy.data.frangieh_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021</span></code></a>()</p></td>
 <td><p>Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021_protein.html#pertpy.data.frangieh_2021_protein" title="pertpy.data.frangieh_2021_protein"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021_protein</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021_protein.html#pertpy.data.frangieh_2021_protein" title="pertpy.data.frangieh_2021_protein"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021_protein</span></code></a>()</p></td>
 <td><p>CITE-seq data of 218000 cells under 750 perturbations (only the surface protein data).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021_raw.html#pertpy.data.frangieh_2021_raw" title="pertpy.data.frangieh_2021_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021_raw</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021_raw.html#pertpy.data.frangieh_2021_raw" title="pertpy.data.frangieh_2021_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021_raw</span></code></a>()</p></td>
 <td><p>Raw Perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling readout.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021_rna.html#pertpy.data.frangieh_2021_rna" title="pertpy.data.frangieh_2021_rna"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021_rna</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.frangieh_2021_rna.html#pertpy.data.frangieh_2021_rna" title="pertpy.data.frangieh_2021_rna"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.frangieh_2021_rna</span></code></a>()</p></td>
 <td><p>CITE-seq data of 218000 cells under 750 perturbations (only the transcriptomics data).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.gasperini_2019_atscale.html#pertpy.data.gasperini_2019_atscale" title="pertpy.data.gasperini_2019_atscale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gasperini_2019_atscale</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.gasperini_2019_atscale.html#pertpy.data.gasperini_2019_atscale" title="pertpy.data.gasperini_2019_atscale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gasperini_2019_atscale</span></code></a>()</p></td>
 <td><p>Transcriptomics of 254974 cells of chronic K562 cells with CRISPRi perturbations.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.gasperini_2019_highmoi.html#pertpy.data.gasperini_2019_highmoi" title="pertpy.data.gasperini_2019_highmoi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gasperini_2019_highmoi</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.gasperini_2019_highmoi.html#pertpy.data.gasperini_2019_highmoi" title="pertpy.data.gasperini_2019_highmoi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gasperini_2019_highmoi</span></code></a>()</p></td>
 <td><p>K562 perturbed cells with 1119 candidate enhancers (only the high MOI part).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.gasperini_2019_lowmoi.html#pertpy.data.gasperini_2019_lowmoi" title="pertpy.data.gasperini_2019_lowmoi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gasperini_2019_lowmoi</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.gasperini_2019_lowmoi.html#pertpy.data.gasperini_2019_lowmoi" title="pertpy.data.gasperini_2019_lowmoi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gasperini_2019_lowmoi</span></code></a>()</p></td>
 <td><p>K562 perturbed cells with 1119 candidate enhancers (only the low MOI part).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.gehring_2019.html#pertpy.data.gehring_2019" title="pertpy.data.gehring_2019"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gehring_2019</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.gehring_2019.html#pertpy.data.gehring_2019" title="pertpy.data.gehring_2019"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.gehring_2019</span></code></a>()</p></td>
 <td><p>96-plex perturbation experiment on live mouse neural stem cells.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.haber_2017_regions.html#pertpy.data.haber_2017_regions" title="pertpy.data.haber_2017_regions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.haber_2017_regions</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.haber_2017_regions.html#pertpy.data.haber_2017_regions" title="pertpy.data.haber_2017_regions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.haber_2017_regions</span></code></a>()</p></td>
 <td><p>Raw single-cell, pooled CRISPR screening.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.kang_2018.html#pertpy.data.kang_2018" title="pertpy.data.kang_2018"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.kang_2018</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.kang_2018.html#pertpy.data.kang_2018" title="pertpy.data.kang_2018"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.kang_2018</span></code></a>()</p></td>
 <td><p>Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.mcfarland_2020.html#pertpy.data.mcfarland_2020" title="pertpy.data.mcfarland_2020"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.mcfarland_2020</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.mcfarland_2020.html#pertpy.data.mcfarland_2020" title="pertpy.data.mcfarland_2020"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.mcfarland_2020</span></code></a>()</p></td>
 <td><p>Response of various cell lines to a range of different drugs and CRISPRi perturbations.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.norman_2019.html#pertpy.data.norman_2019" title="pertpy.data.norman_2019"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.norman_2019</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.norman_2019.html#pertpy.data.norman_2019" title="pertpy.data.norman_2019"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.norman_2019</span></code></a>()</p></td>
 <td><p>Processed single-cell, pooled CRISPR screening.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.norman_2019_raw.html#pertpy.data.norman_2019_raw" title="pertpy.data.norman_2019_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.norman_2019_raw</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.norman_2019_raw.html#pertpy.data.norman_2019_raw" title="pertpy.data.norman_2019_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.norman_2019_raw</span></code></a>()</p></td>
 <td><p>Raw single-cell, pooled CRISPR screening.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.papalexi_2021.html#pertpy.data.papalexi_2021" title="pertpy.data.papalexi_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.papalexi_2021</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.papalexi_2021.html#pertpy.data.papalexi_2021" title="pertpy.data.papalexi_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.papalexi_2021</span></code></a>()</p></td>
 <td><p>ECCITE-seq dataset of 11 gRNAs generated from stimulated THP-1 cell line.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.replogle_2022_k562_essential.html#pertpy.data.replogle_2022_k562_essential" title="pertpy.data.replogle_2022_k562_essential"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.replogle_2022_k562_essential</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.replogle_2022_k562_essential.html#pertpy.data.replogle_2022_k562_essential" title="pertpy.data.replogle_2022_k562_essential"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.replogle_2022_k562_essential</span></code></a>()</p></td>
 <td><p>K562 cells transduced with CRISPRi (day 7 after transduction).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.replogle_2022_k562_gwps.html#pertpy.data.replogle_2022_k562_gwps" title="pertpy.data.replogle_2022_k562_gwps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.replogle_2022_k562_gwps</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.replogle_2022_k562_gwps.html#pertpy.data.replogle_2022_k562_gwps" title="pertpy.data.replogle_2022_k562_gwps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.replogle_2022_k562_gwps</span></code></a>()</p></td>
 <td><p>K562 cells transduced with CRISPRi (day 8 after transcduction).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.replogle_2022_rpe1.html#pertpy.data.replogle_2022_rpe1" title="pertpy.data.replogle_2022_rpe1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.replogle_2022_rpe1</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.replogle_2022_rpe1.html#pertpy.data.replogle_2022_rpe1" title="pertpy.data.replogle_2022_rpe1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.replogle_2022_rpe1</span></code></a>()</p></td>
 <td><p>RPE1 cells transduced with CRISPRi (day 7 after transcduction).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.sc_sim_augur.html#pertpy.data.sc_sim_augur" title="pertpy.data.sc_sim_augur"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.sc_sim_augur</span></code></a>()</p></td>
-<td><p>Simulated test dataset used the usage example for the Augur.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.sc_sim_augur.html#pertpy.data.sc_sim_augur" title="pertpy.data.sc_sim_augur"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.sc_sim_augur</span></code></a>()</p></td>
+<td><p>Simulated test dataset used in Augur example vignettes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.schiebinger_2019_16day.html#pertpy.data.schiebinger_2019_16day" title="pertpy.data.schiebinger_2019_16day"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schiebinger_2019_16day</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.schiebinger_2019_16day.html#pertpy.data.schiebinger_2019_16day" title="pertpy.data.schiebinger_2019_16day"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schiebinger_2019_16day</span></code></a>()</p></td>
 <td><p>Transcriptomes of 65781 iPSC cells collected over 10 time points in 2i or serum conditions (16-day time course).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.schiebinger_2019_18day.html#pertpy.data.schiebinger_2019_18day" title="pertpy.data.schiebinger_2019_18day"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schiebinger_2019_18day</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.schiebinger_2019_18day.html#pertpy.data.schiebinger_2019_18day" title="pertpy.data.schiebinger_2019_18day"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schiebinger_2019_18day</span></code></a>()</p></td>
 <td><p>Transcriptomes of 259155 iPSC cells collected over 39 time points in 2i or serum conditions (18-day time course).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.schraivogel_2020_tap_screen_chr8.html#pertpy.data.schraivogel_2020_tap_screen_chr8" title="pertpy.data.schraivogel_2020_tap_screen_chr8"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schraivogel_2020_tap_screen_chr8</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.schraivogel_2020_tap_screen_chr8.html#pertpy.data.schraivogel_2020_tap_screen_chr8" title="pertpy.data.schraivogel_2020_tap_screen_chr8"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schraivogel_2020_tap_screen_chr8</span></code></a>()</p></td>
 <td><p>TAP-seq applied to K562 cells (only chromosome 8).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.schraivogel_2020_tap_screen_chr11.html#pertpy.data.schraivogel_2020_tap_screen_chr11" title="pertpy.data.schraivogel_2020_tap_screen_chr11"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schraivogel_2020_tap_screen_chr11</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.schraivogel_2020_tap_screen_chr11.html#pertpy.data.schraivogel_2020_tap_screen_chr11" title="pertpy.data.schraivogel_2020_tap_screen_chr11"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.schraivogel_2020_tap_screen_chr11</span></code></a>()</p></td>
 <td><p>TAP-seq applied to K562 cells (only chromosome 11).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.sciplex3_raw.html#pertpy.data.sciplex3_raw" title="pertpy.data.sciplex3_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.sciplex3_raw</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.sciplex3_raw.html#pertpy.data.sciplex3_raw" title="pertpy.data.sciplex3_raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.sciplex3_raw</span></code></a>()</p></td>
 <td><p>Raw sciplex3 perturbation dataset curated for perturbation modeling.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.shifrut_2018.html#pertpy.data.shifrut_2018" title="pertpy.data.shifrut_2018"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.shifrut_2018</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.shifrut_2018.html#pertpy.data.shifrut_2018" title="pertpy.data.shifrut_2018"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.shifrut_2018</span></code></a>()</p></td>
 <td><p>CD8 T-cells from two donors for two conditions (SLICE and CROP-seq).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.smillie.html#pertpy.data.smillie" title="pertpy.data.smillie"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.smillie</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.smillie.html#pertpy.data.smillie" title="pertpy.data.smillie"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.smillie</span></code></a>()</p></td>
 <td><p>scRNA-seq data of the small intestine of mice under Ulcerative Colitis.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.srivatsan_2020_sciplex2.html#pertpy.data.srivatsan_2020_sciplex2" title="pertpy.data.srivatsan_2020_sciplex2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.srivatsan_2020_sciplex2</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.srivatsan_2020_sciplex2.html#pertpy.data.srivatsan_2020_sciplex2" title="pertpy.data.srivatsan_2020_sciplex2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.srivatsan_2020_sciplex2</span></code></a>()</p></td>
 <td><p>A549 cells exposed to four compounds.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.srivatsan_2020_sciplex3.html#pertpy.data.srivatsan_2020_sciplex3" title="pertpy.data.srivatsan_2020_sciplex3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.srivatsan_2020_sciplex3</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.srivatsan_2020_sciplex3.html#pertpy.data.srivatsan_2020_sciplex3" title="pertpy.data.srivatsan_2020_sciplex3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.srivatsan_2020_sciplex3</span></code></a>()</p></td>
 <td><p>Transcriptomes of 650000 A549, K562, and mCF7 cells exposed to 188 compounds.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.srivatsan_2020_sciplex4.html#pertpy.data.srivatsan_2020_sciplex4" title="pertpy.data.srivatsan_2020_sciplex4"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.srivatsan_2020_sciplex4</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.srivatsan_2020_sciplex4.html#pertpy.data.srivatsan_2020_sciplex4" title="pertpy.data.srivatsan_2020_sciplex4"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.srivatsan_2020_sciplex4</span></code></a>()</p></td>
 <td><p>A549 and MCF7 cells treated with pracinostat.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.stephenson_2021_subsampled.html#pertpy.data.stephenson_2021_subsampled" title="pertpy.data.stephenson_2021_subsampled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.stephenson_2021_subsampled</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.stephenson_2021_subsampled.html#pertpy.data.stephenson_2021_subsampled" title="pertpy.data.stephenson_2021_subsampled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.stephenson_2021_subsampled</span></code></a>()</p></td>
 <td><p>Processed 10X 5' scRNA-seq data from PBMC of COVID-19 patients and healthy donors</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.tian_2019_day7neuron.html#pertpy.data.tian_2019_day7neuron" title="pertpy.data.tian_2019_day7neuron"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2019_day7neuron</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.tian_2019_day7neuron.html#pertpy.data.tian_2019_day7neuron" title="pertpy.data.tian_2019_day7neuron"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2019_day7neuron</span></code></a>()</p></td>
 <td><p>Transcriptomes of 20000 day 7 neurons targeted by 58 gRNAs.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.tian_2019_ipsc.html#pertpy.data.tian_2019_ipsc" title="pertpy.data.tian_2019_ipsc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2019_ipsc</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.tian_2019_ipsc.html#pertpy.data.tian_2019_ipsc" title="pertpy.data.tian_2019_ipsc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2019_ipsc</span></code></a>()</p></td>
 <td><p>Transcriptomics of 20000 iPSCs targeted by 58 sgRNAs.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.tian_2021_crispra.html#pertpy.data.tian_2021_crispra" title="pertpy.data.tian_2021_crispra"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2021_crispra</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.tian_2021_crispra.html#pertpy.data.tian_2021_crispra" title="pertpy.data.tian_2021_crispra"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2021_crispra</span></code></a>()</p></td>
 <td><p>CROP-seq of 50000 neurons treated with 374 gRNAs (CRISPRa only).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.tian_2021_crispri.html#pertpy.data.tian_2021_crispri" title="pertpy.data.tian_2021_crispri"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2021_crispri</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.tian_2021_crispri.html#pertpy.data.tian_2021_crispri" title="pertpy.data.tian_2021_crispri"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.tian_2021_crispri</span></code></a>()</p></td>
 <td><p>CROP-seq of 98000 neurons treated with 374 gRNAs (CRISPRi only).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.weinreb_2020.html#pertpy.data.weinreb_2020" title="pertpy.data.weinreb_2020"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.weinreb_2020</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.weinreb_2020.html#pertpy.data.weinreb_2020" title="pertpy.data.weinreb_2020"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.weinreb_2020</span></code></a>()</p></td>
 <td><p>Mouse embryonic stem cells under different cytokines across time.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.xie_2017.html#pertpy.data.xie_2017" title="pertpy.data.xie_2017"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.xie_2017</span></code></a>()</p></td>
-<td><p>Transcriptomics of 51448 cells generated with Mosaic-seq.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.xie_2017.html#pertpy.data.xie_2017" title="pertpy.data.xie_2017"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.xie_2017</span></code></a>()</p></td>
+<td><p>Single-cell transcriptomics of 51448 cells generated with Mosaic-seq.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="data/pertpy.data.zhao_2021.html#pertpy.data.zhao_2021" title="pertpy.data.zhao_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.zhao_2021</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="data/pertpy.data.zhao_2021.html#pertpy.data.zhao_2021" title="pertpy.data.zhao_2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data.zhao_2021</span></code></a>()</p></td>
 <td><p>Multiplexed drug perturbation from freshly resected tumors.</p></td>
 </tr>
 </tbody>
@@ -465,9 +461,9 @@
 </div>
 </section>
 <section id="preprocessing">
-<h2>Preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this heading">#</a></h2>
+<h2>Preprocessing<a class="headerlink" href="#preprocessing" title="Link to this heading">#</a></h2>
 <section id="guide-assignment">
-<h3>Guide Assignment<a class="headerlink" href="#guide-assignment" title="Permalink to this heading">#</a></h3>
+<h3>Guide Assignment<a class="headerlink" href="#guide-assignment" title="Link to this heading">#</a></h3>
 <p>Simple functions for:</p>
 <p>Assigning guides based on thresholds. Each cell is assigned to the most expressed gRNA if it has at least the specified number of counts.</p>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -484,24 +480,24 @@
 <span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
 
 <span class="n">mdata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">papalexi_2021</span><span class="p">()</span>
-<span class="n">gdo</span> <span class="o">=</span> <span class="n">mdata</span><span class="o">.</span><span class="n">mod</span><span class="p">[</span><span class="s1">&#39;gdo&#39;</span><span class="p">]</span>
-<span class="n">gdo</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s1">&#39;counts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdo</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">gdo</span> <span class="o">=</span> <span class="n">mdata</span><span class="o">.</span><span class="n">mod</span><span class="p">[</span><span class="s2">&quot;gdo&quot;</span><span class="p">]</span>
+<span class="n">gdo</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s2">&quot;counts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdo</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 <span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">gdo</span><span class="p">)</span>
 
 <span class="n">ga</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">GuideAssignment</span><span class="p">()</span>
 <span class="n">ga</span><span class="o">.</span><span class="n">assign_by_threshold</span><span class="p">(</span><span class="n">gdo</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;counts&quot;</span><span class="p">,</span> <span class="n">output_layer</span><span class="o">=</span><span class="s2">&quot;assigned_guides&quot;</span><span class="p">)</span>
 
-<span class="n">pt</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">guide</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">gdo</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s1">&#39;assigned_guides&#39;</span><span class="p">)</span>
+<span class="n">pt</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">guide</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">gdo</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;assigned_guides&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="tools">
-<h2>Tools<a class="headerlink" href="#tools" title="Permalink to this heading">#</a></h2>
+<h2>Tools<a class="headerlink" href="#tools" title="Link to this heading">#</a></h2>
 <section id="pooled-crispr-screens">
-<h3>Pooled CRISPR screens<a class="headerlink" href="#pooled-crispr-screens" title="Permalink to this heading">#</a></h3>
+<h3>Pooled CRISPR screens<a class="headerlink" href="#pooled-crispr-screens" title="Link to this heading">#</a></h3>
 <section id="mixscape">
-<h4>Mixscape<a class="headerlink" href="#mixscape" title="Permalink to this heading">#</a></h4>
+<h4>Mixscape<a class="headerlink" href="#mixscape" title="Link to this heading">#</a></h4>
 <p>A Python implementation of <a class="reference external" href="https://satijalab.org/seurat/articles/mixscape_vignette.html">Mixscape</a>
 Papalexi et al. <a class="reference external" href="https://www.nature.com/articles/s41588-021-00778-2">Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens</a>.</p>
 <p>Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
@@ -521,19 +517,19 @@ Finally, it visualizes similarities and differences across different perturbatio
 
 <span class="n">mdata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">papalexi_2021</span><span class="p">()</span>
 <span class="n">ms</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Mixscape</span><span class="p">()</span>
-<span class="n">ms</span><span class="o">.</span><span class="n">perturbation_signature</span><span class="p">(</span><span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">],</span> <span class="s1">&#39;perturbation&#39;</span><span class="p">,</span> <span class="s1">&#39;NT&#39;</span><span class="p">,</span> <span class="s1">&#39;replicate&#39;</span><span class="p">)</span>
-<span class="n">ms</span><span class="o">.</span><span class="n">mixscape</span><span class="p">(</span><span class="n">adata</span><span class="o">=</span><span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">],</span> <span class="n">control</span><span class="o">=</span><span class="s1">&#39;NT&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;gene_target&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s1">&#39;X_pert&#39;</span><span class="p">)</span>
-<span class="n">ms</span><span class="o">.</span><span class="n">lda</span><span class="p">(</span><span class="n">adata</span><span class="o">=</span><span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;gene_target&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s1">&#39;X_pert&#39;</span><span class="p">)</span>
-<span class="n">pt</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">ms</span><span class="o">.</span><span class="n">lda</span><span class="p">(</span><span class="n">adata</span><span class="o">=</span><span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">])</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">perturbation_signature</span><span class="p">(</span><span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">],</span> <span class="s2">&quot;perturbation&quot;</span><span class="p">,</span> <span class="s2">&quot;NT&quot;</span><span class="p">,</span> <span class="s2">&quot;replicate&quot;</span><span class="p">)</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">mixscape</span><span class="p">(</span><span class="n">adata</span><span class="o">=</span><span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">],</span> <span class="n">control</span><span class="o">=</span><span class="s2">&quot;NT&quot;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="s2">&quot;gene_target&quot;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;X_pert&quot;</span><span class="p">)</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">lda</span><span class="p">(</span><span class="n">adata</span><span class="o">=</span><span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="s2">&quot;gene_target&quot;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;X_pert&quot;</span><span class="p">)</span>
+<span class="n">pt</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">ms</span><span class="o">.</span><span class="n">lda</span><span class="p">(</span><span class="n">adata</span><span class="o">=</span><span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html">mixscape tutorial</a> for a more elaborate tutorial.</p>
 </section>
 </section>
 <section id="compositional-analysis">
-<h3>Compositional analysis<a class="headerlink" href="#compositional-analysis" title="Permalink to this heading">#</a></h3>
+<h3>Compositional analysis<a class="headerlink" href="#compositional-analysis" title="Link to this heading">#</a></h3>
 <section id="milo">
-<h4>Milo<a class="headerlink" href="#milo" title="Permalink to this heading">#</a></h4>
+<h4>Milo<a class="headerlink" href="#milo" title="Link to this heading">#</a></h4>
 <p>A Python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scverse pipelines for single-cell analysis.
 See <a class="reference external" href="https://www.nature.com/articles/s41587-021-01033-z">Differential abundance testing on single-cell data using k-nearest neighbor graphs</a> for details on the statistical framework.</p>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -551,22 +547,24 @@ See <a class="reference external" href="https://www.nature.com/articles/s41587-0
 <span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
 
 <span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">stephenson_2021_subsampled</span><span class="p">()</span>
-<span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;COVID_severity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;Status_on_day_collection_summary&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[[</span><span class="s1">&#39;patient_id&#39;</span><span class="p">,</span> <span class="s1">&#39;COVID_severity&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
-<span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;Status&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;LPS&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;COVID_severity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;Status_on_day_collection_summary&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[[</span><span class="s2">&quot;patient_id&quot;</span><span class="p">,</span> <span class="s2">&quot;COVID_severity&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+<span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;Status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;LPS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 <span class="n">milo</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Milo</span><span class="p">()</span>
 <span class="n">mdata</span> <span class="o">=</span> <span class="n">milo</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
-<span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">neighbors</span><span class="p">(</span><span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">],</span> <span class="n">use_rep</span><span class="o">=</span><span class="s1">&#39;X_scVI&#39;</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">n_pcs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">milo</span><span class="o">.</span><span class="n">make_nhoods</span><span class="p">(</span><span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">],</span> <span class="n">prop</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">neighbors</span><span class="p">(</span><span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">],</span> <span class="n">use_rep</span><span class="o">=</span><span class="s2">&quot;X_scVI&quot;</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">n_pcs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">milo</span><span class="o">.</span><span class="n">make_nhoods</span><span class="p">(</span><span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">],</span> <span class="n">prop</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="n">mdata</span> <span class="o">=</span> <span class="n">milo</span><span class="o">.</span><span class="n">count_nhoods</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">sample_col</span><span class="o">=</span><span class="s2">&quot;patient_id&quot;</span><span class="p">)</span>
-<span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;Status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mdata</span><span class="p">[</span><span class="s1">&#39;rna&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;Status&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">reorder_categories</span><span class="p">([</span><span class="s1">&#39;Healthy&#39;</span><span class="p">,</span> <span class="s1">&#39;Covid&#39;</span><span class="p">])</span>
-<span class="n">milo</span><span class="o">.</span><span class="n">da_nhoods</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="s1">&#39;~Status&#39;</span><span class="p">)</span>
+<span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;Status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">mdata</span><span class="p">[</span><span class="s2">&quot;rna&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;Status&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">reorder_categories</span><span class="p">([</span><span class="s2">&quot;Healthy&quot;</span><span class="p">,</span> <span class="s2">&quot;Covid&quot;</span><span class="p">])</span>
+<span class="p">)</span>
+<span class="n">milo</span><span class="o">.</span><span class="n">da_nhoods</span><span class="p">(</span><span class="n">mdata</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="s2">&quot;~Status&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="sccoda-and-tasccoda">
-<h4>scCODA and tascCODA<a class="headerlink" href="#sccoda-and-tasccoda" title="Permalink to this heading">#</a></h4>
+<h4>scCODA and tascCODA<a class="headerlink" href="#sccoda-and-tasccoda" title="Link to this heading">#</a></h4>
 <p>Reimplementation of scCODA for identification of compositional changes in high-throughput sequencing count data and tascCODA for sparse, tree-aggregated modeling of high-throughput sequencing data.
 See <a class="reference external" href="https://www.nature.com/articles/s41467-021-27150-6">scCODA is a Bayesian model for compositional single-cell data analysis</a> for statistical methodology and benchmarking performance of scCODA and <a class="reference external" href="https://www.frontiersin.org/articles/10.3389/fgene.2021.766405/full">tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data</a> for statistical methodology and benchmarking performance of tascCODA.</p>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -586,26 +584,37 @@ See <a class="reference external" href="https://www.nature.com/articles/s41467-0
 
 <span class="n">haber_cells</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">haber_2017_regions</span><span class="p">()</span>
 <span class="n">sccoda_model</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Sccoda</span><span class="p">()</span>
-<span class="n">sccoda_data</span> <span class="o">=</span> <span class="n">sccoda_model</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">haber_cells</span><span class="p">,</span>
-                                <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cell_level&quot;</span><span class="p">,</span>
-                                <span class="n">generate_sample_level</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                <span class="n">cell_type_identifier</span><span class="o">=</span><span class="s2">&quot;cell_label&quot;</span><span class="p">,</span>
-                                <span class="n">sample_identifier</span><span class="o">=</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span>
-                                <span class="n">covariate_obs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">])</span>
-<span class="n">sccoda_data</span><span class="o">.</span><span class="n">mod</span><span class="p">[</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sccoda_data</span><span class="p">[</span><span class="s2">&quot;coda&quot;</span><span class="p">][</span><span class="n">sccoda_data</span><span class="p">[</span><span class="s2">&quot;coda&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;Control&quot;</span><span class="p">,</span> <span class="s2">&quot;Salmonella&quot;</span><span class="p">])]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">sccoda_data</span> <span class="o">=</span> <span class="n">sccoda_model</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">haber_cells</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cell_level&quot;</span><span class="p">,</span>
+    <span class="n">generate_sample_level</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">cell_type_identifier</span><span class="o">=</span><span class="s2">&quot;cell_label&quot;</span><span class="p">,</span>
+    <span class="n">sample_identifier</span><span class="o">=</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span>
+    <span class="n">covariate_obs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">sccoda_data</span><span class="o">.</span><span class="n">mod</span><span class="p">[</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sccoda_data</span><span class="p">[</span><span class="s2">&quot;coda&quot;</span><span class="p">][</span>
+    <span class="n">sccoda_data</span><span class="p">[</span><span class="s2">&quot;coda&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;Control&quot;</span><span class="p">,</span> <span class="s2">&quot;Salmonella&quot;</span><span class="p">])</span>
+<span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-<span class="n">sccoda_data</span> <span class="o">=</span> <span class="n">sccoda_model</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">sccoda_data</span><span class="p">,</span> <span class="n">modality_key</span><span class="o">=</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;condition&quot;</span><span class="p">,</span> <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;Goblet&quot;</span><span class="p">)</span>
+<span class="n">sccoda_data</span> <span class="o">=</span> <span class="n">sccoda_model</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+    <span class="n">sccoda_data</span><span class="p">,</span>
+    <span class="n">modality_key</span><span class="o">=</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">,</span>
+    <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;condition&quot;</span><span class="p">,</span>
+    <span class="n">reference_cell_type</span><span class="o">=</span><span class="s2">&quot;Goblet&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">sccoda_model</span><span class="o">.</span><span class="n">run_nuts</span><span class="p">(</span><span class="n">sccoda_data</span><span class="p">,</span> <span class="n">modality_key</span><span class="o">=</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">)</span>
 <span class="n">sccoda_model</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">sccoda_data</span><span class="p">,</span> <span class="n">modality_key</span><span class="o">=</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">)</span>
-<span class="n">pt</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">coda</span><span class="o">.</span><span class="n">effects_barplot</span><span class="p">(</span><span class="n">sccoda_data</span><span class="p">,</span> <span class="n">modality_key</span><span class="o">=</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;Final Parameter&quot;</span><span class="p">)</span>
+<span class="n">pt</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">coda</span><span class="o">.</span><span class="n">effects_barplot</span><span class="p">(</span>
+    <span class="n">sccoda_data</span><span class="p">,</span> <span class="n">modality_key</span><span class="o">=</span><span class="s2">&quot;coda_salm&quot;</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;Final Parameter&quot;</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="multi-cellular-or-gene-programs">
-<h3>Multi-cellular or gene programs<a class="headerlink" href="#multi-cellular-or-gene-programs" title="Permalink to this heading">#</a></h3>
+<h3>Multi-cellular or gene programs<a class="headerlink" href="#multi-cellular-or-gene-programs" title="Link to this heading">#</a></h3>
 <section id="dialogue">
-<h4>DIALOGUE<a class="headerlink" href="#dialogue" title="Permalink to this heading">#</a></h4>
+<h4>DIALOGUE<a class="headerlink" href="#dialogue" title="Link to this heading">#</a></h4>
 <p>A <strong>work in progress (!)</strong> Python implementation of DIALOGUE for the discovery of multicellular programs.
 See <a class="reference external" href="https://www.nature.com/articles/s41587-022-01288-0">DIALOGUE maps multicellular programs in tissue from single-cell or spatial transcriptomics data</a> for more details on the methodology.</p>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -627,26 +636,25 @@ See <a class="reference external" href="https://www.nature.com/articles/s41587-0
 <span class="n">sc</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
 
 
-
-<span class="n">dl</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Dialogue</span><span class="p">(</span><span class="n">sample_id</span> <span class="o">=</span> <span class="s2">&quot;clinical.status&quot;</span><span class="p">,</span>
-                   <span class="n">celltype_key</span> <span class="o">=</span> <span class="s2">&quot;cell.subtypes&quot;</span><span class="p">,</span>
-                   <span class="n">n_counts_key</span> <span class="o">=</span> <span class="s2">&quot;nCount_RNA&quot;</span><span class="p">,</span>
-                   <span class="n">n_mpcs</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">adata</span><span class="p">,</span> <span class="n">mcps</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">ct_subs</span> <span class="o">=</span> <span class="n">dl</span><span class="o">.</span><span class="n">calculate_multifactor_PMD</span><span class="p">(</span>
-    <span class="n">adata</span><span class="p">,</span>
-    <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span>
+<span class="n">dl</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Dialogue</span><span class="p">(</span>
+    <span class="n">sample_id</span><span class="o">=</span><span class="s2">&quot;clinical.status&quot;</span><span class="p">,</span>
+    <span class="n">celltype_key</span><span class="o">=</span><span class="s2">&quot;cell.subtypes&quot;</span><span class="p">,</span>
+    <span class="n">n_counts_key</span><span class="o">=</span><span class="s2">&quot;nCount_RNA&quot;</span><span class="p">,</span>
+    <span class="n">n_mpcs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">all_results</span><span class="p">,</span> <span class="n">new_mcps</span> <span class="o">=</span> <span class="n">dl</span><span class="o">.</span><span class="n">multilevel_modeling</span><span class="p">(</span><span class="n">ct_subs</span><span class="o">=</span><span class="n">ct_subs</span><span class="p">,</span>
-                                     <span class="n">mcp_scores</span><span class="o">=</span><span class="n">mcps</span><span class="p">,</span>
-                                     <span class="n">ws_dict</span><span class="o">=</span><span class="n">ws</span><span class="p">,</span>
-                                     <span class="n">confounder</span><span class="o">=</span><span class="s2">&quot;gender&quot;</span><span class="p">,</span>
-                                   <span class="p">)</span>
+<span class="n">adata</span><span class="p">,</span> <span class="n">mcps</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">ct_subs</span> <span class="o">=</span> <span class="n">dl</span><span class="o">.</span><span class="n">calculate_multifactor_PMD</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">all_results</span><span class="p">,</span> <span class="n">new_mcps</span> <span class="o">=</span> <span class="n">dl</span><span class="o">.</span><span class="n">multilevel_modeling</span><span class="p">(</span>
+    <span class="n">ct_subs</span><span class="o">=</span><span class="n">ct_subs</span><span class="p">,</span>
+    <span class="n">mcp_scores</span><span class="o">=</span><span class="n">mcps</span><span class="p">,</span>
+    <span class="n">ws_dict</span><span class="o">=</span><span class="n">ws</span><span class="p">,</span>
+    <span class="n">confounder</span><span class="o">=</span><span class="s2">&quot;gender&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="distances-and-permutation-tests">
-<h3>Distances and Permutation Tests<a class="headerlink" href="#distances-and-permutation-tests" title="Permalink to this heading">#</a></h3>
+<h3>Distances and Permutation Tests<a class="headerlink" href="#distances-and-permutation-tests" title="Link to this heading">#</a></h3>
 <p>General purpose functions for distances and permutation tests.
 Reimplements functions from <a class="reference external" href="http://projects.sanderlab.org/scperturb/">scperturb</a> package.</p>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -665,20 +673,22 @@ Reimplements functions from <a class="reference external" href="http://projects.
 and <a class="reference external" href="https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html">Permutation test tutorial</a> for a more elaborate tutorial.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pertpy</span> <span class="k">as</span> <span class="nn">pt</span>
 
-<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">distance_example_data</span><span class="p">()</span>
+<span class="n">adata</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">distance_example</span><span class="p">()</span>
 
 <span class="c1"># Pairwise distances</span>
-<span class="n">distance</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Distance</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;edistance&#39;</span><span class="p">,</span> <span class="n">obsm_key</span><span class="o">=</span><span class="s1">&#39;X_pca&#39;</span><span class="p">)</span>
-<span class="n">pairwise_edistance</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">pairwise</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;perturbation&#39;</span><span class="p">)</span>
+<span class="n">distance</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">Distance</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s2">&quot;edistance&quot;</span><span class="p">,</span> <span class="n">obsm_key</span><span class="o">=</span><span class="s2">&quot;X_pca&quot;</span><span class="p">)</span>
+<span class="n">pairwise_edistance</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">pairwise</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s2">&quot;perturbation&quot;</span><span class="p">)</span>
 
 <span class="c1"># E-test (Permutation test using E-distance)</span>
-<span class="n">etest</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">PermutationTest</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;edistance&#39;</span><span class="p">,</span> <span class="n">obsm_key</span><span class="o">=</span><span class="s1">&#39;X_pca&#39;</span><span class="p">,</span> <span class="n">correction</span><span class="o">=</span><span class="s1">&#39;holm-sidak&#39;</span><span class="p">)</span>
-<span class="n">tab</span> <span class="o">=</span> <span class="n">etest</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;perturbation&#39;</span><span class="p">,</span> <span class="n">contrast</span><span class="o">=</span><span class="s1">&#39;control&#39;</span><span class="p">)</span>
+<span class="n">etest</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">PermutationTest</span><span class="p">(</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;edistance&quot;</span><span class="p">,</span> <span class="n">obsm_key</span><span class="o">=</span><span class="s2">&quot;X_pca&quot;</span><span class="p">,</span> <span class="n">correction</span><span class="o">=</span><span class="s2">&quot;holm-sidak&quot;</span>
+<span class="p">)</span>
+<span class="n">tab</span> <span class="o">=</span> <span class="n">etest</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s2">&quot;perturbation&quot;</span><span class="p">,</span> <span class="n">contrast</span><span class="o">=</span><span class="s2">&quot;control&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="metadata">
-<h3>MetaData<a class="headerlink" href="#metadata" title="Permalink to this heading">#</a></h3>
+<h3>MetaData<a class="headerlink" href="#metadata" title="Link to this heading">#</a></h3>
 <p>MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
 We are currently implementing several sources with more to come.</p>
 <p>CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
@@ -699,9 +709,9 @@ bulk RNA and protein expression data.</p>
 </div>
 </section>
 <section id="response-prediction">
-<h3>Response prediction<a class="headerlink" href="#response-prediction" title="Permalink to this heading">#</a></h3>
+<h3>Response prediction<a class="headerlink" href="#response-prediction" title="Link to this heading">#</a></h3>
 <section id="augur">
-<h4>Augur<a class="headerlink" href="#augur" title="Permalink to this heading">#</a></h4>
+<h4>Augur<a class="headerlink" href="#augur" title="Link to this heading">#</a></h4>
 <p>The Python implementation of <a class="reference external" href="https://github.com/neurorestore/Augur">Augur R package</a>
 Skinnider, M.A., Squair, J.W., Kathe, C. et al. <a class="reference external" href="https://doi.org/10.1038/s41587-020-0605-1">Cell type prioritization in single-cell data</a>. Nat Biotechnol 39, 30–34 (2021).</p>
 <p>Augur aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
@@ -721,7 +731,7 @@ is used as a proxy for how accurate the model is which in turn approximates pert
 <span class="n">adata</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">ag</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
 
 <span class="c1"># metrics for each cell type</span>
-<span class="n">results</span><span class="p">[</span><span class="s1">&#39;summary_metrics&#39;</span><span class="p">]</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;summary_metrics&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augur.html">augur tutorial</a> for a more elaborate tutorial.</p>
@@ -736,7 +746,7 @@ is used as a proxy for how accurate the model is which in turn approximates pert
 </div>
 </section>
 <section id="scgen">
-<h4>scGen<a class="headerlink" href="#scgen" title="Permalink to this heading">#</a></h4>
+<h4>scGen<a class="headerlink" href="#scgen" title="Link to this heading">#</a></h4>
 <p>Reimplementation of scGen for perturbation response prediction of scRNA-seq data in Jax.
 See <a class="reference external" href="https://www.nature.com/articles/s41592-019-0494-8">scGen predicts single-cell perturbation responses</a> for more details.</p>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -753,30 +763,26 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
 
 <span class="n">train</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">kang_2018</span><span class="p">()</span>
 
-<span class="n">train_new</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="o">~</span><span class="p">((</span><span class="n">train</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CD4T&quot;</span><span class="p">)</span> <span class="o">&amp;</span>
-                    <span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;stimulated&quot;</span><span class="p">))]</span>
+<span class="n">train_new</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span>
+    <span class="o">~</span><span class="p">((</span><span class="n">train</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CD4T&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;stimulated&quot;</span><span class="p">))</span>
+<span class="p">]</span>
 <span class="n">train_new</span> <span class="o">=</span> <span class="n">train_new</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">SCGEN</span><span class="o">.</span><span class="n">setup_anndata</span><span class="p">(</span><span class="n">train_new</span><span class="p">,</span> <span class="n">batch_key</span><span class="o">=</span><span class="s2">&quot;condition&quot;</span><span class="p">,</span> <span class="n">labels_key</span><span class="o">=</span><span class="s2">&quot;cell_type&quot;</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">SCGEN</span><span class="p">(</span><span class="n">train_new</span><span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span>
-    <span class="n">max_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span>
-<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">max_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
 
 <span class="n">pred</span><span class="p">,</span> <span class="n">delta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
-    <span class="n">ctrl_key</span><span class="o">=</span><span class="s1">&#39;control&#39;</span><span class="p">,</span>
-    <span class="n">stim_key</span><span class="o">=</span><span class="s1">&#39;stimulated&#39;</span><span class="p">,</span>
-    <span class="n">celltype_to_predict</span><span class="o">=</span><span class="s1">&#39;CD4T&#39;</span>
+    <span class="n">ctrl_key</span><span class="o">=</span><span class="s2">&quot;control&quot;</span><span class="p">,</span> <span class="n">stim_key</span><span class="o">=</span><span class="s2">&quot;stimulated&quot;</span><span class="p">,</span> <span class="n">celltype_to_predict</span><span class="o">=</span><span class="s2">&quot;CD4T&quot;</span>
 <span class="p">)</span>
-<span class="n">pred</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;condition&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pred&#39;</span>
+<span class="n">pred</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;pred&quot;</span>
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html">scgen tutorial</a> for a more elaborate tutorial.</p>
 </section>
 </section>
 <section id="perturbation-space">
-<h3>Perturbation space<a class="headerlink" href="#perturbation-space" title="Permalink to this heading">#</a></h3>
+<h3>Perturbation space<a class="headerlink" href="#perturbation-space" title="Link to this heading">#</a></h3>
 <p>Various modules for calculating and evaluating perturbation spaces.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -809,9 +815,9 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
 </section>
 </section>
 <section id="plots">
-<h2>Plots<a class="headerlink" href="#plots" title="Permalink to this heading">#</a></h2>
+<h2>Plots<a class="headerlink" href="#plots" title="Link to this heading">#</a></h2>
 <section id="id1">
-<h3>Preprocessing<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h3>
+<h3>Preprocessing<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -823,9 +829,9 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
 </div>
 </section>
 <section id="id2">
-<h3>Pooled CRISPR screens<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h3>
+<h3>Pooled CRISPR screens<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
 <section id="id3">
-<h4>Mixscape<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h4>
+<h4>Mixscape<a class="headerlink" href="#id3" title="Link to this heading">#</a></h4>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -850,9 +856,9 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
 </section>
 </section>
 <section id="id4">
-<h3>Compositional analysis<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h3>
+<h3>Compositional analysis<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <section id="id5">
-<h4>Milo<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h4>
+<h4>Milo<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -873,7 +879,7 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
 </div>
 </section>
 <section id="id6">
-<h4>scCODA and tascCODA<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h4>
+<h4>scCODA and tascCODA<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -904,9 +910,9 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
 </section>
 </section>
 <section id="id7">
-<h3>Response prediction<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h3>
+<h3>Response prediction<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
 <section id="id8">
-<h4>Augur<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h4>
+<h4>Augur<a class="headerlink" href="#id8" title="Link to this heading">#</a></h4>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -927,7 +933,7 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
 </div>
 </section>
 <section id="id9">
-<h4>scGen<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h4>
+<h4>scGen<a class="headerlink" href="#id9" title="Link to this heading">#</a></h4>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -1003,7 +1009,7 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Usage</a><ul>
-<li><a class="reference internal" href="#data">Data</a></li>
+<li><a class="reference internal" href="#datasets">Datasets</a></li>
 <li><a class="reference internal" href="#preprocessing">Preprocessing</a><ul>
 <li><a class="reference internal" href="#guide-assignment">Guide Assignment</a></li>
 </ul>
@@ -1061,9 +1067,9 @@ See <a class="reference external" href="https://www.nature.com/articles/s41592-0
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>

@@ -1,12 +1,12 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Contributor Covenant Code of Conduct" href="code_of_conduct.html" /><link rel="prev" title="Tutorials" href="tutorials/index.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
-        <title>Contributor Guide - pertpy</title>
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
+        <title>Contributing guide - pertpy</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -179,7 +179,6 @@
 <li class="toctree-l2"><a class="reference internal" href="usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage/data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage/data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -259,7 +258,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Contributor Guide</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
@@ -298,105 +297,134 @@
           </label>
         </div>
         <article role="main">
-          <section class="tex2jax_ignore mathjax_ignore" id="contributor-guide">
-<h1>Contributor Guide<a class="headerlink" href="#contributor-guide" title="Permalink to this heading">#</a></h1>
-<p>Thank you for your interest in improving this project.
-This project is open-source under the MIT license and
-highly welcomes contributions in the form of bug reports, feature requests, and pull requests.</p>
-<p>Here is a list of important resources for contributors:</p>
+          <section class="tex2jax_ignore mathjax_ignore" id="contributing-guide">
+<h1>Contributing guide<a class="headerlink" href="#contributing-guide" title="Link to this heading">#</a></h1>
+<p>Scanpy provides extensive <a class="reference external" href="https://scanpy.readthedocs.io/en/latest/dev/index.html">developer documentation</a>, most of which applies to this repo, too.
+This document will not reproduce the entire content from there. Instead, it aims at summarizing the most important
+information to get you started on contributing.</p>
+<p>We assume that you are already familiar with git and with making pull requests on GitHub. If not, please refer
+to the <a class="reference external" href="https://scanpy.readthedocs.io/en/latest/dev/index.html">scanpy developer guide</a>.</p>
+<section id="installing-dev-dependencies">
+<h2>Installing dev dependencies<a class="headerlink" href="#installing-dev-dependencies" title="Link to this heading">#</a></h2>
+<p>In addition to the packages needed to <em>use</em> this package, you need additional python packages to <em>run tests</em> and <em>build
+the documentation</em>. It’s easy to install them using <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>pertpy
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev,test,doc]&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="code-style">
+<h2>Code-style<a class="headerlink" href="#code-style" title="Link to this heading">#</a></h2>
+<p>This project uses <a class="reference external" href="https://pre-commit.com/">pre-commit</a> to enforce consistent code-styles. On every commit, pre-commit checks will either
+automatically fix issues with the code, or raise an error message.</p>
+<p>To enable pre-commit locally, simply run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>in the root of the repository. Pre-commit will automatically download all dependencies when it is run for the first time.</p>
+<p>Alternatively, you can rely on the <a class="reference external" href="https://pre-commit.ci/">pre-commit.ci</a> service enabled on GitHub. If you didn’t run <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code> before
+pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.</p>
+<p>If pre-commit.ci added a commit on a branch you still have been working on locally, simply use</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>pull<span class="w"> </span>--rebase
+</pre></div>
+</div>
+<p>to integrate the changes into yours.
+While the <a class="reference external" href="https://pre-commit.ci/">pre-commit.ci</a> is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.</p>
+<p>Finally, most editors have an <em>autoformat on save</em> feature. Consider enabling this option for <a class="reference external" href="https://black.readthedocs.io/en/stable/integrations/editors.html">black</a>
+and <a class="reference external" href="https://prettier.io/docs/en/editors.html">prettier</a>.</p>
+</section>
+<section id="writing-tests">
+<h2>Writing tests<a class="headerlink" href="#writing-tests" title="Link to this heading">#</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Remember to first install the package with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'-e[dev,test]'</span></code></p>
+</div>
+<p>This package uses the <a class="reference external" href="https://docs.pytest.org/">pytest</a> for automated testing. Please <a class="reference external" href="https://scanpy.readthedocs.io/en/latest/dev/testing.html#writing-tests">write tests</a> for every function added
+to the package.</p>
+<p>Most IDEs integrate with pytest and provide a GUI to run tests. Alternatively, you can run all tests from the
+command line by executing</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest
+</pre></div>
+</div>
+<p>in the root of the repository. Continuous integration will automatically run the tests on all pull requests.</p>
+</section>
+<section id="publishing-a-release">
+<h2>Publishing a release<a class="headerlink" href="#publishing-a-release" title="Link to this heading">#</a></h2>
+<section id="updating-the-version-number">
+<h3>Updating the version number<a class="headerlink" href="#updating-the-version-number" title="Link to this heading">#</a></h3>
+<p>Before making a release, you need to update the version number. Please adhere to <a class="reference external" href="https://semver.org/">Semantic Versioning</a>, in brief</p>
+<blockquote>
+<div><p>Given a version number MAJOR.MINOR.PATCH, increment the:</p>
+<ol class="arabic simple">
+<li><p>MAJOR version when you make incompatible API changes,</p></li>
+<li><p>MINOR version when you add functionality in a backwards compatible manner, and</p></li>
+<li><p>PATCH version when you make backwards compatible bug fixes.</p></li>
+</ol>
+<p>Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.</p>
+</div></blockquote>
+<p>Once you are done, run</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span> <span class="o">--</span><span class="n">tags</span>
+</pre></div>
+</div>
+<p>to publish the created tag on GitHub.</p>
+</section>
+<section id="building-and-publishing-the-package-on-pypi">
+<h3>Building and publishing the package on PyPI<a class="headerlink" href="#building-and-publishing-the-package-on-pypi" title="Link to this heading">#</a></h3>
+<p>Python packages are not distributed as source code, but as <em>distributions</em>. The most common distribution format is the so-called <em>wheel</em>. To build a <em>wheel</em>, run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>build
+</pre></div>
+</div>
+<p>This command creates a <em>source archive</em> and a <em>wheel</em>, which are required for publishing your package to <a class="reference external" href="https://pypi.org/">PyPI</a>. These files are created directly in the root of the repository.</p>
+<p>Before uploading them to <a class="reference external" href="https://pypi.org/">PyPI</a> you can check that your <em>distribution</em> is valid by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>twine<span class="w"> </span>check<span class="w"> </span>dist/*
+</pre></div>
+</div>
+<p>and finally publishing it with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>twine<span class="w"> </span>upload<span class="w"> </span>dist/*
+</pre></div>
+</div>
+<p>Provide your username and password when requested and then go check out your package on <a class="reference external" href="https://pypi.org/">PyPI</a>!</p>
+<p>For more information, follow the <a class="reference external" href="https://packaging.python.org/en/latest/tutorials/packaging-projects/#generating-distribution-archives">Python packaging tutorial</a>.</p>
+<p>It is possible to automate this with GitHub actions, see also <a class="reference external" href="https://github.com/scverse/cookiecutter-scverse/issues/88">this feature request</a>
+in the cookiecutter-scverse template.</p>
+</section>
+</section>
+<section id="writing-documentation">
+<h2>Writing documentation<a class="headerlink" href="#writing-documentation" title="Link to this heading">#</a></h2>
+<p>Please write documentation for new or changed features and use-cases. This project uses <a class="reference external" href="https://www.sphinx-doc.org/en/master/">sphinx</a> with the following features:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.com/theislab/pertpy">Source Code</a></p></li>
-<li><p><a class="reference external" href="https://pertpy.readthedocs.io/">Documentation</a></p></li>
-<li><p><a class="reference external" href="https://github.com/theislab/pertpy/issues">Issue Tracker</a></p></li>
-<li><p><a class="reference external" href="https://github.com/theislab/pertpy/CODE_OF_CONDUCT.md">Code of Conduct</a></p></li>
+<li><p>the <a class="reference external" href="https://myst-parser.readthedocs.io/en/latest/intro.html">myst</a> extension allows to write documentation in markdown/Markedly Structured Text</p></li>
+<li><p>Google-style docstrings</p></li>
+<li><p>Jupyter notebooks as tutorials through <a class="reference external" href="https://myst-nb.readthedocs.io/en/latest/">myst-nb</a> (See <a class="reference internal" href="#tutorials-with-myst-nb-and-jupyter-notebooks"><span class="std std-ref">Tutorials with myst-nb</span></a>)</p></li>
+<li><p><a class="reference external" href="https://github.com/tox-dev/sphinx-autodoc-typehints">Sphinx autodoc typehints</a>, to automatically reference annotated input and output types</p></li>
+<li><p>Citations (like ) can be included with <a class="reference external" href="https://sphinxcontrib-bibtex.readthedocs.io/">sphinxcontrib-bibtex</a></p></li>
 </ul>
-<section id="how-to-report-a-bug">
-<h2>How to report a bug<a class="headerlink" href="#how-to-report-a-bug" title="Permalink to this heading">#</a></h2>
-<p>Report bugs on the <a class="reference external" href="https://github.com/theislab/pertpy/issues">Issue Tracker</a>.</p>
-</section>
-<section id="how-to-request-a-feature">
-<h2>How to request a feature<a class="headerlink" href="#how-to-request-a-feature" title="Permalink to this heading">#</a></h2>
-<p>Request features on the <a class="reference external" href="https://github.com/theislab/pertpy/issues">Issue Tracker</a>.</p>
-</section>
-<section id="getting-the-code">
-<h2>Getting the code<a class="headerlink" href="#getting-the-code" title="Permalink to this heading">#</a></h2>
-<p>pertpy uses submodules for the tutorials. Hence, the project must be cloned as:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>--recurse-submodules<span class="w"> </span>--remote-submodules<span class="w"> </span>https://github.com/theislab/pertpy
-</pre></div>
-</div>
-<p>This will automatically also clone and update the submodules.</p>
-</section>
-<section id="how-to-set-up-your-development-environment">
-<h2>How to set up your development environment<a class="headerlink" href="#how-to-set-up-your-development-environment" title="Permalink to this heading">#</a></h2>
-<p>You need Python 3.10+ and the following tools:</p>
+<p>See the <a class="reference external" href="https://scanpy.readthedocs.io/en/latest/dev/documentation.html">scanpy developer docs</a> for more information
+on how to write documentation.</p>
+<section id="tutorials-with-myst-nb-and-jupyter-notebooks">
+<h3>Tutorials with myst-nb and jupyter notebooks<a class="headerlink" href="#tutorials-with-myst-nb-and-jupyter-notebooks" title="Link to this heading">#</a></h3>
+<p>The documentation is set-up to render jupyter notebooks stored in the <code class="docutils literal notranslate"><span class="pre">docs/tutorials</span></code> directory using <a class="reference external" href="https://myst-nb.readthedocs.io/en/latest/">myst-nb</a>.
+Currently, only notebooks in <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> format are supported that will be included with both their input and output cells.</p>
+<p>These notebooks come from <a class="reference external" href="https://github.com/theislab/pertpy-tutorials">pert-tutorials</a> which is a git submodule of pertpy.</p>
+<section id="hints">
+<h4>Hints<a class="headerlink" href="#hints" title="Link to this heading">#</a></h4>
 <ul class="simple">
-<li><p><a class="reference external" href="https://python-poetry.org/">Poetry</a></p></li>
-<li><p><a class="reference external" href="https://nox.thea.codes/">Nox</a></p></li>
-<li><p><a class="reference external" href="https://nox-poetry.readthedocs.io/">nox-poetry</a></p></li>
+<li><p>If you refer to objects from other packages, please add an entry to <code class="docutils literal notranslate"><span class="pre">intersphinx_mapping</span></code> in <code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code>. Only
+if you do so can sphinx automatically create a link to the external documentation.</p></li>
+<li><p>If building the documentation fails because of a missing link that is outside your control, you can add an entry to
+the <code class="docutils literal notranslate"><span class="pre">nitpick_ignore</span></code> list in <code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code></p></li>
 </ul>
-<p>You can install them with:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>poetry<span class="w"> </span>nox<span class="w"> </span>nox-poetry
-</pre></div>
-</div>
-<p>Install the package with development requirements:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>install
-</pre></div>
-</div>
-<p>You can now run an interactive Python session,
-or the command-line interface:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry<span class="w"> </span>run<span class="w"> </span>python
-<span class="gp">$ </span>poetry<span class="w"> </span>run<span class="w"> </span>pertpy
-</pre></div>
-</div>
 </section>
-<section id="how-to-test-the-project">
-<h2>How to test the project<a class="headerlink" href="#how-to-test-the-project" title="Permalink to this heading">#</a></h2>
-<p>Run the full test suite:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nox
+<section id="building-the-docs-locally">
+<h4>Building the docs locally<a class="headerlink" href="#building-the-docs-locally" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+make<span class="w"> </span>html
+open<span class="w"> </span>_build/html/index.html
 </pre></div>
 </div>
-<p>List the available Nox sessions:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nox<span class="w"> </span>--list-sessions
-</pre></div>
-</div>
-<p>You can also run a specific Nox session.
-For example, invoke the unit test suite like this:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nox<span class="w"> </span>--session<span class="o">=</span>tests
-</pre></div>
-</div>
-<p>Unit tests are located in the <code class="docutils literal notranslate"><span class="pre">tests</span></code> directory,
-and are written using the <a class="reference external" href="https://pytest.readthedocs.io/">pytest</a> testing framework.</p>
+<!-- Links -->
 </section>
-<section id="how-to-build-and-view-the-documentation">
-<h2>How to build and view the documentation<a class="headerlink" href="#how-to-build-and-view-the-documentation" title="Permalink to this heading">#</a></h2>
-<p>This project uses [Sphinx] together with several extensions to build the documentation.
-It further requires [Pandoc] to translate various formats.</p>
-<p>To install all required dependencies for the documentation run:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
-</pre></div>
-</div>
-<p>Please note that pertpy itself must also be installed. To build the documentation run:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>html
-</pre></div>
-</div>
-<p>from inside the docs folder. The generated static HTML files can be found in the <code class="docutils literal notranslate"><span class="pre">_build/html</span></code> folder.
-Simply open them with your favorite browser.</p>
 </section>
-<section id="how-to-submit-changes">
-<h2>How to submit changes<a class="headerlink" href="#how-to-submit-changes" title="Permalink to this heading">#</a></h2>
-<p>Open a <a class="reference external" href="https://github.com/theislab/pertpy/pulls">pull request</a> to submit changes to this project against the <code class="docutils literal notranslate"><span class="pre">development</span></code> branch.</p>
-<p>Your pull request needs to meet the following guidelines for acceptance:</p>
-<ul class="simple">
-<li><p>The Nox test suite must pass without errors and warnings.</p></li>
-<li><p>Include unit tests. This project maintains a high code coverage.</p></li>
-<li><p>If your changes add functionality, update the documentation accordingly.</p></li>
-</ul>
-<p>To run linting and code formatting checks before committing your change, you can install pre-commit as a Git hook by running the following command:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nox<span class="w"> </span>--session<span class="o">=</span>pre-commit<span class="w"> </span>--<span class="w"> </span>install
-</pre></div>
-</div>
-<p>It is recommended to open an issue before starting work on anything.
-This will allow a chance to talk it over with the owners and validate your approach.</p>
 </section>
 </section>
 
@@ -454,14 +482,23 @@ This will allow a chance to talk it over with the owners and validate your appro
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Contributor Guide</a><ul>
-<li><a class="reference internal" href="#how-to-report-a-bug">How to report a bug</a></li>
-<li><a class="reference internal" href="#how-to-request-a-feature">How to request a feature</a></li>
-<li><a class="reference internal" href="#getting-the-code">Getting the code</a></li>
-<li><a class="reference internal" href="#how-to-set-up-your-development-environment">How to set up your development environment</a></li>
-<li><a class="reference internal" href="#how-to-test-the-project">How to test the project</a></li>
-<li><a class="reference internal" href="#how-to-build-and-view-the-documentation">How to build and view the documentation</a></li>
-<li><a class="reference internal" href="#how-to-submit-changes">How to submit changes</a></li>
+<li><a class="reference internal" href="#">Contributing guide</a><ul>
+<li><a class="reference internal" href="#installing-dev-dependencies">Installing dev dependencies</a></li>
+<li><a class="reference internal" href="#code-style">Code-style</a></li>
+<li><a class="reference internal" href="#writing-tests">Writing tests</a></li>
+<li><a class="reference internal" href="#publishing-a-release">Publishing a release</a><ul>
+<li><a class="reference internal" href="#updating-the-version-number">Updating the version number</a></li>
+<li><a class="reference internal" href="#building-and-publishing-the-package-on-pypi">Building and publishing the package on PyPI</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#writing-documentation">Writing documentation</a><ul>
+<li><a class="reference internal" href="#tutorials-with-myst-nb-and-jupyter-notebooks">Tutorials with myst-nb and jupyter notebooks</a><ul>
+<li><a class="reference internal" href="#hints">Hints</a></li>
+<li><a class="reference internal" href="#building-the-docs-locally">Building the docs locally</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -473,9 +510,9 @@ This will allow a chance to talk it over with the owners and validate your appro
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=add265a1"></script>
+</div><script src="_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>

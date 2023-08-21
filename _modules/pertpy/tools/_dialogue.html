@@ -1,10 +1,10 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>pertpy.tools._dialogue - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
@@ -178,7 +178,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -258,7 +257,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Credits</a></li>
@@ -319,7 +318,9 @@
 <span class="kn">from</span> <span class="nn">sparsecca</span> <span class="kn">import</span> <span class="n">lp_pmd</span><span class="p">,</span> <span class="n">multicca_permute</span><span class="p">,</span> <span class="n">multicca_pmd</span>
 
 
-<div class="viewcode-block" id="Dialogue"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue">[docs]</a><span class="k">class</span> <span class="nc">Dialogue</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialogue">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue">[docs]</a>
+<span class="k">class</span> <span class="nc">Dialogue</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Python implementation of DIALOGUE&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">celltype_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_counts_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_mpcs</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -600,7 +601,7 @@
 
         <span class="k">return</span> <span class="n">top_genes</span>
 
-    <span class="k">def</span> <span class="nf">_apply_HLM_per_MCP_for_one_pair</span><span class="p">(</span>  <span class="c1"># noqa: N802</span>
+    <span class="k">def</span> <span class="nf">_apply_HLM_per_MCP_for_one_pair</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mcp_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">scores_df</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
@@ -843,7 +844,9 @@
 
         <span class="k">return</span> <span class="n">cca_sig_results</span><span class="p">,</span> <span class="n">new_mcp_scores</span>
 
-<div class="viewcode-block" id="Dialogue.load"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span>
+<div class="viewcode-block" id="Dialogue.load">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.load">[docs]</a>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
         <span class="n">ct_order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
@@ -877,7 +880,10 @@
 
         <span class="k">return</span> <span class="n">mcca_in</span><span class="p">,</span> <span class="n">ct_subs</span></div>
 
-<div class="viewcode-block" id="Dialogue.calculate_multifactor_PMD"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.calculate_multifactor_PMD">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_multifactor_PMD</span><span class="p">(</span>  <span class="c1"># noqa: N802</span>
+
+<div class="viewcode-block" id="Dialogue.calculate_multifactor_PMD">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.calculate_multifactor_PMD">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_multifactor_PMD</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
         <span class="n">penalties</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -948,7 +954,10 @@
 
         <span class="k">return</span> <span class="n">adata</span><span class="p">,</span> <span class="n">mcp_scores</span><span class="p">,</span> <span class="n">ws_dict</span><span class="p">,</span> <span class="n">ct_subs</span></div>
 
-<div class="viewcode-block" id="Dialogue.multilevel_modeling"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.multilevel_modeling">[docs]</a>    <span class="k">def</span> <span class="nf">multilevel_modeling</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Dialogue.multilevel_modeling">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Dialogue.html#pertpy.tools.Dialogue.multilevel_modeling">[docs]</a>
+    <span class="k">def</span> <span class="nf">multilevel_modeling</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ct_subs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">mcp_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
@@ -980,7 +989,7 @@
 
         <span class="c1"># Hierarchical modeling expects DataFrames</span>
         <span class="n">mcp_cell_types</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;MCP</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">cell_types</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_mcps</span><span class="p">)}</span>
-        <span class="n">mcp_scores_df</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># noqa: F841</span>
+        <span class="n">mcp_scores_df</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">ct</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">ct_subs</span><span class="p">[</span><span class="n">ct</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">mcp_cell_types</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
             <span class="k">for</span> <span class="n">ct</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mcp_scores</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
@@ -1030,10 +1039,8 @@
                     <span class="n">ct_subs</span><span class="p">,</span> <span class="n">mcp_scores</span><span class="o">=</span><span class="n">mcp_scores</span><span class="p">,</span> <span class="n">ws_dict</span><span class="o">=</span><span class="n">ws_dict</span><span class="p">,</span> <span class="n">n_counts_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_counts_key</span>
                 <span class="p">)</span>
 
-                <span class="n">sig_1</span> <span class="o">=</span> <span class="n">cca_sig</span><span class="p">[</span>  <span class="c1"># noqa: F841</span>
-                    <span class="n">cell_type_1</span>
-                <span class="p">]</span>  <span class="c1"># TODO: only need the up and down genes from this here per MCP</span>
-                <span class="n">sig_2</span> <span class="o">=</span> <span class="n">cca_sig</span><span class="p">[</span><span class="n">cell_type_2</span><span class="p">]</span>  <span class="c1"># noqa: F841</span>
+                <span class="n">sig_1</span> <span class="o">=</span> <span class="n">cca_sig</span><span class="p">[</span><span class="n">cell_type_1</span><span class="p">]</span>  <span class="c1"># TODO: only need the up and down genes from this here per MCP</span>
+                <span class="n">sig_2</span> <span class="o">=</span> <span class="n">cca_sig</span><span class="p">[</span><span class="n">cell_type_2</span><span class="p">]</span>
                 <span class="c1"># only use samples which have a minimum number of cells (default 2) in both cell types</span>
                 <span class="n">sample_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
                     <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_abundant_elements_from_series</span><span class="p">(</span><span class="n">ct_data_1</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="p">]))</span>
@@ -1101,7 +1108,9 @@
 
                 <span class="n">all_results</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cell_type_1</span><span class="si">}</span><span class="s2">_vs_</span><span class="si">{</span><span class="n">cell_type_2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged_results</span>
 
-        <span class="k">return</span> <span class="n">all_results</span><span class="p">,</span> <span class="n">new_mcp_scores</span></div></div>
+        <span class="k">return</span> <span class="n">all_results</span><span class="p">,</span> <span class="n">new_mcp_scores</span></div>
+</div>
+
 </pre></div>
         </article>
       </div>
@@ -1133,9 +1142,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../_static/copybutton.js?v=f281be69"></script>

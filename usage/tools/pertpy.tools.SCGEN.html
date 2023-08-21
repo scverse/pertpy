@@ -1,11 +1,11 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="pertpy.tools.DiscriminatorClassifierSpace" href="pertpy.tools.DiscriminatorClassifierSpace.html" /><link rel="prev" title="pertpy.tools.Augur" href="pertpy.tools.Augur.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>pertpy.tools.SCGEN - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
@@ -179,7 +179,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -259,7 +258,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
@@ -299,15 +298,15 @@
         </div>
         <article role="main">
           <section id="pertpy-tools-scgen">
-<h1>pertpy.tools.SCGEN<a class="headerlink" href="#pertpy-tools-scgen" title="Permalink to this heading">#</a></h1>
+<h1>pertpy.tools.SCGEN<a class="headerlink" href="#pertpy-tools-scgen" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pertpy.tools.</span></span><span class="sig-name descname"><span class="pre">SCGEN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">800</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pertpy.tools.</span></span><span class="sig-name descname"><span class="pre">SCGEN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">800</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN" title="Link to this definition">#</a></dt>
 <dd><p>Jax Implementation of scGen model for batch removal and perturbation prediction.</p>
 </dd></dl>
 
 <section id="attributes-table">
-<h2>Attributes table<a class="headerlink" href="#attributes-table" title="Permalink to this heading">#</a></h2>
+<h2>Attributes table<a class="headerlink" href="#attributes-table" title="Link to this heading">#</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -340,7 +339,7 @@
 </div>
 </section>
 <section id="methods-table">
-<h2>Methods table<a class="headerlink" href="#methods-table" title="Permalink to this heading">#</a></h2>
+<h2>Methods table<a class="headerlink" href="#methods-table" title="Link to this heading">#</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -400,86 +399,86 @@
 </div>
 </section>
 <section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading">#</a></h2>
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
 <section id="adata">
-<h3>adata<a class="headerlink" href="#adata" title="Permalink to this heading">#</a></h3>
+<h3>adata<a class="headerlink" href="#adata" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.adata">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">adata</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.adata" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">adata</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.adata" title="Link to this definition">#</a></dt>
 <dd><p>Data attached to model instance.</p>
 </dd></dl>
 
 </section>
 <section id="adata-manager">
-<h3>adata_manager<a class="headerlink" href="#adata-manager" title="Permalink to this heading">#</a></h3>
+<h3>adata_manager<a class="headerlink" href="#adata-manager" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.adata_manager">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">adata_manager</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.adata_manager" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">adata_manager</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.adata_manager" title="Link to this definition">#</a></dt>
 <dd><p>Manager instance associated with self.adata.</p>
 </dd></dl>
 
 </section>
 <section id="device">
-<h3>device<a class="headerlink" href="#device" title="Permalink to this heading">#</a></h3>
+<h3>device<a class="headerlink" href="#device" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.device">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.device" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.device" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="history">
-<h3>history<a class="headerlink" href="#history" title="Permalink to this heading">#</a></h3>
+<h3>history<a class="headerlink" href="#history" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.history">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">history</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.history" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">history</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.history" title="Link to this definition">#</a></dt>
 <dd><p>Returns computed metrics during training.</p>
 </dd></dl>
 
 </section>
 <section id="is-trained">
-<h3>is_trained<a class="headerlink" href="#is-trained" title="Permalink to this heading">#</a></h3>
+<h3>is_trained<a class="headerlink" href="#is-trained" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.is_trained">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">is_trained</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.is_trained" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">is_trained</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.is_trained" title="Link to this definition">#</a></dt>
 <dd><p>Whether the model has been trained.</p>
 </dd></dl>
 
 </section>
 <section id="test-indices">
-<h3>test_indices<a class="headerlink" href="#test-indices" title="Permalink to this heading">#</a></h3>
+<h3>test_indices<a class="headerlink" href="#test-indices" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.test_indices">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">test_indices</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.test_indices" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">test_indices</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.test_indices" title="Link to this definition">#</a></dt>
 <dd><p>Observations that are in test set.</p>
 </dd></dl>
 
 </section>
 <section id="train-indices">
-<h3>train_indices<a class="headerlink" href="#train-indices" title="Permalink to this heading">#</a></h3>
+<h3>train_indices<a class="headerlink" href="#train-indices" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.train_indices">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">train_indices</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.train_indices" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">train_indices</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.train_indices" title="Link to this definition">#</a></dt>
 <dd><p>Observations that are in train set.</p>
 </dd></dl>
 
 </section>
 <section id="validation-indices">
-<h3>validation_indices<a class="headerlink" href="#validation-indices" title="Permalink to this heading">#</a></h3>
+<h3>validation_indices<a class="headerlink" href="#validation-indices" title="Link to this heading">#</a></h3>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.validation_indices">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">validation_indices</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.validation_indices" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">validation_indices</span></span><a class="headerlink" href="#pertpy.tools.SCGEN.validation_indices" title="Link to this definition">#</a></dt>
 <dd><p>Observations that are in validation set.</p>
 </dd></dl>
 
 </section>
 </section>
 <section id="methods">
-<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this heading">#</a></h2>
+<h2>Methods<a class="headerlink" href="#methods" title="Link to this heading">#</a></h2>
 <section id="batch-removal">
-<h3>batch_removal<a class="headerlink" href="#batch-removal" title="Permalink to this heading">#</a></h3>
+<h3>batch_removal<a class="headerlink" href="#batch-removal" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.batch_removal">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">batch_removal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.batch_removal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.batch_removal" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">batch_removal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.batch_removal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.batch_removal" title="Link to this definition">#</a></dt>
 <dd><p>Removes batch effects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -500,10 +499,10 @@ A reference to the original AnnData is in <cite>corrected.raw</cite> if the inpu
 
 </section>
 <section id="convert-legacy-save">
-<h3>convert_legacy_save<a class="headerlink" href="#convert-legacy-save" title="Permalink to this heading">#</a></h3>
+<h3>convert_legacy_save<a class="headerlink" href="#convert-legacy-save" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.convert_legacy_save">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">convert_legacy_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.convert_legacy_save" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">convert_legacy_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.convert_legacy_save" title="Link to this definition">#</a></dt>
 <dd><p>Converts a legacy saved model (&lt;v0.15.0) to the updated save format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -523,10 +522,10 @@ already exists at <code class="docutils literal notranslate"><span class="pre">o
 
 </section>
 <section id="deregister-manager">
-<h3>deregister_manager<a class="headerlink" href="#deregister-manager" title="Permalink to this heading">#</a></h3>
+<h3>deregister_manager<a class="headerlink" href="#deregister-manager" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.deregister_manager">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">deregister_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.deregister_manager" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">deregister_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.deregister_manager" title="Link to this definition">#</a></dt>
 <dd><p>Deregisters the <code class="xref py py-class docutils literal notranslate"><span class="pre">AnnDataManager</span></code> instance associated with <cite>adata</cite>.</p>
 <p>If <cite>adata</cite> is <cite>None</cite>, deregisters all <code class="xref py py-class docutils literal notranslate"><span class="pre">AnnDataManager</span></code> instances
 in both the class and instance-specific manager stores, except for the one associated
@@ -535,10 +534,10 @@ with this model instance.</p>
 
 </section>
 <section id="get-anndata-manager">
-<h3>get_anndata_manager<a class="headerlink" href="#get-anndata-manager" title="Permalink to this heading">#</a></h3>
+<h3>get_anndata_manager<a class="headerlink" href="#get-anndata-manager" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.get_anndata_manager">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_anndata_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.get_anndata_manager" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_anndata_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.get_anndata_manager" title="Link to this definition">#</a></dt>
 <dd><p>Retrieves the <code class="xref py py-class docutils literal notranslate"><span class="pre">AnnDataManager</span></code> for a given AnnData object specific to this model instance.</p>
 <p>Requires <code class="docutils literal notranslate"><span class="pre">self.id</span></code> has been set. Checks for an <code class="xref py py-class docutils literal notranslate"><span class="pre">AnnDataManager</span></code>
 specific to this model instance.</p>
@@ -557,10 +556,10 @@ specific to this model instance.</p>
 
 </section>
 <section id="get-decoded-expression">
-<h3>get_decoded_expression<a class="headerlink" href="#get-decoded-expression" title="Permalink to this heading">#</a></h3>
+<h3>get_decoded_expression<a class="headerlink" href="#get-decoded-expression" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.get_decoded_expression">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_decoded_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.get_decoded_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.get_decoded_expression" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_decoded_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.get_decoded_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.get_decoded_expression" title="Link to this definition">#</a></dt>
 <dd><p>Get decoded expression.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -571,10 +570,10 @@ specific to this model instance.</p>
 
 </section>
 <section id="get-from-registry">
-<h3>get_from_registry<a class="headerlink" href="#get-from-registry" title="Permalink to this heading">#</a></h3>
+<h3>get_from_registry<a class="headerlink" href="#get-from-registry" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.get_from_registry">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_from_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.get_from_registry" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_from_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.get_from_registry" title="Link to this definition">#</a></dt>
 <dd><p>Returns the object in AnnData associated with the key in the data registry.</p>
 <p>AnnData object should be registered with the model prior to calling this function
 via the <code class="docutils literal notranslate"><span class="pre">self._validate_anndata</span></code> method.</p>
@@ -593,17 +592,17 @@ via the <code class="docutils literal notranslate"><span class="pre">self._valid
 
 </section>
 <section id="get-latent-representation">
-<h3>get_latent_representation<a class="headerlink" href="#get-latent-representation" title="Permalink to this heading">#</a></h3>
+<h3>get_latent_representation<a class="headerlink" href="#get-latent-representation" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.get_latent_representation">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_latent_representation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">give_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.get_latent_representation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.get_latent_representation" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">get_latent_representation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">give_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.get_latent_representation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.get_latent_representation" title="Link to this definition">#</a></dt>
 <dd><p>Return the latent representation for each cell.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>adata</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>]) – AnnData object with equivalent structure to initial AnnData. If <cite>None</cite>, defaults to the
 AnnData object used to initialize the model.</p></li>
-<li><p><strong>indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]]) – Indices of cells in adata to use. If <cite>None</cite>, all cells are used.</p></li>
+<li><p><strong>indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]]) – Indices of cells in adata to use. If <cite>None</cite>, all cells are used.</p></li>
 <li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Minibatch size for data loading into model. Defaults to <cite>scvi.settings.batch_size</cite>.</p></li>
 </ul>
 </dd>
@@ -618,10 +617,10 @@ AnnData object used to initialize the model.</p></li>
 
 </section>
 <section id="load">
-<h3>load<a class="headerlink" href="#load" title="Permalink to this heading">#</a></h3>
+<h3>load<a class="headerlink" href="#load" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.load">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accelerator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.load" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accelerator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.load" title="Link to this definition">#</a></dt>
 <dd><p>Instantiate a model from the saved output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -658,10 +657,10 @@ first available device.</p></li>
 
 </section>
 <section id="load-registry">
-<h3>load_registry<a class="headerlink" href="#load-registry" title="Permalink to this heading">#</a></h3>
+<h3>load_registry<a class="headerlink" href="#load-registry" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.load_registry">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">load_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.load_registry" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">load_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.load_registry" title="Link to this definition">#</a></dt>
 <dd><p>Return the full registry saved with the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -678,10 +677,10 @@ first available device.</p></li>
 
 </section>
 <section id="predict">
-<h3>predict<a class="headerlink" href="#predict" title="Permalink to this heading">#</a></h3>
+<h3>predict<a class="headerlink" href="#predict" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.predict">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stim_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adata_to_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltype_to_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restrict_arithmetic_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.predict" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stim_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adata_to_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltype_to_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restrict_arithmetic_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.predict" title="Link to this definition">#</a></dt>
 <dd><p>Predicts the cell type provided by the user in stimulated condition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -708,10 +707,10 @@ first available device.</p></li>
 
 </section>
 <section id="register-manager">
-<h3>register_manager<a class="headerlink" href="#register-manager" title="Permalink to this heading">#</a></h3>
+<h3>register_manager<a class="headerlink" href="#register-manager" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.register_manager">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">register_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata_manager</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.register_manager" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">register_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata_manager</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.register_manager" title="Link to this definition">#</a></dt>
 <dd><p>Registers an <code class="xref py py-class docutils literal notranslate"><span class="pre">AnnDataManager</span></code> instance with this model class.</p>
 <p>Stores the <code class="xref py py-class docutils literal notranslate"><span class="pre">AnnDataManager</span></code> reference in a class-specific manager store.
 Intended for use in the <code class="docutils literal notranslate"><span class="pre">setup_anndata()</span></code> class method followed up by retrieval of the
@@ -724,10 +723,10 @@ underlying AnnData object will overwrite the reference to previous <code class="
 
 </section>
 <section id="save">
-<h3>save<a class="headerlink" href="#save" title="Permalink to this heading">#</a></h3>
+<h3>save<a class="headerlink" href="#save" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.save">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_anndata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">anndata_write_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.save" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_anndata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">anndata_write_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.save" title="Link to this definition">#</a></dt>
 <dd><p>Save the state of the model.</p>
 <p>Neither the trainer optimizer state nor the trainer history are saved.
 Model files are not expected to be reproducibly saved and loaded across versions
@@ -748,10 +747,10 @@ already exists at <cite>dir_path</cite>, error will be raised.</p></li>
 
 </section>
 <section id="setup-anndata">
-<h3>setup_anndata<a class="headerlink" href="#setup-anndata" title="Permalink to this heading">#</a></h3>
+<h3>setup_anndata<a class="headerlink" href="#setup-anndata" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.setup_anndata">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">setup_anndata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.setup_anndata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.setup_anndata" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">setup_anndata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.setup_anndata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.setup_anndata" title="Link to this definition">#</a></dt>
 <dd><p>Sets up the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object for this model.</p>
 <p>A mapping will be created between data fields used by this model to their respective locations in adata.
 None of the data in adata are modified. Only adds fields to adata.</p>
@@ -768,10 +767,10 @@ categories and saved to <cite>adata.obs[‘_scvi_labels’]</cite>. If <cite>Non
 
 </section>
 <section id="to-device">
-<h3>to_device<a class="headerlink" href="#to-device" title="Permalink to this heading">#</a></h3>
+<h3>to_device<a class="headerlink" href="#to-device" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.to_device">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.to_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.to_device" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_scgen/_jax_scgen.html#SCGEN.to_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.SCGEN.to_device" title="Link to this definition">#</a></dt>
 <dd><p>Move model to device.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -791,10 +790,10 @@ or ‘cuda:X’ where X is the GPU index (eg. ‘cuda:0’). See torch.device fo
 
 </section>
 <section id="train">
-<h3>train<a class="headerlink" href="#train" title="Permalink to this heading">#</a></h3>
+<h3>train<a class="headerlink" href="#train" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.train">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accelerator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">devices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle_set_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.train" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accelerator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">devices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle_set_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.train" title="Link to this definition">#</a></dt>
 <dd><p>Train the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -829,10 +828,10 @@ sequential order of the data according to <cite>validation_size</cite> and <cite
 
 </section>
 <section id="view-anndata-setup">
-<h3>view_anndata_setup<a class="headerlink" href="#view-anndata-setup" title="Permalink to this heading">#</a></h3>
+<h3>view_anndata_setup<a class="headerlink" href="#view-anndata-setup" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.view_anndata_setup">
-<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">view_anndata_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hide_state_registries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.view_anndata_setup" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">view_anndata_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hide_state_registries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.view_anndata_setup" title="Link to this definition">#</a></dt>
 <dd><p>Print summary of the setup for the initial AnnData or a given AnnData object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -850,10 +849,10 @@ sequential order of the data according to <cite>validation_size</cite> and <cite
 
 </section>
 <section id="view-setup-args">
-<h3>view_setup_args<a class="headerlink" href="#view-setup-args" title="Permalink to this heading">#</a></h3>
+<h3>view_setup_args<a class="headerlink" href="#view-setup-args" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.SCGEN.view_setup_args">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">view_setup_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.view_setup_args" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SCGEN.</span></span><span class="sig-name descname"><span class="pre">view_setup_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.SCGEN.view_setup_args" title="Link to this definition">#</a></dt>
 <dd><p>Print args used to setup a saved model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1047,9 +1046,9 @@ sequential order of the data according to <cite>validation_size</cite> and <cite
       
     </aside>
   </div>
-</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>

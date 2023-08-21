@@ -1,11 +1,11 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="pertpy.tools.PseudobulkSpace" href="pertpy.tools.PseudobulkSpace.html" /><link rel="prev" title="pertpy.tools.DBSCANSpace" href="pertpy.tools.DBSCANSpace.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>pertpy.tools.KMeansSpace - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
@@ -179,7 +179,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -259,7 +258,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
@@ -299,15 +298,15 @@
         </div>
         <article role="main">
           <section id="pertpy-tools-kmeansspace">
-<h1>pertpy.tools.KMeansSpace<a class="headerlink" href="#pertpy-tools-kmeansspace" title="Permalink to this heading">#</a></h1>
+<h1>pertpy.tools.KMeansSpace<a class="headerlink" href="#pertpy-tools-kmeansspace" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pertpy.tools.KMeansSpace">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pertpy.tools.</span></span><span class="sig-name descname"><span class="pre">KMeansSpace</span></span><a class="reference internal" href="../../_modules/pertpy/tools/_perturbation_space/_simple.html#KMeansSpace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.KMeansSpace" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pertpy.tools.</span></span><span class="sig-name descname"><span class="pre">KMeansSpace</span></span><a class="reference internal" href="../../_modules/pertpy/tools/_perturbation_space/_simple.html#KMeansSpace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.KMeansSpace" title="Link to this definition">#</a></dt>
 <dd><p>Computes K-Means clustering of the expression values.</p>
 </dd></dl>
 
 <section id="methods-table">
-<h2>Methods table<a class="headerlink" href="#methods-table" title="Permalink to this heading">#</a></h2>
+<h2>Methods table<a class="headerlink" href="#methods-table" title="Link to this heading">#</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -331,18 +330,18 @@
 </div>
 </section>
 <section id="methods">
-<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this heading">#</a></h2>
+<h2>Methods<a class="headerlink" href="#methods" title="Link to this heading">#</a></h2>
 <section id="add">
-<h3>add<a class="headerlink" href="#add" title="Permalink to this heading">#</a></h3>
+<h3>add<a class="headerlink" href="#add" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.KMeansSpace.add">
-<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturbations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_consistency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.add" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturbations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_consistency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.add" title="Link to this definition">#</a></dt>
 <dd><p>Add perturbations linearly. Assumes input of size n_perts x dimensionality</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>adata</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>) – Anndata object of size n_perts x dim.</p></li>
-<li><p><strong>perturbations</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – Perturbations to add.</p></li>
+<li><p><strong>perturbations</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – Perturbations to add.</p></li>
 <li><p><strong>reference_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – perturbation source from which the perturbation summation starts.</p></li>
 <li><p><strong>ensure_consistency</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If True, runs differential expression on all data matrices to ensure consistency of linear space.</p></li>
 </ul>
@@ -352,10 +351,10 @@
 
 </section>
 <section id="compute">
-<h3>compute<a class="headerlink" href="#compute" title="Permalink to this heading">#</a></h3>
+<h3>compute<a class="headerlink" href="#compute" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.KMeansSpace.compute">
-<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_perturbation_space/_simple.html#KMeansSpace.compute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.KMeansSpace.compute" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pertpy/tools/_perturbation_space/_simple.html#KMeansSpace.compute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pertpy.tools.KMeansSpace.compute" title="Link to this definition">#</a></dt>
 <dd><p>Computes K-Means clustering of the expression values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -377,10 +376,10 @@
 
 </section>
 <section id="compute-control-diff">
-<h3>compute_control_diff<a class="headerlink" href="#compute-control-diff" title="Permalink to this heading">#</a></h3>
+<h3>compute_control_diff<a class="headerlink" href="#compute-control-diff" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.KMeansSpace.compute_control_diff">
-<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">compute_control_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'perturbations'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_layer_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control_diff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_embedding_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control_diff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.compute_control_diff" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">compute_control_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'perturbations'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_layer_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control_diff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_embedding_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control_diff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.compute_control_diff" title="Link to this definition">#</a></dt>
 <dd><p>Subtract mean of the control from the perturbation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -401,10 +400,10 @@
 
 </section>
 <section id="evaluate-clustering">
-<h3>evaluate_clustering<a class="headerlink" href="#evaluate-clustering" title="Permalink to this heading">#</a></h3>
+<h3>evaluate_clustering<a class="headerlink" href="#evaluate-clustering" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.KMeansSpace.evaluate_clustering">
-<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">evaluate_clustering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_label_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.evaluate_clustering" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">evaluate_clustering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_label_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.evaluate_clustering" title="Link to this definition">#</a></dt>
 <dd><p>Evaluation of previously computed clustering against ground truth labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -412,7 +411,7 @@
 <li><p><strong>adata</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>) – AnnData object that contains the clustered data and the cluster labels.</p></li>
 <li><p><strong>true_label_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – ground truth labels.</p></li>
 <li><p><strong>cluster_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – cluster computed labels.</p></li>
-<li><p><strong>metrics</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – Metrics to compute. Defaults to [‘nmi’, ‘ari’, ‘asw’].</p></li>
+<li><p><strong>metrics</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – Metrics to compute. Defaults to [‘nmi’, ‘ari’, ‘asw’].</p></li>
 </ul>
 </dd>
 </dl>
@@ -420,16 +419,16 @@
 
 </section>
 <section id="subtract">
-<h3>subtract<a class="headerlink" href="#subtract" title="Permalink to this heading">#</a></h3>
+<h3>subtract<a class="headerlink" href="#subtract" title="Link to this heading">#</a></h3>
 <dl class="py method">
 <dt class="sig sig-object py" id="pertpy.tools.KMeansSpace.subtract">
-<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">subtract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturbations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_consistency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.subtract" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">KMeansSpace.</span></span><span class="sig-name descname"><span class="pre">subtract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturbations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'control'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_consistency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pertpy.tools.KMeansSpace.subtract" title="Link to this definition">#</a></dt>
 <dd><p>Subtract perturbations linearly. Assumes input of size n_perts x dimensionality</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>adata</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>) – Anndata object of size n_perts x dim.</p></li>
-<li><p><strong>perturbations</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – Perturbations to subtract,</p></li>
+<li><p><strong>perturbations</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – Perturbations to subtract,</p></li>
 <li><p><strong>reference_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Perturbation source from which the perturbation subtraction starts</p></li>
 <li><p><strong>ensure_consistency</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If True, runs differential expression on all data matrices to ensure consistency of linear space.</p></li>
 </ul>
@@ -532,9 +531,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>

@@ -1,10 +1,10 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>pertpy.data._datasets - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
@@ -178,7 +178,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -258,7 +257,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Credits</a></li>
@@ -307,14 +306,16 @@
 <span class="kn">from</span> <span class="nn">pertpy.data._dataloader</span> <span class="kn">import</span> <span class="n">_download</span>
 
 
-<div class="viewcode-block" id="burczynski_crohn"><a class="viewcode-back" href="../../../usage/data/pertpy.data.burczynski_crohn.html#pertpy.data.burczynski_crohn">[docs]</a><span class="k">def</span> <span class="nf">burczynski_crohn</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<div class="viewcode-block" id="burczynski_crohn">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.burczynski_crohn.html#pertpy.data.burczynski_crohn">[docs]</a>
+<span class="k">def</span> <span class="nf">burczynski_crohn</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Bulk data with conditions ulcerative colitis (UC) and Crohn&#39;s disease (CD).</span>
 
 <span class="sd">    The study assesses transcriptional profiles in peripheral blood mononuclear</span>
 <span class="sd">    cells from 42 healthy individuals, 59 CD patients, and 26 UC patients by</span>
 <span class="sd">    hybridization to microarrays interrogating more than 22,000 sequences.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Burczynski et al., &quot;Molecular classification of Crohn&#39;s disease and</span>
 <span class="sd">        ulcerative colitis patients using transcriptional profiles in peripheral blood mononuclear cells&quot;</span>
 <span class="sd">        J Mol Diagn 8, 51 (2006). PMID:16436634.</span>
@@ -325,16 +326,19 @@
     <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">burczynski06</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="papalexi_2021"><a class="viewcode-back" href="../../../usage/data/pertpy.data.papalexi_2021.html#pertpy.data.papalexi_2021">[docs]</a><span class="k">def</span> <span class="nf">papalexi_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MuData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="papalexi_2021">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.papalexi_2021.html#pertpy.data.papalexi_2021">[docs]</a>
+<span class="k">def</span> <span class="nf">papalexi_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MuData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;ECCITE-seq dataset of 11 gRNAs generated from stimulated THP-1 cell line.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Papalexi, E., Mimitou, E.P., Butler, A.W. et al. Characterizing the molecular regulation</span>
 <span class="sd">        of inhibitory immune checkpoints with multimodal single-cell screens.</span>
 <span class="sd">        Nat Genet 53, 322–331 (2021). https://doi.org/10.1038/s41588-021-00778-2</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of the ECCITE-seq dataset</span>
+<span class="sd">        :class:`~mudata.MuData` object of the ECCITE-seq dataset</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">muon</span> <span class="k">as</span> <span class="nn">mu</span>
 
@@ -354,10 +358,14 @@
     <span class="k">return</span> <span class="n">mudata</span></div>
 
 
-<div class="viewcode-block" id="sc_sim_augur"><a class="viewcode-back" href="../../../usage/data/pertpy.data.sc_sim_augur.html#pertpy.data.sc_sim_augur">[docs]</a><span class="k">def</span> <span class="nf">sc_sim_augur</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simulated test dataset used the usage example for the Augur.</span>
 
-<span class="sd">    https://github.com/neurorestore/Augur</span>
+<div class="viewcode-block" id="sc_sim_augur">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.sc_sim_augur.html#pertpy.data.sc_sim_augur">[docs]</a>
+<span class="k">def</span> <span class="nf">sc_sim_augur</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simulated test dataset used in Augur example vignettes.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Obtained from https://github.com/neurorestore/Augur</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of a simulated single-cell RNA seq dataset</span>
@@ -378,14 +386,17 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="bhattacherjee"><a class="viewcode-back" href="../../../usage/data/pertpy.data.bhattacherjee.html#pertpy.data.bhattacherjee">[docs]</a><span class="k">def</span> <span class="nf">bhattacherjee</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="bhattacherjee">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.bhattacherjee.html#pertpy.data.bhattacherjee">[docs]</a>
+<span class="k">def</span> <span class="nf">bhattacherjee</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Processed single-cell data PFC adult mice under cocaine self-administration.</span>
 
 <span class="sd">    Adult mice were subject to cocaine self-administration, samples were</span>
 <span class="sd">    collected a three time points: Maintance, 48h after cocaine withdrawal and</span>
 <span class="sd">    15 days after cocaine withdrawal.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Bhattacherjee A, Djekidel MN, Chen R, Chen W, Tuesta LM, Zhang Y. Cell</span>
 <span class="sd">        type-specific transcriptional programs in mouse prefrontal cortex during</span>
 <span class="sd">        adolescence and addiction. Nat Commun. 2019 Sep 13;10(1):4169.</span>
@@ -410,10 +421,13 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="sciplex3_raw"><a class="viewcode-back" href="../../../usage/data/pertpy.data.sciplex3_raw.html#pertpy.data.sciplex3_raw">[docs]</a><span class="k">def</span> <span class="nf">sciplex3_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="sciplex3_raw">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.sciplex3_raw.html#pertpy.data.sciplex3_raw">[docs]</a>
+<span class="k">def</span> <span class="nf">sciplex3_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw sciplex3 perturbation dataset curated for perturbation modeling.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Srivatsan SR, McFaline-Figueroa JL, Ramani V, Saunders L, Cao J, Packer J,</span>
 <span class="sd">        Pliner HA, Jackson DL, Daza RM, Christiansen L, Zhang F, Steemers F,</span>
 <span class="sd">        Shendure J, Trapnell C. Massively multiplex chemical transcriptomics at</span>
@@ -439,15 +453,18 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="smillie"><a class="viewcode-back" href="../../../usage/data/pertpy.data.smillie.html#pertpy.data.smillie">[docs]</a><span class="k">def</span> <span class="nf">smillie</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="smillie">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.smillie.html#pertpy.data.smillie">[docs]</a>
+<span class="k">def</span> <span class="nf">smillie</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;scRNA-seq data of the small intestine of mice under Ulcerative Colitis.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”</span>
 <span class="sd">        Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of a single-cell RNA seq dataset</span>
+<span class="sd">        :class:`~anndata.AnnData` object of the dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_file_name</span> <span class="o">=</span> <span class="s2">&quot;smillie.h5ad&quot;</span>
     <span class="n">output_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span>
@@ -465,20 +482,23 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="frangieh_2021"><a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021.html#pertpy.data.frangieh_2021">[docs]</a><span class="k">def</span> <span class="nf">frangieh_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="frangieh_2021">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021.html#pertpy.data.frangieh_2021">[docs]</a>
+<span class="k">def</span> <span class="nf">frangieh_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Processed perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling.</span>
 
 <span class="sd">    We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,</span>
 <span class="sd">    chosen by their membership in an immune evasion program that is associated with</span>
 <span class="sd">    immunotherapy resistance in patients.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Frangieh, C.J., Melms, J.C., Thakore, P.I. et al. Multimodal pooled Perturb-CITE-seq</span>
 <span class="sd">        screens in patient models define mechanisms of cancer immune evasion.</span>
 <span class="sd">        Nat Genet 53, 332–341 (2021). https://doi.org/10.1038/s41588-021-00779-1</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of a Perturb-CITE-seq data</span>
+<span class="sd">        :class:`~anndata.AnnData` object of the Perturb-CITE-seq data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_file_name</span> <span class="o">=</span> <span class="s2">&quot;frangieh_2021.h5ad&quot;</span>
     <span class="n">output_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span>
@@ -496,20 +516,23 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="frangieh_2021_raw"><a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html#pertpy.data.frangieh_2021_raw">[docs]</a><span class="k">def</span> <span class="nf">frangieh_2021_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="frangieh_2021_raw">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html#pertpy.data.frangieh_2021_raw">[docs]</a>
+<span class="k">def</span> <span class="nf">frangieh_2021_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw Perturb-CITE-seq data with multi-modal RNA and protein single-cell profiling readout.</span>
 
 <span class="sd">    We profiled RNA and 20 surface proteins in over 218,000 cells under ~750 perturbations,</span>
 <span class="sd">    chosen by their membership in an immune evasion program that is associated with</span>
 <span class="sd">    immunotherapy resistance in patients.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Frangieh, C.J., Melms, J.C., Thakore, P.I. et al. Multimodal pooled Perturb-CITE-seq</span>
 <span class="sd">        screens in patient models define mechanisms of cancer immune evasion.</span>
 <span class="sd">        Nat Genet 53, 332–341 (2021). https://doi.org/10.1038/s41588-021-00779-1</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data</span>
+<span class="sd">        :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_file_name</span> <span class="o">=</span> <span class="s2">&quot;frangieh_2021_raw.h5ad&quot;</span>
     <span class="n">output_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span>
@@ -527,20 +550,23 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="dixit_2016_raw"><a class="viewcode-back" href="../../../usage/data/pertpy.data.dixit_2016_raw.html#pertpy.data.dixit_2016_raw">[docs]</a><span class="k">def</span> <span class="nf">dixit_2016_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="dixit_2016_raw">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.dixit_2016_raw.html#pertpy.data.dixit_2016_raw">[docs]</a>
+<span class="k">def</span> <span class="nf">dixit_2016_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.</span>
 
 <span class="sd">    scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens</span>
 <span class="sd">    unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post transduction,</span>
 <span class="sd">    and 13 days at a higher MOI of perturbations.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with</span>
 <span class="sd">        Scalable Single-Cell RNA Profiling of Pooled Genetic Screens.</span>
 <span class="sd">        Cell 2016 Dec 15;167(7):1853-1866.e17. DOI:https://doi.org/10.1016/j.cell.2016.11.038</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of raw Perturb-seq data</span>
+<span class="sd">        :class:`~anndata.AnnData` object of raw Perturb-seq data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_file_name</span> <span class="o">=</span> <span class="s2">&quot;dixit_2016_raw.h5ad&quot;</span>
     <span class="n">output_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span>
@@ -558,14 +584,17 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="dixit_2016"><a class="viewcode-back" href="../../../usage/data/pertpy.data.dixit_2016.html#pertpy.data.dixit_2016">[docs]</a><span class="k">def</span> <span class="nf">dixit_2016</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="dixit_2016">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.dixit_2016.html#pertpy.data.dixit_2016">[docs]</a>
+<span class="k">def</span> <span class="nf">dixit_2016</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Perturb-seq: scRNA-seq with pooled CRISPR-KO perturbations.</span>
 
 <span class="sd">    scRNA-seq with pooled CRISPR-KO perturbations in 200,000 cells across six screens</span>
-<span class="sd">    unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post trasnduction,</span>
+<span class="sd">    unstimulated BMDC, BMDC stimulated at 3hr, TFs in K562 at 7 and 13 days post transduction,</span>
 <span class="sd">    and 13 days at a higher MOI of perturbations.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Dixit A, Parnas O, Li B, Chen J et al. Perturb-Seq: Dissecting Molecular Circuits with</span>
 <span class="sd">        Scalable Single-Cell RNA Profiling of Pooled Genetic Screens.</span>
 <span class="sd">        Cell 2016 Dec 15;167(7):1853-1866.e17. DOI:https://doi.org/10.1016/j.cell.2016.11.038</span>
@@ -589,19 +618,22 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="norman_2019"><a class="viewcode-back" href="../../../usage/data/pertpy.data.norman_2019.html#pertpy.data.norman_2019">[docs]</a><span class="k">def</span> <span class="nf">norman_2019</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="norman_2019">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.norman_2019.html#pertpy.data.norman_2019">[docs]</a>
+<span class="k">def</span> <span class="nf">norman_2019</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Processed single-cell, pooled CRISPR screening.</span>
 
 <span class="sd">    Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of</span>
 <span class="sd">    overexpressing genes alone or in combination</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich</span>
 <span class="sd">        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.</span>
 <span class="sd">        doi:10.1126/science.aax4438</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of sc pooled CRISPR screening</span>
+<span class="sd">        :class:`~anndata.AnnData` object of single-cell pooled CRISPR screening.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_file_name</span> <span class="o">=</span> <span class="s2">&quot;norman_2019.h5ad&quot;</span>
     <span class="n">output_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span>
@@ -619,19 +651,22 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="norman_2019_raw"><a class="viewcode-back" href="../../../usage/data/pertpy.data.norman_2019_raw.html#pertpy.data.norman_2019_raw">[docs]</a><span class="k">def</span> <span class="nf">norman_2019_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="norman_2019_raw">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.norman_2019_raw.html#pertpy.data.norman_2019_raw">[docs]</a>
+<span class="k">def</span> <span class="nf">norman_2019_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw single-cell, pooled CRISPR screening.</span>
 
 <span class="sd">    Single-cell, pooled CRISPR screening experiment comparing the transcriptional effects of</span>
 <span class="sd">    overexpressing genes alone or in combination</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich</span>
 <span class="sd">        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.</span>
 <span class="sd">        doi:10.1126/science.aax4438</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of sc pooled CRISPR screening</span>
+<span class="sd">        :class:`~anndata.AnnData` object of raw single-cell pooled CRISPR screening</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_file_name</span> <span class="o">=</span> <span class="s2">&quot;norman_2019_raw.h5ad&quot;</span>
     <span class="n">output_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span>
@@ -649,10 +684,14 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="dialogue_example"><a class="viewcode-back" href="../../../usage/data/pertpy.data.dialogue_example.html#pertpy.data.dialogue_example">[docs]</a><span class="k">def</span> <span class="nf">dialogue_example</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Example dataset used to feature DIALOGUE.</span>
 
-<span class="sd">    https://github.com/livnatje/DIALOGUE/wiki/Example</span>
+<div class="viewcode-block" id="dialogue_example">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.dialogue_example.html#pertpy.data.dialogue_example">[docs]</a>
+<span class="k">def</span> <span class="nf">dialogue_example</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Example dataset used in DIALOGUE vignettes.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        https://github.com/livnatje/DIALOGUE/wiki/Example</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object</span>
@@ -673,7 +712,8 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<span class="k">def</span> <span class="nf">distance_example_data</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<span class="k">def</span> <span class="nf">distance_example</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Example dataset used to feature distances and distance_tests.</span>
 
 <span class="sd">    Processed and subsetted version of original Perturb-seq dataset by Dixit et al.</span>
@@ -697,7 +737,9 @@
     <span class="k">return</span> <span class="n">adata</span>
 
 
-<div class="viewcode-block" id="kang_2018"><a class="viewcode-back" href="../../../usage/data/pertpy.data.kang_2018.html#pertpy.data.kang_2018">[docs]</a><span class="k">def</span> <span class="nf">kang_2018</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<div class="viewcode-block" id="kang_2018">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.kang_2018.html#pertpy.data.kang_2018">[docs]</a>
+<span class="k">def</span> <span class="nf">kang_2018</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Processed multiplexing droplet-based single cell RNA-sequencing using genetic barcodes.</span>
 
 <span class="sd">    HiSeq 2500 data for sequencing of PBMCs from SLE patients and 2 controls. We collected 1M cells</span>
@@ -706,7 +748,7 @@
 <span class="sd">    directly following thaw, while samples 2.1 and 2.2 were cultured for 6 hours with (B) or</span>
 <span class="sd">    without (A) IFN-beta stimulation prior to loading on the 10x Single Cell instrument.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Kang, H., Subramaniam, M., Targ, S. et al. Multiplexed droplet single-cell RNA-sequencing</span>
 <span class="sd">        using natural genetic variation.</span>
 <span class="sd">        Nat Biotechnol 36, 89–94 (2018). https://doi.org/10.1038/nbt.4042</span>
@@ -730,14 +772,17 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="stephenson_2021_subsampled"><a class="viewcode-back" href="../../../usage/data/pertpy.data.stephenson_2021_subsampled.html#pertpy.data.stephenson_2021_subsampled">[docs]</a><span class="k">def</span> <span class="nf">stephenson_2021_subsampled</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="stephenson_2021_subsampled">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.stephenson_2021_subsampled.html#pertpy.data.stephenson_2021_subsampled">[docs]</a>
+<span class="k">def</span> <span class="nf">stephenson_2021_subsampled</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Processed 10X 5&#39; scRNA-seq data from PBMC of COVID-19 patients and healthy donors</span>
 
 <span class="sd">    The study profiled peripheral blood mononuclear cells from 90 COVID-19 patients with different disease severity and 23 healthy control donors.</span>
 <span class="sd">    Here the dataset was downsampled to approx. 500 cells per donor and cells were mapped to a reference atlas of healthy PBMCs from 12 studies</span>
 <span class="sd">    with scArches.</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Stephenson, E., Reynolds, G., Botting, R. A., et al. (2021).</span>
 <span class="sd">        Single-cell multi-omics analysis of the immune response in COVID-19.</span>
 <span class="sd">        Nature Medicine, 27(5). https://doi.org/10.1038/s41591-021-01329-2</span>
@@ -759,13 +804,16 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="haber_2017_regions"><a class="viewcode-back" href="../../../usage/data/pertpy.data.haber_2017_regions.html#pertpy.data.haber_2017_regions">[docs]</a><span class="k">def</span> <span class="nf">haber_2017_regions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="haber_2017_regions">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.haber_2017_regions.html#pertpy.data.haber_2017_regions">[docs]</a>
+<span class="k">def</span> <span class="nf">haber_2017_regions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw single-cell, pooled CRISPR screening.</span>
 
 <span class="sd">    Epithelial cells from the small intestine and organoids of mice.</span>
 <span class="sd">    Some of the cells were also subject to Salmonella or Heligmosomoides polygyrus infection (day 3 and day 10).</span>
 
-<span class="sd">    Reference:</span>
+<span class="sd">    References:</span>
 <span class="sd">        Haber, Adam L. et al. “A single-cell survey of the small intestinal epithelium” Nature vol. 551 (2017): 333-339</span>
 <span class="sd">        doi:10.1038/nature24489</span>
 
@@ -787,14 +835,18 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="adamson_2016_pilot"><a class="viewcode-back" href="../../../usage/data/pertpy.data.adamson_2016_pilot.html#pertpy.data.adamson_2016_pilot">[docs]</a><span class="k">def</span> <span class="nf">adamson_2016_pilot</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="adamson_2016_pilot">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.adamson_2016_pilot.html#pertpy.data.adamson_2016_pilot">[docs]</a>
+<span class="k">def</span> <span class="nf">adamson_2016_pilot</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;6000 chronic myeloid leukemia (K562) cells carrying 8 distinct GBCs.</span>
 
 <span class="sd">    In a pilot experiment, single-cell RNA-seq was performed on a pool of individually transduced chronic</span>
 <span class="sd">    myeloid leukemia cells (K562) carrying 8 distinct guide barcodes, analyzing ∼6,000 cells total.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -815,7 +867,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="adamson_2016_upr_epistasis"><a class="viewcode-back" href="../../../usage/data/pertpy.data.adamson_2016_upr_epistasis.html#pertpy.data.adamson_2016_upr_epistasis">[docs]</a><span class="k">def</span> <span class="nf">adamson_2016_upr_epistasis</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="adamson_2016_upr_epistasis">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.adamson_2016_upr_epistasis.html#pertpy.data.adamson_2016_upr_epistasis">[docs]</a>
+<span class="k">def</span> <span class="nf">adamson_2016_upr_epistasis</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;15000 K562 cells with UPR sensor genes knocked out and treated with thapsigargin.</span>
 
 <span class="sd">    In UPR epistasis experiment, Perturb-seq was applied to explore the branches of</span>
@@ -825,8 +880,9 @@
 <span class="sd">    treated with thapsigargin. Control cells were treated with DMSO. Transcriptomes</span>
 <span class="sd">    of ∼15,000 cells were sequenced.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb preparedsingle-cell perturbation data</span>
@@ -847,16 +903,20 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="adamson_2016_upr_perturb_seq"><a class="viewcode-back" href="../../../usage/data/pertpy.data.adamson_2016_upr_perturb_seq.html#pertpy.data.adamson_2016_upr_perturb_seq">[docs]</a><span class="k">def</span> <span class="nf">adamson_2016_upr_perturb_seq</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 65000 cells that were subject to 91 sgRNAs targeting 82 genes.</span>
+
+<div class="viewcode-block" id="adamson_2016_upr_perturb_seq">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.adamson_2016_upr_perturb_seq.html#pertpy.data.adamson_2016_upr_perturb_seq">[docs]</a>
+<span class="k">def</span> <span class="nf">adamson_2016_upr_perturb_seq</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics measurements of 65000 cells that were subject to 91 sgRNAs targeting 82 genes.</span>
 
 <span class="sd">    In UPR Perturb-seq experiment, Perturb-seq was applied to a small CRISPRi library</span>
 <span class="sd">    of 91 sgRNAs targeting 82 genes. sgRNAs were delivered via pooled transduction</span>
 <span class="sd">    using a mixture of separately prepared lentiviruses, and ∼65,000 transcriptomes</span>
 <span class="sd">    were collected in one large pooled experiment.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://www.sciencedirect.com/science/article/pii/S0092867416316609?via%3Dihub \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -877,14 +937,18 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="aissa_2021"><a class="viewcode-back" href="../../../usage/data/pertpy.data.aissa_2021.html#pertpy.data.aissa_2021">[docs]</a><span class="k">def</span> <span class="nf">aissa_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="aissa_2021">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.aissa_2021.html#pertpy.data.aissa_2021">[docs]</a>
+<span class="k">def</span> <span class="nf">aissa_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 848 P99 cells subject to consecutive erlotinib and 756 control cells.</span>
 
 <span class="sd">    In this study 848 PC9 cells subjected to consecutive erlotinib treatment (for</span>
 <span class="sd">    1, 2, 4, 9, and 11 days) and 756 control cells were analysed using Drop-seq.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://www.nature.com/articles/s41467-021-21884-z</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://www.nature.com/articles/s41467-021-21884-z \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data</span>
@@ -905,7 +969,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="chang_2021"><a class="viewcode-back" href="../../../usage/data/pertpy.data.chang_2021.html#pertpy.data.chang_2021">[docs]</a><span class="k">def</span> <span class="nf">chang_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="chang_2021">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.chang_2021.html#pertpy.data.chang_2021">[docs]</a>
+<span class="k">def</span> <span class="nf">chang_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 5 different cell lines that were induced with a unique TraCe-seq barcode.</span>
 
 <span class="sd">    TraCe-seq is a method that captures at clonal resolution the origin, fate and</span>
@@ -914,7 +981,7 @@
 <span class="sd">    transduced into five different cell lines (PC9, MCF-10A, MDA-MB-231, NCI-H358 and NCI-H1373).</span>
 <span class="sd">    Transduced cells were selected with puromycin only, mixed together and profiled by 10x scRNA-seq.</span>
 
-<span class="sd">    Source paper:</span>
+<span class="sd">    References:</span>
 <span class="sd">        https://www.nature.com/articles/s41587-021-01005-3</span>
 
 <span class="sd">    Returns:</span>
@@ -936,8 +1003,11 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="datlinger_2017"><a class="viewcode-back" href="../../../usage/data/pertpy.data.datlinger_2017.html#pertpy.data.datlinger_2017">[docs]</a><span class="k">def</span> <span class="nf">datlinger_2017</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptpmics of 5905 Jurkat cells induced with anti-CD3 and anti-CD28 antibodies.</span>
+
+<div class="viewcode-block" id="datlinger_2017">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.datlinger_2017.html#pertpy.data.datlinger_2017">[docs]</a>
+<span class="k">def</span> <span class="nf">datlinger_2017</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics measurements of 5905 Jurkat cells induced with anti-CD3 and anti-CD28 antibodies.</span>
 
 <span class="sd">    For CROP-seq, Jurkat cells were transduced with a gRNA library targeting high-level</span>
 <span class="sd">    regulators of T cell receptor signaling and a set of transcription factors. After 10</span>
@@ -946,8 +1016,9 @@
 <span class="sd">    measuring TCR activation for each gene knockout. The dataset comprises 5,905 high-quality</span>
 <span class="sd">    single-cell transcriptomes with uniquely assigned gRNAs.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://www.nature.com/articles/nmeth.4177</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://www.nature.com/articles/nmeth.4177 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -968,8 +1039,11 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="datlinger_2021"><a class="viewcode-back" href="../../../usage/data/pertpy.data.datlinger_2021.html#pertpy.data.datlinger_2021">[docs]</a><span class="k">def</span> <span class="nf">datlinger_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 151788 nuclei of four cell lines.</span>
+
+<div class="viewcode-block" id="datlinger_2021">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.datlinger_2021.html#pertpy.data.datlinger_2021">[docs]</a>
+<span class="k">def</span> <span class="nf">datlinger_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics measurements of 151788 nuclei of four cell lines.</span>
 
 <span class="sd">    A large-scale scifi-RNA-seq experiment was performed with 383,000 nuclei loaded into</span>
 <span class="sd">    a single microfluidic channel of the Chromium system. Four human cell lines (HEK293T,</span>
@@ -978,7 +1052,8 @@
 <span class="sd">    resulted in 151,788 single-cell transcriptomes passing quality control.</span>
 
 <span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41592-021-01153-z</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41592-021-01153-z \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">     Returns:</span>
 <span class="sd">         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -999,39 +1074,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="dixit_2016_scperturb"><a class="viewcode-back" href="../../../usage/data/pertpy.data.dixit_2016_scperturb.html#pertpy.data.dixit_2016_scperturb">[docs]</a><span class="k">def</span> <span class="nf">dixit_2016_scperturb</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 200000 bone marrow-derived dendritic K562 cells.</span>
 
-<span class="sd">    Six Perturb-seq experiments were performed, analyzing 200,000 cells. In bone</span>
-<span class="sd">    marrow-derived dendritic cells (BMDCs), 24 transcription factors (TFs) were targeted</span>
-<span class="sd">    and the effects pre-stimulation (0 hr) and at 3 hr post-lipopolysaccharide (LPS) were</span>
-<span class="sd">    measured. In K562 cells, 14 TFs and 10 cell-cycle regulators were targeted in separate</span>
-<span class="sd">    pooled experiments. For K562 TFs, experiments were performed using lower and higher MOI</span>
-<span class="sd">    and at two time points. Reference scRNA-seq data from unperturbed cells were collected separately.</span>
-
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2016.11.038</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">output_file_name</span> <span class="o">=</span> <span class="s2">&quot;dixit_2016_scperturb.h5ad&quot;</span>
-    <span class="n">output_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="n">_download</span><span class="p">(</span>
-            <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://zenodo.org/record/7278143/files/DixitRegev2016.h5ad?download=1&quot;</span><span class="p">,</span>
-            <span class="n">output_file_name</span><span class="o">=</span><span class="n">output_file_name</span><span class="p">,</span>
-            <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="p">,</span>
-            <span class="n">is_zip</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">read_h5ad</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">datasetdir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_file_name</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">read_h5ad</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">adata</span></div>
-
-
-<div class="viewcode-block" id="frangieh_2021_protein"><a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021_protein.html#pertpy.data.frangieh_2021_protein">[docs]</a><span class="k">def</span> <span class="nf">frangieh_2021_protein</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<div class="viewcode-block" id="frangieh_2021_protein">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021_protein.html#pertpy.data.frangieh_2021_protein">[docs]</a>
+<span class="k">def</span> <span class="nf">frangieh_2021_protein</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;CITE-seq data of 218000 cells under 750 perturbations (only the surface protein data).</span>
 
 <span class="sd">    Perturb-CITE-seq was developed for pooled CRISPR perturbation screens with multi-modal</span>
@@ -1041,8 +1087,9 @@
 <span class="sd">    by their membership in an immune evasion program that is associated with immunotherapy</span>
 <span class="sd">    resistance in patients.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41588-021-00779-1</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41588-021-00779-1 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1063,7 +1110,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="frangieh_2021_rna"><a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021_rna.html#pertpy.data.frangieh_2021_rna">[docs]</a><span class="k">def</span> <span class="nf">frangieh_2021_rna</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="frangieh_2021_rna">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.frangieh_2021_rna.html#pertpy.data.frangieh_2021_rna">[docs]</a>
+<span class="k">def</span> <span class="nf">frangieh_2021_rna</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;CITE-seq data of 218000 cells under 750 perturbations (only the transcriptomics data).</span>
 
 <span class="sd">    Perturb-CITE-seq was developed for pooled CRISPR perturbation screens with multi-modal</span>
@@ -1074,7 +1124,8 @@
 <span class="sd">    resistance in patients.</span>
 
 <span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41588-021-00779-1</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41588-021-00779-1 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1095,15 +1146,19 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="gasperini_2019_atscale"><a class="viewcode-back" href="../../../usage/data/pertpy.data.gasperini_2019_atscale.html#pertpy.data.gasperini_2019_atscale">[docs]</a><span class="k">def</span> <span class="nf">gasperini_2019_atscale</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="gasperini_2019_atscale">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.gasperini_2019_atscale.html#pertpy.data.gasperini_2019_atscale">[docs]</a>
+<span class="k">def</span> <span class="nf">gasperini_2019_atscale</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 254974 cells of chronic K562 cells with CRISPRi perturbations.</span>
 
 <span class="sd">    Across two experiments, the authors used dCas9-KRAB to perturb 5,920 candidate enhancers</span>
 <span class="sd">    with no strong a priori hypothesis as to their target gene(s) in 254,974 cells of chronic</span>
 <span class="sd">    myelogenous leukemia cell line K562, with CRISPRi as the mode of perturbation.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2018.11.029</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2018.11.029 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1124,7 +1179,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="gasperini_2019_highmoi"><a class="viewcode-back" href="../../../usage/data/pertpy.data.gasperini_2019_highmoi.html#pertpy.data.gasperini_2019_highmoi">[docs]</a><span class="k">def</span> <span class="nf">gasperini_2019_highmoi</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="gasperini_2019_highmoi">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.gasperini_2019_highmoi.html#pertpy.data.gasperini_2019_highmoi">[docs]</a>
+<span class="k">def</span> <span class="nf">gasperini_2019_highmoi</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;K562 perturbed cells with 1119 candidate enhancers (only the high MOI part).</span>
 
 <span class="sd">    The authors used dCas9-KRAB to perturb 1,119 candidate enhancers with no strong a priori</span>
@@ -1132,8 +1190,9 @@
 <span class="sd">    K562, with CRISPRi as the mode of perturbation, where K562 cells were transduced</span>
 <span class="sd">    at a high MOI (pilot library MOI = ∼15).</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2018.11.029</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2018.11.029 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data</span>
@@ -1154,7 +1213,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="gasperini_2019_lowmoi"><a class="viewcode-back" href="../../../usage/data/pertpy.data.gasperini_2019_lowmoi.html#pertpy.data.gasperini_2019_lowmoi">[docs]</a><span class="k">def</span> <span class="nf">gasperini_2019_lowmoi</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="gasperini_2019_lowmoi">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.gasperini_2019_lowmoi.html#pertpy.data.gasperini_2019_lowmoi">[docs]</a>
+<span class="k">def</span> <span class="nf">gasperini_2019_lowmoi</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;K562 perturbed cells with 1119 candidate enhancers (only the low MOI part).</span>
 
 <span class="sd">    The authors used dCas9-KRAB to perturb 1,119 candidate enhancers with no strong a priori</span>
@@ -1162,8 +1224,9 @@
 <span class="sd">    with CRISPRi as the mode of perturbation, where K562 cells were transduced at a</span>
 <span class="sd">    low MOI (pilot library MOI = ∼1).</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2018.11.029</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2018.11.029 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1184,15 +1247,19 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="gehring_2019"><a class="viewcode-back" href="../../../usage/data/pertpy.data.gehring_2019.html#pertpy.data.gehring_2019">[docs]</a><span class="k">def</span> <span class="nf">gehring_2019</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="gehring_2019">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.gehring_2019.html#pertpy.data.gehring_2019">[docs]</a>
+<span class="k">def</span> <span class="nf">gehring_2019</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;96-plex perturbation experiment on live mouse neural stem cells.</span>
 
 <span class="sd">    In this study, a 96-plex perturbation experiment was conducted on live mouse neural</span>
 <span class="sd">    stem cells (NSCs), consisting of a pair of drug-triples with 4 drugs in total at 3</span>
 <span class="sd">    or 4 different concentractions.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41587-019-0372-z</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41587-019-0372-z \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of a scPerturb prepared single-cell dataset</span>
@@ -1213,7 +1280,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="mcfarland_2020"><a class="viewcode-back" href="../../../usage/data/pertpy.data.mcfarland_2020.html#pertpy.data.mcfarland_2020">[docs]</a><span class="k">def</span> <span class="nf">mcfarland_2020</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="mcfarland_2020">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.mcfarland_2020.html#pertpy.data.mcfarland_2020">[docs]</a>
+<span class="k">def</span> <span class="nf">mcfarland_2020</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Response of various cell lines to a range of different drugs and CRISPRi perturbations.</span>
 
 <span class="sd">    Here, the authors developed MIX-Seq, a method for multiplexed transcriptional profiling</span>
@@ -1221,8 +1291,9 @@
 <span class="sd">    co-treated pools of cancer cell lines. The responses of pools of 24–99 cell lines to</span>
 <span class="sd">    a range of different drugs were profiled, as well as to CRISPR perturbations.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41467-020-17440-w</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41467-020-17440-w \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data</span>
@@ -1243,7 +1314,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="replogle_2022_k562_essential"><a class="viewcode-back" href="../../../usage/data/pertpy.data.replogle_2022_k562_essential.html#pertpy.data.replogle_2022_k562_essential">[docs]</a><span class="k">def</span> <span class="nf">replogle_2022_k562_essential</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="replogle_2022_k562_essential">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.replogle_2022_k562_essential.html#pertpy.data.replogle_2022_k562_essential">[docs]</a>
+<span class="k">def</span> <span class="nf">replogle_2022_k562_essential</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;K562 cells transduced with CRISPRi (day 7 after transduction).</span>
 
 <span class="sd">    For day 6 essential-scale experiment in chronic myeloid leukemia (CML) (K562) cell</span>
@@ -1251,8 +1325,9 @@
 <span class="sd">    measured in K562 cells to obtain viral titers. CRISPRi K562 cells were transduced</span>
 <span class="sd">    and 20Q1 Cancer Dependency Map common essential genes were targeted at day 7 after transduction.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2022.05.013</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2022.05.013 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1273,7 +1348,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="replogle_2022_k562_gwps"><a class="viewcode-back" href="../../../usage/data/pertpy.data.replogle_2022_k562_gwps.html#pertpy.data.replogle_2022_k562_gwps">[docs]</a><span class="k">def</span> <span class="nf">replogle_2022_k562_gwps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="replogle_2022_k562_gwps">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.replogle_2022_k562_gwps.html#pertpy.data.replogle_2022_k562_gwps">[docs]</a>
+<span class="k">def</span> <span class="nf">replogle_2022_k562_gwps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;K562 cells transduced with CRISPRi (day 8 after transcduction).</span>
 
 <span class="sd">    Here, the authors used a compact, multiplexed CRISPR interference (CRISPRi) library</span>
@@ -1283,8 +1361,9 @@
 <span class="sd">    empirically measured in K562 cells to obtain viral titers. CRISPRi K562 cells were transduced</span>
 <span class="sd">    and all expressed genes were targeted at day 8 after transduction</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2022.05.013</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2022.05.013 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1305,7 +1384,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="replogle_2022_rpe1"><a class="viewcode-back" href="../../../usage/data/pertpy.data.replogle_2022_rpe1.html#pertpy.data.replogle_2022_rpe1">[docs]</a><span class="k">def</span> <span class="nf">replogle_2022_rpe1</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="replogle_2022_rpe1">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.replogle_2022_rpe1.html#pertpy.data.replogle_2022_rpe1">[docs]</a>
+<span class="k">def</span> <span class="nf">replogle_2022_rpe1</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;RPE1 cells transduced with CRISPRi (day 7 after transcduction).</span>
 
 <span class="sd">    For day 7 essential-scale Perturb-seq experiment in retinal pigment epithelial (RPE1)</span>
@@ -1314,8 +1396,9 @@
 <span class="sd">    ZIM3 KRAB-dCas9-P2A-BFP were transduced. 20Q1 Cancer Dependency Map common essential</span>
 <span class="sd">    genes were targeted at day 7 after transduction.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2022.05.013</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2022.05.013 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1336,7 +1419,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="schiebinger_2019_16day"><a class="viewcode-back" href="../../../usage/data/pertpy.data.schiebinger_2019_16day.html#pertpy.data.schiebinger_2019_16day">[docs]</a><span class="k">def</span> <span class="nf">schiebinger_2019_16day</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="schiebinger_2019_16day">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.schiebinger_2019_16day.html#pertpy.data.schiebinger_2019_16day">[docs]</a>
+<span class="k">def</span> <span class="nf">schiebinger_2019_16day</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomes of 65781 iPSC cells collected over 10 time points in 2i or serum conditions (16-day time course).</span>
 
 <span class="sd">    Samples were collected from established iPSC lines reprogrammed from the reprogramming mouse embryonic</span>
@@ -1346,8 +1432,9 @@
 <span class="sd">    and 7,387 unique transcripts per cell.</span>
 
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2019.01.006</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2019.01.006 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data</span>
@@ -1368,7 +1455,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="schiebinger_2019_18day"><a class="viewcode-back" href="../../../usage/data/pertpy.data.schiebinger_2019_18day.html#pertpy.data.schiebinger_2019_18day">[docs]</a><span class="k">def</span> <span class="nf">schiebinger_2019_18day</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="schiebinger_2019_18day">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.schiebinger_2019_18day.html#pertpy.data.schiebinger_2019_18day">[docs]</a>
+<span class="k">def</span> <span class="nf">schiebinger_2019_18day</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomes of 259155 iPSC cells collected over 39 time points in 2i or serum conditions (18-day time course).</span>
 
 <span class="sd">    Samples were collected from established iPSC lines reprogrammed from the reprogramming mouse embryonic</span>
@@ -1376,8 +1466,9 @@
 <span class="sd">    ∼12 hours across an 18-day time course (and every 6 hours between days 8 and 9). Overall, 259,155 cells</span>
 <span class="sd">    were profiled.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2019.01.006</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2019.01.006 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data</span>
@@ -1398,7 +1489,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="schraivogel_2020_tap_screen_chr11"><a class="viewcode-back" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr11.html#pertpy.data.schraivogel_2020_tap_screen_chr11">[docs]</a><span class="k">def</span> <span class="nf">schraivogel_2020_tap_screen_chr11</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="schraivogel_2020_tap_screen_chr11">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr11.html#pertpy.data.schraivogel_2020_tap_screen_chr11">[docs]</a>
+<span class="k">def</span> <span class="nf">schraivogel_2020_tap_screen_chr11</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;TAP-seq applied to K562 cells (only chromosome 11).</span>
 
 <span class="sd">    TAP-seq was applied to generate perturbation-based enhancer–target gene maps in K562 cells.</span>
@@ -1406,8 +1500,9 @@
 <span class="sd">    in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes</span>
 <span class="sd">    within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41592-020-0837-5</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41592-020-0837-5 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data</span>
@@ -1428,7 +1523,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="schraivogel_2020_tap_screen_chr8"><a class="viewcode-back" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr8.html#pertpy.data.schraivogel_2020_tap_screen_chr8">[docs]</a><span class="k">def</span> <span class="nf">schraivogel_2020_tap_screen_chr8</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="schraivogel_2020_tap_screen_chr8">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.schraivogel_2020_tap_screen_chr8.html#pertpy.data.schraivogel_2020_tap_screen_chr8">[docs]</a>
+<span class="k">def</span> <span class="nf">schraivogel_2020_tap_screen_chr8</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;TAP-seq applied to K562 cells (only chromosome 8).</span>
 
 <span class="sd">    TAP-seq was applied to generate perturbation-based enhancer–target gene maps in K562 cells.</span>
@@ -1436,8 +1534,9 @@
 <span class="sd">    in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes</span>
 <span class="sd">    within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41592-020-0837-5</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41592-020-0837-5 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1458,7 +1557,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="shifrut_2018"><a class="viewcode-back" href="../../../usage/data/pertpy.data.shifrut_2018.html#pertpy.data.shifrut_2018">[docs]</a><span class="k">def</span> <span class="nf">shifrut_2018</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="shifrut_2018">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.shifrut_2018.html#pertpy.data.shifrut_2018">[docs]</a>
+<span class="k">def</span> <span class="nf">shifrut_2018</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;CD8 T-cells from two donors for two conditions (SLICE and CROP-seq).</span>
 
 <span class="sd">    The authors developed a new method, single guide RNA (sgRNA) lentiviral infection</span>
@@ -1467,8 +1569,9 @@
 <span class="sd">    to explore transcriptional changes downstream of CRISPR-KO. Dataset includes CD8</span>
 <span class="sd">    T cells from two donors, for two conditions: with TCR stimulation or No stimulation.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.cell.2018.10.024</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.cell.2018.10.024 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1489,7 +1592,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="srivatsan_2020_sciplex2"><a class="viewcode-back" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex2.html#pertpy.data.srivatsan_2020_sciplex2">[docs]</a><span class="k">def</span> <span class="nf">srivatsan_2020_sciplex2</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="srivatsan_2020_sciplex2">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex2.html#pertpy.data.srivatsan_2020_sciplex2">[docs]</a>
+<span class="k">def</span> <span class="nf">srivatsan_2020_sciplex2</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A549 cells exposed to four compounds.</span>
 
 <span class="sd">    A549, a human lung adenocarcinoma cell line, was exposed to one of four compounds:</span>
@@ -1499,8 +1605,9 @@
 <span class="sd">    doses in triplicate for a total of 84 drug–dose–replicate combinations and additional</span>
 <span class="sd">    vehicle controls. Nuclei from each well were labelled and subjected to sci-RNA-seq.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1126/science.aax6234</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1126/science.aax6234 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1521,7 +1628,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="srivatsan_2020_sciplex3"><a class="viewcode-back" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex3.html#pertpy.data.srivatsan_2020_sciplex3">[docs]</a><span class="k">def</span> <span class="nf">srivatsan_2020_sciplex3</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="srivatsan_2020_sciplex3">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex3.html#pertpy.data.srivatsan_2020_sciplex3">[docs]</a>
+<span class="k">def</span> <span class="nf">srivatsan_2020_sciplex3</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomes of 650000 A549, K562, and mCF7 cells exposed to 188 compounds.</span>
 
 <span class="sd">    sci-Plex was used to screen three well-characterized human cancer cell lines, A549</span>
@@ -1529,8 +1639,9 @@
 <span class="sd">    adenocarcinoma)exposed to 188 compounds, profiling ~650,000 single-cell</span>
 <span class="sd">    transcriptomes across ~5000 independent samples in one experiment.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1126/science.aax6234</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1126/science.aax6234 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1551,7 +1662,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="srivatsan_2020_sciplex4"><a class="viewcode-back" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex4.html#pertpy.data.srivatsan_2020_sciplex4">[docs]</a><span class="k">def</span> <span class="nf">srivatsan_2020_sciplex4</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="srivatsan_2020_sciplex4">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.srivatsan_2020_sciplex4.html#pertpy.data.srivatsan_2020_sciplex4">[docs]</a>
+<span class="k">def</span> <span class="nf">srivatsan_2020_sciplex4</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A549 and MCF7 cells treated with pracinostat.</span>
 
 <span class="sd">    A549 and MCF7 cells were treated with pracinostat in the presence and absence of</span>
@@ -1562,8 +1676,9 @@
 <span class="sd">    supplementation was capable of blocking pracinostat-treated cells from reaching</span>
 <span class="sd">    the end of the HDAC inhibitor trajectory.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1126/science.aax6234</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1126/science.aax6234 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1584,7 +1699,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="tian_2019_day7neuron"><a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2019_day7neuron.html#pertpy.data.tian_2019_day7neuron">[docs]</a><span class="k">def</span> <span class="nf">tian_2019_day7neuron</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="tian_2019_day7neuron">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2019_day7neuron.html#pertpy.data.tian_2019_day7neuron">[docs]</a>
+<span class="k">def</span> <span class="nf">tian_2019_day7neuron</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomes of 20000 day 7 neurons targeted by 58 gRNAs.</span>
 
 <span class="sd">    The authors performed single-cell RNA sequencing of ∼20,000 day 7 neurons via 10x Genomics</span>
@@ -1595,8 +1713,9 @@
 <span class="sd">    from ∼91,000 mean reads per cell, the median number of ∼4,600 genes detected per cell and</span>
 <span class="sd">    ∼8,400 cells to which a unique sgRNA could be assigned after quality control.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.neuron.2019.07.014</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.neuron.2019.07.014 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1617,7 +1736,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="tian_2019_ipsc"><a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2019_ipsc.html#pertpy.data.tian_2019_ipsc">[docs]</a><span class="k">def</span> <span class="nf">tian_2019_ipsc</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="tian_2019_ipsc">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2019_ipsc.html#pertpy.data.tian_2019_ipsc">[docs]</a>
+<span class="k">def</span> <span class="nf">tian_2019_ipsc</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 20000 iPSCs targeted by 58 sgRNAs.</span>
 
 <span class="sd">    The authors performed single-cell RNA sequencing of ∼20,000 iPSCs via 10x Genomics</span>
@@ -1628,8 +1750,9 @@
 <span class="sd">    from ∼84,000 mean reads per cell, the median number of ∼5,000 genes detected per cell and</span>
 <span class="sd">    ∼15,000 cells to which a unique sgRNA could be assigned after quality control.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.neuron.2019.07.014</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.neuron.2019.07.014 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1650,7 +1773,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="tian_2021_crispra"><a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2021_crispra.html#pertpy.data.tian_2021_crispra">[docs]</a><span class="k">def</span> <span class="nf">tian_2021_crispra</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="tian_2021_crispra">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2021_crispra.html#pertpy.data.tian_2021_crispra">[docs]</a>
+<span class="k">def</span> <span class="nf">tian_2021_crispra</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;CROP-seq of 50000 neurons treated with 374 gRNAs (CRISPRa only).</span>
 
 <span class="sd">    For CRISPRa, 100 genes were inclued in the CROP-seq experiments. The CROP-seq</span>
@@ -1659,8 +1785,9 @@
 <span class="sd">    CROP-seq sgRNA library, approximately 50,000 CRISPRi neurons were loaded into</span>
 <span class="sd">    10X chips with about 25,000 input cells per lane.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41593-021-00862-0</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41593-021-00862-0 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data</span>
@@ -1681,7 +1808,10 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="tian_2021_crispri"><a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2021_crispri.html#pertpy.data.tian_2021_crispri">[docs]</a><span class="k">def</span> <span class="nf">tian_2021_crispri</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="tian_2021_crispri">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.tian_2021_crispri.html#pertpy.data.tian_2021_crispri">[docs]</a>
+<span class="k">def</span> <span class="nf">tian_2021_crispri</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;CROP-seq of 98000 neurons treated with 374 gRNAs (CRISPRi only).</span>
 
 <span class="sd">    For CRISPRi, 184 genes were inclued in the CROP-seq experiments. The CROP-seq</span>
@@ -1690,9 +1820,9 @@
 <span class="sd">    CROP-seq sgRNA library, approximately 98,000 CRISPRi neurons were loaded into</span>
 <span class="sd">    10X chips with about 25,000 input cells per lane.</span>
 
-
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1038/s41593-021-00862-0</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1038/s41593-021-00862-0 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1713,11 +1843,18 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="weinreb_2020"><a class="viewcode-back" href="../../../usage/data/pertpy.data.weinreb_2020.html#pertpy.data.weinreb_2020">[docs]</a><span class="k">def</span> <span class="nf">weinreb_2020</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="weinreb_2020">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.weinreb_2020.html#pertpy.data.weinreb_2020">[docs]</a>
+<span class="k">def</span> <span class="nf">weinreb_2020</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mouse embryonic stem cells under different cytokines across time.</span>
 
 <span class="sd">    The authors developed a tool called LARRY (lineage and RNA recovery) and applied</span>
 <span class="sd">    it to mouse embryonic stem cells under different cytokine conditions across time.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://www.science.org/doi/10.1126/science.aaw3381 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1738,15 +1875,19 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="xie_2017"><a class="viewcode-back" href="../../../usage/data/pertpy.data.xie_2017.html#pertpy.data.xie_2017">[docs]</a><span class="k">def</span> <span class="nf">xie_2017</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcriptomics of 51448 cells generated with Mosaic-seq.</span>
+
+<div class="viewcode-block" id="xie_2017">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.xie_2017.html#pertpy.data.xie_2017">[docs]</a>
+<span class="k">def</span> <span class="nf">xie_2017</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Single-cell transcriptomics of 51448 cells generated with Mosaic-seq.</span>
 
 <span class="sd">    Mosaic-seq was applied to 71 constituent enhancers from 15 super-enhancers, this</span>
 <span class="sd">    analysis of 51,448 sgRNA-induced transcriptomes finds that only a small number of</span>
 <span class="sd">    constituents are major effectors of target gene expression.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1016/j.molcel.2017.03.007</span>
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1016/j.molcel.2017.03.007 \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1767,17 +1908,21 @@
     <span class="k">return</span> <span class="n">adata</span></div>
 
 
-<div class="viewcode-block" id="zhao_2021"><a class="viewcode-back" href="../../../usage/data/pertpy.data.zhao_2021.html#pertpy.data.zhao_2021">[docs]</a><span class="k">def</span> <span class="nf">zhao_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multiplexed drug perturbation from freshly resected tumors.</span>
 
-<span class="sd">    Source paper:</span>
-<span class="sd">        https://doi.org/10.1186/s13073-021-00894-y</span>
+<div class="viewcode-block" id="zhao_2021">
+<a class="viewcode-back" href="../../../usage/data/pertpy.data.zhao_2021.html#pertpy.data.zhao_2021">[docs]</a>
+<span class="k">def</span> <span class="nf">zhao_2021</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multiplexed drug perturbation from freshly resected tumors.</span>
 
 <span class="sd">    This study combines multiplexed drug perturbation in acute slice culture from freshly</span>
 <span class="sd">    resected tumors with scRNA-seq to profile transcriptome-wide drug responses in</span>
 <span class="sd">    individual patients. They applied this approach to drug perturbations on slices derived</span>
 <span class="sd">    from six glioblastoma (GBM) resections to identify conserved drug responses and to one</span>
 <span class="sd">    additional GBM resection to identify patient-specific responses.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Publication: https://doi.org/10.1186/s13073-021-00894-y \</span>
+<span class="sd">        Obtained from scperturb: http://projects.sanderlab.org/scperturb/</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data</span>
@@ -1796,6 +1941,7 @@
         <span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">read_h5ad</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">adata</span></div>
+
 </pre></div>
         </article>
       </div>
@@ -1827,9 +1973,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../_static/copybutton.js?v=f281be69"></script>

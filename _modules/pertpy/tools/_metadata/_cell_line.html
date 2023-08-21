@@ -1,10 +1,10 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../../../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>pertpy.tools._metadata._cell_line - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=135e06be" />
@@ -178,7 +178,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../usage/data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../usage/data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -258,7 +257,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../authors.html">Credits</a></li>
@@ -300,253 +299,213 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
 
-<span class="kn">import</span> <span class="nn">anndata</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">anndata</span> <span class="kn">import</span> <span class="n">AnnData</span>
+<span class="kn">from</span> <span class="nn">remotezip</span> <span class="kn">import</span> <span class="n">RemoteZip</span>
 <span class="kn">from</span> <span class="nn">rich</span> <span class="kn">import</span> <span class="nb">print</span>
 <span class="kn">from</span> <span class="nn">scanpy</span> <span class="kn">import</span> <span class="n">settings</span>
 
 <span class="kn">from</span> <span class="nn">pertpy.data._dataloader</span> <span class="kn">import</span> <span class="n">_download</span>
 
+<span class="kn">from</span> <span class="nn">._look_up</span> <span class="kn">import</span> <span class="n">LookUp</span>
 
-<div class="viewcode-block" id="CellLineMetaData"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData">[docs]</a><span class="k">class</span> <span class="nc">CellLineMetaData</span><span class="p">:</span>
+
+<div class="viewcode-block" id="CellLineMetaData">
+<a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData">[docs]</a>
+<span class="k">class</span> <span class="nc">CellLineMetaData</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Utilities to fetch cell line metadata.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Download cell line metadata from DepMap</span>
-        <span class="n">cell_line_file_name</span> <span class="o">=</span> <span class="s2">&quot;sample_info.csv&quot;</span>
-        <span class="n">cell_line_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">cell_line_file_name</span>
+        <span class="c1"># Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)</span>
+        <span class="n">cell_line_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/sample_info.csv&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">cell_line_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[bold yellow]No DepMap metadata file found. Starting download now.&quot;</span><span class="p">)</span>
             <span class="n">_download</span><span class="p">(</span>
                 <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://ndownloader.figshare.com/files/35020903&quot;</span><span class="p">,</span>
-                <span class="n">output_file_name</span><span class="o">=</span><span class="n">cell_line_file_name</span><span class="p">,</span>
+                <span class="n">output_file_name</span><span class="o">=</span><span class="s2">&quot;sample_info.csv&quot;</span><span class="p">,</span>
                 <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
+                <span class="n">block_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
                 <span class="n">is_zip</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cell_line_meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">cell_line_file_path</span><span class="p">)</span>
 
         <span class="c1"># Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project</span>
-        <span class="n">cell_line_cancer_project_file_name</span> <span class="o">=</span> <span class="s2">&quot;cell_line_cancer_project.csv&quot;</span>
-        <span class="n">cell_line_cancer_project_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">cell_line_cancer_project_file_name</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">cell_line_cancer_project_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;[bold yellow]No cell line metadata file from The Genomics of Drug Sensitivity &quot;</span>
-                <span class="s2">&quot;in Cancer Project found. Starting download now.&quot;</span>
+        <span class="c1"># Source: https://www.cancerrxgene.org/celllines</span>
+        <span class="n">cell_line_cancer_project_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/cell_line_cancer_project.csv&quot;</span>
+        <span class="n">cell_line_cancer_project_transformed_path</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/cell_line_cancer_project_transformed.csv&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">cell_line_cancer_project_transformed_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">cell_line_cancer_project_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;[bold yellow]No cell line metadata file from The Genomics of Drug Sensitivity &quot;</span>
+                    <span class="s2">&quot;in Cancer Project found. Starting download now.&quot;</span>
+                <span class="p">)</span>
+                <span class="n">_download</span><span class="p">(</span>
+                    <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://www.cancerrxgene.org/api/celllines?list=all&amp;sEcho=1&amp;iColumns=7&amp;sColumns=&amp;&quot;</span>
+                    <span class="s2">&quot;iDisplayStart=0&amp;iDisplayLength=25&amp;mDataProp_0=0&amp;mDataProp_1=1&amp;mDataProp_2=2&amp;mDataProp_3=3&amp;&quot;</span>
+                    <span class="s2">&quot;mDataProp_4=4&amp;mDataProp_5=5&amp;mDataProp_6=6&amp;sSearch=&amp;bRegex=false&amp;sSearch_0=&amp;bRegex_0=false&amp;&quot;</span>
+                    <span class="s2">&quot;bSearchable_0=true&amp;sSearch_1=&amp;bRegex_1=false&amp;bSearchable_1=true&amp;sSearch_2=&amp;bRegex_2=false&amp;&quot;</span>
+                    <span class="s2">&quot;bSearchable_2=true&amp;sSearch_3=&amp;bRegex_3=false&amp;bSearchable_3=true&amp;sSearch_4=&amp;bRegex_4=false&amp;&quot;</span>
+                    <span class="s2">&quot;bSearchable_4=true&amp;sSearch_5=&amp;bRegex_5=false&amp;bSearchable_5=true&amp;sSearch_6=&amp;bRegex_6=false&amp;&quot;</span>
+                    <span class="s2">&quot;bSearchable_6=true&amp;iSortCol_0=0&amp;sSortDir_0=asc&amp;iSortingCols=1&amp;bSortable_0=true&amp;bSortable_1=true&amp;&quot;</span>
+                    <span class="s2">&quot;bSortable_2=true&amp;bSortable_3=true&amp;bSortable_4=true&amp;bSortable_5=true&amp;bSortable_6=true&amp;export=csv&quot;</span><span class="p">,</span>
+                    <span class="n">output_file_name</span><span class="o">=</span><span class="s2">&quot;cell_line_cancer_project.csv&quot;</span><span class="p">,</span>
+                    <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
+                    <span class="n">block_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+                    <span class="n">is_zip</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">cell_line_cancer_project_file_path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span><span class="s2">&quot;stripped_cell_line_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span>
+                <span class="s2">&quot;Cell line Name&quot;</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\-|\.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span><span class="s2">&quot;stripped_cell_line_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span><span class="s2">&quot;stripped_cell_line_name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="p">)</span>
+            <span class="c1"># pivot the data frame so that each cell line has only one row of metadata</span>
+            <span class="n">index_col</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s2">&quot;Datasets&quot;</span><span class="p">,</span> <span class="s2">&quot;number of drugs&quot;</span><span class="p">})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">index_col</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;Datasets&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;number of drugs&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Cell line Name&quot;</span><span class="p">:</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">cell_line_cancer_project_transformed_path</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">cell_line_cancer_project_transformed_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Download metadata for driver genes from DepMap_Sanger</span>
+        <span class="c1"># Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)</span>
+        <span class="n">gene_annotation_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/gene_identifiers_20191101.csv&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">gene_annotation_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[bold yellow]No metadata file was found for gene annotation.&quot;</span> <span class="s2">&quot; Starting download now.&quot;</span><span class="p">)</span>
             <span class="n">_download</span><span class="p">(</span>
-                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://www.cancerrxgene.org/api/celllines?list=all&amp;sEcho=1&amp;iColumns=7&amp;sColumns=&amp;&quot;</span>
-                <span class="s2">&quot;iDisplayStart=0&amp;iDisplayLength=25&amp;mDataProp_0=0&amp;mDataProp_1=1&amp;mDataProp_2=2&amp;mDataProp_3=3&amp;&quot;</span>
-                <span class="s2">&quot;mDataProp_4=4&amp;mDataProp_5=5&amp;mDataProp_6=6&amp;sSearch=&amp;bRegex=false&amp;sSearch_0=&amp;bRegex_0=false&amp;&quot;</span>
-                <span class="s2">&quot;bSearchable_0=true&amp;sSearch_1=&amp;bRegex_1=false&amp;bSearchable_1=true&amp;sSearch_2=&amp;bRegex_2=false&amp;&quot;</span>
-                <span class="s2">&quot;bSearchable_2=true&amp;sSearch_3=&amp;bRegex_3=false&amp;bSearchable_3=true&amp;sSearch_4=&amp;bRegex_4=false&amp;&quot;</span>
-                <span class="s2">&quot;bSearchable_4=true&amp;sSearch_5=&amp;bRegex_5=false&amp;bSearchable_5=true&amp;sSearch_6=&amp;bRegex_6=false&amp;&quot;</span>
-                <span class="s2">&quot;bSearchable_6=true&amp;iSortCol_0=0&amp;sSortDir_0=asc&amp;iSortingCols=1&amp;bSortable_0=true&amp;bSortable_1=true&amp;&quot;</span>
-                <span class="s2">&quot;bSortable_2=true&amp;bSortable_3=true&amp;bSortable_4=true&amp;bSortable_5=true&amp;bSortable_6=true&amp;export=csv&quot;</span><span class="p">,</span>
-                <span class="n">output_file_name</span><span class="o">=</span><span class="n">cell_line_cancer_project_file_name</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv&quot;</span><span class="p">,</span>
+                <span class="n">output_file_name</span><span class="o">=</span><span class="s2">&quot;gene_identifiers_20191101.csv&quot;</span><span class="p">,</span>
                 <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
+                <span class="n">block_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
                 <span class="n">is_zip</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_annotation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">gene_annotation_file_path</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">cell_line_cancer_project_file_path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span><span class="s2">&quot;stripped_cell_line_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span>
-            <span class="s2">&quot;Cell line Name&quot;</span>
-        <span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\-|\.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span><span class="s2">&quot;stripped_cell_line_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">[</span><span class="s2">&quot;stripped_cell_line_name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-        <span class="p">)</span>
-        <span class="c1"># pivot the data frame so that each cell line has only one row of metadata</span>
-        <span class="n">index_col</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s2">&quot;Datasets&quot;</span><span class="p">,</span> <span class="s2">&quot;number of drugs&quot;</span><span class="p">})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span>
-            <span class="n">index</span><span class="o">=</span><span class="n">index_col</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;Datasets&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;number of drugs&quot;</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-
-        <span class="c1"># Download metadata for driver genes of the intOGen analysis from DepMap_Sanger</span>
-        <span class="n">driver_gene_intOGen_file_name</span> <span class="o">=</span> <span class="s2">&quot;IntOGen-Drivers.zip&quot;</span>
-        <span class="n">driver_gene_intOGen_file_path</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/2020-02-02_IntOGen-Drivers-20200213/Compendium_Cancer_Genes.tsv&quot;</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">driver_gene_intOGen_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;[bold yellow]No metadata file was found for driver genes of the intOGen analysis.&quot;</span>
-                <span class="s2">&quot; Starting download now.&quot;</span>
-            <span class="p">)</span>
-            <span class="n">_download</span><span class="p">(</span>
-                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://www.intogen.org/download?file=IntOGen-Drivers-20200201.zip&quot;</span><span class="p">,</span>
-                <span class="n">output_file_name</span><span class="o">=</span><span class="n">driver_gene_intOGen_file_name</span><span class="p">,</span>
-                <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
-                <span class="n">is_zip</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">driver_gene_intOGen</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">driver_gene_intOGen_file_path</span><span class="p">)</span>
-
-        <span class="c1"># Download metadata for driver genes of the COSMIC Tier 1 gene</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">driver_gene_cosmic</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;https://www.dropbox.com/s/8azkmt7vqz56e2m/COSMIC_tier1.csv?dl=1&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Download bulk RNA-seq data collated from the Wellcome Sanger Institute and the Broad Institute</span>
-        <span class="n">bulk_rna_sanger_file_name</span> <span class="o">=</span> <span class="s2">&quot;rnaseq_sanger.zip&quot;</span>
-        <span class="n">bulk_rna_sanger_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/rnaseq_sanger_20210316.csv&quot;</span>
+        <span class="c1"># Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute fro DepMap.Sanger</span>
+        <span class="c1"># Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)</span>
+        <span class="n">bulk_rna_sanger_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/rnaseq_read_count_20220624.csv&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">bulk_rna_sanger_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="s2">&quot;[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line.&quot;</span>
-                <span class="s2">&quot; Starting download now.&quot;</span>
+                <span class="s2">&quot; Starting download now...&quot;</span>
             <span class="p">)</span>
-            <span class="n">_download</span><span class="p">(</span>
-                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://cog.sanger.ac.uk/cmp/download/rnaseq_sanger_20210316.zip&quot;</span><span class="p">,</span>
-                <span class="n">output_file_name</span><span class="o">=</span><span class="n">bulk_rna_sanger_file_name</span><span class="p">,</span>
-                <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
-                <span class="n">is_zip</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">bulk_rna_sanger_file_path</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">RemoteZip</span><span class="p">(</span><span class="s2">&quot;https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_file</span><span class="p">:</span>
+                <span class="n">zip_file</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">&quot;rnaseq_read_count_20220624.csv&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">)</span>
 
-        <span class="n">bulk_rna_broad_file_name</span> <span class="o">=</span> <span class="s2">&quot;rnaseq_broad.zip&quot;</span>
-        <span class="n">bulk_rna_broad_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/rnaseq_broad_20210317.csv&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">bulk_rna_broad_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;[bold yellow]No metadata file was found for bulk RNA-seq data of broad cell line.&quot;</span>
-                <span class="s2">&quot; Starting download now.&quot;</span>
-            <span class="p">)</span>
-            <span class="n">_download</span><span class="p">(</span>
-                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://cog.sanger.ac.uk/cmp/download/rnaseq_broad_20210317.zip&quot;</span><span class="p">,</span>
-                <span class="n">output_file_name</span><span class="o">=</span><span class="n">bulk_rna_broad_file_name</span><span class="p">,</span>
-                <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
-                <span class="n">is_zip</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">bulk_rna_broad_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">bulk_rna_sanger_file_path</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">header</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">index_col</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 
-        <span class="c1"># Download proteomics data from ProCan-DepMapSanger</span>
-        <span class="n">proteomics_file_name</span> <span class="o">=</span> <span class="s2">&quot;Proteomics_20221214.zip&quot;</span>
-        <span class="n">proteomics_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/proteomics_all_20221214.csv&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">proteomics_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;[bold yellow]No metadata file was found for proteomics data (ProCan-DepMapSanger).&quot;</span>
-                <span class="s2">&quot; Starting download now.&quot;</span>
-            <span class="p">)</span>
-            <span class="n">_download</span><span class="p">(</span>
-                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip&quot;</span><span class="p">,</span>
-                <span class="n">output_file_name</span><span class="o">=</span><span class="n">proteomics_file_name</span><span class="p">,</span>
-                <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
-                <span class="n">is_zip</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">proteomics_file_path</span><span class="p">)</span>
+        <span class="c1"># issue: read count values contain random whitespace, not sure what it supposes to mean</span>
+        <span class="c1"># solution: remove the white space and convert to int before depmap updates the metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">droplevel</span><span class="p">(</span><span class="s2">&quot;model_id&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">droplevel</span><span class="p">(</span><span class="s2">&quot;gene_id&quot;</span><span class="p">)</span>
 
         <span class="c1"># Download CCLE expression data from DepMap</span>
-        <span class="n">ccle_expr_file_name</span> <span class="o">=</span> <span class="s2">&quot;CCLE_expression.csv&quot;</span>
-        <span class="n">ccle_expr_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/CCLE_expression.csv&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">ccle_expr_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[bold yellow]No metadata file was found for CCLE expression data.&quot;</span> <span class="s2">&quot; Starting download now.&quot;</span><span class="p">)</span>
+        <span class="c1"># Source: https://depmap.org/portal/download/all/  (DepMap Public 22Q2)</span>
+        <span class="c1"># bulk_rna_broad_file_path = settings.cachedir.__str__() + &quot;/CCLE_expression.csv&quot;</span>
+        <span class="n">bulk_rna_broad_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/CCLE_expression_full.csv&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">bulk_rna_broad_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[bold yellow]No metadata file was found for CCLE expression data. Starting download now.&quot;</span><span class="p">)</span>
             <span class="n">_download</span><span class="p">(</span>
-                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://figshare.com/ndownloader/files/34989919&quot;</span><span class="p">,</span>
-                <span class="n">output_file_name</span><span class="o">=</span><span class="n">ccle_expr_file_name</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://figshare.com/ndownloader/files/34989922&quot;</span><span class="p">,</span>
+                <span class="n">output_file_name</span><span class="o">=</span><span class="s2">&quot;CCLE_expression_full.csv&quot;</span><span class="p">,</span>
                 <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
+                <span class="n">block_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
                 <span class="n">is_zip</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ccle_expr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">ccle_expr_file_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">bulk_rna_broad_file_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CellLineMetaData.getinfo_annotate_driver_genes"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.getinfo_annotate_driver_genes">[docs]</a>    <span class="k">def</span> <span class="nf">getinfo_annotate_driver_genes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">driver_gene_set</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;intOGen&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A brief summary of genes in cancer driver annotation data.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            driver_gene_set: gene set for cancer driver annotation: intOGen or COSMIC. Defaults to &quot;intOGen&quot;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">driver_gene_set</span> <span class="o">==</span> <span class="s2">&quot;intOGen&quot;</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Current available information in the DepMap_Sanger driver gene annotation for intOGen genes: &quot;</span><span class="p">,</span>
-                <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">driver_gene_intOGen</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">driver_gene_intOGen</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2"> driver genes are saved in this file&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">driver_gene_set</span> <span class="o">==</span> <span class="s2">&quot;COSMIC&quot;</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Current available information in the DepMap_Sanger driver gene annotation for COSMIC Tier 1 genes: &quot;</span><span class="p">,</span>
-                <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">driver_gene_cosmic</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">driver_gene_cosmic</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2"> driver genes are saved in this file&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CellLineMetaData.getinfo_annotate_bulk_rna_expression"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.getinfo_annotate_bulk_rna_expression">[docs]</a>    <span class="k">def</span> <span class="nf">getinfo_annotate_bulk_rna_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_line_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;broad&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A brief summary of bulk RNA expression data.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            cell_line_source: the source of RNA-seq data: broad or sanger. Defaults to&quot;broad&quot;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">cell_line_source</span> <span class="o">==</span> <span class="s2">&quot;broad&quot;</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Current available information in the RNA-Seq Data for broad cell line only: &quot;</span><span class="p">,</span>
-                <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span><span class="o">.</span><span class="n">model_name</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> unique cell lines are saved in this file.&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span><span class="o">.</span><span class="n">gene_id</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> unique genes are saved in this file&quot;</span><span class="p">)</span>
-
-        <span class="k">elif</span> <span class="n">cell_line_source</span> <span class="o">==</span> <span class="s2">&quot;sanger&quot;</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Current available information in the RNA-Seq Data for Sanger cell line only: &quot;</span><span class="p">,</span>
-                <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">model_name</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> unique cell lines are saved in this file.&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">gene_id</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> unique genes are saved in this file.&quot;</span><span class="p">)</span>
+        <span class="c1"># Download proteomics data from DepMap.Sanger</span>
+        <span class="c1"># Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)</span>
+        <span class="n">proteomics_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/proteomics_all_20221214.csv&quot;</span>
+        <span class="n">proteomics_trimm_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/proteomics_all_20221214_trimm.csv&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">proteomics_trimm_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">proteomics_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger).&quot;</span>
+                    <span class="s2">&quot; Starting download now.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">with</span> <span class="n">RemoteZip</span><span class="p">(</span><span class="s2">&quot;https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_file</span><span class="p">:</span>
+                    <span class="n">zip_file</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">&quot;proteomics_all_20221214.csv&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">proteomics_file_path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="p">[[</span><span class="s2">&quot;uniprot_id&quot;</span><span class="p">,</span> <span class="s2">&quot;model_id&quot;</span><span class="p">,</span> <span class="s2">&quot;model_name&quot;</span><span class="p">,</span> <span class="s2">&quot;symbol&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="p">[</span>
+                <span class="p">[</span><span class="s2">&quot;uniprot_id&quot;</span><span class="p">,</span> <span class="s2">&quot;model_id&quot;</span><span class="p">,</span> <span class="s2">&quot;model_name&quot;</span><span class="p">,</span> <span class="s2">&quot;symbol&quot;</span><span class="p">]</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">proteomics_trimm_path</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified source of bulk rna expression data is not available. &quot;</span>
-                <span class="s2">&quot;Please choose either broad or sanger.&quot;</span>
-            <span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">proteomics_trimm_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CellLineMetaData.getinfo_annotate_cell_lines"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.getinfo_annotate_cell_lines">[docs]</a>    <span class="k">def</span> <span class="nf">getinfo_annotate_cell_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_line_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DepMap&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A brief summary of cell line metadata.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            cell_line_source: the source of cell line annotation: DepMap or Cancerrxgene. Defaults to &quot;DepMap&quot;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">cell_line_source</span> <span class="o">==</span> <span class="s2">&quot;DepMap&quot;</span><span class="p">:</span>
+        <span class="c1"># Download GDSC drug response data</span>
+        <span class="c1"># Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)</span>
+        <span class="n">drug_response_gdsc1_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/ic50_gdsc1.xlsx&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">drug_response_gdsc1_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Current available information in the DepMap cell line annotation: &quot;</span><span class="p">,</span>
-                <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_line_meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
+                <span class="s2">&quot;[bold yellow]No metadata file was found for drug response data of GDSC1 dataset.&quot;</span>
+                <span class="s2">&quot; Starting download now.&quot;</span>
             <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_line_meta</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2"> cell lines are saved in this file&quot;</span><span class="p">)</span>
+            <span class="n">_download</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx&quot;</span><span class="p">,</span>
+                <span class="n">output_file_name</span><span class="o">=</span><span class="s2">&quot;ic50_gdsc1.xlsx&quot;</span><span class="p">,</span>
+                <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
+                <span class="n">block_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+                <span class="n">is_zip</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">drug_response_gdsc1_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span> <span class="s2">&quot;drug_name&quot;</span><span class="p">])[</span><span class="s2">&quot;auc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">idxmax</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="n">cell_line_source</span> <span class="o">==</span> <span class="s2">&quot;Cancerrxgene&quot;</span><span class="p">:</span>
+        <span class="n">drug_response_gdsc2_file_path</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/ic50_gdsc2.xlsx&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">drug_response_gdsc2_file_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Current available information in the cell line annotation from the project &quot;</span>
-                <span class="s2">&quot;Genomics of Drug Sensitivity in Cancer: &quot;</span><span class="p">,</span>
-                <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
+                <span class="s2">&quot;[bold yellow]No metadata file was found for drug response data of GDSC2 dataset.&quot;</span>
+                <span class="s2">&quot; Starting download now.&quot;</span>
             <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2"> cell lines are saved in this file&quot;</span><span class="p">)</span>
+            <span class="n">_download</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC2_fitted_dose_response_24Jul22.xlsx&quot;</span><span class="p">,</span>
+                <span class="n">output_file_name</span><span class="o">=</span><span class="s2">&quot;ic50_gdsc2.xlsx&quot;</span><span class="p">,</span>
+                <span class="n">output_path</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">cachedir</span><span class="p">,</span>
+                <span class="n">block_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+                <span class="n">is_zip</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">drug_response_gdsc2_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span> <span class="s2">&quot;drug_name&quot;</span><span class="p">])[</span><span class="s2">&quot;auc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">idxmax</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified source of cell line annotation is not available. &quot;</span>
-                <span class="s2">&quot;Please choose either DepMap or Cancerrxgene.&quot;</span>
-            <span class="p">)</span></div>
-
-<div class="viewcode-block" id="CellLineMetaData.getinfo_annotate_protein_expression"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.getinfo_annotate_protein_expression">[docs]</a>    <span class="k">def</span> <span class="nf">getinfo_annotate_protein_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A brief summary of protein expression data.&quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="s2">&quot;Current available information in the proteomics data: &quot;</span><span class="p">,</span>
-            <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-            <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="o">.</span><span class="n">model_name</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> unique cell lines are saved in this file.&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="o">.</span><span class="n">uniprot_id</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> unique proteins are saved in this file.&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CellLineMetaData.getinfo_annotate_ccle_expression"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.getinfo_annotate_ccle_expression">[docs]</a>    <span class="k">def</span> <span class="nf">getinfo_annotate_ccle_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A brief summary of CCLE expression data.&quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Expression of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ccle_expr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> genes is saved in this file.&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ccle_expr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="si">}</span><span class="s2"> unique cell lines are available in this file.&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CellLineMetaData.annotate_cell_lines"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_cell_lines">[docs]</a>    <span class="k">def</span> <span class="nf">annotate_cell_lines</span><span class="p">(</span>
+<div class="viewcode-block" id="CellLineMetaData.annotate_cell_lines">
+<a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_cell_lines">[docs]</a>
+    <span class="k">def</span> <span class="nf">annotate_cell_lines</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
-        <span class="n">cell_line_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DepMap_ID&quot;</span><span class="p">,</span>
-        <span class="n">identifier_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DepMap_ID&quot;</span><span class="p">,</span>
-        <span class="n">cell_line_information</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DepMap&quot;</span><span class="p">,</span>
+        <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DepMap_ID&quot;</span><span class="p">,</span>
+        <span class="n">reference_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DepMap_ID&quot;</span><span class="p">,</span>
+        <span class="n">cell_line_information</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cell_line_source</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;DepMap&quot;</span><span class="p">,</span> <span class="s2">&quot;Cancerrxgene&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;DepMap&quot;</span><span class="p">,</span>
         <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch cell line annotation.</span>
@@ -554,14 +513,14 @@
 <span class="sd">        For each cell, we fetch cell line annotation from Dependency Map (DepMap).</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            adata: The AnnData object to annotate.</span>
-<span class="sd">            cell_line_identifier: The column of `.obs` with cell line information. Defaults to &quot;DepMap_ID&quot;.</span>
-<span class="sd">            identifier_type: The type of cell line information, e.g. DepMap_ID, cell_line_name or</span>
-<span class="sd">                stripped_cell_line_name. To fetch cell line metadata from Cancerrxgene, it is recommended to choose</span>
+<span class="sd">            adata: The data object to annotate.</span>
+<span class="sd">            query_id: The column of `.obs` with cell line information. Defaults to &quot;DepMap_ID&quot;.</span>
+<span class="sd">            reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or</span>
+<span class="sd">                stripped_cell_line_name. If fetch cell line metadata from Cancerrxgene, it is recommended to choose</span>
 <span class="sd">                &quot;stripped_cell_line_name&quot;. Defaults to &quot;DepMap_ID&quot;.</span>
 <span class="sd">            cell_line_information: The metadata to fetch. All metadata will be fetched by default. Defaults to None (=all).</span>
-<span class="sd">            source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to &quot;DepMap&quot;.</span>
-<span class="sd">            copy: Determines whether a copy of the AnnData object is returned. Defaults to False.</span>
+<span class="sd">            cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to &quot;DepMap&quot;.</span>
+<span class="sd">            copy: Determines whether a copy of the `adata` is returned. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Returns an AnnData object with cell line annotation.</span>
@@ -569,97 +528,111 @@
         <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
             <span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s2">&quot;DepMap&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cell_line_source</span> <span class="o">==</span> <span class="s2">&quot;DepMap&quot;</span><span class="p">:</span>
             <span class="n">cell_line_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_line_meta</span>
-        <span class="k">elif</span> <span class="n">source</span> <span class="o">==</span> <span class="s2">&quot;Cancerrxgene&quot;</span><span class="p">:</span>
-            <span class="n">cell_line_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified source of cell line metadata is not available.&quot;</span>
-                <span class="s2">&quot;Please choose either DepMap or Cancerrxgene. Default is DepMap.&quot;</span>
-            <span class="p">)</span>
+            <span class="n">reference_id</span> <span class="o">=</span> <span class="s2">&quot;stripped_cell_line_name&quot;</span>
+            <span class="k">if</span> <span class="n">query_id</span> <span class="o">==</span> <span class="s2">&quot;DepMap_ID&quot;</span><span class="p">:</span>
+                <span class="n">query_id</span> <span class="o">=</span> <span class="s2">&quot;stripped_cell_line_name&quot;</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;[bold blue]`stripped_cell_line_name` is used as reference and query indentifier &quot;</span><span class="p">,</span>
+                    <span class="s2">&quot; to annotate cell line metadata from Cancerrxgene. &quot;</span>
+                    <span class="s2">&quot;So please make sure that `stripped_cell_line_name` is available in the adata.obs. &quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;or use the DepMap as `cell_line_source` to annotate the cell line first &quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">cell_line_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span>
 
-        <span class="k">if</span> <span class="n">identifier_type</span> <span class="ow">in</span> <span class="n">cell_line_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">query_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The requested query_id </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> is not in `adata.obs`. </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="s2">&quot;Please check again. &quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reference_id</span> <span class="ow">in</span> <span class="n">cell_line_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="c1"># If the specified cell line type can be found in the database,</span>
             <span class="c1"># we can compare these keys and fetch the corresponding metadata.</span>
+            <span class="n">identifier_num_all</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+            <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">cell_line_meta</span><span class="p">[</span><span class="n">reference_id</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">==</span> <span class="n">identifier_num_all</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Attempting to match the query id </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> in the adata.obs to the reference id </span><span class="si">{</span><span class="n">reference_id</span><span class="si">}</span><span class="s2"> in the metadata.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;However, none of the query IDs could be found in the cell line annotation data.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;The annotation process has been halted.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;By using the `LookUp.cell_line()` method, &quot;</span>
+                    <span class="s2">&quot;you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs.&quot;</span>
+                <span class="p">)</span>
 
-            <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">cell_line_identifier</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">cell_line_meta</span><span class="p">[</span><span class="n">identifier_type</span><span class="p">]))</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span>
-                    <span class="s2">&quot;Following identifiers can not be found in cell line annotation file,&quot;</span>
-                    <span class="s2">&quot; so their corresponding meta data are NA values. Please check it again:&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;[bold blue]There are </span><span class="si">{</span><span class="n">identifier_num_all</span><span class="si">}</span><span class="s2"> identifiers in `adata.obs`.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;However, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span><span class="si">}</span><span class="s2"> identifiers can&#39;t be found in the cell line annotation,&quot;</span>
+                    <span class="s2">&quot;leading to the presence of NA values for their respective metadata.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Please check again: &quot;</span><span class="p">,</span>
                     <span class="o">*</span><span class="n">not_matched_identifiers</span><span class="p">,</span>
                     <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
                 <span class="p">)</span>
 
             <span class="k">if</span> <span class="n">cell_line_information</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># If no cell_line_information is specified, all metadata is fetched by default.</span>
-                <span class="c1"># Sometimes there is already different cell line information in the `adata`.</span>
+                <span class="c1"># Sometimes there is already different cell line information in the AnnData object.</span>
                 <span class="c1"># To avoid redundant information we will remove the duplicate information from metadata after merging.</span>
                 <span class="n">adata</span><span class="o">.</span><span class="n">obs</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-                    <span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+                    <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
                         <span class="n">cell_line_meta</span><span class="p">,</span>
-                        <span class="n">left_on</span><span class="o">=</span><span class="n">cell_line_identifier</span><span class="p">,</span>
-                        <span class="n">right_on</span><span class="o">=</span><span class="n">identifier_type</span><span class="p">,</span>
+                        <span class="n">left_on</span><span class="o">=</span><span class="n">query_id</span><span class="p">,</span>
+                        <span class="n">right_on</span><span class="o">=</span><span class="n">reference_id</span><span class="p">,</span>
                         <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
                         <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;_fromMeta&quot;</span><span class="p">),</span>
                     <span class="p">)</span>
                     <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;^(?!.*_fromMeta)&quot;</span><span class="p">)</span>
-                    <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
                 <span class="p">)</span>
-                <span class="c1"># If cell_line_identifier and identifier_type have different names,</span>
+                <span class="c1"># If query_id and reference_id have different names,</span>
                 <span class="c1"># there will be a column for each of them after merging,</span>
                 <span class="c1"># which is redundant as they refer to the same information.</span>
-                <span class="c1"># We will move the identifier_type column.</span>
-                <span class="k">if</span> <span class="n">cell_line_identifier</span> <span class="o">!=</span> <span class="n">identifier_type</span><span class="p">:</span>
-                    <span class="k">del</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">identifier_type</span><span class="p">]</span>
+                <span class="c1"># We will move the reference_id column.</span>
+                <span class="k">if</span> <span class="n">query_id</span> <span class="o">!=</span> <span class="n">reference_id</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">reference_id</span><span class="p">]</span>
 
             <span class="k">elif</span> <span class="nb">set</span><span class="p">(</span><span class="n">cell_line_information</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cell_line_meta</span><span class="o">.</span><span class="n">columns</span><span class="p">)):</span>
                 <span class="c1"># If cell_line_information is specified and can be found in the DepMap database,</span>
-                <span class="c1"># We will subset the original metadata dataframe correspondingly and add them to the `adata`.</span>
+                <span class="c1"># We will subset the original metadata dataframe correspondingly and add them to the AnnData object.</span>
                 <span class="c1"># Again, redundant information will be removed.</span>
-                <span class="k">if</span> <span class="n">identifier_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cell_line_information</span><span class="p">:</span>
-                    <span class="n">cell_line_information</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">identifier_type</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">reference_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cell_line_information</span><span class="p">:</span>
+                    <span class="n">cell_line_information</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reference_id</span><span class="p">)</span>
                 <span class="n">cell_line_meta_part</span> <span class="o">=</span> <span class="n">cell_line_meta</span><span class="p">[</span><span class="n">cell_line_information</span><span class="p">]</span>
                 <span class="n">adata</span><span class="o">.</span><span class="n">obs</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-                    <span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+                    <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
                         <span class="n">cell_line_meta_part</span><span class="p">,</span>
-                        <span class="n">left_on</span><span class="o">=</span><span class="n">cell_line_identifier</span><span class="p">,</span>
-                        <span class="n">right_on</span><span class="o">=</span><span class="n">identifier_type</span><span class="p">,</span>
+                        <span class="n">left_on</span><span class="o">=</span><span class="n">query_id</span><span class="p">,</span>
+                        <span class="n">right_on</span><span class="o">=</span><span class="n">reference_id</span><span class="p">,</span>
                         <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
                         <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;_fromMeta&quot;</span><span class="p">),</span>
                     <span class="p">)</span>
                     <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;^(?!.*_fromMeta)&quot;</span><span class="p">)</span>
-                    <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="c1"># Again, redundant information will be removed.</span>
-                <span class="k">if</span> <span class="n">cell_line_identifier</span> <span class="o">!=</span> <span class="n">identifier_type</span><span class="p">:</span>
-                    <span class="k">del</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">identifier_type</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;The specified cell line metadata can&#39;t be found in the DepMap database.&quot;</span>
-                    <span class="s2">&quot;Please give the cell line metadata available in the DepMap,&quot;</span>
-                    <span class="s2">&quot;or fetch all the metadata by default.&quot;</span>
-                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">query_id</span> <span class="o">!=</span> <span class="n">reference_id</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">reference_id</span><span class="p">]</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified cell line type is not available in the DepMap database.&quot;</span>
-                <span class="s2">&quot;Please give the type of cell line information available in the DepMap.&quot;</span>
-                <span class="s2">&quot;e.g. DepMap_ID, cell_line_name or stripped_cell_line_name.&quot;</span>
-                <span class="s2">&quot;DepMap_ID is compared by default.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;The requested cell line type </span><span class="si">{</span><span class="n">reference_id</span><span class="si">}</span><span class="s2"> is currently unavailable in the database.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;To solve ths issue, please refer to the available reference identifier in the chosen database.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;DepMap_ID is compared by default.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;By using the `LookUp.cell_line()` method, you can obtain the available reference identifiers in the metadata.&quot;</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">adata</span></div>
 
-<div class="viewcode-block" id="CellLineMetaData.annotate_bulk_rna_expression"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_bulk_rna_expression">[docs]</a>    <span class="k">def</span> <span class="nf">annotate_bulk_rna_expression</span><span class="p">(</span>
+
+<div class="viewcode-block" id="CellLineMetaData.annotate_bulk_rna_expression">
+<a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_bulk_rna_expression">[docs]</a>
+    <span class="k">def</span> <span class="nf">annotate_bulk_rna_expression</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
-        <span class="n">cell_line_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span>
-        <span class="n">identifier_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;model_name&quot;</span><span class="p">,</span>
-        <span class="n">bulk_rna_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;broad&quot;</span><span class="p">,</span>
-        <span class="n">bulk_rna_information</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;read_count&quot;</span><span class="p">,</span>
+        <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span>
+        <span class="n">cell_line_source</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;broad&quot;</span><span class="p">,</span> <span class="s2">&quot;sanger&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sanger&quot;</span><span class="p">,</span>
         <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch bulk rna expression.</span>
@@ -668,10 +641,8 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            adata: The data object to annotate.</span>
-<span class="sd">            cell_line_identifier: The column of `.obs` with cell line information. Defaults to &quot;cell_line_name&quot;.</span>
-<span class="sd">            identifier_type: The type of cell line information, e.g. model_name or model_id. Defaults to &quot;model_name&quot;.</span>
-<span class="sd">            bulk_rna_source: The bulk rna expression data from either Broad or Sanger cell line. Defaults to &quot;broad&quot;.</span>
-<span class="sd">            bulk_rna_information: The metadata to fetch. Defaults to &quot;read_count&quot;.</span>
+<span class="sd">            query_id: The column of `.obs` with cell line information. Defaults to &quot;cell_line_name&quot; if `cell_line_source` is sanger, otherwise &quot;DepMap_ID&quot;.</span>
+<span class="sd">            cell_line_source: The bulk rna expression data from either broad or sanger cell line. Defaults to &quot;sanger&quot;.</span>
 <span class="sd">            copy: Determines whether a copy of the `adata` is returned. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
@@ -679,53 +650,80 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
             <span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">bulk_rna_source</span> <span class="o">==</span> <span class="s2">&quot;broad&quot;</span><span class="p">:</span>
-            <span class="n">bulk_rna</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span>
-        <span class="k">elif</span> <span class="n">bulk_rna_source</span> <span class="o">==</span> <span class="s2">&quot;sanger&quot;</span><span class="p">:</span>
-            <span class="n">bulk_rna</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified source of bulk rna expression data is not available. &quot;</span>
-                <span class="s2">&quot;Please choose either broad or sanger.&quot;</span>
-            <span class="p">)</span>
 
         <span class="c1"># Make sure that the specified `cell_line_type` can be found in the bulk rna expression data,</span>
         <span class="c1"># then we can compare these keys and fetch the corresponding metadata.</span>
-        <span class="k">if</span> <span class="n">cell_line_identifier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">query_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified `cell_line_identifier` can&#39;t be found in the `adata.obs`. &quot;</span>
-                <span class="s2">&quot;Please fetch the cell line metadata first using the function &quot;</span>
-                <span class="s2">&quot;`annotate_cell_lines()`.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;The specified `query_id` </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> can&#39;t be found in the `adata.obs`.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;If the desired query ID is not available, you can fetch the cell line metadata &quot;</span>
+                <span class="s2">&quot;using the `annotate_cell_lines()` function before calling annotate_ccle_expression(). &quot;</span>
+                <span class="s2">&quot;This will help ensure that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">identifier_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bulk_rna</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified `identifier_type` can&#39;t be found in the metadata. &quot;</span>
-                <span class="s2">&quot;Please check the available `identifier_type` in the bulk expression data using &quot;</span>
-                <span class="s2">&quot;the function getinfo_annotate_bulk_rna_expression().&quot;</span>
-            <span class="p">)</span>
-
-        <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">cell_line_identifier</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">bulk_rna</span><span class="p">[</span><span class="n">identifier_type</span><span class="p">]))</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">identifier_num_all</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">cell_line_source</span> <span class="o">==</span> <span class="s2">&quot;sanger&quot;</span><span class="p">:</span>
+            <span class="n">reference_id</span> <span class="o">=</span> <span class="s2">&quot;model_name&quot;</span>
+            <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reference_id</span> <span class="o">=</span> <span class="s2">&quot;DepMap_ID&quot;</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;[bold yellow]Following identifiers can not be found in bulk RNA expression data,&quot;</span>
-                <span class="s2">&quot; their corresponding meta data are NA values. Please check it again:&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;To annotate bulk RNA expression data from Broad Institue, &quot;</span><span class="p">,</span>
+                <span class="s2">&quot;`DepMap_ID` is used as default reference and query indentifier if no `reference_id` is given. &quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Please make sure that `DepMap_ID` is available in the adata.obs. &quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Alternatively, use the `annotate_cell_lines()` function to annotate the cell line first &quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">query_id</span> <span class="o">==</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">:</span>
+                <span class="n">query_id</span> <span class="o">=</span> <span class="s2">&quot;DepMap_ID&quot;</span>
+            <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">==</span> <span class="n">identifier_num_all</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;You are attempting to match the query id </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> in the adata.obs to the reference id </span><span class="si">{</span><span class="n">reference_id</span><span class="si">}</span><span class="s2"> in the metadata.&quot;</span>
+                <span class="s2">&quot;However, none of the query IDs could be found in the bulk RNA expression data.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;The annotation process has been halted.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;By using the `LookUp.bulk_rna_expression()` method, &quot;</span>
+                <span class="s2">&quot;you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function &quot;</span>
+                <span class="s2">&quot;to acquire more possible query IDs that can be used for annotation purposes.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There are </span><span class="si">{</span><span class="n">identifier_num_all</span><span class="si">}</span><span class="s2"> identifiers in `adata.obs`.&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[bold yellow]Following </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span><span class="si">}</span><span class="s2"> identifiers can&#39;t be found in bulk RNA expression data, &quot;</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;leading to the presence of NA values for their respective metadata. Please check again: &quot;</span><span class="p">,</span>
                 <span class="o">*</span><span class="n">not_matched_identifiers</span><span class="p">,</span>
                 <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
             <span class="p">)</span>
-
-        <span class="n">rna_exp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">bulk_rna</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">identifier_type</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;gene_id&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">bulk_rna_information</span><span class="p">)</span>
-        <span class="n">rna_exp</span> <span class="o">=</span> <span class="n">rna_exp</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">cell_line_identifier</span><span class="p">])</span>
-        <span class="n">rna_exp</span> <span class="o">=</span> <span class="n">rna_exp</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;bulk_rna_expression_&quot;</span> <span class="o">+</span> <span class="n">bulk_rna_source</span><span class="p">]</span> <span class="o">=</span> <span class="n">rna_exp</span>
+        <span class="k">if</span> <span class="n">cell_line_source</span> <span class="o">==</span> <span class="s2">&quot;sanger&quot;</span><span class="p">:</span>
+            <span class="n">sanger_rna_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])]</span>
+            <span class="n">sanger_rna_exp</span> <span class="o">=</span> <span class="n">sanger_rna_exp</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span>
+            <span class="n">sanger_rna_exp</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;bulk_rna_expression_sanger&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sanger_rna_exp</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">broad_rna_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])]</span>
+            <span class="n">ccle_expression</span> <span class="o">=</span> <span class="n">broad_rna_exp</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span>
+            <span class="n">ccle_expression</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;bulk_rna_expression_broad&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ccle_expression</span>
 
         <span class="k">return</span> <span class="n">adata</span></div>
 
-<div class="viewcode-block" id="CellLineMetaData.annotate_protein_expression"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_protein_expression">[docs]</a>    <span class="k">def</span> <span class="nf">annotate_protein_expression</span><span class="p">(</span>
+
+<div class="viewcode-block" id="CellLineMetaData.annotate_protein_expression">
+<a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_protein_expression">[docs]</a>
+    <span class="k">def</span> <span class="nf">annotate_protein_expression</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
-        <span class="n">cell_line_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span>
-        <span class="n">identifier_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;model_name&quot;</span><span class="p">,</span>
+        <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span>
+        <span class="n">reference_id</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;model_name&quot;</span><span class="p">,</span> <span class="s2">&quot;model_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;model_name&quot;</span><span class="p">,</span>
+        <span class="n">protein_information</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;protein_intensity&quot;</span><span class="p">,</span> <span class="s2">&quot;zscore&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;protein_intensity&quot;</span><span class="p">,</span>
+        <span class="n">protein_id</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;uniprot_id&quot;</span><span class="p">,</span> <span class="s2">&quot;symbol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;uniprot_id&quot;</span><span class="p">,</span>
         <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch protein expression.</span>
@@ -734,8 +732,10 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            adata: The data object to annotate.</span>
-<span class="sd">            cell_line_identifier: The column of `.obs` with cell line information. Defaults to &quot;cell_line_name&quot;.</span>
-<span class="sd">            identifier_type: The type of cell line information, e.g. model_name or model_id. Defaults to &quot;model_name&quot;.</span>
+<span class="sd">            query_id: The column of `.obs` with cell line information. Defaults to &quot;cell_line_name&quot;.</span>
+<span class="sd">            reference_id: The type of cell line identifier in the meta data, model_name or model_id. Defaults to &quot;model_name&quot;.</span>
+<span class="sd">            protein_information: The type of protein expression data to fetch, protein_intensity or zscore. Defaults to &quot;protein_intensity&quot;.</span>
+<span class="sd">            protein_id: The protein identifier saved in the fetched meta data, uniprot_id or symbol. Defaults to &quot;uniprot_id&quot;.</span>
 <span class="sd">            copy: Determines whether a copy of the `adata` is returned. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
@@ -746,85 +746,161 @@
 
         <span class="c1"># Make sure that the specified `cell_line_type` can be found in the protein expression data,</span>
         <span class="c1"># then we can compare these keys and fetch the corresponding metadata.</span>
-        <span class="k">if</span> <span class="n">cell_line_identifier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">query_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified `cell_line_identifier` can&#39;t be found in the `adata.obs`. &quot;</span>
-                <span class="s2">&quot;Please fetch the cell line meta data first using the function &quot;</span>
-                <span class="s2">&quot;`annotate_cell_lines()`.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;The specified `query_id` </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> can&#39;t be found in the `adata.obs`. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;If the desired query ID is not available, you can fetch the cell line metadata </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;using the `annotate_cell_lines()` function before calling annotate_protein_expression(). </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;This will help ensure that the required query ID is included in your data&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">identifier_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">reference_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified `identifier_type` can&#39;t be found in the meta data. &quot;</span>
-                <span class="s2">&quot;Please check the available identifier types in the protein expression data calling &quot;</span>
-                <span class="s2">&quot;the function `getinfo_annotate_protein_expression()`.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;The specified `reference_id`</span><span class="si">{</span><span class="n">reference_id</span><span class="si">}</span><span class="s2"> can&#39;t be found in the protein expression data. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;To solve the issue, please use the reference identifier available in the metadata.  </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;By using the `LookUp.protein_expression()` method, you can obtain the available reference identifiers in the metadata. &quot;</span>
             <span class="p">)</span>
 
-        <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">cell_line_identifier</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="p">[</span><span class="n">identifier_type</span><span class="p">])</span>
-        <span class="p">)</span>
+        <span class="n">identifier_num_all</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+        <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="p">[</span><span class="n">reference_id</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">==</span> <span class="n">identifier_num_all</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;You are attempting to match the query id </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> in the adata.obs to the reference id </span><span class="si">{</span><span class="n">reference_id</span><span class="si">}</span><span class="s2"> in the metadata.&quot;</span>
+                <span class="s2">&quot;However, none of the query IDs could be found in the proteomics data. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;The annotation process has been halted. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;By using the `LookUp.protein_expression()` method, &quot;</span>
+                <span class="s2">&quot;you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Additionally, you can call the `CellLineMetaData.annotate_cell_lines` function &quot;</span>
+                <span class="s2">&quot;to acquire more possible query IDs that can be used for annotation purposes.&quot;</span>
+            <span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;[bold yellow]Following identifiers can not be found in the protein expression data,&quot;</span>
-                <span class="s2">&quot; their corresponding meta data are NA values. Please check it again:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;[bold yellow]There are </span><span class="si">{</span><span class="n">identifier_num_all</span><span class="si">}</span><span class="s2"> identifiers in `adata.obs`. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;However </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span><span class="si">}</span><span class="s2"> identifiers can&#39;t be found in the protein expression data, &quot;</span>
+                <span class="s2">&quot;leading to the presence of NA values for their respective metadata. Please check again: &quot;</span><span class="p">,</span>
                 <span class="o">*</span><span class="n">not_matched_identifiers</span><span class="p">,</span>
                 <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="c1"># convert the original protein intensities table from long format to wide format, group by the cell lines</span>
-        <span class="n">prot_exp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">identifier_type</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;uniprot_id&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;protein_intensity&quot;</span>
-        <span class="p">)</span>
-        <span class="n">prot_exp</span> <span class="o">=</span> <span class="n">prot_exp</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">cell_line_identifier</span><span class="p">])</span>
-        <span class="n">prot_exp</span> <span class="o">=</span> <span class="n">prot_exp</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;proteomics_protein_intensity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prot_exp</span>
+        <span class="n">prot_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="p">[[</span><span class="n">reference_id</span><span class="p">,</span> <span class="n">protein_id</span><span class="p">,</span> <span class="n">protein_information</span><span class="p">]]</span>
+        <span class="n">prot_exp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">prot_exp</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">reference_id</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">protein_id</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">protein_information</span><span class="p">)</span>
+        <span class="n">prot_exp</span> <span class="o">=</span> <span class="n">prot_exp</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span>
+        <span class="n">prot_exp</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;proteomics_&quot;</span> <span class="o">+</span> <span class="n">protein_information</span><span class="p">]</span> <span class="o">=</span> <span class="n">prot_exp</span>
 
         <span class="k">return</span> <span class="n">adata</span></div>
 
-<div class="viewcode-block" id="CellLineMetaData.annotate_ccle_expression"><a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_ccle_expression">[docs]</a>    <span class="k">def</span> <span class="nf">annotate_ccle_expression</span><span class="p">(</span>
+
+<div class="viewcode-block" id="CellLineMetaData.annotate_from_gdsc">
+<a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.annotate_from_gdsc">[docs]</a>
+    <span class="k">def</span> <span class="nf">annotate_from_gdsc</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
-        <span class="n">cell_line_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DepMap_ID&quot;</span><span class="p">,</span>
+        <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span>
+        <span class="n">reference_id</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span> <span class="s2">&quot;sanger_model_id&quot;</span><span class="p">,</span> <span class="s2">&quot;cosmic_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cell_line_name&quot;</span><span class="p">,</span>
+        <span class="n">query_perturbation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;perturbation&quot;</span><span class="p">,</span>
+        <span class="n">reference_perturbation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;drug_name&quot;</span><span class="p">,</span> <span class="s2">&quot;drug_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;drug_name&quot;</span><span class="p">,</span>
+        <span class="n">gdsc_dataset</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch CCLE expression data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch drug response data.</span>
 
-<span class="sd">         For each cell, we fetch gene expression TPM values of the protein coding genes for its corresponding DepMap</span>
-<span class="sd">         cell line.</span>
+<span class="sd">        For each cell, we fetch drug response data as natural log of the fitted IC50 for its corresponding cell line and perturbation from GDSC fitted data results file.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            adata: The data object to annotate.</span>
-<span class="sd">            cell_line_identifier: The column of `.obs` with cell line information. Defaults to &quot;DepMap_ID&quot;.</span>
+<span class="sd">            query_id: The column of `.obs` with cell line information. Defaults to &quot;cell_line_name&quot;.</span>
+<span class="sd">            reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id. Defaults to &quot;cell_line_name&quot;.</span>
+<span class="sd">            query_perturbation: The column of `.obs` with perturbation information. Defaults to &quot;perturbation&quot;.</span>
+<span class="sd">            reference_perturbation: The type of perturbation in the meta data, drug_name or drug_id. Defaults to &quot;drug_name&quot;.</span>
+<span class="sd">            gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1. The GDSC1 dataset updates previous releases with additional drug screening data from the Wellcome Sanger Institute and Massachusetts General Hospital. It covers 970 Cell lines and 403 Compounds with 333292 IC50s. GDSC2 is new and has 243,466 IC50 results from the latest screening at the Wellcome Sanger Institute using improved experimental procedures.</span>
 <span class="sd">            copy: Determines whether a copy of the `adata` is returned. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Returns an AnnData object with CCLE expression annotation.</span>
+<span class="sd">            Returns an AnnData object with drug response annotation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
             <span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-        <span class="c1"># Make sure that the specified cell line type can be found in the CCLE expression data,</span>
-        <span class="c1"># then we can compare these keys and fetch the corresponding metadata.</span>
-        <span class="k">if</span> <span class="n">cell_line_identifier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">query_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The specified `cell_line_identifier` can&#39;t be found in the `adata.obs`. &quot;</span>
-                <span class="s2">&quot;Please fetch the cell line meta data first using the function &quot;</span>
-                <span class="s2">&quot;`annotate_cell_lines()`.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;The specified `query_id` </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> can&#39;t be found in the `adata.obs`. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;If the desired query ID is not available, you can fetch the cell line metadata &quot;</span>
+                <span class="s2">&quot;using the `annotate_cell_lines()` function before calling `annotate_from_gdsc()`. &quot;</span>
+                <span class="s2">&quot;This will help ensure that the required query ID is included in your data.&quot;</span>
             <span class="p">)</span>
-
-        <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">cell_line_identifier</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ccle_expr</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">gdsc_dataset</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">gdsc_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gdsc_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span>
+        <span class="n">not_matched_identifiers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">gdsc_data</span><span class="p">[</span><span class="n">reference_id</span><span class="p">]))</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;[bold yellow]Following identifiers can not be found in the CCLE expression data,&quot;</span>
-                <span class="s2">&quot; their corresponding meta data are NA values. Please check it again:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;[bold yellow]Following </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span><span class="si">}</span><span class="s2"> identifiers can not be found in the drug response data for GDSC</span><span class="si">{</span><span class="n">gdsc_dataset</span><span class="si">}</span><span class="s2">,&quot;</span>
+                <span class="s2">&quot;leading to the presence of NA values for their respective metadata. Please check it again:&quot;</span><span class="p">,</span>
                 <span class="o">*</span><span class="n">not_matched_identifiers</span><span class="p">,</span>
                 <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">- &quot;</span><span class="p">,</span>
             <span class="p">)</span>
+        <span class="n">identifier_num_all</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">query_id</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_matched_identifiers</span><span class="p">)</span> <span class="o">==</span> <span class="n">identifier_num_all</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;You are attempting to match the query id </span><span class="si">{</span><span class="n">query_id</span><span class="si">}</span><span class="s2"> in the adata.obs to the reference id </span><span class="si">{</span><span class="n">reference_id</span><span class="si">}</span><span class="s2"> in the metadata. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;However, none of the query IDs could be found in the drug response data. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;The annotation process has been halted. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;By using the `LookUp.drug_response_gdsc()` method, </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;you can obtain the count of matched identifiers in the adata for different query IDs. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;acquire more cell line information that can be used for annotation purposes.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">adata</span><span class="o">.</span><span class="n">obs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+                <span class="n">gdsc_data</span><span class="p">[[</span><span class="n">reference_id</span><span class="p">,</span> <span class="n">reference_perturbation</span><span class="p">,</span> <span class="s2">&quot;ln_ic50&quot;</span><span class="p">]],</span>
+                <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+                <span class="n">left_on</span><span class="o">=</span><span class="p">[</span><span class="n">query_id</span><span class="p">,</span> <span class="n">query_perturbation</span><span class="p">],</span>
+                <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="n">reference_id</span><span class="p">,</span> <span class="n">reference_perturbation</span><span class="p">],</span>
+                <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;_fromMeta&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;^(?!.*_fromMeta)&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="p">)</span>
 
-        <span class="n">ccle_expression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ccle_expr</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">cell_line_identifier</span><span class="p">])</span>
-        <span class="n">ccle_expression</span> <span class="o">=</span> <span class="n">ccle_expression</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s2">&quot;CCLE_expression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ccle_expression</span>
+        <span class="k">return</span> <span class="n">adata</span></div>
 
-        <span class="k">return</span> <span class="n">adata</span></div></div>
+
+<div class="viewcode-block" id="CellLineMetaData.lookup">
+<a class="viewcode-back" href="../../../../usage/tools/pertpy.tools.CellLineMetaData.html#pertpy.tools.CellLineMetaData.lookup">[docs]</a>
+    <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LookUp</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate LookUp object for CellLineMetaData.</span>
+
+<span class="sd">        The LookUp object provides an overview of the metadata to annotate.</span>
+<span class="sd">        Each annotate_{metadata} function has a corresponding lookup function in the LookUp object,</span>
+<span class="sd">        where users can search the reference_id in the metadata and</span>
+<span class="sd">        compare with the query_id in their own data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Returns a LookUp object specific for cell line annotation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">LookUp</span><span class="p">(</span>
+            <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cell_line&quot;</span><span class="p">,</span>
+            <span class="n">transfer_metadata</span><span class="o">=</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cell_line_meta</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cl_cancer_project_meta</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">gene_annotation</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_sanger</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bulk_rna_broad</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">proteomics_data</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc1</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">drug_response_gdsc2</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span></div>
+</div>
+
 </pre></div>
         </article>
       </div>
@@ -856,9 +932,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../../../../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../../_static/copybutton.js?v=f281be69"></script>

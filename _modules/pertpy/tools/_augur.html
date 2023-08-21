@@ -1,10 +1,10 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html class="no-js" lang="en" data-content_root="../../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.19 -->
         <title>pertpy.tools._augur - pertpy</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
@@ -178,7 +178,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dialogue_example.html">pertpy.data.dialogue_example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016.html">pertpy.data.dixit_2016</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_raw.html">pertpy.data.dixit_2016_raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.dixit_2016_scperturb.html">pertpy.data.dixit_2016_scperturb</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021.html">pertpy.data.frangieh_2021</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_protein.html">pertpy.data.frangieh_2021_protein</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../usage/data/pertpy.data.frangieh_2021_raw.html">pertpy.data.frangieh_2021_raw</a></li>
@@ -258,7 +257,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributor Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/theislab/pertpy/discussions">Discussions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Credits</a></li>
@@ -372,7 +371,9 @@
     <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 
-<div class="viewcode-block" id="Augur"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur">[docs]</a><span class="k">class</span> <span class="nc">Augur</span><span class="p">:</span>
+<div class="viewcode-block" id="Augur">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur">[docs]</a>
+<span class="k">class</span> <span class="nc">Augur</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Python implementation of Augur.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -384,7 +385,9 @@
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_estimator</span><span class="p">(</span><span class="n">classifier</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Augur.load"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span>
+<div class="viewcode-block" id="Augur.load">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.load">[docs]</a>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AnnData</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">meta</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -446,7 +449,10 @@
 
         <span class="k">return</span> <span class="n">adata</span></div>
 
-<div class="viewcode-block" id="Augur.create_estimator"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.create_estimator">[docs]</a>    <span class="k">def</span> <span class="nf">create_estimator</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Augur.create_estimator">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.create_estimator">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_estimator</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">classifier</span><span class="p">:</span> <span class="p">(</span>
             <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;random_forest_classifier&quot;</span><span class="p">]</span>
@@ -496,7 +502,10 @@
 
         <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">result</span></div>
 
-<div class="viewcode-block" id="Augur.sample"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">categorical</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subsample_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Augur.sample">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.sample">[docs]</a>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">categorical</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subsample_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample AnnData observations.</span>
 
 <span class="sd">        Args:</span>
@@ -539,7 +548,10 @@
 
         <span class="k">return</span> <span class="n">subsample</span><span class="p">[:,</span> <span class="n">subsample</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;highly_variable&quot;</span><span class="p">]]</span></div>
 
-<div class="viewcode-block" id="Augur.draw_subsample"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.draw_subsample">[docs]</a>    <span class="k">def</span> <span class="nf">draw_subsample</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Augur.draw_subsample">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.draw_subsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">draw_subsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
         <span class="n">augur_mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -588,7 +600,10 @@
             <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="Augur.cross_validate_subsample"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.cross_validate_subsample">[docs]</a>    <span class="k">def</span> <span class="nf">cross_validate_subsample</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Augur.cross_validate_subsample">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.cross_validate_subsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">cross_validate_subsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
         <span class="n">augur_mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -634,7 +649,10 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">results</span></div>
 
-<div class="viewcode-block" id="Augur.ccc_score"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.ccc_score">[docs]</a>    <span class="k">def</span> <span class="nf">ccc_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Augur.ccc_score">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.ccc_score">[docs]</a>
+    <span class="k">def</span> <span class="nf">ccc_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Implementation of Lin&#39;s Concordance correlation coefficient, based on https://gitlab.com/-/snippets/1730605.</span>
 
 <span class="sd">        Args:</span>
@@ -658,7 +676,10 @@
 
         <span class="k">return</span> <span class="n">ccc</span></div>
 
-<div class="viewcode-block" id="Augur.set_scorer"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.set_scorer">[docs]</a>    <span class="k">def</span> <span class="nf">set_scorer</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Augur.set_scorer">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.set_scorer">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_scorer</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">multiclass</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">zero_division</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
@@ -701,7 +722,10 @@
             <span class="p">}</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="Augur.run_cross_validation"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.run_cross_validation">[docs]</a>    <span class="k">def</span> <span class="nf">run_cross_validation</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Augur.run_cross_validation">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.run_cross_validation">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_cross_validation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">subsample</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
         <span class="n">subsample_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -765,7 +789,10 @@
 
         <span class="k">return</span> <span class="n">results</span></div>
 
-<div class="viewcode-block" id="Augur.average_metrics"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.average_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">average_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_cv_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="Augur.average_metrics">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.average_metrics">[docs]</a>
+    <span class="k">def</span> <span class="nf">average_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_cv_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate average metric of cross validation runs done of one cell type.</span>
 
 <span class="sd">        Args:</span>
@@ -782,7 +809,10 @@
 
         <span class="k">return</span> <span class="p">{</span><span class="n">metric</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">metric_list</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
 
-<div class="viewcode-block" id="Augur.select_highly_variable"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.select_highly_variable">[docs]</a>    <span class="k">def</span> <span class="nf">select_highly_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Augur.select_highly_variable">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.select_highly_variable">[docs]</a>
+    <span class="k">def</span> <span class="nf">select_highly_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnnData</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Feature selection by variance using scanpy highly variable genes function.</span>
 
 <span class="sd">        Args:</span>
@@ -803,7 +833,10 @@
 
         <span class="k">return</span> <span class="n">adata</span></div>
 
-<div class="viewcode-block" id="Augur.cox_compare"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.cox_compare">[docs]</a>    <span class="k">def</span> <span class="nf">cox_compare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loess1</span><span class="p">,</span> <span class="n">loess2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Augur.cox_compare">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.cox_compare">[docs]</a>
+    <span class="k">def</span> <span class="nf">cox_compare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loess1</span><span class="p">,</span> <span class="n">loess2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Cox compare test on two models.</span>
 
 <span class="sd">        Based on: https://www.statsmodels.org/dev/generated/statsmodels.stats.diagnostic.compare_cox.html</span>
@@ -841,7 +874,10 @@
 
         <span class="k">return</span> <span class="n">q</span><span class="p">,</span> <span class="n">pval</span></div>
 
-<div class="viewcode-block" id="Augur.select_variance"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.select_variance">[docs]</a>    <span class="k">def</span> <span class="nf">select_variance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">var_quantile</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">filter_negative_residuals</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">span</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Augur.select_variance">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.select_variance">[docs]</a>
+    <span class="k">def</span> <span class="nf">select_variance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span> <span class="n">var_quantile</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">filter_negative_residuals</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">span</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Feature selection based on Augur implementation.</span>
 
 <span class="sd">        Args:</span>
@@ -905,7 +941,10 @@
 
         <span class="k">return</span> <span class="n">adata</span></div>
 
-<div class="viewcode-block" id="Augur.predict"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Augur.predict">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.predict">[docs]</a>
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">adata</span><span class="p">:</span> <span class="n">AnnData</span><span class="p">,</span>
         <span class="n">n_subsamples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
@@ -1056,7 +1095,10 @@
 
         <span class="k">return</span> <span class="n">adata</span><span class="p">,</span> <span class="n">results</span></div>
 
-<div class="viewcode-block" id="Augur.predict_differential_prioritization"><a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.predict_differential_prioritization">[docs]</a>    <span class="k">def</span> <span class="nf">predict_differential_prioritization</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Augur.predict_differential_prioritization">
+<a class="viewcode-back" href="../../../usage/tools/pertpy.tools.Augur.html#pertpy.tools.Augur.predict_differential_prioritization">[docs]</a>
+    <span class="k">def</span> <span class="nf">predict_differential_prioritization</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">augur_results1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">augur_results2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
@@ -1179,7 +1221,9 @@
         <span class="p">)</span>
         <span class="n">delta</span><span class="p">[</span><span class="s2">&quot;padj&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fdrcorrection</span><span class="p">(</span><span class="n">delta</span><span class="p">[</span><span class="s2">&quot;pval&quot;</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">delta</span></div></div>
+        <span class="k">return</span> <span class="n">delta</span></div>
+</div>
+
 </pre></div>
         </article>
       </div>
@@ -1211,9 +1255,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=add265a1"></script>
+</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../_static/copybutton.js?v=f281be69"></script>
