@@ -1,7 +1,6 @@
 """Based on gist.github.com/MantasVaitkunas/7c16de233812adcb7028."""
 import os
-import warnings
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sphinx.application import Sphinx
 
@@ -19,7 +18,7 @@ def get_github_repo(app: Sphinx, path: str) -> str:
 
 
 def _html_page_context(
-    app: Sphinx, _pagename: str, templatename: str, context: Dict[str, Any], doctree: Optional[Any]
+    app: Sphinx, _pagename: str, templatename: str, context: dict[str, Any], doctree: Any | None
 ) -> None:
     # doctree is None - otherwise viewcode fails
     if templatename != "page.html" or doctree is None:

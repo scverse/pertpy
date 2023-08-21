@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import copy
 from collections import OrderedDict
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import pandas as pd

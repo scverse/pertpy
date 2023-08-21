@@ -52,7 +52,7 @@ def asw(
     metric: str = "euclidean",
     sample_size: int = None,
     random_state: int = None,
-    **kwargs
+    **kwargs,
 ) -> float:
     """Computes the average-width silhouette score.
 
