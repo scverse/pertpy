@@ -70,6 +70,11 @@ class DialoguePlot:
         mean_mcps = adata.obs.groupby([sample_id,celltype_key])[mcp].mean()
         mean_mcps = mean_mcps.reset_index()
         mcp_pivot = pd.pivot(mean_mcps[[sample_id,celltype_key,mcp]],index=sample_id,columns = celltype_key )[mcp]
-        mcp_pivot = pd.concat([mcp_pivot,adata.obs.groupby([sample_id]).agg(pd.Series.mode)[color]],axis=1)
-        sns.pairplot(mcp_pivot, corner=True, hue=color)
+        # now for each sample I want to get the value of the color variable
+        aggstats = adata.obs.groupby([sample_id])[color].describe()
+        aggstats = aggstats.loc[list(mcp_pivot.index),:]
+        aggstats[color] = aggstats['top']
+        mcp_pivot = pd.concat([mcp_pivot,aggstats[color]],axis=1)
+        p = sns.pairplot(mcp_pivot, hue=color, corner=True)
+        return p
 
