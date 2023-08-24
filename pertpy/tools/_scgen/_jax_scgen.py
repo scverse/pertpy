@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import jax.numpy as jnp
 import numpy as np
@@ -15,6 +14,9 @@ from scvi.utils import setup_anndata_dsp
 
 from ._jax_scgenvae import JaxSCGENVAE
 from ._utils import balancer, extractor
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 font = {"family": "Arial", "size": 14}
 

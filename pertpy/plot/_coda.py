@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Literal, Optional, Union
 
 import matplotlib.image as mpimg
@@ -837,8 +838,8 @@ class CodaPlot:
             leaf_effs = leaf_effs.loc[leaf_name].reset_index()
             palette = ["blue" if Effect > 0 else "red" for Effect in leaf_effs["Effect"].tolist()]
 
-            dir_path = os.getcwd()
-            dir_path = os.path.join(dir_path, "tree_effect.png")
+            dir_path = Path.cwd()
+            dir_path = Path(dir_path / "tree_effect.png")
             tree2.render(dir_path, tree_style=tree_style, units="in")
             _, ax = plt.subplots(1, 2, figsize=(10, 10))
             sns.barplot(data=leaf_effs, x="Effect", y="Cell Type", palette=palette, ax=ax[1])

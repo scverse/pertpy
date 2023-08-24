@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import arviz as az
 import ete3 as ete
 import jax.numpy as jnp
 import numpy as np
-import numpyro as npy
 import pandas as pd
 import patsy as pt
-import toytree as tt
 from anndata import AnnData
 from jax import random
-from jax._src.prng import PRNGKeyArray
-from jax._src.typing import Array
 from jax.config import config
 from mudata import MuData
 from numpyro.infer import HMC, MCMC, NUTS, initialization
@@ -21,6 +18,12 @@ from rich import box, print
 from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
+
+if TYPE_CHECKING:
+    import numpyro as npy
+    import toytree as tt
+    from jax._src.prng import PRNGKeyArray
+    from jax._src.typing import Array
 
 config.update("jax_enable_x64", True)
 

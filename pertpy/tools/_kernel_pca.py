@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-from anndata import AnnData
+from typing import TYPE_CHECKING
+
 from sklearn.decomposition import KernelPCA
+
+if TYPE_CHECKING:
+    from anndata import AnnData
 
 
 def kernel_pca(

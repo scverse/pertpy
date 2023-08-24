@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from anndata import AnnData
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
 from sklearn.metrics import pairwise_distances
+
+if TYPE_CHECKING:
+    from anndata import AnnData
 
 
 class Distance:

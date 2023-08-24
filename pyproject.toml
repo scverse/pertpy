@@ -129,6 +129,9 @@ select = [
     "BLE",  # flake8-blind-except
     "UP",  # pyupgrade
     "RUF100",  # Report unused noqa directives
+    "TCH",  # Typing imports
+    # "NPY",  # Numpy specific rules
+    "PTH"  # Use pathlib
 ]
 ignore = [
     # line too long -> we accept long comment lines; black gets rid of long code lines

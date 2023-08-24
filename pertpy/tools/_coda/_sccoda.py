@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import arviz as az
 import jax.numpy as jnp
 import numpy as np
 import numpyro as npy
 import numpyro.distributions as npd
-import pandas as pd
 from anndata import AnnData
 from jax import random
 from jax.config import config
@@ -16,6 +15,9 @@ from numpyro.infer import Predictive
 from rich import print
 
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 config.update("jax_enable_x64", True)
 
