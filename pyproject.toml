@@ -51,13 +51,13 @@ dependencies = [
     "sparsecca",
     "numba",
     "remotezip",
-    "openpyxl"
+    "openpyxl",
 ]
 
 [project.optional-dependencies]
 coda = [
     "ete3",
-    "pyqt5"
+    "pyqt5"  # remove this after ete4 got released
 ]
 dev = [
     "pre-commit",

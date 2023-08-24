@@ -11,6 +11,7 @@ from numba import NumbaDeprecationWarning
 
 warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 from . import data as dt
 from . import plot as pl
