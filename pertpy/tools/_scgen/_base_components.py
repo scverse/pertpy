@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import jax.numpy as jnp
-import jaxlib
 from flax import linen as nn
+
+if TYPE_CHECKING:
+    import jaxlib
 
 
 class FlaxEncoder(nn.Module):

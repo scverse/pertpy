@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
-from anndata import AnnData
 from remotezip import RemoteZip
 from rich import print
 from scanpy import settings
@@ -12,6 +11,9 @@ from scanpy import settings
 from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
+
+if TYPE_CHECKING:
+    from anndata import AnnData
 
 
 class CellLineMetaData:

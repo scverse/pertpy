@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from anndata import AnnData
 from rich import print
 from scanpy.tools._utils import _choose_representation
-from scipy import sparse
 from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 import pertpy as pt
+
+if TYPE_CHECKING:
+    from anndata import AnnData
+    from scipy import sparse
 
 warnings.simplefilter("ignore")
 

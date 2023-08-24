@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from anndata import AnnData
 from rich import print
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class PerturbationSpace:

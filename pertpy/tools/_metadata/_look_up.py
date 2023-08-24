@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-import pandas as pd
 from rich import print
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 class LookUp:
