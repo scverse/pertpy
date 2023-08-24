@@ -38,7 +38,8 @@ class CodaPlot:
         Typical use (only inside stacked_barplot): plot_one_stackbar(data.X, data.var.index, "xyz", data.obs.index)
 
         Args:
-            y: The count data, collapsed onto the level of interest. i.e. a binary covariate has two rows, one for each group, containing the count mean of each cell type
+            y: The count data, collapsed onto the level of interest. i.e. a binary covariate has two rows,
+               one for each group, containing the count mean of each cell type
             type_names: The names of all cell types
             title: Plot title, usually the covariate's name
             level_names: Names of the covariate's levels
@@ -95,8 +96,6 @@ class CodaPlot:
         level_order: list[str] = None,
     ) -> plt.Axes:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
-
-        Usage: plot_feature_stackbars(data, ["cov1", "cov2", "cov3"])
 
         Args:
             data: AnnData object or MuData object.
@@ -196,7 +195,8 @@ class CodaPlot:
             args_barplot: Arguments passed to sns.barplot. Defaults to None.
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
+            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
         """
         if args_barplot is None:
             args_barplot = {}
@@ -350,10 +350,12 @@ class CodaPlot:
             data: AnnData object or MuData object
             feature_name: The name of the feature in data.obs to plot
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            y_scale: Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count), "log10" - log10(count), "count" - absolute abundance (cell counts). Defaults to "relative".
+            y_scale: Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count), "log10" - log10(count), "count" - absolute abundance (cell counts).
+                     Defaults to "relative".
             plot_facets: If False, plot cell types on the x-axis. If True, plot as facets. Defaults to False.
             add_dots: If True, overlay a scatterplot with one dot for each data point. Defaults to False.
-            draw_effects: If True, draw horizontal bars for credible effects (You have to run inference on model before using this option!). Defaults to False.
+            draw_effects: If True, draw horizontal bars for credible effects (You have to run inference on model before using this option!).
+                          Defaults to False.
             model: When draw_effects, specify a tasCODA model
             cell_types: Subset of cell types that should be plotted. Defaults to None.
             args_boxplot: Arguments passed to sns.boxplot. Defaults to {}.
@@ -365,7 +367,8 @@ class CodaPlot:
             level_order: Custom ordering of bars on the x-axis. Defaults to None.
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`) or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
+            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
         """
         if args_boxplot is None:
             args_boxplot = {}
@@ -553,10 +556,12 @@ class CodaPlot:
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda". Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+                          Defaults to "coda".
             abundant_threshold: Presence threshold for abundant cell types. Defaults to 0.9.
             default_color: Bar color for all non-minimal cell types. Defaults to "Grey".
-            abundant_color: Bar color for cell types with abundant percentage larger than abundant_threshold. Defaults to "Red".
+            abundant_color: Bar color for cell types with abundant percentage larger than abundant_threshold.
+                            Defaults to "Red".
             label_cell_types: Label dots with cell type names. Defaults to True.
             figsize: Figure size. Defaults to None.
             dpi: Dpi setting. Defaults to 100.
@@ -657,10 +662,13 @@ class CodaPlot:
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             tree: A ete3 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
-            tight_text: When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Default to False.
+            tight_text: When False, boundaries of the text are approximated according to general font metrics,
+                        producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
+                        Default to False.
             show_scale: Include the scale legend in the tree image or not. Default to False.
             show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
-            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not. Defaults to None.
+            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
+                       Defaults to None.
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
             h: Height of the image in units. Defaults to None.
             w: Width of the image in units. Defaults to None.
@@ -717,17 +725,21 @@ class CodaPlot:
             tree: A ete3 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
             show_legend: If show legend of nodes significant effects or not. Default is False if show_leaf_effects is True.
             show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects. Defaults to False.
-            tight_text: When False, boundaries of the text are approximated according to general font metrics, producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces. Defaults to False.
+            tight_text: When False, boundaries of the text are approximated according to general font metrics,
+                        producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
+                        Defaults to False.
             show_scale: Include the scale legend in the tree image or not. Defaults to False.
             show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
-            file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not. Defaults to None.
+            file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
+                       Defaults to None.
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Default is "in". Defaults to "in".
             h: Height of the image in units. Defaults to None.
             w: Width of the image in units. Defaults to None.
             dpi: Dots per inches. Defaults to 90.
 
         Returns:
-            Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
+            Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
+            or  plot the tree inline (`show = False`)
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -866,7 +878,9 @@ class CodaPlot:
         ax: Axes = None,
         **kwargs,
     ):
-        """Plot a UMAP visualization colored by effect strength. Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData (default is data['rna']) depending on the cluster they were assigned to.
+        """Plot a UMAP visualization colored by effect strength.
+
+        Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData (default is data['rna']) depending on the cluster they were assigned to.
 
         Args:
             data: AnnData object or MuData object.
@@ -897,4 +911,5 @@ class CodaPlot:
             kwargs.pop("vmax")
         else:
             vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
+
         return sc.pl.umap(data_rna, color=effect_name, vmax=vmax, vmin=vmin, ax=ax, show=show, **kwargs)
