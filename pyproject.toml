@@ -36,7 +36,6 @@ dependencies = [
     "muon",
     "requests",
     "ipywidgets",
-    "switchlang",
     "scikit-misc",
     "plotnine",
     "scipy",
