@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import decoupler as dc
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
-from anndata import AnnData
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from anndata import AnnData
 
 
 class DifferentialGeneExpression:

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from anndata import AnnData
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
@@ -16,6 +16,9 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
+
+if TYPE_CHECKING:
+    from anndata import AnnData
 
 
 class Distance:
@@ -71,9 +74,9 @@ class Distance:
             import pertpy as pt
 
             adata = pt.dt.distance_example_data()
-            Distance = pt.tools.Distance(metric='edistance')
-            X = adata.obsm['X_pca'][adata.obs['perturbation'] == 'p-sgCREB1-2']
-            Y = adata.obsm['X_pca'][adata.obs['perturbation'] == 'control']
+            Distance = pt.tools.Distance(metric="edistance")
+            X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+            Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
             D = Distance(X, Y)
     """
 
@@ -142,9 +145,9 @@ class Distance:
                 import pertpy as pt
 
                 adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric='edistance')
-                X = adata.obsm['X_pca'][adata.obs['perturbation'] == 'p-sgCREB1-2']
-                Y = adata.obsm['X_pca'][adata.obs['perturbation'] == 'control']
+                Distance = pt.tools.Distance(metric="edistance")
+                X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+                Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
                 D = Distance(X, Y)
         """
         return self.metric_fct(X, Y, **kwargs)
@@ -176,8 +179,8 @@ class Distance:
                 import pertpy as pt
 
                 adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric='edistance')
-                pairwise_df = distance.pairwise(adata, groupby='perturbation')
+                Distance = pt.tools.Distance(metric="edistance")
+                pairwise_df = distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()

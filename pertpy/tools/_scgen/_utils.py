@@ -29,9 +29,12 @@ def extractor(
 
             import SCGEN
             import anndata
+
             train_data = anndata.read("./data/train.h5ad")
             test_data = anndata.read("./data/test.h5ad")
-            train_data_extracted_list = extractor(train_data, "CD4T", "conditions", "cell_type", "control", "stimulated")
+            train_data_extracted_list = extractor(
+                train_data, "CD4T", "conditions", "cell_type", "control", "stimulated"
+            )
     """
     cell_with_both_condition = data[data.obs[cell_type_key] == cell_type]
     condition_1 = data[(data.obs[cell_type_key] == cell_type) & (data.obs[condition_key] == ctrl_key)]
@@ -59,6 +62,7 @@ def balancer(
 
             import SCGEN
             import anndata
+
             train_data = anndata.read("./train_kang.h5ad")
             train_ctrl = train_data[train_data.obs["condition"] == "control", :]
             train_ctrl = balancer(train_ctrl, "conditions", "cell_type")

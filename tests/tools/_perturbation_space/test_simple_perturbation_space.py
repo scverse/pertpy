@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
+import pertpy as pt
 import pytest
 from anndata import AnnData
-
-import pertpy as pt
 
 
 def test_differential_response():

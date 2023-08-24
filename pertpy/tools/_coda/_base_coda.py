@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import arviz as az
 import ete3 as ete
 import jax.numpy as jnp
 import numpy as np
-import numpyro as npy
 import pandas as pd
 import patsy as pt
-import toytree as tt
 from anndata import AnnData
 from jax import random
-from jax._src.prng import PRNGKeyArray
-from jax._src.typing import Array
 from jax.config import config
 from mudata import MuData
 from numpyro.infer import HMC, MCMC, NUTS, initialization
@@ -21,6 +18,12 @@ from rich import box, print
 from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
+
+if TYPE_CHECKING:
+    import numpyro as npy
+    import toytree as tt
+    from jax._src.prng import PRNGKeyArray
+    from jax._src.typing import Array
 
 config.update("jax_enable_x64", True)
 
@@ -412,7 +415,14 @@ class CompositionalModel2(ABC):
         else:
             raise ValueError("No valid model type!")
 
-        summ = az.summary(data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False), var_names=var_names, kind="stats", stat_funcs={"median": np.median}, *args, **kwargs)  # type: ignore
+        summ = az.summary(
+            data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False),
+            var_names=var_names,
+            kind="stats",
+            stat_funcs={"median": np.median},
+            *args,  # noqa: B026
+            **kwargs,
+        )  # type: ignore
 
         effect_df = summ.loc[summ.index.str.match("|".join([r"beta\["]))].copy()
         intercept_df = summ.loc[summ.index.str.match("|".join([r"alpha\["]))].copy()
@@ -467,7 +477,9 @@ class CompositionalModel2(ABC):
 
             res = az.convert_to_inference_data(np.array([b_raw_sel]))
 
-            summary_sel = az.summary(data=res, kind="stats", var_names=["x"], skipna=True, *args, **kwargs)  # type: ignore
+            summary_sel = az.summary(
+                data=res, kind="stats", var_names=["x"], skipna=True, *args, **kwargs  # noqa: B026
+            )
 
             ref_index = sample_adata.uns["scCODA_params"]["reference_index"]
             n_conditions = len(covariates)

@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
-from anndata import AnnData
-
 import pertpy as pt
+from anndata import AnnData
 
 
 def test_discriminator_classifier():

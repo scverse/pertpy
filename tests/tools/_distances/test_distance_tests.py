@@ -1,7 +1,6 @@
+import pertpy as pt
 from pandas import DataFrame
 from pytest import fixture, mark
-
-import pertpy as pt
 
 distances = [
     "edistance",
@@ -22,7 +21,7 @@ distances = [
 class TestPermutationTest:
     @fixture
     def adata(self):
-        adata = pt.dt.distance_example_data()
+        adata = pt.dt.distance_example()
         return adata
 
     @mark.parametrize("distance", distances)

@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import scanpy as sc
-from anndata import AnnData
-from matplotlib.axes import Axes
+
+if TYPE_CHECKING:
+    from anndata import AnnData
+    from matplotlib.axes import Axes
 
 
 class GuideRnaPlot:

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from anndata import AnnData
 from rich import print
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class PerturbationSpace:
@@ -184,14 +187,14 @@ class PerturbationSpace:
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.layers[key_name] = data["layers"][key]
 
         if "embeddings" in data.keys():
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.obsm[key_name] = data["embeddings"][key]
 
         if ensure_consistency:
@@ -275,14 +278,14 @@ class PerturbationSpace:
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.layers[key_name] = data["layers"][key]
 
         if "embeddings" in data.keys():
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
-                    key_name = key.remove_suffix("_control_diff")
+                    key_name = key.removesuffix("_control_diff")
                 new_perturbation.obsm[key_name] = data["embeddings"][key]
 
         if ensure_consistency:

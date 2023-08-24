@@ -1,8 +1,7 @@
 import numpy as np
+import pertpy as pt
 from pandas import DataFrame
 from pytest import fixture, mark
-
-import pertpy as pt
 
 actual_distances = [
     "edistance",
@@ -19,7 +18,7 @@ pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_t
 class TestDistances:
     @fixture
     def adata(self):
-        adata = pt.dt.distance_example_data()
+        adata = pt.dt.distance_example()
         return adata
 
     @mark.parametrize("distance", actual_distances)

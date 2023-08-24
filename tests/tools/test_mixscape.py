@@ -3,9 +3,8 @@ from pathlib import Path
 import anndata
 import numpy as np
 import pandas as pd
-from scipy import sparse
-
 import pertpy as pt
+from scipy import sparse
 
 CWD = Path(__file__).parent.resolve()
 
@@ -85,9 +84,8 @@ class TestMixscape:
     def test_perturbation_signature(self):
         adata = self.make_test_adata()
 
-        pt.tl.kernel_pca(adata, n_comps=50)
         mixscape_identifier = pt.tl.Mixscape()
-        mixscape_identifier.perturbation_signature(adata, pert_key="label", control="control", use_rep="X_kpca")
+        mixscape_identifier.perturbation_signature(adata, pert_key="label", control="control")
 
         assert "X_pert" in adata.layers
 

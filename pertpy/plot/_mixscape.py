@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import copy
 from collections import OrderedDict
-from typing import Literal, Sequence
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from anndata import AnnData
 from matplotlib import pyplot as pl
-from matplotlib.axes import Axes
 from plotnine import (
     aes,
     element_blank,
@@ -31,6 +29,12 @@ from scanpy import get
 from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from anndata import AnnData
+    from matplotlib.axes import Axes
 
 
 class MixscapePlot:
@@ -312,7 +316,7 @@ class MixscapePlot:
         return p2
 
     @staticmethod
-    def violin(  # noqa: C901  pragma: no cover
+    def violin(  # pragma: no cover
         adata: AnnData,
         target_gene_idents: str | list[str],
         keys: str | Sequence[str] = "mixscape_class_p_ko",
