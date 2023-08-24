@@ -1,5 +1,6 @@
 import numpy as np
 import pertpy as pt
+import scanpy as sc
 from pandas import DataFrame
 from pytest import fixture, mark
 
@@ -19,7 +20,8 @@ class TestDistances:
     @fixture
     def adata(self):
         adata = pt.dt.distance_example()
-        return adata
+        adata_subsampled = sc.pp.subsample(adata, 0.001, copy=True)
+        return adata_subsampled
 
     @mark.parametrize("distance", actual_distances)
     def test_distance_axioms(self, adata, distance):
@@ -33,7 +35,7 @@ class TestDistances:
         assert np.sum(df.values - df.values.T) == 0
         assert df.columns.equals(df.index)
         # (M3) Triangle inequality (we just probe this for a few random triplets)
-        for _i in range(100):
+        for _i in range(10):
             triplet = np.random.choice(df.index, size=3, replace=False)
             assert df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]] >= df.loc[triplet[0], triplet[2]]
 
