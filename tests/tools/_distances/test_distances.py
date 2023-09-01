@@ -20,7 +20,7 @@ class TestDistances:
     @fixture
     def adata(self):
         adata = pt.dt.distance_example()
-        adata_subsampled = sc.pp.subsample(adata, 0.001, copy=True)
+        adata_subsampled = sc.pp.subsample(adata, 0.1, copy=True)
         return adata_subsampled
 
     @mark.parametrize("distance", actual_distances)
