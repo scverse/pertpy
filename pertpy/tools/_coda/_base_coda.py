@@ -224,6 +224,14 @@ class CompositionalModel2(ABC):
             extra_fields=extra_fields,
         )
 
+        acc_rate = np.array(self.mcmc.last_state.mean_accept_prob)
+        if acc_rate < 0.5:
+            print(f"[bold red]Acceptance rate unusually low ({acc_rate} < 0.5)! Results might be incorrect! "
+                            f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary.")
+        if acc_rate > 0.95:
+            print(f"[bold red]Acceptance rate unusually high ({acc_rate} > 0.95)! Results might be incorrect! "
+                            f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary.")
+
         # Set acceptance rate and save sampled values to `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["acceptance_rate"] = np.array(self.mcmc.last_state.mean_accept_prob)
         samples = self.mcmc.get_samples()
