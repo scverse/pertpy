@@ -15,6 +15,7 @@ distances = [
     "r2_distance",
     "kl_divergence",
     "t_test",
+    "nb_nll",
 ]
 
 

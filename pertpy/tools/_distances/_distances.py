@@ -62,6 +62,9 @@ class Distance:
         Here we fit a gaussian distribution over each group of cells and then calculate the KL divergence
     - "t_test": t-test statistic.
         T-test statistic measure between cells of two groups.
+    - "nb_nll": nll loss over negative binomial
+        Average of nll loss of samples of the secondary group after fitting a negative binomial distribution
+        over the samples of the first group.
 
     Attributes:
         metric: Name of distance metric.
@@ -72,7 +75,7 @@ class Distance:
 
             import pertpy as pt
 
-            adata = pt.dt.distance_example_data()
+            adata = pt.dt.distance_example()
             Distance = pt.tools.Distance(metric="edistance")
             X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
             Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -461,8 +464,6 @@ class KLDivergence(AbstractDistance):
 
     """
 
-    # NOTE: This results in an approximation of KL-Divergence by calculating histogram over bins
-
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
@@ -487,7 +488,7 @@ class TTestDistance(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, bins=10, **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         t_test_all = []
         n1 = X.shape[0]
         n2 = Y.shape[0]
@@ -514,9 +515,9 @@ class NBNLL(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, bins=10, **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
         if X.dtype.kind != "i" or Y.dtype.kind != "i":
-            raise ValueError("The NB NLL distance only applies for raw count inputs")
+            raise ValueError("The NBNLL distance only applies for raw count inputs")
 
         nlls = []
         for i in range(X.shape[1]):
@@ -524,9 +525,10 @@ class NBNLL(AbstractDistance):
             nb_params = NegativeBinomialP(x, np.ones_like(x)).fit().params
             mu = np.repeat(np.exp(nb_params[0]), x.shape[0])
             theta = np.repeat(1 / nb_params[1], x.shape[0])
-
+            if mu == np.nan or theta == np.nan:
+                raise ValueError("Could not fit a negative binomial distribution to the input data")
             # calculate the nll of y
-            eps = np.repeat(1e-8, x.shape[0])
+            eps = np.repeat(epsilon, x.shape[0])
             log_theta_mu_eps = np.log(theta + mu + eps)
             nll = (
                 theta * (np.log(theta + eps) - log_theta_mu_eps)
@@ -540,4 +542,4 @@ class NBNLL(AbstractDistance):
         return sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("NBNLL cannot be called on a pairwise distance matrix.")
