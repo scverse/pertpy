@@ -1,8 +1,12 @@
-from typing import Literal
+from __future__ import annotations
 
-import numpy as np
-from numpy._typing import ArrayLike
+from typing import TYPE_CHECKING, Literal
+
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, silhouette_score
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy._typing import ArrayLike
 
 
 def nmi(

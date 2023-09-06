@@ -537,15 +537,10 @@ class NBNLL(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
         def _is_count_matrix(matrix, tolerance=1e-6):
-            # Check if the matrix is a NumPy array
-            if not isinstance(matrix, np.ndarray):
-                return False
-
-            # Check if all values are non-negative integers or within the specified tolerance of integers
-            if np.issubdtype(matrix.dtype, np.integer) or np.all(np.abs(matrix - np.round(matrix)) < tolerance):
+            if matrix.dtype.kind == "i" or np.all(np.abs(matrix - np.round(matrix)) < tolerance):
                 return True
-
-            return False
+            else:
+                return False
 
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBNLL distance only works for raw counts.")
