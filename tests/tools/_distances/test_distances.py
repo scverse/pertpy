@@ -33,8 +33,8 @@ class TestDistances:
     @mark.parametrize("distance", actual_distances)
     def test_distance_axioms(self, adata, distance):
         # Test if distances are well-defined in accordance with metric axioms
-        Distance = pt.tl.Distance(distance, "X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", verbose=True)
+        Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
 
         # (M1) Positive definiteness
         assert all(np.diag(df.values) == 0)  # distance to self is 0
@@ -51,9 +51,20 @@ class TestDistances:
 
     @mark.parametrize("distance", actual_distances + pseudo_distances)
     def test_distance(self, adata, distance):
-        Distance = pt.tl.Distance(distance, "X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", verbose=True)
+        Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
 
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
+
+    @mark.parametrize("distance", actual_distances)
+    def test_distance_counts(self, adata, distance):
+        adata.X = adata.X.toarray()
+        adata.layers["counts"] = adata.X
+        Distance = pt.tl.Distance(distance, counts_layer_key="counts")
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
+
+        assert isinstance(df, DataFrame)
+        assert df.columns.equals(df.index)
+        assert np.sum(df.values - df.values.T) == 0
