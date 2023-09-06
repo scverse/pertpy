@@ -225,7 +225,7 @@ class CompositionalModel2(ABC):
         )
 
         acc_rate = np.array(self.mcmc.last_state.mean_accept_prob)
-        if acc_rate < 0.5:
+        if acc_rate < 0.6:
             print(f"[bold red]Acceptance rate unusually low ({acc_rate} < 0.5)! Results might be incorrect! "
                             f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary.")
         if acc_rate > 0.95:
