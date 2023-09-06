@@ -7,6 +7,7 @@ from typing import Any, Literal
 import anndata as ad
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
@@ -458,8 +459,10 @@ class Dialogue:
             ct_adata = ct_subs[ct]
             conf_m = ct_adata.obs[n_counts_key].values  # defining this for the millionth time
 
+            if not isinstance(ct_adata.X, np.ndarray):
+                ct_adata.X = ct_adata.X.toarray()
             R_cca_gene_cor1_x = self._corr2_coeff(
-                ct_adata.X.toarray().T, mcp_scores[ct].T
+                ct_adata.X.T, mcp_scores[ct].T
             )  # TODO: there are some nans here, also in R
 
             # get genes that are most positively and negatively correlated across all MCPS

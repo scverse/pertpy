@@ -82,13 +82,19 @@ class Distance:
     def __init__(
         self,
         metric: str = "edistance",
-        obsm_key: str = "X_pca",
+        counts_layer_key: str = None,
+        obsm_key: str = None,
     ):
         """Initialize Distance class.
 
         Args:
             metric: Distance metric to use. Defaults to "edistance".
-            obsm_key: Name of embedding in adata.obsm to use. Defaults to "X_pca".
+            counts_layer_key: Name of the counts layer containing raw counts to calculate distances for.
+                        Mutually exclusive with 'obsm_key'.
+                        Defaults to None and is then not used.
+            obsm_key: Name of embedding in adata.obsm to use.
+                      Mutually exclusive with 'counts_layer_key'.
+                      Defaults to None, but is set to "X_pca" if not set explicitly internally.
         """
         metric_fct: AbstractDistance = None
         if metric == "edistance":
@@ -120,6 +126,15 @@ class Distance:
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
+
+        if counts_layer_key and obsm_key:
+            raise ValueError(
+                "Cannot use 'counts_layer_key' and 'obsm_key' at the same time.\n"
+                "Please provide only one of the two keys."
+            )
+        if not counts_layer_key and not obsm_key:
+            obsm_key = "X_pca"
+        self.counts_layer_key = counts_layer_key
         self.obsm_key = obsm_key
         self.metric = metric
 
@@ -156,7 +171,7 @@ class Distance:
         adata: AnnData,
         groupby: str,
         groups: list[str] | None = None,
-        verbose: bool = True,
+        show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
     ) -> pd.DataFrame:
@@ -167,7 +182,7 @@ class Distance:
             groupby: Column name in adata.obs.
             groups: List of groups to compute pairwise distances for.
                     If None, uses all groups. Defaults to None.
-            verbose: Whether to show progress bar. Defaults to True.
+            show_progressbar: Whether to show progress bar. Defaults to True.
             n_jobs: Number of cores to use. Defaults to -1 (all).
 
         Returns:
@@ -185,7 +200,7 @@ class Distance:
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
-        fct = track if verbose else lambda iterable: iterable
+        fct = track if show_progressbar else lambda iterable: iterable
 
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
@@ -205,7 +220,10 @@ class Distance:
                     df.loc[group_x, group_y] = dist
                     df.loc[group_y, group_x] = dist
         else:
-            embedding = adata.obsm[self.obsm_key].copy()
+            if self.counts_layer_key:
+                embedding = adata.layers[self.counts_layer_key]
+            else:
+                embedding = adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[grouping == group_x].copy()
                 for group_y in groups[index_x:]:
@@ -233,10 +251,11 @@ class Distance:
             obs_key: Column name in adata.obs.
             cell_wise_metric: Metric to use for pairwise distances.
         """
-        # Precompute the pairwise distances
-        cells = adata.obsm[self.obsm_key].copy()
+        if self.counts_layer_key:
+            cells = adata.layers[self.counts_layer_key]
+        else:
+            cells = adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=cell_wise_metric, n_jobs=n_jobs)
-        # Write to adata.obsp
         adata.obsp[f"{self.obsm_key}_predistances"] = pwd
 
 
