@@ -13,7 +13,7 @@ actual_distances = [
     "cosine_distance",
     "wasserstein",
 ]
-pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test"]
+pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test", "nb_nll"]
 
 
 class TestDistances:
