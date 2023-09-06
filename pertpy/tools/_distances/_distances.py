@@ -93,8 +93,8 @@ class Distance:
         Args:
             metric: Distance metric to use. Defaults to "edistance".
             counts_layer_key: Name of the counts layer containing raw counts to calculate distances for.
-                        Mutually exclusive with 'obsm_key'.
-                        Defaults to None and is then not used.
+                              Mutually exclusive with 'obsm_key'.
+                              Defaults to None and is then not used.
             obsm_key: Name of embedding in adata.obsm to use.
                       Mutually exclusive with 'counts_layer_key'.
                       Defaults to None, but is set to "X_pca" if not set explicitly internally.
