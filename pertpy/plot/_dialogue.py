@@ -12,8 +12,8 @@ class DialoguePlot:
     def split_violins(
         adata: AnnData,
         split_key: str, 
-        split_which: (str,str),
         celltype_key = str,
+        split_which: (str,str)=None,
         mcp: str = "mcp_0",
     ) -> plt.Axes:
         """
@@ -23,15 +23,18 @@ class DialoguePlot:
         Args:
             adata (AnnData): Annotated data object.
             split_key (str): Variable in adata.obs used to split the data.
-            split_which (str,str): Which values of split_key to plot.
+            split_which (str,str): Which values of split_key to plot. Required if more than 2 values in split_key.
             celltype_key (str): Key for cell type annotations.
             mcp (str, optional): Key for MCP data. Defaults to "mcp_0".
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object"""
         
+        
         # Get a DataFrame with necessary columns
         df = sc.get.obs_df(adata, [celltype_key, mcp, split_key])
+        if split_which is None:
+            split_which = df[split_key].unique()
         df = df[df[split_key].isin(split_which)]
         df[split_key] = df[split_key].cat.remove_unused_categories()
 
