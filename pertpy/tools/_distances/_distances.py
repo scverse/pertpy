@@ -68,6 +68,7 @@ class Distance:
 
     Attributes:
         metric: Name of distance metric.
+        layer_key: Name of the counts to use in adata.layers.
         obsm_key: Name of embedding in adata.obsm to use.
 
     Example:
@@ -85,7 +86,7 @@ class Distance:
     def __init__(
         self,
         metric: str = "edistance",
-        counts_layer_key: str = None,
+        layer_key: str = None,
         obsm_key: str = None,
     ):
         """Initialize Distance class.
@@ -130,14 +131,14 @@ class Distance:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
 
-        if counts_layer_key and obsm_key:
+        if layer_key and obsm_key:
             raise ValueError(
                 "Cannot use 'counts_layer_key' and 'obsm_key' at the same time.\n"
                 "Please provide only one of the two keys."
             )
-        if not counts_layer_key and not obsm_key:
+        if not layer_key and not obsm_key:
             obsm_key = "X_pca"
-        self.counts_layer_key = counts_layer_key
+        self.layer_key = layer_key
         self.obsm_key = obsm_key
         self.metric = metric
 
@@ -223,8 +224,8 @@ class Distance:
                     df.loc[group_x, group_y] = dist
                     df.loc[group_y, group_x] = dist
         else:
-            if self.counts_layer_key:
-                embedding = adata.layers[self.counts_layer_key]
+            if self.layer_key:
+                embedding = adata.layers[self.layer_key]
             else:
                 embedding = adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
@@ -254,8 +255,8 @@ class Distance:
             obs_key: Column name in adata.obs.
             cell_wise_metric: Metric to use for pairwise distances.
         """
-        if self.counts_layer_key:
-            cells = adata.layers[self.counts_layer_key]
+        if self.layer_key:
+            cells = adata.layers[self.layer_key]
         else:
             cells = adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=cell_wise_metric, n_jobs=n_jobs)
@@ -535,8 +536,19 @@ class NBNLL(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
-        if X.dtype.kind != "i" or Y.dtype.kind != "i":
-            raise ValueError("The NBNLL distance only applies for raw count inputs")
+        def _is_count_matrix(matrix, tolerance=1e-6):
+            # Check if the matrix is a NumPy array
+            if not isinstance(matrix, np.ndarray):
+                return False
+
+            # Check if all values are non-negative integers or within the specified tolerance of integers
+            if np.issubdtype(matrix.dtype, np.integer) or np.all(np.abs(matrix - np.round(matrix)) < tolerance):
+                return True
+
+            return False
+
+        if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
+            raise ValueError("NBNLL distance only works for raw counts.")
 
         nlls = []
         for i in range(X.shape[1]):

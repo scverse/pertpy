@@ -50,7 +50,12 @@ class DistanceTest:
         self.correction = correction
 
     def __call__(
-        self, adata: AnnData, groupby: str, contrast: str, cell_wise_metric: str = "euclidean", verbose: bool = True
+        self,
+        adata: AnnData,
+        groupby: str,
+        contrast: str,
+        cell_wise_metric: str = "euclidean",
+        show_progressbar: bool = True,
     ) -> pd.DataFrame:
         """Run a permutation test using the specified distance metric, testing
         all groups of cells against a specified contrast group ("control").
@@ -59,7 +64,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            verbose: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress. Defaults to True.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -78,11 +83,11 @@ class DistanceTest:
         if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
             # distance matrix, but not all metrics can do that.
-            return self.test_precomputed(adata, groupby, contrast, cell_wise_metric, verbose)
+            return self.test_precomputed(adata, groupby, contrast, cell_wise_metric, show_progressbar)
         else:
-            return self.test_xy(adata, groupby, contrast, verbose)
+            return self.test_xy(adata, groupby, contrast, show_progressbar)
 
-    def test_xy(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
+    def test_xy(self, adata: AnnData, groupby: str, contrast: str, show_progressbar: bool = True) -> pd.DataFrame:
         """Run permutation test for metric not supporting precomputed distances.
 
         Runs a permutation test for a metric that can not be computed using
@@ -94,7 +99,7 @@ class DistanceTest:
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
             cell_wise_metric: Metric to use for pairwise distances. Defaults to "euclidean".
-            verbose: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress. Defaults to True.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -108,7 +113,7 @@ class DistanceTest:
         groups = adata.obs[groupby].unique()
         if contrast not in groups:
             raise ValueError(f"Contrast group {contrast} not found in {groupby} of adata.obs.")
-        fct = track if verbose else lambda iterable: iterable
+        fct = track if show_progressbar else lambda iterable: iterable
         embedding = adata.obsm[self.obsm_key]
 
         # Generate the null distribution

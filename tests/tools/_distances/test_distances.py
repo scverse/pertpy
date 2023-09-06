@@ -1,5 +1,6 @@
 import numpy as np
 import pertpy as pt
+import pytest
 import scanpy as sc
 from pandas import DataFrame
 from pytest import fixture, mark
@@ -13,7 +14,8 @@ actual_distances = [
     "cosine_distance",
     "wasserstein",
 ]
-pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test", "nb_nll"]
+pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test"]
+pseudo_counts_distances = ["nb_nll"]
 
 
 class TestDistances:
@@ -58,13 +60,17 @@ class TestDistances:
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
 
-    @mark.parametrize("distance", actual_distances)
+    @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
     def test_distance_counts(self, adata, distance):
-        adata.X = adata.X.toarray()
-        adata.layers["counts"] = adata.X
-        Distance = pt.tl.Distance(distance, counts_layer_key="counts")
+        adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
+        Distance = pt.tl.Distance(distance, layer_key="counts")
         df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
 
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0
+
+    @mark.parametrize("distance", actual_distances)
+    def test_mutually_exclusive_keys(self, adata, distance):
+        with pytest.raises(ValueError):
+            _ = pt.tl.Distance(distance, layer_key="counts", obsm_key="X_pca")
