@@ -33,12 +33,6 @@ from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
 from skmisc.loess import loess
 from statsmodels.stats.multitest import fdrcorrection
-from switchlang import switch
-
-
-def _raise_exception(exception_message: str):
-    """Raise exception for invalid classifier input."""
-    raise Exception(exception_message)
 
 
 @dataclass
@@ -170,32 +164,24 @@ class Augur:
         """
         if params is None:
             params = Params()
-        with switch(classifier) as c:
-            c.case(
-                "random_forest_classifier",
-                lambda: RandomForestClassifier(
-                    n_estimators=params.n_estimators,
-                    max_depth=params.max_depth,
-                    max_features=params.max_features,
-                    random_state=params.random_state,
-                ),
+        if classifier == "random_forest_classifier":
+            return RandomForestClassifier(
+                n_estimators=params.n_estimators,
+                max_depth=params.max_depth,
+                max_features=params.max_features,
+                random_state=params.random_state,
             )
-            c.case(
-                "random_forest_regressor",
-                lambda: RandomForestRegressor(
-                    n_estimators=params.n_estimators,
-                    max_depth=params.max_depth,
-                    max_features=params.max_features,
-                    random_state=params.random_state,
-                ),
+        elif classifier == "random_forest_regressor":
+            return RandomForestRegressor(
+                n_estimators=params.n_estimators,
+                max_depth=params.max_depth,
+                max_features=params.max_features,
+                random_state=params.random_state,
             )
-            c.case(
-                "logistic_regression_classifier",
-                lambda: LogisticRegression(penalty=params.penalty, random_state=params.random_state),
-            )
-            c.default(lambda: _raise_exception("Invalid classifer."))
-
-        return c.result
+        elif classifier == "logistic_regression_classifier":
+            return LogisticRegression(penalty=params.penalty, random_state=params.random_state)
+        else:
+            raise ValueError("Invalid classifier")
 
     def sample(self, adata: AnnData, categorical: bool, subsample_size: int, random_state: int, features: list):
         """Sample AnnData observations.

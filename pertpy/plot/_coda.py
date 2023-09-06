@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Literal, Optional, Union
 
@@ -15,7 +14,6 @@ from matplotlib import cm, rcParams
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
 from mudata import MuData
-from statannotations.Annotator import Annotator
 
 from pertpy.tools._coda._base_coda import CompositionalModel2, collapse_singularities_2
 
@@ -333,7 +331,6 @@ class CodaPlot:
         y_scale: Literal["relative", "log", "log10", "count"] = "relative",
         plot_facets: bool = False,
         add_dots: bool = False,
-        draw_effects: bool = False,
         model: CompositionalModel2 = None,
         cell_types: Optional[list] = None,
         args_boxplot: Optional[dict] = None,
@@ -351,12 +348,11 @@ class CodaPlot:
             data: AnnData object or MuData object
             feature_name: The name of the feature in data.obs to plot
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            y_scale: Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count), "log10" - log10(count), "count" - absolute abundance (cell counts).
+            y_scale: Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count),
+                     "log10" - log10(count), "count" - absolute abundance (cell counts).
                      Defaults to "relative".
             plot_facets: If False, plot cell types on the x-axis. If True, plot as facets. Defaults to False.
             add_dots: If True, overlay a scatterplot with one dot for each data point. Defaults to False.
-            draw_effects: If True, draw horizontal bars for credible effects (You have to run inference on model before using this option!).
-                          Defaults to False.
             model: When draw_effects, specify a tasCODA model
             cell_types: Subset of cell types that should be plotted. Defaults to None.
             args_boxplot: Arguments passed to sns.boxplot. Defaults to {}.
@@ -408,15 +404,17 @@ class CodaPlot:
         if cell_types is not None:
             plot_df = plot_df[plot_df["Cell type"].isin(cell_types)]
 
+        # Currently disabled because the latest statsannotations does not support the latest seaborn.
+        # We had to drop the dependency.
         # Get credible effects results from model
-        if draw_effects:
-            if model is not None:
-                credible_effects_df = model.credible_effects(data, modality_key).to_frame().reset_index()
-            else:
-                print("Specify a tasCODA model to draw effects")
-            credible_effects_df[feature_name] = credible_effects_df["Covariate"].str.removeprefix(f"{feature_name}[T.")
-            credible_effects_df[feature_name] = credible_effects_df[feature_name].str.removesuffix("]")
-            credible_effects_df = credible_effects_df[credible_effects_df["Final Parameter"]]
+        # if draw_effects:
+        #     if model is not None:
+        #         credible_effects_df = model.credible_effects(data, modality_key).to_frame().reset_index()
+        #     else:
+        #         print("[bold yellow]Specify a tasCODA model to draw effects")
+        #     credible_effects_df[feature_name] = credible_effects_df["Covariate"].str.removeprefix(f"{feature_name}[T.")
+        #     credible_effects_df[feature_name] = credible_effects_df[feature_name].str.removesuffix("]")
+        #     credible_effects_df = credible_effects_df[credible_effects_df["Final Parameter"]]
 
         # If plot as facets, create a FacetGrid and map boxplot to it.
         if plot_facets:
@@ -494,15 +492,17 @@ class CodaPlot:
                 **args_boxplot,
             )
 
-            if draw_effects:
-                pairs = [
-                    [(row["Cell Type"], row[feature_name]), (row["Cell Type"], "Control")]
-                    for _, row in credible_effects_df.iterrows()
-                ]
-                annot = Annotator(ax, pairs, data=plot_df, x="Cell type", y=value_name, hue=feature_name)
-                annot.configure(test=None, loc="outside", color="red", line_height=0, verbose=False)
-                annot.set_custom_annotations([row[feature_name] for _, row in credible_effects_df.iterrows()])
-                annot.annotate()
+            # Currently disabled because the latest statsannotations does not support the latest seaborn.
+            # We had to drop the dependency.
+            # if draw_effects:
+            #     pairs = [
+            #         [(row["Cell Type"], row[feature_name]), (row["Cell Type"], "Control")]
+            #         for _, row in credible_effects_df.iterrows()
+            #     ]
+            #     annot = Annotator(ax, pairs, data=plot_df, x="Cell type", y=value_name, hue=feature_name)
+            #     annot.configure(test=None, loc="outside", color="red", line_height=0, verbose=False)
+            #     annot.set_custom_annotations([row[feature_name] for _, row in credible_effects_df.iterrows()])
+            #     annot.annotate()
 
             if add_dots:
                 sns.swarmplot(
