@@ -24,7 +24,12 @@ class DistanceTest:
     Args:
         metric: Distance metric to use.
         n_perms: Number of permutations to run. Defaults to 1000.
-        obsm_key: Name of embedding to use for distance computation. Defaults to 'X_pca'.
+        layer_key: Name of the counts layer containing raw counts to calculate distances for.
+                   Mutually exclusive with 'obsm_key'.
+                   Defaults to None and is then not used.
+        obsm_key: Name of embedding in adata.obsm to use.
+                  Mutually exclusive with 'counts_layer_key'.
+                  Defaults to None, but is set to "X_pca" if not set explicitly internally.
         alpha: Significance level. Defaults to 0.05.
         correction: Multiple testing correction method. Defaults to 'holm-sidak'.
 
@@ -39,12 +44,22 @@ class DistanceTest:
         self,
         metric: str,
         n_perms: int = 1000,
-        obsm_key: str = "X_pca",
+        layer_key: str = None,
+        obsm_key: str = None,
         alpha: float = 0.05,
         correction: str = "holm-sidak",
     ):
         self.metric = metric
         self.n_perms = n_perms
+
+        if layer_key and obsm_key:
+            raise ValueError(
+                "Cannot use 'counts_layer_key' and 'obsm_key' at the same time.\n"
+                "Please provide only one of the two keys."
+            )
+        if not layer_key and not obsm_key:
+            obsm_key = "X_pca"
+        self.layer_key = layer_key
         self.obsm_key = obsm_key
         self.alpha = alpha
         self.correction = correction
@@ -109,7 +124,7 @@ class DistanceTest:
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
         """
-        distance = Distance(self.metric, self.obsm_key)
+        distance = Distance(self.metric, layer_key=self.layer_key, obsm_key=self.obsm_key)
         groups = adata.obs[groupby].unique()
         if contrast not in groups:
             raise ValueError(f"Contrast group {contrast} not found in {groupby} of adata.obs.")
@@ -197,7 +212,7 @@ class DistanceTest:
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
         """
-        distance = Distance(self.metric, self.obsm_key)
+        distance = Distance(self.metric, layer_key=self.layer_key, obsm_key=self.obsm_key)
         if not distance.metric_fct.accepts_precomputed:
             raise ValueError(f"Metric {self.metric} does not accept precomputed distances.")
 
@@ -209,7 +224,10 @@ class DistanceTest:
         # Precompute the pairwise distances
         precomputed_distances = {}
         for group in groups:
-            cells = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.obsm_key].copy()
+            if self.layer_key:
+                cells = adata[adata.obs[groupby].isin([group, contrast])].layers[self.layer_key].copy()
+            else:
+                cells = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.obsm_key].copy()
             pwd = pairwise_distances(cells, cells, metric=cell_wise_metric)
             precomputed_distances[group] = pwd
 
