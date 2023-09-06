@@ -254,7 +254,7 @@ class CompositionalModel2(ABC):
         modality_key: str = "coda",
         num_samples: int = 10000,
         num_warmup: int = 1000,
-        rng_key: int = None,
+        rng_key: int = 0,
         copy: bool = False,
         *args,
         **kwargs,
@@ -266,7 +266,7 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             num_samples: Number of sampled values after burn-in. Defaults to 10000.
             num_warmup: Number of burn-in (warmup) samples. Defaults to 1000.
-            rng_key: The rng state used. If None, a random state will be selected. Defaults to None.
+            rng_key: The rng state used. Defaults to 0.
             copy: Return a copy instead of writing to adata. Defaults to False.
 
         Returns:
@@ -283,11 +283,7 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        # Set rng key if needed
-        if rng_key is None:
-            rng_key_array = random.PRNGKey(np.random.randint(0, 10000))
-        else:
-            rng_key_array = random.PRNGKey(rng_key)
+        rng_key_array = random.PRNGKey(rng_key)
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
