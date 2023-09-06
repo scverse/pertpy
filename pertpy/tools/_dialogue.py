@@ -876,6 +876,16 @@ class Dialogue:
         Returns: 
             dict with keys 'up_genes' and 'down_genes' and values of lists of genes
         """
+        # Convert "mcp_x" to "MCPx" format 
+        # REMOVE THIS BLOCK ONCE MLM OUTPUT MATCHES STANDARD
+        if MCP.startswith('mcp_'):
+            MCP = MCP.replace('mcp_','MCP')
+            # convert from MCPx to MCPx+1
+            MCP = "MCP" + str(int(MCP[3:])-1)
+            
+
+
+
         # Extract all comparison keys from the results object
         comparisons = results.keys()
         comparisons = list(comparisons)
@@ -996,6 +1006,4 @@ class Dialogue:
             ct_ranked = self._get_extrema_MCP_genes_single(ct_subs, mcp = mcp, fraction = fraction)
             for celltype in ct_ranked.keys():
                 rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype], group=None)
-                #print(celltype)
-                #print(rank_dfs[mcp][celltype])
         return rank_dfs
