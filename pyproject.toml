@@ -36,7 +36,6 @@ dependencies = [
     "muon",
     "requests",
     "ipywidgets",
-    "switchlang",
     "scikit-misc",
     "plotnine",
     "scipy",
@@ -45,19 +44,18 @@ dependencies = [
     "toytree",
     "arviz",
     "numpyro",
-    "statannotations",
     "decoupler",
     "ott-jax",
     "sparsecca",
     "numba",
     "remotezip",
-    "openpyxl"
+    "openpyxl",
 ]
 
 [project.optional-dependencies]
 coda = [
     "ete3",
-    "pyqt5"
+    "pyqt5"  # remove this after ete4 got released
 ]
 dev = [
     "pre-commit",
@@ -129,6 +127,9 @@ select = [
     "BLE",  # flake8-blind-except
     "UP",  # pyupgrade
     "RUF100",  # Report unused noqa directives
+    "TCH",  # Typing imports
+    # "NPY",  # Numpy specific rules
+    "PTH"  # Use pathlib
 ]
 ignore = [
     # line too long -> we accept long comment lines; black gets rid of long code lines

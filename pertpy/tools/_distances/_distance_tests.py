@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
-from anndata import AnnData
 from rich.progress import track
 from sklearn.metrics import pairwise_distances
 from statsmodels.stats.multitest import multipletests
 
 from ._distances import Distance
+
+if TYPE_CHECKING:
+    from anndata import AnnData
 
 
 class DistanceTest:

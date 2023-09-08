@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import arviz as az
 import ete3 as ete
 import jax.numpy as jnp
 import numpy as np
-import numpyro as npy
 import pandas as pd
 import patsy as pt
-import toytree as tt
 from anndata import AnnData
 from jax import random
-from jax._src.prng import PRNGKeyArray
-from jax._src.typing import Array
 from jax.config import config
 from mudata import MuData
 from numpyro.infer import HMC, MCMC, NUTS, initialization
@@ -21,6 +18,12 @@ from rich import box, print
 from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
+
+if TYPE_CHECKING:
+    import numpyro as npy
+    import toytree as tt
+    from jax._src.prng import PRNGKeyArray
+    from jax._src.typing import Array
 
 config.update("jax_enable_x64", True)
 
@@ -221,6 +224,18 @@ class CompositionalModel2(ABC):
             extra_fields=extra_fields,
         )
 
+        acc_rate = np.array(self.mcmc.last_state.mean_accept_prob)
+        if acc_rate < 0.6:
+            print(
+                f"[bold red]Acceptance rate unusually low ({acc_rate} < 0.5)! Results might be incorrect! "
+                f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary."
+            )
+        if acc_rate > 0.95:
+            print(
+                f"[bold red]Acceptance rate unusually high ({acc_rate} > 0.95)! Results might be incorrect! "
+                f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary."
+            )
+
         # Set acceptance rate and save sampled values to `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["acceptance_rate"] = np.array(self.mcmc.last_state.mean_accept_prob)
         samples = self.mcmc.get_samples()
@@ -251,7 +266,7 @@ class CompositionalModel2(ABC):
         modality_key: str = "coda",
         num_samples: int = 10000,
         num_warmup: int = 1000,
-        rng_key: int = None,
+        rng_key: int = 0,
         copy: bool = False,
         *args,
         **kwargs,
@@ -263,7 +278,7 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             num_samples: Number of sampled values after burn-in. Defaults to 10000.
             num_warmup: Number of burn-in (warmup) samples. Defaults to 1000.
-            rng_key: The rng state used. If None, a random state will be selected. Defaults to None.
+            rng_key: The rng state used. Defaults to 0.
             copy: Return a copy instead of writing to adata. Defaults to False.
 
         Returns:
@@ -280,11 +295,7 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        # Set rng key if needed
-        if rng_key is None:
-            rng_key_array = random.PRNGKey(np.random.randint(0, 10000))
-        else:
-            rng_key_array = random.PRNGKey(rng_key)
+        rng_key_array = random.PRNGKey(rng_key)
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel

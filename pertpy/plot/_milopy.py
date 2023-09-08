@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-from mudata import MuData
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from mudata import MuData
 
 
 class MilopyPlot:
