@@ -8,6 +8,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+import scanpy as sc
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
@@ -16,9 +17,11 @@ from rich import print
 from rich.console import Group
 from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+from scipy import stats
 from scipy.optimize import nnls
 from sklearn.linear_model import LinearRegression
 from sparsecca import lp_pmd, multicca_permute, multicca_pmd
+from statsmodels.sandbox.stats.multicomp import multipletests
 
 
 class Dialogue:
@@ -804,3 +807,202 @@ class Dialogue:
                 all_results[f"{cell_type_1}_vs_{cell_type_2}"] = merged_results
 
         return all_results, new_mcp_scores
+
+    def test_association(
+        self,
+        adata: AnnData,
+        condition_label: str,
+        conditions_compare: tuple[str, str] = None,
+    ):
+        """Tests association between MCPs and a binary response variable (e.g. response to treatment).
+
+        Note: benjamini-hochberg corrects for the number of cell types, NOT the number of MCPs
+
+        Args:
+            adata: AnnData object with MCPs in obs
+            condition_label: Column name in adata.obs with condition labels. Must be categorical.
+            conditions_compare: Tuple of length 2 with the two conditions to compare, must be in in adata.obs[condition_label]
+
+        Returns:
+            Dict of data frames with pvals, tstats, and pvals_adj for each MCP
+        """
+        celltype_label = self.celltype_key
+        sample_label = self.sample_id
+        n_mcps = self.n_mcps
+
+        # create conditions_compare if not supplied
+        if conditions_compare is None:
+            conditions_compare = list(adata.obs["path_str"].cat.categories)  # type: ignore
+            if len(conditions_compare) != 2:
+                raise ValueError("Please specify conditions to compare or supply an object with only 2 conditions")
+
+        # create data frames to store results
+        pvals = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
+        tstats = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
+        pvals_adj = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
+
+        response = adata.obs.groupby(sample_label)[condition_label].agg(pd.Series.mode)
+        for celltype in adata.obs[celltype_label].unique():
+            # subset data to cell type
+            df = adata.obs[adata.obs[celltype_label] == celltype]
+            # run t-test for each MCP
+            for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
+                mns = df.groupby(sample_label)[mcpnum].mean()
+                mns = pd.concat([mns, response], axis=1)
+                res = stats.ttest_ind(
+                    mns[mns[condition_label] == conditions_compare[0]][mcpnum],
+                    mns[mns[condition_label] == conditions_compare[1]][mcpnum],
+                )
+                pvals.loc[celltype, mcpnum] = res[1]
+                tstats.loc[celltype, mcpnum] = res[0]
+                # return(res)
+
+        # benjamini-hochberg correction for number of cell types (use BH because correlated MCPs)
+        for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
+            pvals_adj[mcpnum] = multipletests(pvals[mcpnum], method="fdr_bh")[1]
+        return {"pvals": pvals, "tstats": tstats, "pvals_adj": pvals_adj}
+
+    def get_mlm_mcp_genes(
+        self,
+        celltype: str,
+        results: dict,
+        MCP: str = "mcp_0",
+        threshold: float = 0.70,
+        focal_celltypes: list[str] | None = None,
+    ):
+        """Extracts MCP genes from the MCP multilevel modeling object for the cell type of interest.
+
+        Args:
+            celltype: Cell type of interest.
+            results: dl.MultilevelModeling result object.
+            MCP: MCP key of the result object.
+            threshhold: Number between [0,1]. The fraction of cell types compared against which must have the associated MCP gene.
+                        Defaults to 0.70.
+            focal_celltypes: None (compare against all cell types) or a list of other cell types which you want to compare against.
+                             Defaults to None.
+
+        Returns:
+            Dict with keys 'up_genes' and 'down_genes' and values of lists of genes
+        """
+        # Convert "mcp_x" to "MCPx" format
+        # REMOVE THIS BLOCK ONCE MLM OUTPUT MATCHES STANDARD
+        if MCP.startswith("mcp_"):
+            MCP = MCP.replace("mcp_", "MCP")
+            # convert from MCPx to MCPx+1
+            MCP = "MCP" + str(int(MCP[3:]) - 1)
+
+        # Extract all comparison keys from the results object
+        comparisons = list(results.keys())
+
+        filtered_keys = [key for key in comparisons if celltype in key]
+
+        # If focal_celltypes are specified, further filter keys
+        if focal_celltypes is not None:
+            if celltype in focal_celltypes:
+                focal_celltypes = [item for item in focal_celltypes if item != celltype]
+            filtered_keys = [key for key in filtered_keys if any(foci in key for foci in focal_celltypes)]
+
+        mcp_dict = {}
+        for key in filtered_keys:
+            if key.startswith(celltype):
+                mcp_dict[key.split("_vs_")[1]] = results[key][MCP]["sig_genes_1"]
+            else:
+                mcp_dict[key.split("_vs_")[0]] = results[key][MCP]["sig_genes_2"]
+
+        genes_dict_up = {}  # type: ignore
+        genes_dict_down = {}  # type: ignore
+        for celltype2 in mcp_dict.keys():
+            for gene in mcp_dict[celltype2][MCP + ".up"]:
+                if gene in genes_dict_up:
+                    genes_dict_up[gene] += 1
+                else:
+                    genes_dict_up[gene] = 1
+            for gene in mcp_dict[celltype2][MCP + ".down"]:
+                if gene in genes_dict_down:
+                    genes_dict_down[gene] += 1
+                else:
+                    genes_dict_down[gene] = 1
+
+        up_genes_df = pd.DataFrame.from_dict(genes_dict_up, orient="index")
+        down_genes_df = pd.DataFrame.from_dict(genes_dict_down, orient="index")
+
+        min_cell_types = np.floor(len(filtered_keys) * threshold)
+
+        final_output = {}
+        final_output["up_genes"] = list(np.unique(up_genes_df[up_genes_df[0] >= min_cell_types].index.values.tolist()))
+        final_output["down_genes"] = list(
+            np.unique(down_genes_df[down_genes_df[0] >= min_cell_types].index.values.tolist())
+        )
+
+        return final_output
+
+    def _get_extrema_MCP_genes_single(self, ct_subs: dict, mcp: str = "mcp_0", fraction: float = 0.1):
+        """Identifies extreme cells based on their MCP score.
+
+        Takes a dictionary of subpopulations AnnData objects as output from DIALOGUE,
+        identifies the extreme cells based on their MCP score for the input mcp,
+        calculates rank_gene_groups with default parameters between the high-extreme and low-extreme cells
+        and returns a dictionary containing the resulting ct_subs objects with the extreme cells labeled.
+
+        Args:
+            ct_subs: Dialogue output ct_subs dictionary
+            mcp: The name of the marker gene expression column.
+                 Defaults to "mcp_0".
+            fraction: Fraction of extreme cells to consider for gene ranking.
+                      Should be between 0 and 1.
+                      Defaults to 0.1.
+
+        Returns:
+            Dictionary where keys are subpopulation names and values are Anndata
+            objects containing the results of gene ranking analysis.
+
+        Examples:
+            ct_subs = {
+            "subpop1": anndata_obj1,
+            "subpop2": anndata_obj2,
+            # ... more subpopulations ...
+            }
+            genes_results = _get_extrema_MCP_genes_single(ct_subs, mcp="mcp_4", fraction=0.2)
+        """
+        genes = {}
+        for ct in ct_subs.keys():
+            mini = ct_subs[ct]
+            mini.obs[mcp]
+            mini.obs["extrema"] = pd.qcut(
+                mini.obs[mcp],
+                [0, 0 + fraction, 1 - fraction, 1.0],
+                labels=["low " + mcp + " " + ct, "no", "high" + mcp + " " + ct],
+            )
+            sc.tl.rank_genes_groups(
+                mini, "extrema", groups=["high" + mcp + " " + ct], reference="low " + mcp + " " + ct
+            )
+            genes[ct] = mini  # .uns['rank_genes_groups']
+        return genes
+
+    def get_extrema_MCP_genes(self, ct_subs: dict, fraction: float = 0.1):
+        """Identifies cells with extreme MCP scores.
+
+        Takes as input a dictionary of subpopulations AnnData objects (DIALOGUE output),
+        For each MCP it identifies cells with extreme MCP scores, then calls rank_genes_groups to
+        identify genes which are differentially expressed between high-scoring and low-scoring cells.
+
+        Args:
+            ct_subs: Dialogue output ct_subs dictionary
+            fraction: Fraction of extreme cells to consider for gene ranking.
+                      Should be between 0 and 1. Defaults to 0.1.
+
+        Returns:
+            Nested dictionary where keys of the first level are MCPs (of the form "mcp_0" etc)
+            and the second level keys are cell types. The values are dataframes containing the
+            results of the rank_genes_groups analysis.
+        """
+        rank_dfs: dict[str, dict[Any, Any]] = {}
+        _, ct_sub = next(iter(ct_subs.items()))
+        mcps = [col for col in ct_sub.obs.columns if col.startswith("mcp_")]
+
+        for mcp in mcps:
+            rank_dfs[mcp] = {}
+            ct_ranked = self._get_extrema_MCP_genes_single(ct_subs, mcp=mcp, fraction=fraction)
+            for celltype in ct_ranked.keys():
+                rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype], group=None)
+        return rank_dfs
