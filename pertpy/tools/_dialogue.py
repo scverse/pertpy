@@ -7,8 +7,8 @@ from typing import Any, Literal
 import anndata as ad
 import numpy as np
 import pandas as pd
-import scipy.sparse as sp
 import scanpy as sc
+import scipy.sparse as sp
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
