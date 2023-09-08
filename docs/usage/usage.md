@@ -452,7 +452,16 @@ Example implementation:
 ```python
 import pertpy as pt
 
-# TODO will be added soon.
+mdata = pt.dt.papalexi_2021()
+ps = pt.tl.PseudobulkSpace()
+ps_adata = ps.compute(
+    mdata["rna"],
+    target_col="gene_target",
+    groups_col="gene_target",
+    mode="mean",
+    min_cells=0,
+    min_counts=0,
+)
 ```
 
 See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html) for a more elaborate tutorial.
@@ -511,6 +520,18 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
     plot.coda.draw_tree
     plot.coda.draw_effects
     plot.coda.effects_umap
+```
+
+### Multi-cellular programs
+
+#### DIALOGUE
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.dl.split_violins
+    plot.dl.pairplot
 ```
 
 ### Response prediction

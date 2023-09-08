@@ -1,4 +1,5 @@
 from pertpy.plot._augurpy import AugurpyPlot as ag
+from pertpy.plot._dialogue import DialoguePlot as dl
 
 try:
     from pertpy.plot._coda import CodaPlot as coda
