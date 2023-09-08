@@ -57,10 +57,12 @@ class MixscapePlot:
 
         Args:
             adata: The annotated data object.
-            guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels. The format must be <gene_target>g<#>. For example, 'STAT2g1' and 'ATF2g1'.
+            guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels.
+                              The format must be <gene_target>g<#>. For example, 'STAT2g1' and 'ATF2g1'.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             show: Show the plot, do not return axis.
-            save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
+            save: If True or a str, save the figure. A string is appended to the default filename.
+                  Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
 
         Returns:
             If show is False, return ggplot object used to draw the plot.
