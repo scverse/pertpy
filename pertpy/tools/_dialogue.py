@@ -37,6 +37,11 @@ class Dialogue:
         """
         self.sample_id = sample_id
         self.celltype_key = celltype_key
+        if " " in n_counts_key:
+            raise ValueError(
+                "Patsy, which we use for formulas, does not allow for spaces in this key.\n"
+                "Please replace spaces with underscores and ensure that the key is in your object."
+            )
         self.n_counts_key = n_counts_key
         self.n_mcps = n_mpcs
 
@@ -459,7 +464,7 @@ class Dialogue:
         new_mcp_scores: dict[Any, list[Any]] = {}
         for ct in ct_subs.keys():
             ct_adata = ct_subs[ct]
-            conf_m = ct_adata.obs[n_counts_key].values  # defining this for the millionth time
+            conf_m = ct_adata.obs[n_counts_key].values
 
             R_cca_gene_cor1_x = self._corr2_coeff(
                 ct_adata.X.toarray().T, mcp_scores[ct].T
@@ -674,9 +679,8 @@ class Dialogue:
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
             TODO: Describe both returns
         """
-        cell_types = list(ct_subs.keys())
-
         # all possible pairs of cell types with out pairing same cell type
+        cell_types = list(ct_subs.keys())
         pairs = list(itertools.combinations(cell_types, 2))
 
         if not formula:
