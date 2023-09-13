@@ -1,4 +1,4 @@
-from pertpy.plot._augurpy import AugurpyPlot as ag
+from pertpy.plot._augur import AugurpyPlot as ag
 from pertpy.plot._dialogue import DialoguePlot as dl
 
 try:
