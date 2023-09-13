@@ -687,7 +687,7 @@ class Dialogue:
             formula = f"y ~ x + {self.n_counts_key}"
 
         # Hierarchical modeling expects DataFrames
-        mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(self.n_mcps)}
+        mcp_cell_types = {f"MCP{i}": cell_types for i in range(self.n_mcps)}
         mcp_scores_df = {
             ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=mcp_cell_types.keys())
             for ct, v in mcp_scores.items()
