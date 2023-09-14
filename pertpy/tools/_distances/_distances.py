@@ -10,6 +10,7 @@ from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
+from scipy.sparse import issparse
 from scipy.spatial.distance import cosine
 from scipy.special import gammaln
 from scipy.stats import pearsonr, spearmanr
@@ -168,6 +169,14 @@ class Distance:
                 Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
                 D = Distance(X, Y)
         """
+        if issparse(X):
+            X = X.A
+        if issparse(Y):
+            Y = Y.A
+
+        if len(X) == 0 or len(Y) == 0:
+            raise ValueError("Neither X nor Y can be empty.")
+
         return self.metric_fct(X, Y, **kwargs)
 
     def pairwise(
@@ -470,7 +479,7 @@ class R2ScoreDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return r2_score(X.mean(axis=0), Y.mean(axis=0))
+        return 1-r2_score(X.mean(axis=0), Y.mean(axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
@@ -551,7 +560,7 @@ class NBNLL(AbstractDistance):
             nb_params = NegativeBinomialP(x, np.ones_like(x)).fit().params
             mu = np.repeat(np.exp(nb_params[0]), x.shape[0])
             theta = np.repeat(1 / nb_params[1], x.shape[0])
-            if mu == np.nan or theta == np.nan:
+            if mu[0] == np.nan or theta[0] == np.nan:
                 raise ValueError("Could not fit a negative binomial distribution to the input data")
             # calculate the nll of y
             eps = np.repeat(epsilon, x.shape[0])
@@ -565,7 +574,7 @@ class NBNLL(AbstractDistance):
             )
             nlls.append(nll.mean())
 
-        return sum(nlls) / len(nlls)
+        return -sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("NBNLL cannot be called on a pairwise distance matrix.")
