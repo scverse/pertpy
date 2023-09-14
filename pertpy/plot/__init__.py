@@ -6,6 +6,7 @@ try:
 except ImportError:
     pass
 
+from pertpy.plot._cinemaot import CinemaotPlot as cot
 from pertpy.plot._guide_rna import GuideRnaPlot as guide
 from pertpy.plot._milopy import MilopyPlot as milo
 from pertpy.plot._mixscape import MixscapePlot as ms
