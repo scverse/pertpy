@@ -40,6 +40,12 @@ class Milo:
             feature_key: Key to store the cell-level AnnData object in the MuData object
         Returns:
             MuData: MuData object with original AnnData (default is `mudata[feature_key]`).
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.data.stephenson_2021_subsampled()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
         """
         mdata = MuData({feature_key: input, "milo": AnnData()})
 

@@ -41,6 +41,20 @@ class GuideRnaPlot:
          Returns:
              List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
              Order of cells in the y axis will be saved on adata.obs[key_to_save_order] if provided.
+
+        Examples:
+            Each cell is assigned to gRNA that occurs at least 5 times in the respective cell, which is then
+            visualized using a heatmap.
+
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> mdata = pt.data.papalexi_2021()
+            >>> gdo = mdata.mod['gdo']
+            >>> gdo.layers['counts'] = gdo.X.copy()
+            >>> sc.pp.log1p(gdo)
+            >>> ga = pt.pp.GuideAssignment()
+            >>> ga.assign_by_threshold(gdo, assignment_threshold=5, layer='counts')
+            >>> pt.pl.guide.heatmap(gdo)
         """
         data = adata.X if layer is None else adata.layers[layer]
 

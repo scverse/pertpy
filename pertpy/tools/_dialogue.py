@@ -607,6 +607,14 @@ class Dialogue:
 
         Returns:
             MCP scores  # TODO this requires more detail
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
         """
         # IMPORTANT NOTE: the order in which matrices are passed to multicca matters. As such,
         # it is important here that to obtain the same result as in R, we pass the matrices in
@@ -673,6 +681,14 @@ class Dialogue:
             - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
             TODO: Describe both returns
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs, mcp_scores=mcps, ws_dict=ws, \
+                confounder="gender")
         """
         cell_types = list(ct_subs.keys())
 

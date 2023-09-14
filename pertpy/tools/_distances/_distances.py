@@ -135,14 +135,11 @@ class Distance:
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric="edistance")
-                pairwise_df = distance.pairwise(adata, groupby="perturbation")
+        Examples:
+                >>> import pertpy as pt
+                >>> adata = pt.dt.distance_example_data()
+                >>> Distance = pt.tools.Distance(metric="edistance")
+                >>> pairwise_df = distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
