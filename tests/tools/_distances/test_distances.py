@@ -30,6 +30,9 @@ class TestDistances:
         else:
             adata = sc.pp.subsample(adata, 0.1, copy=True)
 
+        adata.layers["lognorm"] = adata.X.copy()
+        adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
+
         return adata
 
     @mark.parametrize("distance", actual_distances)
@@ -60,9 +63,17 @@ class TestDistances:
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
 
+    @mark.parametrize("distance", actual_distances + pseudo_distances)
+    def test_distance_layers(self, adata, distance):
+        Distance = pt.tl.Distance(distance, layer_key="lognorm")
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
+
+        assert isinstance(df, DataFrame)
+        assert df.columns.equals(df.index)
+        assert np.sum(df.values - df.values.T) == 0  # symmetry
+
     @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
     def test_distance_counts(self, adata, distance):
-        adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
         Distance = pt.tl.Distance(distance, layer_key="counts")
         df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
 
