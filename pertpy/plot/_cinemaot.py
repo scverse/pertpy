@@ -1,17 +1,14 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
+from anndata import AnnData
+from matplotlib.axes import Axes
 from scanpy.plotting import _utils
 
-from typing import Optional
-
-if TYPE_CHECKING:
-    from anndata import AnnData
-    from matplotlib.axes import Axes
 
 class CinemaotPlot:
     """Plotting functions for CINEMA-OT. Only includes new functions beyond the scanpy.pl.embedding family."""
@@ -24,9 +21,9 @@ class CinemaotPlot:
         control: str,
         de_label: str,
         source_label: str,
-        matching_rep: str = 'ot',
+        matching_rep: str = "ot",
         resolution: float = 0.5,
-        normalize: str = 'col',
+        normalize: str = "col",
         title: str = "CINEMA-OT matching matrix",
         min_val: float = 0.01,
         show: bool = True,
@@ -34,7 +31,7 @@ class CinemaotPlot:
         ax: Optional[Axes] = None,
         **kwargs,
     ) -> None:
-        """Visualize the CINEMA-OT matching matrix. 
+        """Visualize the CINEMA-OT matching matrix.
 
         Args:
             adata: the original anndata after running cinemaot.causaleffect or cinemaot.causaleffect_weighted.
@@ -53,30 +50,30 @@ class CinemaotPlot:
             **kwargs: Other parameters to input for seaborn.heatmap.
 
         """
-        adata_ = adata[adata.obs[pert_key]==control]
+        adata_ = adata[adata.obs[pert_key] == control]
 
         df = pd.DataFrame(de.obsm[matching_rep])
         if de_label is None:
-            de_label = 'leiden'
-            sc.pp.neighbors(de,use_rep='X_embedding')
-            sc.tl.leiden(de,resolution=resolution)
-        df['de_label'] = de.obs[de_label].astype(str).values
-        df['de_label'] = 'Response ' + df['de_label']
-        df = df.groupby('de_label').sum().T
-        df['source_label'] = adata_.obs[source_label].astype(str).values
-        df = df.groupby('source_label').sum()
+            de_label = "leiden"
+            sc.pp.neighbors(de, use_rep="X_embedding")
+            sc.tl.leiden(de, resolution=resolution)
+        df["de_label"] = de.obs[de_label].astype(str).values
+        df["de_label"] = "Response " + df["de_label"]
+        df = df.groupby("de_label").sum().T
+        df["source_label"] = adata_.obs[source_label].astype(str).values
+        df = df.groupby("source_label").sum()
 
-        if normalize == 'col':
-            df = df/df.sum(axis=0)
+        if normalize == "col":
+            df = df / df.sum(axis=0)
         else:
-            df = (df.T/df.sum(axis=1)).T
+            df = (df.T / df.sum(axis=1)).T
         df = df.clip(lower=min_val) - min_val
-        if normalize == 'col':
-            df = df/df.sum(axis=0)
+        if normalize == "col":
+            df = df / df.sum(axis=0)
         else:
-            df = (df.T/df.sum(axis=1)).T
+            df = (df.T / df.sum(axis=1)).T
 
-        g = sns.heatmap(df,annot=True,ax=ax,**kwargs)
+        g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
         _utils.savefig_or_show("matching_heatmap", show=show, save=save)
         if not show:
