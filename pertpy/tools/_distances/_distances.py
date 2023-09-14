@@ -479,7 +479,7 @@ class R2ScoreDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return 1-r2_score(X.mean(axis=0), Y.mean(axis=0))
+        return 1 - r2_score(X.mean(axis=0), Y.mean(axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
