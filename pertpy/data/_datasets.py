@@ -48,9 +48,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        mudata = mu.read(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        mudata = mu.read(output_file_path)
+    mudata = mu.read(output_file_path)
 
     return mudata
 
@@ -73,9 +71,7 @@ def sc_sim_augur() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -105,9 +101,7 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -134,9 +128,7 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -160,9 +152,7 @@ def smillie() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -191,9 +181,7 @@ def frangieh_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -222,9 +210,7 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -253,9 +239,7 @@ def dixit_2016_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -284,9 +268,7 @@ def dixit_2016() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -314,9 +296,7 @@ def norman_2019() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -344,9 +324,7 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -369,9 +347,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -393,9 +369,7 @@ def distance_example() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -426,9 +400,7 @@ def kang_2018() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -453,12 +425,12 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/38171703",
+            output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
+
     return adata
 
 
@@ -484,9 +456,8 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
+
     return adata
 
 
@@ -512,9 +483,7 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -545,9 +514,7 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -576,9 +543,7 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -605,9 +570,7 @@ def aissa_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -636,9 +599,7 @@ def chang_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -669,9 +630,7 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -701,9 +660,7 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -734,9 +691,7 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -767,9 +722,7 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -797,9 +750,7 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -828,9 +779,7 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -859,9 +808,7 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -889,9 +836,7 @@ def gehring_2019() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -920,9 +865,7 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -951,9 +894,7 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -984,9 +925,7 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1016,9 +955,7 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1049,9 +986,7 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1080,9 +1015,7 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1111,9 +1044,7 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1142,9 +1073,7 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1174,9 +1103,7 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1207,9 +1134,7 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1238,9 +1163,7 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1272,9 +1195,7 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1306,9 +1227,7 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1340,9 +1259,7 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1372,9 +1289,7 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1404,9 +1319,7 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1433,9 +1346,7 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1463,9 +1374,7 @@ def xie_2017() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1495,8 +1404,6 @@ def zhao_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-        adata = sc.read_h5ad(filename=settings.datasetdir.__str__() + "/" + output_file_name)
-    else:
-        adata = sc.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
