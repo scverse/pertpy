@@ -561,13 +561,13 @@ class NBLL(AbstractDistance):
         nlls = []
         for i in range(X.shape[1]):
             x, y = X[:, i], Y[:, i]
-            nb_params = NegativeBinomialP(x, np.ones_like(x)).fit().params
-            mu = np.repeat(np.exp(nb_params[0]), x.shape[0])
-            theta = np.repeat(1 / nb_params[1], x.shape[0])
+            nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
+            mu = np.repeat(np.exp(nb_params[0]), y.shape[0])
+            theta = np.repeat(1 / nb_params[1], y.shape[0])
             if mu[0] == np.nan or theta[0] == np.nan:
                 raise ValueError("Could not fit a negative binomial distribution to the input data")
             # calculate the nll of y
-            eps = np.repeat(epsilon, x.shape[0])
+            eps = np.repeat(epsilon, y.shape[0])
             log_theta_mu_eps = np.log(theta + mu + eps)
             nll = (
                 theta * (np.log(theta + eps) - log_theta_mu_eps)
