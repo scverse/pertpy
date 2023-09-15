@@ -35,8 +35,10 @@ class Distance:
         `Peidli et al. (2023) <https://doi.org/10.1101/2022.08.20.504663>`__.
     - "euclidean": euclidean distance.
         Euclidean distance between the means of cells from two groups.
-    - "mean_squared_error": euclidean distance.
+    - "root_mean_squared_error": euclidean distance.
         Euclidean distance between the means of cells from two groups.
+    - "mse": Pseudobulk mean squared error.
+        mean squared distance between the means of cells from two groups.
     - "mean_absolute_error": Pseudobulk mean absolute distance.
         Mean absolute distance between the means of cells from two groups.
     - "pearson_distance": Pearson distance.
@@ -108,8 +110,10 @@ class Distance:
             metric_fct = Edistance()
         elif metric == "euclidean":
             metric_fct = EuclideanDistance()
-        elif metric == "mean_squared_error":
+        elif metric == "root_mean_squared_error":
             metric_fct = EuclideanDistance()
+        elif metric == "mse":
+            metric_fct = MeanSquaredDistance()
         elif metric == "mean_absolute_error":
             metric_fct = MeanAbsoluteDistance()
         elif metric == "pearson_distance":
@@ -399,6 +403,20 @@ class EuclideanDistance(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("EuclideanDistance cannot be called on a pairwise distance matrix.")
+
+
+class MeanSquaredDistance(AbstractDistance):
+    """Mean squared distance between pseudobulk vectors."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs) ** 0.5
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("MeanSquaredDistance cannot be called on a pairwise distance matrix.")
 
 
 class MeanAbsoluteDistance(AbstractDistance):
