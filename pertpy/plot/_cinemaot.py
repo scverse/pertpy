@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
@@ -48,7 +47,6 @@ class CinemaotPlot:
             save: If `True` or a `str`, save the figure. A string is appended to the default filename.
                 Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             **kwargs: Other parameters to input for seaborn.heatmap.
-
         """
         adata_ = adata[adata.obs[pert_key] == control]
 

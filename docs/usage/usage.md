@@ -452,7 +452,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = sc.read_h5ad("cinemaot.h5ad")
+adata = pt.dt.cinemaot_example()
 
 model = pt.tl.Cinemaot()
 de = model.causaleffect(
@@ -600,4 +600,13 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
     plot.scg.reg_mean_plot
     plot.scg.reg_var_plot
     plot.scg.binary_classifier
+```
+
+#### CINEMA-OT
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.cot.vis_matching
 ```
