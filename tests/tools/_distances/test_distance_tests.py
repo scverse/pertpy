@@ -5,8 +5,8 @@ from pytest import fixture, mark
 
 distances = [
     "edistance",
-    "pseudobulk",
-    "mean_absolute_distance",
+    "euclidean",
+    "mean_absolute_error",
     "pearson_distance",
     "spearman_distance",
     "cosine_distance",

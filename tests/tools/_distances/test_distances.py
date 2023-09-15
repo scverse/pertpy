@@ -7,8 +7,8 @@ from pytest import fixture, mark
 
 actual_distances = [
     "edistance",
-    "pseudobulk",
-    "mean_absolute_distance",
+    "euclidean",
+    "mean_absolute_error",
     "pearson_distance",
     "spearman_distance",
     "cosine_distance",

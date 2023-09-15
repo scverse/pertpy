@@ -33,9 +33,11 @@ class Distance:
         groups minus the mean pairwise distance between cells within each group
         respectively. More information can be found in
         `Peidli et al. (2023) <https://doi.org/10.1101/2022.08.20.504663>`__.
-    - "pseudobulk": Pseudobulk distance.
+    - "euclidean": euclidean distance.
         Euclidean distance between the means of cells from two groups.
-    - "mean_absolute_distance": Pseudobulk mean absolute distance.
+    - "mean_squared_error": euclidean distance.
+        Euclidean distance between the means of cells from two groups.
+    - "mean_absolute_error": Pseudobulk mean absolute distance.
         Mean absolute distance between the means of cells from two groups.
     - "pearson_distance": Pearson distance.
         Pearson distance between the means of cells from two groups.
@@ -104,9 +106,11 @@ class Distance:
         metric_fct: AbstractDistance = None
         if metric == "edistance":
             metric_fct = Edistance()
-        elif metric == "pseudobulk":
-            metric_fct = PseudobulkDistance()
-        elif metric == "mean_absolute_distance":
+        elif metric == "euclidean":
+            metric_fct = EuclideanDistance()
+        elif metric == "mean_squared_error":
+            metric_fct = EuclideanDistance()
+        elif metric == "mean_absolute_error":
             metric_fct = MeanAbsoluteDistance()
         elif metric == "pearson_distance":
             metric_fct = PearsonDistance()
@@ -383,7 +387,7 @@ class WassersteinDistance(AbstractDistance):
         return ot.reg_ot_cost
 
 
-class PseudobulkDistance(AbstractDistance):
+class EuclideanDistance(AbstractDistance):
     """Euclidean distance between pseudobulk vectors."""
 
     def __init__(self) -> None:
@@ -394,7 +398,7 @@ class PseudobulkDistance(AbstractDistance):
         return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("PseudobulkDistance cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("EuclideanDistance cannot be called on a pairwise distance matrix.")
 
 
 class MeanAbsoluteDistance(AbstractDistance):
@@ -497,13 +501,11 @@ class KLDivergence(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
         kl_all = []
         for i in range(X.shape[1]):
-            x_mean, x_std = X[:, i].mean(), X[:, i].std()
-            y_mean, y_std = Y[:, i].mean(), Y[:, i].std()
-            if x_std == 0 or y_std == 0:
-                continue
+            x_mean, x_std = X[:, i].mean(), X[:, i].std() + epsilon
+            y_mean, y_std = Y[:, i].mean(), Y[:, i].std() + epsilon
             kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
             kl_all.append(kl)
         return sum(kl_all) / len(kl_all)
@@ -519,15 +521,13 @@ class TTestDistance(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
         t_test_all = []
         n1 = X.shape[0]
         n2 = Y.shape[0]
         for i in range(X.shape[1]):
-            m1, v1 = X[:, i].mean(), X[:, i].std() ** 2 * n1 / (n1 - 1)
-            m2, v2 = Y[:, i].mean(), Y[:, i].std() ** 2 * n2 / (n2 - 1)
-            if v1 == 0 or v2 == 0:
-                continue
+            m1, v1 = X[:, i].mean(), X[:, i].std() ** 2 * n1 / (n1 - 1) + epsilon
+            m2, v2 = Y[:, i].mean(), Y[:, i].std() ** 2 * n2 / (n2 - 1) + epsilon
             vn1 = v1 / n1
             vn2 = v2 / n2
             t = (m1 - m2) / np.sqrt(vn1 + vn2)
