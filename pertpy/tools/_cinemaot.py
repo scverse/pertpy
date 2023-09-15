@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 
 class Cinemaot:
+    """CINEMA-OT is a causal framework for perturbation effect analysis to identify individual treatment effects and synergy."""
+
     def __init__(self):
         pass
 
