@@ -430,7 +430,22 @@ See [scgen tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks
 
 #### CINEMA-OT
 
-An implementation of [CINEMA-OT](https://github.com/vandijklab/CINEMA-OT) with the ott-jax library. CINEMA-OT is a causal framework for perturbation effect analysis to identify individual treatment effects and synergy at the single cell level. CINEMA-OT separates confounding sources of variation from perturbation effects to obtain an optimal transport matching that reflects counterfactual cell pairs. These cell pairs represent causal perturbation responses permitting a number of novel analyses, such as individual treatment effect analysis, response clustering, attribution analysis, and synergy analysis. See [Causal identification of single-cell experimental perturbation effects with CINEMA-OT](https://www.biorxiv.org/content/10.1101/2022.07.31.502173v3.abstract) for more details.
+An implementation of [CINEMA-OT](https://github.com/vandijklab/CINEMA-OT) with the ott-jax library.
+CINEMA-OT is a causal framework for perturbation effect analysis to identify individual treatment effects and synergy at the single cell level.
+CINEMA-OT separates confounding sources of variation from perturbation effects to obtain an optimal transport matching that reflects counterfactual cell pairs.
+These cell pairs represent causal perturbation responses permitting a number of novel analyses, such as individual treatment effect analysis, response clustering, attribution analysis, and synergy analysis.
+See [Causal identification of single-cell experimental perturbation effects with CINEMA-OT](https://www.biorxiv.org/content/10.1101/2022.07.31.502173v3.abstract) for more details.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Cinemaot
+```
 
 Example implementation:
 

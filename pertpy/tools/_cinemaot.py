@@ -1,27 +1,23 @@
-import warnings
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Optional, Union
+from __future__ import annotations
 
-import jax
-import jax.numpy as jnp
+from typing import TYPE_CHECKING, Optional
+
 import numpy as np
-import ott
 import pandas as pd
 import scanpy as sc
 import scipy.stats as ss
 import sklearn.metrics
-import statsmodels.api as sm
-from anndata import AnnData
-from ott import problems
-from ott.geometry import geometry, pointcloud
+from ott.geometry import pointcloud
 from ott.problems.linear import linear_problem
-from ott.solvers import linear
-from ott.solvers.linear import acceleration, sinkhorn, sinkhorn_lr
-from ott.tools.sinkhorn_divergence import sinkhorn_divergence
+from ott.solvers.linear import sinkhorn, sinkhorn_lr
 from scipy.sparse import issparse
 from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors
+
+if TYPE_CHECKING:
+    from anndata import AnnData
+    from statsmodels.tools.typing import ArrayLike
 
 
 class Cinemaot:
@@ -36,17 +32,16 @@ class Cinemaot:
         return_matching: bool = False,
         cf_rep: str = "cf",
         use_rep: str = "X_pca",
-        batch_size: Optional[int] = None,
-        dim: Optional[int] = 20,
+        batch_size: int | None = None,
+        dim: int | None = 20,
         thres: float = 0.15,
         smoothness: float = 1e-4,
         rank: int = 200,
         eps: float = 1e-3,
         solver: str = "Sinkhorn",
-        preweight_label: Optional[str] = None,
+        preweight_label: str | None = None,
     ):
         """Calculate the confounding variation, optimal transport counterfactual pairs, and single-cell level treatment effects.
-
 
         Args:
             adata: The annotated data object.
@@ -57,25 +52,23 @@ class Cinemaot:
             use_rep: Use the indicated representation. `'X'` or any key for `.obsm` is valid.
             batch_size: Size of batch to calculate the optimal transport map.
             dim: Use the first dim components in use_rep.
-                If none, use a biwhitening procedure on the raw count matrix to derive a reasonable rank.
+                 If none, use a biwhitening procedure on the raw count matrix to derive a reasonable rank.
             thres: the threshold for the rank-dependence metric.
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
             eps: Tolerate error of the optimal transport.
             solver: Either "Sinkhorn" or "Sinkhorn". The ott-jax solver used.
-            preweight_label: the annotated label (e.g. cell type) that is used to assign weights for treated
-                and control cells to balance across the label. Helps overcome the differential abundance issue.
+            preweight_label: The annotated label (e.g. cell type) that is used to assign weights for treated
+                             and control cells to balance across the label. Helps overcome the differential abundance issue.
 
         Returns:
-            Returns an anndata object that contains the single-cell level treatment effect as de.X and the
+            Returns an AnnData object that contains the single-cell level treatment effect as de.X and the
             corresponding low dimensional embedding in de.obsm['X_embedding'], and optional matching matrix
             stored in the de.obsm['ot']. Also puts the confounding variation in adata.obsm[cf_rep].
         """
-
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
-        assert solver in available_solvers, (
-            f"solver = {solver} is not one of the supported solvers:" f" {available_solvers}"
-        )
+        if solver not in available_solvers:
+            raise ValueError(f"solver = {solver} is not one of the supported solvers:" f" {available_solvers}")
 
         if dim is None:
             dim = self.get_dim(adata, use_rep=use_rep)
@@ -101,14 +94,14 @@ class Cinemaot:
             sklearn.metrics.pairwise_distances(cf1, cf2)
 
         e = smoothness * sum(xi < thres)
-
         geom = pointcloud.PointCloud(cf1, cf2, epsilon=e, batch_size=batch_size)
 
         if preweight_label is None:
             ot_prob = linear_problem.LinearProblem(geom, a=None, b=None)
 
         else:
-            # implement a simple function here, taking adata.obs, output inverse prob weight. For consistency, c is still the empirical distribution, while r is weighted.
+            # Implement a simple function here, taking adata.obs, output inverse prob weight.
+            # For consistency, c is still the empirical distribution, while r is weighted.
             a = np.zeros(cf1.shape[0])
             b = np.zeros(cf2.shape[0])
 
@@ -196,9 +189,9 @@ class Cinemaot:
         return_matching: bool = False,
         cf_rep: str = "cf",
         use_rep: str = "X_pca",
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         k: int = 20,
-        dim: Optional[int] = 20,
+        dim: int | None = 20,
         thres: float = 0.15,
         smoothness: float = 1e-4,
         rank: int = 200,
@@ -218,7 +211,7 @@ class Cinemaot:
             batch_size: Size of batch to calculate the optimal transport map.
             k: the number of neighbors used in the k-NN matching phase.
             dim: Use the first dim components in use_rep.
-                If none, use a biwhitening procedure on the raw count matrix to derive a reasonable rank.
+                 If None, use a biwhitening procedure on the raw count matrix to derive a reasonable rank.
             thres: the threshold for the rank-dependence metric.
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
@@ -267,10 +260,8 @@ class Cinemaot:
         pert_key: str,
         control: str,
         label_list: list,
-        return_matching: bool = False,
         cf_rep: str = "cf",
         de_rep: str = "X_embedding",
-        assigncf: bool = False,
         cf_resolution: float = 0.5,
         de_resolution: float = 0.5,
         use_raw: bool = True,
@@ -279,14 +270,13 @@ class Cinemaot:
 
         Requires running Cinemaot.causaleffect() or Cinemaot.causaleffect_weighted() first.
 
-
         Args:
             adata: The annotated data object.
             de: The anndata output from Cinemaot.causaleffect() or Cinemaot.causaleffect_weighted().
             pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
             control: Control category from the `pert_key` column.
             label_list: Additional covariate labels used to segragate pseudobulk.
-                Should at least contain sample information (sample 1, sample 2,..., etc).
+                        Should at least contain sample information (sample 1, sample 2,..., etc).
             cf_rep: the place to put the confounder embedding in the original adata.obsm.
             de_rep: Use the indicated representation in de.obsm.
             assign_cf: If a str is passed, a label in adata.obs instead of confounder Leiden label is used.
@@ -299,7 +289,6 @@ class Cinemaot:
         """
         sc.pp.neighbors(de, use_rep=de_rep)
         sc.tl.leiden(de, resolution=de_resolution)
-        adata[adata.obs[pert_key] == control]
         if use_raw:
             if issparse(adata.raw.X):
                 df = pd.DataFrame(adata.raw.X.toarray(), columns=adata.raw.var_names, index=adata.raw.obs_names)
@@ -378,6 +367,7 @@ class Cinemaot:
             use_rep: the embedding used to give a upper bound for the estimated rank.
             k: the number of neighbors used in the k-NN matching phase.
             resolution: the clustering resolution used in the sampling phase.
+
         Returns:
             Returns the indices.
         """
@@ -459,6 +449,7 @@ class Cinemaot:
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].obs.index
                     )
                     idx = idx.append(idx_tmp)
+
         return idx
 
     def synergy(
@@ -469,14 +460,14 @@ class Cinemaot:
         A: str,
         B: str,
         AB: str,
-        dim: Optional[int] = 20,
+        dim: int | None = 20,
         thres: float = 0.15,
         smoothness: float = 1e-4,
-        eps: float = 1e-3,
-        preweight_label: Optional[str] = None,
+        preweight_label: str | None = None,
         **kwargs,
     ):
         """A wrapper for computing the synergy matrices.
+
         Args:
             adata: The annotated data object.
             pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
@@ -494,7 +485,7 @@ class Cinemaot:
             **kwargs: other parameters that can be passed to Cinemaot.causaleffect()
 
         Returns:
-            Returns an anndata object that contains the single-cell level synergy matrix de.X and the embedding.
+            Returns an AnnData object that contains the single-cell level synergy matrix de.X and the embedding.
         """
         adata1 = adata[adata.obs[pert_key].isin([base, A]), :].copy()
         adata2 = adata[adata.obs[pert_key].isin([B, AB]), :].copy()
@@ -549,6 +540,7 @@ class Cinemaot:
         use_raw: bool = False,
     ):
         """A simple function for computing confounder-specific genes.
+
         Args:
             adata: The annotated data object.
             pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
@@ -675,30 +667,25 @@ class Xi:
     def xi(cls, x, y):
         return cls(x, y)
 
-    def pval_asymptotic(self, ties=False, nperm=1000):
-        """
-        Returns p values of the correlation
+    def pval_asymptotic(self, ties: bool = False):
+        """Returns p values of the correlation.
+
         Args:
             ties: boolean
                 If ties is true, the algorithm assumes that the data has ties
                 and employs the more elaborated theory for calculating
                 the P-value. Otherwise, it uses the simpler theory. There is
                 no harm in setting tiles True, even if there are no ties.
-            nperm: int
-                The number of permutations for the permutation test, if needed.
-                default 1000
+
         Returns:
             p value
         """
         # If there are no ties, return xi and theoretical P-value:
-
         if ties:
             return 1 - ss.norm.cdf(np.sqrt(self.sample_size) * self.correlation / np.sqrt(2 / 5))
 
-        # If there are ties, and the theoretical method
-        # is to be used for calculation P-values:
-        # The following steps calculate the theoretical variance
-        # in the presence of ties:
+        # If there are ties, and the theoretical method is to be used for calculation P-values:
+        # The following steps calculate the theoretical variance in the presence of ties:
         sorted_ordered_x_rank = sorted(self.x_rank_max_ordered)
 
         ind = [i + 1 for i in range(self.sample_size)]
@@ -724,40 +711,32 @@ class SinkhornKnopp:
 
     """
 
-    def __init__(self, max_iter=1000, setr=0, setc=0, epsilon=1e-3):
-        assert isinstance(max_iter, int) or isinstance(max_iter, float), (
-            "max_iter is not of type int or float: %r" % max_iter
-        )
-        assert max_iter > 0, "max_iter must be greater than 0: %r" % max_iter
+    def __init__(self, max_iter: float = 1000, setr: int = 0, setc: float = 0, epsilon: float = 1e-3):
+        if max_iter < 0:
+            raise ValueError(f"max_iter is {max_iter} but must be greater than 0.")
         self._max_iter = int(max_iter)
 
-        assert isinstance(epsilon, int) or isinstance(epsilon, float), (
-            "epsilon is not of type float or int: %r" % epsilon
-        )
-        assert epsilon > 0 and epsilon < 1, "epsilon must be between 0 and 1 exclusive: %r" % epsilon
+        if not epsilon > 0 and epsilon < 1:
+            raise ValueError(f"epsilon is {epsilon} but must be between 0 and 1 exclusive.")
         self._epsilon = epsilon
         self._setr = setr
         self._setc = setc
-        self._stopping_condition = None
+        self._stopping_condition: str | None = None
         self._iterations = 0
         self._D1 = np.ones(1)
         self._D2 = np.ones(1)
 
-    def fit(self, P):
-        """Fit the diagonal matrices in Sinkhorn Knopp's algorithm
+    def fit(self, P: ArrayLike):
+        """Fit the diagonal matrices in Sinkhorn Knopp's algorithm.
 
-        Parameters
-        ----------
-        P : 2d array-like
-        Must be a square non-negative 2d array-like object, that
-        is convertible to a numpy array. The matrix must not be
-        equal to 0 and it must have total support for the algorithm
-        to converge.
+        Args:
+            P: 2d array-like
+               Must be a square non-negative 2d array-like object, that
+               is convertible to a numpy array. The matrix must not be
+               equal to 0 and it must have total support for the algorithm to converge.
 
-        Returns
-        -------
-        A double stochastic matrix.
-
+        Returns:
+            A double stochastic matrix.
         """
         P = np.asarray(P)
         assert np.all(P >= 0)
