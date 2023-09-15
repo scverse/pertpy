@@ -18,7 +18,7 @@ distances = [
     "t_test",
 ]
 
-count_distances = ["nb_nll"]
+count_distances = ["nb_ll"]
 
 
 class TestPermutationTest:

@@ -63,8 +63,8 @@ class Distance:
         Here we fit a gaussian distribution over each group of cells and then calculate the KL divergence
     - "t_test": t-test statistic.
         T-test statistic measure between cells of two groups.
-    - "nb_nll": nll loss over negative binomial
-        Average of nll loss of samples of the secondary group after fitting a negative binomial distribution
+    - "nb_ll": log-likelihood over negative binomial
+        Average of log-likelihoods of samples of the secondary group after fitting a negative binomial distribution
         over the samples of the first group.
 
     Attributes:
@@ -126,8 +126,8 @@ class Distance:
             metric_fct = KLDivergence()
         elif metric == "t_test":
             metric_fct = TTestDistance()
-        elif metric == "nb_nll":
-            metric_fct = NBNLL()
+        elif metric == "nb_ll":
+            metric_fct = NBLL()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -502,6 +502,8 @@ class KLDivergence(AbstractDistance):
         for i in range(X.shape[1]):
             x_mean, x_std = X[:, i].mean(), X[:, i].std()
             y_mean, y_std = Y[:, i].mean(), Y[:, i].std()
+            if x_std == 0 or y_std == 0:
+                continue
             kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
             kl_all.append(kl)
         return sum(kl_all) / len(kl_all)
@@ -524,6 +526,8 @@ class TTestDistance(AbstractDistance):
         for i in range(X.shape[1]):
             m1, v1 = X[:, i].mean(), X[:, i].std() ** 2 * n1 / (n1 - 1)
             m2, v2 = Y[:, i].mean(), Y[:, i].std() ** 2 * n2 / (n2 - 1)
+            if v1 == 0 or v2 == 0:
+                continue
             vn1 = v1 / n1
             vn2 = v2 / n2
             t = (m1 - m2) / np.sqrt(vn1 + vn2)
@@ -534,9 +538,9 @@ class TTestDistance(AbstractDistance):
         raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
 
 
-class NBNLL(AbstractDistance):
+class NBLL(AbstractDistance):
     """
-    Average of Negative Log likelihood (scalar) of group B cells
+    Average of Log likelihood (scalar) of group B cells
     according to a NB distribution fitted over group A
     """
 
@@ -552,7 +556,7 @@ class NBNLL(AbstractDistance):
                 return False
 
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
-            raise ValueError("NBNLL distance only works for raw counts.")
+            raise ValueError("NBLL distance only works for raw counts.")
 
         nlls = []
         for i in range(X.shape[1]):
@@ -577,4 +581,4 @@ class NBNLL(AbstractDistance):
         return -sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("NBNLL cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")

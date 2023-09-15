@@ -15,7 +15,7 @@ actual_distances = [
     "wasserstein",
 ]
 pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test"]
-pseudo_counts_distances = ["nb_nll"]
+pseudo_counts_distances = ["nb_ll"]
 
 
 class TestDistances:
