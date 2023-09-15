@@ -244,7 +244,7 @@ class Distance:
                         dist = 0.0
                     else:
                         cells_y = embedding[grouping == group_y].copy()
-                        dist = self.metric_fct(cells_x, cells_y, **kwargs)
+                        dist = self(cells_x, cells_y, **kwargs)
                     df.loc[group_x, group_y] = dist
                     df.loc[group_y, group_x] = dist
         df.index.name = groupby
