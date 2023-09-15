@@ -316,11 +316,13 @@ class Cinemaot:
         df["ptb"][adata.obs[pert_key] != control] = de.obs["leiden"].astype(str)
         label_list.append("ptb")
         df = df.groupby(label_list).sum()
-        adata_pb = sc.AnnData(df)
+        new_index = df.index.map(lambda x: '_'.join(map(str, x)))
+        df_ = df.set_index(new_index)
+        adata_pb = sc.AnnData(df_)
         adata_pb.obs = pd.DataFrame(
-            adata_pb.obs_names.to_frame().values,
+            df.index.to_frame().values,
             index=adata_pb.obs_names,
-            columns=adata_pb.obs_names.to_frame().columns,
+            columns=df.index.to_frame().columns,
         )
         return adata_pb
 
