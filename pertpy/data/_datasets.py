@@ -1407,3 +1407,25 @@ def zhao_2021() -> AnnData:  # pragma: no cover
     adata = sc.read_h5ad(output_file_path)
 
     return adata
+
+
+def cinemaot_example() -> AnnData:  # pragma: no cover:
+    """CINEMA-OT Example dataset.
+
+    Ex vivo stimulation of human peripheral blood mononuclear cells (PBMC) with interferon.
+
+    Returns:
+        :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
+    """
+    output_file_name = "cinemaot_example.h5ad"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/42362796?private_link=270b0d2c7f1ea57c366d",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+    adata = sc.read_h5ad(output_file_path)
+
+    return adata
