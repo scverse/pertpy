@@ -27,6 +27,7 @@ class TestCinemaot:
             smoothness=1e-5,
             eps=1e-3,
             solver="Sinkhorn",
+            preweight_label='cell_type0528',
         )
 
         eps = 1e-1
@@ -67,13 +68,14 @@ class TestCinemaot:
             smoothness=1e-5,
             eps=1e-3,
             solver="Sinkhorn",
+            preweight_label='cell_type0528',
         )
         adata_pb = model.generate_pseudobulk(
-            adata, de, pert_key="perturbation", control="No stimulation", label_list=["cell_type0528"]
+            adata, de, pert_key="perturbation", control="No stimulation", label_list=None
         )
 
-        expect_num = 60
-        eps = 30
+        expect_num = 20
+        eps = 5
         assert "ptb" in adata_pb.obs
         assert not np.isnan(np.sum(adata_pb.X))
         assert not np.abs(adata_pb.shape[0]-expect_num) > eps
