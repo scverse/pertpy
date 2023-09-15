@@ -302,12 +302,7 @@ class Cinemaot:
             else:
                 df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
 
-        if label_list is not None:
-            label_list.append("leiden")
-            sc.pp.neighbors(adata, use_rep=cf_rep)
-            sc.tl.leiden(adata, resolution=cf_resolution)
-            df = pd.concat([df, adata.obs[label_list].astype(str).copy()], axis=1)
-        else:
+        if label_list is None:
             label_list = ["ct"]
             sc.pp.neighbors(adata, use_rep=cf_rep)
             sc.tl.leiden(adata, resolution=cf_resolution)
