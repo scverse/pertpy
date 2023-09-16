@@ -27,11 +27,14 @@ class TestCinemaot:
             smoothness=1e-5,
             eps=1e-3,
             solver="Sinkhorn",
+            preweight_label="cell_type0528",
         )
 
+        eps = 1e-1
         assert "cf" in adata.obsm
         assert "ot" in de.obsm
         assert not np.isnan(np.sum(de.obsm["ot"]))
+        assert not np.abs(np.sum(de.obsm["ot"]) - 1) > eps
 
     def test_weighted(self, adata):
         sc.pp.pca(adata)
@@ -47,9 +50,11 @@ class TestCinemaot:
             solver="Sinkhorn",
         )
 
+        eps = 1e-1
         assert "cf" in ad.obsm
         assert "ot" in de.obsm
         assert not np.isnan(np.sum(de.obsm["ot"]))
+        assert not np.abs(np.sum(de.obsm["ot"]) - 1) > eps
 
     def test_pseudobulk(self, adata):
         sc.pp.pca(adata)
@@ -63,10 +68,14 @@ class TestCinemaot:
             smoothness=1e-5,
             eps=1e-3,
             solver="Sinkhorn",
+            preweight_label="cell_type0528",
         )
         adata_pb = model.generate_pseudobulk(
-            adata, de, pert_key="perturbation", control="No stimulation", label_list=["cell_type0528"]
+            adata, de, pert_key="perturbation", control="No stimulation", label_list=None
         )
 
+        expect_num = 20
+        eps = 5
         assert "ptb" in adata_pb.obs
         assert not np.isnan(np.sum(adata_pb.X))
+        assert not np.abs(adata_pb.shape[0] - expect_num) > eps

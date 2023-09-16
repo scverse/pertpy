@@ -302,12 +302,7 @@ class Cinemaot:
             else:
                 df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
 
-        if label_list is not None:
-            label_list.append("leiden")
-            sc.pp.neighbors(adata, use_rep=cf_rep)
-            sc.tl.leiden(adata, resolution=cf_resolution)
-            df = pd.concat([df, adata.obs[label_list].astype(str).copy()], axis=1)
-        else:
+        if label_list is None:
             label_list = ["ct"]
             sc.pp.neighbors(adata, use_rep=cf_rep)
             sc.tl.leiden(adata, resolution=cf_resolution)
@@ -316,11 +311,13 @@ class Cinemaot:
         df["ptb"][adata.obs[pert_key] != control] = de.obs["leiden"].astype(str)
         label_list.append("ptb")
         df = df.groupby(label_list).sum()
-        adata_pb = sc.AnnData(df)
+        new_index = df.index.map(lambda x: "_".join(map(str, x)))
+        df_ = df.set_index(new_index)
+        adata_pb = sc.AnnData(df_)
         adata_pb.obs = pd.DataFrame(
-            adata_pb.obs_names.to_frame().values,
+            df.index.to_frame().values,
             index=adata_pb.obs_names,
-            columns=adata_pb.obs_names.to_frame().columns,
+            columns=df.index.to_frame().columns,
         )
         return adata_pb
 
