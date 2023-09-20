@@ -566,6 +566,11 @@ class Dialogue:
 
         Returns:
             A celltype_label:array dictionary.
+
+        Examples:
+            >>> import pertpy as pt
+            #TODO
+
         """
         ct_subs = {ct: adata[adata.obs[self.celltype_key] == ct].copy() for ct in ct_order}
         fn = self._pseudobulk_pca if agg_pca else self._get_pseudobulks
@@ -613,7 +618,8 @@ class Dialogue:
             >>> import scanpy as sc
             >>> adata = pt.dt.dialogue_example()
             >>> sc.pp.pca(adata)
-            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
             >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
         """
         # IMPORTANT NOTE: the order in which matrices are passed to multicca matters. As such,

@@ -38,13 +38,10 @@ class GuideAssignment:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell.
 
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.data.papalexi_2021()
             >>> gdo = mdata.mod['gdo']
-            >>> gdo.layers['counts'] = gdo.X.copy()
-            >>> sc.pp.log1p(gdo)
             >>> ga = pt.pp.GuideAssignment()
-            >>> ga.assign_by_threshold(gdo, assignment_threshold=5, layer='counts')
+            >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):
@@ -86,13 +83,10 @@ class GuideAssignment:
             Each cell is assigned to the most expressed gRNA if it has at least 5 counts.
 
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.data.papalexi_2021()
             >>> gdo = mdata.mod['gdo']
-            >>> gdo.layers['counts'] = gdo.X.copy()
-            >>> sc.pp.log1p(gdo)
             >>> ga = pt.pp.GuideAssignment()
-            >>> ga.assign_to_max_guide(gdo, assignment_threshold=5, layer='counts')
+            >>> ga.assign_to_max_guide(gdo, assignment_threshold=5)
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):

@@ -72,12 +72,7 @@ class MixscapePlot:
 
         Examples:
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.dt.papalexi_2021()
-            >>> sc.pp.normalize_total(mdata['rna'])
-            >>> sc.pp.log1p(mdata['rna'])
-            >>> sc.pp.highly_variable_genes(mdata['rna'], subset=True)
-            >>> sc.pp.pca(mdata["rna"])
             >>> mixscape_identifier = pt.tl.Mixscape()
             >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
@@ -164,12 +159,7 @@ class MixscapePlot:
 
         Examples:
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.dt.papalexi_2021()
-            >>> sc.pp.normalize_total(mdata['rna'])
-            >>> sc.pp.log1p(mdata['rna'])
-            >>> sc.pp.highly_variable_genes(mdata['rna'], subset=True)
-            >>> sc.pp.pca(mdata["rna"])
             >>> mixscape_identifier = pt.tl.Mixscape()
             >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
@@ -226,12 +216,7 @@ class MixscapePlot:
             Visualizing the perturbation scores for the cells in a dataset:
 
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.dt.papalexi_2021()
-            >>> sc.pp.normalize_total(mdata['rna'])
-            >>> sc.pp.log1p(mdata['rna'])
-            >>> sc.pp.highly_variable_genes(mdata['rna'], subset=True)
-            >>> sc.pp.pca(mdata["rna"])
             >>> mixscape_identifier = pt.tl.Mixscape()
             >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
@@ -405,12 +390,7 @@ class MixscapePlot:
 
         Examples:
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.dt.papalexi_2021()
-            >>> sc.pp.normalize_total(mdata['rna'])
-            >>> sc.pp.log1p(mdata['rna'])
-            >>> sc.pp.highly_variable_genes(mdata['rna'], subset=True)
-            >>> sc.pp.pca(mdata["rna"])
             >>> mixscape_identifier = pt.tl.Mixscape()
             >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
@@ -589,12 +569,7 @@ class MixscapePlot:
 
         Examples:
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.dt.papalexi_2021()
-            >>> sc.pp.normalize_total(mdata['rna'])
-            >>> sc.pp.log1p(mdata['rna'])
-            >>> sc.pp.highly_variable_genes(mdata['rna'], subset=True)
-            >>> sc.pp.pca(mdata["rna"])
             >>> mixscape_identifier = pt.tl.Mixscape()
             >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')

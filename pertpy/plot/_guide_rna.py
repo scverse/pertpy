@@ -47,13 +47,10 @@ class GuideRnaPlot:
             visualized using a heatmap.
 
             >>> import pertpy as pt
-            >>> import scanpy as sc
             >>> mdata = pt.data.papalexi_2021()
             >>> gdo = mdata.mod['gdo']
-            >>> gdo.layers['counts'] = gdo.X.copy()
-            >>> sc.pp.log1p(gdo)
             >>> ga = pt.pp.GuideAssignment()
-            >>> ga.assign_by_threshold(gdo, assignment_threshold=5, layer='counts')
+            >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
             >>> pt.pl.guide.heatmap(gdo)
         """
         data = adata.X if layer is None else adata.layers[layer]
