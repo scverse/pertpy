@@ -104,6 +104,12 @@ class Augur:
         Returns:
             Anndata object containing gene expression values (cells in rows, genes in columns) and cell type, label and y
             dummy variables as obs
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
         """
         if isinstance(input, AnnData):
             input.obs = input.obs.rename(columns={cell_type_col: "cell_type", label_col: "label"})
@@ -161,6 +167,11 @@ class Augur:
 
         Returns:
             Estimator object.
+
+        Examples:
+            >>> import pertpy as pt #TODO: check why this method is public
+            >>> augur = pt.tl.Augur("random_forest_classifier")
+            >>> estimator = augur.create_estimator("logistic_regression_classifier")
         """
         if params is None:
             params = Params()
@@ -195,6 +206,15 @@ class Augur:
 
         Returns:
             Subsample of AnnData object of size subsample_size with given features
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> ag_rfc.select_highly_variable(loaded_data)
+            >>> features = loaded_data.var_names
+            >>> subsample = ag_rfc.sample(loaded_data, categorical=True, subsample_size=20, random_state=42, features=loaded_data.var_names)
         """
         # export subsampling.
         random.seed(random_state)
@@ -244,11 +264,22 @@ class Augur:
                 while setting augur_mode = "permute" will generate a null distribution of AUCs for each cell type by
                 permuting the labels
             subsample_size: number of cells to subsample randomly per type from each experimental condition
-            categorical_data: `True` if target values are categorical
+            feature_perc: proportion of genes that are randomly selected as features for input to the classifier in each
+                          subsample using the random gene filter
+            categorical: `True` if target values are categorical
             random_state: set numpy random seed and sampling seed
 
         Returns:
             Subsample of anndata object of size subsample_size
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> ag_rfc.select_highly_variable(loaded_data)
+            >>> subsample = ag_rfc.draw_subsample(adata, augur_mode="default", subsample_size=20, feature_perc=0.5, \
+                categorical=True, random_state=42)
         """
         random.seed(random_state)
         if augur_mode == "permute":
@@ -296,6 +327,8 @@ class Augur:
                 permuting the labels
             subsample_size: number of cells to subsample randomly per type from each experimental condition
             folds: number of folds to run cross validation on
+            feature_perc: proportion of genes that are randomly selected as features for input to the classifier in each
+                          subsample using the random gene filter
             subsample_idx: index of the subsample
             random_state: set numpy random seed, sampling seed and fold seed
             zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
@@ -303,6 +336,15 @@ class Augur:
 
         Returns:
             Results for each cross validation fold.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> ag_rfc.select_highly_variable(loaded_data)
+            >>> results = ag_rfc.cross_validate_subsample(loaded_data, augur_mode="default", subsample_size=20, \
+                folds=3, feature_perc=0.5, subsample_idx=0, random_state=42, zero_division=0)
         """
         subsample = self.draw_subsample(
             adata,
@@ -359,6 +401,11 @@ class Augur:
 
         Returns:
             Dict linking name to scorer object and string name
+
+        Examples:
+            >>> import pertpy as pt
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> scorer = ag_rfc.set_scorer(True, 0)
         """
         if multiclass:
             return {
@@ -409,6 +456,16 @@ class Augur:
 
         Returns:
             Dictionary containing prediction metrics and estimator for each fold.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> ag_rfc.select_highly_variable(loaded_data)
+            >>> subsample = ag_rfc.draw_subsample(adata, augur_mode="default", subsample_size=20, feature_perc=0.5, \
+                categorical=True, random_state=42)
+            >>> results = ag_rfc.run_cross_validation(subsample=subsample, folds=3, subsample_idx=0, random_state=42, zero_division=0)
         """
         x = subsample.to_df()
         y = subsample.obs["y_"]
@@ -477,6 +534,13 @@ class Augur:
 
         Results:
             Anndata object with highly variable genes added as layer
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> ag_rfc.select_highly_variable(loaded_data)
         """
         min_features_for_selection = 1000
 
@@ -540,6 +604,13 @@ class Augur:
 
         Return:
             AnnData object with additional select_variance column in var.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> ag_rfc.select_variance(loaded_data, var_quantile=0.5, filter_negative_residuals=False, span=0.75)
         """
         adata.var["highly_variable"] = False
         adata.var["means"] = np.ravel(adata.X.mean(axis=0))
@@ -644,6 +715,13 @@ class Augur:
                 * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs
                 * full_results: Dict containing merged results of individual cross validation runs for each cell type
                 * [cell_types]: Cross validation runs of the cell type called
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)
         """
         if augur_mode == "permute" and n_subsamples < 100:
             n_subsamples = 500
@@ -767,6 +845,22 @@ class Augur:
 
         Returns:
             Results object containing mean augur scores.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.bhattacherjee()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+
+            >>> data_15 = ag_rfc.load(adata, condition_label="Maintenance_Cocaine", treatment_label="withdraw_15d_Cocaine")
+            >>> adata_15, results_15 = ag_rfc.predict(data_15, random_state=None, n_threads=4)
+            >>> adata_15_permute, results_15_permute = ag_rfc.predict(data_15, augur_mode="permute", n_subsamples=100, random_state=None, n_threads=4)
+
+            >>> data_48 = ag_rfc.load(adata, condition_label="Maintenance_Cocaine", treatment_label="withdraw_48h_Cocaine")
+            >>> adata_48, results_48 = ag_rfc.predict(data_48, random_state=None, n_threads=4)
+            >>> adata_48_permute, results_48_permute = ag_rfc.predict(data_48, augur_mode="permute", n_subsamples=100, random_state=None, n_threads=4)
+
+            >>> pvals = ag_rfc.predict_differential_prioritization(augur_results1=results_15, augur_results2=results_48, \
+                permuted_results1=results_15_permute, permuted_results2=results_48_permute)
         """
         # compare available cell types
         cell_types = (

@@ -46,6 +46,13 @@ class PerturbationSpace:
             new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control diff'.
             all_data: if True, do the computation in all data representations (X, all layers and all embeddings)
             copy: If True returns a new Anndata of same size with the new column; otherwise it updates the initial AnnData object.
+
+        Examples:
+            Example usage with PseudobulkSpace:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> diff_adata = ps.compute_control_diff(mdata["rna"], target_col="gene_target", reference_key='NT')
         """
         if reference_key not in adata.obs[target_col].unique():
             raise ValueError(

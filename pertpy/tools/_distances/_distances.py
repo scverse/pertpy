@@ -46,7 +46,7 @@ class Distance:
         obsm_key: Name of embedding in adata.obsm to use.
         metric_fct: Distance metric function.
 
-    Example:
+    Examples:
         .. code-block:: python
 
             import pertpy as pt
@@ -136,10 +136,10 @@ class Distance:
             pd.DataFrame: Dataframe with pairwise distances.
 
         Examples:
-                >>> import pertpy as pt
-                >>> adata = pt.dt.distance_example_data()
-                >>> Distance = pt.tools.Distance(metric="edistance")
-                >>> pairwise_df = distance.pairwise(adata, groupby="perturbation")
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance = pt.tools.Distance(metric="edistance")
+            >>> pairwise_df = distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -190,6 +190,12 @@ class Distance:
             adata: Annotated data matrix.
             obs_key: Column name in adata.obs.
             cell_wise_metric: Metric to use for pairwise distances.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance = pt.tools.Distance(metric="edistance")
+            >>> distance.precompute_distances(adata)
         """
         # Precompute the pairwise distances
         cells = adata.obsm[self.obsm_key].copy()
