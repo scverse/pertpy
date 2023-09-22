@@ -149,6 +149,11 @@ class Distance:
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
         fct = track if verbose else lambda iterable: iterable
 
+        # Some metrics are able to handle precomputed distances. This means that
+        # the pairwise distances between all cells are computed once and then
+        # passed to the metric function. This is much faster than computing the
+        # pairwise distances for each group separately. Other metrics are not 
+        # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
@@ -158,9 +163,10 @@ class Distance:
                 idx_x = grouping == group_x
                 for group_y in groups[index_x:]:
                     if group_x == group_y:
-                        dist = 0.0
+                        dist = 0.0  # by distance axiom
                     else:
                         idx_y = grouping == group_y
+                        # subset the pairwise distance matrix to the two groups
                         sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
                         sub_idx = grouping[idx_x | idx_y] == group_x
                         dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
