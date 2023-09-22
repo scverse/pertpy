@@ -10,6 +10,7 @@ distances = [
     "mean_absolute_error",
     "pearson_distance",
     "spearman_distance",
+    "kendalltau_distance",
     "cosine_distance",
     "wasserstein",
     "mean_pairwise",

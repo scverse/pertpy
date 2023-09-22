@@ -13,7 +13,7 @@ from rich.progress import track
 from scipy.sparse import issparse
 from scipy.spatial.distance import cosine
 from scipy.special import gammaln
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
@@ -45,6 +45,8 @@ class Distance:
         Pearson distance between the means of cells from two groups.
     - "spearman_distance": Spearman distance.
         Spearman distance between the means of cells from two groups.
+    - "kendalltau_distance": Kendall tau distance.
+        Kendall tau distance between the means of cells from two groups.
     - "cosine_distance": Cosine distance.
         Cosine distance between the means of cells from two groups.
     - "r2_distance": coefficient of determination distance.
@@ -120,6 +122,8 @@ class Distance:
             metric_fct = PearsonDistance()
         elif metric == "spearman_distance":
             metric_fct = SpearmanDistance()
+        elif metric == "kendalltau_distance":
+            metric_fct = KendallTauDistance()
         elif metric == "cosine_distance":
             metric_fct = CosineDistance()
         elif metric == "r2_distance":
@@ -475,6 +479,24 @@ class SpearmanDistance(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("SpearmanDistance cannot be called on a pairwise distance matrix.")
+
+
+class KendallTauDistance(AbstractDistance):
+    """Kendall-tau distance between pseudobulk vectors."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        x, y = X.mean(axis=0), Y.mean(axis=0)
+        n = len(x)
+        tau_corr = kendalltau(x, y).statistic
+        tau_dist = (1 - tau_corr) * n * (n - 1) / 4
+        return tau_dist
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("KendallTauDistance cannot be called on a pairwise distance matrix.")
 
 
 class CosineDistance(AbstractDistance):
