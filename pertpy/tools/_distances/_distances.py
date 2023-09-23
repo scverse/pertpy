@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -46,16 +47,13 @@ class Distance:
         obsm_key: Name of embedding in adata.obsm to use.
         metric_fct: Distance metric function.
 
-    Example:
-        .. code-block:: python
-
-            import pertpy as pt
-
-            adata = pt.dt.distance_example_data()
-            Distance = pt.tools.Distance(metric="edistance")
-            X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
-            Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
-            D = Distance(X, Y)
+    Examples:
+        >>> import pertpy as pt
+        >>> adata = pt.dt.distance_example_data()
+        >>> Distance = pt.tools.Distance(metric="edistance")
+        >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+        >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
+        >>> D = Distance(X, Y)
     """
 
     def __init__(
@@ -101,16 +99,13 @@ class Distance:
         Returns:
             float: Distance between X and Y.
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric="edistance")
-                X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
-                Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
-                D = Distance(X, Y)
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> Distance = pt.tools.Distance(metric="edistance")
+            >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+            >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
+            >>> D = Distance(X, Y)
         """
         return self.metric_fct(X, Y, **kwargs)
 
@@ -118,9 +113,9 @@ class Distance:
         self,
         adata: AnnData,
         groupby: str,
-        groups: list[str] | None = None,
-        verbose: bool = True,
-        n_jobs: int = 1,
+        groups: Iterable = None,
+        show_progressbar: bool = True,
+        n_jobs: int = -1,
         **kwargs,
     ) -> pd.DataFrame:
         """Get pairwise distances between groups of cells.
@@ -130,24 +125,21 @@ class Distance:
             groupby: Column name in adata.obs.
             groups: List of groups to compute pairwise distances for.
                     If None, uses all groups. Defaults to None.
-            verbose: Whether to show progress bar. Defaults to True.
+            show_progressbar: Whether to show progress bar. Defaults to True.
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric="edistance")
-                pairwise_df = distance.pairwise(adata, groupby="perturbation")
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> Distance = pt.tools.Distance(metric="edistance")
+            >>> pairwise_df = distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
-        fct = track if verbose else lambda iterable: iterable
+        fct = track if show_progressbar else lambda iterable: iterable
 
         # Some metrics are able to handle precomputed distances. This means that
         # the pairwise distances between all cells are computed once and then
@@ -194,9 +186,9 @@ class Distance:
         adata: AnnData,
         groupby: str,
         selected_group: str | None = None,
-        groups: list[str] | None = None,
-        verbose: bool = True,
-        n_jobs: int = 1,
+        groups: Iterable = None,
+        show_progressbar: bool = True,
+        n_jobs: int = -1,
         **kwargs,
     ) -> pd.DataFrame:
         """Get pairwise distances between groups of cells.
@@ -207,24 +199,21 @@ class Distance:
             selected_group: Group to compute pairwise distances to all other.
             groups: List of groups to compute distances to selected_group for.
                     If None, uses all groups. Defaults to None.
-            verbose: Whether to show progress bar. Defaults to True.
+            show_progressbar: Whether to show progress bar. Defaults to True.
 
         Returns:
             pd.DataFrame: Dataframe with distances of groups to selected_group.
 
-        Example:
-            .. code-block:: python
-
-                import pertpy as pt
-
-                adata = pt.dt.distance_example_data()
-                Distance = pt.tools.Distance(metric="edistance")
-                pairwise_df = distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> Distance = pt.tools.Distance(metric="edistance")
+            >>> pairwise_df = distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.Series(index=groups, dtype=float)
-        fct = track if verbose else lambda iterable: iterable
+        fct = track if show_progressbar else lambda iterable: iterable
 
         # Some metrics are able to handle precomputed distances. This means that
         # the pairwise distances between all cells are computed once and then
@@ -263,7 +252,7 @@ class Distance:
         df.name = f"{self.metric} to {selected_group}"
         return df
 
-    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", n_jobs: int = None) -> None:
+    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", n_jobs: int = -1) -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
 
         The precomputed distances are stored in adata.obsp under the key
