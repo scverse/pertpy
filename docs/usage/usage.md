@@ -428,6 +428,48 @@ pred.obs["condition"] = "pred"
 
 See [scgen tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html) for a more elaborate tutorial.
 
+#### CINEMA-OT
+
+An implementation of [CINEMA-OT](https://github.com/vandijklab/CINEMA-OT) with the ott-jax library.
+CINEMA-OT is a causal framework for perturbation effect analysis to identify individual treatment effects and synergy at the single cell level.
+CINEMA-OT separates confounding sources of variation from perturbation effects to obtain an optimal transport matching that reflects counterfactual cell pairs.
+These cell pairs represent causal perturbation responses permitting a number of novel analyses, such as individual treatment effect analysis, response clustering, attribution analysis, and synergy analysis.
+See [Causal identification of single-cell experimental perturbation effects with CINEMA-OT](https://www.biorxiv.org/content/10.1101/2022.07.31.502173v3.abstract) for more details.
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Cinemaot
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+adata = pt.dt.cinemaot_example()
+
+model = pt.tl.Cinemaot()
+de = model.causaleffect(
+    adata,
+    pert_key="perturbation",
+    control="No stimulation",
+    return_matching=True,
+    thres=0.5,
+    smoothness=1e-5,
+    eps=1e-3,
+    solver="Sinkhorn",
+    preweight_label="cell_type0528",
+)
+```
+
+See [CINEMA-OT tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/cinemaot.html) for a more elaborate tutorial.
+
 ### Perturbation space
 
 Various modules for calculating and evaluating perturbation spaces.
@@ -558,4 +600,13 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
     plot.scg.reg_mean_plot
     plot.scg.reg_var_plot
     plot.scg.binary_classifier
+```
+
+#### CINEMA-OT
+
+```{eval-rst}
+.. autosummary::
+    :toctree: plot
+
+    plot.cot.vis_matching
 ```

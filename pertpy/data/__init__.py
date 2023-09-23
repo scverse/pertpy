@@ -6,6 +6,7 @@ from pertpy.data._datasets import (
     bhattacherjee,
     burczynski_crohn,
     chang_2021,
+    cinemaot_example,
     datlinger_2017,
     datlinger_2021,
     dialogue_example,

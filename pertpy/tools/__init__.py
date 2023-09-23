@@ -1,6 +1,7 @@
 from rich import print
 
 from pertpy.tools._augur import Augur
+from pertpy.tools._cinemaot import Cinemaot
 from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._differential_gene_expression import DifferentialGeneExpression
 from pertpy.tools._distances._distance_tests import DistanceTest

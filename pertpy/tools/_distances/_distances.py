@@ -227,6 +227,11 @@ class Distance:
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
         fct = track if show_progressbar else lambda iterable: iterable
 
+        # Some metrics are able to handle precomputed distances. This means that
+        # the pairwise distances between all cells are computed once and then
+        # passed to the metric function. This is much faster than computing the
+        # pairwise distances for each group separately. Other metrics are not 
+        # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
@@ -236,9 +241,10 @@ class Distance:
                 idx_x = grouping == group_x
                 for group_y in groups[index_x:]:
                     if group_x == group_y:
-                        dist = 0.0
+                        dist = 0.0  # by distance axiom
                     else:
                         idx_y = grouping == group_y
+                        # subset the pairwise distance matrix to the two groups
                         sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
                         sub_idx = grouping[idx_x | idx_y] == group_x
                         dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
@@ -263,6 +269,80 @@ class Distance:
         df.columns.name = groupby
         df.name = f"pairwise {self.metric}"
 
+        return df
+    
+    def onesided_distances(
+        self,
+        adata: AnnData,
+        groupby: str,
+        selected_group: str | None = None,
+        groups: list[str] | None = None,
+        verbose: bool = True,
+        n_jobs: int = 1,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Get pairwise distances between groups of cells.
+
+        Args:
+            adata: Annotated data matrix.
+            groupby: Column name in adata.obs.
+            selected_group: Group to compute pairwise distances to all other.
+            groups: List of groups to compute distances to selected_group for.
+                    If None, uses all groups. Defaults to None.
+            verbose: Whether to show progress bar. Defaults to True.
+
+        Returns:
+            pd.DataFrame: Dataframe with distances of groups to selected_group.
+
+        Example:
+            .. code-block:: python
+
+                import pertpy as pt
+
+                adata = pt.dt.distance_example_data()
+                Distance = pt.tools.Distance(metric="edistance")
+                pairwise_df = distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
+        """
+        groups = adata.obs[groupby].unique() if groups is None else groups
+        grouping = adata.obs[groupby].copy()
+        df = pd.Series(index=groups, dtype=float)
+        fct = track if verbose else lambda iterable: iterable
+
+        # Some metrics are able to handle precomputed distances. This means that
+        # the pairwise distances between all cells are computed once and then
+        # passed to the metric function. This is much faster than computing the
+        # pairwise distances for each group separately. Other metrics are not 
+        # able to handle precomputed distances such as the PsuedobulkDistance.
+        if self.metric_fct.accepts_precomputed:
+            # Precompute the pairwise distances if needed
+            if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
+                self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
+            pwd = adata.obsp[f"{self.obsm_key}_predistances"]
+            for group_x in fct(groups):
+                idx_x = grouping == group_x
+                group_y = selected_group
+                if group_x == group_y:
+                    dist = 0.0  # by distance axiom
+                else:
+                    idx_y = grouping == group_y
+                    # subset the pairwise distance matrix to the two groups
+                    sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
+                    sub_idx = grouping[idx_x | idx_y] == group_x
+                    dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
+                df.loc[group_x] = dist
+        else:
+            embedding = adata.obsm[self.obsm_key].copy()
+            for group_x in fct(groups):
+                cells_x = embedding[grouping == group_x].copy()
+                group_y = selected_group
+                if group_x == group_y:
+                    dist = 0.0
+                else:
+                    cells_y = embedding[grouping == group_y].copy()
+                    dist = self.metric_fct(cells_x, cells_y, **kwargs)
+                df.loc[group_x] = dist
+        df.index.name = groupby
+        df.name = f"{self.metric} to {selected_group}"
         return df
 
     def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", n_jobs: int = None) -> None:
