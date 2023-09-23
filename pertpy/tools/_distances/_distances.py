@@ -230,7 +230,7 @@ class Distance:
         # Some metrics are able to handle precomputed distances. This means that
         # the pairwise distances between all cells are computed once and then
         # passed to the metric function. This is much faster than computing the
-        # pairwise distances for each group separately. Other metrics are not 
+        # pairwise distances for each group separately. Other metrics are not
         # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
@@ -270,7 +270,7 @@ class Distance:
         df.name = f"pairwise {self.metric}"
 
         return df
-    
+
     def onesided_distances(
         self,
         adata: AnnData,
@@ -301,7 +301,9 @@ class Distance:
 
                 adata = pt.dt.distance_example_data()
                 Distance = pt.tools.Distance(metric="edistance")
-                pairwise_df = distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
+                pairwise_df = distance.onesided_distances(
+                    adata, groupby="perturbation", selected_group="control"
+                )
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -311,7 +313,7 @@ class Distance:
         # Some metrics are able to handle precomputed distances. This means that
         # the pairwise distances between all cells are computed once and then
         # passed to the metric function. This is much faster than computing the
-        # pairwise distances for each group separately. Other metrics are not 
+        # pairwise distances for each group separately. Other metrics are not
         # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
