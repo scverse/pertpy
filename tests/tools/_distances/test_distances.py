@@ -94,11 +94,13 @@ class TestDistances:
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
-    
+
     @mark.parametrize("distance", actual_distances + pseudo_distances)
     def test_distance_onesided(self, adata, distance):
         Distance = pt.tl.Distance(distance, "X_pca")
         selected_group = adata.obs.perturbation.unique()[0]
-        df = Distance.onesided_distances(adata, groupby="perturbation", selected_group=selected_group, show_progressbar=True)
+        df = Distance.onesided_distances(
+            adata, groupby="perturbation", selected_group=selected_group, show_progressbar=True
+        )
         assert isinstance(df, Series)
         assert df.loc[selected_group] == 0  # distance to self is 0
