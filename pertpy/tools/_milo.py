@@ -43,7 +43,7 @@ class Milo:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.stephenson_2021_subsampled()
+            >>> adata = pt.dt.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
         """
@@ -95,10 +95,12 @@ class Milo:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.stephenson_2021_subsampled()
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
-            >>>
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
@@ -198,6 +200,16 @@ class Milo:
             - `mudata['milo'].var_names` are neighbourhoods
             - `mudata['milo'].X` is the matrix counting the number of cells from each
             sample in each neighbourhood
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
@@ -261,6 +273,17 @@ class Milo:
             - `PValue` stores the p-value for the QLF test before multiple testing correction
             - `SpatialFDR` stores the the p-value adjusted for multiple testing to limit the false discovery rate,
                 calculated with weighted Benjamini-Hochberg procedure
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.da_nhoods(mdata, design="~label")
         """
         try:
             sample_adata = mdata["milo"]
@@ -390,6 +413,17 @@ class Milo:
             - `milo_mdata['milo'].var["nhood_annotation_frac"]` stores the fraciton of cells in the neighbourhood with the assigned label
             - `milo_mdata['milo'].varm['frac_annotation']`: stores the fraction of cells from each label in each nhood
             - `milo_mdata['milo'].uns["annotation_labels"]`: stores the column names for `milo_mdata['milo'].varm['frac_annotation']`
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.annotate_nhoods(mdata, anno_col='cell_type')
         """
         try:
             sample_adata = mdata["milo"]
@@ -430,6 +464,17 @@ class Milo:
         Returns:
             None. Adds in place:
             - `milo_mdata['milo'].var["nhood_{anno_col}"]`: assigning a continuous value to each nhood
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.annotate_nhoods_continuous(mdata, anno_col='nUMI')
         """
         if "milo" not in mdata.mod:
             raise ValueError(
@@ -459,6 +504,17 @@ class Milo:
 
         Returns:
             None, adds columns to `milo_mdata['milo']` in place
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.add_covariate_to_nhoods_var(mdata, new_covariates=["label"])
         """
         try:
             sample_adata = mdata["milo"]
@@ -501,6 +557,18 @@ class Milo:
         Returns:
             - `milo_mdata['milo'].varp['nhood_connectivities']`: graph of overlap between neighbourhoods (i.e. no of shared cells)
             - `milo_mdata['milo'].var["Nhood_size"]`: number of cells in neighbourhoods
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> sc.tl.umap(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.build_nhood_graph(mdata)
         """
         adata = mdata[feature_key]
         # # Add embedding positions
@@ -526,6 +594,17 @@ class Milo:
 
         Returns:
             Updates adata in place to store the matrix of average expression in each neighbourhood in `milo_mdata['milo'].varm['expr']`
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.add_nhood_expression(mdata)
         """
         try:
             sample_adata = mdata["milo"]
