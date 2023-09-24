@@ -162,6 +162,12 @@ class KMeansSpace(ClusteringSpace):
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's KMeans.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> kmeans = pt.tl.KMeansSpace()
+            >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
         """
         if copy:
             adata = adata.copy()
@@ -218,6 +224,12 @@ class DBSCANSpace(ClusteringSpace):
             cluster_key: name of the .obs column to store the cluster labels. Defaults to 'k-means'
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> dbscan = pt.tl.DBSCANSpace()
+            >>> dbscan_adata = dbscan.compute(mdata["rna"])
         """
         if copy:
             adata = adata.copy()

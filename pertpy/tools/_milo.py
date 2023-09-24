@@ -43,7 +43,7 @@ class Milo:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.data.stephenson_2021_subsampled()
+            >>> adata = pt.dt.stephenson_2021_subsampled()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
         """
@@ -92,6 +92,13 @@ class Milo:
 
             nhood_neighbors_key: `adata.uns["nhood_neighbors_key"]`
             KNN graph key, used for neighbourhood construction
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.stephenson_2021_subsampled()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>>
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
