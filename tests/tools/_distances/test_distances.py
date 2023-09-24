@@ -2,7 +2,7 @@ import numpy as np
 import pertpy as pt
 import pytest
 import scanpy as sc
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from pytest import fixture, mark
 
 actual_distances = [
@@ -43,7 +43,7 @@ class TestDistances:
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
         df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
 
-        # (M1) Positive definiteness
+        # (M1) Positiv definiteness
         assert all(np.diag(df.values) == 0)  # distance to self is 0
         assert len(df) == np.sum(df.values == 0)  # distance to other is not 0
 
@@ -87,3 +87,18 @@ class TestDistances:
     def test_mutually_exclusive_keys(self, adata, distance):
         with pytest.raises(ValueError):
             _ = pt.tl.Distance(distance, layer_key="counts", obsm_key="X_pca")
+
+    def test_distance_pairwise(self, adata, distance):
+        Distance = pt.tl.Distance(distance, "X_pca")
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
+        assert isinstance(df, DataFrame)
+        assert df.columns.equals(df.index)
+        assert np.sum(df.values - df.values.T) == 0  # symmetry
+    
+    @mark.parametrize("distance", actual_distances + pseudo_distances)
+    def test_distance_onesided(self, adata, distance):
+        Distance = pt.tl.Distance(distance, "X_pca")
+        selected_group = adata.obs.perturbation.unique()[0]
+        df = Distance.onesided_distances(adata, groupby="perturbation", selected_group=selected_group, show_progressbar=True)
+        assert isinstance(df, Series)
+        assert df.loc[selected_group] == 0  # distance to self is 0
