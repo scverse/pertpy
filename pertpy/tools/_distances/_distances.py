@@ -692,3 +692,5 @@ class NBLL(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
+
+# TODO: e.g. mahalanobis
