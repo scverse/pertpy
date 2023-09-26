@@ -11,7 +11,7 @@ from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
 from scipy.sparse import issparse
-from scipy.spatial.distance import cosine
+from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
 from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances, r2_score
@@ -693,4 +693,19 @@ class NBLL(AbstractDistance):
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
 
-# TODO: e.g. mahalanobis
+
+class Mahalanobis(AbstractDistance):
+    """Mahalanobis distance between pseudobulk vectors."""
+    
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        # TODO: Store/return/accept the expensive inverse of the covariance matrix?
+        return mahalanobis(X.mean(axis=0), Y.mean(axis=0), np.inv(np.cov(X.T)))
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
+    
+# TODO: More?
