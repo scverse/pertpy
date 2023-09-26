@@ -1,7 +1,13 @@
+from typing import Optional
+
 import anndata as ad
 import numpy as np
 import pandas as pd
 import scanpy as sc
+from scipy.sparse import issparse
+from scipy.sparse import vstack as sp_vstack
+from sklearn.base import ClassifierMixin
+from sklearn.linear_model import LogisticRegression
 
 
 def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs) -> dict:
@@ -39,3 +45,33 @@ def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 10
     metrics["scores_ranks_corr"] = results["ranks_x"].corr(results["ranks_y"], method="spearman")
 
     return metrics
+
+
+def compare_class(
+    X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[ClassifierMixin] = None, pca: bool = True
+) -> float:
+    assert X.shape[1] == Y.shape[1] == C.shape[1]
+
+    if clf is None:
+        clf = LogisticRegression()
+
+    n_x = len(X)
+    n_xc = n_x + len(C)
+
+    if pca:
+        full_data = sp_vstack((X, C, Y)) if issparse(X) else np.vstack((X, C, Y))
+        full_pca = sc.tl.pca(full_data, return_info=False)
+        X = full_pca[:n_x]
+        Y = full_pca[n_xc:]
+        data = full_pca[:n_xc]
+    else:
+        data = sp_vstack((X, C)) if issparse(X) else np.vstack((X, C))
+
+    labels = np.full(n_xc, "ctrl")
+    labels[:n_x] = "comp"
+    clf.fit(data, labels)
+
+    norm_score = clf.score(Y, np.full(len(Y), "comp")) / clf.score(X, labels[:n_x])
+    norm_score = min(1.0, norm_score)
+
+    return norm_score
