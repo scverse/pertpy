@@ -139,6 +139,8 @@ class Distance:
             metric_fct = TTestDistance()
         elif metric == "nb_ll":
             metric_fct = NBLL()
+        elif metric == "mahalanobis":
+            metric_fct = MahalanobisDistance()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -187,6 +189,7 @@ class Distance:
 
         return self.metric_fct(X, Y, **kwargs)
 
+    # TODO: Add keyword to do bootstrapping?
     def pairwise(
         self,
         adata: AnnData,
@@ -352,6 +355,23 @@ class Distance:
             cells = adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_predistances"] = pwd
+        
+        
+    # TODO: evaluate if this is a good idea to have it as a method of Distance
+    def calculate_variance(self, X, Y, n_bootstraps=1000, **kwargs):
+        distances = []
+        for _ in range(n_bootstraps):
+            # Generate bootstrapped samples
+            X_bootstrapped = np.random.choice(X, len(X), replace=True)
+            Y_bootstrapped = np.random.choice(Y, len(Y), replace=True)
+
+            # Calculate the distance using the provided distance metric
+            distance = self(X_bootstrapped, Y_bootstrapped, **kwargs)
+            distances.append(distance)
+
+        # Calculate the variance of the distances
+        variance = np.var(distances)
+        return variance
 
 
 class AbstractDistance(ABC):
@@ -694,7 +714,7 @@ class NBLL(AbstractDistance):
         raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
 
 
-class Mahalanobis(AbstractDistance):
+class MahalanobisDistance(AbstractDistance):
     """Mahalanobis distance between pseudobulk vectors."""
     
     def __init__(self) -> None:
@@ -703,7 +723,7 @@ class Mahalanobis(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         # TODO: Store/return/accept the expensive inverse of the covariance matrix?
-        return mahalanobis(X.mean(axis=0), Y.mean(axis=0), np.inv(np.cov(X.T)))
+        return mahalanobis(X.mean(axis=0), Y.mean(axis=0), np.linalg.inv(np.cov(X.T)))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
