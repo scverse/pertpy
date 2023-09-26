@@ -28,6 +28,16 @@ class DialoguePlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
+            >>> pt.pl.dl.split_violins(adata, split_key='clinical.status', celltype_key='cell.subtypes')
         """
         df = sc.get.obs_df(adata, [celltype_key, mcp, split_key])
         if split_which is None:
@@ -56,6 +66,16 @@ class DialoguePlot:
 
         Returns:
             Seaborn Pairgrid object.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
+            >>> pt.pl.dl.pairplot(adata, celltype_key="cell.subtypes", color="gender", sample_id="clinical.status")
         """
         mean_mcps = adata.obs.groupby([sample_id, celltype_key])[mcp].mean()
         mean_mcps = mean_mcps.reset_index()

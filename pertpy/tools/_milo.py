@@ -271,7 +271,7 @@ class Milo:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
             - `logFC` stores the log fold change in cell abundance (coefficient from the GLM)
             - `PValue` stores the p-value for the QLF test before multiple testing correction
-            - `SpatialFDR` stores the the p-value adjusted for multiple testing to limit the false discovery rate,
+            - `SpatialFDR` stores the p-value adjusted for multiple testing to limit the false discovery rate,
                 calculated with weighted Benjamini-Hochberg procedure
 
         Examples:

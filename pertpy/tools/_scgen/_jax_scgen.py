@@ -168,6 +168,14 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             corrected: `~anndata.AnnData`
             AnnData of corrected gene expression in adata.X and corrected latent space in adata.obsm["latent"].
             A reference to the original AnnData is in `corrected.raw` if the input adata had no `raw` attribute.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.SCGEN(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> corrected_adata = model.batch_removal()
         """
         adata = self._validate_anndata(adata)
         latent_all = self.get_latent_representation(adata)
@@ -264,6 +272,11 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
 
         %(param_batch_key)s
         %(param_labels_key)s
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
         """
         setup_method_args = cls._get_setup_method_args(**locals())
         anndata_fields = [
