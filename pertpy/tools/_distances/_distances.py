@@ -197,6 +197,7 @@ class Distance:
         groups: Iterable = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
+        bootstrap = False,
         **kwargs,
     ) -> pd.DataFrame:
         """Get pairwise distances between groups of cells.
@@ -221,6 +222,8 @@ class Distance:
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
+        if bootstrap:
+            df_var = pd.DataFrame(index=groups, columns=groups, dtype=float)
         fct = track if show_progressbar else lambda iterable: iterable
 
         # Some metrics are able to handle precomputed distances. This means that
@@ -228,7 +231,9 @@ class Distance:
         # passed to the metric function. This is much faster than computing the
         # pairwise distances for each group separately. Other metrics are not
         # able to handle precomputed distances such as the PsuedobulkDistance.
-        if self.metric_fct.accepts_precomputed:
+        
+        # TODO: check if move bootstrap branching also in precompute
+        if self.metric_fct.accepts_precomputed and not bootstrap:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
@@ -258,15 +263,31 @@ class Distance:
                         dist = 0.0
                     else:
                         cells_y = embedding[grouping == group_y].copy()
-                        dist = self(cells_x, cells_y, **kwargs)
+                        if not bootstrap:
+                            dist = self(cells_x, cells_y, **kwargs)
+                            # TODO: check if makes sense. Added for bootstrap mode
+                        else:
+                            dist, var = self.bootstrap_mode(cells_x, cells_y, **kwargs) 
+                            df_var.loc[group_x, group_y] = var
+                            df_var.loc[group_y, group_x] = var
+                            
                     df.loc[group_x, group_y] = dist
                     df.loc[group_y, group_x] = dist
-        df.index.name = groupby
-        df.columns.name = groupby
-        df.name = f"pairwise {self.metric}"
-
-        return df
-
+                    
+        
+            df.index.name = groupby
+            df.columns.name = groupby
+            df.name = f"pairwise {self.metric}"
+            
+        if not bootstrap:
+            return df
+        else:
+            df_var.index.name = groupby
+            df_var.columns.name = groupby
+            df_var.name = f"pairwise {self.metric} variance"
+            
+            return df, df_var
+        
     def onesided_distances(
         self,
         adata: AnnData,
@@ -358,20 +379,29 @@ class Distance:
         
         
     # TODO: evaluate if this is a good idea to have it as a method of Distance
-    def calculate_variance(self, X, Y, n_bootstraps=1000, **kwargs):
+    # TODO idea might call it bootstrap mode and return mean and variance instead?
+    def bootstrap_mode(self, X, Y, n_bootstraps=100, random_state=0, **kwargs):
+        # TODO double check if this might interfere with other RNG usage
+        np.random.seed(random_state)
+        
         distances = []
         for _ in range(n_bootstraps):
             # Generate bootstrapped samples
-            X_bootstrapped = np.random.choice(X, len(X), replace=True)
-            Y_bootstrapped = np.random.choice(Y, len(Y), replace=True)
+            X_bootstrapped = X[np.random.choice(a = X.shape[0],
+                                                size = X.shape[0],
+                                                replace=True)]
+            Y_bootstrapped = Y[np.random.choice(a = Y.shape[0], 
+                                                size = X.shape[0],
+                                                replace=True)]
 
             # Calculate the distance using the provided distance metric
             distance = self(X_bootstrapped, Y_bootstrapped, **kwargs)
             distances.append(distance)
 
         # Calculate the variance of the distances
+        mean = np.mean(distances) # TODO: check if return this instead of simple mean
         variance = np.var(distances)
-        return variance
+        return mean, variance
 
 
 class AbstractDistance(ABC):
