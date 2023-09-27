@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pynndescent
 import scanpy as sc
+from numpy.typing import NDArray
 from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
 from sklearn.base import ClassifierMixin
@@ -99,7 +100,7 @@ def compare_class(X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[Cla
 
 def compare_knn(
     X: np.ndarray, Y: np.ndarray, C: Optional[np.ndarray] = None, n_neighbors: int = 20, use_Y_knn: bool = False
-) -> tuple:
+) -> tuple[NDArray[np.str_], NDArray[np.intp]]:
     """Calculate proportions of real perturbed and control data points for simulated data.
 
     Computes proportions of real perturbed (if provided), control and simulated (if `use_Y_knn=True`)
@@ -127,7 +128,7 @@ def compare_knn(
 
     y_in_index = use_Y_knn or C is None
     c_in_index = C is not None
-    labels = np.full(len(index_data), "comp")
+    labels: NDArray[np.str_] = np.full(len(index_data), "comp")
     if y_in_index:
         labels[:n_y] = "siml"
     if c_in_index:
