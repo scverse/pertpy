@@ -75,7 +75,7 @@ def compare_class(
 
 def compare_knn(
     X: np.ndarray, Y: np.ndarray, C: Optional[np.ndarray] = None, n_neighbors: int = 20, use_Y_knn: bool = False
-):
+) -> tuple:
     """X - real, Y - simulated, C - control."""
     assert X.shape[1] == Y.shape[1]
     if C is not None:
