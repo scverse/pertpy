@@ -416,7 +416,7 @@ class Distance:
         # Calculate the variance of the distances
         mean = np.mean(distances)  # TODO: check if return this instead of simple mean
         variance = np.var(distances)
-        return dict(mean=mean, variance=variance)
+        return dict(mean=mean, variance=variance)  # noqa: C408
 
 
 class AbstractDistance(ABC):

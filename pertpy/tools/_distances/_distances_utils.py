@@ -3,6 +3,7 @@ import numpy as np
 from pertpy.tools._distances._distances import (
     MMD,
     NBLL,
+    AbstractDistance,
     CosineDistance,
     Edistance,
     EuclideanDistance,
