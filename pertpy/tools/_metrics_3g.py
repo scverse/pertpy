@@ -12,7 +12,18 @@ from sklearn.linear_model import LogisticRegression
 
 
 def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs) -> dict:
-    """X - real, Y - simulated, C - control."""
+    """Compare DEG across real and simulated perturbations.
+
+    Computes DEG for real and simulated perturbations vs. control and calculates
+    metrics to evaluate similarity of the results.
+
+    Args:
+        X: Real perturbed data.
+        Y: Simulated perturbed data.
+        C: Control data
+        shared_top: The number of top DEG to compute the proportion of their intersection.
+        **kwargs: arguments for `scanpy.tl.rank_genes_groups`.
+    """
     n_vars = X.shape[1]
     assert n_vars == Y.shape[1] == C.shape[1]
 
@@ -49,10 +60,18 @@ def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 10
     return metrics
 
 
-def compare_class(
-    X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[ClassifierMixin] = None, pca: bool = False
-) -> float:
-    """X - real, Y - simulated, C - control."""
+def compare_class(X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[ClassifierMixin] = None) -> float:
+    """Compare classification accuracy between real and simulated perturbations.
+
+    Trains a classifier on the real perturbation data + the control data and reports a normalized
+    classification accuracy on the simulated perturbation.
+
+    Args:
+        X: Real perturbed data.
+        Y: Simulated perturbed data.
+        C: Control data
+        clf: sklearn classifier to use, `sklearn.linear_model.LogisticRegression` if not provided.
+    """
     assert X.shape[1] == Y.shape[1] == C.shape[1]
 
     if clf is None:
@@ -76,7 +95,19 @@ def compare_class(
 def compare_knn(
     X: np.ndarray, Y: np.ndarray, C: Optional[np.ndarray] = None, n_neighbors: int = 20, use_Y_knn: bool = False
 ) -> tuple:
-    """X - real, Y - simulated, C - control."""
+    """Calculate proportions of real perturbed and control data points for simulated data.
+
+    Computes proportions of real perturbed (if provided), control and simulated (if `use_Y_knn=True`)
+    data points for simulated data. If control (`C`) is not provided, builds the knn graph from
+    real perturbed + simulated perturbed.
+
+    Args:
+        X: Real perturbed data.
+        Y: Simulated perturbed data.
+        C: Control data.
+        use_Y_knn: Include simulted perturbed data (`Y`) into the knn graph. Only valid when
+            control (`C`) is provided.
+    """
     assert X.shape[1] == Y.shape[1]
     if C is not None:
         assert X.shape[1] == C.shape[1]
