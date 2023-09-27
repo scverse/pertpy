@@ -1,6 +1,8 @@
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
+from collections.abc import Mapping
+from types import MappingProxyType
 
 from pertpy.tools._distances._distances import AbstractDistance, Distance
 
@@ -136,11 +138,13 @@ def score(
     pert: np.ndarray,
     metric: str = 'euclidean',
     kind: Literal['simple', 'scaled', 'nearest'] = 'simple',
+    # TODO: pass metric_kwds directly to this function instead?
+    metric_kwds: Mapping[str, Any] = MappingProxyType({}),
 ):
     dist = Distance(metric)
     if kind == 'simple':
-        d1 = dist.metric_fct(pert, pred, **kwargs)
-        d2 = dist.metric_fct(ctrl, pred, **kwargs)
+        d1 = dist.metric_fct(pert, pred, **metric_kwds)
+        d2 = dist.metric_fct(ctrl, pred, **metric_kwds)
         return d1 / d2
     elif kind in {'scaled', 'nearest'}:
         raise NotImplementedError(f'kind {kind} not implemented yet')
