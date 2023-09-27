@@ -3,6 +3,7 @@ from typing import Optional
 import anndata as ad
 import numpy as np
 import pandas as pd
+import pynndescent
 import scanpy as sc
 from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
@@ -11,6 +12,7 @@ from sklearn.linear_model import LogisticRegression
 
 
 def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs) -> dict:
+    """X - real, Y - simulated, C - control."""
     n_vars = X.shape[1]
     assert n_vars == Y.shape[1] == C.shape[1]
 
@@ -48,8 +50,9 @@ def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 10
 
 
 def compare_class(
-    X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[ClassifierMixin] = None, pca: bool = True
+    X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[ClassifierMixin] = None, pca: bool = False
 ) -> float:
+    """X - real, Y - simulated, C - control."""
     assert X.shape[1] == Y.shape[1] == C.shape[1]
 
     if clf is None:
@@ -58,14 +61,7 @@ def compare_class(
     n_x = len(X)
     n_xc = n_x + len(C)
 
-    if pca:
-        full_data = sp_vstack((X, C, Y)) if issparse(X) else np.vstack((X, C, Y))
-        full_pca = sc.tl.pca(full_data, return_info=False)
-        X = full_pca[:n_x]
-        Y = full_pca[n_xc:]
-        data = full_pca[:n_xc]
-    else:
-        data = sp_vstack((X, C)) if issparse(X) else np.vstack((X, C))
+    data = sp_vstack((X, C)) if issparse(X) else np.vstack((X, C))
 
     labels = np.full(n_xc, "ctrl")
     labels[:n_x] = "comp"
@@ -75,3 +71,35 @@ def compare_class(
     norm_score = min(1.0, norm_score)
 
     return norm_score
+
+
+def compare_knn(
+    X: np.ndarray, Y: np.ndarray, C: Optional[np.ndarray] = None, n_neighbors: int = 20, use_Y_knn: bool = False
+):
+    """X - real, Y - simulated, C - control."""
+    assert X.shape[1] == Y.shape[1]
+    if C is not None:
+        assert X.shape[1] == C.shape[1]
+
+    n_y = len(Y)
+
+    if C is None:
+        index_data = sp_vstack((Y, X)) if issparse(X) else np.vstack((Y, X))
+    else:
+        datas = (Y, X, C) if use_Y_knn else (X, C)
+        index_data = sp_vstack(datas) if issparse(X) else np.vstack(datas)
+
+    y_in_index = use_Y_knn or C is None
+    c_in_index = C is not None
+    labels = np.full(len(index_data), "comp")
+    if y_in_index:
+        labels[:n_y] = "siml"
+    if c_in_index:
+        labels[-len(C) :] = "ctrl"
+
+    index = pynndescent.NNDescent(index_data, n_neighbors=max(50, n_neighbors))
+    indices = index.query(Y, k=n_neighbors)[0]
+
+    uq_counts = np.unique(labels[indices], return_counts=True)
+
+    return uq_counts[0], uq_counts[1] / uq_counts[1].sum()
