@@ -100,7 +100,7 @@ def compare_class(X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[Cla
 
 def compare_knn(
     X: np.ndarray, Y: np.ndarray, C: Optional[np.ndarray] = None, n_neighbors: int = 20, use_Y_knn: bool = False
-) -> tuple[NDArray[np.str_], NDArray[np.intp]]:
+) -> tuple[NDArray[np.str_], NDArray[np.float64]]:
     """Calculate proportions of real perturbed and control data points for simulated data.
 
     Computes proportions of real perturbed (if provided), control and simulated (if `use_Y_knn=True`)
@@ -137,9 +137,9 @@ def compare_knn(
     index = pynndescent.NNDescent(index_data, n_neighbors=max(50, n_neighbors))
     indices = index.query(Y, k=n_neighbors)[0]
 
-    uq_counts = np.unique(labels[indices], return_counts=True)
+    uq, uq_counts = np.unique(labels[indices], return_counts=True)
 
-    return uq_counts[0], uq_counts[1] / uq_counts[1].sum()
+    return uq, uq_counts / uq_counts.sum()
 
 
 def compare_dist(
