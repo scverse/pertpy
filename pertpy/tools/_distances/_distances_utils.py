@@ -1,22 +1,22 @@
 import numpy as np
-import scanpy as sc
+
 from pertpy.tools._distances._distances import (
+    MMD,
+    NBLL,
+    CosineDistance,
     Edistance,
     EuclideanDistance,
-    MeanSquaredDistance,
-    MeanAbsoluteDistance,
-    PearsonDistance,
-    SpearmanDistance,
     KendallTauDistance,
-    CosineDistance,
-    R2ScoreDistance,
-    MeanPairwiseDistance,
-    MMD,
-    WassersteinDistance,
     KLDivergence,
-    TTestDistance,
-    NBLL,
     MahalanobisDistance,
+    MeanAbsoluteDistance,
+    MeanPairwiseDistance,
+    MeanSquaredDistance,
+    PearsonDistance,
+    R2ScoreDistance,
+    SpearmanDistance,
+    TTestDistance,
+    WassersteinDistance,
 )
 
 # class DistanceBootstrapper:
