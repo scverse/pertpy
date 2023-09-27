@@ -1,8 +1,9 @@
+from collections.abc import Mapping
+from functools import partial
+from types import MappingProxyType
 from typing import Any, Literal
 
 import numpy as np
-from collections.abc import Mapping
-from types import MappingProxyType
 
 from pertpy.tools._distances._distances import AbstractDistance, Distance
 
@@ -137,16 +138,29 @@ def score(
     pred: np.ndarray,
     pert: np.ndarray,
     metric: str = 'euclidean',
+    # TODO: better names?
     kind: Literal['simple', 'scaled', 'nearest'] = 'simple',
     # TODO: pass metric_kwds directly to this function instead?
     metric_kwds: Mapping[str, Any] = MappingProxyType({}),
-):
-    dist = Distance(metric)
-    if kind == 'simple':
-        d1 = dist.metric_fct(pert, pred, **metric_kwds)
-        d2 = dist.metric_fct(ctrl, pred, **metric_kwds)
+) -> float:
+    if metric_kwds.get('bootstrap', False):
+        # TODO: implement
+        raise NotImplementedError('Can’t handle boodstrap kw yet')
+
+    metric_fct = partial(Distance(metric).metric_fct, **metric_kwds)
+
+    if kind in {'simple', 'scaled'}:
+        if kind == 'scaled':
+            from sklearn.preprocessing import StandardScaler
+
+            scaler = StandardScaler().fit(ctrl)
+            pert = scaler.transform(pert)
+            pred = scaler.transform(pert)
+
+        d1 = metric_fct(pert, pred)
+        d2 = metric_fct(ctrl, pred)
         return d1 / d2
-    elif kind in {'scaled', 'nearest'}:
+    elif kind == 'nearest':
         raise NotImplementedError(f'kind {kind} not implemented yet')
     else:
         raise ValueError(f'Unknown kind {kind}')
