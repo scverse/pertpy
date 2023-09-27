@@ -4,6 +4,7 @@ from types import MappingProxyType
 from typing import Any, Literal
 
 import numpy as np
+from anndata import AnnData
 
 from pertpy.tools._distances._distances import AbstractDistance, Distance
 
@@ -131,36 +132,54 @@ class ThreeWayComparison:
     #     return distance
 
 
-
 def score(
+    adata: AnnData,
     *,
-    ctrl: np.ndarray,
-    pred: np.ndarray,
-    pert: np.ndarray,
-    metric: str = 'euclidean',
+    condition_key: str,
+    ctrl_mark: str,
+    stim_mark: str,
+    metric: str = "euclidean",
     # TODO: better names?
-    kind: Literal['simple', 'scaled', 'nearest'] = 'simple',
+    kind: Literal["simple", "scaled", "nearest"] = "simple",
     # TODO: pass metric_kwds directly to this function instead?
     metric_kwds: Mapping[str, Any] = MappingProxyType({}),
 ) -> float:
-    if metric_kwds.get('bootstrap', False):
+    """Compute the score of simulating a stimulation.
+
+    Args:
+        adata: AnnData object with an ``adata.obs[condition_key]`` column
+            defining which observations are control, stimulation, or predicted stimulation.
+        condition_key: Key in ``adata.obs`` naming the above column.
+        ctrl_mark: value in ``adata.obs[condition_key]`` marking control.
+        stim_mark: value in ``adata.obs[condition_key]`` marking stimulation.
+    """
+    if metric_kwds.get("bootstrap", False):
         # TODO: implement
-        raise NotImplementedError('Can’t handle boodstrap kw yet')
+        raise NotImplementedError("Can’t handle boodstrap kw yet")
 
     metric_fct = partial(Distance(metric).metric_fct, **metric_kwds)
 
-    if kind in {'simple', 'scaled'}:
-        if kind == 'scaled':
-            from sklearn.preprocessing import StandardScaler
+    are_ctrl = adata.obs[condition_key] == ctrl_mark
+    are_stim = adata.obs[condition_key] == stim_mark
+    ctrl: np.ndarray = adata.X[are_ctrl]
+    stim: np.ndarray = adata.X[are_stim]
+    pred: np.ndarray = adata.X[~(are_ctrl | are_stim)]
 
-            scaler = StandardScaler().fit(ctrl)
-            pert = scaler.transform(pert)
-            pred = scaler.transform(pert)
+    if kind == "simple":
+        pass  # nothing to be done
+    elif kind == "scaled":
+        from sklearn.preprocessing import StandardScaler
 
-        d1 = metric_fct(pert, pred)
-        d2 = metric_fct(ctrl, pred)
-        return d1 / d2
-    elif kind == 'nearest':
-        raise NotImplementedError(f'kind {kind} not implemented yet')
+        # TODO: fit to stim and ctrl?
+        scaler = StandardScaler().fit(ctrl)
+        pred = scaler.transform(pred)
+        stim = scaler.transform(stim)
+    elif kind == "nearest":
+        raise NotImplementedError(f"kind {kind} not implemented yet")
     else:
-        raise ValueError(f'Unknown kind {kind}')
+        raise ValueError(f"Unknown kind {kind}")
+
+    stim_means, pred_means, ctrl_means = (x.mean(axis=0) for x in (stim, pred, ctrl))
+    d1 = metric_fct(stim_means, pred_means)
+    d2 = metric_fct(ctrl_means, pred_means)
+    return d1 / d2
