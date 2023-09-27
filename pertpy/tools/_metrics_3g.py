@@ -1,4 +1,7 @@
-from typing import Optional
+from collections.abc import Mapping
+from functools import partial
+from types import MappingProxyType
+from typing import Any, Literal, Optional
 
 import anndata as ad
 import numpy as np
@@ -9,6 +12,8 @@ from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
 from sklearn.base import ClassifierMixin
 from sklearn.linear_model import LogisticRegression
+
+from pertpy.tools._distances import Distance
 
 
 def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs) -> dict:
@@ -134,3 +139,46 @@ def compare_knn(
     uq_counts = np.unique(labels[indices], return_counts=True)
 
     return uq_counts[0], uq_counts[1] / uq_counts[1].sum()
+
+
+def compare_dist(
+    pert: np.ndarray,
+    pred: np.ndarray,
+    ctrl: np.ndarray,
+    *,
+    metric: str = "euclidean",
+    # TODO: better names?
+    kind: Literal["simple", "scaled"] = "simple",
+    # TODO: pass metric_kwds directly to this function instead?
+    metric_kwds: Mapping[str, Any] = MappingProxyType({}),
+) -> float:
+    """Compute the score of simulating a perturbation.
+
+    Args:
+        pert: Real perturbed data.
+        pred: Simulated perturbed data.
+        ctrl: Control data
+        kind: Kind of metric to use.
+    """
+    if metric_kwds.get("bootstrap", False):
+        # TODO: implement
+        raise NotImplementedError("Can’t handle boodstrap kw yet")
+
+    metric_fct = partial(Distance(metric).metric_fct, **metric_kwds)
+
+    if kind == "simple":
+        pass  # nothing to be done
+    elif kind == "scaled":
+        from sklearn.preprocessing import StandardScaler
+
+        # TODO: fit to stim and ctrl?
+        scaler = StandardScaler().fit(ctrl)
+        pred = scaler.transform(pred)
+        pert = scaler.transform(pert)
+    else:
+        raise ValueError(f"Unknown kind {kind}")
+
+    ctrl_means, pred_means, pert_means = (x.mean(axis=0) for x in (ctrl, pred, pert))
+    d1 = metric_fct(pert_means, pred_means)
+    d2 = metric_fct(ctrl_means, pred_means)
+    return d1 / d2

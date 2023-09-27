@@ -1,10 +1,4 @@
-from collections.abc import Mapping
-from functools import partial
-from types import MappingProxyType
-from typing import Any, Literal
-
 import numpy as np
-from anndata import AnnData
 
 from pertpy.tools._distances._distances import AbstractDistance, Distance
 
@@ -130,56 +124,3 @@ class ThreeWayComparison:
     #             raise ValueError("If pairwise is True, X must be an AnnData.")
     #         distance = self.distance_metric.pairwise(X, **kwargs)
     #     return distance
-
-
-def score(
-    adata: AnnData,
-    *,
-    condition_key: str,
-    ctrl_mark: str,
-    pred_mark: str,
-    metric: str = "euclidean",
-    # TODO: better names?
-    kind: Literal["simple", "scaled", "nearest"] = "simple",
-    # TODO: pass metric_kwds directly to this function instead?
-    metric_kwds: Mapping[str, Any] = MappingProxyType({}),
-) -> float:
-    """Compute the score of simulating a perturbation.
-
-    Args:
-        adata: AnnData object with an ``adata.obs[condition_key]`` column
-            defining which observations are control, perturbation, or predicted perturbation.
-        condition_key: Key in ``adata.obs`` naming the above column.
-        ctrl_mark: value in ``adata.obs[condition_key]`` marking control.
-        pred_mark: value in ``adata.obs[condition_key]`` marking predicted perturbation.
-    """
-    if metric_kwds.get("bootstrap", False):
-        # TODO: implement
-        raise NotImplementedError("Can’t handle boodstrap kw yet")
-
-    metric_fct = partial(Distance(metric).metric_fct, **metric_kwds)
-
-    are_ctrl = adata.obs[condition_key] == ctrl_mark
-    are_pred = adata.obs[condition_key] == pred_mark
-    ctrl: np.ndarray = adata.X[are_ctrl]
-    pred: np.ndarray = adata.X[are_pred]
-    pert: np.ndarray = adata.X[~(are_ctrl | are_pred)]
-
-    if kind == "simple":
-        pass  # nothing to be done
-    elif kind == "scaled":
-        from sklearn.preprocessing import StandardScaler
-
-        # TODO: fit to stim and ctrl?
-        scaler = StandardScaler().fit(ctrl)
-        pred = scaler.transform(pred)
-        pert = scaler.transform(pert)
-    elif kind == "nearest":
-        raise NotImplementedError(f"kind {kind} not implemented yet")
-    else:
-        raise ValueError(f"Unknown kind {kind}")
-
-    ctrl_means, pred_means, pert_means = (x.mean(axis=0) for x in (ctrl, pred, pert))
-    d1 = metric_fct(pert_means, pred_means)
-    d2 = metric_fct(ctrl_means, pred_means)
-    return d1 / d2
