@@ -1,24 +1,6 @@
 import numpy as np
 
-from pertpy.tools._distances._distances import (
-    MMD,
-    NBLL,
-    AbstractDistance,
-    CosineDistance,
-    Edistance,
-    EuclideanDistance,
-    KendallTauDistance,
-    KLDivergence,
-    MahalanobisDistance,
-    MeanAbsoluteDistance,
-    MeanPairwiseDistance,
-    MeanSquaredDistance,
-    PearsonDistance,
-    R2ScoreDistance,
-    SpearmanDistance,
-    TTestDistance,
-    WassersteinDistance,
-)
+from pertpy.tools._distances._distances import Distance
 
 # class DistanceBootstrapper:
 #     def __init__(self, distance_metric, n_bootstraps=1000):
@@ -64,50 +46,14 @@ class ThreeWayComparison:
                       Mutually exclusive with 'counts_layer_key'.
                       Defaults to None, but is set to "X_pca" if not set explicitly internally.
         """
-        self.is_pertpy_metric = True
-
-        metric_fct: AbstractDistance = None
-        if metric == "edistance":
-            metric_fct = Edistance()
-        elif metric == "euclidean":
-            metric_fct = EuclideanDistance()
-        elif metric == "root_mean_squared_error":
-            metric_fct = EuclideanDistance()
-        elif metric == "mse":
-            metric_fct = MeanSquaredDistance()
-        elif metric == "mean_absolute_error":
-            metric_fct = MeanAbsoluteDistance()
-        elif metric == "pearson_distance":
-            metric_fct = PearsonDistance()
-        elif metric == "spearman_distance":
-            metric_fct = SpearmanDistance()
-        elif metric == "kendalltau_distance":
-            metric_fct = KendallTauDistance()
-        elif metric == "cosine_distance":
-            metric_fct = CosineDistance()
-        elif metric == "r2_distance":
-            metric_fct = R2ScoreDistance()
-        elif metric == "mean_pairwise":
-            metric_fct = MeanPairwiseDistance()
-        elif metric == "mmd":
-            metric_fct = MMD()
-        elif metric == "wasserstein":
-            metric_fct = WassersteinDistance()
-        elif metric == "kl_divergence":
-            metric_fct = KLDivergence()
-        elif metric == "t_test":
-            metric_fct = TTestDistance()
-        elif metric == "nb_ll":
-            metric_fct = NBLL()
-        elif metric == "mahalanobis":
-            metric_fct = MahalanobisDistance()
-        # TODO: can also grab other things here that are not in pertpy api
-        elif metric == "DE_Intersection":
-            metric_fct = None  # pass
+        try:
+            dist = Distance(metric)
+        except ValueError:
+            self.metric_fct = None
             self.is_pertpy_metric = False
         else:
-            raise ValueError(f"Metric {metric} not recognized.")
-        self.metric_fct = metric_fct
+            self.metric_fct = dist.metric_fct
+            self.is_pertpy_metric = True
 
     # call(X,Y,Z) -> (X,Y), (Y,Z)
     # one-sided distance (adata, selected_group=None, groupby, groups=None)
@@ -119,6 +65,7 @@ class ThreeWayComparison:
         X: np.ndarray,
         Y: np.ndarray,
         Z: np.ndarray,
+        *,
         bootstrap: bool = False,
         n_bootstraps: int = 100,
         random_state: int = 0,
