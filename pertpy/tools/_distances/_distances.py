@@ -18,6 +18,8 @@ from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
+from pertpy.tools._distances._constants import BOOTSRAP_MEAN_KEY, BOOTSTRAP_VAR_KEY
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -160,6 +162,9 @@ class Distance:
         self,
         X: np.ndarray,
         Y: np.ndarray,
+        bootstrap: bool = False,
+        n_bootstrap: int = 100,
+        random_state: int = 0,
         **kwargs,
     ) -> float:
         """Compute distance between vectors X and Y.
@@ -167,9 +172,14 @@ class Distance:
         Args:
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
+            bootstrap: Whether to use bootstrap mode. Defaults to False.
+            n_bootstrap: Number of bootstraps to use. Defaults to 100.
+            random_state: Random state to use for bootstrapping. Defaults to 0.
 
         Returns:
-            float: Distance between X and Y.
+            float: Distance between X and Y, if bootstrap is False.
+            dict: Mean and variance of the distance between X and Y, \
+                if bootstrap is True.
 
         Examples:
             >>> import pertpy as pt
@@ -187,9 +197,15 @@ class Distance:
         if len(X) == 0 or len(Y) == 0:
             raise ValueError("Neither X nor Y can be empty.")
 
+        if bootstrap:
+            return self._bootstrap(X,
+                                   Y,
+                                   n_bootstraps=n_bootstrap,
+                                   random_state=random_state, **kwargs)
+
         return self.metric_fct(X, Y, **kwargs)
 
-    # TODO: Add keyword to do bootstrapping?
+
     def pairwise(
         self,
         adata: AnnData,
@@ -233,7 +249,7 @@ class Distance:
         # able to handle precomputed distances such as the PsuedobulkDistance.
         
         # TODO: check if move bootstrap branching also in precompute
-        if self.metric_fct.accepts_precomputed and not bootstrap:
+        if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
@@ -261,20 +277,23 @@ class Distance:
                 for group_y in groups[index_x:]:
                     if group_x == group_y:
                         dist = 0.0
+                
                     else:
                         cells_y = embedding[grouping == group_y].copy()
                         if not bootstrap:
                             dist = self(cells_x, cells_y, **kwargs)
-                            # TODO: check if makes sense. Added for bootstrap mode
                         else:
-                            dist, var = self.bootstrap_mode(cells_x, cells_y, **kwargs) 
-                            df_var.loc[group_x, group_y] = var
-                            df_var.loc[group_y, group_x] = var
+                            bootstrap_output = self(cells_x,
+                                             cells_y,
+                                             bootstrap,
+                                             **kwargs)
                             
-                    df.loc[group_x, group_y] = dist
-                    df.loc[group_y, group_x] = dist
+                            df_var.loc[group_x, group_y] = bootstrap_output[BOOTSTRAP_VAR_KEY]
+                            df_var.loc[group_y, group_x] = bootstrap_output[BOOTSTRAP_VAR_KEY]
+                            
+                    df.loc[group_x, group_y] = bootstrap_output[BOOTSRAP_MEAN_KEY]
+                    df.loc[group_y, group_x] = bootstrap_output[BOOTSRAP_MEAN_KEY]
                     
-        
             df.index.name = groupby
             df.columns.name = groupby
             df.name = f"pairwise {self.metric}"
@@ -284,6 +303,7 @@ class Distance:
         else:
             df_var.index.name = groupby
             df_var.columns.name = groupby
+            df_var = df_var.fillna(0)
             df_var.name = f"pairwise {self.metric} variance"
             
             return df, df_var
@@ -380,7 +400,7 @@ class Distance:
         
     # TODO: evaluate if this is a good idea to have it as a method of Distance
     # TODO idea might call it bootstrap mode and return mean and variance instead?
-    def bootstrap_mode(self, X, Y, n_bootstraps=100, random_state=0, **kwargs):
+    def _bootstrap_mode(self, X, Y, n_bootstraps=100, random_state=0, **kwargs):
         # TODO double check if this might interfere with other RNG usage
         np.random.seed(random_state)
         
@@ -401,7 +421,8 @@ class Distance:
         # Calculate the variance of the distances
         mean = np.mean(distances) # TODO: check if return this instead of simple mean
         variance = np.var(distances)
-        return mean, variance
+        return dict(mean=mean,
+                    variance=variance)
 
 
 class AbstractDistance(ABC):
