@@ -1,6 +1,8 @@
+from typing import Literal
+
 import numpy as np
 
-from pertpy.tools._distances._distances import Distance
+from pertpy.tools._distances._distances import AbstractDistance, Distance
 
 # class DistanceBootstrapper:
 #     def __init__(self, distance_metric, n_bootstraps=1000):
@@ -30,6 +32,8 @@ class ThreeWayComparison:
     - if yes, integrate into pairwise comparison (and one-sided)
     """
 
+    metric_fct: AbstractDistance | None
+
     def __init__(
         self,
         metric: str,
@@ -50,10 +54,12 @@ class ThreeWayComparison:
             dist = Distance(metric)
         except ValueError:
             self.metric_fct = None
-            self.is_pertpy_metric = False
         else:
             self.metric_fct = dist.metric_fct
-            self.is_pertpy_metric = True
+
+    @property
+    def is_pertpy_metric(self) -> bool:
+        return self.metric_fct is None
 
     # call(X,Y,Z) -> (X,Y), (Y,Z)
     # one-sided distance (adata, selected_group=None, groupby, groups=None)
@@ -65,6 +71,7 @@ class ThreeWayComparison:
         X: np.ndarray,
         Y: np.ndarray,
         Z: np.ndarray,
+        /,
         *,
         bootstrap: bool = False,
         n_bootstraps: int = 100,
@@ -89,14 +96,14 @@ class ThreeWayComparison:
 
         return a, b
 
-    def precomputed(self, X, Y, Z, **kwargs):
+    def precomputed(self, X, Y, Z, /, **kwargs):
         a = self.metric_fct.precomputed(X, Y, **kwargs)
         b = self.metric_fct.precomputed(Y, Z, **kwargs)
 
         return a, b
 
     # less efficient as it computes all pairwise distances
-    def alternative(self, adata, groupby, selected_group=None, groups=None):
+    def alternative(self, adata, groupby, *, selected_group=None, groups=None):
         dists = self.metric_fct.pairwise(adata, groupby, groups=groups)
         dist_XY = dists.iloc[1]  # get XY
         dist_YZ = dists.iloc[2]  # get YZ
@@ -119,3 +126,23 @@ class ThreeWayComparison:
     #             raise ValueError("If pairwise is True, X must be an AnnData.")
     #         distance = self.distance_metric.pairwise(X, **kwargs)
     #     return distance
+
+
+
+def score(
+    *,
+    ctrl: np.ndarray,
+    pred: np.ndarray,
+    pert: np.ndarray,
+    metric: str = 'euclidean',
+    kind: Literal['simple', 'scaled', 'nearest'] = 'simple',
+):
+    dist = Distance(metric)
+    if kind == 'simple':
+        d1 = dist.metric_fct(pert, pred, **kwargs)
+        d2 = dist.metric_fct(ctrl, pred, **kwargs)
+        return d1 / d2
+    elif kind in {'scaled', 'nearest'}:
+        raise NotImplementedError(f'kind {kind} not implemented yet')
+    else:
+        raise ValueError(f'Unknown kind {kind}')
