@@ -18,7 +18,7 @@ from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
-from pertpy.tools._distances._constants import BOOTSRAP_MEAN_KEY, BOOTSTRAP_VAR_KEY
+from pertpy.tools._distances._constants import BOOTSTRAP_MEAN_KEY, BOOTSTRAP_VAR_KEY
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -162,6 +162,7 @@ class Distance:
         self,
         X: np.ndarray,
         Y: np.ndarray,
+        *,
         bootstrap: bool = False,
         n_bootstrap: int = 100,
         random_state: int = 0,
@@ -198,13 +199,15 @@ class Distance:
             raise ValueError("Neither X nor Y can be empty.")
 
         if bootstrap:
-            return self._bootstrap(X,
-                                   Y,
-                                   n_bootstraps=n_bootstrap,
-                                   random_state=random_state, **kwargs)
+            return self._bootstrap(
+                X,
+                Y,
+                n_bootstraps=n_bootstrap,
+                random_state=random_state,
+                **kwargs,
+            )
 
         return self.metric_fct(X, Y, **kwargs)
-
 
     def pairwise(
         self,
@@ -213,7 +216,7 @@ class Distance:
         groups: Iterable = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
-        bootstrap = False,
+        bootstrap=False,
         **kwargs,
     ) -> pd.DataFrame:
         """Get pairwise distances between groups of cells.
@@ -247,7 +250,7 @@ class Distance:
         # passed to the metric function. This is much faster than computing the
         # pairwise distances for each group separately. Other metrics are not
         # able to handle precomputed distances such as the PsuedobulkDistance.
-        
+
         # TODO: check if move bootstrap branching also in precompute
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
@@ -277,27 +280,24 @@ class Distance:
                 for group_y in groups[index_x:]:
                     if group_x == group_y:
                         dist = 0.0
-                
+
                     else:
                         cells_y = embedding[grouping == group_y].copy()
                         if not bootstrap:
                             dist = self(cells_x, cells_y, **kwargs)
                         else:
-                            bootstrap_output = self(cells_x,
-                                             cells_y,
-                                             bootstrap,
-                                             **kwargs)
-                            
+                            bootstrap_output = self(cells_x, cells_y, bootstrap, **kwargs)
+
                             df_var.loc[group_x, group_y] = bootstrap_output[BOOTSTRAP_VAR_KEY]
                             df_var.loc[group_y, group_x] = bootstrap_output[BOOTSTRAP_VAR_KEY]
-                            
-                    df.loc[group_x, group_y] = bootstrap_output[BOOTSRAP_MEAN_KEY]
-                    df.loc[group_y, group_x] = bootstrap_output[BOOTSRAP_MEAN_KEY]
-                    
+
+                    df.loc[group_x, group_y] = bootstrap_output[BOOTSTRAP_MEAN_KEY]
+                    df.loc[group_y, group_x] = bootstrap_output[BOOTSTRAP_MEAN_KEY]
+
             df.index.name = groupby
             df.columns.name = groupby
             df.name = f"pairwise {self.metric}"
-            
+
         if not bootstrap:
             return df
         else:
@@ -305,9 +305,9 @@ class Distance:
             df_var.columns.name = groupby
             df_var = df_var.fillna(0)
             df_var.name = f"pairwise {self.metric} variance"
-            
+
             return df, df_var
-        
+
     def onesided_distances(
         self,
         adata: AnnData,
@@ -396,33 +396,27 @@ class Distance:
             cells = adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_predistances"] = pwd
-        
-        
+
     # TODO: evaluate if this is a good idea to have it as a method of Distance
     # TODO idea might call it bootstrap mode and return mean and variance instead?
     def _bootstrap_mode(self, X, Y, n_bootstraps=100, random_state=0, **kwargs):
         # TODO double check if this might interfere with other RNG usage
         np.random.seed(random_state)
-        
+
         distances = []
         for _ in range(n_bootstraps):
             # Generate bootstrapped samples
-            X_bootstrapped = X[np.random.choice(a = X.shape[0],
-                                                size = X.shape[0],
-                                                replace=True)]
-            Y_bootstrapped = Y[np.random.choice(a = Y.shape[0], 
-                                                size = X.shape[0],
-                                                replace=True)]
+            X_bootstrapped = X[np.random.choice(a=X.shape[0], size=X.shape[0], replace=True)]
+            Y_bootstrapped = Y[np.random.choice(a=Y.shape[0], size=X.shape[0], replace=True)]
 
             # Calculate the distance using the provided distance metric
             distance = self(X_bootstrapped, Y_bootstrapped, **kwargs)
             distances.append(distance)
 
         # Calculate the variance of the distances
-        mean = np.mean(distances) # TODO: check if return this instead of simple mean
+        mean = np.mean(distances)  # TODO: check if return this instead of simple mean
         variance = np.var(distances)
-        return dict(mean=mean,
-                    variance=variance)
+        return dict(mean=mean, variance=variance)
 
 
 class AbstractDistance(ABC):
@@ -767,7 +761,7 @@ class NBLL(AbstractDistance):
 
 class MahalanobisDistance(AbstractDistance):
     """Mahalanobis distance between pseudobulk vectors."""
-    
+
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
@@ -778,5 +772,6 @@ class MahalanobisDistance(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
-    
+
+
 # TODO: More?

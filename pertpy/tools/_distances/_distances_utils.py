@@ -1,10 +1,23 @@
 import numpy as np
 import scanpy as sc
-from pertpy.tools._distances._distances import Edistance, EuclideanDistance, MeanSquaredDistance, \
-    MeanAbsoluteDistance, PearsonDistance, SpearmanDistance, \
-    KendallTauDistance, CosineDistance, R2ScoreDistance, \
-    MeanPairwiseDistance, MMD, WassersteinDistance, \
-    KLDivergence, TTestDistance, NBLL, MahalanobisDistance
+from pertpy.tools._distances._distances import (
+    Edistance,
+    EuclideanDistance,
+    MeanSquaredDistance,
+    MeanAbsoluteDistance,
+    PearsonDistance,
+    SpearmanDistance,
+    KendallTauDistance,
+    CosineDistance,
+    R2ScoreDistance,
+    MeanPairwiseDistance,
+    MMD,
+    WassersteinDistance,
+    KLDivergence,
+    TTestDistance,
+    NBLL,
+    MahalanobisDistance,
+)
 
 # class DistanceBootstrapper:
 #     def __init__(self, distance_metric, n_bootstraps=1000):
@@ -33,10 +46,12 @@ class ThreeWayComparison:
     - evaluate if something like this is doing what we want
     - if yes, integrate into pairwise comparison (and one-sided)
     """
-    def __init__(self,
-                 metric: str,
-                 # TODO: might pass things here
-                 ):
+
+    def __init__(
+        self,
+        metric: str,
+        # TODO: might pass things here
+    ):
         """Initialize Distance class.
 
         Args:
@@ -49,7 +64,7 @@ class ThreeWayComparison:
                       Defaults to None, but is set to "X_pca" if not set explicitly internally.
         """
         self.is_pertpy_metric = True
-        
+
         metric_fct: AbstractDistance = None
         if metric == "edistance":
             metric_fct = Edistance()
@@ -87,25 +102,27 @@ class ThreeWayComparison:
             metric_fct = MahalanobisDistance()
         # TODO: can also grab other things here that are not in pertpy api
         elif metric == "DE_Intersection":
-            metric_fct = None # pass
+            metric_fct = None  # pass
             self.is_pertpy_metric = False
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
-    
-    # call(X,Y,Z) -> (X,Y), (Y,Z
+
+    # call(X,Y,Z) -> (X,Y), (Y,Z)
     # one-sided distance (adata, selected_group=None, groupby, groups=None)
     # pairwise distance (adata, groupby, groups=None) - dont do as this is doing just "all" the pairwise ones?
     # precomputed (adata, cell_wise_metric="euclidean")
-    
-    def __call__(self,
-                 X: np.ndarray,
-                 Y: np.ndarray,
-                 Z: np.ndarray,
-                 bootstrap: bool=False,
-                 n_bootstraps: int=100,
-                 random_state: int=0,
-                 **kwargs):
+
+    def __call__(
+        self,
+        X: np.ndarray,
+        Y: np.ndarray,
+        Z: np.ndarray,
+        bootstrap: bool = False,
+        n_bootstraps: int = 100,
+        random_state: int = 0,
+        **kwargs,
+    ):
         """_summary_
 
         Args:
@@ -121,29 +138,29 @@ class ThreeWayComparison:
         """
         a = self.metric_fct(X, Y, **kwargs)
         b = self.metric_fct(Y, Z, **kwargs)
-        
+
         return a, b
-    
+
     def precomputed(self, X, Y, Z, **kwargs):
         a = self.metric_fct.precomputed(X, Y, **kwargs)
         b = self.metric_fct.precomputed(Y, Z, **kwargs)
-        
+
         return a, b
-    
+
     # less efficient as it computes all pairwise distances
     def alternative(self, adata, groupby, selected_group=None, groups=None):
         dists = self.metric_fct.pairwise(adata, groupby, groups=groups)
-        dist_XY = dists.iloc[1] # get XY
-        dist_YZ = dists.iloc[2] # get YZ
-        
+        dist_XY = dists.iloc[1]  # get XY
+        dist_YZ = dists.iloc[2]  # get YZ
+
     # note to me - this is called on an adata which is already subsetted for a cell type
     # second note - this is all we need?
-    #def pairwise(self, adata, groupby, groups=None, **kwargs):
+    # def pairwise(self, adata, groupby, groups=None, **kwargs):
     #    a = self.pairwise(adata, groupby, groups=groups, **kwargs)
     #    b = self.pairwise(adata, groupby, groups=groups, **kwargs)
     #    return self.compare_X_to_Y(X, Y, pairwise, **kwargs), \
     #           self.compare_X_to_Y(Y, Z, pairwise, **kwargs)
-        # def _compare_X_to_Y(self, X, Y=None, pairwise=False, **kwargs):
+    # def _compare_X_to_Y(self, X, Y=None, pairwise=False, **kwargs):
     #     # Calculate the distance using the provided distance metric
     #     if not pairwise:
     #         if Y is None:
