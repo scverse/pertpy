@@ -20,7 +20,7 @@ def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 10
     """Compare DEG across real and simulated perturbations.
 
     Computes DEG for real and simulated perturbations vs. control and calculates
-    metrics to evaluate similarity of the results.
+    metrics to evaluate similarity of the results. Expects raw counts.
 
     Args:
         X: Real perturbed data.
