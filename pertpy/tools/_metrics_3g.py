@@ -14,7 +14,7 @@ from scipy.sparse import vstack as sp_vstack
 from sklearn.base import ClassifierMixin
 from sklearn.linear_model import LogisticRegression
 
-from pertpy.tools._distances import Distance
+from pertpy.tools._distances._distances import Distance
 
 
 def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs) -> dict:
