@@ -109,8 +109,8 @@ class ThreeWayComparison:
     # less efficient as it computes all pairwise distances
     def alternative(self, adata, groupby, *, selected_group=None, groups=None):
         dists = self.metric_fct.pairwise(adata, groupby, groups=groups)
-        dist_XY = dists.iloc[1]  # get XY
-        dist_YZ = dists.iloc[2]  # get YZ
+        dists.iloc[1]  # get XY
+        dists.iloc[2]  # get YZ
 
     # note to me - this is called on an adata which is already subsetted for a cell type
     # second note - this is all we need?
@@ -137,21 +137,21 @@ def score(
     *,
     condition_key: str,
     ctrl_mark: str,
-    stim_mark: str,
+    pred_mark: str,
     metric: str = "euclidean",
     # TODO: better names?
     kind: Literal["simple", "scaled", "nearest"] = "simple",
     # TODO: pass metric_kwds directly to this function instead?
     metric_kwds: Mapping[str, Any] = MappingProxyType({}),
 ) -> float:
-    """Compute the score of simulating a stimulation.
+    """Compute the score of simulating a perturbation.
 
     Args:
         adata: AnnData object with an ``adata.obs[condition_key]`` column
-            defining which observations are control, stimulation, or predicted stimulation.
+            defining which observations are control, perturbation, or predicted perturbation.
         condition_key: Key in ``adata.obs`` naming the above column.
         ctrl_mark: value in ``adata.obs[condition_key]`` marking control.
-        stim_mark: value in ``adata.obs[condition_key]`` marking stimulation.
+        pred_mark: value in ``adata.obs[condition_key]`` marking predicted perturbation.
     """
     if metric_kwds.get("bootstrap", False):
         # TODO: implement
@@ -160,10 +160,10 @@ def score(
     metric_fct = partial(Distance(metric).metric_fct, **metric_kwds)
 
     are_ctrl = adata.obs[condition_key] == ctrl_mark
-    are_stim = adata.obs[condition_key] == stim_mark
+    are_pred = adata.obs[condition_key] == pred_mark
     ctrl: np.ndarray = adata.X[are_ctrl]
-    stim: np.ndarray = adata.X[are_stim]
-    pred: np.ndarray = adata.X[~(are_ctrl | are_stim)]
+    pred: np.ndarray = adata.X[are_pred]
+    pert: np.ndarray = adata.X[~(are_ctrl | are_pred)]
 
     if kind == "simple":
         pass  # nothing to be done
@@ -173,13 +173,13 @@ def score(
         # TODO: fit to stim and ctrl?
         scaler = StandardScaler().fit(ctrl)
         pred = scaler.transform(pred)
-        stim = scaler.transform(stim)
+        pert = scaler.transform(pert)
     elif kind == "nearest":
         raise NotImplementedError(f"kind {kind} not implemented yet")
     else:
         raise ValueError(f"Unknown kind {kind}")
 
-    stim_means, pred_means, ctrl_means = (x.mean(axis=0) for x in (stim, pred, ctrl))
-    d1 = metric_fct(stim_means, pred_means)
+    ctrl_means, pred_means, pert_means = (x.mean(axis=0) for x in (ctrl, pred, pert))
+    d1 = metric_fct(pert_means, pred_means)
     d2 = metric_fct(ctrl_means, pred_means)
     return d1 / d2
