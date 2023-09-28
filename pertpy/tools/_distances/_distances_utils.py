@@ -1,6 +1,11 @@
-import numpy as np
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from pertpy.tools._distances._distances import AbstractDistance, Distance
+
+if TYPE_CHECKING:
+    import numpy as np
 
 # class DistanceBootstrapper:
 #     def __init__(self, distance_metric, n_bootstraps=1000):
