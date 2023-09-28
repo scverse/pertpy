@@ -151,6 +151,7 @@ def compare_dist(
     kind: Literal["simple", "scaled"] = "simple",
     # TODO: pass metric_kwds directly to this function instead?
     metric_kwds: Mapping[str, Any] = MappingProxyType({}),
+    _fit_to_pert_and_ctrl: bool = False,
 ) -> float:
     """Compute the score of simulating a perturbation.
 
@@ -171,8 +172,7 @@ def compare_dist(
     elif kind == "scaled":
         from sklearn.preprocessing import StandardScaler
 
-        # TODO: fit to stim and ctrl?
-        scaler = StandardScaler().fit(ctrl)
+        scaler = StandardScaler().fit(np.vstack((pert, ctrl)) if _fit_to_pert_and_ctrl else ctrl)
         pred = scaler.transform(pred)
         pert = scaler.transform(pert)
     else:
