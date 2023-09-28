@@ -91,7 +91,7 @@ def compare_class(X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[Cla
     labels[:n_x] = "comp"
     clf.fit(data, labels)
 
-    norm_score = clf.score(Y, np.full(len(Y), "comp")) / clf.score(X, labels[:n_x])
+    norm_score = clf.score(Y, np.full(Y.shape[0], "comp")) / clf.score(X, labels[:n_x])
     norm_score = min(1.0, norm_score)
 
     return norm_score
