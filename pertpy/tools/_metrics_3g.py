@@ -178,7 +178,6 @@ def compare_dist(
     else:
         raise ValueError(f"Unknown kind {kind}")
 
-    ctrl_means, pred_means, pert_means = (x.mean(axis=0) for x in (ctrl, pred, pert))
-    d1 = metric_fct(pert_means, pred_means)
-    d2 = metric_fct(ctrl_means, pred_means)
+    d1 = metric_fct(pert, pred)
+    d2 = metric_fct(ctrl, pred)
     return d1 / d2
