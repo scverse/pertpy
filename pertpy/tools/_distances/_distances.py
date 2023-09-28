@@ -13,8 +13,6 @@ from rich.progress import track
 from sklearn.metrics import pairwise_distances
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from anndata import AnnData
 
 
@@ -114,7 +112,7 @@ class Distance:
         self,
         adata: AnnData,
         groupby: str,
-        groups: Iterable = None,
+        groups: list[str] | None = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -187,7 +185,7 @@ class Distance:
         adata: AnnData,
         groupby: str,
         selected_group: str | None = None,
-        groups: Iterable = None,
+        groups: list[str] | None = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
