@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -18,12 +18,16 @@ from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
-from pertpy.tools._distances._constants import BOOTSTRAP_MEAN_KEY, BOOTSTRAP_VAR_KEY
-
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from anndata import AnnData
+    from scipy import sparse
+
+
+class MeanVar(TypedDict):
+    mean: float
+    variance: float
 
 
 class Distance:
@@ -160,12 +164,8 @@ class Distance:
 
     def __call__(
         self,
-        X: np.ndarray,
-        Y: np.ndarray,
-        *,
-        bootstrap: bool = False,
-        n_bootstrap: int = 100,
-        random_state: int = 0,
+        X: np.ndarray | sparse.spmatrix,
+        Y: np.ndarray | sparse.spmatrix,
         **kwargs,
     ) -> float:
         """Compute distance between vectors X and Y.
@@ -190,33 +190,49 @@ class Distance:
             >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
             >>> D = Distance(X, Y)
         """
+        X, Y = self._coerce_call_args(X, Y)
+        return self.metric_fct(X, Y, **kwargs)
+
+    def bootstrap(
+        self,
+        X: np.ndarray | sparse.spmatrix,
+        Y: np.ndarray | sparse.spmatrix,
+        *,
+        n_bootstrap: int = 100,
+        random_state: int = 0,
+        **kwargs,
+    ) -> MeanVar:
+        """TODO(Eljas)"""
+        X, Y = self._coerce_call_args(X, Y)
+
+        return self._bootstrap_mode(
+            X,
+            Y,
+            n_bootstraps=n_bootstrap,
+            random_state=random_state,
+            **kwargs,
+        )
+
+    @staticmethod
+    def _coerce_call_args(
+        X: np.ndarray | sparse.spmatrix, Y: np.ndarray | sparse.spmatrix
+    ) -> tuple[np.ndarray, np.ndarray]:
         if issparse(X):
             X = X.A
         if issparse(Y):
             Y = Y.A
-
         if len(X) == 0 or len(Y) == 0:
             raise ValueError("Neither X nor Y can be empty.")
-
-        if bootstrap:
-            return self._bootstrap(
-                X,
-                Y,
-                n_bootstraps=n_bootstrap,
-                random_state=random_state,
-                **kwargs,
-            )
-
-        return self.metric_fct(X, Y, **kwargs)
+        return X, Y
 
     def pairwise(
         self,
         adata: AnnData,
         groupby: str,
-        groups: Iterable = None,
+        groups: Sequence[str] = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
-        bootstrap=False,
+        bootstrap: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
         """Get pairwise distances between groups of cells.
@@ -285,14 +301,14 @@ class Distance:
                         cells_y = embedding[grouping == group_y].copy()
                         if not bootstrap:
                             dist = self(cells_x, cells_y, **kwargs)
+
+                            df.loc[group_x, group_y] = dist
+                            df.loc[group_y, group_x] = dist
                         else:
-                            bootstrap_output = self(cells_x, cells_y, bootstrap, **kwargs)
+                            bootstrap_output = self.bootstrap(cells_x, cells_y, bootstrap=bootstrap, **kwargs)
 
-                            df_var.loc[group_x, group_y] = bootstrap_output[BOOTSTRAP_VAR_KEY]
-                            df_var.loc[group_y, group_x] = bootstrap_output[BOOTSTRAP_VAR_KEY]
-
-                    df.loc[group_x, group_y] = bootstrap_output[BOOTSTRAP_MEAN_KEY]
-                    df.loc[group_y, group_x] = bootstrap_output[BOOTSTRAP_MEAN_KEY]
+                            df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output["mean"]
+                            df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output["variance"]
 
             df.index.name = groupby
             df.columns.name = groupby
@@ -399,7 +415,7 @@ class Distance:
 
     # TODO: evaluate if this is a good idea to have it as a method of Distance
     # TODO idea might call it bootstrap mode and return mean and variance instead?
-    def _bootstrap_mode(self, X, Y, n_bootstraps=100, random_state=0, **kwargs):
+    def _bootstrap_mode(self, X, Y, n_bootstraps=100, random_state=0, **kwargs) -> MeanVar:
         # TODO double check if this might interfere with other RNG usage
         np.random.seed(random_state)
 
@@ -416,7 +432,7 @@ class Distance:
         # Calculate the variance of the distances
         mean = np.mean(distances)  # TODO: check if return this instead of simple mean
         variance = np.var(distances)
-        return dict(mean=mean, variance=variance)  # noqa: C408
+        return MeanVar(mean=mean, variance=variance)
 
 
 class AbstractDistance(ABC):
