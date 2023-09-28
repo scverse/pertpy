@@ -82,8 +82,8 @@ def compare_class(X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[Cla
     if clf is None:
         clf = LogisticRegression()
 
-    n_x = len(X)
-    n_xc = n_x + len(C)
+    n_x = X.shape[0]
+    n_xc = n_x + C.shape[0]
 
     data = sp_vstack((X, C)) if issparse(X) else np.vstack((X, C))
 
