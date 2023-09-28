@@ -117,7 +117,7 @@ def compare_knn(
     if C is not None:
         assert X.shape[1] == C.shape[1]
 
-    n_y = len(Y)
+    n_y = Y.shape[0]
 
     if C is None:
         index_data = sp_vstack((Y, X)) if issparse(X) else np.vstack((Y, X))
@@ -127,11 +127,11 @@ def compare_knn(
 
     y_in_index = use_Y_knn or C is None
     c_in_index = C is not None
-    labels: NDArray[np.str_] = np.full(len(index_data), "comp")
+    labels: NDArray[np.str_] = np.full(index_data.shape[0], "comp")
     if y_in_index:
         labels[:n_y] = "siml"
     if c_in_index:
-        labels[-len(C) :] = "ctrl"
+        labels[-C.shape[0] :] = "ctrl"
 
     index = pynndescent.NNDescent(index_data, n_neighbors=max(50, n_neighbors))
     indices = index.query(Y, k=n_neighbors)[0]
