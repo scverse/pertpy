@@ -11,6 +11,7 @@ from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
 from scipy.sparse import issparse
+from scipy.sparse import vstack as sp_vstack
 from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
 from scipy.stats import kendalltau, pearsonr, spearmanr
@@ -147,6 +148,8 @@ class Distance:
             metric_fct = NBLL()
         elif metric == "mahalanobis":
             metric_fct = MahalanobisDistance()
+        elif metric == "ilisi":
+            metric_fct = ILISI()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -788,6 +791,34 @@ class MahalanobisDistance(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
+
+
+class ILISI(AbstractDistance):
+    """Mahalanobis distance between pseudobulk vectors."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, n_neighbors: int = 50, n_jobs: int = 1, **kwargs) -> float:
+        from scanpy.neighbors import _compute_connectivities_umap
+        from scib_metrics import ilisi_knn
+        from scib_metrics.nearest_neighbors import pynndescent
+
+        data = sp_vstack((X, Y)) if issparse(X) else np.vstack((X, Y))
+        n_obs = len(data)
+        batches = np.full(n_obs, "group_2")
+        batches[: len(X)] = "group_1"
+
+        inds_dists = pynndescent(data, n_neighbors=n_neighbors, n_jobs=n_jobs)
+        indices, distances = inds_dists.indices, inds_dists.distances
+
+        sp_distances, _ = _compute_connectivities_umap(indices, distances, n_obs, n_neighbors=n_neighbors)
+
+        return ilisi_knn(sp_distances, batches, **kwargs)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("iLISI cannot be called on a pairwise distance matrix.")
 
 
 # TODO: More?
