@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from scipy import sparse
 
 
-class MeanVar(TypedDict):
+class MeanVar(NamedTuple):
     mean: float
     variance: float
 
@@ -307,8 +307,8 @@ class Distance:
                         else:
                             bootstrap_output = self.bootstrap(cells_x, cells_y, bootstrap=bootstrap, **kwargs)
 
-                            df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output["mean"]
-                            df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output["variance"]
+                            df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
+                            df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
 
             df.index.name = groupby
             df.columns.name = groupby
