@@ -30,7 +30,17 @@ class TestDistances:
             assert df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]] >= df.loc[triplet[0], triplet[2]]
 
     @mark.parametrize("distance", actual_distances + pseudo_distances)
+    def test_distance_output_type(self, distance):
+        # Test if distances are outputting floats
+        Distance = pt.tl.Distance(distance, "X_pca")
+        X = np.random.normal(size=(100, 10))
+        Y = np.random.normal(size=(100, 10))
+        d = Distance(X, Y)
+        assert isinstance(d, float)
+
+    @mark.parametrize("distance", actual_distances + pseudo_distances)
     def test_distance_pairwise(self, adata, distance):
+        # Test consistency of pairwise distance results
         Distance = pt.tl.Distance(distance, "X_pca")
         df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
         assert isinstance(df, DataFrame)
@@ -39,6 +49,7 @@ class TestDistances:
 
     @mark.parametrize("distance", actual_distances + pseudo_distances)
     def test_distance_onesided(self, adata, distance):
+        # Test consistency of one-sided distance results
         Distance = pt.tl.Distance(distance, "X_pca")
         selected_group = adata.obs.perturbation.unique()[0]
         df = Distance.onesided_distances(
