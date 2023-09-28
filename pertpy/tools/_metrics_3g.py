@@ -21,7 +21,7 @@ def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 10
     """Compare DEG across real and simulated perturbations.
 
     Computes DEG for real and simulated perturbations vs. control and calculates
-    metrics to evaluate similarity of the results. Expects raw counts.
+    metrics to evaluate similarity of the results.
 
     Args:
         X: Real perturbed data.
@@ -46,7 +46,6 @@ def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 10
     for group in ("x", "y"):
         adata_joint = ad.concat((adatas_xy[group], adata_c), index_unique="-")
 
-        sc.pp.log1p(adata_joint)
         sc.tl.rank_genes_groups(adata_joint, groupby="label", reference="ctrl", key_added="de", **kwargs)
 
         srt_idx = np.argsort(adata_joint.uns["de"]["names"]["comp"])
