@@ -82,7 +82,7 @@ class Distance:
 
     Examples:
         >>> import pertpy as pt
-        >>> adata = pt.dt.distance_example_data()
+        >>> adata = pt.dt.distance_example()
         >>> Distance = pt.tools.Distance(metric="edistance")
         >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
         >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -171,7 +171,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
             >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -191,7 +191,7 @@ class Distance:
         self,
         adata: AnnData,
         groupby: str,
-        groups: Iterable = None,
+        groups: list[str] | None = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -211,9 +211,9 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
-            >>> pairwise_df = distance.pairwise(adata, groupby="perturbation")
+            >>> pairwise_df = Distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -269,7 +269,7 @@ class Distance:
         adata: AnnData,
         groupby: str,
         selected_group: str | None = None,
-        groups: Iterable = None,
+        groups: list[str] | None = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -289,9 +289,9 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
-            >>> pairwise_df = distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
+            >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -462,7 +462,7 @@ class WassersteinDistance(AbstractDistance):
         solver = Sinkhorn()
         # Solve OT problem
         ot = solver(ot_prob, **kwargs)
-        return ot.reg_ot_cost
+        return ot.reg_ot_cost.item()
 
 
 class EuclideanDistance(AbstractDistance):
