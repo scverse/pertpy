@@ -48,7 +48,7 @@ class Distance:
 
     Examples:
         >>> import pertpy as pt
-        >>> adata = pt.dt.distance_example_data()
+        >>> adata = pt.dt.distance_example()
         >>> Distance = pt.tools.Distance(metric="edistance")
         >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
         >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -100,7 +100,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
             >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -131,9 +131,9 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
-            >>> pairwise_df = distance.pairwise(adata, groupby="perturbation")
+            >>> pairwise_df = Distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -205,9 +205,9 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
-            >>> pairwise_df = distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
+            >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
