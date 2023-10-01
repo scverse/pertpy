@@ -363,7 +363,7 @@ class WassersteinDistance(AbstractDistance):
         solver = Sinkhorn()
         # Solve OT problem
         ot = solver(ot_prob, **kwargs)
-        return ot.reg_ot_cost
+        return ot.reg_ot_cost.item()
 
 
 class PseudobulkDistance(AbstractDistance):
