@@ -108,6 +108,16 @@ class CodaPlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda_model = pt.tl.Sccoda()
+            >>> sccoda_data = sccoda_model.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", sample_identifier="batch", covariate_obs=["condition"])
+            >>> sccoda_data.mod["coda_salm"] = sccoda_data["coda"][sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])].copy()
+            >>> pt.pl.coda.stacked_barplot(sccoda_data, modality_key="coda", feature_name="samples")
+            #TODO: Check
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -196,6 +206,19 @@ class CodaPlot:
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata = sccoda.load(adata, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata_salm = sccoda.prepare(mdata_salm, formula="condition", reference_cell_type="Goblet")
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> sccoda.credible_effects(mdata_salm)
+            >>> pt.pl.coda.effects_barplot(mdata_salm, parameter="Final Parameter")
+            #TODO: Check
         """
         if args_barplot is None:
             args_barplot = {}
@@ -366,6 +389,16 @@ class CodaPlot:
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda_model = pt.tl.Sccoda()
+            >>> sccoda_data = sccoda_model.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", sample_identifier="batch", covariate_obs=["condition"])
+            >>> sccoda_data.mod["coda_salm"] = sccoda_data["coda"][sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])].copy()
+            >>> pt.pl.coda.boxplots(sccoda_data, modality_key="coda", feature_name="condition", add_dots=True)
+            #TODO: Check
         """
         if args_boxplot is None:
             args_boxplot = {}
@@ -570,6 +603,19 @@ class CodaPlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda_model = pt.tl.Sccoda()
+            >>> sccoda_data = sccoda_model.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", sample_identifier="batch", covariate_obs=["condition"])
+            >>> sccoda_data.mod["coda_salm"] = sccoda_data["coda"][sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])].copy()
+            >>> sccoda_data = sccoda_model.prepare(sccoda_data, modality_key="coda_salm", formula="condition", reference_cell_type="Enterocyte")
+            >>> sccoda_model.run_nuts(sccoda_data, modality_key="coda_salm")
+            #>>> sccoda_model.summary(sccoda_data, modality_key="coda_salm", est_fdr=0.4) #TODO
+            >>> pt.pl.coda.rel_abundance_dispersion_plot(sccoda_data, modality_key="coda", abundant_threshold=0.9)
+            #TODO: Check
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -677,6 +723,18 @@ class CodaPlot:
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata = sccoda.load(adata, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata_salm = sccoda.prepare(mdata_salm, formula="condition", reference_cell_type="Goblet")
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> pt.pl.coda.draw_tree(mdata_salm)
+            #TODO: Check
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -741,6 +799,18 @@ class CodaPlot:
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
             or  plot the tree inline (`show = False`)
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata = sccoda.load(adata, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata_salm = sccoda.prepare(mdata_salm, formula="condition", reference_cell_type="Goblet")
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> pt.pl.coda.draw_effects(mdata_salm, covariate="condition")
+            #TODO: Check
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -895,6 +965,18 @@ class CodaPlot:
 
         Returns:
             If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+            >>> mdata = sccoda.load(adata, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata_salm = sccoda.prepare(mdata_salm, formula="condition", reference_cell_type="Goblet")
+            >>> sccoda.run_nuts(mdata_salm)
+            >>> pt.pl.coda.effects_umap(mdata_salm, effect_name="condition")
+            #TODO: Check
         """
         data_rna = data[modality_key_1]
         data_coda = data[modality_key_2]
