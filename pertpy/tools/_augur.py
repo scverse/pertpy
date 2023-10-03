@@ -169,7 +169,7 @@ class Augur:
             Estimator object.
 
         Examples:
-            >>> import pertpy as pt #TODO: check why this method is public
+            >>> import pertpy as pt
             >>> augur = pt.tl.Augur("random_forest_classifier")
             >>> estimator = augur.create_estimator("logistic_regression_classifier")
         """

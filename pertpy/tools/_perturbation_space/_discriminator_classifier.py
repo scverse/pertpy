@@ -55,7 +55,6 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             >>> adata = pt.dt.papalexi_2021()['rna']
             >>> dcs = pt.tl.DiscriminatorClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
-            #TODO: Check
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
@@ -129,7 +128,6 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             >>> dcs = pt.tl.DiscriminatorClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
             >>> dcs.train(max_epochs=5)
-            #TODO: Check
         """
         self.trainer = pl.Trainer(
             min_epochs=1,
@@ -160,7 +158,6 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             >>> dcs.load(adata, target_col="gene_target")
             >>> dcs.train()
             >>> embeddings = dcs.get_embeddings()
-            #TODO: Check
         """
         with torch.no_grad():
             self.model.eval()

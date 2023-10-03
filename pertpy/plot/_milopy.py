@@ -55,7 +55,7 @@ class MilopyPlot:
             >>> milo.da_nhoods(mdata, design="~label")
             >>> milo.build_nhood_graph(mdata)
             >>> pt.pl.milo.nhood_graph(mdata)
-            # TODO: This throws a StopIteration error
+            # TODO: If necessary adjust after fixing StopIteration error, which is currently thrown
         """
         nhood_adata = mdata["milo"].T.copy()
 

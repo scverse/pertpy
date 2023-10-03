@@ -43,7 +43,6 @@ class AugurpyPlot:
             >>> pvals = ag_rfc.predict_differential_prioritization(augur_results1=results_15, augur_results2=results_48, \
                 permuted_results1=results_15_permute, permuted_results2=results_48_permute)
             >>> pt.pl.ag.dp_scatter(pvals)
-            #TODO: Check
         """
         x = results["mean_augur_score1"]
         y = results["mean_augur_score2"]
