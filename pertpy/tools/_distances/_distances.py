@@ -800,19 +800,53 @@ class ILISI(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, n_neighbors: int = 50, n_jobs: int = 1, **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, n_neighbors: int = 50, 
+                 n_jobs: int = 1, random_state:int = 0, **kwargs) -> float:
         from scanpy.neighbors import _compute_connectivities_umap
         from scib_metrics import ilisi_knn
-        from scib_metrics.nearest_neighbors import pynndescent
+        from pynndescent import NNDescent
 
         data = sp_vstack((X, Y)) if issparse(X) else np.vstack((X, Y))
         n_obs = len(data)
         batches = np.full(n_obs, "group_2")
         batches[: len(X)] = "group_1"
 
-        inds_dists = pynndescent(data, n_neighbors=n_neighbors, n_jobs=n_jobs)
-        indices, distances = inds_dists.indices, inds_dists.distances
-
+        # Copied from https://github.com/YosefLab/scib-metrics/main/src/scib_metrics/nearest_neighbors/_pynndescent.py
+        n_trees = min(64, 5 + int(round((data.shape[0]) ** 0.5 / 20.0)))
+        n_iters = max(5, int(round(np.log2(data.shape[0]))))
+        max_candidates = 60
+        
+        index = NNDescent(
+            data,
+            n_neighbors=n_neighbors,
+            random_state=random_state,
+            low_memory=True,
+            n_jobs=n_jobs,
+            compressed=False,
+            n_trees=n_trees,
+            n_iters=n_iters,
+            max_candidates=max_candidates,
+        )
+        indices,distances = index.query(data, k=n_neighbors)
+        
+        # Adjustment for when some cells are duplicates - may occur in simulations
+        # Compute additional neighbors to be able to 
+        # remove the identical NNs from the NN list and still retain the same number of NN
+        for i in range(indices.shape[0]):
+            n_recompute=0
+            # If a distance to more than one neighbor is 0 - recompute that many additional neighbors
+            for j in range(1,indices.shape[1]):
+                if distances[i,j]==0:
+                    n_recompute+=1
+                else:
+                    break
+            if n_recompute>0:
+                indices_sub,distances_sub = index.query(data[i:i+1,:], k=n_neighbors+n_recompute)
+                indices_sub=np.concatenate([np.array([i]),indices_sub[0,n_recompute+1:]])
+                distances_sub=np.concatenate([np.array([0.0]),distances_sub[0,n_recompute+1:]])
+                indices[i,:]=indices_sub
+                distances[i,:]=distances_sub
+        
         sp_distances, _ = _compute_connectivities_umap(indices, distances, n_obs, n_neighbors=n_neighbors)
 
         return ilisi_knn(sp_distances, batches, **kwargs)
