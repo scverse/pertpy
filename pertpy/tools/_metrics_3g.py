@@ -133,11 +133,14 @@ def compare_knn(
 
     y_in_index = use_Y_knn or C is None
     c_in_index = C is not None
+    label_groups=["comp"]
     labels: NDArray[np.str_] = np.full(index_data.shape[0], "comp")
     if y_in_index:
         labels[:n_y] = "siml"
+        label_groups.append("siml")
     if c_in_index:
         labels[-C.shape[0] :] = "ctrl"
+        label_groups.append("ctrl")
 
     index = pynndescent.NNDescent(
         index_data, n_neighbors=max(50, n_neighbors), random_state=random_state, n_jobs=n_jobs
@@ -145,8 +148,12 @@ def compare_knn(
     indices = index.query(Y, k=n_neighbors)[0]
 
     uq, uq_counts = np.unique(labels[indices], return_counts=True)
+    uq_counts = uq_counts / uq_counts.sum()
+    counts=dict(zip(label_groups,[0]*len(label_groups)))
+    for group,count in zip(uq, uq_counts):
+        counts[group]=count
 
-    return uq, uq_counts / uq_counts.sum()
+    return counts
 
 
 def compare_dist(
