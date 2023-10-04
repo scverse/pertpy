@@ -979,7 +979,7 @@ class CodaPlot:
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
 
             >>> pt.pl.coda.effects_umap(mdata, effect_name="", cluster_key="")
-            #TODO!!!
+            #TODO: Add effect_name parameter and cluster_key and test the example
         """
         data_rna = data[modality_key_1]
         data_coda = data[modality_key_2]

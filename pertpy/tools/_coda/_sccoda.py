@@ -240,13 +240,6 @@ class Sccoda(CompositionalModel2):
 
         Returns:
             predictions (see numpyro documentation for details on models)
-
-        Examples:
-            >>> import pertpy as pt
-            >>> preds = sccoda.model(counts, covariates, n_total, ref_index, sample_adata)
-            #TODO!!!!!!
-            >>> mdata = sccoda.load(adata, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
-                sample_identifier="batch", covariate_obs=["condition"])
         """
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape

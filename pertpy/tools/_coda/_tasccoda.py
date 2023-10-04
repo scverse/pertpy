@@ -392,9 +392,6 @@ class Tasccoda(CompositionalModel2):
 
         Returns:
             predictions (see numpyro documentation for details on models)
-
-        Examples:
-            #TODO!!!
         """
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
