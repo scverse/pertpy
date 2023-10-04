@@ -79,6 +79,7 @@ class Distance:
         metric: Name of distance metric.
         layer_key: Name of the counts to use in adata.layers.
         obsm_key: Name of embedding in adata.obsm to use.
+        cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
 
     Examples:
         >>> import pertpy as pt
@@ -94,6 +95,7 @@ class Distance:
         metric: str = "edistance",
         layer_key: str = None,
         obsm_key: str = None,
+        cell_wise_metric: str = "euclidean",
     ):
         """Initialize Distance class.
 
@@ -105,6 +107,8 @@ class Distance:
             obsm_key: Name of embedding in adata.obsm to use.
                       Mutually exclusive with 'counts_layer_key'.
                       Defaults to None, but is set to "X_pca" if not set explicitly internally.
+            cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
+                                Defaults to "euclidean".
         """
         metric_fct: AbstractDistance = None
         if metric == "edistance":
@@ -153,6 +157,7 @@ class Distance:
         self.layer_key = layer_key
         self.obsm_key = obsm_key
         self.metric = metric
+        self.cell_wise_metric = cell_wise_metric
 
     def __call__(
         self,
@@ -191,7 +196,7 @@ class Distance:
         self,
         adata: AnnData,
         groupby: str,
-        groups: Iterable = None,
+        groups: list[str] | None = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -205,6 +210,7 @@ class Distance:
                     If None, uses all groups. Defaults to None.
             show_progressbar: Whether to show progress bar. Defaults to True.
             n_jobs: Number of cores to use. Defaults to -1 (all).
+            kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
@@ -227,9 +233,9 @@ class Distance:
         # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
-            pwd = adata.obsp[f"{self.obsm_key}_predistances"]
+            pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
                 for group_y in groups[index_x:]:
@@ -269,7 +275,7 @@ class Distance:
         adata: AnnData,
         groupby: str,
         selected_group: str | None = None,
-        groups: Iterable = None,
+        groups: list[str] | None = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -283,6 +289,8 @@ class Distance:
             groups: List of groups to compute distances to selected_group for.
                     If None, uses all groups. Defaults to None.
             show_progressbar: Whether to show progress bar. Defaults to True.
+            n_jobs: Number of cores to use. Defaults to -1 (all).
+            kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
             pd.DataFrame: Dataframe with distances of groups to selected_group.
@@ -305,9 +313,9 @@ class Distance:
         # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
-            pwd = adata.obsp[f"{self.obsm_key}_predistances"]
+            pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for group_x in fct(groups):
                 idx_x = grouping == group_x
                 group_y = selected_group
@@ -335,23 +343,24 @@ class Distance:
         df.name = f"{self.metric} to {selected_group}"
         return df
 
-    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", n_jobs: int = -1) -> None:
+    def precompute_distances(self, adata: AnnData, n_jobs: int = -1) -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
 
         The precomputed distances are stored in adata.obsp under the key
-        '{self.obsm_key}_predistances', as they depend on the embedding used.
+        '{self.obsm_key}_{cell_wise_metric}_predistances', as they depend on
+        both the cell-wise metric and the embedding used.
 
         Args:
             adata: Annotated data matrix.
             obs_key: Column name in adata.obs.
-            cell_wise_metric: Metric to use for pairwise distances.
+            n_jobs: Number of cores to use. Defaults to -1 (all).
         """
         if self.layer_key:
             cells = adata.layers[self.layer_key]
         else:
             cells = adata.obsm[self.obsm_key].copy()
-        pwd = pairwise_distances(cells, cells, metric=cell_wise_metric, n_jobs=n_jobs)
-        adata.obsp[f"{self.obsm_key}_predistances"] = pwd
+        pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
+        adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
 
 
 class AbstractDistance(ABC):
@@ -396,11 +405,12 @@ class Edistance(AbstractDistance):
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = True
+        self.cell_wise_metric = "sqeuclidean"
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        sigma_X = pairwise_distances(X, X, metric="euclidean").mean()
-        sigma_Y = pairwise_distances(Y, Y, metric="euclidean").mean()
-        delta = pairwise_distances(X, Y, metric="euclidean").mean()
+        sigma_X = pairwise_distances(X, X, metric="sqeuclidean").mean()
+        sigma_Y = pairwise_distances(Y, Y, metric="sqeuclidean").mean()
+        delta = pairwise_distances(X, Y, metric="sqeuclidean").mean()
         return 2 * delta - sigma_X - sigma_Y
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
