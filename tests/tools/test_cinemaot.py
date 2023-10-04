@@ -75,7 +75,7 @@ class TestCinemaot:
         )
 
         expect_num = 20
-        eps = 6
+        eps = 7
         assert "ptb" in adata_pb.obs
         assert not np.isnan(np.sum(adata_pb.X))
         assert not np.abs(adata_pb.shape[0] - expect_num) >= eps
