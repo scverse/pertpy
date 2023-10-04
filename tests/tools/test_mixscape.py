@@ -4,6 +4,7 @@ import anndata
 import numpy as np
 import pandas as pd
 import pertpy as pt
+from _pytest.fixtures import fixture
 from scipy import sparse
 
 CWD = Path(__file__).parent.resolve()
@@ -16,7 +17,8 @@ accuracy_threshold = 0.8
 
 
 class TestMixscape:
-    def make_test_adata(self):
+    @fixture
+    def adata(self):
         np.random.seed(1)
         # generate not differentially expressed genes
         for i in range(num_not_de):
@@ -64,8 +66,7 @@ class TestMixscape:
         adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=np.float32)
         return adata
 
-    def test_mixscape(self):
-        adata = self.make_test_adata()
+    def test_mixscape(self, adata):
         mixscape_identifier = pt.tl.Mixscape()
         adata.layers["X_pert"] = adata.X
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
@@ -81,16 +82,13 @@ class TestMixscape:
         assert sum(np_result_correct) > accuracy_threshold * num_cells_per_group
         assert sum(ko_result_correct) > accuracy_threshold * num_cells_per_group
 
-    def test_perturbation_signature(self):
-        adata = self.make_test_adata()
-
+    def test_perturbation_signature(self, adata):
         mixscape_identifier = pt.tl.Mixscape()
         mixscape_identifier.perturbation_signature(adata, pert_key="label", control="control")
 
         assert "X_pert" in adata.layers
 
-    def test_lda(self):
-        adata = self.make_test_adata()
+    def test_lda(self, adata):
         adata.layers["X_pert"] = adata.X
         mixscape_identifier = pt.tl.Mixscape()
         mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")

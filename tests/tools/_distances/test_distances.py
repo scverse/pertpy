@@ -1,6 +1,6 @@
 import numpy as np
 import pertpy as pt
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from pytest import fixture, mark
 
 actual_distances = ["edistance", "pseudobulk", "wasserstein"]
@@ -17,7 +17,7 @@ class TestDistances:
     def test_distance_axioms(self, adata, distance):
         # Test if distances are well-defined in accordance with metric axioms
         Distance = pt.tl.Distance(distance, "X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", verbose=True)
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
         # (M1) Positiv definiteness
         assert all(np.diag(df.values) == 0)  # distance to self is 0
         assert len(df) == np.sum(df.values == 0)  # distance to other is not 0
@@ -30,9 +30,30 @@ class TestDistances:
             assert df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]] >= df.loc[triplet[0], triplet[2]]
 
     @mark.parametrize("distance", actual_distances + pseudo_distances)
-    def test_distance(self, adata, distance):
+    def test_distance_output_type(self, distance):
+        # Test if distances are outputting floats
         Distance = pt.tl.Distance(distance, "X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", verbose=True)
+        X = np.random.normal(size=(100, 10))
+        Y = np.random.normal(size=(100, 10))
+        d = Distance(X, Y)
+        assert isinstance(d, float)
+
+    @mark.parametrize("distance", actual_distances + pseudo_distances)
+    def test_distance_pairwise(self, adata, distance):
+        # Test consistency of pairwise distance results
+        Distance = pt.tl.Distance(distance, "X_pca")
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
+
+    @mark.parametrize("distance", actual_distances + pseudo_distances)
+    def test_distance_onesided(self, adata, distance):
+        # Test consistency of one-sided distance results
+        Distance = pt.tl.Distance(distance, "X_pca")
+        selected_group = adata.obs.perturbation.unique()[0]
+        df = Distance.onesided_distances(
+            adata, groupby="perturbation", selected_group=selected_group, show_progressbar=True
+        )
+        assert isinstance(df, Series)
+        assert df.loc[selected_group] == 0  # distance to self is 0
