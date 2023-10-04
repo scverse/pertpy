@@ -102,7 +102,7 @@ class TestDistances:
     @mark.parametrize("distance", actual_distances + pseudo_distances)
     def test_distance_pairwise(self, adata, distance):
         # Test consistency of pairwise distance results
-        Distance = pt.tl.Distance(distance, "X_pca")
+        Distance = pt.tl.Distance(distance, obsm_key="X_pca")
         df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
 
         assert isinstance(df, DataFrame)
