@@ -41,7 +41,7 @@ $ make install
 ```
 
 ## Apple Silicon
-If you want to install and use pertpy on a machine with MacOS and M-Chip, the installation is slightly more complex.
+If you want to install and use pertpy on a machine with macOS and M-Chip, the installation is slightly more complex.
 This is because pertpy depends on [scvi-tools], which can currently only run on Apple Silicon machines when installed
 using a native python version (due to a dependency on jax, which cannot be run via Rosetta).
 
@@ -71,7 +71,7 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
    $ cd pertpy
    $ pip install .
    ```
-Now you're ready to use pertpy as usual within the environment (``ìmport pertpy``).
+Now you're ready to use pertpy as usual within the environment (``import pertpy``).
 
 [github repo]: https://github.com/theislab/pertpy
 [pip]: https://pip.pypa.io
