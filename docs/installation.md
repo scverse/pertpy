@@ -71,11 +71,13 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
     ```
 
 5. Go inside the pertpy folder and install pertpy
-   ```console
-   $ cd pertpy
-   $ pip install .
+    ```console
+    $ cd pertpy
+    $ pip install .
     ```
-    Now you're ready to use pertpy as usual within the environment (``import pertpy``).
+    Now you're ready to use pertpy as usual within the environment (`import pertpy`).
+    ```
+
     ```
 
 [github repo]: https://github.com/theislab/pertpy
