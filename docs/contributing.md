@@ -18,7 +18,10 @@ cd pertpy
 pip install -e ".[dev,test,doc]"
 ```
 
-_Note:_ If you're working on an Apple Silicon machine, the installation is slightly more complex. In that case, follow the [steps described in the Installation guide](installation.md#apple-silicon) and replace the last two steps described there with the code above.
+```{note}
+If you're working on an Apple Silicon machine, the installation is slightly more complex. In that case, follow
+the steps described in the Apple Silicon section of the installation guide and replace the last two steps described there with the code above.
+```
 
 ## Code-style
 
