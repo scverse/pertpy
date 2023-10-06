@@ -187,9 +187,9 @@ def compare_dist(
     if kind == "simple":
         pass  # nothing to be done
     elif kind == "scaled":
-        from sklearn.preprocessing import StandardScaler
+        from sklearn.preprocessing import MinMaxScaler
 
-        scaler = StandardScaler().fit(np.vstack((pert, ctrl)) if _fit_to_pert_and_ctrl else ctrl)
+        scaler = MinMaxScaler().fit(np.vstack((pert, ctrl)) if _fit_to_pert_and_ctrl else ctrl)
         pred = scaler.transform(pred)
         pert = scaler.transform(pert)
     else:
