@@ -1,20 +1,22 @@
 from collections.abc import Mapping
 from functools import partial
 from types import MappingProxyType
-from typing import Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import anndata as ad
 import numpy as np
 import pandas as pd
 import pynndescent
 import scanpy as sc
-from numpy.typing import NDArray
 from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
 from sklearn.base import ClassifierMixin
 from sklearn.linear_model import LogisticRegression
 
 from pertpy.tools._distances._distances import Distance
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs) -> dict:
@@ -105,7 +107,7 @@ def compare_knn(
     use_Y_knn: bool = False,
     random_state: int = 0,
     n_jobs: int = 1,
-) -> tuple[NDArray[np.str_], NDArray[np.float64]]:
+) -> dict[str, float]:
     """Calculate proportions of real perturbed and control data points for simulated data.
 
     Computes proportions of real perturbed (if provided), control and simulated (if `use_Y_knn=True`)
@@ -133,7 +135,7 @@ def compare_knn(
 
     y_in_index = use_Y_knn or C is None
     c_in_index = C is not None
-    label_groups=["comp"]
+    label_groups = ["comp"]
     labels: NDArray[np.str_] = np.full(index_data.shape[0], "comp")
     if y_in_index:
         labels[:n_y] = "siml"
@@ -148,10 +150,10 @@ def compare_knn(
     indices = index.query(Y, k=n_neighbors)[0]
 
     uq, uq_counts = np.unique(labels[indices], return_counts=True)
-    uq_counts = uq_counts / uq_counts.sum()
-    counts=dict(zip(label_groups,[0]*len(label_groups)))
-    for group,count in zip(uq, uq_counts):
-        counts[group]=count
+    uq_counts_norm = uq_counts / uq_counts.sum()
+    counts = dict(zip(label_groups, [0.0] * len(label_groups)))
+    for group, count_norm in zip(uq, uq_counts_norm):
+        counts[group] = count_norm
 
     return counts
 
