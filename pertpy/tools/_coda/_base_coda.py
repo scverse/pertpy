@@ -347,7 +347,8 @@ class CompositionalModel2(ABC):
 
         # Set rng key if needed
         if rng_key is None:
-            rng_key = random.PRNGKey(np.random.randint(0, 10000))
+            rng = np.random.default_rng()
+            rng_key = random.PRNGKey(rng.integers(0, 10000))
             sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = rng_key
         else:
             rng_key = random.PRNGKey(rng_key)

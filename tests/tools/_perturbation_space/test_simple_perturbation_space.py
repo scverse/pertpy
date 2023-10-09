@@ -6,7 +6,8 @@ from anndata import AnnData
 
 
 def test_differential_response():
-    X = np.random.rand(10, 5)
+    rng = np.random.default_rng()
+    X = rng.random(size=(10, 5))
     obs = pd.DataFrame(
         {
             "perturbations": [
@@ -48,7 +49,8 @@ def test_differential_response():
 
 
 def test_pseudobulk_response():
-    X = np.random.rand(10, 5)
+    rng = np.random.default_rng()
+    X = rng.random(size=(10, 5))
     obs = pd.DataFrame(
         {
             "perturbations": [
@@ -168,7 +170,8 @@ def test_centroid_umap_response():
 
 def test_linear_operations():
     """Tests add/subtract and other linear operations."""
-    X = np.random.rand(10, 5)
+    rng = np.random.default_rng()
+    X = rng.random(size=(10, 5))
     obs = pd.DataFrame(
         {
             "perturbations": [

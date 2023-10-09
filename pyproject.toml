@@ -128,7 +128,7 @@ select = [
     "UP",  # pyupgrade
     "RUF100",  # Report unused noqa directives
     "TCH",  # Typing imports
-    # "NPY",  # Numpy specific rules
+    "NPY",  # Numpy specific rules
     "PTH"  # Use pathlib
 ]
 ignore = [

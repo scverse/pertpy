@@ -148,7 +148,8 @@ class DistanceTest:
                 # Shuffle the labels of the groups
                 mask = adata.obs[groupby].isin([group, contrast])
                 labels = adata.obs[groupby].values[mask]
-                shuffled_labels = np.random.permutation(labels)
+                rng = np.random.default_rng()
+                shuffled_labels = rng.permutation(labels)
                 idx = shuffled_labels == group
 
                 X = embedding[mask][idx]  # shuffled group
@@ -245,7 +246,8 @@ class DistanceTest:
                 # Shuffle the labels of the groups
                 mask = adata.obs[groupby].isin([group, contrast])
                 labels = adata.obs[groupby].values[mask]
-                shuffled_labels = np.random.permutation(labels)
+                rng = np.random.default_rng()
+                shuffled_labels = rng.permutation(labels)
                 idx = shuffled_labels == group
 
                 precomputed_distance = precomputed_distances[group]

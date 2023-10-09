@@ -216,10 +216,11 @@ class MixscapePlot:
             p_copy._build()
             top_r = max(p_copy.layers[0].data["density"])
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
-            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = np.random.uniform(
+            rng = np.random.default_rng()
+            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = rng.uniform(
                 low=0.001, high=top_r / 10, size=sum(perturbation_score[labels] == gd)
             )
-            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = np.random.uniform(
+            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = rng.uniform(
                 low=-top_r / 10, high=0, size=sum(perturbation_score[labels] == target_gene)
             )
             # If split_by is provided, split densities based on the split_by
@@ -265,18 +266,19 @@ class MixscapePlot:
             p_copy._build()
             top_r = max(p_copy.layers[0].data["density"])
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
+            rng = np.random.default_rng()
             gd2 = list(
                 set(perturbation_score["mix"]).difference([f"{target_gene} NP", f"{target_gene} {perturbation_type}"])
             )[0]
-            perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = np.random.uniform(
+            perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = rng.uniform(
                 low=0.001, high=top_r / 10, size=sum(perturbation_score["mix"] == gd2)
             )
             perturbation_score.loc[
                 perturbation_score["mix"] == f"{target_gene} {perturbation_type}", "y_jitter"
-            ] = np.random.uniform(
+            ] = rng.uniform(
                 low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} {perturbation_type}")
             )
-            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = np.random.uniform(
+            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = rng.uniform(
                 low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} NP")
             )
             # If split_by is provided, split densities based on the split_by

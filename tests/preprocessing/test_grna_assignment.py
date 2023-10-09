@@ -6,7 +6,7 @@ import pertpy as pt
 
 class TestGuideRnaProcessingAndPlotting:
     def make_test_adata(self):
-        np.random.seed(1)
+        # np.random.seed(1) TODO: Can we delete this? As far as I can see it's not used
         exp_matrix = np.array(
             [
                 [9, 0, 1, 0, 1, 0, 0],

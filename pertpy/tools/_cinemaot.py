@@ -601,7 +601,8 @@ class Xi:
         # random shuffling of the data - reason to use random.choice is that
         # pd.sample(frac=1) uses the same randomizing algorithm
         len_x = len(self.x)
-        randomized_indices = np.random.choice(np.arange(len_x), len_x, replace=False)
+        rng = np.random.default_rng()
+        randomized_indices = rng.choice(np.arange(len_x), len_x, replace=False)
         randomized = [self.x[idx] for idx in randomized_indices]
         # same as pandas rank method 'first'
         rankdata = ss.rankdata(randomized, method="ordinal")
