@@ -329,7 +329,10 @@ class Distance:
                     dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
                 df.loc[group_x] = dist
         else:
-            embedding = adata.obsm[self.obsm_key].copy()
+            if self.layer_key:
+                embedding = adata.layers[self.layer_key]
+            else:
+                embedding = adata.obsm[self.obsm_key].copy()
             for group_x in fct(groups):
                 cells_x = embedding[grouping == group_x].copy()
                 group_y = selected_group
@@ -337,7 +340,7 @@ class Distance:
                     dist = 0.0
                 else:
                     cells_y = embedding[grouping == group_y].copy()
-                    dist = self.metric_fct(cells_x, cells_y, **kwargs)
+                    dist = self(cells_x, cells_y, **kwargs)
                 df.loc[group_x] = dist
         df.index.name = groupby
         df.name = f"{self.metric} to {selected_group}"
