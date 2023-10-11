@@ -4,6 +4,7 @@ import arviz as az
 import numpy as np
 import pandas as pd
 import pytest
+import scanpy as sc
 from mudata import MuData
 
 try:
@@ -22,6 +23,8 @@ class TestscCODA:
     @pytest.fixture
     def adata(self):
         cells = pt.dt.haber_2017_regions()
+        cells = sc.pp.subsample(cells, 0.1, copy=True)
+
         return cells
 
     def test_load(self, adata):
