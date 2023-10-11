@@ -3,8 +3,8 @@ from pathlib import Path
 import arviz as az
 import numpy as np
 import pandas as pd
-import scanpy as sc
 import pytest
+import scanpy as sc
 from mudata import MuData
 
 try:

@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import numpy as np
-import scanpy as sc
 import pytest
+import scanpy as sc
 from mudata import MuData
 
 try:
