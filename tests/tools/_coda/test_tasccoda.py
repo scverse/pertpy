@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import scanpy as sc
 import pytest
 from mudata import MuData
 
@@ -20,6 +21,8 @@ class TesttascCODA:
     @pytest.fixture
     def smillie_adata(self):
         smillie_adata = pt.dt.smillie()
+        smillie_adata = sc.pp.subsample(smillie_adata, 0.1, copy=True)
+
         return smillie_adata
 
     def test_load(self, smillie_adata):
@@ -50,7 +53,7 @@ class TesttascCODA:
         assert "covariate_matrix" in mdata["coda"].obsm
         assert "sample_counts" in mdata["coda"].obsm
         assert isinstance(mdata["coda"].obsm["sample_counts"], np.ndarray)
-        assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 85
+        assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 8
 
     def test_run_nuts(self, smillie_adata):
         mdata = self.tasccoda.load(
