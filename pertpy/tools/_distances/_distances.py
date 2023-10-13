@@ -13,7 +13,7 @@ from rich.progress import track
 from scipy.sparse import issparse
 from scipy.spatial.distance import cosine
 from scipy.special import gammaln
-from scipy.stats import kendalltau, pearsonr, spearmanr
+from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
@@ -71,6 +71,8 @@ class Distance:
         Here we fit a gaussian distribution over each group of cells and then calculate the KL divergence
     - "t_test": t-test statistic.
         T-test statistic measure between cells of two groups.
+    - "ks_test": Kolmogorov-Smirnov test statistic.
+        Kolmogorov-Smirnov test statistic measure between cells of two groups.
     - "nb_ll": log-likelihood over negative binomial
         Average of log-likelihoods of samples of the secondary group after fitting a negative binomial distribution
         over the samples of the first group.
@@ -141,6 +143,8 @@ class Distance:
             metric_fct = KLDivergence()
         elif metric == "t_test":
             metric_fct = TTestDistance()
+        elif metric == "ks_test":
+            metric_fct = KSTestDistance()
         elif metric == "nb_ll":
             metric_fct = NBLL()
         else:
@@ -659,6 +663,23 @@ class TTestDistance(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
+
+
+class KSTestDistance(AbstractDistance):
+    """Average of two-sided KS test statistic between two groups"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        stats = []
+        for i in range(X.shape[1]):
+            stats.append(abs(kstest(X[:, i], Y[:, i])[0]))
+        return sum(stats) / len(stats)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("KSTestDistance cannot be called on a pairwise distance matrix.")
 
 
 class NBLL(AbstractDistance):

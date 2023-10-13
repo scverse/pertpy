@@ -15,14 +15,14 @@ actual_distances = [
     "cosine_distance",
     "wasserstein",
 ]
-pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test", "edistance"]
+pseudo_distances = ["mean_pairwise", "mmd", "r2_distance", "kl_divergence", "t_test", "ks_test", "edistance"]
 pseudo_counts_distances = ["nb_ll"]
 
 
 class TestDistances:
     @fixture
     def adata(self, request):
-        no_subsample_distances = ["kl_divergence", "t_test"]
+        no_subsample_distances = ["kl_divergence", "t_test", "ks_test"]
         distance = request.node.callspec.params["distance"]
 
         adata = pt.dt.distance_example()

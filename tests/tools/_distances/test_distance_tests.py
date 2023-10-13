@@ -18,6 +18,7 @@ distances = [
     "r2_distance",
     "kl_divergence",
     "t_test",
+    "ks_test",
 ]
 
 count_distances = ["nb_ll"]
