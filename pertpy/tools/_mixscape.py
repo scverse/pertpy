@@ -66,6 +66,14 @@ class Mixscape:
         Returns:
             If `copy=True`, returns the copy of `adata` with the perturbation signature in `.layers["X_pert"]`.
             Otherwise writes the perturbation signature directly to `.layers["X_pert"]` of the provided `adata`.
+
+        Examples:
+            Calcutate perturbation signature for each cell in the dataset:
+
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
         """
         if copy:
             adata = adata.copy()
@@ -180,6 +188,15 @@ class Mixscape:
             mixscape_class_p_ko: pandas.Series (`adata.obs['mixscape_class_p_ko']`).
             Posterior probabilities used to determine if a cell is KO (default).
             Name of this item will change to match perturbation_type parameter setting. (>0.5) or NP
+
+        Examples:
+            Calcutate perturbation signature for each cell in the dataset:
+
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
         """
         if copy:
             adata = adata.copy()
@@ -337,6 +354,16 @@ class Mixscape:
 
             mixscape_lda: numpy.ndarray (`adata.uns['mixscape_lda']`).
             LDA result.
+
+        Examples:
+            Use LDA dimensionality reduction to visualize the perturbation effects:
+
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> mixscape_identifier.lda(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
         """
         if copy:
             adata = adata.copy()

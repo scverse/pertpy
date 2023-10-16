@@ -46,6 +46,13 @@ class PerturbationSpace:
             new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control diff'.
             all_data: if True, do the computation in all data representations (X, all layers and all embeddings)
             copy: If True returns a new Anndata of same size with the new column; otherwise it updates the initial AnnData object.
+
+        Examples:
+            Example usage with PseudobulkSpace:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> diff_adata = ps.compute_control_diff(mdata["rna"], target_col="gene_target", reference_key='NT')
         """
         if reference_key not in adata.obs[target_col].unique():
             raise ValueError(
@@ -125,6 +132,14 @@ class PerturbationSpace:
             perturbations: Perturbations to add.
             reference_key: perturbation source from which the perturbation summation starts.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
+
+        Examples:
+            Example usage with PseudobulkSpace:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
+            >>> new_perturbation = ps.add(ps_adata, perturbations=["ATF2", "CD86"], reference_key='NT')
         """
         new_pert_name = ""
         for perturbation in perturbations:
@@ -216,6 +231,14 @@ class PerturbationSpace:
             perturbations: Perturbations to subtract,
             reference_key: Perturbation source from which the perturbation subtraction starts
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
+
+        Examples:
+            Example usage with PseudobulkSpace:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
+            >>> new_perturbation = ps.add(ps_adata, reference_key="ATF2", perturbations=["BRD4", "CUL3"])
         """
         new_pert_name = reference_key + "-"
         for perturbation in perturbations:

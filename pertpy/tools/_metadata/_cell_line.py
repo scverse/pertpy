@@ -219,6 +219,13 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with cell line annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
         """
         if copy:
             adata = adata.copy()
@@ -339,6 +346,14 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with bulk rna expression annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> pt_metadata.annotate_bulk_rna_expression(adata_annotated)
         """
         if copy:
             adata = adata.copy()
@@ -429,6 +444,14 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with protein expression annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> pt_metadata.annotate_protein_expression(adata_annotated)
         """
         if copy:
             adata = adata.copy()
@@ -509,6 +532,12 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with drug response annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.mcfarland_2020()
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> pt_metadata.annotate_from_gdsc(adata, query_id='cell_line')
         """
         if copy:
             adata = adata.copy()
@@ -568,6 +597,11 @@ class CellLineMetaData:
 
         Returns:
             Returns a LookUp object specific for cell line annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> lookup = pt_metadata.lookup()
         """
         return LookUp(
             type="cell_line",

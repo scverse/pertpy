@@ -22,35 +22,63 @@ class DistanceTest:
     group (which normally would be your "control" cells).
 
     Args:
-        metric: Distance metric to use.
+        metric: Distance metric to use between groups of cells.
         n_perms: Number of permutations to run. Defaults to 1000.
-        obsm_key: Name of embedding to use for distance computation. Defaults to 'X_pca'.
+        layer_key: Name of the counts layer containing raw counts to calculate distances for.
+                   Mutually exclusive with 'obsm_key'.
+                   Defaults to None and is then not used.
+        obsm_key: Name of embedding in adata.obsm to use.
+                  Mutually exclusive with 'counts_layer_key'.
+                  Defaults to None, but is set to "X_pca" if not set explicitly internally.
         alpha: Significance level. Defaults to 0.05.
         correction: Multiple testing correction method. Defaults to 'holm-sidak'.
+        cell_wise_metric: Metric to use between single cells. Defaults to "euclidean".
 
     Examples:
         >>> import pertpy as pt
-        >>> adata = pt.dt.distance_example()
-        >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
-        >>> tab = etest(adata, groupby='perturbation', contrast='control')
+        >>> adata = pt.dt.distance_example_data()
+        >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+        >>> tab = distance_test(adata, groupby='perturbation', contrast='control')
     """
 
     def __init__(
         self,
         metric: str,
         n_perms: int = 1000,
-        obsm_key: str = "X_pca",
+        layer_key: str = None,
+        obsm_key: str = None,
         alpha: float = 0.05,
         correction: str = "holm-sidak",
+        cell_wise_metric=None,
     ):
         self.metric = metric
         self.n_perms = n_perms
+
+        if layer_key and obsm_key:
+            raise ValueError(
+                "Cannot use 'counts_layer_key' and 'obsm_key' at the same time.\n"
+                "Please provide only one of the two keys."
+            )
+        if not layer_key and not obsm_key:
+            obsm_key = "X_pca"
+        self.layer_key = layer_key
         self.obsm_key = obsm_key
         self.alpha = alpha
         self.correction = correction
+        self.cell_wise_metric = (
+            cell_wise_metric if cell_wise_metric else Distance(self.metric, self.obsm_key).cell_wise_metric
+        )
+
+        self.distance = Distance(
+            self.metric, layer_key=self.layer_key, obsm_key=self.obsm_key, cell_wise_metric=self.cell_wise_metric
+        )
 
     def __call__(
-        self, adata: AnnData, groupby: str, contrast: str, cell_wise_metric: str = "euclidean", verbose: bool = True
+        self,
+        adata: AnnData,
+        groupby: str,
+        contrast: str,
+        show_progressbar: bool = True,
     ) -> pd.DataFrame:
         """Run a permutation test using the specified distance metric, testing
         all groups of cells against a specified contrast group ("control").
@@ -59,7 +87,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            verbose: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress. Defaults to True.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -71,18 +99,18 @@ class DistanceTest:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example()
-            >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
-            >>> tab = etest(adata, groupby='perturbation', contrast='control')
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+            >>> tab = distance_test(adata, groupby='perturbation', contrast='control')
         """
-        if Distance(self.metric, self.obsm_key).metric_fct.accepts_precomputed:
+        if self.distance.metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
             # distance matrix, but not all metrics can do that.
-            return self.test_precomputed(adata, groupby, contrast, cell_wise_metric, verbose)
+            return self.test_precomputed(adata, groupby, contrast, show_progressbar)
         else:
-            return self.test_xy(adata, groupby, contrast, verbose)
+            return self.test_xy(adata, groupby, contrast, show_progressbar)
 
-    def test_xy(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
+    def test_xy(self, adata: AnnData, groupby: str, contrast: str, show_progressbar: bool = True) -> pd.DataFrame:
         """Run permutation test for metric not supporting precomputed distances.
 
         Runs a permutation test for a metric that can not be computed using
@@ -93,8 +121,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            cell_wise_metric: Metric to use for pairwise distances. Defaults to "euclidean".
-            verbose: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress. Defaults to True.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -103,12 +130,17 @@ class DistanceTest:
                 - significant: whether the group is significantly different from the contrast group
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+            >>> test_results = distance_test.test_xy(adata, groupby='perturbation', contrast='control')
         """
-        distance = Distance(self.metric, self.obsm_key)
         groups = adata.obs[groupby].unique()
         if contrast not in groups:
             raise ValueError(f"Contrast group {contrast} not found in {groupby} of adata.obs.")
-        fct = track if verbose else lambda iterable: iterable
+        fct = track if show_progressbar else lambda iterable: iterable
         embedding = adata.obsm[self.obsm_key]
 
         # Generate the null distribution
@@ -127,7 +159,7 @@ class DistanceTest:
 
                 X = embedding[mask][idx]  # shuffled group
                 Y = embedding[mask][~idx]  # shuffled contrast
-                dist = distance(X, Y)
+                dist = self.distance(X, Y)
 
                 df.loc[group, "distance"] = dist
             results.append(df.sort_index())
@@ -138,7 +170,7 @@ class DistanceTest:
                 continue
             X = embedding[adata.obs[groupby] == group]
             Y = embedding[adata.obs[groupby] == contrast]
-            df.loc[group, "distance"] = distance(X, Y)
+            df.loc[group, "distance"] = self.distance(X, Y)
 
         # Evaluate the test
         # count times shuffling resulted in larger distance
@@ -172,9 +204,7 @@ class DistanceTest:
 
         return tab
 
-    def test_precomputed(
-        self, adata: AnnData, groupby: str, contrast: str, cell_wise_metric: str = "euclidean", verbose: bool = True
-    ) -> pd.DataFrame:
+    def test_precomputed(self, adata: AnnData, groupby: str, contrast: str, verbose: bool = True) -> pd.DataFrame:
         """Run permutation test for metrics that take precomputed distances.
 
         Args:
@@ -191,9 +221,14 @@ class DistanceTest:
                 - significant: whether the group is significantly different from the contrast group
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+            >>> test_results = distance_test.test_precomputed(adata, groupby='perturbation', contrast='control')
         """
-        distance = Distance(self.metric, self.obsm_key)
-        if not distance.metric_fct.accepts_precomputed:
+        if not self.distance.metric_fct.accepts_precomputed:
             raise ValueError(f"Metric {self.metric} does not accept precomputed distances.")
 
         groups = adata.obs[groupby].unique()
@@ -204,8 +239,11 @@ class DistanceTest:
         # Precompute the pairwise distances
         precomputed_distances = {}
         for group in groups:
-            cells = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.obsm_key].copy()
-            pwd = pairwise_distances(cells, cells, metric=cell_wise_metric)
+            if self.layer_key:
+                cells = adata[adata.obs[groupby].isin([group, contrast])].layers[self.layer_key].copy()
+            else:
+                cells = adata[adata.obs[groupby].isin([group, contrast])].obsm[self.obsm_key].copy()
+            pwd = pairwise_distances(cells, cells, metric=self.distance.cell_wise_metric)
             precomputed_distances[group] = pwd
 
         # Generate the null distribution
@@ -223,7 +261,7 @@ class DistanceTest:
                 idx = shuffled_labels == group
 
                 precomputed_distance = precomputed_distances[group]
-                distance_result = distance.metric_fct.from_precomputed(precomputed_distance, idx)
+                distance_result = self.distance.metric_fct.from_precomputed(precomputed_distance, idx)
 
                 df.loc[group, "distance"] = distance_result
             results.append(df.sort_index())
@@ -237,7 +275,7 @@ class DistanceTest:
             idx = labels == group
 
             precomputed_distance = precomputed_distances[group]
-            distance_result = distance.metric_fct.from_precomputed(precomputed_distance, idx)
+            distance_result = self.distance.metric_fct.from_precomputed(precomputed_distance, idx)
 
             df.loc[group, "distance"] = distance_result
 
