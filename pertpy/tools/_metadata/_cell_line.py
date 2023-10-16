@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 from rich import print
+from scanpy import settings
 
 from pertpy.data._dataloader import _download
 
@@ -18,19 +19,19 @@ class CellLineMetaData:
     """Utilities to fetch cell line metadata."""
 
     def __init__(self):
-        # Create cachedir if not exists
-        self.cachedir = ".pertpy_cache"
-        if not Path.exists(Path(self.cachedir)):
-            Path(self.cachedir).mkdir(parents=True)
+        # Set scanpy cachedir to pertpy dir
+        settings.cachedir = ".pertpy_cache"
+        # if not Path.exists(Path(self.cachedir)):
+        #    Path(self.cachedir).mkdir(parents=True)
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-        cell_line_file_path = self.cachedir + "/sample_info.csv"
+        cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
         if not Path(cell_line_file_path).exists():
             print("[bold yellow]No DepMap metadata file found. Starting download now.")
             _download(
                 url="https://ndownloader.figshare.com/files/35020903",
                 output_file_name="sample_info.csv",
-                output_path=self.cachedir,
+                output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
@@ -38,8 +39,10 @@ class CellLineMetaData:
 
         # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
         # Source: https://www.cancerrxgene.org/celllines
-        cell_line_cancer_project_file_path = self.cachedir + "/cell_line_cancer_project.csv"
-        cell_line_cancer_project_transformed_path = self.cachedir + "/cell_line_cancer_project_transformed.csv"
+        cell_line_cancer_project_file_path = settings.cachedir.__str__() + "/cell_line_cancer_project.csv"
+        cell_line_cancer_project_transformed_path = (
+            settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
+        )
         if not Path(cell_line_cancer_project_transformed_path).exists():
             if not Path(cell_line_cancer_project_file_path).exists():
                 print(
@@ -56,7 +59,7 @@ class CellLineMetaData:
                     "bSearchable_6=true&iSortCol_0=0&sSortDir_0=asc&iSortingCols=1&bSortable_0=true&bSortable_1=true&"
                     "bSortable_2=true&bSortable_3=true&bSortable_4=true&bSortable_5=true&bSortable_6=true&export=csv",
                     output_file_name="cell_line_cancer_project.csv",
-                    output_path=self.cachedir,
+                    output_path=settings.cachedir,
                     block_size=4096,
                     is_zip=False,
                 )
@@ -86,13 +89,13 @@ class CellLineMetaData:
 
         # Download metadata for driver genes from DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
-        gene_annotation_file_path = self.cachedir + "/gene_identifiers_20191101.csv"
+        gene_annotation_file_path = settings.cachedir.__str__() + "/gene_identifiers_20191101.csv"
         if not Path(gene_annotation_file_path).exists():
             print("[bold yellow]No metadata file was found for gene annotation." " Starting download now.")
             _download(
                 url="https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv",
                 output_file_name="gene_identifiers_20191101.csv",
-                output_path=self.cachedir,
+                output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
@@ -102,7 +105,7 @@ class CellLineMetaData:
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
         # issue: read count values contain random whitespace, not sure what it supposes to mean
         # solution: remove the white space and convert to int before depmap updates the metadata
-        bulk_rna_sanger_file_path = self.cachedir + "/rnaseq_read_count_20220624_processed.csv"
+        bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624_processed.csv"
         if not Path(bulk_rna_sanger_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
@@ -111,7 +114,7 @@ class CellLineMetaData:
             _download(
                 url="https://figshare.com/ndownloader/files/42467103",
                 output_file_name="rnaseq_read_count_20220624_processed.csv",
-                output_path=self.cachedir,
+                output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
@@ -119,14 +122,13 @@ class CellLineMetaData:
 
         # Download CCLE expression data from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-        # bulk_rna_broad_file_path = self.cachedir + "/CCLE_expression.csv"
-        bulk_rna_broad_file_path = self.cachedir + "/CCLE_expression_full.csv"
+        bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression_full.csv"
         if not Path(bulk_rna_broad_file_path).exists():
             print("[bold yellow]No metadata file was found for CCLE expression data. Starting download now.")
             _download(
                 url="https://figshare.com/ndownloader/files/34989922",
                 output_file_name="CCLE_expression_full.csv",
-                output_path=self.cachedir,
+                output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
@@ -134,7 +136,7 @@ class CellLineMetaData:
 
         # Download proteomics data processed by DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
-        proteomics_file_path = self.cachedir + "/proteomics_all_20221214_processed.csv"
+        proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214_processed.csv"
         if not Path(proteomics_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger)." " Starting download now."
@@ -142,7 +144,7 @@ class CellLineMetaData:
             _download(
                 url="https://figshare.com/ndownloader/files/42468393",
                 output_file_name="proteomics_all_20221214_processed.csv",
-                output_path=self.cachedir,
+                output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
@@ -150,7 +152,7 @@ class CellLineMetaData:
 
         # Download GDSC drug response data
         # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
-        drug_response_gdsc1_file_path = self.cachedir + "/ic50_gdsc1.xlsx"
+        drug_response_gdsc1_file_path = settings.cachedir.__str__() + "/ic50_gdsc1.xlsx"
         if not Path(drug_response_gdsc1_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for drug response data of GDSC1 dataset."
@@ -159,7 +161,7 @@ class CellLineMetaData:
             _download(
                 url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx",
                 output_file_name="ic50_gdsc1.xlsx",
-                output_path=self.cachedir,
+                output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
@@ -171,7 +173,7 @@ class CellLineMetaData:
         ]
         self.drug_response_gdsc1 = self.drug_response_gdsc1.reset_index(drop=True)
 
-        drug_response_gdsc2_file_path = self.cachedir + "/ic50_gdsc2.xlsx"
+        drug_response_gdsc2_file_path = settings.cachedir.__str__() + "/ic50_gdsc2.xlsx"
         if not Path(drug_response_gdsc2_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for drug response data of GDSC2 dataset."
@@ -180,7 +182,7 @@ class CellLineMetaData:
             _download(
                 url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC2_fitted_dose_response_24Jul22.xlsx",
                 output_file_name="ic50_gdsc2.xlsx",
-                output_path=self.cachedir,
+                output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
