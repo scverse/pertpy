@@ -19,7 +19,6 @@ class CellLineMetaData:
     """Utilities to fetch cell line metadata."""
 
     def __init__(self):
-        # Set scanpy cachedir to pertpy dir
         settings.cachedir = ".pertpy_cache"
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
