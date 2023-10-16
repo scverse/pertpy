@@ -21,8 +21,6 @@ class CellLineMetaData:
     def __init__(self):
         # Set scanpy cachedir to pertpy dir
         settings.cachedir = ".pertpy_cache"
-        # if not Path.exists(Path(self.cachedir)):
-        #    Path(self.cachedir).mkdir(parents=True)
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
         cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
