@@ -135,10 +135,7 @@ class CellLineMetaData:
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
         proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214_processed.csv"
         if not Path(proteomics_file_path).exists():
-            print(
-                "[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger).\n
-                 Starting download now."
-            )
+            print("[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger). Starting download now.")
             _download(
                 url="https://figshare.com/ndownloader/files/42468393",
                 output_file_name="proteomics_all_20221214_processed.csv",
