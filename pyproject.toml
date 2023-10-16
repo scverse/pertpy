@@ -48,7 +48,6 @@ dependencies = [
     "ott-jax",
     "sparsecca",
     "numba",
-    "remotezip",
     "openpyxl",
 ]
 
