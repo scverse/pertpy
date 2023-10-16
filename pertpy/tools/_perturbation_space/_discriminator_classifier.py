@@ -1,5 +1,8 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import anndata
-import numpy as np
 import pytorch_lightning as pl
 import scipy
 import torch
@@ -11,6 +14,9 @@ from torch import optim
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class DiscriminatorClassifierSpace(PerturbationSpace):

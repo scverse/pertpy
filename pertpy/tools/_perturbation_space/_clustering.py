@@ -1,7 +1,13 @@
-from anndata import AnnData
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sklearn.metrics import pairwise_distances
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+
+if TYPE_CHECKING:
+    from anndata import AnnData
 
 
 class ClusteringSpace(PerturbationSpace):

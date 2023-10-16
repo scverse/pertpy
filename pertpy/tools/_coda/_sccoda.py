@@ -404,7 +404,7 @@ class Sccoda(CompositionalModel2):
         modality_key: str = "coda",
         num_samples: int = 10000,
         num_warmup: int = 1000,
-        rng_key: int = None,
+        rng_key: int = 0,
         copy: bool = False,
         *args,
         **kwargs,
