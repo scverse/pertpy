@@ -44,6 +44,18 @@ class JaxscgenPlot:
             gene_list: list of gene names to be plotted.
             show: if `True`: will show to the plot after saving it.
             **kwargs:
+
+        Examples:
+            >>> import pertpy at pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.SCGEN(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> pred, delta = model.predict(ctrl_key='ctrl', stim_key='stim', celltype_to_predict='CD4 T cells')
+            >>> pred.obs['label'] = 'pred'
+            >>> eval_adata = data[data.obs['cell_type'] == 'CD4 T cells'].copy().concatenate(pred)
+            >>> r2_value = pt.pl.scg.reg_mean_plot(eval_adata, condition_key='label', axis_keys={"x": "pred", "y": "stim"}, \
+                labels={"x": "predicted", "y": "ground truth"}, save=False, show=True)
         """
         import seaborn as sns
 

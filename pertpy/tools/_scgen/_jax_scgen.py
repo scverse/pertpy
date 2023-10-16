@@ -74,6 +74,14 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             `np nd-array` of predicted cells in primary space.
         delta: float
             Difference between stimulated and control cells in latent space
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.SCGEN(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> pred, delta = model.predict(ctrl_key='ctrl', stim_key='stim', celltype_to_predict='CD4 T cells')
         """
         # use keys registered from `setup_anndata()`
         cell_type_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.LABELS_KEY).original_key
@@ -142,7 +150,25 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         indices: Sequence[int] | None = None,
         batch_size: int | None = None,
     ) -> Array:
-        """Get decoded expression."""
+        """Get decoded expression.
+
+        Args:
+            adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
+                   AnnData object used to initialize the model.
+            indices: Indices of cells in adata to use. If `None`, all cells are used.
+            batch_size: Minibatch size for data loading into model. Defaults to `scvi.settings.batch_size`.
+
+        Returns:
+            Decoded expression for each cell
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.SCGEN(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> decoded_X = model.get_decoded_expression()
+        """
         if self.is_trained_ is False:
             raise RuntimeError("Please train the model first.")
 
@@ -168,6 +194,14 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             corrected: `~anndata.AnnData`
             AnnData of corrected gene expression in adata.X and corrected latent space in adata.obsm["latent"].
             A reference to the original AnnData is in `corrected.raw` if the input adata had no `raw` attribute.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.SCGEN(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> corrected_adata = model.batch_removal()
         """
         adata = self._validate_anndata(adata)
         latent_all = self.get_latent_representation(adata)
@@ -264,6 +298,11 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
 
         %(param_batch_key)s
         %(param_labels_key)s
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
         """
         setup_method_args = cls._get_setup_method_args(**locals())
         anndata_fields = [
@@ -300,6 +339,14 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
 
         Returns:
             Low-dimensional representation for each cell
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.SCGEN(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> latent_X = model.get_latent_representation()
         """
         self._check_if_trained(warn=False)
 

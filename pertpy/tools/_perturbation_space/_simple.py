@@ -26,6 +26,18 @@ class CentroidSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+
+        Examples:
+            Compute the centroids of a UMAP embedding of the papalexi_2021 dataset:
+
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> sc.pp.pca(mdata["rna"])
+            >>> sc.pp.neighbors(mdata['rna'])
+            >>> sc.tl.umap(mdata["rna"])
+            >>> cs = pt.tl.CentroidSpace()
+            >>> cs_adata = cs.compute(mdata["rna"], target_col="gene_target")
         """
 
         X = None
@@ -94,6 +106,12 @@ class PseudobulkSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+
+        Examples:
+            >>> import pertpy as pp
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
         """
         if "groups_col" not in kwargs:
             kwargs["groups_col"] = "perturbations"
@@ -144,6 +162,12 @@ class KMeansSpace(ClusteringSpace):
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's KMeans.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> kmeans = pt.tl.KMeansSpace()
+            >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
         """
         if copy:
             adata = adata.copy()
@@ -200,6 +224,12 @@ class DBSCANSpace(ClusteringSpace):
             cluster_key: name of the .obs column to store the cluster labels. Defaults to 'k-means'
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> dbscan = pt.tl.DBSCANSpace()
+            >>> dbscan_adata = dbscan.compute(mdata["rna"])
         """
         if copy:
             adata = adata.copy()

@@ -1,5 +1,8 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import anndata
-import numpy as np
 import pytorch_lightning as pl
 import scipy
 import torch
@@ -11,6 +14,9 @@ from torch import optim
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class DiscriminatorClassifierSpace(PerturbationSpace):
@@ -49,6 +55,12 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             test_split_size: Default to 0.2.
             validation_split_size: Size of the validation split taking into account that is taking with respect to the resultant train split.
                                    Defaults to 0.25.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.papalexi_2021()['rna']
+            >>> dcs = pt.tl.DiscriminatorClassifierSpace()
+            >>> dcs.load(adata, target_col="gene_target")
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
@@ -115,6 +127,13 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             max_epochs: max epochs for training. Default to 40
             val_epochs_check: check in validation dataset each val_epochs_check epochs
             patience: patience before the early stopping flag is activated
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.papalexi_2021()['rna']
+            >>> dcs = pt.tl.DiscriminatorClassifierSpace()
+            >>> dcs.load(adata, target_col="gene_target")
+            >>> dcs.train(max_epochs=5)
         """
         self.trainer = pl.Trainer(
             min_epochs=1,
@@ -137,6 +156,14 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
         Returns:
             AnnData whose `X` attribute is the perturbation embedding and whose .obs['perturbations'] are the names of the perturbations.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.papalexi_2021()['rna']
+            >>> dcs = pt.tl.DiscriminatorClassifierSpace()
+            >>> dcs.load(adata, target_col="gene_target")
+            >>> dcs.train()
+            >>> embeddings = dcs.get_embeddings()
         """
         with torch.no_grad():
             self.model.eval()
