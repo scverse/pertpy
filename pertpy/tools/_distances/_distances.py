@@ -352,8 +352,13 @@ class Distance:
 
         Args:
             adata: Annotated data matrix.
-            obs_key: Column name in adata.obs.
             n_jobs: Number of cores to use. Defaults to -1 (all).
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example()
+            >>> distance = pt.tools.Distance(metric="edistance")
+            >>> distance.precompute_distances(adata)
         """
         if self.layer_key:
             cells = adata.layers[self.layer_key]

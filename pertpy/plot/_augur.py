@@ -26,6 +26,23 @@ class AugurpyPlot:
 
         Returns:
             Axes of the plot.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.bhattacherjee()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+
+            >>> data_15 = ag_rfc.load(adata, condition_label="Maintenance_Cocaine", treatment_label="withdraw_15d_Cocaine")
+            >>> adata_15, results_15 = ag_rfc.predict(data_15, random_state=None, n_threads=4)
+            >>> adata_15_permute, results_15_permute = ag_rfc.predict(data_15, augur_mode="permute", n_subsamples=100, random_state=None, n_threads=4)
+
+            >>> data_48 = ag_rfc.load(adata, condition_label="Maintenance_Cocaine", treatment_label="withdraw_48h_Cocaine")
+            >>> adata_48, results_48 = ag_rfc.predict(data_48, random_state=None, n_threads=4)
+            >>> adata_48_permute, results_48_permute = ag_rfc.predict(data_48, augur_mode="permute", n_subsamples=100, random_state=None, n_threads=4)
+
+            >>> pvals = ag_rfc.predict_differential_prioritization(augur_results1=results_15, augur_results2=results_48, \
+                permuted_results1=results_15_permute, permuted_results2=results_48_permute)
+            >>> pt.pl.ag.dp_scatter(pvals)
         """
         x = results["mean_augur_score1"]
         y = results["mean_augur_score2"]
@@ -69,6 +86,14 @@ class AugurpyPlot:
 
         Returns:
             Axes of the plot.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
+            >>> pt.pl.ag.important_features(v_results)
         """
         if isinstance(data, AnnData):
             results = data.uns[key]
@@ -115,6 +140,14 @@ class AugurpyPlot:
 
         Returns:
             Axes of the plot.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
+            >>> pt.pl.ag.lollipop(v_results)
         """
         if isinstance(data, AnnData):
             results = data.uns[key]
@@ -157,6 +190,15 @@ class AugurpyPlot:
 
         Returns:
             Axes of the plot.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.sc_sim_augur()
+            >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
+            >>> loaded_data = ag_rfc.load(adata)
+            >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)
+            >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
+            >>> pt.pl.ag.scatterplot(v_results, h_results)
         """
         cell_types = results1["summary_metrics"].columns
 

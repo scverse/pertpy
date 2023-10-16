@@ -303,7 +303,7 @@ class Tasccoda(CompositionalModel2):
 
     def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:  # type: ignore
         """
-        Sets initial MCMC state values for scCODA model
+        Sets initial MCMC state values for tascCODA model
 
         Args:
             rng_key: RNG value to be set
@@ -312,6 +312,20 @@ class Tasccoda(CompositionalModel2):
 
         Returns:
             Return AnnData
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> adata = tasccoda.set_init_mcmc_states(rng_key=42, ref_index=[0,1], sample_adata=mdata['coda'])
         """
         N, D = sample_adata.obsm["covariate_matrix"].shape
         P = sample_adata.X.shape[1]
@@ -476,8 +490,8 @@ class Tasccoda(CompositionalModel2):
             >>> mdata = tasccoda.prepare(
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
-            >>> tasccoda.make_arviz(mdata)
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> arviz_data = tasccoda.make_arviz(mdata)
         """
         if isinstance(data, MuData):
             try:
@@ -586,7 +600,7 @@ class Tasccoda(CompositionalModel2):
             >>> mdata = tasccoda.prepare(
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
         """
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
@@ -606,7 +620,7 @@ class Tasccoda(CompositionalModel2):
             >>> mdata = tasccoda.prepare(
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.summary(mdata)
         """
         return super().summary(data, extended, modality_key, *args, **kwargs)
@@ -627,7 +641,7 @@ class Tasccoda(CompositionalModel2):
             >>> mdata = tasccoda.prepare(
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.credible_effects(mdata)
         """
         return super().credible_effects(data, modality_key, est_fdr)
@@ -648,8 +662,9 @@ class Tasccoda(CompositionalModel2):
             >>> mdata = tasccoda.prepare(
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100)
-            >>> tasccoda.set_fdr(mdata_salm, est_fdr=0.4)
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> tasccoda.set_fdr(mdata, est_fdr=0.4)
+            #TODO: Not working (throws error, because too many values to unpack -> Correct set_fdr first)
         """
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
