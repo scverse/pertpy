@@ -29,7 +29,7 @@ class TestMetaData:
         }
         cell_line = pd.DataFrame(cell_line)
         obs = pd.concat([cell_line], axis=1)
-        obs = obs.set_index(np.arange(NUM_GENES))
+        obs = obs.set_index(pd.Index([str(i) for i in range(NUM_GENES)]))
         obs.index.rename("index", inplace=True)
         obs["perturbation"] = "Midostaurin"
 
