@@ -359,16 +359,15 @@ class Tasccoda(CompositionalModel2):
         sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1_scaled"] = lambda_1
 
         # Initial MCMC states
-        if rng_key is not None:
-            np.random.seed(rng_key)
+        rng = np.random.default_rng(seed=rng_key)
 
         sample_adata.uns["scCODA_params"]["mcmc"]["init_params"] = {
             "a_0": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_0,
-            "b_raw_0": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "b_raw_0": rng.normal(0.0, 1.0, beta_nobl_size),
             "a_1": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_1,
-            "b_raw_1": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "b_raw_1": rng.normal(0.0, 1.0, beta_nobl_size),
             "theta": np.ones(dtype=np.float64, shape=1) * 0.5,
-            "alpha": np.random.normal(0.0, 1.0, alpha_size),
+            "alpha": rng.normal(0.0, 1.0, alpha_size),
         }
 
         return sample_adata
@@ -543,7 +542,8 @@ class Tasccoda(CompositionalModel2):
         ref_index = jnp.array(sample_adata.uns["scCODA_params"]["reference_index"])
 
         if rng_key is None:
-            rng_key = random.PRNGKey(np.random.randint(0, 10000))
+            rng = np.random.default_rng()
+            rng_key = random.PRNGKey(rng.integers(0, 10000))
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(

@@ -208,14 +208,13 @@ class Sccoda(CompositionalModel2):
         beta_nobl_size = [D, P - 1]
 
         # Initial MCMC states
-        if rng_key is not None:
-            np.random.seed(rng_key)
+        rng = np.random.default_rng(seed=rng_key)
 
         sample_adata.uns["scCODA_params"]["mcmc"]["init_params"] = {
             "sigma_d": np.ones(dtype=np.float64, shape=sigma_size),
-            "b_offset": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "b_offset": rng.normal(0.0, 1.0, beta_nobl_size),
             "ind_raw": np.zeros(dtype=np.float64, shape=beta_nobl_size),
-            "alpha": np.random.normal(0.0, 1.0, alpha_size),
+            "alpha": rng.normal(0.0, 1.0, alpha_size),
         }
 
         return sample_adata
@@ -365,7 +364,8 @@ class Sccoda(CompositionalModel2):
         ref_index = jnp.array(sample_adata.uns["scCODA_params"]["reference_index"])
 
         if rng_key is None:
-            rng_key = random.PRNGKey(np.random.randint(0, 10000))
+            rng = np.random.default_rng()
+            rng_key = random.PRNGKey(rng.integers(0, 10000))
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
