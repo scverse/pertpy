@@ -504,7 +504,7 @@ class MeanSquaredDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs) ** 0.5
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs) ** 2 / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MeanSquaredDistance cannot be called on a pairwise distance matrix.")
@@ -518,7 +518,7 @@ class MeanAbsoluteDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs)
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs) / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MeanAbsoluteDistance cannot be called on a pairwise distance matrix.")
