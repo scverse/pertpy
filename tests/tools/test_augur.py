@@ -31,9 +31,7 @@ class TestAugur:
         loaded_df = ag.load(adata.to_df(), meta=adata.obs, cell_type_col="cell_type", label_col="label")
 
         assert loaded_adata.obs["y_"].equals(loaded_df.obs["y_"]) is True
-        assert adata.to_df().equals(loaded_adata.to_df()) is True and adata.to_df().equals(
-            loaded_df.to_df()
-        )
+        assert adata.to_df().equals(loaded_adata.to_df()) is True and adata.to_df().equals(loaded_df.to_df())
 
     def test_random_forest_classifier(self, adata):
         """Tests random forest for auc calculation."""
@@ -75,7 +73,9 @@ class TestAugur:
         sc.pp.highly_variable_genes(adata)
         adata_subsampled = sc.pp.subsample(adata, n_obs=100, random_state=42, copy=True)
 
-        cv = self.ag_rfc.run_cross_validation(adata_subsampled, subsample_idx=1, folds=3, random_state=42, zero_division=0)
+        cv = self.ag_rfc.run_cross_validation(
+            adata_subsampled, subsample_idx=1, folds=3, random_state=42, zero_division=0
+        )
         auc = 0.786412
         assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
