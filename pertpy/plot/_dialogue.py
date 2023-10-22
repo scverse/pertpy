@@ -51,7 +51,8 @@ class DialoguePlot:
 
         return ax
 
-    def pairplot(self, adata: AnnData, celltype_key: str, color: str, sample_id: str, mcp: str = "mcp_0") -> PairGrid:
+    @staticmethod
+    def pairplot(adata: AnnData, celltype_key: str, color: str, sample_id: str, mcp: str = "mcp_0") -> PairGrid:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,
@@ -75,10 +76,7 @@ class DialoguePlot:
             >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
                 n_counts_key = "nCount_RNA", n_mpcs = 3)
             >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
-            #>>> dl_pl=pt.pl.dl()
-            #>>> dl_pl.pairplot(adata=adata, celltype_key="cell.subtypes", color="gender", sample_id="clinical.status")
             >>> pt.pl.dl.pairplot(adata, celltype_key="cell.subtypes", color="gender", sample_id="clinical.status")
-            #TODO: Is self parameter there on purpose -> create DialoguePlot object first?
         """
         mean_mcps = adata.obs.groupby([sample_id, celltype_key])[mcp].mean()
         mean_mcps = mean_mcps.reset_index()
