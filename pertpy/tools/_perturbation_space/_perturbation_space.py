@@ -60,9 +60,7 @@ class PerturbationSpace:
             )
 
         if embedding_key is not None and embedding_key not in adata.obsm_keys():
-            raise ValueError(
-                f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."
-            )
+            raise ValueError(f"Embedding key {embedding_key} not found in obsm keys of the anndata.")
 
         if layer_key is not None and layer_key not in adata.layers.keys():
             raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
@@ -124,6 +122,7 @@ class PerturbationSpace:
         perturbations: Iterable[str],
         reference_key: str = "control",
         ensure_consistency: bool = False,
+        target_col: str = "perturbations",
     ):
         """Add perturbations linearly. Assumes input of size n_perts x dimensionality
 
@@ -132,6 +131,7 @@ class PerturbationSpace:
             perturbations: Perturbations to add.
             reference_key: perturbation source from which the perturbation summation starts.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
+            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 
         Examples:
             Example usage with PseudobulkSpace:
@@ -145,7 +145,7 @@ class PerturbationSpace:
         for perturbation in perturbations:
             if perturbation not in adata.obs_names:
                 raise ValueError(
-                    f"Perturbation {reference_key} not found in adata.obs_names. {reference_key} must be in adata.obs_names."
+                    f"Perturbation {perturbation} not found in adata.obs_names. {perturbation} must be in adata.obs_names."
                 )
             new_pert_name += perturbation + "+"
 
@@ -156,7 +156,7 @@ class PerturbationSpace:
                 "Run with ensure_consistency=True"
             )
         else:
-            adata = self.compute_control_diff(adata, copy=True, all_data=True)
+            adata = self.compute_control_diff(adata, copy=True, all_data=True, target_col=target_col)
 
         data: dict[str, np.array] = {}
 
@@ -223,6 +223,7 @@ class PerturbationSpace:
         perturbations: Iterable[str],
         reference_key: str = "control",
         ensure_consistency: bool = False,
+        target_col: str = "perturbations",
     ):
         """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
 
@@ -231,6 +232,7 @@ class PerturbationSpace:
             perturbations: Perturbations to subtract,
             reference_key: Perturbation source from which the perturbation subtraction starts
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
+            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 
         Examples:
             Example usage with PseudobulkSpace:
@@ -244,7 +246,7 @@ class PerturbationSpace:
         for perturbation in perturbations:
             if perturbation not in adata.obs_names:
                 raise ValueError(
-                    f"Perturbation {reference_key} not found in adata.obs_names. {reference_key} must be in adata.obs_names."
+                    f"Perturbation {perturbation} not found in adata.obs_names. {perturbation} must be in adata.obs_names."
                 )
             new_pert_name += perturbation + "-"
 
@@ -255,7 +257,7 @@ class PerturbationSpace:
                 "Run with ensure_consistency=True"
             )
         else:
-            adata = self.compute_control_diff(adata, copy=True, all_data=True)
+            adata = self.compute_control_diff(adata, copy=True, all_data=True, target_col=target_col)
 
         data: dict[str, np.array] = {}
 

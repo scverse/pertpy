@@ -43,6 +43,13 @@ class JaxscgenPlot:
             save: Specify if the plot should be saved or not.
             gene_list: list of gene names to be plotted.
             show: if `True`: will show to the plot after saving it.
+            top_100_genes: List of the top 100 differentially expressed genes. Specify if you want the top 100 DEGs to be assessed extra.
+            verbose: Specify if you want information to be printed while creating the plot, defaults to `False`.
+            legend: if `True`: plots a legend, defaults to `True`.
+            title: Set if you want the plot to display a title.
+            x_coeff: Offset to print the R^2 value in x-direction, defaults to 0.3.
+            y_coeff: Offset to print the R^2 value in y-direction, defaults to 0.8.
+            fontsize: Fontsize used for text in the plot, defaults to 14.
             **kwargs:
 
         Examples:
@@ -171,6 +178,13 @@ class JaxscgenPlot:
             save: Specify if the plot should be saved or not.
             gene_list: list of gene names to be plotted.
             show: if `True`: will show to the plot after saving it.
+            top_100_genes: List of the top 100 differentially expressed genes. Specify if you want the top 100 DEGs to be assessed extra.
+            legend: if `True`: plots a legend, defaults to `True`.
+            title: Set if you want the plot to display a title.
+            verbose: Specify if you want information to be printed while creating the plot, defaults to `False`.
+            x_coeff: Offset to print the R^2 value in x-direction, defaults to 0.3.
+            y_coeff: Offset to print the R^2 value in y-direction, defaults to 0.8.
+            fontsize: Fontsize used for text in the plot, defaults to 14.
         """
         import seaborn as sns
 
