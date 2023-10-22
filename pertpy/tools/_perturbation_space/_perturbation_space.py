@@ -60,9 +60,7 @@ class PerturbationSpace:
             )
 
         if embedding_key is not None and embedding_key not in adata.obsm_keys():
-            raise ValueError(
-                f"Embedding key {embedding_key} not found in obsm keys of the anndata."
-            )
+            raise ValueError(f"Embedding key {embedding_key} not found in obsm keys of the anndata.")
 
         if layer_key is not None and layer_key not in adata.layers.keys():
             raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
