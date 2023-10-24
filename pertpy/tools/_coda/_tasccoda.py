@@ -664,7 +664,6 @@ class Tasccoda(CompositionalModel2):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.set_fdr(mdata, est_fdr=0.4)
-            #TODO: Not working (throws error, because too many values to unpack -> Correct set_fdr first)
         """
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
