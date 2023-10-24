@@ -1050,7 +1050,6 @@ class CompositionalModel2(ABC):
             intercept_df, effect_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
         elif sample_adata.uns["scCODA_params"]["model_type"] == "tree_agg":
             intercept_df, effect_df, node_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
-            # Save node df in `sample_adata.uns`
             sample_adata.uns["scCODA_params"]["node_df"] = node_df
         else:
             raise ValueError("No valid model type!")
