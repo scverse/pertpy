@@ -1046,7 +1046,14 @@ class CompositionalModel2(ABC):
         if isinstance(data, AnnData):
             sample_adata = data
 
-        intercept_df, effect_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
+        if sample_adata.uns["scCODA_params"]["model_type"] == "classic":
+            intercept_df, effect_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
+        elif sample_adata.uns["scCODA_params"]["model_type"] == "tree_agg":
+            intercept_df, effect_df, node_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
+            sample_adata.uns["scCODA_params"]["node_df"] = node_df
+        else:
+            raise ValueError("No valid model type!")
+
         sample_adata.varm["intercept_df"] = intercept_df
         for cov in effect_df.index.get_level_values("Covariate"):
             sample_adata.varm[f"effect_df_{cov}"] = effect_df.loc[cov, :]
