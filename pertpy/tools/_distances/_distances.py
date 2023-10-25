@@ -16,6 +16,7 @@ from scipy.special import gammaln
 from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+from sklearn.linear_model import LogisticRegression
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 if TYPE_CHECKING:
@@ -76,6 +77,10 @@ class Distance:
     - "nb_ll": log-likelihood over negative binomial
         Average of log-likelihoods of samples of the secondary group after fitting a negative binomial distribution
         over the samples of the first group.
+    - "classifier_proba": probability of a binary classifier
+        Average of the classification probability of the perturbation for a binary classifier.
+    - "classifier_cp": classifier class projection
+        Average of the class
 
     Attributes:
         metric: Name of distance metric.
@@ -147,6 +152,10 @@ class Distance:
             metric_fct = KSTestDistance()
         elif metric == "nb_ll":
             metric_fct = NBLL()
+        elif metric == "classifier_proba":
+            metric_fct = ClassifierProbaDistance()
+        elif metric == "classifier_cp":
+            metric_fct = ClassifierClassProjection()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -305,6 +314,10 @@ class Distance:
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
+        if self.metric == 'classifier_cp':
+            return self.metric_fct.onesided_distances(
+                adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs)
+
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.Series(index=groups, dtype=float)
@@ -726,3 +739,88 @@ class NBLL(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
+
+
+def _sample(X, frac=None, n=None):
+    """Returns subsample of cells in format (train, test)."""
+    if frac and n:
+        raise ValueError('Cannot pass both frac and n.')
+    if frac:
+        n_cells = int(X.shape[0]*frac)
+    elif n:
+        n_cells = n
+    else:
+        raise ValueError('Must pass either `frac` or `n`.')
+
+    sampled_indices = np.random.choice(X.shape[0], n_cells, replace=False)
+    remaining_indices = np.setdiff1d(np.arange(X.shape[0]), sampled_indices)
+    return X[remaining_indices, :], X[sampled_indices, :]
+
+class ClassifierProbaDistance(AbstractDistance):
+    """Average of classification probabilites of a binary classifier.
+
+    Assumes the first condition is control and the second is perturbed. Always holds out 20% of the perturbed condition.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        Y_train, Y_test = _sample(Y, frac=.2)
+        label = ['c']*X.shape[0] + ['p']*Y_train.shape[0]
+        train = np.concatenate([X, Y_train])
+
+        reg = LogisticRegression()  # TODO dynamically pass this?
+        reg.fit(train, label)
+        test_labels = reg.predict_proba(Y_test)
+        return np.mean(test_labels[:, 1])
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierProbaDistance cannot be called on a pairwise distance matrix.")
+
+
+class ClassifierClassProjection(AbstractDistance):
+    """Average of 1-(classification probability of control).
+
+    Warning: unlike all other distances, this must also take a list of categorical labels the same length as X.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierClassProjection cannot be called normally.")
+
+    def onesided_distances(
+        self,
+        adata: AnnData,
+        groupby: str,
+        selected_group: str | None = None,
+        groups: list[str] | None = None,
+        show_progressbar: bool = True,
+        n_jobs: int = -1,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Unlike the parent function, all groups except the selected group are factored into the classifier. Similar to the parent function, the returned dataframe contains only the specified groups."""
+        groups = adata.obs[groupby].unique() if groups is None else groups
+
+        X = adata[adata.obs[groupby] != selected_group].X
+        labels = adata[adata.obs[groupby] != selected_group].obs[groupby].values
+        Y = adata[adata.obs[groupby] == selected_group].X
+
+        reg = LogisticRegression()
+        reg.fit(X, labels)
+        test_probas = reg.predict_proba(Y)
+
+        df = pd.Series(index=groups, dtype=float)
+        for group in groups:
+            class_idx = list(reg.classes_).index(group)
+            df.loc[group] = np.mean(test_probas[:, class_idx])
+        df.index.name = groupby
+        df.name = f"classifier_cp to {selected_group}"
+        return df
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierClassProjection cannot be called on a pairwise distance matrix.")
