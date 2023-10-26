@@ -346,7 +346,7 @@ class Cinemaot:
         sk.fit(vm)
         wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
         u, s, vt = np.linalg.svd(wm)
-        dim = np.min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
+        dim = min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
         return dim
 
     def get_weightidx(
@@ -489,7 +489,7 @@ class Cinemaot:
         adata1 = adata[adata.obs[pert_key].isin([base, A]), :].copy()
         adata2 = adata[adata.obs[pert_key].isin([B, AB]), :].copy()
         adata_link = adata[adata.obs[pert_key].isin([base, B]), :].copy()
-        ot1, de1 = self.causaleffect(
+        de1 = self.causaleffect(
             adata1,
             pert_key=pert_key,
             control=A,
@@ -500,7 +500,8 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot2, de2 = self.causaleffect(
+        ot1 = de1.obsm['ot']
+        de2 = self.causaleffect(
             adata2,
             pert_key=pert_key,
             control=AB,
@@ -511,7 +512,8 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot0, de0 = self.causaleffect(
+        ot2 = de2.obsm['ot']
+        de0 = self.causaleffect(
             adata_link,
             pert_key=pert_key,
             control=B,
@@ -522,6 +524,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
+        ot0 = de0.obsm['ot']
         syn = sc.AnnData(
             np.array(-((ot0 / np.sum(ot0, axis=1)[:, None]) @ de2.X - de1.X)), obs=de1.obs.copy(), var=de1.var.copy()
         )
