@@ -59,7 +59,7 @@ class Cinemaot:
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
             eps: Tolerate error of the optimal transport.
-            solver: Either "Sinkhorn" or "Sinkhorn". The ott-jax solver used.
+            solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             preweight_label: The annotated label (e.g. cell type) that is used to assign weights for treated
                              and control cells to balance across the label. Helps overcome the differential abundance issue.
 
@@ -218,7 +218,7 @@ class Cinemaot:
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
             eps: Tolerate error of the optimal transport.
-            solver: Either "Sinkhorn" or "Sinkhorn". The ott-jax solver used.
+            solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             resolution: the clustering resolution used in the sampling phase.
 
         Returns:
@@ -327,7 +327,7 @@ class Cinemaot:
         c: float = 0.5,
         use_rep: str = "X_pca",
     ):
-        """Estimating the rank of the count matrix. Always use adata.raw.X.
+        """Estimating the rank of the count matrix. Always use adata.raw.X. Make sure it is the raw count matrix.
 
         Args:
             adata: The annotated data object.
