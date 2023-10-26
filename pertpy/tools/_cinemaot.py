@@ -67,6 +67,14 @@ class Cinemaot:
             Returns an AnnData object that contains the single-cell level treatment effect as de.X and the
             corresponding low dimensional embedding in de.obsm['X_embedding'], and optional matching matrix
             stored in the de.obsm['ot']. Also puts the confounding variation in adata.obsm[cf_rep].
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> out_adata = model.causaleffect(
+            >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True,
+            >>>         thres=0.5, smoothness=1e-5, eps=1e-3, solver="Sinkhorn", preweight_label="cell_type0528")
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         if solver not in available_solvers:
@@ -225,6 +233,14 @@ class Cinemaot:
             Returns an anndata object that contains the single-cell level treatment effect as de.X and the
             corresponding low dimensional embedding in de.obsm['X_embedding'], and optional matching matrix
             stored in the de.obsm['ot']. Also puts the confounding variation in adata.obsm[cf_rep].
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> ad, de = model.causaleffect_weighted(
+            >>>              adata, pert_key="perturbation", control="No stimulation", return_matching=True,
+            >>>              thres=0.5, smoothness=1e-5, eps=1e-3, solver="Sinkhorn")
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         assert solver in available_solvers, (
@@ -288,6 +304,16 @@ class Cinemaot:
 
         Returns:
             Returns an anndata object that contains aggregated pseudobulk profiles and associated metadata.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> de = model.causaleffect(
+            >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True, thres=0.5,
+            >>>         smoothness=1e-5, eps=1e-3, solver="Sinkhorn", preweight_label="cell_type0528")
+            >>> adata_pb = model.generate_pseudobulk(
+            >>>         adata, de, pert_key="perturbation", control="No stimulation", label_list=None)
         """
         sc.pp.neighbors(de, use_rep=de_rep)
         sc.tl.leiden(de, resolution=de_resolution)
@@ -369,6 +395,12 @@ class Cinemaot:
 
         Returns:
             Returns the indices.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> idx = model.get_weightidx(adata, pert_key="perturbation", control="No stimulation")
         """
         adata_ = adata.copy()
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]
@@ -549,6 +581,12 @@ class Cinemaot:
 
         Returns:
             Returns the confounder effect (c_effect) and the residual effect (s_effect).
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> c_effect, s_effect = model.attribution_scatter(adata, pert_key="perturbation", control="No stimulation")
         """
         cf = adata.obsm[cf_rep]
         if use_raw:
