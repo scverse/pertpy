@@ -500,7 +500,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot1 = de1.obsm['ot']
+        ot1 = de1.obsm["ot"]
         de2 = self.causaleffect(
             adata2,
             pert_key=pert_key,
@@ -512,7 +512,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot2 = de2.obsm['ot']
+        ot2 = de2.obsm["ot"]
         de0 = self.causaleffect(
             adata_link,
             pert_key=pert_key,
@@ -524,7 +524,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot0 = de0.obsm['ot']
+        ot0 = de0.obsm["ot"]
         syn = sc.AnnData(
             np.array(-((ot0 / np.sum(ot0, axis=1)[:, None]) @ de2.X - de1.X)), obs=de1.obs.copy(), var=de1.var.copy()
         )
