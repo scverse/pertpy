@@ -47,6 +47,16 @@ class CinemaotPlot:
             save: If `True` or a `str`, save the figure. A string is appended to the default filename.
                 Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             **kwargs: Other parameters to input for seaborn.heatmap.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> de = model.causaleffect(
+            >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True,
+            >>>         thres=0.5, smoothness=1e-5, eps=1e-3, solver="Sinkhorn", preweight_label="cell_type0528")
+            >>> pt.pl.cot.vis_matching(
+            >>>         adata, de, pert_key="perturbation",control="No stimulation", de_label=None, source_label="cell_type0528")
         """
         adata_ = adata[adata.obs[pert_key] == control]
 
