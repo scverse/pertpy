@@ -14,9 +14,9 @@ from scipy.sparse import issparse
 from scipy.spatial.distance import cosine
 from scipy.special import gammaln
 from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
-from sklearn.linear_model import LogisticRegression
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 if TYPE_CHECKING:
@@ -314,9 +314,10 @@ class Distance:
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
-        if self.metric == 'classifier_cp':
+        if self.metric == "classifier_cp":
             return self.metric_fct.onesided_distances(
-                adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs)
+                adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs
+            )
 
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -749,17 +750,18 @@ class NBLL(AbstractDistance):
 def _sample(X, frac=None, n=None):
     """Returns subsample of cells in format (train, test)."""
     if frac and n:
-        raise ValueError('Cannot pass both frac and n.')
+        raise ValueError("Cannot pass both frac and n.")
     if frac:
-        n_cells = int(X.shape[0]*frac)
+        n_cells = int(X.shape[0] * frac)
     elif n:
         n_cells = n
     else:
-        raise ValueError('Must pass either `frac` or `n`.')
+        raise ValueError("Must pass either `frac` or `n`.")
 
     sampled_indices = np.random.choice(X.shape[0], n_cells, replace=False)
     remaining_indices = np.setdiff1d(np.arange(X.shape[0]), sampled_indices)
     return X[remaining_indices, :], X[sampled_indices, :]
+
 
 class ClassifierProbaDistance(AbstractDistance):
     """Average of classification probabilites of a binary classifier.
@@ -772,8 +774,8 @@ class ClassifierProbaDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        Y_train, Y_test = _sample(Y, frac=.2)
-        label = ['c']*X.shape[0] + ['p']*Y_train.shape[0]
+        Y_train, Y_test = _sample(Y, frac=0.2)
+        label = ["c"] * X.shape[0] + ["p"] * Y_train.shape[0]
         train = np.concatenate([X, Y_train])
 
         reg = LogisticRegression()  # TODO dynamically pass this?
