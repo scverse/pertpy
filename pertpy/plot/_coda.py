@@ -108,6 +108,15 @@ class CodaPlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> pt.pl.coda.stacked_barplot(mdata, feature_name="samples")
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -196,6 +205,17 @@ class CodaPlot:
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> pt.pl.coda.effects_barplot(mdata)
         """
         if args_barplot is None:
             args_barplot = {}
@@ -366,6 +386,15 @@ class CodaPlot:
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> pt.pl.coda.boxplots(mdata, feature_name="condition", add_dots=True)
         """
         if args_boxplot is None:
             args_boxplot = {}
@@ -570,6 +599,17 @@ class CodaPlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> pt.pl.coda.rel_abundance_dispersion_plot(mdata)
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -677,6 +717,22 @@ class CodaPlot:
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
+
+        Examples:
+            Example with tascCODA:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> pt.pl.coda.draw_tree(mdata, tree="lineage")
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -741,6 +797,22 @@ class CodaPlot:
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
             or  plot the tree inline (`show = False`)
+
+        Examples:
+            Example with tascCODA:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -895,6 +967,19 @@ class CodaPlot:
 
         Returns:
             If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+
+            >>> pt.pl.coda.effects_umap(mdata, effect_name="", cluster_key="")
+            #TODO: Add effect_name parameter and cluster_key and test the example
         """
         data_rna = data[modality_key_1]
         data_coda = data[modality_key_2]

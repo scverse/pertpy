@@ -33,6 +33,15 @@ class GuideAssignment:
             output_layer: Assigned guide will be saved on adata.layers[output_key]. Defaults to `assigned_guides`.
             only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
                                  Defaults to False.
+
+        Examples:
+            Each cell is assigned to gRNA that occurs at least 5 times in the respective cell.
+
+            >>> import pertpy as pt
+            >>> mdata = pt.data.papalexi_2021()
+            >>> gdo = mdata.mod['gdo']
+            >>> ga = pt.pp.GuideAssignment()
+            >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):
@@ -69,6 +78,15 @@ class GuideAssignment:
             output_key: Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
             no_grna_assigned_key: The key to return if no gRNA is expressed enough.
             only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
+
+        Examples:
+            Each cell is assigned to the most expressed gRNA if it has at least 5 counts.
+
+            >>> import pertpy as pt
+            >>> mdata = pt.data.papalexi_2021()
+            >>> gdo = mdata.mod['gdo']
+            >>> ga = pt.pp.GuideAssignment()
+            >>> ga.assign_to_max_guide(gdo, assignment_threshold=5)
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):

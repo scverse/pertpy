@@ -36,9 +36,9 @@ class DistanceTest:
 
     Examples:
         >>> import pertpy as pt
-        >>> adata = pt.dt.distance_example()
-        >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
-        >>> tab = etest(adata, groupby='perturbation', contrast='control')
+        >>> adata = pt.dt.distance_example_data()
+        >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+        >>> tab = distance_test(adata, groupby='perturbation', contrast='control')
     """
 
     def __init__(
@@ -99,9 +99,9 @@ class DistanceTest:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example()
-            >>> etest = pt.tl.DistanceTest('edistance', n_perms=1000)
-            >>> tab = etest(adata, groupby='perturbation', contrast='control')
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+            >>> tab = distance_test(adata, groupby='perturbation', contrast='control')
         """
         if self.distance.metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
@@ -130,6 +130,12 @@ class DistanceTest:
                 - significant: whether the group is significantly different from the contrast group
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+            >>> test_results = distance_test.test_xy(adata, groupby='perturbation', contrast='control')
         """
         groups = adata.obs[groupby].unique()
         if contrast not in groups:
@@ -148,7 +154,8 @@ class DistanceTest:
                 # Shuffle the labels of the groups
                 mask = adata.obs[groupby].isin([group, contrast])
                 labels = adata.obs[groupby].values[mask]
-                shuffled_labels = np.random.permutation(labels)
+                rng = np.random.default_rng()
+                shuffled_labels = rng.permutation(labels)
                 idx = shuffled_labels == group
 
                 X = embedding[mask][idx]  # shuffled group
@@ -215,6 +222,12 @@ class DistanceTest:
                 - significant: whether the group is significantly different from the contrast group
                 - pvalue_adj: p-value after multiple testing correction
                 - significant_adj: whether the group is significantly different from the contrast group after multiple testing correction
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example_data()
+            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
+            >>> test_results = distance_test.test_precomputed(adata, groupby='perturbation', contrast='control')
         """
         if not self.distance.metric_fct.accepts_precomputed:
             raise ValueError(f"Metric {self.metric} does not accept precomputed distances.")
@@ -245,7 +258,8 @@ class DistanceTest:
                 # Shuffle the labels of the groups
                 mask = adata.obs[groupby].isin([group, contrast])
                 labels = adata.obs[groupby].values[mask]
-                shuffled_labels = np.random.permutation(labels)
+                rng = np.random.default_rng()
+                shuffled_labels = rng.permutation(labels)
                 idx = shuffled_labels == group
 
                 precomputed_distance = precomputed_distances[group]
