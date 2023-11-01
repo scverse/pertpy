@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
-from remotezip import RemoteZip
 from rich import print
 from scanpy import settings
 
@@ -20,6 +19,7 @@ class CellLineMetaData:
     """Utilities to fetch cell line metadata."""
 
     def __init__(self):
+        settings.cachedir = ".pertpy_cache"
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
         cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
@@ -84,7 +84,7 @@ class CellLineMetaData:
         else:
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_transformed_path, index_col=0)
 
-        # Download metadata for driver genes from DepMap_Sanger
+        # Download metadata for driver genes from DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
         gene_annotation_file_path = settings.cachedir.__str__() + "/gene_identifiers_20191101.csv"
         if not Path(gene_annotation_file_path).exists():
@@ -98,31 +98,27 @@ class CellLineMetaData:
             )
         self.gene_annotation = pd.read_table(gene_annotation_file_path, delimiter=",")
 
-        # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute fro DepMap.Sanger
+        # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute from DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
-        bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624.csv"
+        # issue: read count values contain random whitespace, not sure what it supposes to mean
+        # solution: remove the white space and convert to int before depmap updates the metadata
+        bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624_processed.csv"
         if not Path(bulk_rna_sanger_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
                 " Starting download now..."
             )
-            with RemoteZip("https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip") as zip_file:
-                zip_file.extract("rnaseq_read_count_20220624.csv", path=settings.cachedir)
-
-        self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, skiprows=[2, 3], header=[0, 1], index_col=[0, 1])
-
-        # issue: read count values contain random whitespace, not sure what it supposes to mean
-        # solution: remove the white space and convert to int before depmap updates the metadata
-        self.bulk_rna_sanger = self.bulk_rna_sanger.applymap(
-            lambda x: int(x.replace(" ", "")) if isinstance(x, str) else x
-        )
-        self.bulk_rna_sanger = self.bulk_rna_sanger.T
-        self.bulk_rna_sanger.index = self.bulk_rna_sanger.index.droplevel("model_id")
-        self.bulk_rna_sanger.columns = self.bulk_rna_sanger.columns.droplevel("gene_id")
+            _download(
+                url="https://figshare.com/ndownloader/files/42467103",
+                output_file_name="rnaseq_read_count_20220624_processed.csv",
+                output_path=settings.cachedir,
+                block_size=4096,
+                is_zip=False,
+            )
+        self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0)
 
         # Download CCLE expression data from DepMap
-        # Source: https://depmap.org/portal/download/all/  (DepMap Public 22Q2)
-        # bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression.csv"
+        # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
         bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression_full.csv"
         if not Path(bulk_rna_broad_file_path).exists():
             print("[bold yellow]No metadata file was found for CCLE expression data. Starting download now.")
@@ -135,25 +131,19 @@ class CellLineMetaData:
             )
         self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
 
-        # Download proteomics data from DepMap.Sanger
+        # Download proteomics data processed by DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
-        proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214.csv"
-        proteomics_trimm_path = settings.cachedir.__str__() + "/proteomics_all_20221214_trimm.csv"
-        if not Path(proteomics_trimm_path).exists():
-            if not Path(proteomics_file_path).exists():
-                print(
-                    "[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger)."
-                    " Starting download now."
-                )
-                with RemoteZip("https://cog.sanger.ac.uk/cmp/download/Proteomics_20221214.zip") as zip_file:
-                    zip_file.extract("proteomics_all_20221214.csv", path=settings.cachedir)
-            self.proteomics_data = pd.read_csv(proteomics_file_path)
-            self.proteomics_data[["uniprot_id", "model_id", "model_name", "symbol"]] = self.proteomics_data[
-                ["uniprot_id", "model_id", "model_name", "symbol"]
-            ].astype("category")
-            self.proteomics_data.to_csv(proteomics_trimm_path)
-        else:
-            self.proteomics_data = pd.read_csv(proteomics_trimm_path, index_col=0)
+        proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214_processed.csv"
+        if not Path(proteomics_file_path).exists():
+            print("[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger). Starting download now.")
+            _download(
+                url="https://figshare.com/ndownloader/files/42468393",
+                output_file_name="proteomics_all_20221214_processed.csv",
+                output_path=settings.cachedir,
+                block_size=4096,
+                is_zip=False,
+            )
+        self.proteomics_data = pd.read_csv(proteomics_file_path, index_col=0)
 
         # Download GDSC drug response data
         # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
@@ -224,6 +214,13 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with cell line annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
         """
         if copy:
             adata = adata.copy()
@@ -344,6 +341,14 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with bulk rna expression annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> pt_metadata.annotate_bulk_rna_expression(adata_annotated)
         """
         if copy:
             adata = adata.copy()
@@ -434,6 +439,14 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with protein expression annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> pt_metadata.annotate_protein_expression(adata_annotated)
         """
         if copy:
             adata = adata.copy()
@@ -514,6 +527,12 @@ class CellLineMetaData:
 
         Returns:
             Returns an AnnData object with drug response annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.mcfarland_2020()
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> pt_metadata.annotate_from_gdsc(adata, query_id='cell_line')
         """
         if copy:
             adata = adata.copy()
@@ -573,6 +592,11 @@ class CellLineMetaData:
 
         Returns:
             Returns a LookUp object specific for cell line annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> lookup = pt_metadata.lookup()
         """
         return LookUp(
             type="cell_line",

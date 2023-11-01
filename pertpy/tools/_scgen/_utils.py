@@ -76,7 +76,8 @@ def balancer(
     for cls in class_names:
         class_index = np.array(adata.obs[cell_type_key] == cls)
         index_cls = np.nonzero(class_index)[0]
-        index_cls_r = index_cls[np.random.choice(len(index_cls), max_number)]
+        rng = np.random.default_rng()
+        index_cls_r = index_cls[rng.choice(len(index_cls), max_number)]
         index_all.append(index_cls_r)
 
     balanced_data = adata[np.concatenate(index_all)].copy()

@@ -19,14 +19,14 @@ accuracy_threshold = 0.8
 class TestMixscape:
     @fixture
     def adata(self):
-        np.random.seed(1)
+        rng = np.random.default_rng(seed=1)
         # generate not differentially expressed genes
         for i in range(num_not_de):
-            NT = np.random.normal(0, 1, num_cells_per_group)
+            NT = rng.normal(0, 1, num_cells_per_group)
             NT = np.where(NT < 0, 0, NT)
-            NP = np.random.normal(0, 1, num_cells_per_group)
+            NP = rng.normal(0, 1, num_cells_per_group)
             NP = np.where(NP < 0, 0, NP)
-            KO = np.random.normal(0, 1, num_cells_per_group)
+            KO = rng.normal(0, 1, num_cells_per_group)
             KO = np.where(KO < 0, 0, KO)
             gene_i = np.concatenate((NT, NP, KO))
             gene_i = np.expand_dims(gene_i, axis=1)
@@ -37,11 +37,11 @@ class TestMixscape:
 
         # generate differentially expressed genes
         for i in range(num_de):
-            NT = np.random.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
+            NT = rng.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
             NT = np.where(NT < 0, 0, NT)
-            NP = np.random.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
+            NP = rng.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
             NP = np.where(NP < 0, 0, NP)
-            KO = np.random.normal(i + 4, 0.5 + 0.1 * i, num_cells_per_group)
+            KO = rng.normal(i + 4, 0.5 + 0.1 * i, num_cells_per_group)
             KO = np.where(KO < 0, 0, KO)
             gene_i = np.concatenate((NT, NP, KO))
             gene_i = np.expand_dims(gene_i, axis=1)

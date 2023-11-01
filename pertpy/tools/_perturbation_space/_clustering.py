@@ -1,7 +1,13 @@
-from anndata import AnnData
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sklearn.metrics import pairwise_distances
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+
+if TYPE_CHECKING:
+    from anndata import AnnData
 
 
 class ClusteringSpace(PerturbationSpace):
@@ -25,6 +31,15 @@ class ClusteringSpace(PerturbationSpace):
             true_label_col: ground truth labels.
             cluster_col: cluster computed labels.
             metrics: Metrics to compute. Defaults to ['nmi', 'ari', 'asw'].
+
+        Examples:
+            Example usage with KMeansSpace:
+
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> kmeans = pt.tl.KMeansSpace()
+            >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
+            >>> results = kmeans.evaluate_clustering(kmeans_adata, true_label_col="gene_target", cluster_col="k-means", metrics=['nmi'])
         """
         if metrics is None:
             metrics = ["nmi", "ari", "asw"]

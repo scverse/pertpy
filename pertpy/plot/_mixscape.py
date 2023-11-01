@@ -69,6 +69,14 @@ class MixscapePlot:
 
         Returns:
             If show is False, return ggplot object used to draw the plot.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> pt.pl.ms.barplot(mdata['rna'], guide_rna_column='NT')
         """
         if mixscape_class_global not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
@@ -148,6 +156,14 @@ class MixscapePlot:
             save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             ax: A matplotlib axes object. Only works if plotting a single component.
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> pt.pl.ms.heatmap(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', layer='X_pert', control='NT')
         """
         if "mixscape_class" not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
@@ -195,6 +211,16 @@ class MixscapePlot:
 
         Returns:
             The ggplot object used for drawn.
+
+        Examples:
+            Visualizing the perturbation scores for the cells in a dataset:
+
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> pt.pl.ms.perturbscore(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', color = 'orange')
         """
         if "mixscape" not in adata.uns:
             raise ValueError("Please run `pt.tl.mixscape` first.")
@@ -216,10 +242,11 @@ class MixscapePlot:
             p_copy._build()
             top_r = max(p_copy.layers[0].data["density"])
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
-            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = np.random.uniform(
+            rng = np.random.default_rng()
+            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = rng.uniform(
                 low=0.001, high=top_r / 10, size=sum(perturbation_score[labels] == gd)
             )
-            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = np.random.uniform(
+            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = rng.uniform(
                 low=-top_r / 10, high=0, size=sum(perturbation_score[labels] == target_gene)
             )
             # If split_by is provided, split densities based on the split_by
@@ -265,18 +292,19 @@ class MixscapePlot:
             p_copy._build()
             top_r = max(p_copy.layers[0].data["density"])
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
+            rng = np.random.default_rng()
             gd2 = list(
                 set(perturbation_score["mix"]).difference([f"{target_gene} NP", f"{target_gene} {perturbation_type}"])
             )[0]
-            perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = np.random.uniform(
+            perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = rng.uniform(
                 low=0.001, high=top_r / 10, size=sum(perturbation_score["mix"] == gd2)
             )
             perturbation_score.loc[
                 perturbation_score["mix"] == f"{target_gene} {perturbation_type}", "y_jitter"
-            ] = np.random.uniform(
+            ] = rng.uniform(
                 low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} {perturbation_type}")
             )
-            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = np.random.uniform(
+            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = rng.uniform(
                 low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} NP")
             )
             # If split_by is provided, split densities based on the split_by
@@ -361,6 +389,14 @@ class MixscapePlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object if `ax` is `None` else `None`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> pt.pl.ms.violin(adata = mdata['rna'], target_gene_idents=['NT', 'IFNGR2 NP', 'IFNGR2 KO'], groupby='mixscape_class')
         """
         if isinstance(target_gene_idents, str):
             mixscape_class_mask = adata.obs[groupby] == target_gene_idents
@@ -532,6 +568,15 @@ class MixscapePlot:
             show: Show the plot, do not return axis.
             save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             **kwds: Additional arguments to `scanpy.pl.umap`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> mixscape_identifier = pt.tl.Mixscape()
+            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> mixscape_identifier.lda(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
+            >>> pt.pl.ms.lda(adata=mdata['rna'], control='NT')
         """
         if mixscape_class not in adata.obs:
             raise ValueError(f'Did not find .obs["{mixscape_class!r}"]. Please run `pt.tl.mixscape` first.')

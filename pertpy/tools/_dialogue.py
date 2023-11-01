@@ -8,6 +8,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import scipy.sparse as sp
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
@@ -466,8 +467,10 @@ class Dialogue:
             ct_adata = ct_subs[ct]
             conf_m = ct_adata.obs[n_counts_key].values
 
+            if not isinstance(ct_adata.X, np.ndarray):
+                ct_adata.X = ct_adata.X.toarray()
             R_cca_gene_cor1_x = self._corr2_coeff(
-                ct_adata.X.toarray().T, mcp_scores[ct].T
+                ct_adata.X.T, mcp_scores[ct].T
             )  # TODO: there are some nans here, also in R
 
             # get genes that are most positively and negatively correlated across all MCPS
@@ -571,6 +574,16 @@ class Dialogue:
 
         Returns:
             A celltype_label:array dictionary.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> cell_types = adata.obs[dl.celltype_key].astype("category").cat.categories
+            >>> mcca_in, ct_subs = dl.load(adata, ct_order=cell_types)
         """
         ct_subs = {ct: adata[adata.obs[self.celltype_key] == ct].copy() for ct in ct_order}
         fn = self._pseudobulk_pca if agg_pca else self._get_pseudobulks
@@ -612,6 +625,15 @@ class Dialogue:
 
         Returns:
             MCP scores  # TODO this requires more detail
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
         """
         # IMPORTANT NOTE: the order in which matrices are passed to multicca matters. As such,
         # it is important here that to obtain the same result as in R, we pass the matrices in
@@ -679,6 +701,17 @@ class Dialogue:
             - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
             TODO: Describe both returns
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
+            >>> all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs, mcp_scores=mcps, ws_dict=ws, \
+                confounder="gender")
         """
         # all possible pairs of cell types with out pairing same cell type
         cell_types = list(ct_subs.keys())
@@ -823,10 +856,20 @@ class Dialogue:
         Args:
             adata: AnnData object with MCPs in obs
             condition_label: Column name in adata.obs with condition labels. Must be categorical.
-            conditions_compare: Tuple of length 2 with the two conditions to compare, must be in in adata.obs[condition_label]
+            conditions_compare: Tuple of length 2 with the two conditions to compare, must be in adata.obs[condition_label]
 
         Returns:
             Dict of data frames with pvals, tstats, and pvals_adj for each MCP
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
+            >>> stats = dl.test_association(adata, condition_label="pathology")
         """
         celltype_label = self.celltype_key
         sample_label = self.sample_id
@@ -885,6 +928,18 @@ class Dialogue:
 
         Returns:
             Dict with keys 'up_genes' and 'down_genes' and values of lists of genes
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
+            >>> all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs, mcp_scores=mcps, ws_dict=ws, \
+                confounder="gender")
+            >>> mcp_genes = dl.get_mlm_mcp_genes(celltype='Macrophages', results=all_results)
         """
         # Convert "mcp_x" to "MCPx" format
         # REMOVE THIS BLOCK ONCE MLM OUTPUT MATCHES STANDARD
@@ -997,6 +1052,16 @@ class Dialogue:
             Nested dictionary where keys of the first level are MCPs (of the form "mcp_0" etc)
             and the second level keys are cell types. The values are dataframes containing the
             results of the rank_genes_groups analysis.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
+                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
+            >>> extrema_mcp_genes = dl.get_extrema_MCP_genes(ct_subs)
         """
         rank_dfs: dict[str, dict[Any, Any]] = {}
         _, ct_sub = next(iter(ct_subs.items()))

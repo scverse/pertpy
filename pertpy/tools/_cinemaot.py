@@ -59,7 +59,7 @@ class Cinemaot:
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
             eps: Tolerate error of the optimal transport.
-            solver: Either "Sinkhorn" or "Sinkhorn". The ott-jax solver used.
+            solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             preweight_label: The annotated label (e.g. cell type) that is used to assign weights for treated
                              and control cells to balance across the label. Helps overcome the differential abundance issue.
 
@@ -218,7 +218,7 @@ class Cinemaot:
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
             eps: Tolerate error of the optimal transport.
-            solver: Either "Sinkhorn" or "Sinkhorn". The ott-jax solver used.
+            solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             resolution: the clustering resolution used in the sampling phase.
 
         Returns:
@@ -327,7 +327,7 @@ class Cinemaot:
         c: float = 0.5,
         use_rep: str = "X_pca",
     ):
-        """Estimating the rank of the count matrix. Always use adata.raw.X.
+        """Estimating the rank of the count matrix. Always use adata.raw.X. Make sure it is the raw count matrix.
 
         Args:
             adata: The annotated data object.
@@ -346,7 +346,7 @@ class Cinemaot:
         sk.fit(vm)
         wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
         u, s, vt = np.linalg.svd(wm)
-        dim = np.min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
+        dim = min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
         return dim
 
     def get_weightidx(
@@ -489,7 +489,7 @@ class Cinemaot:
         adata1 = adata[adata.obs[pert_key].isin([base, A]), :].copy()
         adata2 = adata[adata.obs[pert_key].isin([B, AB]), :].copy()
         adata_link = adata[adata.obs[pert_key].isin([base, B]), :].copy()
-        ot1, de1 = self.causaleffect(
+        de1 = self.causaleffect(
             adata1,
             pert_key=pert_key,
             control=A,
@@ -500,7 +500,8 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot2, de2 = self.causaleffect(
+        ot1 = de1.obsm["ot"]
+        de2 = self.causaleffect(
             adata2,
             pert_key=pert_key,
             control=AB,
@@ -511,7 +512,8 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot0, de0 = self.causaleffect(
+        ot2 = de2.obsm["ot"]
+        de0 = self.causaleffect(
             adata_link,
             pert_key=pert_key,
             control=B,
@@ -522,6 +524,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
+        ot0 = de0.obsm["ot"]
         syn = sc.AnnData(
             np.array(-((ot0 / np.sum(ot0, axis=1)[:, None]) @ de2.X - de1.X)), obs=de1.obs.copy(), var=de1.var.copy()
         )
@@ -601,7 +604,8 @@ class Xi:
         # random shuffling of the data - reason to use random.choice is that
         # pd.sample(frac=1) uses the same randomizing algorithm
         len_x = len(self.x)
-        randomized_indices = np.random.choice(np.arange(len_x), len_x, replace=False)
+        rng = np.random.default_rng()
+        randomized_indices = rng.choice(np.arange(len_x), len_x, replace=False)
         randomized = [self.x[idx] for idx in randomized_indices]
         # same as pandas rank method 'first'
         rankdata = ss.rankdata(randomized, method="ordinal")
