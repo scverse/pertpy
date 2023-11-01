@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -14,6 +13,8 @@ from rich.progress import track
 from sklearn.metrics import pairwise_distances
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from anndata import AnnData
 
 
@@ -144,8 +145,8 @@ class Distance:
         # Some metrics are able to handle precomputed distances. This means that
         # the pairwise distances between all cells are computed once and then
         # passed to the metric function. This is much faster than computing the
-        # pairwise distances for each group separately. Other metrics are not 
-        # able to handle precomputed distances such as the PsuedobulkDistance.
+        # pairwise distances for each group separately. Other metrics are not
+        # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
@@ -153,7 +154,7 @@ class Distance:
             pwd = adata.obsp[f"{self.obsm_key}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
-                for group_y in groups[index_x:]:
+                for group_y in groups[index_x:]:  # type: ignore
                     if group_x == group_y:
                         dist = 0.0  # by distance axiom
                     else:
@@ -168,7 +169,7 @@ class Distance:
             embedding = adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[grouping == group_x].copy()
-                for group_y in groups[index_x:]:
+                for group_y in groups[index_x:]:  # type: ignore
                     if group_x == group_y:
                         dist = 0.0
                     else:
@@ -180,7 +181,7 @@ class Distance:
         df.columns.name = groupby
         df.name = f"pairwise {self.metric}"
         return df
-    
+
     def onesided_distances(
         self,
         adata: AnnData,
@@ -218,7 +219,7 @@ class Distance:
         # Some metrics are able to handle precomputed distances. This means that
         # the pairwise distances between all cells are computed once and then
         # passed to the metric function. This is much faster than computing the
-        # pairwise distances for each group separately. Other metrics are not 
+        # pairwise distances for each group separately. Other metrics are not
         # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed

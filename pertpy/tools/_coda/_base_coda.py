@@ -486,7 +486,12 @@ class CompositionalModel2(ABC):
             res = az.convert_to_inference_data(np.array([b_raw_sel]))
 
             summary_sel = az.summary(
-                data=res, kind="stats", var_names=["x"], skipna=True, *args, **kwargs  # noqa: B026
+                data=res,
+                kind="stats",
+                var_names=["x"],
+                skipna=True,
+                *args,  # noqa: B026
+                **kwargs,
             )
 
             ref_index = sample_adata.uns["scCODA_params"]["reference_index"]
@@ -559,7 +564,9 @@ class CompositionalModel2(ABC):
             )
 
         if model_type == "tree_agg":
-            node_df = node_df.loc[:, ["final_parameter", "median", hdis[0], hdis[1], "sd", "delta", "significant"]].copy()  # type: ignore
+            node_df = node_df.loc[
+                :, ["final_parameter", "median", hdis[0], hdis[1], "sd", "delta", "significant"]
+            ].copy()  # type: ignore
             node_df = node_df.rename(
                 columns=dict(
                     zip(

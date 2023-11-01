@@ -171,9 +171,7 @@ nbsphinx_prolog = r"""
         Some tutorial content may look better in light mode.
         </p>
     </div>
-""".format(
-    version=version, docname="{{ docname|e }}"
-)
+""".format(version=version, docname="{{ docname|e }}")
 nbsphinx_thumbnails = {
     "tutorials/notebooks/guide_rna_assignment": "_static/tutorials/guide_rna_assignment.png",
     "tutorials/notebooks/mixscape": "_static/tutorials/mixscape.png",
