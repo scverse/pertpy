@@ -500,7 +500,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot1 = de1.obsm["ot"]
+        ot1 = de1.obsm["ot"]  # noqa: F841
         de2 = self.causaleffect(
             adata2,
             pert_key=pert_key,
@@ -512,7 +512,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot2 = de2.obsm["ot"]
+        ot2 = de2.obsm["ot"]  # noqa: F841
         de0 = self.causaleffect(
             adata_link,
             pert_key=pert_key,
