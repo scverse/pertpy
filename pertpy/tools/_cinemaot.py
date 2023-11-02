@@ -362,6 +362,12 @@ class Cinemaot:
 
         Returns:
             Returns the estimated dimension number.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> dim = model.get_dim(adata)
         """
         sk = SinkhornKnopp()
         if issparse(adata.raw.X):
