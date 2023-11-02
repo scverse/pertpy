@@ -183,6 +183,7 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/dialogue": "_static/tutorials/dialogue.png",
     "tutorials/notebooks/distances": "_static/tutorials/distances.png",
     "tutorials/notebooks/distance_tests": "_static/tutorials/distances_tests.png",
+    "tutorials/notebooks/cinemaot": "_static/tutorials/cinemaot.png",
     "tutorials/notebooks/scgen_perturbation_prediction": "_static/tutorials/scgen_perturbation_prediction.png",
     "tutorials/notebooks/scgen_batch_removal": "_static/tutorials/scgen_batch_removal.png",
     "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
