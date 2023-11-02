@@ -119,6 +119,5 @@ class TestDistances:
         df = Distance.onesided_distances(
             adata, groupby="perturbation", selected_group=selected_group, show_progressbar=True
         )
-
         assert isinstance(df, Series)
         assert df.loc[selected_group] == 0  # distance to self is 0
