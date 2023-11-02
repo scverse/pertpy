@@ -67,9 +67,9 @@ class Distance:
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
-    - "kl_divergence": Kullback–Leibler divergence distance.
+    - "jeffreys": symmetrized Kullback–Leibler divergence distance.
         Kullback–Leibler divergence of the gaussian distributions between cells of two groups.
-        Here we fit a gaussian distribution over each group of cells and then calculate the KL divergence
+        Here we fit a gaussian distribution over one group of cells and then calculate the KL divergence on the other, and vice versa.
     - "t_test": t-test statistic.
         T-test statistic measure between cells of two groups.
     - "ks_test": Kolmogorov-Smirnov test statistic.
@@ -144,8 +144,8 @@ class Distance:
             metric_fct = MMD()
         elif metric == "wasserstein":
             metric_fct = WassersteinDistance()
-        elif metric == "kl_divergence":
-            metric_fct = KLDivergence()
+        elif metric == "jeffreys":
+            metric_fct = JeffreysDivergence()
         elif metric == "t_test":
             metric_fct = TTestDistance()
         elif metric == "ks_test":
@@ -635,11 +635,12 @@ class R2ScoreDistance(AbstractDistance):
         raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
 
 
-class KLDivergence(AbstractDistance):
-    """Average of KL divergence between gene distributions of two groups
+class JeffreysDivergence(AbstractDistance):
+    """Average of symmetric KL divergence between gene distributions of two groups
 
     Assuming a Gaussian distribution for each gene in each group, calculates
-    the KL divergence between them and averages over all genes
+    the KL divergence between them and averages over all genes. Repeats this ABBA to get a symmetrized distance.
+    See https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Symmetrised_divergence.
 
     """
 
@@ -653,11 +654,12 @@ class KLDivergence(AbstractDistance):
             x_mean, x_std = X[:, i].mean(), X[:, i].std() + epsilon
             y_mean, y_std = Y[:, i].mean(), Y[:, i].std() + epsilon
             kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
-            kl_all.append(kl)
+            klr = np.log(x_std / y_std) + (y_std**2 + (y_mean - x_mean) ** 2) / (2 * x_std**2) - 1 / 2
+            kl_all.append(kl + klr)
         return sum(kl_all) / len(kl_all)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("KLDivergence cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("JeffreysDivergence cannot be called on a pairwise distance matrix.")
 
 
 class TTestDistance(AbstractDistance):
@@ -722,9 +724,21 @@ class NBLL(AbstractDistance):
             raise ValueError("NBLL distance only works for raw counts.")
 
         nlls = []
+        genes_skipped = 0
         for i in range(X.shape[1]):
             x, y = X[:, i], Y[:, i]
-            nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
+            try:
+                nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
+            except np.linalg.linalg.LinAlgError:
+                ## This error occurs when the gene cannot be parameterized, most commonly due to too much sparsity.
+                ## If the gene has fewer than 10 counts on average in both populations, we treat it as a vector of
+                ## zeroes and assign a distance of zero.
+                ## If the control vector cannot be parameterized not because it is sparse, we omit calculation for this gene.
+                if x.mean() < 10 and y.mean() < 10:
+                    nlls.append(0)
+                else:
+                    genes_skipped += 1
+                continue
             mu = np.repeat(np.exp(nb_params[0]), y.shape[0])
             theta = np.repeat(1 / nb_params[1], y.shape[0])
             if mu[0] == np.nan or theta[0] == np.nan:
@@ -740,6 +754,9 @@ class NBLL(AbstractDistance):
                 - gammaln(y + 1)
             )
             nlls.append(nll.mean())
+
+        if genes_skipped > X.shape[1]/2:
+            raise AttributeError(f"{genes_skipped} genes could not be fit, which is over half.")
 
         return -sum(nlls) / len(nlls)
 
@@ -823,8 +840,11 @@ class ClassifierClassProjection(AbstractDistance):
 
         df = pd.Series(index=groups, dtype=float)
         for group in groups:
-            class_idx = list(reg.classes_).index(group)
-            df.loc[group] = np.mean(test_probas[:, class_idx])
+            if group == selected_group:
+                df.loc[group] = 0
+            else:
+                class_idx = list(reg.classes_).index(group)
+                df.loc[group] = 1-np.mean(test_probas[:, class_idx])
         df.index.name = groupby
         df.name = f"classifier_cp to {selected_group}"
         return df
