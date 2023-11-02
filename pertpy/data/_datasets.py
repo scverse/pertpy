@@ -1412,7 +1412,10 @@ def zhao_2021() -> AnnData:  # pragma: no cover
 def cinemaot_example() -> AnnData:  # pragma: no cover:
     """CINEMA-OT Example dataset.
 
-    Ex vivo stimulation of human peripheral blood mononuclear cells (PBMC) with interferon.
+    Ex vivo stimulation of human peripheral blood mononuclear cells (PBMC) with interferon. This is a subsampled
+    dataset containing 1000 cells, either without stimulation or stimulated with IFNb. The full dataset is available
+    via the cinemaot() function.
+
 
     Returns:
         :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
@@ -1422,6 +1425,31 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/42362796?private_link=270b0d2c7f1ea57c366d",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+    adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+def cinemaot() -> AnnData:  # pragma: no cover
+    """Complete CINEMA-OT dataset.
+
+    Ex vivo stimulation of human peripheral blood mononuclear cells (PBMC) with interferon. Full dataset containing
+    9209 cells that were stimulated with IFNb, IFNg, IFNb+IFNg, or left unstimulated.
+
+    Reference:
+        Preprint: https://doi.org/10.1101/2022.07.31.502173
+
+    Returns:
+        :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
+    """
+    output_file_name = "cinemaot_full.h5ad" #TODO
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="TODO", #TODO
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
