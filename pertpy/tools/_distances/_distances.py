@@ -755,7 +755,7 @@ class NBLL(AbstractDistance):
             )
             nlls.append(nll.mean())
 
-        if genes_skipped > X.shape[1]/2:
+        if genes_skipped > X.shape[1] / 2:
             raise AttributeError(f"{genes_skipped} genes could not be fit, which is over half.")
 
         return -sum(nlls) / len(nlls)
@@ -844,7 +844,7 @@ class ClassifierClassProjection(AbstractDistance):
                 df.loc[group] = 0
             else:
                 class_idx = list(reg.classes_).index(group)
-                df.loc[group] = 1-np.mean(test_probas[:, class_idx])
+                df.loc[group] = 1 - np.mean(test_probas[:, class_idx])
         df.index.name = groupby
         df.name = f"classifier_cp to {selected_group}"
         return df
