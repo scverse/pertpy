@@ -16,9 +16,6 @@ from mudata import MuData
 
 from pertpy.tools._coda._base_coda import CompositionalModel2, collapse_singularities_2
 
-if TYPE_CHECKING:
-    from ete3 import Tree  # noqa: TCH004
-
 sns.set_style("ticks")
 
 
@@ -689,7 +686,7 @@ class CodaPlot:
     def draw_tree(  # pragma: no cover
         data: Union[AnnData, MuData],
         modality_key: str = "coda",
-        tree: Union[Tree, str] = "tree",
+        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         tight_text: Optional[bool] = False,
         show_scale: Optional[bool] = False,
         show: Optional[bool] = True,
@@ -757,9 +754,9 @@ class CodaPlot:
         tree_style.layout_fn = my_layout
         tree_style.show_scale = show_scale
         if file_name is not None:
-            tree.render(file_name, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+            tree.render(file_name, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
 
@@ -768,7 +765,7 @@ class CodaPlot:
         data: Union[AnnData, MuData],
         covariate: str,
         modality_key: str = "coda",
-        tree: Union[Tree, str] = "tree",
+        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         show_legend: Optional[bool] = None,
         show_leaf_effects: Optional[bool] = False,
         tight_text: Optional[bool] = False,
