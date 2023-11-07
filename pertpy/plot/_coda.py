@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -9,13 +9,15 @@ import scanpy as sc
 import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
-from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
 from matplotlib import cm, rcParams
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
 from mudata import MuData
 
 from pertpy.tools._coda._base_coda import CompositionalModel2, collapse_singularities_2
+
+if TYPE_CHECKING:
+    from ete3 import Tree  # noqa: TCH004
 
 sns.set_style("ticks")
 
@@ -734,6 +736,11 @@ class CodaPlot:
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> pt.pl.coda.draw_tree(mdata, tree="lineage")
         """
+        try:
+            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+        except ImportError:
+            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
@@ -814,6 +821,11 @@ class CodaPlot:
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
         """
+        try:
+            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+        except ImportError:
+            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
