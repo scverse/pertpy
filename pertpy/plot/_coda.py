@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -9,7 +9,6 @@ import scanpy as sc
 import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
-from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
 from matplotlib import cm, rcParams
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
@@ -687,7 +686,7 @@ class CodaPlot:
     def draw_tree(  # pragma: no cover
         data: Union[AnnData, MuData],
         modality_key: str = "coda",
-        tree: Union[Tree, str] = "tree",
+        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         tight_text: Optional[bool] = False,
         show_scale: Optional[bool] = False,
         show: Optional[bool] = True,
@@ -734,6 +733,11 @@ class CodaPlot:
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> pt.pl.coda.draw_tree(mdata, tree="lineage")
         """
+        try:
+            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+        except ImportError:
+            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
@@ -750,9 +754,9 @@ class CodaPlot:
         tree_style.layout_fn = my_layout
         tree_style.show_scale = show_scale
         if file_name is not None:
-            tree.render(file_name, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+            tree.render(file_name, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
 
@@ -761,7 +765,7 @@ class CodaPlot:
         data: Union[AnnData, MuData],
         covariate: str,
         modality_key: str = "coda",
-        tree: Union[Tree, str] = "tree",
+        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         show_legend: Optional[bool] = None,
         show_leaf_effects: Optional[bool] = False,
         tight_text: Optional[bool] = False,
@@ -814,6 +818,11 @@ class CodaPlot:
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
         """
+        try:
+            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+        except ImportError:
+            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
