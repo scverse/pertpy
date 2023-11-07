@@ -55,8 +55,6 @@ class Distance:
         Coefficient of determination distance between the means of cells from two groups.
     - "mean_pairwise": Mean pairwise distance.
         Mean of the pairwise euclidean distances between cells of two groups.
-    - "mean_pairwise": Mean pairwise distance.
-        Mean of the pairwise euclidean distances between cells of two groups.
     - "mmd": Maximum mean discrepancy
         Maximum mean discrepancy between the cells of two groups.
         Here, uses linear, rbf, and quadratic polynomial MMD. For theory on MMD in single-cell applications, see
