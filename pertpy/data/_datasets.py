@@ -1410,11 +1410,11 @@ def zhao_2021() -> AnnData:  # pragma: no cover
 
 
 def cinemaot_example() -> AnnData:  # pragma: no cover:
-    """CINEMA-OT Example dataset.
+    """Subsampled CINEMA-OT example dataset.
 
     Ex vivo stimulation of human peripheral blood mononuclear cells (PBMC) with interferon. This is a subsampled
     dataset containing 1000 cells, either without stimulation or stimulated with IFNb. The full dataset is available
-    via the cinemaot() function.
+    via the cinemaot_full() function.
 
 
     Returns:
@@ -1433,23 +1433,25 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
 
     return adata
 
-def cinemaot() -> AnnData:  # pragma: no cover
+def cinemaot_full() -> AnnData:  # pragma: no cover
     """Complete CINEMA-OT dataset.
 
-    Ex vivo stimulation of human peripheral blood mononuclear cells (PBMC) with interferon. Full dataset containing
-    9209 cells that were stimulated with IFNb, IFNg, IFNb+IFNg, or left unstimulated.
+    Ex vivo stimulation of human peripheral blood mononuclear cells (PBMC) with interferon. This is the full dataset
+    containing 9209 cells that were stimulated with IFNb, IFNg, IFNb+IFNg, or left unstimulated. A subsampled version
+    of the dataset is available via cinemaot_example().
 
-    Reference:
+    References:
         Preprint: https://doi.org/10.1101/2022.07.31.502173
+        Dataset available here: https://datadryad.org/stash/dataset/doi:10.5061/dryad.4xgxd25g1
 
     Returns:
         :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
     """
-    output_file_name = "cinemaot_full.h5ad" #TODO
+    output_file_name = "Integrated_subset.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="TODO", #TODO
+            url="https://figshare.com/ndownloader/files/43068190",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
