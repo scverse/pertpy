@@ -523,6 +523,15 @@ class Cinemaot:
 
         Returns:
             Returns an AnnData object that contains the single-cell level synergy matrix de.X and the embedding.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_full()
+            >>> sc.pp.pca(adata)
+            >>> model = pt.tl.Cinemaot()
+            >>> combo = model.synergy(adata, pert_key='perturbation', base='No stimulation', A='IFNb', B='IFNg',
+            >>>                    AB='IFNb+ IFNg', thres=0.5, smoothness=1e-5, eps=1e-3, solver='Sinkhorn')
+
         """
         adata1 = adata[adata.obs[pert_key].isin([base, A]), :].copy()
         adata2 = adata[adata.obs[pert_key].isin([B, AB]), :].copy()
