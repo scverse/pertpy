@@ -22,6 +22,7 @@ authors = [
     {name = "Tessa Green"},
     {name = "Stefan Peidli"},
     {name = "Antonia Schumacher"},
+    {name = "Lilly May"},
 ]
 maintainers = [
     {name = "Lukas Heumos", email = "lukas.heumos@posteo.net"},
@@ -30,12 +31,10 @@ urls.Documentation = "https://pertpy.readthedocs.io"
 urls.Source = "https://github.com/theislab/pertpy"
 urls.Home-page = "https://github.com/theislab/pertpy"
 dependencies = [
-    "anndata",
     "rich",
     "scanpy[leiden]",
     "muon",
     "requests",
-    "ipywidgets",
     "scikit-misc",
     "plotnine",
     "scipy",
@@ -47,7 +46,6 @@ dependencies = [
     "decoupler",
     "ott-jax",
     "sparsecca",
-    "numba",
     "openpyxl",
 ]
 
