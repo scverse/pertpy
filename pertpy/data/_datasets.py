@@ -1433,6 +1433,7 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
 
     return adata
 
+
 def cinemaot_full() -> AnnData:  # pragma: no cover
     """Complete CINEMA-OT dataset.
 
