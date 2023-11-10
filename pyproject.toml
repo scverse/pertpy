@@ -106,15 +106,6 @@ test = [
 [tool.hatch.version]
 source = "vcs"
 
-[tool.hatch.envs.test]
-features = ["test"]
-[tool.hatch.envs.test.scripts]
-run = "pytest {args}"
-cov = [
-    "coverage run -m pytest",
-    "coverage report -m",
-]
-
 [tool.coverage.run]
 source_pkgs = ["pertpy"]
 omit = [
