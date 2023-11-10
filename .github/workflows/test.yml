@@ -56,7 +56,7 @@ jobs:
 
             - name: Show coverage report
               run: coverage report -m
-  
+
             - name: Upload coverage
               uses: codecov/codecov-action@v3
               with:
