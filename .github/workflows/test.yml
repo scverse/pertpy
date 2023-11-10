@@ -52,7 +52,7 @@ jobs:
                   MPLBACKEND: agg
                   PLATFORM: ${{ matrix.os }}
                   DISPLAY: :42
-              run: pytest -v --cov --color=yes
+              run: pytest -v --cov=pertpy --color=yes
 
             - name: Show coverage report
               run: coverage report -m
