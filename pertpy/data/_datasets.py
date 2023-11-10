@@ -1448,7 +1448,7 @@ def cinemaot_full() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
     """
-    output_file_name = "Integrated_subset.h5ad"
+    output_file_name = "dong_2023.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
