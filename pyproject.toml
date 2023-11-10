@@ -107,7 +107,6 @@ test = [
 source = "vcs"
 
 [tool.coverage.run]
-source = ["pertpy"]
 omit = [
     "**/test_*.py",
 ]
