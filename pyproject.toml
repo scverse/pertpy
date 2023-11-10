@@ -100,20 +100,20 @@ doc = [
 ]
 test = [
     "pytest",
-    "pytest-cov",
+    "coverage",
 ]
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.coverage.run]
-source = ["pertpy"]
+source_pkgs = ["pertpy"]
 omit = [
     "**/test_*.py",
 ]
 
 [tool.pytest.ini_options]
-testpaths = "pertpy/tests"
+testpaths = "tests"
 xfail_strict = true
 addopts = [
     "--import-mode=importlib",  # allow using test files with same name
