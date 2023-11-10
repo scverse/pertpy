@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import arviz as az
-import ete3 as ete
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -22,6 +21,7 @@ from scipy.cluster import hierarchy as sp_hierarchy
 if TYPE_CHECKING:
     import numpyro as npy
     import toytree as tt
+    from ete3 import Tree
     from jax._src.prng import PRNGKeyArray
     from jax._src.typing import Array
 
@@ -1242,7 +1242,7 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
 
 
 def get_a_2(
-    tree: ete.Tree,
+    tree: Tree,
     leaf_order: list[str] = None,
     node_order: list[str] = None,
 ) -> tuple[np.ndarray, int]:
@@ -1263,6 +1263,11 @@ def get_a_2(
         T
             number of nodes in the tree, excluding the root node
     """
+    try:
+        import ete3 as ete
+    except ImportError:
+        raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
     n_tips = len(tree.get_leaves())
     n_nodes = len(tree.get_descendants())
 
@@ -1292,7 +1297,7 @@ def get_a_2(
     return A_, n_nodes
 
 
-def collapse_singularities_2(tree: ete.Tree) -> ete.Tree:
+def collapse_singularities_2(tree: Tree) -> Tree:
     """Collapses (deletes) nodes in a ete3 tree that are singularities (have only one child).
 
     Args:
@@ -1368,8 +1373,10 @@ def import_tree(
         dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
         levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
         levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
-        add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}. Defaults to True.
-        key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
+        add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}.
+                        Defaults to True.
+        key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`.
+                   If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
         copy: Return a copy instead of writing to `data`. Defaults to False.
 
     Returns:
@@ -1379,6 +1386,11 @@ def import_tree(
 
         tree: A ete3 tree object.
     """
+    try:
+        import ete3 as ete
+    except ImportError:
+        raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
     if isinstance(data, MuData):
         try:
             data_1 = data[modality_1]
