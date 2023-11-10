@@ -54,6 +54,9 @@ jobs:
                   DISPLAY: :42
               run: pytest -v --cov --color=yes
 
+            - name: Show coverage report
+              run: coverage report -m
+  
             - name: Upload coverage
               uses: codecov/codecov-action@v3
               with:
