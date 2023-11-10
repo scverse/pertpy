@@ -1,13 +1,16 @@
-comment: false
+codecov:
+    require_ci_to_pass: no
+
 coverage:
     status:
         project:
             default:
-                target: auto
-        patch:
-            default:
-                enabled: no
-    ignore:
-        - "test/"
-github_checks:
-    annotations: false
+                # Require 1% coverage, i.e., succeed as long as coverage collection works
+                target: 1
+        patch: false
+        changes: false
+
+comment:
+    layout: diff, flags, files
+    behavior: once
+    require_base: no
