@@ -15,8 +15,8 @@ copyright = "2021, Lukas Heumos, Theislab"
 author = "Lukas Heumos"
 github_repo = "pertpy"
 
-version = "0.6.0"
-release = "0.6.0"
+version = "0.7.0"
+release = "0.7.0"
 
 extensions = [
     "myst_parser",
@@ -171,9 +171,7 @@ nbsphinx_prolog = r"""
         Some tutorial content may look better in light mode.
         </p>
     </div>
-""".format(
-    version=version, docname="{{ docname|e }}"
-)
+""".format(version=version, docname="{{ docname|e }}")
 nbsphinx_thumbnails = {
     "tutorials/notebooks/guide_rna_assignment": "_static/tutorials/guide_rna_assignment.png",
     "tutorials/notebooks/mixscape": "_static/tutorials/mixscape.png",
@@ -185,6 +183,7 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/dialogue": "_static/tutorials/dialogue.png",
     "tutorials/notebooks/distances": "_static/tutorials/distances.png",
     "tutorials/notebooks/distance_tests": "_static/tutorials/distances_tests.png",
+    "tutorials/notebooks/cinemaot": "_static/tutorials/cinemaot.png",
     "tutorials/notebooks/scgen_perturbation_prediction": "_static/tutorials/scgen_perturbation_prediction.png",
     "tutorials/notebooks/scgen_batch_removal": "_static/tutorials/scgen_batch_removal.png",
     "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",

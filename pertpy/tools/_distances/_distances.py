@@ -56,8 +56,6 @@ class Distance:
         Coefficient of determination distance between the means of cells from two groups.
     - "mean_pairwise": Mean pairwise distance.
         Mean of the pairwise euclidean distances between cells of two groups.
-    - "mean_pairwise": Mean pairwise distance.
-        Mean of the pairwise euclidean distances between cells of two groups.
     - "mmd": Maximum mean discrepancy
         Maximum mean discrepancy between the cells of two groups.
         Here, uses linear, rbf, and quadratic polynomial MMD. For theory on MMD in single-cell applications, see
@@ -243,7 +241,7 @@ class Distance:
         # the pairwise distances between all cells are computed once and then
         # passed to the metric function. This is much faster than computing the
         # pairwise distances for each group separately. Other metrics are not
-        # able to handle precomputed distances such as the PsuedobulkDistance.
+        # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
@@ -251,7 +249,7 @@ class Distance:
             pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
-                for group_y in groups[index_x:]:
+                for group_y in groups[index_x:]:  # type: ignore
                     if group_x == group_y:
                         dist = 0.0  # by distance axiom
                     else:
@@ -269,7 +267,7 @@ class Distance:
                 embedding = adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[grouping == group_x].copy()
-                for group_y in groups[index_x:]:
+                for group_y in groups[index_x:]:  # type: ignore
                     if group_x == group_y:
                         dist = 0.0
                     else:

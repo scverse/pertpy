@@ -52,10 +52,11 @@ class MilopyPlot:
             >>> sc.tl.umap(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
-            >>> milo.da_nhoods(mdata, design="~label")
+            >>> milo.da_nhoods(mdata,
+            >>>            design='~label',
+            >>>            model_contrasts='labelwithdraw_15d_Cocaine-labelwithdraw_48h_Cocaine')
             >>> milo.build_nhood_graph(mdata)
             >>> pt.pl.milo.nhood_graph(mdata)
-            # TODO: If necessary adjust after fixing StopIteration error, which is currently thrown
         """
         nhood_adata = mdata["milo"].T.copy()
 

@@ -123,7 +123,7 @@ class Milo:
                 raise
         else:
             try:
-                use_rep = adata.uns["neighbors"]["params"]["use_rep"]
+                use_rep = adata.uns[neighbors_key]["params"]["use_rep"]
             except KeyError:
                 logging.warning("Using X_pca as default embedding")
                 use_rep = "X_pca"
