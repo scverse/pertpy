@@ -20,7 +20,7 @@ distances = [
     "t_test",
     "ks_test",
     "classifier_proba",
-    "classifier_cp"
+    "classifier_cp",
 ]
 
 count_distances = ["nb_ll"]
