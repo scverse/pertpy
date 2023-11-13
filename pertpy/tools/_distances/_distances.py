@@ -65,7 +65,7 @@ class Distance:
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
-    - "jeffreys": symmetrized Kullback–Leibler divergence distance.
+    - "sym_kldiv": symmetrized Kullback–Leibler divergence distance.
         Kullback–Leibler divergence of the gaussian distributions between cells of two groups.
         Here we fit a gaussian distribution over one group of cells and then calculate the KL divergence on the other, and vice versa.
     - "t_test": t-test statistic.
@@ -142,8 +142,8 @@ class Distance:
             metric_fct = MMD()
         elif metric == "wasserstein":
             metric_fct = WassersteinDistance()
-        elif metric == "jeffreys":
-            metric_fct = JeffreysDivergence()
+        elif metric == "sym_kldiv":
+            metric_fct = SymmetricKLDivergence()
         elif metric == "t_test":
             metric_fct = TTestDistance()
         elif metric == "ks_test":
@@ -633,7 +633,7 @@ class R2ScoreDistance(AbstractDistance):
         raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
 
 
-class JeffreysDivergence(AbstractDistance):
+class SymmetricKLDivergence(AbstractDistance):
     """Average of symmetric KL divergence between gene distributions of two groups
 
     Assuming a Gaussian distribution for each gene in each group, calculates
@@ -657,7 +657,7 @@ class JeffreysDivergence(AbstractDistance):
         return sum(kl_all) / len(kl_all)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("JeffreysDivergence cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("SymmetricKLDivergence cannot be called on a pairwise distance matrix.")
 
 
 class TTestDistance(AbstractDistance):
