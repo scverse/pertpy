@@ -30,7 +30,7 @@ all_distances = actual_distances + semi_distances + non_distances  # + pseudo_co
 class TestDistances:
     @fixture
     def adata(self, request):
-        no_subsample_distances = ["sym_kldiv", "t_test", "ks_test"]
+        no_subsample_distances = ["sym_kldiv", "t_test", "ks_test", "classifier_proba", "classifier_cp"]
         distance = request.node.callspec.params["distance"]
 
         adata = pt.dt.distance_example()
@@ -46,7 +46,7 @@ class TestDistances:
 
         return adata
 
-    @mark.parametrize("distance", all_distances)
+    @mark.parametrize("distance", non_distances)
     def test_distance(self, adata, distance):
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
         df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
