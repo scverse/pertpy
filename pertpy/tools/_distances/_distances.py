@@ -313,9 +313,7 @@ class Distance:
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
         if self.metric == "classifier_cp":
-            return self.metric_fct.onesided_distances(
-                adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs
-            )
+            return self.onesided_distances(adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs)
 
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -767,13 +765,14 @@ def _sample(X, frac=None, n=None):
     if frac and n:
         raise ValueError("Cannot pass both frac and n.")
     if frac:
-        n_cells = int(X.shape[0] * frac)
+        n_cells = max(1, int(X.shape[0] * frac))
     elif n:
         n_cells = n
     else:
         raise ValueError("Must pass either `frac` or `n`.")
 
-    sampled_indices = np.random.choice(X.shape[0], n_cells, replace=False)
+    rng = np.random.default_rng()
+    sampled_indices = rng.choice(X.shape[0], n_cells, replace=False)
     remaining_indices = np.setdiff1d(np.arange(X.shape[0]), sampled_indices)
     return X[remaining_indices, :], X[sampled_indices, :]
 
