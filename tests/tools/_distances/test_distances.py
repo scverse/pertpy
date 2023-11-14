@@ -46,7 +46,7 @@ class TestDistances:
 
         return adata
 
-    @mark.parametrize("distance", non_distances)
+    @mark.parametrize("distance", all_distances)
     def test_distance(self, adata, distance):
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
         df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
