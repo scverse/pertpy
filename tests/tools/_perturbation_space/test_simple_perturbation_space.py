@@ -168,7 +168,7 @@ def test_centroid_umap_response():
         )
 
 
-def test_linear_operations():
+def test_linear_operations(): #TODO: This throws error
     """Tests add/subtract and other linear operations."""
     rng = np.random.default_rng()
     X = rng.random(size=(10, 5))
