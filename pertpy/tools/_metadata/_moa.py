@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from rich import print
 from scanpy import settings
 
@@ -34,8 +34,8 @@ class MoaMetaData:
                 block_size=4096,
                 is_zip=False,
             )
-        self.moa = pd.read_csv(moa_file_path, sep="	", skiprows=9) 
-        self.moa = self.moa[["pert_iname", "moa","target"]]
+        self.moa = pd.read_csv(moa_file_path, sep="	", skiprows=9)
+        self.moa = self.moa[["pert_iname", "moa", "target"]]
 
     def annotate_moa(
         self,
@@ -84,24 +84,29 @@ class MoaMetaData:
                 *not_matched_identifiers,
                 sep="\n- ",
             )
-        adata.obs = adata.obs.merge(self.moa, left_on=adata.obs[query_id].str.lower(), 
-                                    right_on=self.moa["pert_iname"].str.lower(), 
-                                    how="left", suffixes=("", "_fromMeta")).set_index(adata.obs.index)
+        adata.obs = adata.obs.merge(
+            self.moa,
+            left_on=adata.obs[query_id].str.lower(),
+            right_on=self.moa["pert_iname"].str.lower(),
+            how="left",
+            suffixes=("", "_fromMeta"),
+        ).set_index(adata.obs.index)
 
         if target is not None:
-            target_meta = "target" if target != 'target' else "target_fromMeta"
-            adata.obs[target_meta] = adata.obs[target_meta].mask(~adata.obs.apply(lambda row: str(row[target]) in str(row[target_meta]),
-                                                                                  axis=1))
-            pertname_meta = 'pert_iname' if query_id != 'pert_iname' else 'pert_iname_fromMeta'
-            adata.obs.loc[adata.obs[target_meta].isna(), [pertname_meta, 'moa']] = np.nan
+            target_meta = "target" if target != "target" else "target_fromMeta"
+            adata.obs[target_meta] = adata.obs[target_meta].mask(
+                ~adata.obs.apply(lambda row: str(row[target]) in str(row[target_meta]), axis=1)
+            )
+            pertname_meta = "pert_iname" if query_id != "pert_iname" else "pert_iname_fromMeta"
+            adata.obs.loc[adata.obs[target_meta].isna(), [pertname_meta, "moa"]] = np.nan
 
         # If query_id and reference_id have different names,
         # there will be a column for each of them after merging,
         # which is redundant as they refer to the same information.
         # We will move the reference_id column.
         if query_id != "pert_iname":
-            del adata.obs['pert_iname']
-        
+            del adata.obs["pert_iname"]
+
         return adata
 
     def lookup(self) -> LookUp:
@@ -117,7 +122,5 @@ class MoaMetaData:
         """
         return LookUp(
             type="cell_line",
-            transfer_metadata=[
-                self.moa
-            ],
+            transfer_metadata=[self.moa],
         )
