@@ -526,7 +526,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_full()
+            >>> adata = pt.dt.dong_2023()
             >>> sc.pp.pca(adata)
             >>> model = pt.tl.Cinemaot()
             >>> combo = model.synergy(adata, pert_key='perturbation', base='No stimulation', A='IFNb', B='IFNg',
