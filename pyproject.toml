@@ -49,6 +49,7 @@ dependencies = [
     "sparsecca",
     "numba",
     "openpyxl",
+    "pubchempy",
 ]
 
 [project.optional-dependencies]

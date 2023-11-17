@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Union
 
 import pandas as pd
 from rich import print
@@ -510,6 +510,7 @@ class CellLineMetaData:
         query_perturbation: str = "perturbation",
         reference_perturbation: Literal["drug_name", "drug_id"] = "drug_name",
         gdsc_dataset: Literal[1, 2] = 1,
+        show: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch drug response data.
@@ -523,6 +524,7 @@ class CellLineMetaData:
             query_perturbation: The column of `.obs` with perturbation information. Defaults to "perturbation".
             reference_perturbation: The type of perturbation in the meta data, drug_name or drug_id. Defaults to "drug_name".
             gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1. The GDSC1 dataset updates previous releases with additional drug screening data from the Wellcome Sanger Institute and Massachusetts General Hospital. It covers 970 Cell lines and 403 Compounds with 333292 IC50s. GDSC2 is new and has 243,466 IC50 results from the latest screening at the Wellcome Sanger Institute using improved experimental procedures.
+            show: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -548,14 +550,26 @@ class CellLineMetaData:
             gdsc_data = self.drug_response_gdsc1
         else:
             gdsc_data = self.drug_response_gdsc2
+
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(gdsc_data[reference_id]))
         if len(not_matched_identifiers) > 0:
-            print(
-                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can not be found in the drug response data for GDSC{gdsc_dataset},"
-                "leading to the presence of NA values for their respective metadata. Please check it again:",
-                *not_matched_identifiers,
-                sep="\n- ",
-            )
+            if isinstance(show, str):
+                if show != "all":
+                    raise ValueError("Only a non-positive value or all is accepted.")
+                else:
+                    show = len(not_matched_identifiers)
+
+            if isinstance(show, int) and show >= 0:
+                show = min(show, len(not_matched_identifiers))
+                print(
+                    f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can not be found in the drug response data for GDSC{gdsc_dataset},"
+                    "leading to the presence of NA values for their respective metadata. Please check it again:",
+                    *not_matched_identifiers[:show],
+                    sep="\n- ",
+                )
+            else:
+                raise ValueError("Only 'all' or a non-positive value is accepted.")
+
         identifier_num_all = len(adata.obs[query_id].unique())
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
@@ -568,16 +582,13 @@ class CellLineMetaData:
                 "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to \n"
                 "acquire more cell line information that can be used for annotation purposes."
             )
+        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
         adata.obs = (
-            adata.obs.merge(
-                gdsc_data[[reference_id, reference_perturbation, "ln_ic50"]],
-                how="left",
-                left_on=[query_id, query_perturbation],
-                right_on=[reference_id, reference_perturbation],
-                suffixes=("", "_fromMeta"),
-            )
-            .filter(regex="^(?!.*_fromMeta)")
-            .set_index(adata.obs.index)
+            adata.obs.reset_index()
+            .set_index([query_id, query_perturbation])
+            .assign(ln_ic50=self.drug_response_gdsc1.set_index([reference_id, reference_perturbation]).ln_ic50)
+            .reset_index()
+            .set_index(old_index_name)
         )
 
         return adata
