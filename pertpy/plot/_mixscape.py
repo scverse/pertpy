@@ -101,7 +101,9 @@ class MixscapePlot:
                     width=0.8,
                     legend=False,
                 )
-                ax.set_title(gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size)
+                ax.set_title(
+                    gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size
+                )
                 ax.set(xlabel="sgRNA", ylabel="% of cells")
                 sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
                 ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
