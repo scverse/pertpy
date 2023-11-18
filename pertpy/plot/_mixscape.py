@@ -245,7 +245,7 @@ class MixscapePlot:
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
                 sns.set(style="whitegrid")
-                sns.FacetGrid(data=perturbation_score, col=split_by, hue=split_by, palette=cols, height=5, sharey=False)
+                g = sns.FacetGrid(data=perturbation_score, col=split_by, hue=split_by, palette=cols, height=5, sharey=False)
                 g.map(sns.kdeplot, "pvec", fill=True, common_norm=False)
                 g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
                 g.set_axis_labels("Perturbation score", "Cell density")
