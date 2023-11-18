@@ -83,20 +83,39 @@ class MixscapePlot:
         if not show:
             color_mapping = {"KO": "gray", "NP": "lightgray", "NT": "salmon"}
             unique_genes = NP_KO_cells["gene"].unique()
-            fig, axs = pl.subplots(int(len(unique_genes)/5),5, figsize=(25, 25), sharey=True)
+            fig, axs = pl.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
             for i, gene in enumerate(unique_genes):
-                ax = axs[int(i/5),i%5]
-                grouped_df = NP_KO_cells[NP_KO_cells["gene"]==gene].groupby(["guide_number", "mixscape_class_global"])["value"].sum().unstack()
-                grouped_df.plot(kind="bar", stacked=True, color=[color_mapping[col] for col in grouped_df.columns], ax=ax, width=0.8,legend=False)
-                ax.set_title(gene, bbox=dict(facecolor='white', edgecolor='black', pad=1),fontsize=axis_title_size)
+                ax = axs[int(i / 5), i % 5]
+                grouped_df = (
+                    NP_KO_cells[NP_KO_cells["gene"] == gene]
+                    .groupby(["guide_number", "mixscape_class_global"])["value"]
+                    .sum()
+                    .unstack()
+                )
+                grouped_df.plot(
+                    kind="bar",
+                    stacked=True,
+                    color=[color_mapping[col] for col in grouped_df.columns],
+                    ax=ax,
+                    width=0.8,
+                    legend=False,
+                )
+                ax.set_title(gene, bbox=dict(facecolor="white", edgecolor="black", pad=1), fontsize=axis_title_size)
                 ax.set(xlabel="sgRNA", ylabel="% of cells")
                 sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
-                ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha='right',fontsize=axis_text_x_size) 
-                ax.set_yticklabels(ax.get_yticklabels(), rotation=0,fontsize=axis_text_y_size)
+                ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
+                ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
             fig.subplots_adjust(right=0.8)
-            #Increase the space between subplots
+            # Increase the space between subplots
             fig.subplots_adjust(hspace=0.5, wspace=0.5)
-            ax.legend(title="mixscape_class_global",loc='center right', bbox_to_anchor=(2.2, 3.5),frameon=True, fontsize=legend_text_size, title_fontsize=legend_title_size)
+            ax.legend(
+                title="mixscape_class_global",
+                loc="center right",
+                bbox_to_anchor=(2.2, 3.5),
+                frameon=True,
+                fontsize=legend_text_size,
+                title_fontsize=legend_title_size,
+            )
             return fig
 
     @staticmethod
@@ -211,7 +230,7 @@ class MixscapePlot:
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             cols = {gd: "#7d7d7d", target_gene: color}
-            p = sns.kdeplot(data=perturbation_score, x='pvec', hue=labels, fill=False, common_norm=False)
+            p = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
             top_r = max(p.get_lines()[i].get_data()[1].max() for i in range(len(p.get_lines())))
             pl.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
@@ -226,8 +245,8 @@ class MixscapePlot:
             if split_by is not None:
                 sns.set(style="whitegrid")
                 sns.FacetGrid(data=perturbation_score, col=split_by, hue=split_by, palette=cols, height=5, sharey=False)
-                g.map(sns.kdeplot, 'pvec', fill=True, common_norm=False)
-                g.map(sns.scatterplot, 'pvec', 'y_jitter', s=10, alpha=0.5)
+                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False)
+                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
                 g.set_axis_labels("Perturbation score", "Cell density")
                 g.add_legend(title=split_by, fontsize=14, title_fontsize=16)
                 g.despine(left=True)
@@ -235,19 +254,22 @@ class MixscapePlot:
             # If split_by is not provided, create a single plot
             else:
                 sns.set(style="whitegrid")
-                sns.kdeplot(data=perturbation_score, x='pvec', hue='gene_target', fill=True, common_norm=False, palette=cols)
-                sns.scatterplot(data=perturbation_score, x='pvec', y='y_jitter', hue='gene_target', palette=cols, s=10, alpha=0.5)
-                pl.xlabel('Perturbation score', fontsize=16)
-                pl.ylabel('Cell density', fontsize=16)
-                pl.title('Density Plot using Seaborn and Matplotlib', fontsize=18)
-                pl.legend(title='gene_target', title_fontsize=14, fontsize=12)
+                sns.kdeplot(
+                    data=perturbation_score, x="pvec", hue="gene_target", fill=True, common_norm=False, palette=cols
+                )
+                sns.scatterplot(
+                    data=perturbation_score, x="pvec", y="y_jitter", hue="gene_target", palette=cols, s=10, alpha=0.5
+                )
+                pl.xlabel("Perturbation score", fontsize=16)
+                pl.ylabel("Cell density", fontsize=16)
+                pl.title("Density Plot using Seaborn and Matplotlib", fontsize=18)
+                pl.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
-              
-                
+
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
             cols = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
-            p = sns.kdeplot(data=perturbation_score, x='pvec', hue=labels, fill=False, common_norm=False)
+            p = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
             top_r = max(p.get_lines()[i].get_data()[1].max() for i in range(len(p.get_lines())))
             pl.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
@@ -269,25 +291,30 @@ class MixscapePlot:
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
                 sns.set(style="whitegrid")
-                g = sns.FacetGrid(data=perturbation_score, col=split_by, hue='mix', palette=cols, height=5, sharey=False)
-                g.map(sns.kdeplot, 'pvec', fill=True, common_norm=False, alpha=0.7)
-                g.map(sns.scatterplot, 'pvec', 'y_jitter', s=10, alpha=0.5)
+                g = sns.FacetGrid(
+                    data=perturbation_score, col=split_by, hue="mix", palette=cols, height=5, sharey=False
+                )
+                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False, alpha=0.7)
+                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
                 g.set_axis_labels("Perturbation score", "Cell density")
-                g.add_legend(title='mix', fontsize=14, title_fontsize=16)
+                g.add_legend(title="mix", fontsize=14, title_fontsize=16)
                 g.despine(left=True)
-                
 
             # If split_by is not provided, create a single plot
             else:
                 sns.set(style="whitegrid")
-                sns.kdeplot(data=perturbation_score, x='pvec', hue='mix', fill=True, common_norm=False, palette=cols, alpha=0.7)
-                sns.scatterplot(data=perturbation_score, x='pvec', y='y_jitter', hue='mix', palette=cols, s=10, alpha=0.5)
-                pl.xlabel('Perturbation score', fontsize=16)
-                pl.ylabel('Cell density', fontsize=16)
-                pl.title('Density Plot using Seaborn and Matplotlib', fontsize=18)
-                pl.legend(title='mix', title_fontsize=14, fontsize=12)
+                sns.kdeplot(
+                    data=perturbation_score, x="pvec", hue="mix", fill=True, common_norm=False, palette=cols, alpha=0.7
+                )
+                sns.scatterplot(
+                    data=perturbation_score, x="pvec", y="y_jitter", hue="mix", palette=cols, s=10, alpha=0.5
+                )
+                pl.xlabel("Perturbation score", fontsize=16)
+                pl.ylabel("Cell density", fontsize=16)
+                pl.title("Density Plot using Seaborn and Matplotlib", fontsize=18)
+                pl.legend(title="mix", title_fontsize=14, fontsize=12)
                 sns.despine()
-                
+
         return pl.gcf()
 
     @staticmethod
@@ -350,8 +377,6 @@ class MixscapePlot:
             for ident in target_gene_idents:
                 mixscape_class_mask |= adata.obs[groupby] == ident
         adata = adata[mixscape_class_mask]
-
-
 
         sanitize_anndata(adata)
         use_raw = _check_use_raw(adata, use_raw)
@@ -435,7 +460,7 @@ class MixscapePlot:
                 )
             else:
                 axs = [ax]
-            for ax, y, ylab in zip(axs, ys, ylabel):  # noqa: F402
+            for ax, y, ylab in zip(axs, ys, ylabel):
                 ax = sns.violinplot(
                     x=x,
                     y=y,
