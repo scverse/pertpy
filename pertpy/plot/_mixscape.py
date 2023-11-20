@@ -232,8 +232,8 @@ class MixscapePlot:
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             cols = {gd: "#7d7d7d", target_gene: color}
-            p = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
-            top_r = max(p.get_lines()[cond].get_data()[1].max() for cond in range(len(p.get_lines())))
+            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
+            top_r = max(plot_dens.get_lines()[cond].get_data()[1].max() for cond in range(len(plot_dens.get_lines())))
             pl.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
@@ -273,8 +273,8 @@ class MixscapePlot:
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
             cols = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
-            p = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
-            top_r = max(p.get_lines()[i].get_data()[1].max() for i in range(len(p.get_lines())))
+            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
+            top_r = max(plot_dens.get_lines()[i].get_data()[1].max() for i in range(len(plot_dens.get_lines())))
             pl.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
@@ -316,7 +316,7 @@ class MixscapePlot:
                 pl.xlabel("Perturbation score", fontsize=16)
                 pl.ylabel("Cell density", fontsize=16)
                 pl.title("Density Plot using Seaborn and Matplotlib", fontsize=18)
-                pl.legend(title="mix", title_fontsize=14, fontsize=12)
+                pl.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
         return pl.gcf()
