@@ -55,7 +55,6 @@ dependencies = [
     "muon",
     "requests",
     "scikit-misc",
-    "plotnine",
     "scipy",
     "scvi-tools",
     "adjusttext",
