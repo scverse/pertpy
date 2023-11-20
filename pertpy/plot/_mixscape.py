@@ -109,7 +109,6 @@ class MixscapePlot:
                 ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
                 ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
             fig.subplots_adjust(right=0.8)
-            # Increase the space between subplots
             fig.subplots_adjust(hspace=0.5, wspace=0.5)
             ax.legend(
                 title="mixscape_class_global",
@@ -234,7 +233,7 @@ class MixscapePlot:
         if before_mixscape is True:
             cols = {gd: "#7d7d7d", target_gene: color}
             p = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
-            top_r = max(p.get_lines()[i].get_data()[1].max() for i in range(len(p.get_lines())))
+            top_r = max(p.get_lines()[cond].get_data()[1].max() for cond in range(len(p.get_lines())))
             pl.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
