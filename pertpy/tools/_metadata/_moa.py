@@ -42,20 +42,22 @@ class MoaMetaData:
         adata: AnnData,
         query_id: str = "pert_iname",
         target: str | None = None,
+        show: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch MoA annotation.
 
-        For each cell, we fetch mechanism of action annotation sourced from clue.io.
+        For each cell, we fetch the mechanism of action and molecular targets of the compounds sourced from clue.io.
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with perturbation information. Defaults to "pert_iname".
+            query_id: The column of `.obs` with the name of a perturbagen. Defaults to "pert_iname".
             target: The column of `.obs` with target information. Defaults to None.
+            show: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
-            Returns an AnnData object with moa annotation.
+            Returns an AnnData object with MoA annotation.
 
         """
         if copy:
@@ -68,29 +70,49 @@ class MoaMetaData:
         not_matched_identifiers = list(set(adata.obs[query_id].str.lower()) - set(self.moa["pert_iname"].str.lower()))
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
-                f"Attempting to match the query id {query_id} in the adata.obs to the pert_iname in the metadata.\n"
-                "However, none of the query IDs could be found in the moa annotation data.\n"
+                f"Attempting to match the query id {query_id} in the adata.obs to the `pert_iname` in the metadata.\n"
+                "However, none of the query IDs could be found in the MoA annotation data.\n"
                 "The annotation process has been halted.\n"
                 "To resolve this issue, please call the `MoaMetaData.lookup()` function to create a LookUp object.\n"
                 "By using the `LookUp.moa()` method. "
             )
 
         if len(not_matched_identifiers) > 0:
-            print(
-                f"[bold blue]There are {identifier_num_all} types of perturbation in `adata.obs`."
-                f"However, {len(not_matched_identifiers)} can't be found in the moa annotation,"
-                "leading to the presence of NA values for their respective metadata.\n",
-                "Please check again: ",
-                *not_matched_identifiers,
-                sep="\n- ",
+            if isinstance(show, str):
+                if show != "all":
+                    raise ValueError("Only a non-positive value or all is accepted.")
+                else:
+                    show = len(not_matched_identifiers)
+
+            if isinstance(show, int) and show >= 0:
+                show = min(show, len(not_matched_identifiers))
+                print(
+                    f"[bold blue]There are {identifier_num_all} different perturbagens in `adata.obs`."
+                    f"However, {len(not_matched_identifiers)} can't be found in the MoA annotation,"
+                    "leading to the presence of NA values for their respective metadata.\n",
+                    "Please check again: ",
+                    *not_matched_identifiers[:show],
+                    sep="\n- ",
+                )
+            else:
+                raise ValueError("Only 'all' or a non-positive value is accepted.")
+
+        adata.obs = (
+            adata.obs.merge(
+                self.moa,
+                left_on=adata.obs[query_id].str.lower(),
+                right_on=self.moa["pert_iname"].str.lower(),
+                how="left",
+                suffixes=("", "_fromMeta"),
             )
-        adata.obs = adata.obs.merge(
-            self.moa,
-            left_on=adata.obs[query_id].str.lower(),
-            right_on=self.moa["pert_iname"].str.lower(),
-            how="left",
-            suffixes=("", "_fromMeta"),
-        ).set_index(adata.obs.index)
+            .set_index(adata.obs.index)
+            .drop("key_0", axis=1)
+        )
+
+        # If target column is given,
+        # we check whether it is one of the targets listed in the metadata
+        # If inconsistent, we treat this perturbagen as unmatched and
+        # overwrite the annotated metadata with NaN
 
         if target is not None:
             target_meta = "target" if target != "target" else "target_fromMeta"
@@ -113,14 +135,13 @@ class MoaMetaData:
         """Generate LookUp object for MoaMetaData.
 
         The LookUp object provides an overview of the metadata to annotate.
-        Each annotate_{metadata} function has a corresponding lookup function in the LookUp object,
-        where users can search the reference_id in the metadata and
-        compare with the query_id in their own data.
+        annotate_moa function has a corresponding lookup function in the LookUp object,
+        where users can search the query_ids and targets in the metadata.
 
         Returns:
-            Returns a LookUp object specific for cell line annotation.
+            Returns a LookUp object specific for MoA annotation.
         """
         return LookUp(
-            type="cell_line",
+            type="moa",
             transfer_metadata=[self.moa],
         )

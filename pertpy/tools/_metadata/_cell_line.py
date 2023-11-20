@@ -196,6 +196,7 @@ class CellLineMetaData:
         reference_id: str = "DepMap_ID",
         cell_line_information: list[str] | None = None,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
+        show: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch cell line annotation.
@@ -210,6 +211,7 @@ class CellLineMetaData:
                 "stripped_cell_line_name". Defaults to "DepMap_ID".
             cell_line_information: The metadata to fetch. All metadata will be fetched by default. Defaults to None (=all).
             cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
+            show: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -258,14 +260,23 @@ class CellLineMetaData:
                 )
 
             if len(not_matched_identifiers) > 0:
-                print(
-                    f"[bold blue]There are {identifier_num_all} identifiers in `adata.obs`."
-                    f"However, {len(not_matched_identifiers)} identifiers can't be found in the cell line annotation,"
-                    "leading to the presence of NA values for their respective metadata.\n",
-                    "Please check again: ",
-                    *not_matched_identifiers,
-                    sep="\n- ",
-                )
+                if isinstance(show, str):
+                    if show != "all":
+                        raise ValueError("Only a non-positive value or all is accepted.")
+                    else:
+                        show = len(not_matched_identifiers)
+                if isinstance(show, int) and show >= 0:
+                    show = min(show, len(not_matched_identifiers))
+                    print(
+                        f"[bold blue]There are {identifier_num_all} identifiers in `adata.obs`."
+                        f"However, {len(not_matched_identifiers)} identifiers can't be found in the cell line annotation,"
+                        "leading to the presence of NA values for their respective metadata.\n",
+                        "Please check again: ",
+                        *not_matched_identifiers[:show],
+                        sep="\n- ",
+                    )
+                else:
+                    raise ValueError("Only 'all' or a non-positive value is accepted.")
 
             if cell_line_information is None:
                 # If no cell_line_information is specified, all metadata is fetched by default.
@@ -327,6 +338,7 @@ class CellLineMetaData:
         adata: AnnData,
         query_id: str = "cell_line_name",
         cell_line_source: Literal["broad", "sanger"] = "sanger",
+        show: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch bulk rna expression.
@@ -337,6 +349,7 @@ class CellLineMetaData:
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
             cell_line_source: The bulk rna expression data from either broad or sanger cell line. Defaults to "sanger".
+            show: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -394,15 +407,24 @@ class CellLineMetaData:
             )
 
         if len(not_matched_identifiers) > 0:
-            print(f"There are {identifier_num_all} identifiers in `adata.obs`.")
-            print(
-                f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can't be found in bulk RNA expression data, "
-            )
-            print(
-                "leading to the presence of NA values for their respective metadata. Please check again: ",
-                *not_matched_identifiers,
-                sep="\n- ",
-            )
+            if isinstance(show, str):
+                if show != "all":
+                    raise ValueError("Only a non-positive value or all is accepted.")
+                else:
+                    show = len(not_matched_identifiers)
+
+            if isinstance(show, int) and show >= 0:
+                show = min(show, len(not_matched_identifiers))
+                print(
+                    f"[bold yellow]There are {identifier_num_all} identifiers in `adata.obs`. "
+                    f"However {len(not_matched_identifiers)} identifiers can't be found in bulk RNA expression data, "
+                    "leading to the presence of NA values for their respective metadata. Please check again: ",
+                    *not_matched_identifiers[:show],
+                    sep="\n- ",
+                )
+            else:
+                raise ValueError("Only 'all' or a non-positive value is accepted.")
+
         if cell_line_source == "sanger":
             sanger_rna_exp = self.bulk_rna_sanger[self.bulk_rna_sanger.index.isin(adata.obs[query_id])]
             sanger_rna_exp = sanger_rna_exp.reindex(adata.obs[query_id])
@@ -423,6 +445,7 @@ class CellLineMetaData:
         reference_id: Literal["model_name", "model_id"] = "model_name",
         protein_information: Literal["protein_intensity", "zscore"] = "protein_intensity",
         protein_id: Literal["uniprot_id", "symbol"] = "uniprot_id",
+        show: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch protein expression.
@@ -435,6 +458,7 @@ class CellLineMetaData:
             reference_id: The type of cell line identifier in the meta data, model_name or model_id. Defaults to "model_name".
             protein_information: The type of protein expression data to fetch, protein_intensity or zscore. Defaults to "protein_intensity".
             protein_id: The protein identifier saved in the fetched meta data, uniprot_id or symbol. Defaults to "uniprot_id".
+            show: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -486,13 +510,24 @@ class CellLineMetaData:
             )
 
         if len(not_matched_identifiers) > 0:
-            print(
-                f"[bold yellow]There are {identifier_num_all} identifiers in `adata.obs`. "
-                f"However {len(not_matched_identifiers)} identifiers can't be found in the protein expression data, "
-                "leading to the presence of NA values for their respective metadata. Please check again: ",
-                *not_matched_identifiers,
-                sep="\n- ",
-            )
+            if isinstance(show, str):
+                if show != "all":
+                    raise ValueError("Only a non-positive value or all is accepted.")
+                else:
+                    show = len(not_matched_identifiers)
+
+            if isinstance(show, int) and show >= 0:
+                show = min(show, len(not_matched_identifiers))
+                print(
+                    f"[bold yellow]There are {identifier_num_all} identifiers in `adata.obs`. "
+                    f"However {len(not_matched_identifiers)} identifiers can't be found in the protein expression data, "
+                    "leading to the presence of NA values for their respective metadata. Please check again: ",
+                    *not_matched_identifiers[:show],
+                    sep="\n- ",
+                )
+            else:
+                raise ValueError("Only 'all' or a non-positive value is accepted.")
+
         # convert the original protein intensities table from long format to wide format, group by the cell lines
         prot_exp = self.proteomics_data[[reference_id, protein_id, protein_information]]
         prot_exp = pd.pivot(prot_exp, index=reference_id, columns=protein_id, values=protein_information)
@@ -562,7 +597,7 @@ class CellLineMetaData:
             if isinstance(show, int) and show >= 0:
                 show = min(show, len(not_matched_identifiers))
                 print(
-                    f"[bold yellow]Following {len(not_matched_identifiers)} identifiers can not be found in the drug response data for GDSC{gdsc_dataset},"
+                    f"[bold yellow]{len(not_matched_identifiers)} identifiers can not be found in the drug response data for GDSC{gdsc_dataset},"
                     "leading to the presence of NA values for their respective metadata. Please check it again:",
                     *not_matched_identifiers[:show],
                     sep="\n- ",

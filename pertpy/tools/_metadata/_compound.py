@@ -26,7 +26,9 @@ class CompoundMetaData:
     def annotate_compound(
         self,
         adata: AnnData,
-        query_id: str = "pert_iname",
+        query_id: str = "perturbation",
+        query_id_type: Literal["name", "cid"] = "name",
+        show: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch compound annotation.
@@ -35,7 +37,9 @@ class CompoundMetaData:
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with compound identifier. Defaults to "pert_iname".
+            query_id: The column of `.obs` with compound identifiers. Defaults to "perturbation".
+            query_id_type: The type of compound identifiers, name or cid. Defaults to "name".
+            show: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -50,34 +54,62 @@ class CompoundMetaData:
 
         query_dict = {}
         not_matched_identifiers = []
-        for p in adata.obs[query_id].cat.categories:  # list(adata.obs.perturbation_name.unique())
-            cids = pcp.get_cids(p, "name", list_return="flat")
-            if len(cids) == 0:  # search did not work
-                not_matched_identifiers.append(p)
-            if len(cids) >= 1:
-                ## If the name matches the first synonym offered by PubChem (outside of capitalization), it is not
-                ## changed (outside of capitalization). Otherwise, it is replaced with the first synonym.
-                cmpd = pcp.Compound.from_cid(cids[0])
-                query_dict[p] = [cmpd.synonyms[0], cids[0], cmpd.to_dict()["canonical_smiles"]]
+        for p in adata.obs[query_id].dropna().astype(str).unique():
+            if query_id_type == "name":
+                cids = pcp.get_compounds(p, "name")
+                if len(cids) == 0:  # search did not work
+                    not_matched_identifiers.append(p)
+                if len(cids) >= 1:
+                    # If the name matches the first synonym offered by PubChem (outside of capitalization),
+                    # it is not changed (outside of capitalization). Otherwise, it is replaced with the first synonym.
+                    query_dict[p] = [cids[0].synonyms[0], cids[0].cid, cids[0].canonical_smiles]
+            else:
+                try:
+                    cid = pcp.Compound.from_cid(p)
+                    query_dict[p] = [cid.synonyms[0], p, cid.canonical_smiles]
+                except pcp.BadRequestError:
+                    # pubchempy throws badrequest if a cid is not found
+                    not_matched_identifiers.append(p)
 
         identifier_num_all = len(adata.obs[query_id].unique())
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
-                f"Attempting to match the query id {query_id} in the adata.obs to the pert_iname in the metadata.\n"
-                "However, none of the query IDs could be found in the compound annotation data.\n"
+                f"Attempting to find the query id {query_id} in the adata.obs in pubchem database.\n"
+                "However, none of them could be found.\n"
                 "The annotation process has been halted.\n"
                 "To resolve this issue, please call the `CompoundMetaData.lookup()` function to create a LookUp object.\n"
                 "By using the `LookUp.compound()` method. "
             )
 
         if len(not_matched_identifiers) > 0:
-            print(
-                f"[bold blue]There are {identifier_num_all} types of perturbation in `adata.obs`."
-                f"However, {len(not_matched_identifiers)} can't be found in the compound annotation,"
-                "leading to the presence of NA values for their respective metadata.\n",
-                "Please check again: ",
-                *not_matched_identifiers,
-                sep="\n- ",
-            )
+            if isinstance(show, str):
+                if show != "all":
+                    raise ValueError("Only a non-positive value or all is accepted.")
+                else:
+                    show = len(not_matched_identifiers)
+
+            if isinstance(show, int) and show >= 0:
+                show = min(show, len(not_matched_identifiers))
+                print(
+                    f"[bold yellow]There are {identifier_num_all} identifiers in `adata.obs`. "
+                    f"However {len(not_matched_identifiers)} identifiers can't be found in the compound annotation, "
+                    "leading to the presence of NA values for their respective metadata. Please check again: ",
+                    *not_matched_identifiers[:show],
+                    sep="\n- ",
+                )
+            else:
+                raise ValueError("Only 'all' or a non-positive value is accepted.")
+
         query_df = pd.DataFrame.from_dict(query_dict, orient="index", columns=["pubchem_name", "pubchem_ID", "smiles"])
-        adata.obs = adata.obs.merge(query_df, left_on=query_id, right_index=True, how="left")
+        adata.obs = adata.obs.merge(
+            query_df, left_on=query_id, right_index=True, how="left", suffixes=("", "_fromMeta")
+        )
+        # Remove duplicate columns
+        if query_id_type == "cid":
+            duplicate_col = "pubchem_ID" if query_id != "pubchem_ID" else "pubchem_ID_fromMeta"
+            adata.obs.drop(duplicate_col, axis=1, inplace=True)
+        else:
+            # Column is converted to float after merging due to unmatches
+            # Convert back to integers
+            adata.obs.pubchem_ID = adata.obs.pubchem_ID.astype("Int64")
+        return adata

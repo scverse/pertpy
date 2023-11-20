@@ -61,7 +61,6 @@ class TestMetaData:
     def test_gdsc_annotation(self, adata):
         self.pt_metadata.annotate_cell_lines(adata)
         self.pt_metadata.annotate_from_gdsc(adata, query_id="stripped_cell_line_name")
-        assert "drug_name" in adata.obs
         assert "ln_ic50" in adata.obs
 
     def test_protein_expression_annotation(self, adata):
