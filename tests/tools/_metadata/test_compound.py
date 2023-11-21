@@ -31,7 +31,12 @@ class TestMetaData:
         obs = pd.concat([cell_line], axis=1)
         obs = obs.set_index(pd.Index([str(i) for i in range(NUM_GENES)]))
         obs.index.rename("index", inplace=True)
-        obs["perturbation"] = ["AG-490"] * NUM_CELLS_PER_ID + ["Iniparib"] * NUM_CELLS_PER_ID + ["TAK-901"] * NUM_CELLS_PER_ID + ["Quercetin"] * NUM_CELLS_PER_ID
+        obs["perturbation"] = (
+            ["AG-490"] * NUM_CELLS_PER_ID
+            + ["Iniparib"] * NUM_CELLS_PER_ID
+            + ["TAK-901"] * NUM_CELLS_PER_ID
+            + ["Quercetin"] * NUM_CELLS_PER_ID
+        )
 
         var_data = {"gene_name": ["gene" + str(i) for i in range(1, NUM_GENES + 1)]}
         var = pd.DataFrame(var_data)
@@ -45,7 +50,7 @@ class TestMetaData:
 
     def test_compound_annotation(self, adata):
         self.pt_metadata.annotate_compound(adata=adata, query_id="perturbation")
-        assert (len(adata.obs.columns) == 5)  
+        assert len(adata.obs.columns) == 5
         pubchemid = (
             [5328779] * NUM_CELLS_PER_ID
             + [9796068] * NUM_CELLS_PER_ID

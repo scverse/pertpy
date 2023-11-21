@@ -101,15 +101,23 @@ class CompoundMetaData:
                 raise ValueError("Only 'all' or a non-positive value is accepted.")
 
         query_df = pd.DataFrame.from_dict(query_dict, orient="index", columns=["pubchem_name", "pubchem_ID", "smiles"])
-        adata.obs = adata.obs.merge(
-            query_df, left_on=query_id, right_index=True, how="left", suffixes=("", "_fromMeta")
-        )
-        # Remove duplicate columns
+        # Merge and remove duplicate columns
+        # Column is converted to float after merging due to unmatches
+        # Convert back to integers
         if query_id_type == "cid":
-            duplicate_col = "pubchem_ID" if query_id != "pubchem_ID" else "pubchem_ID_fromMeta"
-            adata.obs.drop(duplicate_col, axis=1, inplace=True)
+            query_df.pubchem_ID = query_df.pubchem_ID.astype("Int64")
+            adata.obs = (
+                adata.obs.merge(
+                    query_df, left_on=query_id, right_on="pubchem_ID", how="left", suffixes=("", "_fromMeta")
+                )
+                .filter(regex="^(?!.*_fromMeta)")
+                .set_index(adata.obs.index)
+            )
         else:
-            # Column is converted to float after merging due to unmatches
-            # Convert back to integers
+            adata.obs = (
+                adata.obs.merge(query_df, left_on=query_id, right_index=True, how="left", suffixes=("", "_fromMeta"))
+                .filter(regex="^(?!.*_fromMeta)")
+                .set_index(adata.obs.index)
+            )
             adata.obs.pubchem_ID = adata.obs.pubchem_ID.astype("Int64")
         return adata
