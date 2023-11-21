@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 import arviz as az
-import ete3 as ete
 import jax.numpy as jnp
 import numpy as np
 import numpyro as npy
@@ -148,17 +147,19 @@ class Tasccoda(CompositionalModel2):
         pen_args: dict = None,
         modality_key: str = "coda",
     ) -> AnnData | MuData:
-        """Handles data preprocessing, covariate matrix creation, reference selection, and zero count replacement for tascCODA. Also sets model parameters, model type (tree_agg), effect selection type (sslaso) and performs tree processing.
+        """Handles data preprocessing, covariate matrix creation, reference selection, and zero count replacement for tascCODA.
 
         Args:
             data: Anndata object with cell counts as .X and covariates saved in .obs or a MuData object.
             formula: R-style formula for building the covariate matrix.
-                Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.
-                To set a different level as the base category for a categorical covariate, use "C(<CovariateName>, Treatment('<ReferenceLevelName>'))"
+                     Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.
+                     To set a different level as the base category for a categorical covariate, use "C(<CovariateName>, Treatment('<ReferenceLevelName>'))"
             reference_cell_type: Column name that sets the reference cell type.
-                Reference the name of a column. If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen. Defaults to "automatic".
-            automatic_reference_absence_threshold: If using reference_cell_type = "automatic", determine the maximum fraction of zero entries for a cell type
-                to be considered as a possible reference cell type. Defaults to 0.05.
+                                 If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen.
+                                 Defaults to "automatic".
+            automatic_reference_absence_threshold: If using reference_cell_type = "automatic",
+                                                   determine the maximum fraction of zero entries for a cell type
+                                                   to be considered as a possible reference cell type. Defaults to 0.05.
             tree_key: Key in `adata.uns` that contains the tree structure
             pen_args: Dictionary with penalty arguments. With `reg="scaled_3"`, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.
                 See the tascCODA paper for an explanation of these parameters. Default: lambda_0 = 50, lambda_1 = 5, phi = 0.
@@ -198,6 +199,12 @@ class Tasccoda(CompositionalModel2):
 
         if tree_key is None:
             raise ValueError("Please specify the key in .uns that contains the tree structure!")
+
+        # Scoped import due to installation issues
+        try:
+            import ete3 as ete
+        except ImportError:
+            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
 
         # toytree tree - only for legacy reasons, can be removed in the final version
         if isinstance(adata.uns[tree_key], tt.tree):
@@ -359,16 +366,15 @@ class Tasccoda(CompositionalModel2):
         sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1_scaled"] = lambda_1
 
         # Initial MCMC states
-        if rng_key is not None:
-            np.random.seed(rng_key)
+        rng = np.random.default_rng(seed=rng_key)
 
         sample_adata.uns["scCODA_params"]["mcmc"]["init_params"] = {
             "a_0": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_0,
-            "b_raw_0": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "b_raw_0": rng.normal(0.0, 1.0, beta_nobl_size),
             "a_1": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_1,
-            "b_raw_1": np.random.normal(0.0, 1.0, beta_nobl_size),
+            "b_raw_1": rng.normal(0.0, 1.0, beta_nobl_size),
             "theta": np.ones(dtype=np.float64, shape=1) * 0.5,
-            "alpha": np.random.normal(0.0, 1.0, alpha_size),
+            "alpha": rng.normal(0.0, 1.0, alpha_size),
         }
 
         return sample_adata
@@ -543,7 +549,8 @@ class Tasccoda(CompositionalModel2):
         ref_index = jnp.array(sample_adata.uns["scCODA_params"]["reference_index"])
 
         if rng_key is None:
-            rng_key = random.PRNGKey(np.random.randint(0, 10000))
+            rng = np.random.default_rng()
+            rng_key = random.PRNGKey(rng.integers(0, 10000))
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
@@ -664,7 +671,6 @@ class Tasccoda(CompositionalModel2):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.set_fdr(mdata, est_fdr=0.4)
-            #TODO: Not working (throws error, because too many values to unpack -> Correct set_fdr first)
         """
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 

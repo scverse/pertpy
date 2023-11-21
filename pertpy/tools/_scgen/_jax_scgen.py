@@ -118,8 +118,9 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             ctrl_pred = adata_to_predict
 
         eq = min(ctrl_x.X.shape[0], stim_x.X.shape[0])
-        cd_ind = np.random.choice(range(ctrl_x.shape[0]), size=eq, replace=False)
-        stim_ind = np.random.choice(range(stim_x.shape[0]), size=eq, replace=False)
+        rng = np.random.default_rng()
+        cd_ind = rng.choice(range(ctrl_x.shape[0]), size=eq, replace=False)
+        stim_ind = rng.choice(range(stim_x.shape[0]), size=eq, replace=False)
         ctrl_adata = ctrl_x[cd_ind, :]
         stim_adata = stim_x[stim_ind, :]
 

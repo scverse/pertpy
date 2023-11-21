@@ -52,7 +52,13 @@ jobs:
                   MPLBACKEND: agg
                   PLATFORM: ${{ matrix.os }}
                   DISPLAY: :42
-              run: pytest -v --cov --color=yes
+              run: coverage run -m pytest -v --color=yes
+
+            - name: Show coverage report
+              run: coverage report -m
 
             - name: Upload coverage
               uses: codecov/codecov-action@v3
+              with:
+                  fail_ci_if_error: true
+                  verbose: true

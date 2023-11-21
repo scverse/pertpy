@@ -106,6 +106,7 @@ class PseudobulkSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+            **kwargs: Are passed to decoupler's get_pseuobulk.
 
         Examples:
             >>> import pertpy as pp
@@ -147,7 +148,7 @@ class KMeansSpace(ClusteringSpace):
         adata: AnnData,
         layer_key: str = None,
         embedding_key: str = None,
-        cluster_key: str = None,
+        cluster_key: str = "k-means",
         copy: bool = False,
         return_object: bool = False,
         **kwargs,
@@ -171,9 +172,6 @@ class KMeansSpace(ClusteringSpace):
         """
         if copy:
             adata = adata.copy()
-
-        if cluster_key is None:
-            cluster_key = "k-means"
 
         if layer_key is not None and embedding_key is not None:
             raise ValueError("Please, select just either layer or embedding for computation.")
@@ -210,7 +208,7 @@ class DBSCANSpace(ClusteringSpace):
         adata: AnnData,
         layer_key: str = None,
         embedding_key: str = None,
-        cluster_key: str = None,
+        cluster_key: str = "dbscan",
         copy: bool = True,
         return_object: bool = False,
         **kwargs,
@@ -221,9 +219,10 @@ class DBSCANSpace(ClusteringSpace):
             adata: Anndata object of size cells x genes
             layer_key: If specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
             embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
-            cluster_key: name of the .obs column to store the cluster labels. Defaults to 'k-means'
+            cluster_key: name of the .obs column to store the cluster labels. Defaults to 'dbscan'
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
+            **kwargs: Are passed to sklearn's DBSCAN.
 
         Examples:
             >>> import pertpy as pt
@@ -233,9 +232,6 @@ class DBSCANSpace(ClusteringSpace):
         """
         if copy:
             adata = adata.copy()
-
-        if cluster_key is None:
-            cluster_key = "dbscan"
 
         if embedding_key is not None:
             if embedding_key not in adata.obsm_keys():

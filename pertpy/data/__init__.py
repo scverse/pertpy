@@ -13,6 +13,7 @@ from pertpy.data._datasets import (
     distance_example,
     dixit_2016,
     dixit_2016_raw,
+    dong_2023,
     frangieh_2021,
     frangieh_2021_protein,
     frangieh_2021_raw,

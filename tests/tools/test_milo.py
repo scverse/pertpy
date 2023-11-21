@@ -110,16 +110,16 @@ class TestMilopy:
         self.milo.make_nhoods(adata)
 
         # Simulate experimental condition
-        np.random.seed(seed=42)
-        adata.obs["condition"] = np.random.choice(["ConditionA", "ConditionB"], size=adata.n_obs, p=[0.5, 0.5])
+        rng = np.random.default_rng(seed=42)
+        adata.obs["condition"] = rng.choice(["ConditionA", "ConditionB"], size=adata.n_obs, p=[0.5, 0.5])
         # we simulate differential abundance in NK cells
         DA_cells = adata.obs["louvain"] == "1"
-        adata.obs.loc[DA_cells, "condition"] = np.random.choice(
+        adata.obs.loc[DA_cells, "condition"] = rng.choice(
             ["ConditionA", "ConditionB"], size=sum(DA_cells), p=[0.2, 0.8]
         )
 
         # Simulate replicates
-        adata.obs["replicate"] = np.random.choice(["R1", "R2", "R3"], size=adata.n_obs)
+        adata.obs["replicate"] = rng.choice(["R1", "R2", "R3"], size=adata.n_obs)
         adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata
@@ -179,16 +179,16 @@ class TestMilopy:
         self.milo.make_nhoods(adata)
 
         # Simulate experimental condition
-        np.random.seed(seed=42)
-        adata.obs["condition"] = np.random.choice(["ConditionA", "ConditionB"], size=adata.n_obs, p=[0.5, 0.5])
+        rng = np.random.default_rng(seed=42)
+        adata.obs["condition"] = rng.choice(["ConditionA", "ConditionB"], size=adata.n_obs, p=[0.5, 0.5])
         # we simulate differential abundance in NK cells
         DA_cells = adata.obs["louvain"] == "1"
-        adata.obs.loc[DA_cells, "condition"] = np.random.choice(
+        adata.obs.loc[DA_cells, "condition"] = rng.choice(
             ["ConditionA", "ConditionB"], size=sum(DA_cells), p=[0.2, 0.8]
         )
 
         # Simulate replicates
-        adata.obs["replicate"] = np.random.choice(["R1", "R2", "R3"], size=adata.n_obs)
+        adata.obs["replicate"] = rng.choice(["R1", "R2", "R3"], size=adata.n_obs)
         adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata
@@ -208,7 +208,8 @@ class TestMilopy:
     def test_annotate_nhoods_continuous_correct_mean(self, annotate_nhoods_mdata):
         mdata = annotate_nhoods_mdata.copy()
         self.milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
-        i = np.random.choice(np.arange(mdata["milo"].n_obs))
+        rng = np.random.default_rng(seed=42)
+        i = rng.choice(np.arange(mdata["milo"].n_obs))
         mean_val_nhood = mdata["rna"].obs[mdata["rna"].obsm["nhoods"][:, i].toarray() == 1]["S_score"].mean()
         assert mdata["milo"].var["nhood_S_score"][i] == pytest.approx(mean_val_nhood, 0.0001)
 
@@ -235,16 +236,16 @@ class TestMilopy:
         self.milo.make_nhoods(adata)
 
         # Simulate experimental condition
-        np.random.seed(seed=42)
-        adata.obs["condition"] = np.random.choice(["ConditionA", "ConditionB"], size=adata.n_obs, p=[0.2, 0.8])
+        rng = np.random.default_rng(seed=42)
+        adata.obs["condition"] = rng.choice(["ConditionA", "ConditionB"], size=adata.n_obs, p=[0.2, 0.8])
         # we simulate differential abundance in NK cells
         DA_cells = adata.obs["leiden"] == "1"
-        adata.obs.loc[DA_cells, "condition"] = np.random.choice(
+        adata.obs.loc[DA_cells, "condition"] = rng.choice(
             ["ConditionA", "ConditionB"], size=sum(DA_cells), p=[0.2, 0.8]
         )
 
         # Simulate replicates
-        adata.obs["replicate"] = np.random.choice(["R1", "R2", "R3"], size=adata.n_obs)
+        adata.obs["replicate"] = rng.choice(["R1", "R2", "R3"], size=adata.n_obs)
         adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
         return milo_mdata

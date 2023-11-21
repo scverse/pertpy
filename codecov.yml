@@ -5,7 +5,7 @@ coverage:
     status:
         project:
             default:
-                # Require 1% coverage, i.e., always succeed
+                # Require 1% coverage, i.e., succeed as long as coverage collection works
                 target: 1
         patch: false
         changes: false

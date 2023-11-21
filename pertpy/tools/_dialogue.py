@@ -631,8 +631,7 @@ class Dialogue:
             >>> import scanpy as sc
             >>> adata = pt.dt.dialogue_example()
             >>> sc.pp.pca(adata)
-            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
-                n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", n_counts_key = "nCount_RNA", n_mpcs = 3)
             >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
         """
         # IMPORTANT NOTE: the order in which matrices are passed to multicca matters. As such,
@@ -662,7 +661,8 @@ class Dialogue:
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         pre_r_scores = {
-            ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws[i] for i, ct in enumerate(cell_types)  # TODO change from 50
+            ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws[i]
+            for i, ct in enumerate(cell_types)  # TODO change from 50
         }
 
         # TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it's not at all

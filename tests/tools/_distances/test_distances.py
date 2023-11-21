@@ -55,7 +55,8 @@ class TestDistances:
 
         # (M3) Triangle inequality (we just probe this for a few random triplets)
         for _i in range(10):
-            triplet = np.random.choice(df.index, size=3, replace=False)
+            rng = np.random.default_rng()
+            triplet = rng.choice(df.index, size=3, replace=False)
             assert df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]] >= df.loc[triplet[0], triplet[2]]
 
     @mark.parametrize("distance", actual_distances + pseudo_distances)
@@ -94,8 +95,9 @@ class TestDistances:
     def test_distance_output_type(self, distance):
         # Test if distances are outputting floats
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        X = np.random.normal(size=(100, 10))
-        Y = np.random.normal(size=(100, 10))
+        rng = np.random.default_rng()
+        X = rng.normal(size=(100, 10))
+        Y = rng.normal(size=(100, 10))
         d = Distance(X, Y)
         assert isinstance(d, float)
 
@@ -117,6 +119,5 @@ class TestDistances:
         df = Distance.onesided_distances(
             adata, groupby="perturbation", selected_group=selected_group, show_progressbar=True
         )
-
         assert isinstance(df, Series)
         assert df.loc[selected_group] == 0  # distance to self is 0
