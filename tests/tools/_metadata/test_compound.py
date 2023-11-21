@@ -16,8 +16,7 @@ class TestMetaData:
 
     @pytest.fixture
     def adata(self) -> AnnData:
-        np.random.seed(1)
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(1)
         X = rng.standard_normal((NUM_CELLS, NUM_GENES))
         X = np.where(X < 0, 0, X)
 

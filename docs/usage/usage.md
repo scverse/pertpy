@@ -356,7 +356,7 @@ Available databases for mechanism of action metadata:
 
     tools.CellLineMetaData
     tools.MoaMetaData
-    ools.CompoundMetaData
+    tools.CompoundMetaData
 ```
 
 ### Response prediction
