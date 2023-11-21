@@ -18,7 +18,8 @@ class TestMetaData:
     def adata(self) -> AnnData:
         np.random.seed(1)
 
-        X = np.random.normal(0, 1, (NUM_CELLS, NUM_GENES))
+        rng = np.random.default_rng()
+        X = rng.standard_normal((NUM_CELLS, NUM_GENES))
         X = np.where(X < 0, 0, X)
 
         cell_line = {

@@ -332,6 +332,19 @@ Available databases for cell line metadata:
 
 -   The Cancer Dependency Map Project at Broad
 -   The Cancer Dependency Map Project at Sanger
+-   Genomics of Drug Sensitivity in Cancer (GDSC)
+
+CompoundMetaData aims to retrieve various types of information related to compounds of interest, including the most common synonym, pubchemID and canonical SMILES.
+
+Available databases for compound metadata:
+
+-   pubchempy
+
+MoaMetaData aims to retrieve metadata of mechanism of action studies related to perturbagens of interest, depending on the molecular targets.
+
+Available databases for mechanism of action metadata:
+
+-   clue.io
 
 ```{eval-rst}
 .. currentmodule:: pertpy
@@ -342,6 +355,8 @@ Available databases for cell line metadata:
     :toctree: tools
 
     tools.CellLineMetaData
+    tools.MoaMetaData
+    ools.CompoundMetaData
 ```
 
 ### Response prediction
