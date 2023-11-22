@@ -1504,7 +1504,7 @@ def from_scanpy(
         #     if any(adata.obs.groupby(sample_identifier).nunique()[c] != 1):
         #         print(f"Covariate {c} has non-unique values! Skipping...")
         #         covariate_obs.remove(c)
-        temp_df = haber_cells.obs.groupby(sample_identifier).nunique()[covariate_obs]
+        temp_df = adata.obs.groupby(sample_identifier).nunique()[covariate_obs]
         covariate_obs = temp_df.columns[temp_df.nunique() == 1]
         covariate_df_obs = adata.obs.groupby(sample_identifier).first()[covariate_obs]
         covariate_df_ = pd.concat((covariate_df_, covariate_df_obs), axis=1)
