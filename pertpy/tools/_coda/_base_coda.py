@@ -1474,7 +1474,8 @@ def from_scanpy(
         sample_identifier = [sample_identifier]
 
     if covariate_obs:
-        covariate_obs += [i for i in sample_identifier if i not in covariate_obs]
+        # covariate_obs += [i for i in sample_identifier if i not in covariate_obs]
+        covariate_obs = list(set(covariate_obs + sample_identifier))
     else:
         covariate_obs = sample_identifier  # type: ignore
 
@@ -1499,11 +1500,12 @@ def from_scanpy(
         covariate_df_ = pd.concat((covariate_df_, covariate_df_uns), axis=1)
 
     if covariate_obs is not None:
-        for c in covariate_obs:
-            if any(adata.obs.groupby(sample_identifier).nunique()[c] != 1):
-                print(f"Covariate {c} has non-unique values! Skipping...")
-                covariate_obs.remove(c)
-
+        # for c in covariate_obs:
+        #     if any(adata.obs.groupby(sample_identifier).nunique()[c] != 1):
+        #         print(f"Covariate {c} has non-unique values! Skipping...")
+        #         covariate_obs.remove(c)
+        temp_df = haber_cells.obs.groupby(sample_identifier).nunique()[covariate_obs]
+        covariate_obs = temp_df.columns[temp_df.nunique() == 1]
         covariate_df_obs = adata.obs.groupby(sample_identifier).first()[covariate_obs]
         covariate_df_ = pd.concat((covariate_df_, covariate_df_obs), axis=1)
 
