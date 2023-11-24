@@ -20,27 +20,16 @@ class TestMetaData:
         X = rng.standard_normal((NUM_CELLS, NUM_GENES))
         X = np.where(X < 0, 0, X)
 
-        cell_line = {
-            "DepMap_ID": ["ACH-000016"] * NUM_CELLS_PER_ID
-            + ["ACH-000049"] * NUM_CELLS_PER_ID
-            + ["ACH-001208"] * NUM_CELLS_PER_ID
-            + ["ACH-000956"] * NUM_CELLS_PER_ID
-        }
-        cell_line = pd.DataFrame(cell_line)
-        obs = pd.concat([cell_line], axis=1)
-        obs = obs.set_index(pd.Index([str(i) for i in range(NUM_GENES)]))
-        obs.index.rename("index", inplace=True)
-        obs["perturbation"] = (
-            ["AG-490"] * NUM_CELLS_PER_ID
-            + ["Iniparib"] * NUM_CELLS_PER_ID
-            + ["TAK-901"] * NUM_CELLS_PER_ID
-            + ["Quercetin"] * NUM_CELLS_PER_ID
+        obs = pd.DataFrame(
+            {
+                "DepMap_ID": ["ACH-000016", "ACH-000049", "ACH-001208", "ACH-000956"] * NUM_CELLS_PER_ID,
+                "perturbation": ["AG-490", "Iniparib", "TAK-901", "Quercetin"] * NUM_CELLS_PER_ID,
+            },
+            index=[str(i) for i in range(NUM_GENES)],
         )
 
-        var_data = {"gene_name": ["gene" + str(i) for i in range(1, NUM_GENES + 1)]}
-        var = pd.DataFrame(var_data)
-        var = var.set_index("gene_name", drop=False)
-        var.index.rename("index", inplace=True)
+        var_data = {"gene_name": [f"gene{i}" for i in range(1, NUM_GENES + 1)]}
+        var = pd.DataFrame(var_data).set_index("gene_name", drop=False).rename_axis("index")
 
         X = sparse.csr_matrix(X)
         adata = anndata.AnnData(X=X, obs=obs, var=var)
@@ -48,13 +37,7 @@ class TestMetaData:
         return adata
 
     def test_compound_annotation(self, adata):
-        self.pt_metadata.annotate_compound(adata=adata, query_id="perturbation")
+        self.pt_metadata.annotate_compounds(adata=adata, query_id="perturbation")
         assert len(adata.obs.columns) == 5
-        pubchemid = (
-            [5328779] * NUM_CELLS_PER_ID
-            + [9796068] * NUM_CELLS_PER_ID
-            + [16124208] * NUM_CELLS_PER_ID
-            + [5280343] * NUM_CELLS_PER_ID
-        )
-
+        pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
         assert pubchemid == list(adata.obs["pubchem_ID"])

@@ -21,22 +21,16 @@ class TestMetaData:
         X = rng.normal(0, 1, (NUM_CELLS, NUM_GENES))
         X = np.where(X < 0, 0, X)
 
-        cell_line = {
-            "DepMap_ID": ["ACH-000016"] * NUM_CELLS_PER_ID
-            + ["ACH-000049"] * NUM_CELLS_PER_ID
-            + ["ACH-001208"] * NUM_CELLS_PER_ID
-            + ["ACH-000956"] * NUM_CELLS_PER_ID
-        }
-        cell_line = pd.DataFrame(cell_line)
-        obs = pd.concat([cell_line], axis=1)
-        obs = obs.set_index(pd.Index([str(i) for i in range(NUM_GENES)]))
-        obs.index.rename("index", inplace=True)
-        obs["perturbation"] = "Midostaurin"
+        obs = pd.DataFrame(
+            {
+                "DepMap_ID": ["ACH-000016", "ACH-000049", "ACH-001208", "ACH-000956"] * NUM_CELLS_PER_ID,
+                "perturbation": ["Midostaurin"] * NUM_CELLS_PER_ID * 4,
+            },
+            index=[str(i) for i in range(NUM_GENES)],
+        )
 
-        var_data = {"gene_name": ["gene" + str(i) for i in range(1, NUM_GENES + 1)]}
-        var = pd.DataFrame(var_data)
-        var = var.set_index("gene_name", drop=False)
-        var.index.rename("index", inplace=True)
+        var_data = {"gene_name": [f"gene{i}" for i in range(1, NUM_GENES + 1)]}
+        var = pd.DataFrame(var_data).set_index("gene_name", drop=False).rename_axis("index")
 
         X = sparse.csr_matrix(X)
         adata = anndata.AnnData(X=X, obs=obs, var=var)
@@ -49,13 +43,7 @@ class TestMetaData:
             len(adata.obs.columns) == len(self.pt_metadata.cell_line_meta.columns) + 1
         )  # due to the perturbation column
         assert set(self.pt_metadata.cell_line_meta.columns).issubset(adata.obs)
-        stripped_cell_line_name = (
-            ["SLR21"] * NUM_CELLS_PER_ID
-            + ["HEKTE"] * NUM_CELLS_PER_ID
-            + ["TK10"] * NUM_CELLS_PER_ID
-            + ["22RV1"] * NUM_CELLS_PER_ID
-        )
-
+        stripped_cell_line_name = ["SLR21", "HEKTE", "TK10", "22RV1"] * NUM_CELLS_PER_ID
         assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
 
     def test_gdsc_annotation(self, adata):
