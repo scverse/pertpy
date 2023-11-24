@@ -406,7 +406,7 @@ class LookUp:
             print(f"{identifier_num_all - len(not_matched_identifiers)} molecular targets are found! ")
 
 
-def available_compound(
+def available_compounds(
     self,
     query_id_list: list[str] | None = None,
     query_id_type: Literal["name", "cid"] = "name",
