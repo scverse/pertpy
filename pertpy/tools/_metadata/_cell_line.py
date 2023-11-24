@@ -262,7 +262,7 @@ class CellLineMetaData:
             if len(not_matched_identifiers) > 0:
                 if isinstance(show, str):
                     if show != "all":
-                        raise ValueError("Only a non-positive value or all is accepted.")
+                        raise ValueError("Only a non-negative value or 'all' is accepted.")
                     else:
                         show = len(not_matched_identifiers)
                 if isinstance(show, int) and show >= 0:
