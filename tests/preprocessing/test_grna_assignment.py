@@ -2,11 +2,12 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pertpy as pt
+import pytest
 
 
 class TestGuideRnaProcessingAndPlotting:
-    def make_test_adata(self):
-        np.random.seed(1)
+    @pytest.fixture
+    def adata(self):
         exp_matrix = np.array(
             [
                 [9, 0, 1, 0, 1, 0, 0],
@@ -26,9 +27,7 @@ class TestGuideRnaProcessingAndPlotting:
         )
         return adata
 
-    def test_grna_threshold_assignment(self):
-        adata = self.make_test_adata()
-
+    def test_grna_threshold_assignment(self, adata):
         threshold = 5
         output_layer = "assigned_guides"
         assert output_layer not in adata.layers
@@ -38,9 +37,7 @@ class TestGuideRnaProcessingAndPlotting:
         assert output_layer in adata.layers
         assert np.all(np.logical_xor(adata.X < threshold, adata.layers[output_layer].A == 1))
 
-    def test_grna_max_assignment(self):
-        adata = self.make_test_adata()
-
+    def test_grna_max_assignment(self, adata):
         threshold = 5
         output_key = "assigned_guide"
         assert output_key not in adata.obs

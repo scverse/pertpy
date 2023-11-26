@@ -16,9 +16,9 @@ class TestMetaData:
 
     @pytest.fixture
     def adata(self) -> AnnData:
-        np.random.seed(1)
+        rng = np.random.default_rng(seed=1)
 
-        X = np.random.normal(0, 1, (NUM_CELLS, NUM_GENES))
+        X = rng.normal(0, 1, (NUM_CELLS, NUM_GENES))
         X = np.where(X < 0, 0, X)
 
         cell_line = {
@@ -29,7 +29,7 @@ class TestMetaData:
         }
         cell_line = pd.DataFrame(cell_line)
         obs = pd.concat([cell_line], axis=1)
-        obs = obs.set_index(np.arange(NUM_GENES))
+        obs = obs.set_index(pd.Index([str(i) for i in range(NUM_GENES)]))
         obs.index.rename("index", inplace=True)
         obs["perturbation"] = "Midostaurin"
 

@@ -6,16 +6,8 @@ default_stages:
     - push
 minimum_pre_commit_version: 2.16.0
 repos:
-    - repo: https://github.com/psf/black
-      rev: "23.9.1"
-      hooks:
-          - id: black
-    - repo: https://github.com/asottile/blacken-docs
-      rev: 1.16.0
-      hooks:
-          - id: blacken-docs
     - repo: https://github.com/pre-commit/mirrors-prettier
-      rev: v3.0.3
+      rev: v3.1.0
       hooks:
           - id: prettier
             # Newer versions of node don't work on systems that have an older version of GLIBC
@@ -25,12 +17,13 @@ repos:
             # https://github.com/jupyterlab/jupyterlab/issues/12675
             language_version: "17.9.1"
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.0.290
+      rev: v0.1.5
       hooks:
           - id: ruff
             args: [--fix, --exit-non-zero-on-fix]
+          - id: ruff-format
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.4.0
+      rev: v4.5.0
       hooks:
           - id: detect-private-key
           - id: check-ast
@@ -40,7 +33,7 @@ repos:
           - id: trailing-whitespace
           - id: check-case-conflict
     - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v1.5.1
+      rev: v1.7.0
       hooks:
           - id: mypy
             args: [--no-strict-optional, --ignore-missing-imports]

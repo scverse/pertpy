@@ -42,6 +42,21 @@ class MilopyPlot:
             save: If `True` or a `str`, save the figure. A string is appended to the default filename.
                   Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> sc.tl.umap(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.da_nhoods(mdata,
+            >>>            design='~label',
+            >>>            model_contrasts='labelwithdraw_15d_Cocaine-labelwithdraw_48h_Cocaine')
+            >>> milo.build_nhood_graph(mdata)
+            >>> pt.pl.milo.nhood_graph(mdata)
         """
         nhood_adata = mdata["milo"].T.copy()
 
@@ -101,6 +116,17 @@ class MilopyPlot:
             show: Show the plot, do not return axis.
             save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> sc.tl.umap(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> pt.pl.milo.nhood(mdata, ix=0)
         """
 
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
@@ -126,6 +152,19 @@ class MilopyPlot:
             subset_nhoods: List of nhoods to plot. If None, plot all nhoods. (default: None)
             palette: Name of Seaborn color palette for violinplots.
                      Defaults to pre-defined category colors for violinplots.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.da_nhoods(mdata, design="~label")
+            >>> milo.annotate_nhoods(mdata, anno_col='cell_type')
+            >>> pt.pl.milo.da_beeswarm(mdata)
         """
         try:
             nhood_adata = mdata["milo"].T.copy()

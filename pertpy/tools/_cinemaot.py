@@ -59,7 +59,7 @@ class Cinemaot:
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
             eps: Tolerate error of the optimal transport.
-            solver: Either "Sinkhorn" or "Sinkhorn". The ott-jax solver used.
+            solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             preweight_label: The annotated label (e.g. cell type) that is used to assign weights for treated
                              and control cells to balance across the label. Helps overcome the differential abundance issue.
 
@@ -67,6 +67,14 @@ class Cinemaot:
             Returns an AnnData object that contains the single-cell level treatment effect as de.X and the
             corresponding low dimensional embedding in de.obsm['X_embedding'], and optional matching matrix
             stored in the de.obsm['ot']. Also puts the confounding variation in adata.obsm[cf_rep].
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> out_adata = model.causaleffect(
+            >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True,
+            >>>         thres=0.5, smoothness=1e-5, eps=1e-3, solver="Sinkhorn", preweight_label="cell_type0528")
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         if solver not in available_solvers:
@@ -218,13 +226,21 @@ class Cinemaot:
             smoothness: the coefficient determining the smooth level in entropic optimal transport problem.
             rank: Only used if the solver "LRSinkhorn" is used. Specifies the rank number of the transport map.
             eps: Tolerate error of the optimal transport.
-            solver: Either "Sinkhorn" or "Sinkhorn". The ott-jax solver used.
+            solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             resolution: the clustering resolution used in the sampling phase.
 
         Returns:
             Returns an anndata object that contains the single-cell level treatment effect as de.X and the
             corresponding low dimensional embedding in de.obsm['X_embedding'], and optional matching matrix
             stored in the de.obsm['ot']. Also puts the confounding variation in adata.obsm[cf_rep].
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> ad, de = model.causaleffect_weighted(
+            >>>              adata, pert_key="perturbation", control="No stimulation", return_matching=True,
+            >>>              thres=0.5, smoothness=1e-5, eps=1e-3, solver="Sinkhorn")
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         assert solver in available_solvers, (
@@ -288,6 +304,16 @@ class Cinemaot:
 
         Returns:
             Returns an anndata object that contains aggregated pseudobulk profiles and associated metadata.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> de = model.causaleffect(
+            >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True, thres=0.5,
+            >>>         smoothness=1e-5, eps=1e-3, solver="Sinkhorn", preweight_label="cell_type0528")
+            >>> adata_pb = model.generate_pseudobulk(
+            >>>         adata, de, pert_key="perturbation", control="No stimulation", label_list=None)
         """
         sc.pp.neighbors(de, use_rep=de_rep)
         sc.tl.leiden(de, resolution=de_resolution)
@@ -327,7 +353,7 @@ class Cinemaot:
         c: float = 0.5,
         use_rep: str = "X_pca",
     ):
-        """Estimating the rank of the count matrix. Always use adata.raw.X.
+        """Estimating the rank of the count matrix. Always use adata.raw.X. Make sure it is the raw count matrix.
 
         Args:
             adata: The annotated data object.
@@ -336,6 +362,12 @@ class Cinemaot:
 
         Returns:
             Returns the estimated dimension number.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> dim = model.get_dim(adata)
         """
         sk = SinkhornKnopp()
         if issparse(adata.raw.X):
@@ -346,7 +378,7 @@ class Cinemaot:
         sk.fit(vm)
         wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
         u, s, vt = np.linalg.svd(wm)
-        dim = np.min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
+        dim = min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
         return dim
 
     def get_weightidx(
@@ -369,6 +401,12 @@ class Cinemaot:
 
         Returns:
             Returns the indices.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> idx = model.get_weightidx(adata, pert_key="perturbation", control="No stimulation")
         """
         adata_ = adata.copy()
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]
@@ -485,11 +523,20 @@ class Cinemaot:
 
         Returns:
             Returns an AnnData object that contains the single-cell level synergy matrix de.X and the embedding.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_full()
+            >>> sc.pp.pca(adata)
+            >>> model = pt.tl.Cinemaot()
+            >>> combo = model.synergy(adata, pert_key='perturbation', base='No stimulation', A='IFNb', B='IFNg',
+            >>>                   AB='IFNb+ IFNg', thres=0.5, smoothness=1e-5, eps=1e-3, solver='Sinkhorn')
+
         """
         adata1 = adata[adata.obs[pert_key].isin([base, A]), :].copy()
         adata2 = adata[adata.obs[pert_key].isin([B, AB]), :].copy()
         adata_link = adata[adata.obs[pert_key].isin([base, B]), :].copy()
-        ot1, de1 = self.causaleffect(
+        de1 = self.causaleffect(
             adata1,
             pert_key=pert_key,
             control=A,
@@ -500,7 +547,8 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot2, de2 = self.causaleffect(
+        ot1 = de1.obsm["ot"]  # noqa: F841
+        de2 = self.causaleffect(
             adata2,
             pert_key=pert_key,
             control=AB,
@@ -511,7 +559,8 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
-        ot0, de0 = self.causaleffect(
+        ot2 = de2.obsm["ot"]  # noqa: F841
+        de0 = self.causaleffect(
             adata_link,
             pert_key=pert_key,
             control=B,
@@ -522,6 +571,7 @@ class Cinemaot:
             preweight_label=preweight_label,
             **kwargs,
         )
+        ot0 = de0.obsm["ot"]
         syn = sc.AnnData(
             np.array(-((ot0 / np.sum(ot0, axis=1)[:, None]) @ de2.X - de1.X)), obs=de1.obs.copy(), var=de1.var.copy()
         )
@@ -549,6 +599,12 @@ class Cinemaot:
 
         Returns:
             Returns the confounder effect (c_effect) and the residual effect (s_effect).
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.cinemaot_example()
+            >>> model = pt.tl.Cinemaot()
+            >>> c_effect, s_effect = model.attribution_scatter(adata, pert_key="perturbation", control="No stimulation")
         """
         cf = adata.obsm[cf_rep]
         if use_raw:
@@ -601,7 +657,8 @@ class Xi:
         # random shuffling of the data - reason to use random.choice is that
         # pd.sample(frac=1) uses the same randomizing algorithm
         len_x = len(self.x)
-        randomized_indices = np.random.choice(np.arange(len_x), len_x, replace=False)
+        rng = np.random.default_rng()
+        randomized_indices = rng.choice(np.arange(len_x), len_x, replace=False)
         randomized = [self.x[idx] for idx in randomized_indices]
         # same as pandas rank method 'first'
         rankdata = ss.rankdata(randomized, method="ordinal")

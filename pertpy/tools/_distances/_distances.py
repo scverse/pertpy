@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, NamedTuple, Callable
 
+
 import numpy as np
 import pandas as pd
 from ott.geometry.geometry import Geometry
@@ -15,6 +16,7 @@ from scipy.sparse import vstack as sp_vstack
 from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
 from scipy.stats import kendalltau, pearsonr, spearmanr
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
@@ -49,7 +51,6 @@ AGG_FCTS = {
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
-
     from anndata import AnnData
     from scipy import sparse
 
@@ -90,8 +91,6 @@ class Distance:
         Coefficient of determination distance between the means of cells from two groups.
     - "mean_pairwise": Mean pairwise distance.
         Mean of the pairwise euclidean distances between cells of two groups.
-    - "mean_pairwise": Mean pairwise distance.
-        Mean of the pairwise euclidean distances between cells of two groups.
     - "mmd": Maximum mean discrepancy
         Maximum mean discrepancy between the cells of two groups.
         Here, uses linear, rbf, and quadratic polynomial MMD. For theory on MMD in single-cell applications, see
@@ -101,23 +100,30 @@ class Distance:
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
-    - "kl_divergence": Kullback–Leibler divergence distance.
+    - "sym_kldiv": symmetrized Kullback–Leibler divergence distance.
         Kullback–Leibler divergence of the gaussian distributions between cells of two groups.
-        Here we fit a gaussian distribution over each group of cells and then calculate the KL divergence
+        Here we fit a gaussian distribution over one group of cells and then calculate the KL divergence on the other, and vice versa.
     - "t_test": t-test statistic.
         T-test statistic measure between cells of two groups.
+    - "ks_test": Kolmogorov-Smirnov test statistic.
+        Kolmogorov-Smirnov test statistic measure between cells of two groups.
     - "nb_ll": log-likelihood over negative binomial
         Average of log-likelihoods of samples of the secondary group after fitting a negative binomial distribution
         over the samples of the first group.
+    - "classifier_proba": probability of a binary classifier
+        Average of the classification probability of the perturbation for a binary classifier.
+    - "classifier_cp": classifier class projection
+        Average of the class
 
     Attributes:
         metric: Name of distance metric.
         layer_key: Name of the counts to use in adata.layers.
         obsm_key: Name of embedding in adata.obsm to use.
+        cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
 
     Examples:
         >>> import pertpy as pt
-        >>> adata = pt.dt.distance_example_data()
+        >>> adata = pt.dt.distance_example()
         >>> Distance = pt.tools.Distance(metric="edistance")
         >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
         >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -130,6 +136,7 @@ class Distance:
         agg_fct: str = "mean",
         layer_key: str = None,
         obsm_key: str = None,
+        cell_wise_metric: str = "euclidean",
     ):
         """Initialize Distance class.
 
@@ -141,6 +148,8 @@ class Distance:
             obsm_key: Name of embedding in adata.obsm to use.
                       Mutually exclusive with 'counts_layer_key'.
                       Defaults to None, but is set to "X_pca" if not set explicitly internally.
+            cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
+                                Defaults to "euclidean".
         """
         self.aggregation_func = AGG_FCTS[agg_fct]
 
@@ -171,16 +180,22 @@ class Distance:
             metric_fct = MMD()
         elif metric == "wasserstein":
             metric_fct = WassersteinDistance()
-        elif metric == "kl_divergence":
-            metric_fct = KLDivergence()
-        elif metric == "t_test":
-            metric_fct = TTestDistance()
-        elif metric == "nb_ll":
-            metric_fct = NBLL()
         elif metric == "mahalanobis":
             metric_fct = MahalanobisDistance(self.aggregation_func)
         elif metric == "ilisi":
             metric_fct = ILISI()
+        elif metric == "sym_kldiv":
+            metric_fct = SymmetricKLDivergence()
+        elif metric == "t_test":
+            metric_fct = TTestDistance()
+        elif metric == "ks_test":
+            metric_fct = KSTestDistance()
+        elif metric == "nb_ll":
+            metric_fct = NBLL()
+        elif metric == "classifier_proba":
+            metric_fct = ClassifierProbaDistance()
+        elif metric == "classifier_cp":
+            metric_fct = ClassifierClassProjection()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -195,6 +210,7 @@ class Distance:
         self.layer_key = layer_key
         self.obsm_key = obsm_key
         self.metric = metric
+        self.cell_wise_metric = cell_wise_metric
 
     def __call__(
         self,
@@ -218,7 +234,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
             >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -278,15 +294,16 @@ class Distance:
                     If None, uses all groups. Defaults to None.
             show_progressbar: Whether to show progress bar. Defaults to True.
             n_jobs: Number of cores to use. Defaults to -1 (all).
+            kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
-            >>> pairwise_df = distance.pairwise(adata, groupby="perturbation")
+            >>> pairwise_df = Distance.pairwise(adata, groupby="perturbation")
         """
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
@@ -300,16 +317,17 @@ class Distance:
         # passed to the metric function. This is much faster than computing the
         # pairwise distances for each group separately. Other metrics are not
         # able to handle precomputed distances such as the PsuedobulkDistance.
-
+        
         # TODO: check if move bootstrap branching also in precompute
+
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
-            pwd = adata.obsp[f"{self.obsm_key}_predistances"]
+            pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
-                for group_y in groups[index_x:]:
+                for group_y in groups[index_x:]:  # type: ignore
                     if group_x == group_y:
                         dist = 0.0  # by distance axiom
                     else:
@@ -327,7 +345,7 @@ class Distance:
                 embedding = adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[grouping == group_x].copy()
-                for group_y in groups[index_x:]:
+                for group_y in groups[index_x:]:  # type: ignore
                     if group_x == group_y:
                         dist = 0.0
 
@@ -363,7 +381,7 @@ class Distance:
         adata: AnnData,
         groupby: str,
         selected_group: str | None = None,
-        groups: Iterable = None,
+        groups: list[str] | None = None,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -377,16 +395,21 @@ class Distance:
             groups: List of groups to compute distances to selected_group for.
                     If None, uses all groups. Defaults to None.
             show_progressbar: Whether to show progress bar. Defaults to True.
+            n_jobs: Number of cores to use. Defaults to -1 (all).
+            kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
             pd.DataFrame: Dataframe with distances of groups to selected_group.
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example_data()
+            >>> adata = pt.dt.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
-            >>> pairwise_df = distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
+            >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
+        if self.metric == "classifier_cp":
+            return self.onesided_distances(adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs)
+
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.Series(index=groups, dtype=float)
@@ -399,9 +422,9 @@ class Distance:
         # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
-            pwd = adata.obsp[f"{self.obsm_key}_predistances"]
+            pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for group_x in fct(groups):
                 idx_x = grouping == group_x
                 group_y = selected_group
@@ -415,7 +438,10 @@ class Distance:
                     dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
                 df.loc[group_x] = dist
         else:
-            embedding = adata.obsm[self.obsm_key].copy()
+            if self.layer_key:
+                embedding = adata.layers[self.layer_key]
+            else:
+                embedding = adata.obsm[self.obsm_key].copy()
             for group_x in fct(groups):
                 cells_x = embedding[grouping == group_x].copy()
                 group_y = selected_group
@@ -423,29 +449,35 @@ class Distance:
                     dist = 0.0
                 else:
                     cells_y = embedding[grouping == group_y].copy()
-                    dist = self.metric_fct(cells_x, cells_y, **kwargs)
+                    dist = self(cells_x, cells_y, **kwargs)
                 df.loc[group_x] = dist
         df.index.name = groupby
         df.name = f"{self.metric} to {selected_group}"
         return df
 
-    def precompute_distances(self, adata: AnnData, cell_wise_metric: str = "euclidean", n_jobs: int = -1) -> None:
+    def precompute_distances(self, adata: AnnData, n_jobs: int = -1) -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
 
         The precomputed distances are stored in adata.obsp under the key
-        '{self.obsm_key}_predistances', as they depend on the embedding used.
+        '{self.obsm_key}_{cell_wise_metric}_predistances', as they depend on
+        both the cell-wise metric and the embedding used.
 
         Args:
             adata: Annotated data matrix.
-            obs_key: Column name in adata.obs.
-            cell_wise_metric: Metric to use for pairwise distances.
+            n_jobs: Number of cores to use. Defaults to -1 (all).
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example()
+            >>> distance = pt.tools.Distance(metric="edistance")
+            >>> distance.precompute_distances(adata)
         """
         if self.layer_key:
             cells = adata.layers[self.layer_key]
         else:
             cells = adata.obsm[self.obsm_key].copy()
-        pwd = pairwise_distances(cells, cells, metric=cell_wise_metric, n_jobs=n_jobs)
-        adata.obsp[f"{self.obsm_key}_predistances"] = pwd
+        pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
+        adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
 
     # TODO: evaluate if this is a good idea to have it as a method of Distance
     # TODO idea might call it bootstrap mode and return mean and variance instead?
@@ -511,11 +543,12 @@ class Edistance(AbstractDistance):
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = True
+        self.cell_wise_metric = "sqeuclidean"
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        sigma_X = pairwise_distances(X, X, metric="euclidean").mean()
-        sigma_Y = pairwise_distances(Y, Y, metric="euclidean").mean()
-        delta = pairwise_distances(X, Y, metric="euclidean").mean()
+        sigma_X = pairwise_distances(X, X, metric="sqeuclidean").mean()
+        sigma_Y = pairwise_distances(Y, Y, metric="sqeuclidean").mean()
+        delta = pairwise_distances(X, Y, metric="sqeuclidean").mean()
         return 2 * delta - sigma_X - sigma_Y
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
@@ -723,11 +756,13 @@ class R2ScoreDistance(AbstractDistance):
         raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
 
 
-class KLDivergence(AbstractDistance):
-    """Average of KL divergence between gene distributions of two groups
+
+class SymmetricKLDivergence(AbstractDistance):
+    """Average of symmetric KL divergence between gene distributions of two groups
 
     Assuming a Gaussian distribution for each gene in each group, calculates
-    the KL divergence between them and averages over all genes
+    the KL divergence between them and averages over all genes. Repeats this ABBA to get a symmetrized distance.
+    See https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Symmetrised_divergence.
 
     """
 
@@ -741,11 +776,12 @@ class KLDivergence(AbstractDistance):
             x_mean, x_std = X[:, i].mean(), X[:, i].std() + epsilon
             y_mean, y_std = Y[:, i].mean(), Y[:, i].std() + epsilon
             kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
-            kl_all.append(kl)
+            klr = np.log(x_std / y_std) + (y_std**2 + (y_mean - x_mean) ** 2) / (2 * x_std**2) - 1 / 2
+            kl_all.append(kl + klr)
         return sum(kl_all) / len(kl_all)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("KLDivergence cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("SymmetricKLDivergence cannot be called on a pairwise distance matrix.")
 
 
 class TTestDistance(AbstractDistance):
@@ -772,6 +808,23 @@ class TTestDistance(AbstractDistance):
         raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
 
 
+class KSTestDistance(AbstractDistance):
+    """Average of two-sided KS test statistic between two groups"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        stats = []
+        for i in range(X.shape[1]):
+            stats.append(abs(kstest(X[:, i], Y[:, i])[0]))
+        return sum(stats) / len(stats)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("KSTestDistance cannot be called on a pairwise distance matrix.")
+
+
 class NBLL(AbstractDistance):
     """
     Average of Log likelihood (scalar) of group B cells
@@ -793,9 +846,21 @@ class NBLL(AbstractDistance):
             raise ValueError("NBLL distance only works for raw counts.")
 
         nlls = []
+        genes_skipped = 0
         for i in range(X.shape[1]):
             x, y = X[:, i], Y[:, i]
-            nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
+            try:
+                nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
+            except np.linalg.linalg.LinAlgError:
+                ## This error occurs when the gene cannot be parameterized, most commonly due to too much sparsity.
+                ## If the gene has fewer than 10 counts on average in both populations, we treat it as a vector of
+                ## zeroes and assign a distance of zero.
+                ## If the control vector cannot be parameterized not because it is sparse, we omit calculation for this gene.
+                if x.mean() < 10 and y.mean() < 10:
+                    nlls.append(0)
+                else:
+                    genes_skipped += 1
+                continue
             mu = np.repeat(np.exp(nb_params[0]), y.shape[0])
             theta = np.repeat(1 / nb_params[1], y.shape[0])
             if mu[0] == np.nan or theta[0] == np.nan:
@@ -812,6 +877,9 @@ class NBLL(AbstractDistance):
             )
             nlls.append(nll.mean())
 
+        if genes_skipped > X.shape[1] / 2:
+            raise AttributeError(f"{genes_skipped} genes could not be fit, which is over half.")
+
         return -sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
@@ -820,7 +888,12 @@ class NBLL(AbstractDistance):
 
 class MahalanobisDistance(AbstractDistance):
     #does it make sense to generate pseudobulk vector with anything different than mean here?
-    """Mahalanobis distance between pseudobulk vectors."""
+    """
+    Mahalanobis distance between pseudobulk vectors.
+    
+    TODO may need to force to compute on PCA as else too noisy if reference group has small var (e.g. due to low expression)
+    
+    """
     
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
@@ -837,12 +910,6 @@ class MahalanobisDistance(AbstractDistance):
 
 
 class ILISI(AbstractDistance):
-    """Mahalanobis distance between pseudobulk vectors."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.accepts_precomputed = False
-
     def __call__(
         self, X: np.ndarray, Y: np.ndarray, n_neighbors: int = 50, n_jobs: int = 1, random_state: int = 0, **kwargs
     ) -> float:
@@ -898,5 +965,91 @@ class ILISI(AbstractDistance):
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("iLISI cannot be called on a pairwise distance matrix.")
 
+def _sample(X, frac=None, n=None):
+    """Returns subsample of cells in format (train, test)."""
+    if frac and n:
+        raise ValueError("Cannot pass both frac and n.")
+    if frac:
+        n_cells = max(1, int(X.shape[0] * frac))
+    elif n:
+        n_cells = n
+    else:
+        raise ValueError("Must pass either `frac` or `n`.")
 
-# TODO: More?
+    rng = np.random.default_rng()
+    sampled_indices = rng.choice(X.shape[0], n_cells, replace=False)
+    remaining_indices = np.setdiff1d(np.arange(X.shape[0]), sampled_indices)
+    return X[remaining_indices, :], X[sampled_indices, :]
+
+
+class ClassifierProbaDistance(AbstractDistance):
+    """Average of classification probabilites of a binary classifier.
+
+    Assumes the first condition is control and the second is perturbed. Always holds out 20% of the perturbed condition.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        Y_train, Y_test = _sample(Y, frac=0.2)
+        label = ["c"] * X.shape[0] + ["p"] * Y_train.shape[0]
+        train = np.concatenate([X, Y_train])
+
+        reg = LogisticRegression()  # TODO dynamically pass this?
+        reg.fit(train, label)
+        test_labels = reg.predict_proba(Y_test)
+        return np.mean(test_labels[:, 1])
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierProbaDistance cannot be called on a pairwise distance matrix.")
+
+
+class ClassifierClassProjection(AbstractDistance):
+    """Average of 1-(classification probability of control).
+
+    Warning: unlike all other distances, this must also take a list of categorical labels the same length as X.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierClassProjection cannot be called normally.")
+
+    def onesided_distances(
+        self,
+        adata: AnnData,
+        groupby: str,
+        selected_group: str | None = None,
+        groups: list[str] | None = None,
+        show_progressbar: bool = True,
+        n_jobs: int = -1,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Unlike the parent function, all groups except the selected group are factored into the classifier. Similar to the parent function, the returned dataframe contains only the specified groups."""
+        groups = adata.obs[groupby].unique() if groups is None else groups
+
+        X = adata[adata.obs[groupby] != selected_group].X
+        labels = adata[adata.obs[groupby] != selected_group].obs[groupby].values
+        Y = adata[adata.obs[groupby] == selected_group].X
+
+        reg = LogisticRegression()
+        reg.fit(X, labels)
+        test_probas = reg.predict_proba(Y)
+
+        df = pd.Series(index=groups, dtype=float)
+        for group in groups:
+            if group == selected_group:
+                df.loc[group] = 0
+            else:
+                class_idx = list(reg.classes_).index(group)
+                df.loc[group] = 1 - np.mean(test_probas[:, class_idx])
+        df.index.name = groupby
+        df.name = f"classifier_cp to {selected_group}"
+        return df
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierClassProjection cannot be called on a pairwise distance matrix.")

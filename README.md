@@ -1,6 +1,6 @@
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Build](https://github.com/theislab/pertpy/actions/workflows/build.yml/badge.svg)](https://github.com/theislab/pertpy/actions/workflows/build.yml)
-[![Codecov](https://codecov.io/gh/theislab/pertpy/branch/master/graph/badge.svg)](https://codecov.io/gh/theislab/pertpy)
+[![codecov](https://codecov.io/gh/theislab/pertpy/graph/badge.svg?token=1dTpIPBShv)](https://codecov.io/gh/theislab/pertpy)
 [![License](https://img.shields.io/github/license/theislab/pertpy)](https://opensource.org/licenses/Apache2.0)
 [![PyPI](https://img.shields.io/pypi/v/pertpy.svg)](https://pypi.org/project/pertpy/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pertpy)](https://pypi.org/project/pertpy)

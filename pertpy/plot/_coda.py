@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -9,7 +9,6 @@ import scanpy as sc
 import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
-from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
 from matplotlib import cm, rcParams
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
@@ -108,6 +107,15 @@ class CodaPlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> pt.pl.coda.stacked_barplot(mdata, feature_name="samples")
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -196,6 +204,17 @@ class CodaPlot:
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> pt.pl.coda.effects_barplot(mdata)
         """
         if args_barplot is None:
             args_barplot = {}
@@ -366,6 +385,15 @@ class CodaPlot:
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> pt.pl.coda.boxplots(mdata, feature_name="condition", add_dots=True)
         """
         if args_boxplot is None:
             args_boxplot = {}
@@ -570,6 +598,17 @@ class CodaPlot:
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> pt.pl.coda.rel_abundance_dispersion_plot(mdata)
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -647,7 +686,7 @@ class CodaPlot:
     def draw_tree(  # pragma: no cover
         data: Union[AnnData, MuData],
         modality_key: str = "coda",
-        tree: Union[Tree, str] = "tree",
+        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         tight_text: Optional[bool] = False,
         show_scale: Optional[bool] = False,
         show: Optional[bool] = True,
@@ -661,23 +700,50 @@ class CodaPlot:
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
+            modality_key: If data is a MuData object, specify which modality to use.
+                          Defaults to "coda".
+            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
+                  Defaults to "tree".
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
                         Default to False.
-            show_scale: Include the scale legend in the tree image or not. Default to False.
-            show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
-            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
+            show_scale: Include the scale legend in the tree image or not.
+                        Defaults to False.
+            show: If True, plot the tree inline. If false, return tree and tree_style objects.
+                  Defaults to True.
+            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG.
+                       Output image can be saved whether show is True or not.
                        Defaults to None.
-            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
+                   Defaults to "px".
             h: Height of the image in units. Defaults to None.
             w: Width of the image in units. Defaults to None.
             dpi: Dots per inches. Defaults to 90.
 
         Returns:
-            Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or  plot the tree inline (`show = False`)
+            Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
+
+        Examples:
+            Example with tascCODA:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> pt.pl.coda.draw_tree(mdata, tree="lineage")
         """
+        try:
+            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+        except ImportError:
+            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
@@ -694,9 +760,9 @@ class CodaPlot:
         tree_style.layout_fn = my_layout
         tree_style.show_scale = show_scale
         if file_name is not None:
-            tree.render(file_name, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+            tree.render(file_name, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
 
@@ -705,7 +771,7 @@ class CodaPlot:
         data: Union[AnnData, MuData],
         covariate: str,
         modality_key: str = "coda",
-        tree: Union[Tree, str] = "tree",
+        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         show_legend: Optional[bool] = None,
         show_leaf_effects: Optional[bool] = False,
         tight_text: Optional[bool] = False,
@@ -722,10 +788,14 @@ class CodaPlot:
         Args:
             data: AnnData object or MuData object.
             covariate: The covariate, whose effects should be plotted.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
-            show_legend: If show legend of nodes significant effects or not. Default is False if show_leaf_effects is True.
-            show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects. Defaults to False.
+            modality_key: If data is a MuData object, specify which modality to use.
+                          Defaults to "coda".
+            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
+                  Defaults to "tree".
+            show_legend: If show legend of nodes significant effects or not.
+                         Defaults to False if show_leaf_effects is True.
+            show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects.
+                               Defaults to False.
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
                         Defaults to False.
@@ -741,7 +811,28 @@ class CodaPlot:
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
             or  plot the tree inline (`show = False`)
+
+        Examples:
+            Example with tascCODA:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
         """
+        try:
+            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+        except ImportError:
+            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
@@ -881,20 +972,53 @@ class CodaPlot:
     ):
         """Plot a UMAP visualization colored by effect strength.
 
-        Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData (default is data['rna']) depending on the cluster they were assigned to.
+        Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData
+        (default is data['rna']) depending on the cluster they were assigned to.
 
         Args:
             data: AnnData object or MuData object.
-            effect_name: The name of the effect results in .varm of aggregated sample-level AnnData (default is data['coda']) to plot
-            cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']). To assign cell types' effects to original cells.
+            effect_name: The name of the effect results in .varm of aggregated sample-level AnnData to plot
+            cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']).
+                         To assign cell types' effects to original cells.
             modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to "rna".
-            modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object. Defaults to "coda".
+            modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
+                            Defaults to "coda".
             show: Whether to display the figure or return axis. Defaults to None.
-            ax: A matplotlib axes object. Only works if plotting a single component. Defaults to None.
+            ax: A matplotlib axes object. Only works if plotting a single component.
+                Defaults to None.
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
 
         Returns:
             If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
+
+        Examples:
+            Example with tascCODA:
+            >>> import pertpy as pt
+            >>> import schist
+            >>> adata = pt.dt.haber_2017_regions()
+            >>> schist.inference.nested_model(adata, samples=100, random_seed=5678)
+            >>> tasccoda_model = pt.tl.Tasccoda()
+            >>> tasccoda_data = tasccoda_model.load(adata, type="cell_level",
+            >>>                 cell_type_identifier="nsbm_level_1",
+            >>>                 sample_identifier="batch", covariate_obs=["condition"],
+            >>>                 levels_orig=["nsbm_level_4", "nsbm_level_3", "nsbm_level_2", "nsbm_level_1"],
+            >>>                 add_level_name=True)sccoda = pt.tl.Sccoda()
+            >>> tasccoda_model.prepare(
+            >>>     tasccoda_data,
+            >>>     modality_key="coda",
+            >>>     reference_cell_type="18",
+            >>>     formula="condition",
+            >>>     pen_args={"phi": 0, "lambda_1": 3.5},
+            >>>     tree_key="tree"
+            >>> )
+            >>> tasccoda_model.run_nuts(tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000)
+            >>> pt.pl.coda.effects_umap(tasccoda_data,
+            >>>                         effect_name=["effect_df_condition[T.Salmonella]",
+            >>>                                      "effect_df_condition[T.Hpoly.Day3]",
+            >>>                                      "effect_df_condition[T.Hpoly.Day10]"],
+            >>>                                       cluster_key="nsbm_level_1",
+            >>>                         )
+            #TODO: Add effect_name parameter and cluster_key and test the example
         """
         data_rna = data[modality_key_1]
         data_coda = data[modality_key_2]

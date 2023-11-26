@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import arviz as az
-import ete3 as ete
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -22,6 +21,7 @@ from scipy.cluster import hierarchy as sp_hierarchy
 if TYPE_CHECKING:
     import numpyro as npy
     import toytree as tt
+    from ete3 import Tree
     from jax._src.prng import PRNGKeyArray
     from jax._src.typing import Array
 
@@ -333,6 +333,16 @@ class CompositionalModel2(ABC):
             num_warmup: Number of burn-in (warmup) samples. Defaults to 5000.
             rng_key: The rng state used. If None, a random state will be selected. Defaults to None.
             copy: Return a copy instead of writing to adata. Defaults to False.
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_hmc(mdata, num_warmup=100, num_samples=1000)
         """
         if isinstance(data, MuData):
             try:
@@ -347,7 +357,8 @@ class CompositionalModel2(ABC):
 
         # Set rng key if needed
         if rng_key is None:
-            rng_key = random.PRNGKey(np.random.randint(0, 10000))
+            rng = np.random.default_rng()
+            rng_key = random.PRNGKey(rng.integers(0, 10000))
             sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = rng_key
         else:
             rng_key = random.PRNGKey(rng_key)
@@ -410,6 +421,17 @@ class CompositionalModel2(ABC):
                 - SD: Standard deviation of MCMC samples
                 - Delta: Decision boundary value - threshold of practical significance
                 - Is credible: Boolean indicator whether effect is credible
+
+         Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> intercept_df, effect_df = sccoda.summary_prepare(mdata["coda"])
         """
         # Get model and effect selection types
         select_type = sample_adata.uns["scCODA_params"]["select_type"]
@@ -486,7 +508,12 @@ class CompositionalModel2(ABC):
             res = az.convert_to_inference_data(np.array([b_raw_sel]))
 
             summary_sel = az.summary(
-                data=res, kind="stats", var_names=["x"], skipna=True, *args, **kwargs  # noqa: B026
+                data=res,
+                kind="stats",
+                var_names=["x"],
+                skipna=True,
+                *args,  # noqa: B026
+                **kwargs,
             )
 
             ref_index = sample_adata.uns["scCODA_params"]["reference_index"]
@@ -559,7 +586,9 @@ class CompositionalModel2(ABC):
             )
 
         if model_type == "tree_agg":
-            node_df = node_df.loc[:, ["final_parameter", "median", hdis[0], hdis[1], "sd", "delta", "significant"]].copy()  # type: ignore
+            node_df = node_df.loc[
+                :, ["final_parameter", "median", hdis[0], hdis[1], "sd", "delta", "significant"]
+            ].copy()  # type: ignore
             node_df = node_df.rename(
                 columns=dict(
                     zip(
@@ -750,6 +779,17 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             args: Passed to az.summary
             kwargs: Passed to az.summary
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> sccoda.summary(mdata)
         """
         if isinstance(data, MuData):
             try:
@@ -884,6 +924,17 @@ class CompositionalModel2(ABC):
 
         Returns:
             pd.DataFrame: Intercept data frame.
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> intercepts = sccoda.get_intercept_df(mdata)
         """
 
         if isinstance(data, MuData):
@@ -906,6 +957,17 @@ class CompositionalModel2(ABC):
 
         Returns:
             pd.DataFrame: Effect data frame.
+
+        Examples:
+            Example with scCODA:
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
+                sample_identifier="batch", covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> effects = sccoda.get_effect_df(mdata)
         """
 
         if isinstance(data, MuData):
@@ -939,6 +1001,22 @@ class CompositionalModel2(ABC):
 
         Returns:
             pd.DataFrame: Node effect data frame.
+
+        Examples:
+            Example with tascCODA (works only for model of type tree_agg, i.e. a tascCODA model):
+            >>> import pertpy as pt
+            >>> adata = pt.dt.smillie()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> node_effects = tasccoda.get_node_df(mdata)
         """
 
         if isinstance(data, MuData):
@@ -975,7 +1053,14 @@ class CompositionalModel2(ABC):
         if isinstance(data, AnnData):
             sample_adata = data
 
-        intercept_df, effect_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
+        if sample_adata.uns["scCODA_params"]["model_type"] == "classic":
+            intercept_df, effect_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
+        elif sample_adata.uns["scCODA_params"]["model_type"] == "tree_agg":
+            intercept_df, effect_df, node_df = self.summary_prepare(sample_adata, est_fdr, *args, **kwargs)  # type: ignore
+            sample_adata.uns["scCODA_params"]["node_df"] = node_df
+        else:
+            raise ValueError("No valid model type!")
+
         sample_adata.varm["intercept_df"] = intercept_df
         for cov in effect_df.index.get_level_values("Covariate"):
             sample_adata.varm[f"effect_df_{cov}"] = effect_df.loc[cov, :]
@@ -1157,7 +1242,7 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
 
 
 def get_a_2(
-    tree: ete.Tree,
+    tree: Tree,
     leaf_order: list[str] = None,
     node_order: list[str] = None,
 ) -> tuple[np.ndarray, int]:
@@ -1178,6 +1263,11 @@ def get_a_2(
         T
             number of nodes in the tree, excluding the root node
     """
+    try:
+        import ete3 as ete
+    except ImportError:
+        raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
     n_tips = len(tree.get_leaves())
     n_nodes = len(tree.get_descendants())
 
@@ -1207,7 +1297,7 @@ def get_a_2(
     return A_, n_nodes
 
 
-def collapse_singularities_2(tree: ete.Tree) -> ete.Tree:
+def collapse_singularities_2(tree: Tree) -> Tree:
     """Collapses (deletes) nodes in a ete3 tree that are singularities (have only one child).
 
     Args:
@@ -1283,8 +1373,10 @@ def import_tree(
         dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
         levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
         levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
-        add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}. Defaults to True.
-        key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
+        add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}.
+                        Defaults to True.
+        key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`.
+                   If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
         copy: Return a copy instead of writing to `data`. Defaults to False.
 
     Returns:
@@ -1294,6 +1386,11 @@ def import_tree(
 
         tree: A ete3 tree object.
     """
+    try:
+        import ete3 as ete
+    except ImportError:
+        raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+
     if isinstance(data, MuData):
         try:
             data_1 = data[modality_1]

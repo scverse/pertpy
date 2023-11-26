@@ -31,6 +31,15 @@ class ClusteringSpace(PerturbationSpace):
             true_label_col: ground truth labels.
             cluster_col: cluster computed labels.
             metrics: Metrics to compute. Defaults to ['nmi', 'ari', 'asw'].
+
+        Examples:
+            Example usage with KMeansSpace:
+
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> kmeans = pt.tl.KMeansSpace()
+            >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
+            >>> results = kmeans.evaluate_clustering(kmeans_adata, true_label_col="gene_target", cluster_col="k-means", metrics=['nmi'])
         """
         if metrics is None:
             metrics = ["nmi", "ari", "asw"]
