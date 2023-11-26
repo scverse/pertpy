@@ -14,7 +14,7 @@ from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
 from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
-from scipy.stats import kendalltau, pearsonr, spearmanr
+from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
