@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, NamedTuple, Callable
-
+from typing import TYPE_CHECKING, Callable, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -20,6 +19,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
+
+
 def compute_medoid(arr, axis=None):
     if len(arr) == 0:
         return None  # Handle the case when the array is empty
@@ -42,15 +43,12 @@ def compute_medoid(arr, axis=None):
 
     return medoid
 
-AGG_FCTS = {
-    'mean' : np.mean,
-    'median': np.median,
-    'medoid': compute_medoid,
-    'variance': np.var
-}
+
+AGG_FCTS = {"mean": np.mean, "median": np.median, "medoid": compute_medoid, "variance": np.var}
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
+
     from anndata import AnnData
     from scipy import sparse
 
@@ -317,7 +315,7 @@ class Distance:
         # passed to the metric function. This is much faster than computing the
         # pairwise distances for each group separately. Other metrics are not
         # able to handle precomputed distances such as the PsuedobulkDistance.
-        
+
         # TODO: check if move bootstrap branching also in precompute
 
         if self.metric_fct.accepts_precomputed:
@@ -619,7 +617,7 @@ class EuclideanDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return np.linalg.norm(self.aggregation_func(X, axis=0) - self.aggregation_func(Y, axis=0), ord=2, **kwargs)
@@ -634,10 +632,12 @@ class MeanSquaredDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return np.linalg.norm(self.aggregation_func(X, axis=0) - self.aggregation_func(Y, axis=0), ord=2, **kwargs) ** 0.5
+        return (
+            np.linalg.norm(self.aggregation_func(X, axis=0) - self.aggregation_func(Y, axis=0), ord=2, **kwargs) ** 0.5
+        )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MeanSquaredDistance cannot be called on a pairwise distance matrix.")
@@ -649,7 +649,7 @@ class MeanAbsoluteDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return np.linalg.norm(self.aggregation_func(X, axis=0) - self.aggregation_func(Y, axis=0), ord=1, **kwargs)
@@ -680,7 +680,7 @@ class PearsonDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return 1 - pearsonr(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))[0]
@@ -695,7 +695,7 @@ class SpearmanDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return 1 - spearmanr(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))[0]
@@ -710,7 +710,7 @@ class KendallTauDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         x, y = self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0)
@@ -729,8 +729,7 @@ class CosineDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
-
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return cosine(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))
@@ -747,14 +746,13 @@ class R2ScoreDistance(AbstractDistance):
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
-        self.aggregation_func = aggregation_func 
+        self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return 1 - r2_score(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
-
 
 
 class SymmetricKLDivergence(AbstractDistance):
@@ -887,14 +885,14 @@ class NBLL(AbstractDistance):
 
 
 class MahalanobisDistance(AbstractDistance):
-    #does it make sense to generate pseudobulk vector with anything different than mean here?
+    # does it make sense to generate pseudobulk vector with anything different than mean here?
     """
     Mahalanobis distance between pseudobulk vectors.
-    
+
     TODO may need to force to compute on PCA as else too noisy if reference group has small var (e.g. due to low expression)
-    
+
     """
-    
+
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
         self.accepts_precomputed = False
@@ -902,11 +900,12 @@ class MahalanobisDistance(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         # TODO: Store/return/accept the expensive inverse of the covariance matrix?
-        return mahalanobis(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0), np.linalg.inv(np.cov(X.T)))
+        return mahalanobis(
+            self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0), np.linalg.inv(np.cov(X.T))
+        )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
-    
 
 
 class ILISI(AbstractDistance):
@@ -964,6 +963,7 @@ class ILISI(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("iLISI cannot be called on a pairwise distance matrix.")
+
 
 def _sample(X, frac=None, n=None):
     """Returns subsample of cells in format (train, test)."""
