@@ -72,7 +72,7 @@ class CompoundMetaData:
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with compound identifiers. Defaults to "perturbation".
-            query_id_type: The type of compound identifiers, name or cid. Defaults to "name".
+            query_id_type: The type of compound identifiers, 'name' or 'cid'. Defaults to "name".
             show_warning: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
