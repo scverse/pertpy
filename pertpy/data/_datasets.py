@@ -134,7 +134,9 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
 
 
 def tasccoda_example() -> AnnData:  # pragma: no cover
-    """Example for the coda part of a mudata object (mudata['coda']) when preparing a dataset for processing with tascCODA.
+    """Example for the coda part of a mudata object.
+
+    Resulting AnnData object (mudata['coda']) when preparing a dataset for processing with tascCODA.
     Created using the smillie dataset, which comprises scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
     The full dataset containing the actual count data can be obtained via smillie_2019().
 
