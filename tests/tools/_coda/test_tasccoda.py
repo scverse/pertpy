@@ -20,7 +20,7 @@ class TesttascCODA:
 
     @pytest.fixture
     def smillie_adata(self):
-        smillie_adata = pt.dt.smillie()
+        smillie_adata = pt.dt.tasccoda_example()
         smillie_adata = sc.pp.subsample(smillie_adata, 0.1, copy=True)
 
         return smillie_adata
