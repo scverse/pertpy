@@ -387,7 +387,6 @@ class LookUp:
         Args:
             query_id_list: A list of unique perturbagens to test the number of matched ones present in the metadata. Defaults to None.
             target_list: A list of unique molecular targets to test the number of matched ones present in the metadata. Defaults to None.
-
         """
         if self.type != "moa":
             raise ValueError("This is not a LookUp object specific for MoaMetaData!")
