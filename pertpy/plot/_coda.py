@@ -726,7 +726,7 @@ class CodaPlot:
         Examples:
             Example with tascCODA:
             >>> import pertpy as pt
-            >>> adata = pt.dt.smillie()
+            >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -815,7 +815,7 @@ class CodaPlot:
         Examples:
             Example with tascCODA:
             >>> import pertpy as pt
-            >>> adata = pt.dt.smillie()
+            >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",

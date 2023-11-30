@@ -1005,7 +1005,7 @@ class CompositionalModel2(ABC):
         Examples:
             Example with tascCODA (works only for model of type tree_agg, i.e. a tascCODA model):
             >>> import pertpy as pt
-            >>> adata = pt.dt.smillie()
+            >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
