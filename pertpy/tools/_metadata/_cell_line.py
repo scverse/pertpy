@@ -203,7 +203,6 @@ class CellLineMetaData:
             unmatched_identifiers: A list of unmatched identifiers to print.
             metadata_type: The type of metadata. Defaults to None.
             show_warning: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
-
         """
         if isinstance(show_warning, str):
             if show_warning != "all":
