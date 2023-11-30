@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+
 class MetaData:
     def __init__(self):
         pass
@@ -10,7 +11,9 @@ class MetaData:
         self,
         total_identifiers: int = 0,
         unmatched_identifiers: list[str] = None,
-        metadata_type: Literal["cell line", "protein expression", "bulk RNA expression", "drug response", "moa", "compound"] = "cell line",
+        metadata_type: Literal[
+            "cell line", "protein expression", "bulk RNA expression", "drug response", "moa", "compound"
+        ] = "cell line",
         verbosity: int | str = 5,
     ) -> None:
         """Helper function to print out the unmatched identifiers.
@@ -30,12 +33,12 @@ class MetaData:
             verbosity = min(verbosity, len(unmatched_identifiers))
             if verbosity > 0:
                 print(
-                f"[bold blue]There are {total_identifiers} identifiers in `adata.obs`."
-                f"However, {len(unmatched_identifiers)} identifiers can't be found in the {metadata_type} annotation,"
-                "leading to the presence of NA values for their respective metadata.\n",
-                "Please check again: ",
-                *unmatched_identifiers[:verbosity],
-                sep="\n- ",
-            )
+                    f"[bold blue]There are {total_identifiers} identifiers in `adata.obs`."
+                    f"However, {len(unmatched_identifiers)} identifiers can't be found in the {metadata_type} annotation,"
+                    "leading to the presence of NA values for their respective metadata.\n",
+                    "Please check again: ",
+                    *unmatched_identifiers[:verbosity],
+                    sep="\n- ",
+                )
         else:
             raise ValueError("Only 'all' or a non-negative value is accepted.")
