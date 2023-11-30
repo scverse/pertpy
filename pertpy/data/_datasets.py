@@ -1466,7 +1466,7 @@ def dong_2023() -> AnnData:  # pragma: no cover
 
 def smillie_2019() -> AnnData:  # pragma: no cover
     """scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
-    
+
     The resulting AnnData when preparing this dataset for processing with tascCODA is available via tasccoda_example().
 
     References:
