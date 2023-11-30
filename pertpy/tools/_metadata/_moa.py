@@ -11,12 +11,13 @@ from scanpy import settings
 from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
+from ._metadata import MetaData
 
 if TYPE_CHECKING:
     from anndata import AnnData
 
 
-class MoaMetaData:
+class MoaMetaData(MetaData):
     """Utilities to fetch metadata for mechanism of action studies."""
 
     def __init__(self):
@@ -42,7 +43,7 @@ class MoaMetaData:
         adata: AnnData,
         query_id: str = "pert_iname",
         target: str | None = None,
-        show: int | str = 5,
+        verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch MoA annotation.
@@ -52,8 +53,8 @@ class MoaMetaData:
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with the name of a perturbagen. Defaults to "pert_iname".
-            target: The column of `.obs` with target information. Defaults to None.
-            show: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            target: The column of `.obs` with target information.  If set to None, all MoAs are retrieved without comparing molecular targets. Defaults to None.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -78,24 +79,12 @@ class MoaMetaData:
             )
 
         if len(not_matched_identifiers) > 0:
-            if isinstance(show, str):
-                if show != "all":
-                    raise ValueError("Only a non-positive value or all is accepted.")
-                else:
-                    show = len(not_matched_identifiers)
-
-            if isinstance(show, int) and show >= 0:
-                show = min(show, len(not_matched_identifiers))
-                print(
-                    f"[bold blue]There are {identifier_num_all} different perturbagens in `adata.obs`."
-                    f"However, {len(not_matched_identifiers)} can't be found in the MoA annotation,"
-                    "leading to the presence of NA values for their respective metadata.\n",
-                    "Please check again: ",
-                    *not_matched_identifiers[:show],
-                    sep="\n- ",
-                )
-            else:
-                raise ValueError("Only 'all' or a non-positive value is accepted.")
+            self._print_unmatched_ids(
+                total_identifiers=identifier_num_all,
+                unmatched_identifiers=not_matched_identifiers,
+                verbosity=verbosity,
+                metadata_type="moa",
+            )
 
         adata.obs = (
             adata.obs.merge(

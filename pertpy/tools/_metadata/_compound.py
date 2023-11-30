@@ -12,57 +12,24 @@ from scanpy import settings
 from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
+from ._metadata import MetaData
 
 if TYPE_CHECKING:
     from anndata import AnnData
 
 
-class CompoundMetaData:
+class CompoundMetaData(MetaData):
     """Utilities to fetch metadata for compounds."""
 
     def __init__(self):
         settings.cachedir = ".pertpy_cache"
-
-    def __print_unmatched_ids(
-        self,
-        total_identifiers: int = 0,
-        unmatched_identifiers: list[str] | None = None,
-        metadata_type: Literal["pubchem"] | None = None,
-        show_warning: int | str = 5,
-    ) -> None:
-        """Helper function to print out the unmatched identifiers.
-
-        Args:
-            total_identifiers: The total number of identifiers in the `adata` object.
-            unmatched_identifiers: A list of unmatched identifiers to print.
-            metadata_type: The type of metadata. Defaults to None.
-            show_warning: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
-
-        """
-        if isinstance(show_warning, str):
-            if show_warning != "all":
-                raise ValueError("Only a non-negative value or 'all' is accepted.")
-            else:
-                show_warning = len(unmatched_identifiers)
-        if isinstance(show_warning, int) and show_warning >= 0:
-            show_warning = min(show_warning, len(unmatched_identifiers))
-            print(
-                f"[bold blue]There are {total_identifiers} identifiers in `adata.obs`."
-                f"However, {len(unmatched_identifiers)} identifiers can't be found in the {metadata_type} annotation,"
-                "leading to the presence of NA values for their respective metadata.\n",
-                "Please check again: ",
-                *unmatched_identifiers[:show_warning],
-                sep="\n- ",
-            )
-        else:
-            raise ValueError("Only 'all' or a non-negative value is accepted.")
 
     def annotate_compounds(
         self,
         adata: AnnData,
         query_id: str = "perturbation",
         query_id_type: Literal["name", "cid"] = "name",
-        show_warning: int | str = 5,
+        verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
         """Fetch compound annotation.
@@ -73,7 +40,7 @@ class CompoundMetaData:
             adata: The data object to annotate.
             query_id: The column of `.obs` with compound identifiers. Defaults to "perturbation".
             query_id_type: The type of compound identifiers, 'name' or 'cid'. Defaults to "name".
-            show_warning: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -115,11 +82,11 @@ class CompoundMetaData:
             )
 
         if len(not_matched_identifiers) > 0:
-            self.__print_unmatched_ids(
+            self._print_unmatched_ids(
                 total_identifiers=identifier_num_all,
                 unmatched_identifiers=not_matched_identifiers,
-                show_warning=show_warning,
-                metadata_type="pubchem",
+                verbosity=verbosity,
+                metadata_type="compound",
             )
 
         query_df = pd.DataFrame.from_dict(query_dict, orient="index", columns=["pubchem_name", "pubchem_ID", "smiles"])
@@ -143,3 +110,16 @@ class CompoundMetaData:
             )
             adata.obs.pubchem_ID = adata.obs.pubchem_ID.astype("Int64")
         return adata
+
+    def lookup(self) -> LookUp:
+        """Generate LookUp object for CompoundMetaData.
+
+        The LookUp object provides an overview of the metadata to annotate.
+        Each annotate_{metadata} function has a corresponding lookup function in the LookUp object,
+        where users can search the reference_id in the metadata and
+        compare with the query_id in their own data.
+
+        Returns:
+            Returns a LookUp object specific for compound annotation.
+        """
+        return LookUp(type="compound")
