@@ -14,6 +14,7 @@ warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 from . import data as dt
+from . import metadata as md
 from . import plot as pl
 from . import preprocessing as pp
 from . import tools as tl

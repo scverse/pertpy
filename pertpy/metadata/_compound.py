@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from anndata import AnnData
 
 
-class CompoundMetaData(MetaData):
+class Compound(MetaData):
     """Utilities to fetch metadata for compounds."""
 
     def __init__(self):

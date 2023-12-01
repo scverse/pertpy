@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from anndata import AnnData
 
 
-class MoaMetaData(MetaData):
+class Moa(MetaData):
     """Utilities to fetch metadata for mechanism of action studies."""
 
     def __init__(self):

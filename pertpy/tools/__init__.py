@@ -6,9 +6,6 @@ from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._differential_gene_expression import DifferentialGeneExpression
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
-from pertpy.tools._metadata._cell_line import CellLineMetaData
-from pertpy.tools._metadata._compound import CompoundMetaData
-from pertpy.tools._metadata._moa import MoaMetaData
 from pertpy.tools._milo import Milo
 from pertpy.tools._mixscape import Mixscape
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace

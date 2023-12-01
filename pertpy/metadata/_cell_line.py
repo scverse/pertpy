@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from anndata import AnnData
 
 
-class CellLineMetaData(MetaData):
+class CellLine(MetaData):
     """Utilities to fetch cell line metadata."""
 
     def __init__(self):
