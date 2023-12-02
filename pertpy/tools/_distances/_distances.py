@@ -913,11 +913,10 @@ class MahalanobisDistance(AbstractDistance):
 
 
 class ILISI(AbstractDistance):
-    
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
-    
+
     def __call__(
         self, X: np.ndarray, Y: np.ndarray, n_neighbors: int = 50, n_jobs: int = 1, random_state: int = 0, **kwargs
     ) -> float:
