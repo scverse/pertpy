@@ -10,7 +10,7 @@ from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from rich.progress import track
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from scipy.sparse import vstack as sp_vstack
 from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
@@ -18,8 +18,8 @@ from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
-from statsmodels.discrete.discrete_model import NegativeBinomialP
 from sklearn.neighbors import KernelDensity
+from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 
 def compute_medoid(arr, axis=None):
@@ -196,8 +196,8 @@ class Distance:
             metric_fct = ClassifierProbaDistance()
         elif metric == "classifier_cp":
             metric_fct = ClassifierClassProjection()
-        elif metric=="mean_var_distn":
-            metric_fct=MeanVarDistnDistance()
+        elif metric == "mean_var_distn":
+            metric_fct = MeanVarDistnDistance()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -949,14 +949,14 @@ class ILISI(AbstractDistance):
 
         # Add samall poisitive noise to distances to prevent issues in LISI
         # if some cells are identical to each other
-        distances+= np.random.RandomState(0).uniform(1e-9,1e-8,size=distances.shape)
+        distances += np.random.RandomState(0).uniform(1e-9, 1e-8, size=distances.shape)
         # Make 1st neighbour self
         for i in range(indices.shape[0]):
-            if indices[i,0]!=i:
-                idx_same=np.argwhere(indices[i,:]==i)
-                if len(idx_same)==1:
-                    indices[i,idx_same]=indices[i,0]
-                indices[i,0]=i
+            if indices[i, 0] != i:
+                idx_same = np.argwhere(indices[i, :] == i)
+                if len(idx_same) == 1:
+                    indices[i, idx_same] = indices[i, 0]
+                indices[i, 0] = i
 
         sp_distances, _ = _compute_connectivities_umap(indices, distances, n_obs, n_neighbors=n_neighbors)
 
@@ -1071,53 +1071,57 @@ class MeanVarDistnDistance(AbstractDistance):
         Difference of mean-var distibutions in 2 matrices
         :param X,Y: Matrices of cells*genes, normalized and log transformed
         """
+
         # Get log mean & var for comparison
-        def csr_me_var(x, log:bool=False):
+        def csr_me_var(x, log: bool = False):
             # TODo make work without csr
-            x=csr_matrix(x)
-            mean=x.mean(axis=0)
+            x = csr_matrix(x)
+            mean = x.mean(axis=0)
             c = x.copy()
             c.data **= 2
-            var=c.mean(axis=0) - np.square(mean)
-            positive=np.array(mean>0).ravel()
-            mean=np.array(mean).ravel()[positive]
-            var=np.array(var).ravel()[positive]
+            var = c.mean(axis=0) - np.square(mean)
+            positive = np.array(mean > 0).ravel()
+            mean = np.array(mean).ravel()[positive]
+            var = np.array(var).ravel()[positive]
             if log:
-                mean=np.log(mean)
-                var=np.log(var)
-            return mean,var
-        def prep_kde_data(x,y):
-            return np.concatenate([x.reshape(-1,1),y.reshape(-1,1)],axis=1)
-        mean_x,var_x=csr_me_var(X,log=True)
-        x=prep_kde_data(mean_x,var_x)
-        mean_y,var_y=csr_me_var(Y,log=True)
-        y=prep_kde_data(mean_y,var_y)
+                mean = np.log(mean)
+                var = np.log(var)
+            return mean, var
 
-        def grid_points(d,n_points=100):
+        def prep_kde_data(x, y):
+            return np.concatenate([x.reshape(-1, 1), y.reshape(-1, 1)], axis=1)
+
+        mean_x, var_x = csr_me_var(X, log=True)
+        x = prep_kde_data(mean_x, var_x)
+        mean_y, var_y = csr_me_var(Y, log=True)
+        y = prep_kde_data(mean_y, var_y)
+
+        def grid_points(d, n_points=100):
             # Make grid, add 1 bin on lower/upper end to get final n_points
-            d_min=d.min()
-            d_max=d.max()
+            d_min = d.min()
+            d_max = d.max()
             # Compute bin size
-            d_bin=(d_max-d_min)/(n_points-2)
-            d_min=d_min-d_bin
-            d_max=d_max+d_bin
-            return np.arange(start=d_min+0.5*d_bin,stop=d_max,step=d_bin)
+            d_bin = (d_max - d_min) / (n_points - 2)
+            d_min = d_min - d_bin
+            d_max = d_max + d_bin
+            return np.arange(start=d_min + 0.5 * d_bin, stop=d_max, step=d_bin)
+
         # Gridpoints to eval KDE on
-        mean_grid=grid_points(np.concatenate([mean_x,mean_y]))
-        var_grid=grid_points(np.concatenate([var_x,var_y]))
-        grid=np.array(np.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2) 
+        mean_grid = grid_points(np.concatenate([mean_x, mean_y]))
+        var_grid = grid_points(np.concatenate([var_x, var_y]))
+        grid = np.array(np.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2)
 
         # KDE
-        def kde_eval(d,grid):
+        def kde_eval(d, grid):
             # Kernel choice: Gaussian is too smoothing and cosine or other kernels that do not stretch out
             # can not be compared well on regions further away from the data as they are -inf
-            return KernelDensity(bandwidth='silverman',kernel='exponential').fit(d).score_samples(grid)
+            return KernelDensity(bandwidth="silverman", kernel="exponential").fit(d).score_samples(grid)
 
-        kde_x=kde_eval(x,grid)
-        kde_y=kde_eval(y,grid)
+        kde_x = kde_eval(x, grid)
+        kde_y = kde_eval(y, grid)
 
         # KDE difference
-        kde_diff=((kde_x-kde_y)**2).mean()
+        kde_diff = ((kde_x - kde_y) ** 2).mean()
 
         return kde_diff
 
