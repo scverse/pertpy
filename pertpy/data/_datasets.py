@@ -346,7 +346,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://figshare.com/ndownloader/files/34490714",
+            url="https://figshare.com/ndownloader/files/43462662?private_link=04ecd12454ea92603218",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
