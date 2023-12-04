@@ -619,7 +619,7 @@ Available databases for mechanism of action metadata:
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+    :toctree: metadata
 
     metadata.CellLine
     metadata.Compound
