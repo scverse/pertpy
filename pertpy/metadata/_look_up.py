@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 from rich import print
 
