@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
 from rich import print
@@ -17,7 +18,7 @@ class LookUp:
     def __init__(
         self,
         type: Literal["cell_line", "moa", "compound"] = "cell_line",
-        transfer_metadata: list[pd.DataFrame] | None = None,
+        transfer_metadata: Sequence[pd.DataFrame] | None = None,
     ):
         """
         Args:
@@ -210,7 +211,7 @@ class LookUp:
         self,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         reference_id: str = "DepMap_ID",
-        query_id_list: list[str] | None = None,
+        query_id_list: Sequence[str] | None = None,
     ) -> None:
         """A brief summary of cell line metadata.
 
@@ -250,7 +251,7 @@ class LookUp:
     def available_bulk_rna_expression(
         self,
         cell_line_source: Literal["broad", "sanger"] = "sanger",
-        query_id_list: list[str] | None = None,
+        query_id_list: Sequence[str] | None = None,
     ) -> None:
         """A brief summary of bulk RNA expression data.
 
@@ -275,7 +276,7 @@ class LookUp:
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
     def available_protein_expression(
-        self, reference_id: Literal["model_name", "model_id"] = "model_name", query_id_list: list[str] | None = None
+        self, reference_id: Literal["model_name", "model_id"] = "model_name", query_id_list: Sequence[str] | None = None
     ) -> None:
         """A brief summary of protein expression data.
 
@@ -303,9 +304,9 @@ class LookUp:
         self,
         gdsc_dataset: Literal[1, 2] = 1,
         reference_id: Literal["cell_line_name", "sanger_model_id", "cosmic_id"] = "cell_line_name",
-        query_id_list: list[str] | None = None,
+        query_id_list: Sequence[str] | None = None,
         reference_perturbation: Literal["drug_name", "drug_id"] = "drug_name",
-        query_perturbation_list: list[str] | None = None,
+        query_perturbation_list: Sequence[str] | None = None,
     ) -> None:
         """A brief summary of drug response data.
 
@@ -347,7 +348,7 @@ class LookUp:
     def available_genes_annotation(
         self,
         reference_id: Literal["gene_id", "ensembl_gene_id", "hgnc_id", "hgnc_symbol"] = "ensembl_gene_id",
-        query_id_list: list[str] | None = None,
+        query_id_list: Sequence[str] | None = None,
     ) -> None:
         """A brief summary of gene annotation metadata
 
@@ -383,8 +384,8 @@ class LookUp:
 
     def available_moa(
         self,
-        query_id_list: list[str] | None = None,
-        target_list: list[str] | None = None,
+        query_id_list: Sequence[str] | None = None,
+        target_list: Sequence[str] | None = None,
     ) -> None:
         """A brief summary of MoA annotation.
 
@@ -411,7 +412,7 @@ class LookUp:
 
 def available_compounds(
     self,
-    query_id_list: list[str] | None = None,
+    query_id_list: Sequence[str] | None = None,
     query_id_type: Literal["name", "cid"] = "name",
 ) -> None:
     """A brief summary of compound annotation.

@@ -21,7 +21,6 @@ class Moa(MetaData):
     """Utilities to fetch metadata for mechanism of action studies."""
 
     def __init__(self):
-        settings.cachedir = ".pertpy_cache"
         moa_file_path = settings.cachedir.__str__() + "/repurposing_drugs_20200324.txt"
         if not Path(moa_file_path).exists():
             print(

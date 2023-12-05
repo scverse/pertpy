@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Literal
 
 
@@ -10,7 +11,7 @@ class MetaData:
     def _print_unmatched_ids(
         self,
         total_identifiers: int = 0,
-        unmatched_identifiers: list[str] = None,
+        unmatched_identifiers: Sequence[str] = None,
         metadata_type: Literal[
             "cell line", "protein expression", "bulk RNA expression", "drug response", "moa", "compound"
         ] = "cell line",

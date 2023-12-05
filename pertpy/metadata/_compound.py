@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,7 @@ class Compound(MetaData):
     """Utilities to fetch metadata for compounds."""
 
     def __init__(self):
-        settings.cachedir = ".pertpy_cache"
+        pass
 
     def annotate_compounds(
         self,

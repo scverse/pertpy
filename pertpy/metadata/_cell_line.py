@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -21,7 +21,6 @@ class CellLine(MetaData):
     """Utilities to fetch cell line metadata."""
 
     def __init__(self):
-        settings.cachedir = ".pertpy_cache"
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
         cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
@@ -196,7 +195,7 @@ class CellLine(MetaData):
         adata: AnnData,
         query_id: str = "DepMap_ID",
         reference_id: str = "DepMap_ID",
-        cell_line_information: list[str] | None = None,
+        cell_line_information: Sequence[str] | None = None,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         verbosity: int | str = 5,
         copy: bool = False,
@@ -296,6 +295,9 @@ class CellLine(MetaData):
                 # We will subset the original metadata dataframe correspondingly and add them to the AnnData object.
                 # Again, redundant information will be removed.
                 if reference_id not in cell_line_information:
+                    # Sequence doesnt have append function, turn into list
+                    if not isinstance(cell_line_information, list):
+                        cell_line_information = list(cell_line_information)
                     cell_line_information.append(reference_id)
                 cell_line_meta_part = cell_line_meta[cell_line_information]
                 adata.obs = (
