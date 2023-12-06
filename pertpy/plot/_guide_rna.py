@@ -1,13 +1,11 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
-import numpy as np
-import scanpy as sc
-
 if TYPE_CHECKING:
+    import numpy as np
     from anndata import AnnData
-    from matplotlib.axes import Axes
 
 
 class GuideRnaPlot:
@@ -17,8 +15,8 @@ class GuideRnaPlot:
         layer: str | None = None,
         order_by: np.ndarray | str | None = None,
         key_to_save_order: str = None,
-        **kwds,
-    ) -> list[Axes]:
+        **kwargs,
+    ):
         """Heatmap plotting of guide RNA expression matrix.
 
         Assuming guides have sparse expression, this function reorders cells
@@ -36,7 +34,7 @@ class GuideRnaPlot:
                        If a string is provided, adata.obs[order_by] will be used as the order.
                        If a numpy array is provided, the array will be used for ordering.
              key_to_save_order: The obs key to save cell orders in the current plot. Only saves if not None.
-             kwds: Are passed to sc.pl.heatmap.
+             kwargs: Are passed to sc.pl.heatmap.
 
          Returns:
              List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
@@ -47,36 +45,20 @@ class GuideRnaPlot:
             visualized using a heatmap.
 
             >>> import pertpy as pt
-            >>> mdata = pt.data.papalexi_2021()
+            >>> mdata = pt.dt.papalexi_2021()
             >>> gdo = mdata.mod['gdo']
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
-            >>> pt.pl.guide.heatmap(gdo)
+            >>> ga.heatmap(gdo)
         """
-        data = adata.X if layer is None else adata.layers[layer]
-
-        if order_by is None:
-            max_guide_index = np.where(
-                np.array(data.max(axis=1)).squeeze() != data.min(), np.array(data.argmax(axis=1)).squeeze(), -1
-            )
-            order = np.argsort(max_guide_index)
-        elif isinstance(order_by, str):
-            order = adata.obs[order_by]
-        else:
-            order = order_by
-
-        adata.obs["_tmp_pertpy_grna_plot_dummy_group"] = ""
-        if key_to_save_order is not None:
-            adata.obs[key_to_save_order] = order
-        axis_group = sc.pl.heatmap(
-            adata[order],
-            adata.var.index.tolist(),
-            groupby="_tmp_pertpy_grna_plot_dummy_group",
-            cmap="viridis",
-            use_raw=False,
-            dendrogram=False,
-            layer=layer,
-            **kwds,
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.7.0!"
+            " Please use the corresponding 'pt.tl' object",
+            DeprecationWarning,
+            stacklevel=2,
         )
-        del adata.obs["_tmp_pertpy_grna_plot_dummy_group"]
-        return axis_group
+
+        from pertpy.preprocessing import GuideAssignment
+
+        obj = GuideAssignment()
+        obj.heatmap(adata=adata, layer=layer, order_by=order_by, key_to_save_order=key_to_save_order, kwargs=kwargs)
