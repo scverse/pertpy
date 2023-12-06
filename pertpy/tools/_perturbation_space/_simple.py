@@ -99,13 +99,15 @@ class CentroidSpace(PerturbationSpace):
         if embedding_key is not None:
             ps_adata.obsm[embedding_key] = X
 
-        if keep_obs is not None: # Save the values of the obs columns of interest in the ps_adata object
+        if keep_obs is not None:  # Save the values of the obs columns of interest in the ps_adata object
             for obs_name in keep_obs:
                 for pert in index:
                     obs_value = adata[adata.obs.perturbation_name == pert].obs[obs_name].unique()
                     if len(obs_value) > 1:
-                        raise ValueError(f"Obs {obs_name!r} has more than one value for perturbation {pert!r}. "
-                                         f"You can only keep obs columns with an unambiguous value for each perturbation.")
+                        raise ValueError(
+                            f"Obs {obs_name!r} has more than one value for perturbation {pert!r}. "
+                            f"You can only keep obs columns with an unambiguous value for each perturbation."
+                        )
                     ps_adata.obs.loc[ps_adata.obs.index == pert, obs_name] = obs_value[0]
 
         return ps_adata
