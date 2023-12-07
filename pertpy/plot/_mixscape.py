@@ -3,8 +3,6 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, Literal
 
-import scanpy as sc
-
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -53,7 +51,7 @@ class MixscapePlot:
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
@@ -115,7 +113,7 @@ class MixscapePlot:
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
@@ -179,7 +177,7 @@ class MixscapePlot:
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
@@ -253,7 +251,7 @@ class MixscapePlot:
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
@@ -326,7 +324,7 @@ class MixscapePlot:
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 

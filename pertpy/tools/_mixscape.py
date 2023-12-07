@@ -754,7 +754,7 @@ class Mixscape:
                 )
                 pl.xlabel("Perturbation score", fontsize=16)
                 pl.ylabel("Cell density", fontsize=16)
-                pl.title("Density Plot using Seaborn and Matplotlib", fontsize=18)
+                pl.title("Density Plot", fontsize=18)
                 pl.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
 

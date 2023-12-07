@@ -54,7 +54,7 @@ class GuideRnaPlot:
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
