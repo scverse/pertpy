@@ -28,10 +28,6 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from scipy import sparse
 
-warnings.filterwarnings("ignore", category=UserWarning, module="pandas")
-warnings.filterwarnings("ignore", category=UserWarning, module="seaborn")
-warnings.filterwarnings("ignore", category=UserWarning, module="anndata")
-
 
 class Mixscape:
     """Python implementation of Mixscape."""
@@ -577,7 +573,7 @@ class Mixscape:
                 ax = axs[int(i / 5), i % 5]
                 grouped_df = (
                     NP_KO_cells[NP_KO_cells["gene"] == gene]
-                    .groupby(["guide_number", "mixscape_class_global"])["value"]
+                    .groupby(["guide_number", "mixscape_class_global"], observed=False)["value"]
                     .sum()
                     .unstack()
                 )
@@ -773,7 +769,7 @@ class Mixscape:
             )[0]
             perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = rng.uniform(
                 low=0.001, high=top_r / 10, size=sum(perturbation_score["mix"] == gd2)
-            )
+            ).astype(np.float32)
             perturbation_score.loc[
                 perturbation_score["mix"] == f"{target_gene} {perturbation_type}", "y_jitter"
             ] = rng.uniform(
