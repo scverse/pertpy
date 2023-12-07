@@ -18,7 +18,7 @@ class CentroidSpace(PerturbationSpace):
         target_col: str = "perturbations",
         layer_key: str = None,
         embedding_key: str = "X_umap",
-        keep_obs: str | list[str] = None,
+        keep_obs: bool = True,
     ) -> AnnData:  # type: ignore
         """Computes the centroids of a pre-computed embedding such as UMAP.
 
@@ -62,13 +62,6 @@ class CentroidSpace(PerturbationSpace):
         if target_col not in adata.obs:
             raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
 
-        if keep_obs is not None:
-            if isinstance(keep_obs, str):
-                keep_obs = [keep_obs]
-            for obs in keep_obs:
-                if obs not in adata.obs:
-                    raise ValueError(f"Obs {obs!r} does not exist in the .obs attribute.")
-
         grouped = adata.obs.groupby(target_col)
 
         if X is None:
@@ -99,17 +92,14 @@ class CentroidSpace(PerturbationSpace):
         if embedding_key is not None:
             ps_adata.obsm[embedding_key] = X
 
-        if keep_obs is not None:  # Save the values of the obs columns of interest in the ps_adata object
-            for obs_name in keep_obs:
-                for pert in index:
-                    obs_value = adata[adata.obs.perturbation_name == pert].obs[obs_name].unique()
-                    if len(obs_value) > 1:
-                        raise ValueError(
-                            f"Obs {obs_name!r} has more than one value for perturbation {pert!r}. "
-                            f"You can only keep obs columns with an unambiguous value for each perturbation."
-                        )
-                    ps_adata.obs.loc[ps_adata.obs.index == pert, obs_name] = obs_value[0]
-
+        if keep_obs:  # Save the values of the obs columns of interest in the ps_adata object
+            obs_df = adata.obs
+            obs_df = obs_df.groupby(target_col).agg(lambda x: np.nan if len(set(x)) != 1 else list(set(x))[0])
+            for obs_name in obs_df.columns:
+                if not obs_df[obs_name].isnull().values.any():
+                    mapping = {pert: obs_df.loc[pert][obs_name] for pert in index}
+                    ps_adata.obs[obs_name] = ps_adata.obs[target_col].map(mapping)
+                
         return ps_adata
 
 
