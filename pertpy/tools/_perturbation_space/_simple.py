@@ -99,7 +99,7 @@ class CentroidSpace(PerturbationSpace):
                 if not obs_df[obs_name].isnull().values.any():
                     mapping = {pert: obs_df.loc[pert][obs_name] for pert in index}
                     ps_adata.obs[obs_name] = ps_adata.obs[target_col].map(mapping)
-                
+
         return ps_adata
 
 
