@@ -28,8 +28,6 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from scipy import sparse
 
-warnings.simplefilter("ignore")
-
 
 class Mixscape:
     """Python implementation of Mixscape."""
