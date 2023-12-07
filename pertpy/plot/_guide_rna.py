@@ -49,10 +49,10 @@ class GuideRnaPlot:
             >>> gdo = mdata.mod['gdo']
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
-            >>> ga.heatmap(gdo)
+            >>> ga.plot_heatmap(gdo)
         """
         warnings.warn(
-            "This function is deprecated and will be removed in pertpy 0.7.0!"
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object",
             DeprecationWarning,
             stacklevel=2,
@@ -60,5 +60,5 @@ class GuideRnaPlot:
 
         from pertpy.preprocessing import GuideAssignment
 
-        obj = GuideAssignment()
-        obj.heatmap(adata=adata, layer=layer, order_by=order_by, key_to_save_order=key_to_save_order, kwargs=kwargs)
+        ga = GuideAssignment()
+        ga.plot_heatmap(adata=adata, layer=layer, order_by=order_by, key_to_save_order=key_to_save_order, kwargs=kwargs)

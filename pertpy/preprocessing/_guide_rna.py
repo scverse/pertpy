@@ -106,7 +106,8 @@ class GuideAssignment:
 
         return None
 
-    def heatmap(
+    def plot_heatmap(
+        self,
         adata: AnnData,
         layer: str | None = None,
         order_by: np.ndarray | str | None = None,
