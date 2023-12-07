@@ -28,6 +28,10 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from scipy import sparse
 
+warnings.filterwarnings("ignore", category=UserWarning, module="pandas")
+warnings.filterwarnings("ignore", category=UserWarning, module="seaborn")
+warnings.filterwarnings("ignore", category=UserWarning, module="anndata")
+
 
 class Mixscape:
     """Python implementation of Mixscape."""

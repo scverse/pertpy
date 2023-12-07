@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -1018,8 +1018,8 @@ class CodaPlot:
             >>>                                      "effect_df_condition[T.Hpoly.Day10]"],
             >>>                                       cluster_key="nsbm_level_1",
             >>>                         )
-            #TODO: Add effect_name parameter and cluster_key and test the example
         """
+        # TODO: Add effect_name parameter and cluster_key and test the example
         data_rna = data[modality_key_1]
         data_coda = data[modality_key_2]
         if isinstance(effect_name, str):
