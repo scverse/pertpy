@@ -27,8 +27,8 @@ class CentroidSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            keep_obs: .obs columns in the input AnnData to keep in the output pseudobulk AnnData. Only .obs columns with the same value for
-                each cell of one perturbation can be kept. Defaults to None.
+            keep_obs: Whether .obs columns in the input AnnData should be kept in the output pseudobulk AnnData. Only .obs columns with the same value for
+                each cell of one perturbation are kept. Defaults to True.
 
         Examples:
             Compute the centroids of a UMAP embedding of the papalexi_2021 dataset:
