@@ -509,7 +509,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         else:
             return r_value**2
 
-    def reg_var_plot(
+    def plot_reg_var_plot(
         self,
         adata,
         condition_key,
