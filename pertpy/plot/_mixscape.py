@@ -1,18 +1,7 @@
 from __future__ import annotations
 
-import copy
-from collections import OrderedDict
+import warnings
 from typing import TYPE_CHECKING, Literal
-
-import numpy as np
-import pandas as pd
-import scanpy as sc
-import seaborn as sns
-from matplotlib import pyplot as pl
-from scanpy import get
-from scanpy._settings import settings
-from scanpy._utils import _check_use_raw, sanitize_anndata
-from scanpy.plotting import _utils
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -32,9 +21,6 @@ class MixscapePlot:
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
         axis_title_size: int = 8,
-        strip_text_size: int = 6,
-        panel_spacing_x: float = 0.3,
-        panel_spacing_y: float = 0.3,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
         show: bool | None = None,
@@ -57,68 +43,33 @@ class MixscapePlot:
         Examples:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
-            >>> mixscape_identifier = pt.tl.Mixscape()
-            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> pt.pl.ms.barplot(mdata['rna'], guide_rna_column='NT')
+            >>> ms = pt.tl.Mixscape()
+            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> ms.plot_barplot(mdata['rna'], guide_rna_column='NT')
         """
-        if mixscape_class_global not in adata.obs:
-            raise ValueError("Please run `pt.tl.mixscape` first.")
-        count = pd.crosstab(index=adata.obs[mixscape_class_global], columns=adata.obs[guide_rna_column])
-        all_cells_percentage = pd.melt(count / count.sum(), ignore_index=False).reset_index()
-        KO_cells_percentage = all_cells_percentage[all_cells_percentage[mixscape_class_global] == "KO"]
-        KO_cells_percentage = KO_cells_percentage.sort_values("value", ascending=False)
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-        new_levels = KO_cells_percentage[guide_rna_column]
-        all_cells_percentage[guide_rna_column] = pd.Categorical(
-            all_cells_percentage[guide_rna_column], categories=new_levels, ordered=False
+        from pertpy.tools import Mixscape
+
+        ms = Mixscape()
+        return ms.plot_barplot(
+            adata=adata,
+            guide_rna_column=guide_rna_column,
+            mixscape_class_global=mixscape_class_global,
+            axis_text_x_size=axis_text_x_size,
+            axis_text_y_size=axis_text_y_size,
+            axis_title_size=axis_title_size,
+            legend_title_size=legend_title_size,
+            legend_text_size=legend_text_size,
+            show=show,
+            save=save,
         )
-        all_cells_percentage[mixscape_class_global] = pd.Categorical(
-            all_cells_percentage[mixscape_class_global], categories=["NT", "NP", "KO"], ordered=False
-        )
-        all_cells_percentage["gene"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[0]
-        all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
-        all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
-        NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
-        _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
-        if not show:
-            color_mapping = {"KO": "gray", "NP": "lightgray", "NT": "salmon"}
-            unique_genes = NP_KO_cells["gene"].unique()
-            fig, axs = pl.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
-            for i, gene in enumerate(unique_genes):
-                ax = axs[int(i / 5), i % 5]
-                grouped_df = (
-                    NP_KO_cells[NP_KO_cells["gene"] == gene]
-                    .groupby(["guide_number", "mixscape_class_global"])["value"]
-                    .sum()
-                    .unstack()
-                )
-                grouped_df.plot(
-                    kind="bar",
-                    stacked=True,
-                    color=[color_mapping[col] for col in grouped_df.columns],
-                    ax=ax,
-                    width=0.8,
-                    legend=False,
-                )
-                ax.set_title(
-                    gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size
-                )
-                ax.set(xlabel="sgRNA", ylabel="% of cells")
-                sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
-                ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
-                ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
-            fig.subplots_adjust(right=0.8)
-            fig.subplots_adjust(hspace=0.5, wspace=0.5)
-            ax.legend(
-                title="mixscape_class_global",
-                loc="center right",
-                bbox_to_anchor=(2.2, 3.5),
-                frameon=True,
-                fontsize=legend_text_size,
-                title_fontsize=legend_title_size,
-            )
-            return fig
 
     @staticmethod
     def heatmap(  # pragma: no cover
@@ -133,7 +84,7 @@ class MixscapePlot:
         vmax: float | None = 2,
         show: bool | None = None,
         save: bool | str | None = None,
-        **kwds,
+        **kwargs,
     ):
         """Heatmap plot using mixscape results. Requires `pt.tl.mixscape()` to be run first.
 
@@ -149,33 +100,39 @@ class MixscapePlot:
             vmax: The value representing the upper limit of the color scale. Values larger than vmax are plotted with the same color as vmax.
             show: Show the plot, do not return axis.
             save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
-            ax: A matplotlib axes object. Only works if plotting a single component.
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
 
         Examples:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
-            >>> mixscape_identifier = pt.tl.Mixscape()
-            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> pt.pl.ms.heatmap(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', layer='X_pert', control='NT')
+            >>> ms = pt.tl.Mixscape()
+            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> ms.plot_heatmap(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', layer='X_pert', control='NT')
         """
-        if "mixscape_class" not in adata.obs:
-            raise ValueError("Please run `pt.tl.mixscape` first.")
-        adata_subset = adata[(adata.obs[labels] == target_gene) | (adata.obs[labels] == control)].copy()
-        sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
-        sc.pp.scale(adata_subset, max_value=vmax)
-        sc.pp.subsample(adata_subset, n_obs=subsample_number)
-        return sc.pl.rank_genes_groups_heatmap(
-            adata_subset,
-            groupby="mixscape_class",
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
+
+        from pertpy.tools import Mixscape
+
+        ms = Mixscape()
+        return ms.plot_heatmap(
+            adata=adata,
+            labels=labels,
+            target_gene=target_gene,
+            control=control,
+            layer=layer,
+            method=method,
+            subsample_number=subsample_number,
             vmin=vmin,
             vmax=vmax,
-            n_genes=20,
-            groups=["NT"],
             show=show,
             save=save,
-            **kwds,
+            **kwargs,
         )
 
     @staticmethod
@@ -215,111 +172,28 @@ class MixscapePlot:
             >>> mixscape_identifier = pt.tl.Mixscape()
             >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> pt.pl.ms.perturbscore(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', color = 'orange')
+            >>> mixscape_identifier.perturbscore(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', color = 'orange')
         """
-        if "mixscape" not in adata.uns:
-            raise ValueError("Please run `pt.tl.mixscape` first.")
-        perturbation_score = None
-        for key in adata.uns["mixscape"][target_gene].keys():
-            perturbation_score_temp = adata.uns["mixscape"][target_gene][key]
-            perturbation_score_temp["name"] = key
-            if perturbation_score is None:
-                perturbation_score = copy.deepcopy(perturbation_score_temp)
-            else:
-                perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
-        perturbation_score["mix"] = adata.obs[mixscape_class][perturbation_score.index]
-        gd = list(set(perturbation_score[labels]).difference({target_gene}))[0]
-        # If before_mixscape is True, split densities based on original target gene classification
-        if before_mixscape is True:
-            cols = {gd: "#7d7d7d", target_gene: color}
-            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
-            top_r = max(plot_dens.get_lines()[cond].get_data()[1].max() for cond in range(len(plot_dens.get_lines())))
-            pl.close()
-            perturbation_score["y_jitter"] = perturbation_score["pvec"]
-            rng = np.random.default_rng()
-            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = rng.uniform(
-                low=0.001, high=top_r / 10, size=sum(perturbation_score[labels] == gd)
-            )
-            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = rng.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score[labels] == target_gene)
-            )
-            # If split_by is provided, split densities based on the split_by
-            if split_by is not None:
-                sns.set(style="whitegrid")
-                g = sns.FacetGrid(
-                    data=perturbation_score, col=split_by, hue=split_by, palette=cols, height=5, sharey=False
-                )
-                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False)
-                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
-                g.set_axis_labels("Perturbation score", "Cell density")
-                g.add_legend(title=split_by, fontsize=14, title_fontsize=16)
-                g.despine(left=True)
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-            # If split_by is not provided, create a single plot
-            else:
-                sns.set(style="whitegrid")
-                sns.kdeplot(
-                    data=perturbation_score, x="pvec", hue="gene_target", fill=True, common_norm=False, palette=cols
-                )
-                sns.scatterplot(
-                    data=perturbation_score, x="pvec", y="y_jitter", hue="gene_target", palette=cols, s=10, alpha=0.5
-                )
-                pl.xlabel("Perturbation score", fontsize=16)
-                pl.ylabel("Cell density", fontsize=16)
-                pl.title("Density Plot using Seaborn and Matplotlib", fontsize=18)
-                pl.legend(title="gene_target", title_fontsize=14, fontsize=12)
-                sns.despine()
+        from pertpy.tools import Mixscape
 
-        # If before_mixscape is False, split densities based on mixscape classifications
-        else:
-            cols = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
-            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
-            top_r = max(plot_dens.get_lines()[i].get_data()[1].max() for i in range(len(plot_dens.get_lines())))
-            pl.close()
-            perturbation_score["y_jitter"] = perturbation_score["pvec"]
-            rng = np.random.default_rng()
-            gd2 = list(
-                set(perturbation_score["mix"]).difference([f"{target_gene} NP", f"{target_gene} {perturbation_type}"])
-            )[0]
-            perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = rng.uniform(
-                low=0.001, high=top_r / 10, size=sum(perturbation_score["mix"] == gd2)
-            )
-            perturbation_score.loc[
-                perturbation_score["mix"] == f"{target_gene} {perturbation_type}", "y_jitter"
-            ] = rng.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} {perturbation_type}")
-            )
-            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = rng.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} NP")
-            )
-            # If split_by is provided, split densities based on the split_by
-            if split_by is not None:
-                sns.set(style="whitegrid")
-                g = sns.FacetGrid(
-                    data=perturbation_score, col=split_by, hue="mix", palette=cols, height=5, sharey=False
-                )
-                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False, alpha=0.7)
-                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
-                g.set_axis_labels("Perturbation score", "Cell density")
-                g.add_legend(title="mix", fontsize=14, title_fontsize=16)
-                g.despine(left=True)
-
-            # If split_by is not provided, create a single plot
-            else:
-                sns.set(style="whitegrid")
-                sns.kdeplot(
-                    data=perturbation_score, x="pvec", hue="mix", fill=True, common_norm=False, palette=cols, alpha=0.7
-                )
-                sns.scatterplot(
-                    data=perturbation_score, x="pvec", y="y_jitter", hue="mix", palette=cols, s=10, alpha=0.5
-                )
-                pl.xlabel("Perturbation score", fontsize=16)
-                pl.ylabel("Cell density", fontsize=16)
-                pl.title("Density Plot using Seaborn and Matplotlib", fontsize=18)
-                pl.legend(title="mixscape class", title_fontsize=14, fontsize=12)
-                sns.despine()
-
-        return pl.gcf()
+        ms = Mixscape()
+        return ms.plot_perturbscore(
+            adata=adata,
+            labels=labels,
+            target_gene=target_gene,
+            mixscape_class=mixscape_class,
+            color=color,
+            split_by=split_by,
+            before_mixscape=before_mixscape,
+            perturbation_type=perturbation_type,
+        )
 
     @staticmethod
     def violin(  # pragma: no cover
@@ -343,7 +217,7 @@ class MixscapePlot:
         show: bool | None = None,
         save: bool | str | None = None,
         ax: Axes | None = None,
-        **kwds,
+        **kwargs,
     ):
         """Violin plot using mixscape results. Requires `pt.tl.mixscape` to be run first.
 
@@ -361,7 +235,7 @@ class MixscapePlot:
             show: Show the plot, do not return axis.
             save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             ax: A matplotlib axes object. Only works if plotting a single component.
-            **kwds: Additional arguments to `seaborn.violinplot`.
+            **kwargs: Additional arguments to `seaborn.violinplot`.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object if `ax` is `None` else `None`.
@@ -369,151 +243,44 @@ class MixscapePlot:
         Examples:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
-            >>> mixscape_identifier = pt.tl.Mixscape()
-            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> pt.pl.ms.violin(adata = mdata['rna'], target_gene_idents=['NT', 'IFNGR2 NP', 'IFNGR2 KO'], groupby='mixscape_class')
+            >>> ms = pt.tl.Mixscape()
+            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> ms.plot_violin(adata = mdata['rna'], target_gene_idents=['NT', 'IFNGR2 NP', 'IFNGR2 KO'], groupby='mixscape_class')
         """
-        if isinstance(target_gene_idents, str):
-            mixscape_class_mask = adata.obs[groupby] == target_gene_idents
-        elif isinstance(target_gene_idents, list):
-            mixscape_class_mask = np.full_like(adata.obs[groupby], False, dtype=bool)
-            for ident in target_gene_idents:
-                mixscape_class_mask |= adata.obs[groupby] == ident
-        adata = adata[mixscape_class_mask]
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-        sanitize_anndata(adata)
-        use_raw = _check_use_raw(adata, use_raw)
-        if isinstance(keys, str):
-            keys = [keys]
-        keys = list(OrderedDict.fromkeys(keys))  # remove duplicates, preserving the order
+        from pertpy.tools import Mixscape
 
-        if isinstance(ylabel, (str, type(None))):
-            ylabel = [ylabel] * (1 if groupby is None else len(keys))
-        if groupby is None:
-            if len(ylabel) != 1:
-                raise ValueError(f"Expected number of y-labels to be `1`, found `{len(ylabel)}`.")
-        elif len(ylabel) != len(keys):
-            raise ValueError(f"Expected number of y-labels to be `{len(keys)}`, " f"found `{len(ylabel)}`.")
-
-        if groupby is not None:
-            if hue is not None:
-                obs_df = get.obs_df(adata, keys=[groupby] + keys + [hue], layer=layer, use_raw=use_raw)
-            else:
-                obs_df = get.obs_df(adata, keys=[groupby] + keys, layer=layer, use_raw=use_raw)
-
-        else:
-            obs_df = get.obs_df(adata, keys=keys, layer=layer, use_raw=use_raw)
-        if groupby is None:
-            obs_tidy = pd.melt(obs_df, value_vars=keys)
-            x = "variable"
-            ys = ["value"]
-        else:
-            obs_tidy = obs_df
-            x = groupby
-            ys = keys
-
-        if multi_panel and groupby is None and len(ys) == 1:
-            # This is a quick and dirty way for adapting scales across several
-            # keys if groupby is None.
-            y = ys[0]
-
-            g = sns.catplot(
-                y=y,
-                data=obs_tidy,
-                kind="violin",
-                scale=scale,
-                col=x,
-                col_order=keys,
-                sharey=False,
-                order=keys,
-                cut=0,
-                inner=None,
-                **kwds,
-            )
-
-            if stripplot:
-                grouped_df = obs_tidy.groupby(x)
-                for ax_id, key in zip(range(g.axes.shape[1]), keys):
-                    sns.stripplot(
-                        y=y,
-                        data=grouped_df.get_group(key),
-                        jitter=jitter,
-                        size=size,
-                        color="black",
-                        ax=g.axes[0, ax_id],
-                    )
-            if log:
-                g.set(yscale="log")
-            g.set_titles(col_template="{col_name}").set_xlabels("")
-            if rotation is not None:
-                for ax in g.axes[0]:
-                    ax.tick_params(axis="x", labelrotation=rotation)
-        else:
-            # set by default the violin plot cut=0 to limit the extend
-            # of the violin plot (see stacked_violin code) for more info.
-            kwds.setdefault("cut", 0)
-            kwds.setdefault("inner")
-
-            if ax is None:
-                axs, _, _, _ = _utils.setup_axes(
-                    ax=ax,
-                    panels=["x"] if groupby is None else keys,
-                    show_ticks=True,
-                    right_margin=0.3,
-                )
-            else:
-                axs = [ax]
-            for ax, y, ylab in zip(axs, ys, ylabel):
-                ax = sns.violinplot(
-                    x=x,
-                    y=y,
-                    data=obs_tidy,
-                    order=order,
-                    orient="vertical",
-                    scale=scale,
-                    ax=ax,
-                    hue=hue,
-                    **kwds,
-                )
-                # Get the handles and labels.
-                handles, labels = ax.get_legend_handles_labels()
-                if stripplot:
-                    ax = sns.stripplot(
-                        x=x,
-                        y=y,
-                        data=obs_tidy,
-                        order=order,
-                        jitter=jitter,
-                        color="black",
-                        size=size,
-                        ax=ax,
-                        hue=hue,
-                        dodge=True,
-                    )
-                if xlabel == "" and groupby is not None and rotation is None:
-                    xlabel = groupby.replace("_", " ")
-                ax.set_xlabel(xlabel)
-                if ylab is not None:
-                    ax.set_ylabel(ylab)
-
-                if log:
-                    ax.set_yscale("log")
-                if rotation is not None:
-                    ax.tick_params(axis="x", labelrotation=rotation)
-
-        show = settings.autoshow if show is None else show
-        if hue is not None and stripplot is True:
-            pl.legend(handles, labels)
-        _utils.savefig_or_show("mixscape_violin", show=show, save=save)
-
-        if not show:
-            if multi_panel and groupby is None and len(ys) == 1:
-                return g
-            elif len(axs) == 1:
-                return axs[0]
-            else:
-                return axs
+        ms = Mixscape()
+        return ms.plot_violin(
+            adata=adata,
+            target_gene_idents=target_gene_idents,
+            keys=keys,
+            groupby=groupby,
+            log=log,
+            use_raw=use_raw,
+            stripplot=stripplot,
+            hue=hue,
+            jitter=jitter,
+            size=size,
+            layer=layer,
+            scale=scale,
+            order=order,
+            multi_panel=multi_panel,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            rotation=rotation,
+            show=show,
+            save=save,
+            ax=ax,
+            **kwargs,
+        )
 
     @staticmethod
     def lda(  # pragma: no cover
@@ -526,7 +293,7 @@ class MixscapePlot:
         n_components: int | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-        **kwds,
+        **kwargs,
     ):
         """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
 
@@ -536,33 +303,44 @@ class MixscapePlot:
             labels: The column of `.obs` with target gene labels.
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to 'KO'.
+            perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
+                               Defaults to 'KO'.
             lda_key: If not speficied, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
             show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
-            **kwds: Additional arguments to `scanpy.pl.umap`.
+            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
+                  Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
+            **kwargs: Additional arguments to `scanpy.pl.umap`.
 
         Examples:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
-            >>> mixscape_identifier = pt.tl.Mixscape()
-            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> mixscape_identifier.lda(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
-            >>> pt.pl.ms.lda(adata=mdata['rna'], control='NT')
+            >>> ms = pt.tl.Mixscape()
+            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
+            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
+            >>> ms.lda(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
+            >>> ms.plot_lda(adata=mdata['rna'], control='NT')
         """
-        if mixscape_class not in adata.obs:
-            raise ValueError(f'Did not find .obs["{mixscape_class!r}"]. Please run `pt.tl.mixscape` first.')
-        if lda_key not in adata.uns:
-            raise ValueError(f'Did not find .uns["{lda_key!r}"]. Run `pt.tl.neighbors` first.')
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-        adata_subset = adata[
-            (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
-        ].copy()
-        adata_subset.obsm[lda_key] = adata_subset.uns[lda_key]
-        if n_components is None:
-            n_components = adata_subset.uns[lda_key].shape[1]
-        sc.pp.neighbors(adata_subset, use_rep=lda_key)
-        sc.tl.umap(adata_subset, n_components=n_components)
-        sc.pl.umap(adata_subset, color=mixscape_class, show=show, save=save, **kwds)
+        from pertpy.tools import Mixscape
+
+        ms = Mixscape()
+
+        return ms.plot_lda(
+            adata=adata,
+            control=control,
+            mixscape_class=mixscape_class,
+            mixscape_class_global=mixscape_class_global,
+            perturbation_type=perturbation_type,
+            lda_key=lda_key,
+            n_components=n_components,
+            show=show,
+            save=save,
+            **kwargs,
+        )

@@ -1,20 +1,16 @@
-from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional, Union
+import warnings
+from typing import Literal, Optional, Union
 
-import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import scanpy as sc
 import seaborn as sns
-from adjustText import adjust_text
 from anndata import AnnData
 from matplotlib import cm, rcParams
 from matplotlib.axes import Axes
 from matplotlib.colors import ListedColormap
 from mudata import MuData
 
-from pertpy.tools._coda._base_coda import CompositionalModel2, collapse_singularities_2
+from pertpy.tools._coda._base_coda import CompositionalModel2
 
 sns.set_style("ticks")
 
@@ -115,57 +111,28 @@ class CodaPlot:
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
-            >>> pt.pl.coda.stacked_barplot(mdata, feature_name="samples")
+            >>> sccoda.plot_stacked_barplot(mdata, feature_name="samples")
         """
-        if isinstance(data, MuData):
-            data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-        ct_names = data.var.index
+        from pertpy.tools import Sccoda
 
-        # option to plot one stacked barplot per sample
-        if feature_name == "samples":
-            if level_order:
-                assert set(level_order) == set(data.obs.index), "level order is inconsistent with levels"
-                data = data[level_order]
-            ax = CodaPlot.__stackbar(
-                data.X,
-                type_names=data.var.index,
-                title="samples",
-                level_names=data.obs.index,
-                figsize=figsize,
-                dpi=dpi,
-                cmap=cmap,
-                show_legend=show_legend,
-            )
-        else:
-            # Order levels
-            if level_order:
-                assert set(level_order) == set(data.obs[feature_name]), "level order is inconsistent with levels"
-                levels = level_order
-            elif hasattr(data.obs[feature_name], "cat"):
-                levels = data.obs[feature_name].cat.categories.to_list()
-            else:
-                levels = pd.unique(data.obs[feature_name])
-            n_levels = len(levels)
-            feature_totals = np.zeros([n_levels, data.X.shape[1]])
-
-            for level in range(n_levels):
-                l_indices = np.where(data.obs[feature_name] == levels[level])
-                feature_totals[level] = np.sum(data.X[l_indices], axis=0)
-
-            ax = CodaPlot.__stackbar(
-                feature_totals,
-                type_names=ct_names,
-                title=feature_name,
-                level_names=levels,
-                figsize=figsize,
-                dpi=dpi,
-                cmap=cmap,
-                show_legend=show_legend,
-            )
-        return ax
+        coda = Sccoda()
+        return coda.plot_stacked_barplot(
+            data=data,
+            feature_name=feature_name,
+            modality_key=modality_key,
+            figsize=figsize,
+            dpi=dpi,
+            cmap=cmap,
+            show_legend=show_legend,
+            level_order=level_order,
+        )
 
     @staticmethod
     def effects_barplot(  # pragma: no cover
@@ -192,9 +159,12 @@ class CodaPlot:
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             covariates: The name of the covariates in data.obs to plot. Defaults to None.
             parameter: The parameter in effect summary to plot. Defaults to "log2-fold change".
-            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets. Defaults to True.
-            plot_zero_covariate: If True, plot covariate that have all zero effects. If False, do not plot. Defaults to True.
-            plot_zero_cell_type: If True, plot cell type that have zero effect. If False, do not plot. Defaults to False.
+            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets.
+                         Defaults to True.
+            plot_zero_covariate: If True, plot covariate that have all zero effects. If False, do not plot.
+                                 Defaults to True.
+            plot_zero_cell_type: If True, plot cell type that have zero effect. If False, do not plot.
+                                 Defaults to False.
             figsize: Figure size. Defaults to None.
             dpi: Figure size. Defaults to 100.
             cmap: The seaborn color map for the barplot. Defaults to cm.tab20.
@@ -214,133 +184,32 @@ class CodaPlot:
                 sample_identifier="batch", covariate_obs=["condition"])
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-            >>> pt.pl.coda.effects_barplot(mdata)
+            >>> sccoda.plot_effects_barplot(mdata)
         """
-        if args_barplot is None:
-            args_barplot = {}
-        if isinstance(data, MuData):
-            data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
-        # Get covariate names from adata, partition into those with nonzero effects for min. one cell type/no cell types
-        covariate_names = data.uns["scCODA_params"]["covariate_names"]
-        if covariates is not None:
-            if isinstance(covariates, str):
-                covariates = [covariates]
-            partial_covariate_names = [
-                covariate_name
-                for covariate_name in covariate_names
-                if any(covariate in covariate_name for covariate in covariates)
-            ]
-            covariate_names = partial_covariate_names
-        covariate_names_non_zero = [
-            covariate_name
-            for covariate_name in covariate_names
-            if data.varm[f"effect_df_{covariate_name}"][parameter].any()
-        ]
-        covariate_names_zero = list(set(covariate_names) - set(covariate_names_non_zero))
-        if not plot_zero_covariate:
-            covariate_names = covariate_names_non_zero
-
-        # set up df for plotting
-        plot_df = pd.concat(
-            [data.varm[f"effect_df_{covariate_name}"][parameter] for covariate_name in covariate_names],
-            axis=1,
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
         )
-        plot_df.columns = covariate_names
-        plot_df = pd.melt(plot_df, ignore_index=False, var_name="Covariate")
 
-        plot_df = plot_df.reset_index()
+        from pertpy.tools import Sccoda
 
-        if len(covariate_names_zero) != 0:
-            if plot_facets:
-                if plot_zero_covariate and not plot_zero_cell_type:
-                    plot_df = plot_df[plot_df["value"] != 0]
-                    for covariate_name_zero in covariate_names_zero:
-                        new_row = {
-                            "Covariate": covariate_name_zero,
-                            "Cell Type": "zero",
-                            "value": 0,
-                        }
-                        plot_df = pd.concat([plot_df, pd.DataFrame([new_row])], ignore_index=True)
-                    plot_df["covariate_"] = pd.Categorical(plot_df["Covariate"], covariate_names)
-                    plot_df = plot_df.sort_values(["covariate_"])
-        if not plot_zero_cell_type:
-            cell_type_names_zero = [
-                name
-                for name in plot_df["Cell Type"].unique()
-                if (plot_df[plot_df["Cell Type"] == name]["value"] == 0).all()
-            ]
-            plot_df = plot_df[~plot_df["Cell Type"].isin(cell_type_names_zero)]
-
-        # If plot as facets, create a FacetGrid and map barplot to it.
-        if plot_facets:
-            if isinstance(cmap, ListedColormap):
-                cmap = np.array([cmap(i % cmap.N) for i in range(len(plot_df["Cell Type"].unique()))])
-            if figsize is not None:
-                height = figsize[0]
-                aspect = np.round(figsize[1] / figsize[0], 2)
-            else:
-                height = 3
-                aspect = 2
-
-            g = sns.FacetGrid(
-                plot_df,
-                col="Covariate",
-                sharey=True,
-                sharex=False,
-                height=height,
-                aspect=aspect,
-            )
-
-            g.map(
-                sns.barplot,
-                "Cell Type",
-                "value",
-                palette=cmap,
-                order=level_order,
-                **args_barplot,
-            )
-            g.set_xticklabels(rotation=90)
-            g.set(ylabel=parameter)
-            axes = g.axes.flatten()
-            for i, ax in enumerate(axes):
-                ax.set_title(covariate_names[i])
-                if len(ax.get_xticklabels()) < 5:
-                    ax.set_aspect(10 / len(ax.get_xticklabels()))
-                    if len(ax.get_xticklabels()) == 1:
-                        if ax.get_xticklabels()[0]._text == "zero":
-                            ax.set_xticks([])
-            return g
-
-        # If not plot as facets, call barplot to plot cell types on the x-axis.
-        else:
-            _, ax = plt.subplots(figsize=figsize, dpi=dpi)
-            if len(covariate_names) == 1:
-                if isinstance(cmap, ListedColormap):
-                    cmap = np.array([cmap(i % cmap.N) for i in range(len(plot_df["Cell Type"].unique()))])
-                sns.barplot(
-                    data=plot_df,
-                    x="Cell Type",
-                    y="value",
-                    palette=cmap,
-                    ax=ax,
-                )
-                ax.set_title(covariate_names[0])
-            else:
-                if isinstance(cmap, ListedColormap):
-                    cmap = np.array([cmap(i % cmap.N) for i in range(len(covariate_names))])
-                sns.barplot(
-                    data=plot_df,
-                    x="Cell Type",
-                    y="value",
-                    hue="Covariate",
-                    palette=cmap,
-                    ax=ax,
-                )
-            cell_types = pd.unique(plot_df["Cell Type"])
-            ax.set_xticklabels(cell_types, rotation=90)
-            return ax
+        coda = Sccoda()
+        return coda.plot_effects_barplot(
+            data=data,
+            modality_key=modality_key,
+            covariates=covariates,
+            parameter=parameter,
+            plot_facets=plot_facets,
+            plot_zero_covariate=plot_zero_covariate,
+            plot_zero_cell_type=plot_zero_cell_type,
+            figsize=figsize,
+            dpi=dpi,
+            cmap=cmap,
+            level_order=level_order,
+            args_barplot=args_barplot,
+        )
 
     @staticmethod
     def boxplots(  # pragma: no cover
@@ -350,7 +219,6 @@ class CodaPlot:
         y_scale: Literal["relative", "log", "log10", "count"] = "relative",
         plot_facets: bool = False,
         add_dots: bool = False,
-        model: CompositionalModel2 = None,
         cell_types: Optional[list] = None,
         args_boxplot: Optional[dict] = None,
         args_swarmplot: Optional[dict] = None,
@@ -393,179 +261,34 @@ class CodaPlot:
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
-            >>> pt.pl.coda.boxplots(mdata, feature_name="condition", add_dots=True)
+            >>> sccoda.plot_boxplots(mdata, feature_name="condition", add_dots=True)
         """
-        if args_boxplot is None:
-            args_boxplot = {}
-        if args_swarmplot is None:
-            args_swarmplot = {}
-        if isinstance(data, MuData):
-            data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
-        # y scale transformations
-        if y_scale == "relative":
-            sample_sums = np.sum(data.X, axis=1, keepdims=True)
-            X = data.X / sample_sums
-            value_name = "Proportion"
-        # add pseudocount 0.5 if using log scale
-        elif y_scale == "log":
-            X = data.X.copy()
-            X[X == 0] = 0.5
-            X = np.log(X)
-            value_name = "log(count)"
-        elif y_scale == "log10":
-            X = data.X.copy()
-            X[X == 0] = 0.5
-            X = np.log(X)
-            value_name = "log10(count)"
-        elif y_scale == "count":
-            X = data.X
-            value_name = "count"
-        else:
-            raise ValueError("Invalid y_scale transformation")
-
-        count_df = pd.DataFrame(X, columns=data.var.index, index=data.obs.index).merge(
-            data.obs[feature_name], left_index=True, right_index=True
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
         )
-        plot_df = pd.melt(count_df, id_vars=feature_name, var_name="Cell type", value_name=value_name)
-        if cell_types is not None:
-            plot_df = plot_df[plot_df["Cell type"].isin(cell_types)]
 
-        # Currently disabled because the latest statsannotations does not support the latest seaborn.
-        # We had to drop the dependency.
-        # Get credible effects results from model
-        # if draw_effects:
-        #     if model is not None:
-        #         credible_effects_df = model.credible_effects(data, modality_key).to_frame().reset_index()
-        #     else:
-        #         print("[bold yellow]Specify a tasCODA model to draw effects")
-        #     credible_effects_df[feature_name] = credible_effects_df["Covariate"].str.removeprefix(f"{feature_name}[T.")
-        #     credible_effects_df[feature_name] = credible_effects_df[feature_name].str.removesuffix("]")
-        #     credible_effects_df = credible_effects_df[credible_effects_df["Final Parameter"]]
+        from pertpy.tools import Sccoda
 
-        # If plot as facets, create a FacetGrid and map boxplot to it.
-        if plot_facets:
-            if level_order is None:
-                level_order = pd.unique(plot_df[feature_name])
-
-            K = X.shape[1]
-
-            if figsize is not None:
-                height = figsize[0]
-                aspect = np.round(figsize[1] / figsize[0], 2)
-            else:
-                height = 3
-                aspect = 2
-
-            g = sns.FacetGrid(
-                plot_df,
-                col="Cell type",
-                sharey=False,
-                col_wrap=int(np.floor(np.sqrt(K))),
-                height=height,
-                aspect=aspect,
-            )
-            g.map(
-                sns.boxplot,
-                feature_name,
-                value_name,
-                palette=cmap,
-                order=level_order,
-                **args_boxplot,
-            )
-
-            if add_dots:
-                if "hue" in args_swarmplot:
-                    hue = args_swarmplot.pop("hue")
-                else:
-                    hue = None
-
-                if hue is None:
-                    g.map(
-                        sns.swarmplot,
-                        feature_name,
-                        value_name,
-                        color="black",
-                        order=level_order,
-                        **args_swarmplot,
-                    ).set_titles("{col_name}")
-                else:
-                    g.map(
-                        sns.swarmplot,
-                        feature_name,
-                        value_name,
-                        hue,
-                        order=level_order,
-                        **args_swarmplot,
-                    ).set_titles("{col_name}")
-            return g
-
-        # If not plot as facets, call boxplot to plot cell types on the x-axis.
-        else:
-            if level_order:
-                args_boxplot["hue_order"] = level_order
-                args_swarmplot["hue_order"] = level_order
-
-            _, ax = plt.subplots(figsize=figsize, dpi=dpi)
-
-            ax = sns.boxplot(
-                x="Cell type",
-                y=value_name,
-                hue=feature_name,
-                data=plot_df,
-                fliersize=1,
-                palette=cmap,
-                ax=ax,
-                **args_boxplot,
-            )
-
-            # Currently disabled because the latest statsannotations does not support the latest seaborn.
-            # We had to drop the dependency.
-            # if draw_effects:
-            #     pairs = [
-            #         [(row["Cell Type"], row[feature_name]), (row["Cell Type"], "Control")]
-            #         for _, row in credible_effects_df.iterrows()
-            #     ]
-            #     annot = Annotator(ax, pairs, data=plot_df, x="Cell type", y=value_name, hue=feature_name)
-            #     annot.configure(test=None, loc="outside", color="red", line_height=0, verbose=False)
-            #     annot.set_custom_annotations([row[feature_name] for _, row in credible_effects_df.iterrows()])
-            #     annot.annotate()
-
-            if add_dots:
-                sns.swarmplot(
-                    x="Cell type",
-                    y=value_name,
-                    data=plot_df,
-                    hue=feature_name,
-                    ax=ax,
-                    dodge=True,
-                    color="black",
-                    **args_swarmplot,
-                )
-
-            cell_types = pd.unique(plot_df["Cell type"])
-            ax.set_xticklabels(cell_types, rotation=90)
-
-            if show_legend:
-                handles, labels = ax.get_legend_handles_labels()
-                handout = []
-                labelout = []
-                for h, l in zip(handles, labels):
-                    if l not in labelout:
-                        labelout.append(l)
-                        handout.append(h)
-                ax.legend(
-                    handout,
-                    labelout,
-                    loc="upper left",
-                    bbox_to_anchor=(1, 1),
-                    ncol=1,
-                    title=feature_name,
-                )
-
-            plt.tight_layout()
-            return ax
+        coda = Sccoda()
+        return coda.plot_boxplots(
+            data=data,
+            feature_name=feature_name,
+            modality_key=modality_key,
+            y_scale=y_scale,
+            plot_facets=plot_facets,
+            add_dots=add_dots,
+            cell_types=cell_types,
+            args_boxplot=args_boxplot,
+            args_swarmplot=args_swarmplot,
+            figsize=figsize,
+            dpi=dpi,
+            cmap=cmap,
+            show_legend=show_legend,
+            level_order=level_order,
+        )
 
     @staticmethod
     def rel_abundance_dispersion_plot(  # pragma: no cover
@@ -608,79 +331,29 @@ class CodaPlot:
                 sample_identifier="batch", covariate_obs=["condition"])
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-            >>> pt.pl.coda.rel_abundance_dispersion_plot(mdata)
+            >>> sccoda.plot_rel_abundance_dispersion_plot(mdata)
         """
-        if isinstance(data, MuData):
-            data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
-        if ax is None:
-            _, ax = plt.subplots(figsize=figsize, dpi=dpi)
-
-        rel_abun = data.X / np.sum(data.X, axis=1, keepdims=True)
-
-        percent_zero = np.sum(data.X == 0, axis=0) / data.X.shape[0]
-        nonrare_ct = np.where(percent_zero < 1 - abundant_threshold)[0]
-
-        # select reference
-        cell_type_disp = np.var(rel_abun, axis=0) / np.mean(rel_abun, axis=0)
-
-        is_abundant = [x in nonrare_ct for x in range(data.X.shape[1])]
-
-        # Scatterplot
-        plot_df = pd.DataFrame(
-            {
-                "Total dispersion": cell_type_disp,
-                "Cell type": data.var.index,
-                "Presence": 1 - percent_zero,
-                "Is abundant": is_abundant,
-            }
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
         )
 
-        if len(np.unique(plot_df["Is abundant"])) > 1:
-            palette = [default_color, abundant_color]
-        elif np.unique(plot_df["Is abundant"]) == [False]:
-            palette = [default_color]
-        else:
-            palette = [abundant_color]
+        from pertpy.tools import Sccoda
 
-        ax = sns.scatterplot(
-            data=plot_df,
-            x="Presence",
-            y="Total dispersion",
-            hue="Is abundant",
-            palette=palette,
+        coda = Sccoda()
+        return coda.plot_rel_abundance_dispersion_plot(
+            data=data,
+            modality_key=modality_key,
+            abundant_threshold=abundant_threshold,
+            default_color=default_color,
+            abundant_color=abundant_color,
+            label_cell_types=label_cell_types,
+            figsize=figsize,
+            dpi=dpi,
             ax=ax,
         )
-
-        # Text labels for abundant cell types
-
-        abundant_df = plot_df.loc[plot_df["Is abundant"], :]
-
-        def label_point(x, y, val, ax):
-            a = pd.concat({"x": x, "y": y, "val": val}, axis=1)
-            texts = [
-                ax.text(
-                    point["x"],
-                    point["y"],
-                    str(point["val"]),
-                )
-                for i, point in a.iterrows()
-            ]
-            adjust_text(texts)
-
-        if label_cell_types:
-            label_point(
-                abundant_df["Presence"],
-                abundant_df["Total dispersion"],
-                abundant_df["Cell type"],
-                plt.gca(),
-            )
-
-        ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1, title="Is abundant")
-
-        plt.tight_layout()
-        return ax
 
     @staticmethod
     def draw_tree(  # pragma: no cover
@@ -705,7 +378,8 @@ class CodaPlot:
             tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
                   Defaults to "tree".
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
-                        producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
+                        producing slightly worse aligned text faces but improving
+                        the performance of tree visualization in scenes with a lot of text faces.
                         Default to False.
             show_scale: Include the scale legend in the tree image or not.
                         Defaults to False.
@@ -737,34 +411,31 @@ class CodaPlot:
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> pt.pl.coda.draw_tree(mdata, tree="lineage")
+            >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
         """
-        try:
-            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
-        except ImportError:
-            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-        if isinstance(data, MuData):
-            data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
-        if isinstance(tree, str):
-            tree = data.uns[tree]
+        from pertpy.tools import Tasccoda
 
-        def my_layout(node):
-            text_face = TextFace(node.name, tight_text=tight_text)
-            faces.add_face_to_node(text_face, node, column=0, position="branch-right")
-
-        tree_style = TreeStyle()
-        tree_style.show_leaf_name = False
-        tree_style.layout_fn = my_layout
-        tree_style.show_scale = show_scale
-        if file_name is not None:
-            tree.render(file_name, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
-        if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
-        else:
-            return tree, tree_style
+        coda = Tasccoda()
+        return coda.plot_draw_tree(
+            data=data,
+            modality_key=modality_key,
+            tree=tree,
+            tight_text=tight_text,
+            show_scale=show_scale,
+            show=show,
+            file_name=file_name,
+            units=units,
+            h=h,
+            w=w,
+            dpi=dpi,
+        )
 
     @staticmethod
     def draw_effects(  # pragma: no cover
@@ -826,138 +497,34 @@ class CodaPlot:
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
+            >>> tasccoda.plot_draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
         """
-        try:
-            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
-        except ImportError:
-            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
-
-        if isinstance(data, MuData):
-            data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
-        if show_legend is None:
-            show_legend = not show_leaf_effects
-        elif show_legend:
-            print("Tree leaves and leaf effect bars won't be aligned when legend is shown!")
-
-        if isinstance(tree, str):
-            tree = data.uns[tree]
-        # Collapse tree singularities
-        tree2 = collapse_singularities_2(tree)
-
-        node_effs = data.uns["scCODA_params"]["node_df"].loc[(covariate + "_node",),].copy()
-        node_effs.index = node_effs.index.get_level_values("Node")
-
-        covariates = data.uns["scCODA_params"]["covariate_names"]
-        effect_dfs = [data.varm[f"effect_df_{cov}"] for cov in covariates]
-        eff_df = pd.concat(effect_dfs)
-        eff_df.index = pd.MultiIndex.from_product(
-            (covariates, data.var.index.tolist()),
-            names=["Covariate", "Cell Type"],
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
         )
-        leaf_effs = eff_df.loc[(covariate,),].copy()
-        leaf_effs.index = leaf_effs.index.get_level_values("Cell Type")
 
-        # Add effect values
-        for n in tree2.traverse():
-            nstyle = NodeStyle()
-            nstyle["size"] = 0
-            n.set_style(nstyle)
-            if n.name in node_effs.index:
-                e = node_effs.loc[n.name, "Final Parameter"]
-                n.add_feature("node_effect", e)
-            else:
-                n.add_feature("node_effect", 0)
-            if n.name in leaf_effs.index:
-                e = leaf_effs.loc[n.name, "Effect"]
-                n.add_feature("leaf_effect", e)
-            else:
-                n.add_feature("leaf_effect", 0)
+        from pertpy.tools import Tasccoda
 
-        # Scale effect values to get nice node sizes
-        eff_max = np.max([np.abs(n.node_effect) for n in tree2.traverse()])
-        leaf_eff_max = np.max([np.abs(n.leaf_effect) for n in tree2.traverse()])
-
-        def my_layout(node):
-            text_face = TextFace(node.name, tight_text=tight_text)
-            text_face.margin_left = 10
-            faces.add_face_to_node(text_face, node, column=0, aligned=True)
-
-            # if node.is_leaf():
-            size = (np.abs(node.node_effect) * 10 / eff_max) if node.node_effect != 0 else 0
-            if np.sign(node.node_effect) == 1:
-                color = "blue"
-            elif np.sign(node.node_effect) == -1:
-                color = "red"
-            else:
-                color = "cyan"
-            if size != 0:
-                faces.add_face_to_node(CircleFace(radius=size, color=color), node, column=0)
-
-        tree_style = TreeStyle()
-        tree_style.show_leaf_name = False
-        tree_style.layout_fn = my_layout
-        tree_style.show_scale = show_scale
-        tree_style.draw_guiding_lines = True
-        tree_style.legend_position = 1
-
-        if show_legend:
-            tree_style.legend.add_face(TextFace("Effects"), column=0)
-            tree_style.legend.add_face(TextFace("       "), column=1)
-            for i in range(4, 0, -1):
-                tree_style.legend.add_face(
-                    CircleFace(
-                        float(f"{np.abs(eff_max) * 10 * i / (eff_max * 4):.2f}"),
-                        "red",
-                    ),
-                    column=0,
-                )
-                tree_style.legend.add_face(TextFace(f"{-eff_max * i / 4:.2f} "), column=0)
-                tree_style.legend.add_face(
-                    CircleFace(
-                        float(f"{np.abs(eff_max) * 10 * i / (eff_max * 4):.2f}"),
-                        "blue",
-                    ),
-                    column=1,
-                )
-                tree_style.legend.add_face(TextFace(f" {eff_max * i / 4:.2f}"), column=1)
-
-        if show_leaf_effects:
-            leaf_name = [node.name for node in tree2.traverse("postorder") if node.is_leaf()]
-            leaf_effs = leaf_effs.loc[leaf_name].reset_index()
-            palette = ["blue" if Effect > 0 else "red" for Effect in leaf_effs["Effect"].tolist()]
-
-            dir_path = Path.cwd()
-            dir_path = Path(dir_path / "tree_effect.png")
-            tree2.render(dir_path, tree_style=tree_style, units="in")
-            _, ax = plt.subplots(1, 2, figsize=(10, 10))
-            sns.barplot(data=leaf_effs, x="Effect", y="Cell Type", palette=palette, ax=ax[1])
-            img = mpimg.imread(dir_path)
-            ax[0].imshow(img)
-            ax[0].get_xaxis().set_visible(False)
-            ax[0].get_yaxis().set_visible(False)
-            ax[0].set_frame_on(False)
-
-            ax[1].get_yaxis().set_visible(False)
-            ax[1].spines["left"].set_visible(False)
-            ax[1].spines["right"].set_visible(False)
-            ax[1].spines["top"].set_visible(False)
-            plt.xlim(-leaf_eff_max, leaf_eff_max)
-            plt.subplots_adjust(wspace=0)
-
-            if file_name is not None:
-                plt.savefig(file_name)
-
-        if file_name is not None and not show_leaf_effects:
-            tree2.render(file_name, tree_style=tree_style, units=units)
-        if show:
-            if not show_leaf_effects:
-                return tree2.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
-        else:
-            if not show_leaf_effects:
-                return tree2, tree_style
+        coda = Tasccoda()
+        return coda.plot_draw_effects(
+            data=data,
+            modality_key=modality_key,
+            covariate=covariate,
+            tree=tree,
+            show_legend=show_legend,
+            show_leaf_effects=show_leaf_effects,
+            tight_text=tight_text,
+            show_scale=show_scale,
+            show=show,
+            file_name=file_name,
+            units=units,
+            h=h,
+            w=w,
+            dpi=dpi,
+        )
 
     @staticmethod
     def effects_umap(  # pragma: no cover
@@ -1012,29 +579,30 @@ class CodaPlot:
             >>>     tree_key="tree"
             >>> )
             >>> tasccoda_model.run_nuts(tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000)
-            >>> pt.pl.coda.effects_umap(tasccoda_data,
+            >>> tasccoda_model.plot_effects_umap(tasccoda_data,
             >>>                         effect_name=["effect_df_condition[T.Salmonella]",
             >>>                                      "effect_df_condition[T.Hpoly.Day3]",
             >>>                                      "effect_df_condition[T.Hpoly.Day10]"],
             >>>                                       cluster_key="nsbm_level_1",
             >>>                         )
-            #TODO: Add effect_name parameter and cluster_key and test the example
         """
-        data_rna = data[modality_key_1]
-        data_coda = data[modality_key_2]
-        if isinstance(effect_name, str):
-            effect_name = [effect_name]
-        for _, effect in enumerate(effect_name):
-            data_rna.obs[effect] = [data_coda.varm[effect].loc[f"{c}", "Effect"] for c in data_rna.obs[cluster_key]]
-        if kwargs.get("vmin"):
-            vmin = kwargs["vmin"]
-            kwargs.pop("vmin")
-        else:
-            vmin = min(data_rna.obs[effect].min() for _, effect in enumerate(effect_name))
-        if kwargs.get("vmax"):
-            vmax = kwargs["vmax"]
-            kwargs.pop("vmax")
-        else:
-            vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-        return sc.pl.umap(data_rna, color=effect_name, vmax=vmax, vmin=vmin, ax=ax, show=show, **kwargs)
+        from pertpy.tools import Tasccoda
+
+        coda = Tasccoda()
+        coda.plot_effects_umap(
+            data=data,
+            effect_name=effect_name,
+            cluster_key=cluster_key,
+            modality_key_1=modality_key_1,
+            modality_key_2=modality_key_2,
+            show=show,
+            ax=ax,
+            **kwargs,
+        )
