@@ -25,7 +25,7 @@ semi_distances = ["r2_distance", "sym_kldiv", "ks_test"]
 non_distances = ["classifier_proba"]
 onesided_only = ["classifier_cp"]
 pseudo_counts_distances = ["nb_ll"]
-all_distances = actual_distances + semi_distances + non_distances + pseudo_counts_distances # + onesided_only
+all_distances = actual_distances + semi_distances + non_distances + pseudo_counts_distances  # + onesided_only
 
 
 class TestDistances:
