@@ -489,3 +489,42 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
 Every tool has a set of plotting functions that start with `plot_`.
 
 However, we are planning to offer more general plots at a later point.
+
+## MetaData
+
+MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+We are currently implementing several sources with more to come.
+
+CellLine aims to retrieve various types of information related to cell lines, including cell line annotation,
+bulk RNA and protein expression data.
+
+Available databases for cell line metadata:
+
+-   [The Cancer Dependency Map Project at Broad](https://depmap.org/portal/)
+-   [The Cancer Dependency Map Project at Sanger](https://depmap.sanger.ac.uk/)
+-   [Genomics of Drug Sensitivity in Cancer (GDSC)](https://www.cancerrxgene.org/)
+
+Compound aims to retrieve various types of information related to compounds of interest, including the most common synonym, pubchemID and canonical SMILES.
+
+Available databases for compound metadata:
+
+-   [PubChem](https://pubchem.ncbi.nlm.nih.gov/)
+
+Moa aims to retrieve metadata of mechanism of action studies related to perturbagens of interest, depending on the molecular targets.
+
+Available databases for mechanism of action metadata:
+
+-   [CLUE](https://clue.io/)
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: metadata
+
+    metadata.CellLine
+    metadata.Compound
+    metadata.Moa
+```

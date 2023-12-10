@@ -4,11 +4,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
 
+import decoupler as dc
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from rich import print
 from scanpy import settings
+from scipy import stats
 
 from pertpy.data._dataloader import _download
 
@@ -197,7 +201,7 @@ class CellLine(MetaData):
         adata: AnnData,
         query_id: str = "DepMap_ID",
         reference_id: str = "DepMap_ID",
-        cell_line_information: Sequence[str] | None = None,
+        cell_line_information: list[str] | None = None,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         verbosity: int | str = 5,
         copy: bool = False,
@@ -297,9 +301,6 @@ class CellLine(MetaData):
                 # We will subset the original metadata dataframe correspondingly and add them to the AnnData object.
                 # Again, redundant information will be removed.
                 if reference_id not in cell_line_information:
-                    # Sequence doesnt have append function, turn into list
-                    if not isinstance(cell_line_information, list):
-                        cell_line_information = list(cell_line_information)
                     cell_line_information.append(reference_id)
                 cell_line_meta_part = cell_line_meta[cell_line_information]
                 adata.obs = (
@@ -334,6 +335,7 @@ class CellLine(MetaData):
         query_id: str = "cell_line_name",
         cell_line_source: Literal["broad", "sanger"] = "sanger",
         verbosity: int | str = 5,
+        gene_identifier: Literal["gene_name", "gene_ID", "both"] = "gene_ID",
         copy: bool = False,
     ) -> AnnData:
         """Fetch bulk rna expression.
@@ -415,6 +417,16 @@ class CellLine(MetaData):
             sanger_rna_exp.index = adata.obs.index
             adata.obsm["bulk_rna_expression_sanger"] = sanger_rna_exp
         else:
+            if gene_identifier == "gene_ID":
+                self.bulk_rna_broad.columns = [
+                    gene_name.split(" (")[1].split(")")[0] if "(" in gene_name else gene_name
+                    for gene_name in self.bulk_rna_broad.columns
+                ]
+            elif gene_identifier == "gene_name":
+                self.bulk_rna_broad.columns = [
+                    gene_name.split(" (")[0] if "(" in gene_name else gene_name
+                    for gene_name in self.bulk_rna_broad.columns
+                ]
             broad_rna_exp = self.bulk_rna_broad[self.bulk_rna_broad.index.isin(adata.obs[query_id])]
             ccle_expression = broad_rna_exp.reindex(adata.obs[query_id])
             ccle_expression.index = adata.obs.index
@@ -620,3 +632,122 @@ class CellLine(MetaData):
                 self.drug_response_gdsc2,
             ],
         )
+
+    def _pairwise_correlation(
+        self, mat1: np.array, mat2: np.array, row_name: Iterable, col_name: Iterable
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """Calculate the row-wise pearson correlation between two matrices.
+
+        Args:
+            mat1: Input array
+            mat2: Input array
+            row_name: Row name of the output dataframes
+            col_name: Row name of the output dataframes
+
+        Returns:
+            Returns dataframes for both the Pearson correlation coefficients and their associated p-values.
+        """
+
+        # Calculate correlation coefficients and p-values
+        corr = np.empty((mat1.shape[0], mat2.shape[0]))
+        pvals = np.empty((mat1.shape[0], mat2.shape[0]))
+
+        for i in range(mat1.shape[0]):
+            for j in range(mat2.shape[0]):
+                if i > j:
+                    corr[i, j] = corr[j, i]
+                    pvals[i, j] = pvals[j, i]
+                else:
+                    corr[i, j], pvals[i, j] = stats.pearsonr(mat1[i], mat2[j])
+        corr = pd.DataFrame(corr, index=row_name, columns=col_name)
+        pvals = pd.DataFrame(pvals, index=row_name, columns=col_name)
+        return corr, pvals
+
+    def compare_categories(
+        self,
+        adata,
+        identifier: str = "DepMap_ID",
+        metadata_key: str = "bulk_rna_expression_broad",
+        subset_cell_line: str | int | None = None,
+        compare_new_cell_line: bool = True,
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame | None, pd.DataFrame | None]:
+        """Compare cell lines by annotated metadata.
+
+        Args:
+            adata: Input data object.
+            identifier: Column in `.obs` containing cell line identifiers. Defaults to "DepMap_ID".
+            metadata_key: Key of the AnnData obsm for comparison with the X matrix. Defaults to "bulk_rna_expression_broad".
+            subset_cell_line: Selected cell line for scatter plot visualization between the X matrix and `metadata_key`. If None, all cell lines will be plotted. If not None, only the chosen cell line will be plotted, either as a value in `identifier` (string) or as an index number. Defaults to None.
+            compare_new_cell_line: Whether to compare the unmatched cell lines with 'metadata_key'. If true, return two additional arrays for Pearson correlation coefficients and p-values. Defaults to True.
+
+        Returns:
+            Pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
+        """
+
+        # Split cell lines
+        overlapped_cl = adata[~adata.obsm[metadata_key].isna().all(axis=1), :]
+        new_cl = adata[adata.obsm[metadata_key].isna().all(axis=1), :]
+        # Correlation and pvalue matrices for the matched cell lines
+        corr, pvals = self._pairwise_correlation(
+            overlapped_cl.X,
+            overlapped_cl.obsm[metadata_key].values,
+            row_name=overlapped_cl.obs.DepMap_ID,
+            col_name=overlapped_cl.obs.DepMap_ID,
+        )
+
+        if compare_new_cell_line:
+            # Correlation and pvalue matrices for the unmatched cell lines
+            new_corr, new_pvals = self._pairwise_correlation(
+                new_cl.X,
+                overlapped_cl.obsm[metadata_key].values,
+                row_name=new_cl.obs.DepMap_ID,
+                col_name=overlapped_cl.obs.DepMap_ID,
+            )
+        else:
+            new_corr = new_pvals = None
+
+        if subset_cell_line is None:
+            # Visualize all the cell lines
+            # Calculate mean pearson correlation and p values on the diagonal
+            annotation = "\n".join(
+                (
+                    f"Mean pearson correlation: {np.mean(np.diag(corr)):.4f}",
+                    f"Mean p-value: {np.mean(np.diag(pvals)):.4f}",
+                )
+            )
+            plt.scatter(x=overlapped_cl.obsm[metadata_key], y=overlapped_cl.X)
+            plt.xlabel("Broad")
+            plt.ylabel("Baseline")
+        else:
+            if isinstance(subset_cell_line, str):
+                # Visualize the chosen cell line which should be found in `identifier`
+                if subset_cell_line not in overlapped_cl.obs[identifier].values:
+                    raise ValueError(f"{subset_cell_line} is not found!")
+            elif isinstance(subset_cell_line, int):
+                # Visualize the chosen cell line at the given index
+                if subset_cell_line < 0 or subset_cell_line >= overlapped_cl.n_obs:
+                    raise ValueError(f"{subset_cell_line} is not found!")
+                subset_cell_line = overlapped_cl.obs[identifier].values[subset_cell_line]
+
+            plt.scatter(x=overlapped_cl.obsm[metadata_key].loc[subset_cell_line], y=overlapped_cl[subset_cell_line].X)
+            plt.xlabel(f"Broad: {subset_cell_line}")
+            plt.ylabel(f"Baseline: {subset_cell_line}")
+            # Annotate with the correlation coefficient and p-value of the chosen cell line
+            annotation = "\n".join(
+                (
+                    f"Pearson correlation: {corr[subset_cell_line][subset_cell_line]:.4f}",
+                    f"P-value: {pvals[subset_cell_line][subset_cell_line]:.4f}",
+                )
+            )
+
+        plt.text(
+            0.05,
+            0.95,
+            annotation,
+            fontsize=10,
+            transform=plt.gca().transAxes,
+            verticalalignment="top",
+            bbox={"boxstyle": "round", "alpha": 0.5, "facecolor": "white", "edgecolor": "black"},
+        )
+        plt.show()
+        return corr, pvals, new_corr, new_pvals
