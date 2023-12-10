@@ -35,8 +35,8 @@ class MixscapePlot:
         strip_text_size: int = 6,
         panel_spacing_x: float = 0.3,
         panel_spacing_y: float = 0.3,
-        legend_title_size: int = 8,
-        legend_text_size: int = 8,
+        legend_title_size: int = 18,
+        legend_text_size: int = 18,
         show: bool | None = None,
         save: bool | str | None = None,
     ):
@@ -82,7 +82,7 @@ class MixscapePlot:
         NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
         _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
         if not show:
-            color_mapping = {"KO": "gray", "NP": "lightgray", "NT": "salmon"}
+            color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
             unique_genes = NP_KO_cells["gene"].unique()
             fig, axs = pl.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
             for i, gene in enumerate(unique_genes):
@@ -118,7 +118,8 @@ class MixscapePlot:
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
             )
-            return fig
+            pl.tight_layout()
+            return pl.gcf()
 
     @staticmethod
     def heatmap(  # pragma: no cover
