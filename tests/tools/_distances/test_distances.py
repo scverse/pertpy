@@ -22,9 +22,10 @@ actual_distances = [
     "wasserstein",
 ]
 semi_distances = ["r2_distance", "sym_kldiv", "ks_test"]
-non_distances = ["classifier_proba", "classifier_cp"]
+non_distances = ["classifier_proba"]
+onesided_only = ["classifier_cp"]
 pseudo_counts_distances = ["nb_ll"]
-all_distances = actual_distances + semi_distances + non_distances  # + pseudo_counts_distances
+all_distances = actual_distances + semi_distances + non_distances + pseudo_counts_distances # + onesided_only
 
 
 class TestDistances:
@@ -90,14 +91,13 @@ class TestDistances:
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
 
-    # SP: this is giving error "numpy.linalg.LinAlgError: Singular matrix"
-    # @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
-    # def test_distance_counts(self, adata, distance):
-    #     Distance = pt.tl.Distance(distance, layer_key="counts")
-    #     df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
-    #     assert isinstance(df, DataFrame)
-    #     assert df.columns.equals(df.index)
-    #     assert np.sum(df.values - df.values.T) == 0
+    @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
+    def test_distance_counts(self, adata, distance):
+        Distance = pt.tl.Distance(distance, layer_key="counts")
+        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
+        assert isinstance(df, DataFrame)
+        assert df.columns.equals(df.index)
+        assert np.sum(df.values - df.values.T) == 0
 
     @mark.parametrize("distance", all_distances)
     def test_mutually_exclusive_keys(self, adata, distance):
@@ -124,7 +124,7 @@ class TestDistances:
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0  # symmetry
 
-    @mark.parametrize("distance", all_distances)
+    @mark.parametrize("distance", all_distances + onesided_only)
     def test_distance_onesided(self, adata, distance):
         # Test consistency of one-sided distance results
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")

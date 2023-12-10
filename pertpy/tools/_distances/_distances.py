@@ -812,7 +812,7 @@ class ClassifierClassProjection(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("ClassifierClassProjection cannot be called normally.")
+        raise NotImplementedError("ClassifierClassProjection can currently only be called with onesided.")
 
     def onesided_distances(
         self,
