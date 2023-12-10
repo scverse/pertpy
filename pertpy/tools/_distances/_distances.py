@@ -313,7 +313,7 @@ class Distance:
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
         if self.metric == "classifier_cp":
-            return self.onesided_distances(adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs)
+            return self.metric_fct.onesided_distances(adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs)
 
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
