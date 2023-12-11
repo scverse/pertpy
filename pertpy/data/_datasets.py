@@ -133,8 +133,12 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
     return adata
 
 
-def smillie() -> AnnData:  # pragma: no cover
-    """scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
+def tasccoda_example() -> AnnData:  # pragma: no cover
+    """Example for the coda part of a mudata object.
+
+    Resulting AnnData object (mudata['coda']) when preparing a dataset for processing with tascCODA.
+    Created using the smillie dataset, which comprises scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
+    The full dataset containing the actual count data can be obtained via smillie_2019().
 
     References:
         Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
@@ -143,7 +147,7 @@ def smillie() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the dataset.
     """
-    output_file_name = "smillie.h5ad"
+    output_file_name = "tasccoda_smillie.h5ad"
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
@@ -342,7 +346,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://figshare.com/ndownloader/files/34490714",
+            url="https://figshare.com/ndownloader/files/43462662",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1456,6 +1460,32 @@ def dong_2023() -> AnnData:  # pragma: no cover
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
+        )
+    adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def smillie_2019() -> AnnData:  # pragma: no cover
+    """scRNA-seq data of the small intestine of mice under Ulcerative Colitis.
+
+    The resulting AnnData when preparing this dataset for processing with tascCODA is available via tasccoda_example().
+
+    References:
+        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
+        Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
+
+    Returns:
+        :class:`~anndata.AnnData` object of the dataset.
+    """
+    output_file_name = "smillie_2019.h5ad.zip"
+    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name.replace(".zip", "")
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/43317285",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=True,
         )
     adata = sc.read_h5ad(output_file_path)
 
