@@ -21,8 +21,11 @@ class MixscapePlot:
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
         axis_title_size: int = 8,
-        legend_title_size: int = 8,
-        legend_text_size: int = 8,
+        strip_text_size: int = 6,
+        panel_spacing_x: float = 0.3,
+        panel_spacing_y: float = 0.3,
+        legend_title_size: int = 18,
+        legend_text_size: int = 18,
         show: bool | None = None,
         save: bool | str | None = None,
     ):
