@@ -4,9 +4,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable
 
-import decoupler as dc
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -29,6 +28,7 @@ class CellLine(MetaData):
     def __init__(self):
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
+        super().__init__()
         cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
         if not Path(cell_line_file_path).exists():
             print("[bold yellow]No DepMap metadata file found. Starting download now.")
@@ -107,7 +107,7 @@ class CellLine(MetaData):
 
         # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute from DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
-        # issue: read count values contain random whitespace, not sure what it supposes to mean
+        # issue: read count values contain random whitespace
         # solution: remove the white space and convert to int before depmap updates the metadata
         bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624_processed.csv"
         if not Path(bulk_rna_sanger_file_path).exists():
@@ -206,19 +206,21 @@ class CellLine(MetaData):
         verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
-        """Fetch cell line annotation.
+        """Fetch cell line annotation from DepMap.
 
         For each cell, we fetch cell line annotation from Dependency Map (DepMap).
 
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
-            reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or
-                stripped_cell_line_name. If fetch cell line metadata from Cancerrxgene, it is recommended to choose
-                "stripped_cell_line_name". Defaults to "DepMap_ID".
-            cell_line_information: The metadata to fetch. All metadata will be fetched by default. Defaults to None (=all).
+            reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or stripped_cell_line_name.
+                          If fetching cell line metadata from Cancerrxgene, it is recommended to choose
+                          "stripped_cell_line_name". Defaults to "DepMap_ID".
+            cell_line_information: The metadata to fetch. All metadata will be fetched by default.
+                                   Defaults to None (=all).
             cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
-            print_warning: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+                       Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -228,7 +230,7 @@ class CellLine(MetaData):
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
             >>> adata.obs['cell_line_name'] = 'MCF7'
-            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> pt_metadata = pt.md.CellLine()
             >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
         """
         if copy:
@@ -241,15 +243,15 @@ class CellLine(MetaData):
             if query_id == "DepMap_ID":
                 query_id = "stripped_cell_line_name"
                 print(
-                    "[bold blue]`stripped_cell_line_name` is used as reference and query indentifier ",
+                    "[bold blue]`stripped_cell_line_name` is used as reference and query identifier ",
                     " to annotate cell line metadata from Cancerrxgene. "
-                    "So please make sure that `stripped_cell_line_name` is available in the adata.obs. ",
+                    "Ensure that `stripped_cell_line_name` is available in 'adata.obs.' ",
                     "or use the DepMap as `cell_line_source` to annotate the cell line first ",
                 )
             cell_line_meta = self.cl_cancer_project_meta
 
         if query_id not in adata.obs.columns:
-            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`. \n" "Please check again. ")
+            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.")
 
         if reference_id in cell_line_meta.columns:
             # If the specified cell line type can be found in the database,
@@ -258,12 +260,10 @@ class CellLine(MetaData):
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(cell_line_meta[reference_id]))
             if len(not_matched_identifiers) == identifier_num_all:
                 raise ValueError(
-                    f"Attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata.\n"
+                    f"Attempting to match the query id {query_id} in 'adata.obs' to the reference id {reference_id} in the metadata.\n"
                     "However, none of the query IDs could be found in the cell line annotation data.\n"
-                    "The annotation process has been halted.\n"
-                    "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
-                    "By using the `LookUp.cell_line()` method, "
-                    "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs."
+                    "To resolve this issue, call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
+                    "This enables obtaining the count of matched identifiers in the AnnData object for different types of reference and query IDs."
                 )
 
             if len(not_matched_identifiers) > 0:
@@ -277,7 +277,7 @@ class CellLine(MetaData):
             if cell_line_information is None:
                 # If no cell_line_information is specified, all metadata is fetched by default.
                 # Sometimes there is already different cell line information in the AnnData object.
-                # To avoid redundant information we will remove the duplicate information from metadata after merging.
+                # To avoid redundant information we will remove duplicate information from metadata after merging.
                 adata.obs = (
                     adata.obs.merge(
                         cell_line_meta,
@@ -321,10 +321,10 @@ class CellLine(MetaData):
         else:
             raise ValueError(
                 f"The requested cell line type {reference_id} is currently unavailable in the database.\n"
-                "To solve ths issue, please refer to the available reference identifier in the chosen database.\n"
+                "TRefer to the available reference identifier in the chosen database.\n"
                 "DepMap_ID is compared by default.\n"
-                "Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
-                "By using the `LookUp.cell_line()` method, you can obtain the available reference identifiers in the metadata."
+                "Alternatively, create a `CellLineMetaData.lookup()` object to "
+                "obtain the available reference identifiers in the metadata."
             )
 
         return adata
@@ -338,7 +338,7 @@ class CellLine(MetaData):
         gene_identifier: Literal["gene_name", "gene_ID", "both"] = "gene_ID",
         copy: bool = False,
     ) -> AnnData:
-        """Fetch bulk rna expression.
+        """Fetch bulk rna expression from the Broad or Sanger.
 
         For each cell, we fetch bulk rna expression from either Broad or Sanger cell line.
 
@@ -356,7 +356,7 @@ class CellLine(MetaData):
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
             >>> adata.obs['cell_line_name'] = 'MCF7'
-            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> pt_metadata = pt.md.CellLine()
             >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
             >>> pt_metadata.annotate_bulk_rna_expression(adata_annotated)
         """
@@ -368,10 +368,10 @@ class CellLine(MetaData):
         if query_id not in adata.obs.columns:
             raise ValueError(
                 f"The specified `query_id` {query_id} can't be found in the `adata.obs`.\n"
-                "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation.\n"
+                "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation.\n"
                 "If the desired query ID is not available, you can fetch the cell line metadata "
-                "using the `annotate_cell_lines()` function before calling annotate_ccle_expression(). "
-                "This will help ensure that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
+                "using the `annotate_cell_lines()` function before calling 'annotate_ccle_expression()'. "
+                "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
             )
 
         identifier_num_all = len(adata.obs[query_id].unique())
@@ -382,9 +382,9 @@ class CellLine(MetaData):
             reference_id = "DepMap_ID"
             print(
                 "To annotate bulk RNA expression data from Broad Institue, ",
-                "`DepMap_ID` is used as default reference and query indentifier if no `reference_id` is given. ",
-                "Please make sure that `DepMap_ID` is available in the adata.obs. ",
-                "Alternatively, use the `annotate_cell_lines()` function to annotate the cell line first ",
+                "`DepMap_ID` is used as default reference and query identifier if no `reference_id` is given. ",
+                "Ensure that `DepMap_ID` is available in 'adata.obs'. ",
+                "Alternatively, use `annotate_cell_lines()` to annotate the cell line first ",
             )
 
             if query_id == "cell_line_name":
@@ -395,11 +395,9 @@ class CellLine(MetaData):
             raise ValueError(
                 f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata."
                 "However, none of the query IDs could be found in the bulk RNA expression data.\n"
-                "The annotation process has been halted.\n"
-                "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
-                "By using the `LookUp.bulk_rna_expression()` method, "
-                "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs.\n"
-                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function "
+                "Create a `CellLineMetaData.lookup()` object to obtain the count of matched identifiers"
+                " in the AnnData object for different types of reference IDs and query IDs.\n"
+                "Additionally, call the `CellLineMetaData.annotate_cell_lines()` function "
                 "to acquire more possible query IDs that can be used for annotation purposes."
             )
 
@@ -451,10 +449,14 @@ class CellLine(MetaData):
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
-            reference_id: The type of cell line identifier in the meta data, model_name or model_id. Defaults to "model_name".
-            protein_information: The type of protein expression data to fetch, protein_intensity or zscore. Defaults to "protein_intensity".
-            protein_id: The protein identifier saved in the fetched meta data, uniprot_id or symbol. Defaults to "uniprot_id".
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            reference_id: The type of cell line identifier in the meta data, model_name or model_id.
+                          Defaults to "model_name".
+            protein_information: The type of protein expression data to fetch, protein_intensity or zscore.
+                                 Defaults to "protein_intensity".
+            protein_id: The protein identifier saved in the fetched meta data, uniprot_id or symbol.
+                        Defaults to "uniprot_id".
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+                       Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -464,7 +466,7 @@ class CellLine(MetaData):
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
             >>> adata.obs['cell_line_name'] = 'MCF7'
-            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> pt_metadata = pt.md.CellLine()
             >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
             >>> pt_metadata.annotate_protein_expression(adata_annotated)
         """
@@ -475,19 +477,17 @@ class CellLine(MetaData):
         # then we can compare these keys and fetch the corresponding metadata.
         if query_id not in adata.obs.columns:
             raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. \n"
+                f"The specified `query_id` {query_id} can't be found in `adata.obs`. \n"
                 "If the desired query ID is not available, you can fetch the cell line metadata \n"
                 "using the `annotate_cell_lines()` function before calling annotate_protein_expression(). \n"
-                "This will help ensure that the required query ID is included in your data"
+                "This ensures that the required query ID is included in your data."
             )
 
         if reference_id not in self.proteomics_data.columns:
             raise ValueError(
                 f"The specified `reference_id`{reference_id} can't be found in the protein expression data. \n"
                 "To solve the issue, please use the reference identifier available in the metadata.  \n"
-                "Alternatively, you can call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.protein_expression()` method, you can obtain the available reference identifiers in the metadata. "
+                "Alternatively, create a `CellLineMetaData.lookup()` object to obtain the available reference identifiers in the metadata. "
             )
 
         identifier_num_all = len(adata.obs[query_id].unique())
@@ -495,12 +495,10 @@ class CellLine(MetaData):
 
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
-                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata."
+                f"You are attempting to match the query id {query_id} in 'adata.obs' to the reference id {reference_id} in the metadata."
                 "However, none of the query IDs could be found in the proteomics data. \n"
-                "The annotation process has been halted. \n"
-                "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.protein_expression()` method, "
-                "you can obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. \n"
+                "Create a `CellLineMetaData.lookup()` object to use the `LookUp.protein_expression()` method to"
+                " obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. \n"
                 "Additionally, you can call the `CellLineMetaData.annotate_cell_lines` function "
                 "to acquire more possible query IDs that can be used for annotation purposes."
             )
@@ -533,18 +531,27 @@ class CellLine(MetaData):
         verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
-        """Fetch drug response data.
+        """Fetch drug response data from GDSC.
 
         For each cell, we fetch drug response data as natural log of the fitted IC50 for its corresponding cell line and perturbation from GDSC fitted data results file.
 
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
-            reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id. Defaults to "cell_line_name".
-            query_perturbation: The column of `.obs` with perturbation information. Defaults to "perturbation".
-            reference_perturbation: The type of perturbation in the meta data, drug_name or drug_id. Defaults to "drug_name".
-            gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1. The GDSC1 dataset updates previous releases with additional drug screening data from the Wellcome Sanger Institute and Massachusetts General Hospital. It covers 970 Cell lines and 403 Compounds with 333292 IC50s. GDSC2 is new and has 243,466 IC50 results from the latest screening at the Wellcome Sanger Institute using improved experimental procedures.
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id.
+                          Defaults to "cell_line_name".
+            query_perturbation: The column of `.obs` with perturbation information.
+                                Defaults to "perturbation".
+            reference_perturbation: The type of perturbation in the meta data, drug_name or drug_id.
+                                    Defaults to "drug_name".
+            gdsc_dataset: The GDSC dataset, 1 or 2.
+                          The GDSC1 dataset updates previous releases with additional drug screening data from the
+                          Wellcome Sanger Institute and Massachusetts General Hospital.
+                          It covers 970 Cell lines and 403 Compounds with 333292 IC50s.
+                          GDSC2 is new and has 243,466 IC50 results from the latest screening at the Wellcome Sanger Institute using improved experimental procedures.
+                          Defaults to 1.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+                       Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -553,7 +560,7 @@ class CellLine(MetaData):
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.mcfarland_2020()
-            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> pt_metadata = pt.md.CellLine()
             >>> pt_metadata.annotate_from_gdsc(adata, query_id='cell_line')
         """
         if copy:
@@ -561,10 +568,10 @@ class CellLine(MetaData):
         if query_id not in adata.obs.columns:
             raise ValueError(
                 f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Please ensure that you are using one of the available query IDs present in the adata.obs for the annotation. \n"
+                "Ensure that you are using one of the available query IDs present in 'adata.obs' for the annotation. \n"
                 "If the desired query ID is not available, you can fetch the cell line metadata "
                 "using the `annotate_cell_lines()` function before calling `annotate_from_gdsc()`. "
-                "This will help ensure that the required query ID is included in your data."
+                "This ensures that the required query ID is included in your data."
             )
         if gdsc_dataset == 1:
             gdsc_data = self.drug_response_gdsc1
@@ -583,13 +590,11 @@ class CellLine(MetaData):
 
         if len(not_matched_identifiers) == identifier_num_all:
             raise ValueError(
-                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata. \n"
+                f"You are attempting to match the query id {query_id} in 'adata.obs' to the reference id {reference_id} in the metadata. \n"
                 "However, none of the query IDs could be found in the drug response data. \n"
-                "The annotation process has been halted. \n"
-                "To resolve this issue, please call the `CellLineMetaData.lookup()` function to create a LookUp object. \n"
-                "By using the `LookUp.drug_response_gdsc()` method, \n"
-                "you can obtain the count of matched identifiers in the adata for different query IDs. \n"
-                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines()` function to \n"
+                "Create a `CellLineMetaData.lookup()` object and use `LookUp.drug_response_gdsc()`to obtain"
+                " the count of matched identifiers in the AnnData object for different query IDs. \n"
+                "Additionally, call the `CellLineMetaData.annotate_cell_lines()` function to "
                 "acquire more cell line information that can be used for annotation purposes."
             )
         old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
@@ -616,7 +621,7 @@ class CellLine(MetaData):
 
         Examples:
             >>> import pertpy as pt
-            >>> pt_metadata = pt.tl.CellLineMetaData()
+            >>> pt_metadata = pt.md.CellLine()
             >>> lookup = pt_metadata.lookup()
         """
         return LookUp(
@@ -645,10 +650,8 @@ class CellLine(MetaData):
             col_name: Row name of the output dataframes
 
         Returns:
-            Returns dataframes for both the Pearson correlation coefficients and their associated p-values.
+            Returns DataFrames for both the Pearson correlation coefficients and their associated p-values.
         """
-
-        # Calculate correlation coefficients and p-values
         corr = np.empty((mat1.shape[0], mat2.shape[0]))
         pvals = np.empty((mat1.shape[0], mat2.shape[0]))
 
@@ -661,6 +664,7 @@ class CellLine(MetaData):
                     corr[i, j], pvals[i, j] = stats.pearsonr(mat1[i], mat2[j])
         corr = pd.DataFrame(corr, index=row_name, columns=col_name)
         pvals = pd.DataFrame(pvals, index=row_name, columns=col_name)
+
         return corr, pvals
 
     def compare_categories(
@@ -677,17 +681,20 @@ class CellLine(MetaData):
             adata: Input data object.
             identifier: Column in `.obs` containing cell line identifiers. Defaults to "DepMap_ID".
             metadata_key: Key of the AnnData obsm for comparison with the X matrix. Defaults to "bulk_rna_expression_broad".
-            subset_cell_line: Selected cell line for scatter plot visualization between the X matrix and `metadata_key`. If None, all cell lines will be plotted. If not None, only the chosen cell line will be plotted, either as a value in `identifier` (string) or as an index number. Defaults to None.
-            compare_new_cell_line: Whether to compare the unmatched cell lines with 'metadata_key'. If true, return two additional arrays for Pearson correlation coefficients and p-values. Defaults to True.
+            subset_cell_line: Selected cell line for scatter plot visualization between the X matrix and `metadata_key`.
+                              If None, all cell lines will be plotted.
+                              If not None, only the chosen cell line will be plotted, either as a value in `identifier` (string) or as an index number.
+                              Defaults to None.
+            compare_new_cell_line: Whether to compare the unmatched cell lines with 'metadata_key'.
+                                   If True, return two additional arrays for Pearson correlation coefficients and p-values.
+                                   Defaults to True.
 
         Returns:
             Pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
         """
-
-        # Split cell lines
         overlapped_cl = adata[~adata.obsm[metadata_key].isna().all(axis=1), :]
         new_cl = adata[adata.obsm[metadata_key].isna().all(axis=1), :]
-        # Correlation and pvalue matrices for the matched cell lines
+
         corr, pvals = self._pairwise_correlation(
             overlapped_cl.X,
             overlapped_cl.obsm[metadata_key].values,
@@ -696,7 +703,6 @@ class CellLine(MetaData):
         )
 
         if compare_new_cell_line:
-            # Correlation and pvalue matrices for the unmatched cell lines
             new_corr, new_pvals = self._pairwise_correlation(
                 new_cl.X,
                 overlapped_cl.obsm[metadata_key].values,
@@ -707,8 +713,6 @@ class CellLine(MetaData):
             new_corr = new_pvals = None
 
         if subset_cell_line is None:
-            # Visualize all the cell lines
-            # Calculate mean pearson correlation and p values on the diagonal
             annotation = "\n".join(
                 (
                     f"Mean pearson correlation: {np.mean(np.diag(corr)):.4f}",
@@ -750,4 +754,5 @@ class CellLine(MetaData):
             bbox={"boxstyle": "round", "alpha": 0.5, "facecolor": "white", "edgecolor": "black"},
         )
         plt.show()
+
         return corr, pvals, new_corr, new_pvals
