@@ -22,7 +22,7 @@ class Compound(MetaData):
     """Utilities to fetch metadata for compounds."""
 
     def __init__(self):
-        pass
+        super().__init__()
 
     def annotate_compounds(
         self,
@@ -32,7 +32,7 @@ class Compound(MetaData):
         verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
-        """Fetch compound annotation.
+        """Fetch compound annotation from pubchempy.
 
         For each cell, we fetch compound annotation via pubchempy.
 
@@ -76,7 +76,6 @@ class Compound(MetaData):
             raise ValueError(
                 f"Attempting to find the query id {query_id} in the adata.obs in pubchem database.\n"
                 "However, none of them could be found.\n"
-                "The annotation process has been halted.\n"
                 "To resolve this issue, please call the `CompoundMetaData.lookup()` function to create a LookUp object.\n"
                 "By using the `LookUp.compound()` method. "
             )
