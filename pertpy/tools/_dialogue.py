@@ -559,7 +559,7 @@ class Dialogue:
 
         return cca_sig_results, new_mcp_scores
 
-    def load(
+    def _load(
         self,
         adata: AnnData,
         ct_order: list[str],
@@ -578,16 +578,6 @@ class Dialogue:
 
         Returns:
             A celltype_label:array dictionary.
-
-        Examples:
-            >>> import pertpy as pt
-            >>> import scanpy as sc
-            >>> adata = pt.dt.dialogue_example()
-            >>> sc.pp.pca(adata)
-            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", \
-                n_counts_key = "nCount_RNA", n_mpcs = 3)
-            >>> cell_types = adata.obs[dl.celltype_key].astype("category").cat.categories
-            >>> mcca_in, ct_subs = dl.load(adata, ct_order=cell_types)
         """
         ct_subs = {ct: adata[adata.obs[self.celltype_key] == ct].copy() for ct in ct_order}
         fn = self._pseudobulk_pca if agg_pca else self._get_pseudobulks
@@ -646,7 +636,7 @@ class Dialogue:
         else:
             ct_order = cell_types = adata.obs[self.celltype_key].astype("category").cat.categories
 
-        mcca_in, ct_subs = self.load(adata, ct_order=cell_types, agg_pca=agg_pca, normalize=normalize)
+        mcca_in, ct_subs = self._load(adata, ct_order=cell_types, agg_pca=agg_pca, normalize=normalize)
 
         n_samples = mcca_in[0].shape[1]
         if penalties is None:
