@@ -280,7 +280,7 @@ class PLDataset(Dataset):
         self.pert_labels = adata.obs[label_col]
 
     def __len__(self):
-        return len(self.data)
+        return self.data.shape[0]
 
     def __getitem__(self, idx):
         """Returns a sample and corresponding perturbations applied (labels)"""
