@@ -15,7 +15,7 @@ class PerturbationSpace:
     """Implements various ways of interacting with PerturbationSpaces.
 
     We differentiate between a cell space and a perturbation space.
-    Visually speaking, in cell spaces single dota points in an embeddings summarize a cell,
+    Visually speaking, in cell spaces single data points in an embeddings summarize a cell,
     whereas in a perturbation space, data points summarize whole perturbations.
     """
 
