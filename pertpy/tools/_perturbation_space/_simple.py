@@ -27,6 +27,10 @@ class CentroidSpace(PerturbationSpace):
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
 
+        Returns:
+            AnnData object with one observation per perturbation, storing the embedding data of the
+            centroid of the respective perturbation.
+
         Examples:
             Compute the centroids of a UMAP embedding of the papalexi_2021 dataset:
 
@@ -108,6 +112,9 @@ class PseudobulkSpace(PerturbationSpace):
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
             **kwargs: Are passed to decoupler's get_pseuobulk.
 
+        Returns:
+             AnnData object with one observation per perturbation.
+
         Examples:
             >>> import pertpy as pp
             >>> mdata = pt.dt.papalexi_2021()
@@ -163,6 +170,11 @@ class KMeansSpace(ClusteringSpace):
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's KMeans.
+
+        Returns:
+            If return_object is True, the adata and the clustering object is returned.
+            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
+             that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt
@@ -223,6 +235,11 @@ class DBSCANSpace(ClusteringSpace):
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's DBSCAN.
+
+        Returns:
+            If return_object is True, the adata and the clustering object is returned.
+            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
+             that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt
