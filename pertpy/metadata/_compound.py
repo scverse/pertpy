@@ -62,11 +62,19 @@ class Compound(MetaData):
                 if len(cids) >= 1:
                     # If the name matches the first synonym offered by PubChem (outside of capitalization),
                     # it is not changed (outside of capitalization). Otherwise, it is replaced with the first synonym.
-                    query_dict[compound] = [cids[0].synonyms[0], cids[0].cid, cids[0].canonical_smiles]
+                    query_dict[compound] = [
+                        cids[0].synonyms[0],
+                        cids[0].cid,
+                        cids[0].canonical_smiles,
+                    ]
             else:
                 try:
                     cid = pcp.Compound.from_cid(compound)
-                    query_dict[compound] = [cid.synonyms[0], compound, cid.canonical_smiles]
+                    query_dict[compound] = [
+                        cid.synonyms[0],
+                        compound,
+                        cid.canonical_smiles,
+                    ]
                 except pcp.BadRequestError:
                     # pubchempy throws badrequest if a cid is not found
                     not_matched_identifiers.append(compound)
@@ -89,14 +97,24 @@ class Compound(MetaData):
             query_df.pubchem_ID = query_df.pubchem_ID.astype("Int64")
             adata.obs = (
                 adata.obs.merge(
-                    query_df, left_on=query_id, right_on="pubchem_ID", how="left", suffixes=("", "_fromMeta")
+                    query_df,
+                    left_on=query_id,
+                    right_on="pubchem_ID",
+                    how="left",
+                    suffixes=("", "_fromMeta"),
                 )
                 .filter(regex="^(?!.*_fromMeta)")
                 .set_index(adata.obs.index)
             )
         else:
             adata.obs = (
-                adata.obs.merge(query_df, left_on=query_id, right_index=True, how="left", suffixes=("", "_fromMeta"))
+                adata.obs.merge(
+                    query_df,
+                    left_on=query_id,
+                    right_index=True,
+                    how="left",
+                    suffixes=("", "_fromMeta"),
+                )
                 .filter(regex="^(?!.*_fromMeta)")
                 .set_index(adata.obs.index)
             )

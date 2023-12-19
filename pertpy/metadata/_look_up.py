@@ -51,7 +51,12 @@ class LookUp:
                 "n_metadata": len(self.cell_line_meta.columns),
                 "cell_line": self.cell_line_meta.DepMap_ID.values,
                 "metadata": self.cell_line_meta.columns.values,
-                "reference_id": ["DepMap_ID", "cell_line_name", "stripped_cell_line_name", "CCLE_Name"],
+                "reference_id": [
+                    "DepMap_ID",
+                    "cell_line_name",
+                    "stripped_cell_line_name",
+                    "CCLE_Name",
+                ],
                 "reference_id_example": "DepMap_ID: ACH-000016 | cell_line_name: SLR 21 | stripped_cell_line_name: SLR21 | CCLE_Name: SLR21_KIDNEY",
                 "default_parameter": {
                     "cell_line_source": "DepMap",
@@ -67,7 +72,12 @@ class LookUp:
                 "n_metadata": len(self.cl_cancer_project_meta.columns),
                 "cell_line": self.cl_cancer_project_meta.stripped_cell_line_name.values,
                 "metadata": self.cl_cancer_project_meta.columns.values,
-                "reference_id": ["cell_line_name", "stripped_cell_line_name", "Model ID", "COSMIC ID"],
+                "reference_id": [
+                    "cell_line_name",
+                    "stripped_cell_line_name",
+                    "Model ID",
+                    "COSMIC ID",
+                ],
                 "reference_id_example": "cell_line_name: SNU-283 | stripped_cell_line_name: SNU283 | Model ID: SIDM00215 | COSMIC ID: 1659929",
                 "default_parameter": {
                     "query_id": "stripped_cell_line_name",
@@ -91,7 +101,10 @@ class LookUp:
                 "gene": self.bulk_rna_broad.columns.values,
                 "reference_id": "DepMap_ID",
                 "reference_id_example": "DepMap_ID: ACH-001113",
-                "default_parameter": {"query_id": "DepMap_ID", "cell_line_source": "broad"},
+                "default_parameter": {
+                    "query_id": "DepMap_ID",
+                    "cell_line_source": "broad",
+                },
             }
             broad_record = bulk_rna_annotation(**broad_data)
 
@@ -102,7 +115,10 @@ class LookUp:
                 "gene": self.bulk_rna_sanger.columns.values,
                 "reference_id": "model_name",
                 "reference_id_example": "model_name: MEC-1",
-                "default_parameter": {"query_id": "cell_line_name", "cell_line_source": "sanger"},
+                "default_parameter": {
+                    "query_id": "cell_line_name",
+                    "cell_line_source": "sanger",
+                },
             }
             sanger_record = bulk_rna_annotation(**sanger_data)
             self.bulk_rna = bulk_rna_expression(broad_record, sanger_record)
@@ -176,13 +192,18 @@ class LookUp:
         elif type == "moa":
             self.moa_meta = transfer_metadata[0]
             moa_annotation = namedtuple(
-                "moa_annotation", "n_pert n_moa query_id query_id_example target_example default_parameter"
+                "moa_annotation",
+                "n_pert n_moa query_id query_id_example target_example default_parameter",
             )
             moa_data = {
                 "n_pert": len(self.moa_meta.pert_iname.unique()),
                 "n_moa": len(self.moa_meta.moa.unique()),
                 "query_id": "pert_iname",
-                "query_id_example": ["(R)-(-)-apomorphine", "9-aminocamptothecin", "A-803467"],
+                "query_id_example": [
+                    "(R)-(-)-apomorphine",
+                    "9-aminocamptothecin",
+                    "A-803467",
+                ],
                 "target_example": [
                     "ADRA2A|ADRA2B|ADRA2C|CALY|DRD1|DRD2|DRD3|DRD4|DRD5|HTR1A|HTR1B|HTR1D|HTR2A|HTR2B|HTR2C|HTR5A",
                     "SCN10A",
@@ -278,7 +299,9 @@ class LookUp:
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
     def available_protein_expression(
-        self, reference_id: Literal["model_name", "model_id"] = "model_name", query_id_list: Sequence[str] | None = None
+        self,
+        reference_id: Literal["model_name", "model_id"] = "model_name",
+        query_id_list: Sequence[str] | None = None,
     ) -> None:
         """A brief summary of protein expression data.
 

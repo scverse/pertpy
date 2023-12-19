@@ -79,7 +79,10 @@ class CellLine(MetaData):
                 .astype("category")
             )
             # pivot the data frame so that each cell line has only one row of metadata
-            index_col = set(self.cl_cancer_project_meta.columns) - {"Datasets", "number of drugs"}
+            index_col = set(self.cl_cancer_project_meta.columns) - {
+                "Datasets",
+                "number of drugs",
+            }
             self.cl_cancer_project_meta = self.cl_cancer_project_meta.pivot(
                 index=index_col, columns="Datasets", values="number of drugs"
             )
@@ -614,7 +617,10 @@ class CellLine(MetaData):
         return corr, pvals
 
     def correlate(
-        self, adata: AnnData, identifier: str = "DepMap_ID", metadata_key: str = "bulk_rna_broad"
+        self,
+        adata: AnnData,
+        identifier: str = "DepMap_ID",
+        metadata_key: str = "bulk_rna_broad",
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame | None, pd.DataFrame | None]:
         """Correlate cell lines with annotated metadata.
 

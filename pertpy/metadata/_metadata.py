@@ -17,7 +17,12 @@ class MetaData:
         query_id: str,
         reference_id: str,
         metadata_type: Literal[
-            "cell line", "protein expression", "bulk RNA", "drug response", "moa", "compound"
+            "cell line",
+            "protein expression",
+            "bulk RNA",
+            "drug response",
+            "moa",
+            "compound",
         ] = "cell line",
         verbosity: int | str = 5,
     ) -> None:

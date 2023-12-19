@@ -99,7 +99,12 @@ class MetaDataPlot:
                 fontsize=10,
                 transform=plt.gca().transAxes,
                 verticalalignment="top",
-                bbox={"boxstyle": "round", "alpha": 0.5, "facecolor": "white", "edgecolor": "black"},
+                bbox={
+                    "boxstyle": "round",
+                    "alpha": 0.5,
+                    "facecolor": "white",
+                    "edgecolor": "black",
+                },
             )
             plt.show()
         else:
