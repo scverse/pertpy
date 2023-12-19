@@ -72,21 +72,14 @@ class Compound(MetaData):
                     not_matched_identifiers.append(compound)
 
         identifier_num_all = len(adata.obs[query_id].unique())
-        if len(not_matched_identifiers) == identifier_num_all:
-            raise ValueError(
-                f"Attempting to find the query id {query_id} in the adata.obs in pubchem database.\n"
-                "However, none of them could be found.\n"
-                "To resolve this issue, please call the `CompoundMetaData.lookup()` function to create a LookUp object.\n"
-                "By using the `LookUp.compound()` method. "
-            )
-
-        if len(not_matched_identifiers) > 0:
-            self._print_unmatched_ids(
-                total_identifiers=identifier_num_all,
-                unmatched_identifiers=not_matched_identifiers,
-                verbosity=verbosity,
-                metadata_type="compound",
-            )
+        self._warn_unmatch(
+            total_identifiers=identifier_num_all,
+            unmatched_identifiers=not_matched_identifiers,
+            query_id=query_id,
+            reference_id=query_id_type,
+            metadata_type="compound",
+            verbosity=verbosity,
+        )
 
         query_df = pd.DataFrame.from_dict(query_dict, orient="index", columns=["pubchem_name", "pubchem_ID", "smiles"])
         # Merge and remove duplicate columns

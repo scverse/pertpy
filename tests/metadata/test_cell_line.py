@@ -38,7 +38,7 @@ class TestMetaData:
         return adata
 
     def test_cell_line_annotation(self, adata):
-        self.pt_metadata.annotate_cell_lines(adata=adata)
+        self.pt_metadata.annotate(adata=adata)
         assert (
             len(adata.obs.columns) == len(self.pt_metadata.cell_line_meta.columns) + 1
         )  # due to the perturbation column
@@ -47,12 +47,12 @@ class TestMetaData:
         assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
 
     def test_gdsc_annotation(self, adata):
-        self.pt_metadata.annotate_cell_lines(adata)
+        self.pt_metadata.annotate(adata)
         self.pt_metadata.annotate_from_gdsc(adata, query_id="stripped_cell_line_name")
         assert "ln_ic50" in adata.obs
 
     def test_protein_expression_annotation(self, adata):
-        self.pt_metadata.annotate_cell_lines(adata)
+        self.pt_metadata.annotate(adata)
         self.pt_metadata.annotate_protein_expression(adata, query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 1
@@ -62,19 +62,19 @@ class TestMetaData:
         )
 
     def test_bulk_rna_expression_annotation(self, adata):
-        self.pt_metadata.annotate_cell_lines(adata)
-        self.pt_metadata.annotate_bulk_rna_expression(adata, query_id="DepMap_ID", cell_line_source="broad")
+        self.pt_metadata.annotate(adata)
+        self.pt_metadata.annotate_bulk_rna(adata, query_id="DepMap_ID", cell_line_source="broad")
 
         assert len(adata.obsm) == 1
-        assert adata.obsm["bulk_rna_expression_broad"].shape == (
+        assert adata.obsm["bulk_rna_broad"].shape == (
             NUM_GENES,
             self.pt_metadata.bulk_rna_broad.shape[1],
         )
 
-        self.pt_metadata.annotate_bulk_rna_expression(adata, query_id="stripped_cell_line_name")
+        self.pt_metadata.annotate_bulk_rna(adata, query_id="stripped_cell_line_name")
 
         assert len(adata.obsm) == 2
-        assert adata.obsm["bulk_rna_expression_sanger"].shape == (
+        assert adata.obsm["bulk_rna_sanger"].shape == (
             NUM_GENES,
             self.pt_metadata.bulk_rna_sanger.shape[1],
         )

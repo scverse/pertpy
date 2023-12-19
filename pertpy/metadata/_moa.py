@@ -68,22 +68,14 @@ class Moa(MetaData):
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id].str.lower()) - set(self.moa["pert_iname"].str.lower()))
-        if len(not_matched_identifiers) == identifier_num_all:
-            raise ValueError(
-                f"Attempting to match the query id {query_id} in the adata.obs to the `pert_iname` in the metadata.\n"
-                "However, none of the query IDs could be found in the MoA annotation data.\n"
-                "The annotation process has been halted.\n"
-                "To resolve this issue, please call the `MoaMetaData.lookup()` function to create a LookUp object.\n"
-                "By using the `LookUp.moa()` method. "
-            )
-
-        if len(not_matched_identifiers) > 0:
-            self._print_unmatched_ids(
-                total_identifiers=identifier_num_all,
-                unmatched_identifiers=not_matched_identifiers,
-                verbosity=verbosity,
-                metadata_type="moa",
-            )
+        self._warn_unmatch(
+            total_identifiers=identifier_num_all,
+            unmatched_identifiers=not_matched_identifiers,
+            query_id=query_id,
+            reference_id="pert_iname",
+            metadata_type="moa",
+            verbosity=verbosity,
+        )
 
         adata.obs = (
             adata.obs.merge(

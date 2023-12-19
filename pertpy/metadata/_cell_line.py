@@ -29,6 +29,7 @@ class CellLine(MetaData):
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
         super().__init__()
+
         cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
         if not Path(cell_line_file_path).exists():
             print("[bold yellow]No DepMap metadata file found. Starting download now.")
@@ -47,6 +48,7 @@ class CellLine(MetaData):
         cell_line_cancer_project_transformed_path = (
             settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
         )
+
         if not Path(cell_line_cancer_project_transformed_path).exists():
             if not Path(cell_line_cancer_project_file_path).exists():
                 print(
@@ -70,24 +72,22 @@ class CellLine(MetaData):
 
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_file_path)
             self.cl_cancer_project_meta.columns = self.cl_cancer_project_meta.columns.str.strip()
-            self.cl_cancer_project_meta["stripped_cell_line_name"] = self.cl_cancer_project_meta[
-                "Cell line Name"
-            ].str.replace(r"\-|\.", "", regex=True)
-            self.cl_cancer_project_meta["stripped_cell_line_name"] = pd.Categorical(
-                self.cl_cancer_project_meta["stripped_cell_line_name"].str.upper()
+            self.cl_cancer_project_meta["stripped_cell_line_name"] = (
+                self.cl_cancer_project_meta["Cell line Name"]
+                .str.replace(r"\-|\.", "", regex=True)
+                .str.upper()
+                .astype("category")
             )
             # pivot the data frame so that each cell line has only one row of metadata
-            index_col = list(set(self.cl_cancer_project_meta.columns) - {"Datasets", "number of drugs"})
+            index_col = set(self.cl_cancer_project_meta.columns) - {"Datasets", "number of drugs"}
             self.cl_cancer_project_meta = self.cl_cancer_project_meta.pivot(
                 index=index_col, columns="Datasets", values="number of drugs"
             )
             self.cl_cancer_project_meta.columns.name = None
-            self.cl_cancer_project_meta = self.cl_cancer_project_meta.reset_index()
-            self.cl_cancer_project_meta = self.cl_cancer_project_meta.rename(
+            self.cl_cancer_project_meta = self.cl_cancer_project_meta.reset_index().rename(
                 columns={"Cell line Name": "cell_line_name"}
             )
             self.cl_cancer_project_meta.to_csv(cell_line_cancer_project_transformed_path)
-
         else:
             self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_transformed_path, index_col=0)
 
@@ -113,7 +113,7 @@ class CellLine(MetaData):
         if not Path(bulk_rna_sanger_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
-                " Starting download now..."
+                " Starting download now."
             )
             _download(
                 url="https://figshare.com/ndownloader/files/42467103",
@@ -122,7 +122,7 @@ class CellLine(MetaData):
                 block_size=4096,
                 is_zip=False,
             )
-        self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0)
+        self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0, dtype="unicode")
 
         # Download CCLE expression data from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
@@ -154,49 +154,38 @@ class CellLine(MetaData):
 
         # Download GDSC drug response data
         # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
-        drug_response_gdsc1_file_path = settings.cachedir.__str__() + "/ic50_gdsc1.xlsx"
+        # URL: https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx
+        drug_response_gdsc1_file_path = settings.cachedir.__str__() + "/ic50_gdsc1.csv"
         if not Path(drug_response_gdsc1_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for drug response data of GDSC1 dataset."
                 " Starting download now."
             )
             _download(
-                url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx",
-                output_file_name="ic50_gdsc1.xlsx",
+                url="https://figshare.com/ndownloader/files/43757235",
+                output_file_name="ic50_gdsc1.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
-        self.drug_response_gdsc1 = pd.read_excel(drug_response_gdsc1_file_path)
-        self.drug_response_gdsc1 = self.drug_response_gdsc1.iloc[:, [3, 4, 5, 7, 8, 15, 16]]
-        self.drug_response_gdsc1.rename(columns=lambda col: col.lower(), inplace=True)
-        self.drug_response_gdsc1 = self.drug_response_gdsc1.loc[
-            self.drug_response_gdsc1.groupby(["cell_line_name", "drug_name"])["auc"].idxmax()
-        ]
-        self.drug_response_gdsc1 = self.drug_response_gdsc1.reset_index(drop=True)
+        self.drug_response_gdsc1 = pd.read_csv(drug_response_gdsc1_file_path, index_col=0)
 
-        drug_response_gdsc2_file_path = settings.cachedir.__str__() + "/ic50_gdsc2.xlsx"
+        drug_response_gdsc2_file_path = settings.cachedir.__str__() + "/ic50_gdsc2.csv"
         if not Path(drug_response_gdsc2_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for drug response data of GDSC2 dataset."
                 " Starting download now."
             )
             _download(
-                url="https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC2_fitted_dose_response_24Jul22.xlsx",
-                output_file_name="ic50_gdsc2.xlsx",
+                url="https://figshare.com/ndownloader/files/43757232",
+                output_file_name="ic50_gdsc2.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
-        self.drug_response_gdsc2 = pd.read_excel(drug_response_gdsc2_file_path)
-        self.drug_response_gdsc2 = self.drug_response_gdsc2.iloc[:, [3, 4, 5, 7, 8, 15, 16]]
-        self.drug_response_gdsc2.rename(columns=lambda col: col.lower(), inplace=True)
-        self.drug_response_gdsc2 = self.drug_response_gdsc2.loc[
-            self.drug_response_gdsc2.groupby(["cell_line_name", "drug_name"])["auc"].idxmax()
-        ]
-        self.drug_response_gdsc2 = self.drug_response_gdsc2.reset_index(drop=True)
+        self.drug_response_gdsc2 = pd.read_csv(drug_response_gdsc2_file_path, index_col=0)
 
-    def annotate_cell_lines(
+    def annotate(
         self,
         adata: AnnData,
         query_id: str = "DepMap_ID",
@@ -231,7 +220,7 @@ class CellLine(MetaData):
             >>> adata = pt.dt.dialogue_example()
             >>> adata.obs['cell_line_name'] = 'MCF7'
             >>> pt_metadata = pt.md.CellLine()
-            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> adata_annotated = pt_metadata.annotate(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
         """
         if copy:
             adata = adata.copy()
@@ -245,7 +234,7 @@ class CellLine(MetaData):
                 print(
                     "[bold blue]`stripped_cell_line_name` is used as reference and query identifier ",
                     " to annotate cell line metadata from Cancerrxgene. "
-                    "Ensure that `stripped_cell_line_name` is available in 'adata.obs.' ",
+                    "Ensure that stripped cell line names are available in 'adata.obs.' ",
                     "or use the DepMap as `cell_line_source` to annotate the cell line first ",
                 )
             cell_line_meta = self.cl_cancer_project_meta
@@ -258,65 +247,49 @@ class CellLine(MetaData):
             # we can compare these keys and fetch the corresponding metadata.
             identifier_num_all = len(adata.obs[query_id].unique())
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(cell_line_meta[reference_id]))
-            if len(not_matched_identifiers) == identifier_num_all:
-                raise ValueError(
-                    f"Attempting to match the query id {query_id} in 'adata.obs' to the reference id {reference_id} in the metadata.\n"
-                    "However, none of the query IDs could be found in the cell line annotation data.\n"
-                    "To resolve this issue, call the `CellLineMetaData.lookup()` function to create a LookUp object.\n"
-                    "This enables obtaining the count of matched identifiers in the AnnData object for different types of reference and query IDs."
-                )
 
-            if len(not_matched_identifiers) > 0:
-                self._print_unmatched_ids(
-                    total_identifiers=identifier_num_all,
-                    unmatched_identifiers=not_matched_identifiers,
-                    verbosity=verbosity,
-                    metadata_type="cell line",
-                )
+            self._warn_unmatch(
+                total_identifiers=identifier_num_all,
+                unmatched_identifiers=not_matched_identifiers,
+                query_id=query_id,
+                reference_id=reference_id,
+                metadata_type="cell line",
+                verbosity=verbosity,
+            )
 
-            if cell_line_information is None:
-                # If no cell_line_information is specified, all metadata is fetched by default.
-                # Sometimes there is already different cell line information in the AnnData object.
-                # To avoid redundant information we will remove duplicate information from metadata after merging.
-                adata.obs = (
-                    adata.obs.merge(
-                        cell_line_meta,
-                        left_on=query_id,
-                        right_on=reference_id,
-                        how="left",
-                        suffixes=("", "_fromMeta"),
-                    )
-                    .filter(regex="^(?!.*_fromMeta)")
-                    .set_index(adata.obs.index)
-                )
-                # If query_id and reference_id have different names,
-                # there will be a column for each of them after merging,
-                # which is redundant as they refer to the same information.
-                # We will move the reference_id column.
-                if query_id != reference_id:
-                    del adata.obs[reference_id]
-
-            elif set(cell_line_information).issubset(set(cell_line_meta.columns)):
+            if cell_line_information is not None:
                 # If cell_line_information is specified and can be found in the DepMap database,
                 # We will subset the original metadata dataframe correspondingly and add them to the AnnData object.
-                # Again, redundant information will be removed.
-                if reference_id not in cell_line_information:
-                    cell_line_information.append(reference_id)
-                cell_line_meta_part = cell_line_meta[cell_line_information]
-                adata.obs = (
-                    adata.obs.merge(
-                        cell_line_meta_part,
-                        left_on=query_id,
-                        right_on=reference_id,
-                        how="left",
-                        suffixes=("", "_fromMeta"),
+                # Redundant information will be removed.
+                if set(cell_line_information).issubset(set(cell_line_meta.columns)):
+                    if reference_id not in cell_line_information:
+                        cell_line_information.append(reference_id)
+                else:
+                    raise ValueError(
+                        "Selected cell line information is not present in the metadata.\n"
+                        "Please create a `CellLineMetaData.lookup()` object to obtain the available cell line information in the metadata."
                     )
-                    .filter(regex="^(?!.*_fromMeta)")
-                    .set_index(adata.obs.index)
+
+            # If no cell_line_information is specified, all metadata is fetched by default.
+            # Sometimes there is already different cell line information in the AnnData object.
+            # To avoid redundant information we will remove duplicate information from metadata after merging.
+            adata.obs = (
+                adata.obs.merge(
+                    cell_line_meta if cell_line_information is None else cell_line_meta[cell_line_information],
+                    left_on=query_id,
+                    right_on=reference_id,
+                    how="left",
+                    suffixes=("", "_fromMeta"),
                 )
-                # Again, redundant information will be removed.
-                if query_id != reference_id:
-                    del adata.obs[reference_id]
+                .filter(regex="^(?!.*_fromMeta)")
+                .set_index(adata.obs.index)
+            )
+            # If query_id and reference_id have different names,
+            # there will be a column for each of them after merging,
+            # which is redundant as they refer to the same information.
+            # We will move the reference_id column.
+            if query_id != reference_id:
+                del adata.obs[reference_id]
 
         else:
             raise ValueError(
@@ -329,7 +302,7 @@ class CellLine(MetaData):
 
         return adata
 
-    def annotate_bulk_rna_expression(
+    def annotate_bulk_rna(
         self,
         adata: AnnData,
         query_id: str = "cell_line_name",
@@ -357,8 +330,8 @@ class CellLine(MetaData):
             >>> adata = pt.dt.dialogue_example()
             >>> adata.obs['cell_line_name'] = 'MCF7'
             >>> pt_metadata = pt.md.CellLine()
-            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
-            >>> pt_metadata.annotate_bulk_rna_expression(adata_annotated)
+            >>> adata_annotated = pt_metadata.annotate(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> pt_metadata.annotate_bulk_rna(adata_annotated)
         """
         if copy:
             adata = adata.copy()
@@ -370,7 +343,7 @@ class CellLine(MetaData):
                 f"The specified `query_id` {query_id} can't be found in the `adata.obs`.\n"
                 "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation.\n"
                 "If the desired query ID is not available, you can fetch the cell line metadata "
-                "using the `annotate_cell_lines()` function before calling 'annotate_ccle_expression()'. "
+                "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
                 "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
             )
 
@@ -381,39 +354,30 @@ class CellLine(MetaData):
         else:
             reference_id = "DepMap_ID"
             print(
-                "To annotate bulk RNA expression data from Broad Institue, ",
+                "To annotate bulk RNA data from Broad Institue, ",
                 "`DepMap_ID` is used as default reference and query identifier if no `reference_id` is given. ",
                 "Ensure that `DepMap_ID` is available in 'adata.obs'. ",
-                "Alternatively, use `annotate_cell_lines()` to annotate the cell line first ",
+                "Alternatively, use `annotate()` to annotate the cell line first ",
             )
 
             if query_id == "cell_line_name":
                 query_id = "DepMap_ID"
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_broad.index))
 
-        if len(not_matched_identifiers) == identifier_num_all:
-            raise ValueError(
-                f"You are attempting to match the query id {query_id} in the adata.obs to the reference id {reference_id} in the metadata."
-                "However, none of the query IDs could be found in the bulk RNA expression data.\n"
-                "Create a `CellLineMetaData.lookup()` object to obtain the count of matched identifiers"
-                " in the AnnData object for different types of reference IDs and query IDs.\n"
-                "Additionally, call the `CellLineMetaData.annotate_cell_lines()` function "
-                "to acquire more possible query IDs that can be used for annotation purposes."
-            )
-
-        if len(not_matched_identifiers) > 0:
-            self._print_unmatched_ids(
-                total_identifiers=identifier_num_all,
-                unmatched_identifiers=not_matched_identifiers,
-                verbosity=verbosity,
-                metadata_type="bulk RNA expression",
-            )
+        self._warn_unmatch(
+            total_identifiers=identifier_num_all,
+            unmatched_identifiers=not_matched_identifiers,
+            query_id=query_id,
+            reference_id=reference_id,
+            metadata_type="bulk RNA",
+            verbosity=verbosity,
+        )
 
         if cell_line_source == "sanger":
             sanger_rna_exp = self.bulk_rna_sanger[self.bulk_rna_sanger.index.isin(adata.obs[query_id])]
             sanger_rna_exp = sanger_rna_exp.reindex(adata.obs[query_id])
             sanger_rna_exp.index = adata.obs.index
-            adata.obsm["bulk_rna_expression_sanger"] = sanger_rna_exp
+            adata.obsm["bulk_rna_sanger"] = sanger_rna_exp
         else:
             if gene_identifier == "gene_ID":
                 self.bulk_rna_broad.columns = [
@@ -428,7 +392,7 @@ class CellLine(MetaData):
             broad_rna_exp = self.bulk_rna_broad[self.bulk_rna_broad.index.isin(adata.obs[query_id])]
             ccle_expression = broad_rna_exp.reindex(adata.obs[query_id])
             ccle_expression.index = adata.obs.index
-            adata.obsm["bulk_rna_expression_broad"] = ccle_expression
+            adata.obsm["bulk_rna_broad"] = ccle_expression
 
         return adata
 
@@ -467,7 +431,7 @@ class CellLine(MetaData):
             >>> adata = pt.dt.dialogue_example()
             >>> adata.obs['cell_line_name'] = 'MCF7'
             >>> pt_metadata = pt.md.CellLine()
-            >>> adata_annotated = pt_metadata.annotate_cell_lines(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> adata_annotated = pt_metadata.annotate(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
             >>> pt_metadata.annotate_protein_expression(adata_annotated)
         """
         if copy:
@@ -479,7 +443,7 @@ class CellLine(MetaData):
             raise ValueError(
                 f"The specified `query_id` {query_id} can't be found in `adata.obs`. \n"
                 "If the desired query ID is not available, you can fetch the cell line metadata \n"
-                "using the `annotate_cell_lines()` function before calling annotate_protein_expression(). \n"
+                "using the `annotate()` function before calling annotate_protein_expression(). \n"
                 "This ensures that the required query ID is included in your data."
             )
 
@@ -493,31 +457,21 @@ class CellLine(MetaData):
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.proteomics_data[reference_id]))
 
-        if len(not_matched_identifiers) == identifier_num_all:
-            raise ValueError(
-                f"You are attempting to match the query id {query_id} in 'adata.obs' to the reference id {reference_id} in the metadata."
-                "However, none of the query IDs could be found in the proteomics data. \n"
-                "Create a `CellLineMetaData.lookup()` object to use the `LookUp.protein_expression()` method to"
-                " obtain the count of matched identifiers in the adata for different types of reference IDs and query IDs. \n"
-                "Additionally, you can call the `CellLineMetaData.annotate_cell_lines` function "
-                "to acquire more possible query IDs that can be used for annotation purposes."
-            )
-
-        if len(not_matched_identifiers) > 0:
-            self._print_unmatched_ids(
-                total_identifiers=identifier_num_all,
-                unmatched_identifiers=not_matched_identifiers,
-                verbosity=verbosity,
-                metadata_type="protein expression",
-            )
+        self._warn_unmatch(
+            total_identifiers=identifier_num_all,
+            unmatched_identifiers=not_matched_identifiers,
+            query_id=query_id,
+            reference_id=reference_id,
+            metadata_type="protein expression",
+            verbosity=verbosity,
+        )
 
         # convert the original protein intensities table from long format to wide format, group by the cell lines
-        prot_exp = self.proteomics_data[[reference_id, protein_id, protein_information]]
-        prot_exp = pd.pivot(prot_exp, index=reference_id, columns=protein_id, values=protein_information)
-        prot_exp = prot_exp.reindex(adata.obs[query_id])
-        prot_exp.index = adata.obs.index
-        adata.obsm["proteomics_" + protein_information] = prot_exp
-
+        adata.obsm["proteomics_" + protein_information] = (
+            self.proteomics_data[[reference_id, protein_id, protein_information]]
+            .pivot(index=reference_id, columns=protein_id, values=protein_information)
+            .reindex(adata.obs.index)
+        )
         return adata
 
     def annotate_from_gdsc(
@@ -570,7 +524,7 @@ class CellLine(MetaData):
                 f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
                 "Ensure that you are using one of the available query IDs present in 'adata.obs' for the annotation. \n"
                 "If the desired query ID is not available, you can fetch the cell line metadata "
-                "using the `annotate_cell_lines()` function before calling `annotate_from_gdsc()`. "
+                "using the `annotate()` function before calling `annotate_from_gdsc()`. "
                 "This ensures that the required query ID is included in your data."
             )
         if gdsc_dataset == 1:
@@ -580,23 +534,15 @@ class CellLine(MetaData):
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(gdsc_data[reference_id]))
-        if len(not_matched_identifiers) > 0:
-            self._print_unmatched_ids(
-                total_identifiers=identifier_num_all,
-                unmatched_identifiers=not_matched_identifiers,
-                verbosity=verbosity,
-                metadata_type="drug response",
-            )
+        self._warn_unmatch(
+            total_identifiers=identifier_num_all,
+            unmatched_identifiers=not_matched_identifiers,
+            query_id=query_id,
+            reference_id=reference_id,
+            metadata_type="drug response",
+            verbosity=verbosity,
+        )
 
-        if len(not_matched_identifiers) == identifier_num_all:
-            raise ValueError(
-                f"You are attempting to match the query id {query_id} in 'adata.obs' to the reference id {reference_id} in the metadata. \n"
-                "However, none of the query IDs could be found in the drug response data. \n"
-                "Create a `CellLineMetaData.lookup()` object and use `LookUp.drug_response_gdsc()`to obtain"
-                " the count of matched identifiers in the AnnData object for different query IDs. \n"
-                "Additionally, call the `CellLineMetaData.annotate_cell_lines()` function to "
-                "acquire more cell line information that can be used for annotation purposes."
-            )
         old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
@@ -667,92 +613,53 @@ class CellLine(MetaData):
 
         return corr, pvals
 
-    def compare_categories(
-        self,
-        adata,
-        identifier: str = "DepMap_ID",
-        metadata_key: str = "bulk_rna_expression_broad",
-        subset_cell_line: str | int | None = None,
-        compare_new_cell_line: bool = True,
+    def correlate(
+        self, adata: AnnData, identifier: str = "DepMap_ID", metadata_key: str = "bulk_rna_broad"
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame | None, pd.DataFrame | None]:
-        """Compare cell lines by annotated metadata.
+        """Correlate cell lines with annotated metadata.
 
         Args:
             adata: Input data object.
             identifier: Column in `.obs` containing cell line identifiers. Defaults to "DepMap_ID".
-            metadata_key: Key of the AnnData obsm for comparison with the X matrix. Defaults to "bulk_rna_expression_broad".
-            subset_cell_line: Selected cell line for scatter plot visualization between the X matrix and `metadata_key`.
-                              If None, all cell lines will be plotted.
-                              If not None, only the chosen cell line will be plotted, either as a value in `identifier` (string) or as an index number.
-                              Defaults to None.
-            compare_new_cell_line: Whether to compare the unmatched cell lines with 'metadata_key'.
-                                   If True, return two additional arrays for Pearson correlation coefficients and p-values.
-                                   Defaults to True.
+            metadata_key: Key of the AnnData obsm for comparison with the X matrix. Defaults to "bulk_rna_broad".
 
         Returns:
-            Pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
+            Returns pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
         """
+
+        if metadata_key not in adata.obsm:
+            raise ValueError("The metadata can not be found in adata.obsm")
+        if identifier not in adata.obs:
+            raise ValueError("The identifier can not be found in adata.obs")
+        if adata.X.shape[1] != adata.obsm[metadata_key].shape[1]:
+            raise ValueError(
+                "The dimensions of adata.X do not match those of metadata, please make sure that they have the same gene list."
+            )
+        if isinstance(adata.obsm[metadata_key], pd.DataFrame):
+            # Give warning if the genes are not the same
+            if sum(adata.obsm[metadata_key].columns != adata.var.index.values) > 0:
+                print(
+                    "The column name of metadata is not the same as the index of adata.var, please make sure the genes are in the same order."
+                )
+
+        # Divide cell lines into those are present and not present in the metadata
         overlapped_cl = adata[~adata.obsm[metadata_key].isna().all(axis=1), :]
-        new_cl = adata[adata.obsm[metadata_key].isna().all(axis=1), :]
+        missing_cl = adata[adata.obsm[metadata_key].isna().all(axis=1), :]
 
         corr, pvals = self._pairwise_correlation(
             overlapped_cl.X,
             overlapped_cl.obsm[metadata_key].values,
-            row_name=overlapped_cl.obs.DepMap_ID,
-            col_name=overlapped_cl.obs.DepMap_ID,
+            row_name=overlapped_cl.obs[identifier],
+            col_name=overlapped_cl.obs[identifier],
         )
-
-        if compare_new_cell_line:
+        if missing_cl is not None:
             new_corr, new_pvals = self._pairwise_correlation(
-                new_cl.X,
+                missing_cl.X,
                 overlapped_cl.obsm[metadata_key].values,
-                row_name=new_cl.obs.DepMap_ID,
-                col_name=overlapped_cl.obs.DepMap_ID,
+                row_name=missing_cl.obs[identifier],
+                col_name=overlapped_cl.obs[identifier],
             )
         else:
             new_corr = new_pvals = None
-
-        if subset_cell_line is None:
-            annotation = "\n".join(
-                (
-                    f"Mean pearson correlation: {np.mean(np.diag(corr)):.4f}",
-                    f"Mean p-value: {np.mean(np.diag(pvals)):.4f}",
-                )
-            )
-            plt.scatter(x=overlapped_cl.obsm[metadata_key], y=overlapped_cl.X)
-            plt.xlabel("Broad")
-            plt.ylabel("Baseline")
-        else:
-            if isinstance(subset_cell_line, str):
-                # Visualize the chosen cell line which should be found in `identifier`
-                if subset_cell_line not in overlapped_cl.obs[identifier].values:
-                    raise ValueError(f"{subset_cell_line} is not found!")
-            elif isinstance(subset_cell_line, int):
-                # Visualize the chosen cell line at the given index
-                if subset_cell_line < 0 or subset_cell_line >= overlapped_cl.n_obs:
-                    raise ValueError(f"{subset_cell_line} is not found!")
-                subset_cell_line = overlapped_cl.obs[identifier].values[subset_cell_line]
-
-            plt.scatter(x=overlapped_cl.obsm[metadata_key].loc[subset_cell_line], y=overlapped_cl[subset_cell_line].X)
-            plt.xlabel(f"Broad: {subset_cell_line}")
-            plt.ylabel(f"Baseline: {subset_cell_line}")
-            # Annotate with the correlation coefficient and p-value of the chosen cell line
-            annotation = "\n".join(
-                (
-                    f"Pearson correlation: {corr[subset_cell_line][subset_cell_line]:.4f}",
-                    f"P-value: {pvals[subset_cell_line][subset_cell_line]:.4f}",
-                )
-            )
-
-        plt.text(
-            0.05,
-            0.95,
-            annotation,
-            fontsize=10,
-            transform=plt.gca().transAxes,
-            verticalalignment="top",
-            bbox={"boxstyle": "round", "alpha": 0.5, "facecolor": "white", "edgecolor": "black"},
-        )
-        plt.show()
 
         return corr, pvals, new_corr, new_pvals

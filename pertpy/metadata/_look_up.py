@@ -250,7 +250,7 @@ class LookUp:
             print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
-    def available_bulk_rna_expression(
+    def available_bulk_rna(
         self,
         cell_line_source: Literal["broad", "sanger"] = "sanger",
         query_id_list: Sequence[str] | None = None,
