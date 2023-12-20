@@ -286,8 +286,8 @@ class PLDataset(Dataset):
         """Returns a sample and corresponding perturbations applied (labels)"""
 
         sample = self.data[idx].A if scipy.sparse.issparse(self.data) else self.data[idx]
-        num_label = self.labels[idx]
-        str_label = self.pert_labels[idx]
+        num_label = self.labels.iloc[idx]
+        str_label = self.pert_labels.iloc[idx]
 
         return sample, num_label, str_label
 
