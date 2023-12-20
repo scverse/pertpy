@@ -34,13 +34,12 @@ class Compound(MetaData):
     ) -> AnnData:
         """Fetch compound annotation from pubchempy.
 
-        For each cell, we fetch compound annotation via pubchempy.
-
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with compound identifiers. Defaults to "perturbation".
-            query_id_type: The type of compound identifiers, 'name' or 'cid'. Defaults to "name".
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            query_id: The column of `.obs` with compound identifiers. Defaults to 'perturbation'.
+            query_id_type: The type of compound identifiers, 'name' or 'cid'. Defaults to 'name'.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+                       Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -50,7 +49,7 @@ class Compound(MetaData):
             adata = adata.copy()
 
         if query_id not in adata.obs.columns:
-            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`. \n" "Please check again. ")
+            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n" "Please check again. ")
 
         query_dict = {}
         not_matched_identifiers = []

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -52,8 +52,10 @@ class Moa(MetaData):
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with the name of a perturbagen. Defaults to "pert_iname".
-            target: The column of `.obs` with target information.  If set to None, all MoAs are retrieved without comparing molecular targets. Defaults to None.
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            target: The column of `.obs` with target information.  If set to None, all MoAs are retrieved without comparing molecular targets.
+                    Defaults to None.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+                       Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
@@ -89,11 +91,8 @@ class Moa(MetaData):
             .drop("key_0", axis=1)
         )
 
-        # If target column is given,
-        # we check whether it is one of the targets listed in the metadata
-        # If inconsistent, we treat this perturbagen as unmatched and
-        # overwrite the annotated metadata with NaN
-
+        # If target column is given, check whether it is one of the targets listed in the metadata
+        # If inconsistent, treat this perturbagen as unmatched and overwrite the annotated metadata with NaN
         if target is not None:
             target_meta = "target" if target != "target" else "target_fromMeta"
             adata.obs[target_meta] = adata.obs[target_meta].mask(
@@ -102,10 +101,8 @@ class Moa(MetaData):
             pertname_meta = "pert_iname" if query_id != "pert_iname" else "pert_iname_fromMeta"
             adata.obs.loc[adata.obs[target_meta].isna(), [pertname_meta, "moa"]] = np.nan
 
-        # If query_id and reference_id have different names,
-        # there will be a column for each of them after merging,
-        # which is redundant as they refer to the same information.
-        # We will move the reference_id column.
+        # If query_id and reference_id have different names, there will be a column for each of them after merging
+        # which is redundant as they refer to the same information. Then move the reference_id column.
         if query_id != "pert_iname":
             del adata.obs["pert_iname"]
 

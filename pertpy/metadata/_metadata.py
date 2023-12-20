@@ -7,9 +7,6 @@ if TYPE_CHECKING:
 
 
 class MetaData:
-    def __init__(self):
-        pass
-
     def _warn_unmatch(
         self,
         total_identifiers: int,
