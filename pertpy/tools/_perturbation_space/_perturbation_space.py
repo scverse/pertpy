@@ -41,9 +41,9 @@ class PerturbationSpace:
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
             reference_key: The key of the control values. Defaults to 'control'.
             layer_key: Key of the AnnData layer to use for computation. Defaults to the `X` matrix otherwise.
-            new_layer_key: the results are stored in the given layer. Defaults to 'differential diff'.
+            new_layer_key: the results are stored in the given layer. Defaults to 'control_diff'.
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control diff'.
+            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control_diff'.
             all_data: if True, do the computation in all data representations (X, all layers and all embeddings)
             copy: If True returns a new Anndata of same size with the new column; otherwise it updates the initial AnnData object.
 
