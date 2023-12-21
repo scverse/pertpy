@@ -62,7 +62,7 @@ class LookUp:
                     "cell_line_source": "DepMap",
                     "query_id": "DepMap_ID",
                     "reference_id": "DepMap_ID",
-                    "cell_line_information": "None",
+                    "fetch": "None",
                 },
             }
             depmap_record = cell_line_annotation(**depmap_data)
@@ -82,7 +82,7 @@ class LookUp:
                 "default_parameter": {
                     "query_id": "stripped_cell_line_name",
                     "reference_id": "stripped_cell_line_name",
-                    "cell_line_information": "None",
+                    "fetch": "None",
                 },
             }
             ccancerrxgene_record = cell_line_annotation(**cancerrxgene_data)

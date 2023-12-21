@@ -51,10 +51,10 @@ class Moa(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with the name of a perturbagen. Defaults to "pert_iname".
+            query_id: The column of `.obs` with the name of a perturbagen. Defaults to 'pert_iname'.
             target: The column of `.obs` with target information.  If set to None, all MoAs are retrieved without comparing molecular targets.
                     Defaults to None.
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or 'all'.
                        Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 

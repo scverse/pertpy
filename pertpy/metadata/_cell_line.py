@@ -193,7 +193,7 @@ class CellLine(MetaData):
         adata: AnnData,
         query_id: str = "DepMap_ID",
         reference_id: str = "DepMap_ID",
-        cell_line_information: list[str] | None = None,
+        fetch: list[str] | None = None,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         verbosity: int | str = 5,
         copy: bool = False,
@@ -208,8 +208,7 @@ class CellLine(MetaData):
             reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or stripped_cell_line_name.
                           If fetching cell line metadata from Cancerrxgene, it is recommended to choose
                           "stripped_cell_line_name". Defaults to "DepMap_ID".
-            cell_line_information: The metadata to fetch. All metadata will be fetched by default.
-                                   Defaults to None (=all).
+            fetch: The metadata to fetch. Defaults to None (=all).
             cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
                        Defaults to 5.
@@ -223,7 +222,11 @@ class CellLine(MetaData):
             >>> adata = pt.dt.dialogue_example()
             >>> adata.obs['cell_line_name'] = 'MCF7'
             >>> pt_metadata = pt.md.CellLine()
-            >>> adata_annotated = pt_metadata.annotate(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> adata_annotated = pt_metadata.annotate(adata=adata,
+            >>>                                        reference_id='cell_line_name',
+            >>>                                        query_id='cell_line_name',
+            >>>                                        fetch=["cell_line_name", "age", "primary_disease"],
+            >>>                                        copy=True)
         """
         if copy:
             adata = adata.copy()
@@ -260,25 +263,25 @@ class CellLine(MetaData):
                 verbosity=verbosity,
             )
 
-            if cell_line_information is not None:
-                # If cell_line_information is specified and can be found in the DepMap database,
+            if fetch is not None:
+                # If fetch is specified and can be found in the DepMap database,
                 # We will subset the original metadata dataframe correspondingly and add them to the AnnData object.
                 # Redundant information will be removed.
-                if set(cell_line_information).issubset(set(cell_line_meta.columns)):
-                    if reference_id not in cell_line_information:
-                        cell_line_information.append(reference_id)
+                if set(fetch).issubset(set(cell_line_meta.columns)):
+                    if reference_id not in fetch:
+                        fetch.append(reference_id)
                 else:
                     raise ValueError(
                         "Selected cell line information is not present in the metadata.\n"
                         "Please create a `CellLineMetaData.lookup()` object to obtain the available cell line information in the metadata."
                     )
 
-            # If no cell_line_information is specified, all metadata is fetched by default.
+            # If no fetch is specified, all metadata is fetched by default.
             # Sometimes there is already different cell line information in the AnnData object.
             # To avoid redundant information we will remove duplicate information from metadata after merging.
             adata.obs = (
                 adata.obs.merge(
-                    cell_line_meta if cell_line_information is None else cell_line_meta[cell_line_information],
+                    cell_line_meta if fetch is None else cell_line_meta[fetch],
                     left_on=query_id,
                     right_on=reference_id,
                     how="left",
