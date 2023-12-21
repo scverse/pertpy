@@ -849,15 +849,15 @@ class Milo:
                 "mdata should be a MuData object with two slots: feature_key and 'milo'. Run 'milopy.count_nhoods(adata)' first."
             ) from None
 
-        if subset_nhoods is not None:
-            nhood_adata = nhood_adata[subset_nhoods]
-
         try:
             nhood_adata.obs[anno_col]
         except KeyError:
             raise RuntimeError(
                 f"Unable to find {anno_col} in mdata.uns['nhood_adata']. Run 'milopy.utils.annotate_nhoods(adata, anno_col)' first"
             ) from None
+
+        if subset_nhoods is not None:
+            nhood_adata = nhood_adata[nhood_adata.obs[anno_col].isin(subset_nhoods)]
 
         try:
             nhood_adata.obs["logFC"]
