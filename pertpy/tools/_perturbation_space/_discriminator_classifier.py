@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING
 import anndata
 import pytorch_lightning as pl
 import scipy
+import numpy as np
 import torch
 from anndata import AnnData
 from pytorch_lightning.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 from torch import optim
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
@@ -32,7 +33,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         adata: AnnData,
         target_col: str = "perturbations",
         layer_key: str = None,
-        hidden_dim: list[int] = None,
+        hidden_dim: list[int] = [512],
         dropout: float = 0.0,
         batch_norm: bool = True,
         batch_size: int = 256,
@@ -71,15 +72,12 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         if target_col not in adata.obs:
             raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
 
-        if hidden_dim is None:
-            hidden_dim = [512]
-
         # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
-        labels = adata.obs[target_col]
-        label_encoder = LabelEncoder()
-        encoded_labels = label_encoder.fit_transform(labels)
-        adata.obs["encoded_perturbations"] = encoded_labels
+        labels = adata.obs[target_col].values.reshape(-1, 1)
+        encoder = OneHotEncoder()
+        encoded_labels = encoder.fit_transform(labels).toarray()
+        adata.obs["encoded_perturbations"] = [np.float32(label) for label in encoded_labels]
 
         # Split the data in train, test and validation
         X = list(range(0, adata.n_obs))
@@ -103,11 +101,10 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         # Fix class unbalance (likely to happen in perturbation datasets)
         # Usually control cells are overrepresented such that predicting control all time would give good results
         # Cells with rare perturbations are sampled more
-        class_weights = 1.0 / torch.bincount(torch.tensor(train_dataset.labels.values))
-        train_weights = class_weights[train_dataset.labels]
+        train_weights = 1 / (1 + torch.sum(torch.tensor(train_dataset.labels), dim=1))
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
-        self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=4)
+        self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size,  sampler=train_sampler, num_workers=4)
         self.test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
         self.valid_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
@@ -173,6 +170,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             self.model.eval()
             for dataset_count, batch in enumerate(self.entire_dataset):
                 emb, y = self.model.get_embeddings(batch)
+                emb = torch.squeeze(emb)
                 batch_adata = AnnData(X=emb.cpu().numpy())
                 batch_adata.obs["perturbations"] = y
                 if dataset_count == 0:
@@ -286,8 +284,8 @@ class PLDataset(Dataset):
         """Returns a sample and corresponding perturbations applied (labels)"""
 
         sample = self.data[idx].A if scipy.sparse.issparse(self.data) else self.data[idx]
-        num_label = self.labels[idx]
-        str_label = self.pert_labels[idx]
+        num_label = self.labels.iloc[idx]
+        str_label = self.pert_labels.iloc[idx]
 
         return sample, num_label, str_label
 
