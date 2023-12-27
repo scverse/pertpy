@@ -65,6 +65,7 @@ dependencies = [
     "ott-jax",
     "sparsecca",
     "openpyxl",
+    "pubchempy",
 ]
 
 [project.optional-dependencies]
