@@ -21,7 +21,7 @@ class ClusteringSpace(PerturbationSpace):
         adata: AnnData,
         true_label_col: str,
         cluster_col: str,
-        metrics: list[str] = ["nmi", "ari", "asw"],
+        metrics: list[str] = None,
         **kwargs,
     ):
         """Evaluation of previously computed clustering against ground truth labels.
@@ -43,6 +43,8 @@ class ClusteringSpace(PerturbationSpace):
             >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
             >>> results = kmeans.evaluate_clustering(kmeans_adata, true_label_col="gene_target", cluster_col="k-means", metrics=['nmi'])
         """
+        if metrics is None:
+            metrics = ["nmi", "ari", "asw"]
         true_labels = adata.obs[true_label_col]
 
         results = {}
