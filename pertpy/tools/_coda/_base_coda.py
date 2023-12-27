@@ -2524,7 +2524,9 @@ def from_scanpy(
         covariate_df_ = covariate_df_.join(covariate_df_uns, how="left")
 
     if covariate_obs:
-        unique_covariates = [c for c in covariate_obs if adata.obs.groupby(sample_identifier)[c].nunique().eq(1).all()]
+        is_unique = adata.obs.groupby(sample_identifier).transform(lambda x: x.nunique() == 1)
+        unique_covariates = is_unique.columns[is_unique.all()].tolist()
+
         if len(unique_covariates) < len(covariate_obs):
             skipped = set(covariate_obs) - set(unique_covariates)
             print(f"[bold yellow]Covariates {skipped} have non-unique values! Skipping...")
@@ -2538,5 +2540,6 @@ def from_scanpy(
         covariate_df_ = covariate_df_.join(covariate_df, how="left")
 
     var_dat = ct_count_data.sum(axis=0).rename("n_cells").to_frame()
+    var_dat.index = var_dat.index.astype(str)
 
     return AnnData(X=ct_count_data.values, var=var_dat, obs=covariate_df_)
