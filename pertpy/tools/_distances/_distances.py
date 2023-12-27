@@ -3,24 +3,25 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import numba
 import numpy as np
 import pandas as pd
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
+from pandas import Series
 from rich.progress import track
 from scipy.sparse import issparse
 from scipy.spatial.distance import cosine
 from scipy.special import gammaln
-from scipy.stats import kendalltau, pearsonr, spearmanr
+from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from anndata import AnnData
 
 
@@ -64,14 +65,20 @@ class Distance:
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
-    - "kl_divergence": Kullback–Leibler divergence distance.
+    - "sym_kldiv": symmetrized Kullback–Leibler divergence distance.
         Kullback–Leibler divergence of the gaussian distributions between cells of two groups.
-        Here we fit a gaussian distribution over each group of cells and then calculate the KL divergence
+        Here we fit a gaussian distribution over one group of cells and then calculate the KL divergence on the other, and vice versa.
     - "t_test": t-test statistic.
         T-test statistic measure between cells of two groups.
+    - "ks_test": Kolmogorov-Smirnov test statistic.
+        Kolmogorov-Smirnov test statistic measure between cells of two groups.
     - "nb_ll": log-likelihood over negative binomial
         Average of log-likelihoods of samples of the secondary group after fitting a negative binomial distribution
         over the samples of the first group.
+    - "classifier_proba": probability of a binary classifier
+        Average of the classification probability of the perturbation for a binary classifier.
+    - "classifier_cp": classifier class projection
+        Average of the class
 
     Attributes:
         metric: Name of distance metric.
@@ -135,12 +142,18 @@ class Distance:
             metric_fct = MMD()
         elif metric == "wasserstein":
             metric_fct = WassersteinDistance()
-        elif metric == "kl_divergence":
-            metric_fct = KLDivergence()
+        elif metric == "sym_kldiv":
+            metric_fct = SymmetricKLDivergence()
         elif metric == "t_test":
             metric_fct = TTestDistance()
+        elif metric == "ks_test":
+            metric_fct = KSTestDistance()
         elif metric == "nb_ll":
             metric_fct = NBLL()
+        elif metric == "classifier_proba":
+            metric_fct = ClassifierProbaDistance()
+        elif metric == "classifier_cp":
+            metric_fct = ClassifierClassProjection()
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -299,6 +312,11 @@ class Distance:
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
+        if self.metric == "classifier_cp":
+            return self.metric_fct.onesided_distances(  # type: ignore
+                adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs
+            )
+
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.Series(index=groups, dtype=float)
@@ -327,7 +345,10 @@ class Distance:
                     dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
                 df.loc[group_x] = dist
         else:
-            embedding = adata.obsm[self.obsm_key].copy()
+            if self.layer_key:
+                embedding = adata.layers[self.layer_key]
+            else:
+                embedding = adata.obsm[self.obsm_key].copy()
             for group_x in fct(groups):
                 cells_x = embedding[grouping == group_x].copy()
                 group_y = selected_group
@@ -335,7 +356,7 @@ class Distance:
                     dist = 0.0
                 else:
                     cells_y = embedding[grouping == group_y].copy()
-                    dist = self.metric_fct(cells_x, cells_y, **kwargs)
+                    dist = self(cells_x, cells_y, **kwargs)
                 df.loc[group_x] = dist
         df.index.name = groupby
         df.name = f"{self.metric} to {selected_group}"
@@ -469,11 +490,8 @@ class WassersteinDistance(AbstractDistance):
         return self.solve_ot_problem(geom, **kwargs)
 
     def solve_ot_problem(self, geom: Geometry, **kwargs):
-        # Define a linear problem with that cost structure.
         ot_prob = LinearProblem(geom)
-        # Create a Sinkhorn solver
         solver = Sinkhorn()
-        # Solve OT problem
         ot = solver(ot_prob, **kwargs)
         return ot.reg_ot_cost.item()
 
@@ -500,7 +518,7 @@ class MeanSquaredDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs) ** 0.5
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs) ** 2 / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MeanSquaredDistance cannot be called on a pairwise distance matrix.")
@@ -514,7 +532,7 @@ class MeanAbsoluteDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs)
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs) / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MeanAbsoluteDistance cannot be called on a pairwise distance matrix.")
@@ -612,11 +630,12 @@ class R2ScoreDistance(AbstractDistance):
         raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
 
 
-class KLDivergence(AbstractDistance):
-    """Average of KL divergence between gene distributions of two groups
+class SymmetricKLDivergence(AbstractDistance):
+    """Average of symmetric KL divergence between gene distributions of two groups
 
     Assuming a Gaussian distribution for each gene in each group, calculates
-    the KL divergence between them and averages over all genes
+    the KL divergence between them and averages over all genes. Repeats this ABBA to get a symmetrized distance.
+    See https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Symmetrised_divergence.
 
     """
 
@@ -630,11 +649,12 @@ class KLDivergence(AbstractDistance):
             x_mean, x_std = X[:, i].mean(), X[:, i].std() + epsilon
             y_mean, y_std = Y[:, i].mean(), Y[:, i].std() + epsilon
             kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
-            kl_all.append(kl)
+            klr = np.log(x_std / y_std) + (y_std**2 + (y_mean - x_mean) ** 2) / (2 * x_std**2) - 1 / 2
+            kl_all.append(kl + klr)
         return sum(kl_all) / len(kl_all)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError("KLDivergence cannot be called on a pairwise distance matrix.")
+        raise NotImplementedError("SymmetricKLDivergence cannot be called on a pairwise distance matrix.")
 
 
 class TTestDistance(AbstractDistance):
@@ -661,6 +681,23 @@ class TTestDistance(AbstractDistance):
         raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
 
 
+class KSTestDistance(AbstractDistance):
+    """Average of two-sided KS test statistic between two groups"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        stats = []
+        for i in range(X.shape[1]):
+            stats.append(abs(kstest(X[:, i], Y[:, i])[0]))
+        return sum(stats) / len(stats)
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("KSTestDistance cannot be called on a pairwise distance matrix.")
+
+
 class NBLL(AbstractDistance):
     """
     Average of Log likelihood (scalar) of group B cells
@@ -681,16 +718,12 @@ class NBLL(AbstractDistance):
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBLL distance only works for raw counts.")
 
-        nlls = []
-        for i in range(X.shape[1]):
-            x, y = X[:, i], Y[:, i]
-            nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
-            mu = np.repeat(np.exp(nb_params[0]), y.shape[0])
-            theta = np.repeat(1 / nb_params[1], y.shape[0])
-            if mu[0] == np.nan or theta[0] == np.nan:
-                raise ValueError("Could not fit a negative binomial distribution to the input data")
-            # calculate the nll of y
-            eps = np.repeat(epsilon, y.shape[0])
+        @numba.jit
+        def _compute_nll(y: np.ndarray, nb_params: tuple[float, float], epsilon: float) -> float:
+            mu = np.exp(nb_params[0])
+            theta = 1 / nb_params[1]
+            eps = epsilon
+
             log_theta_mu_eps = np.log(theta + mu + eps)
             nll = (
                 theta * (np.log(theta + eps) - log_theta_mu_eps)
@@ -699,9 +732,127 @@ class NBLL(AbstractDistance):
                 - gammaln(theta)
                 - gammaln(y + 1)
             )
-            nlls.append(nll.mean())
+            return nll.mean()
 
-        return -sum(nlls) / len(nlls)
+        def _process_gene(x: np.ndarray, y: np.ndarray, epsilon: float) -> float:
+            try:
+                nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
+                return _compute_nll(y, nb_params, epsilon)
+            except np.linalg.linalg.LinAlgError:
+                if x.mean() < 10 and y.mean() < 10:
+                    return 0.0
+                else:
+                    return np.nan  # Use NaN to indicate skipped genes
+
+        nlls = []
+        genes_skipped = 0
+
+        for i in range(X.shape[1]):
+            nll = _process_gene(X[:, i], Y[:, i], epsilon)
+            if np.isnan(nll):
+                genes_skipped += 1
+            else:
+                nlls.append(nll)
+
+        if genes_skipped > X.shape[1] / 2:
+            raise AttributeError(f"{genes_skipped} genes could not be fit, which is over half.")
+
+        return -np.sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
+
+
+def _sample(X, frac=None, n=None):
+    """Returns subsample of cells in format (train, test)."""
+    if frac and n:
+        raise ValueError("Cannot pass both frac and n.")
+    if frac:
+        n_cells = max(1, int(X.shape[0] * frac))
+    elif n:
+        n_cells = n
+    else:
+        raise ValueError("Must pass either `frac` or `n`.")
+
+    rng = np.random.default_rng()
+    sampled_indices = rng.choice(X.shape[0], n_cells, replace=False)
+    remaining_indices = np.setdiff1d(np.arange(X.shape[0]), sampled_indices)
+    return X[remaining_indices, :], X[sampled_indices, :]
+
+
+class ClassifierProbaDistance(AbstractDistance):
+    """Average of classification probabilites of a binary classifier.
+
+    Assumes the first condition is control and the second is perturbed.
+    Always holds out 20% of the perturbed condition.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        Y_train, Y_test = _sample(Y, frac=0.2)
+        label = ["c"] * X.shape[0] + ["p"] * Y_train.shape[0]
+        train = np.concatenate([X, Y_train])
+
+        reg = LogisticRegression()  # TODO dynamically pass this?
+        reg.fit(train, label)
+        test_labels = reg.predict_proba(Y_test)
+        return np.mean(test_labels[:, 1])
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierProbaDistance cannot be called on a pairwise distance matrix.")
+
+
+class ClassifierClassProjection(AbstractDistance):
+    """Average of 1-(classification probability of control).
+
+    Warning: unlike all other distances, this must also take a list of categorical labels the same length as X.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierClassProjection can currently only be called with onesided.")
+
+    def onesided_distances(
+        self,
+        adata: AnnData,
+        groupby: str,
+        selected_group: str | None = None,
+        groups: list[str] | None = None,
+        show_progressbar: bool = True,
+        n_jobs: int = -1,
+        **kwargs,
+    ) -> Series:
+        """Unlike the parent function, all groups except the selected group are factored into the classifier.
+
+        Similar to the parent function, the returned dataframe contains only the specified groups.
+        """
+        groups = adata.obs[groupby].unique() if groups is None else groups
+
+        X = adata[adata.obs[groupby] != selected_group].X
+        labels = adata[adata.obs[groupby] != selected_group].obs[groupby].values
+        Y = adata[adata.obs[groupby] == selected_group].X
+
+        reg = LogisticRegression()
+        reg.fit(X, labels)
+        test_probas = reg.predict_proba(Y)
+
+        df = pd.Series(index=groups, dtype=float)
+        for group in groups:
+            if group == selected_group:
+                df.loc[group] = 0
+            else:
+                class_idx = list(reg.classes_).index(group)
+                df.loc[group] = 1 - np.mean(test_probas[:, class_idx])
+        df.index.name = groupby
+        df.name = f"classifier_cp to {selected_group}"
+
+        return df
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("ClassifierClassProjection cannot be called on a pairwise distance matrix.")
