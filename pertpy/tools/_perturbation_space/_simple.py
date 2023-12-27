@@ -18,6 +18,7 @@ class CentroidSpace(PerturbationSpace):
         target_col: str = "perturbations",
         layer_key: str = None,
         embedding_key: str = "X_umap",
+        keep_obs: bool = True,
     ) -> AnnData:  # type: ignore
         """Computes the centroids of a pre-computed embedding such as UMAP.
 
@@ -26,6 +27,12 @@ class CentroidSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+            keep_obs: Whether .obs columns in the input AnnData should be kept in the output pseudobulk AnnData. Only .obs columns with the same value for
+                each cell of one perturbation are kept. Defaults to True.
+
+        Returns:
+            AnnData object with one observation per perturbation, storing the embedding data of the
+            centroid of the respective perturbation.
 
         Examples:
             Compute the centroids of a UMAP embedding of the papalexi_2021 dataset:
@@ -84,6 +91,18 @@ class CentroidSpace(PerturbationSpace):
 
         ps_adata = AnnData(X=X)
         ps_adata.obs_names = index
+        ps_adata.obs[target_col] = index
+
+        if embedding_key is not None:
+            ps_adata.obsm[embedding_key] = X
+
+        if keep_obs:  # Save the values of the obs columns of interest in the ps_adata object
+            obs_df = adata.obs
+            obs_df = obs_df.groupby(target_col).agg(lambda x: np.nan if len(set(x)) != 1 else list(set(x))[0])
+            for obs_name in obs_df.columns:
+                if not obs_df[obs_name].isnull().values.any():
+                    mapping = {pert: obs_df.loc[pert][obs_name] for pert in index}
+                    ps_adata.obs[obs_name] = ps_adata.obs[target_col].map(mapping)
 
         return ps_adata
 
@@ -107,6 +126,9 @@ class PseudobulkSpace(PerturbationSpace):
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
             **kwargs: Are passed to decoupler's get_pseuobulk.
+
+        Returns:
+             AnnData object with one observation per perturbation.
 
         Examples:
             >>> import pertpy as pp
@@ -163,6 +185,11 @@ class KMeansSpace(ClusteringSpace):
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's KMeans.
+
+        Returns:
+            If return_object is True, the adata and the clustering object is returned.
+            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
+             that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt
@@ -223,6 +250,11 @@ class DBSCANSpace(ClusteringSpace):
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's DBSCAN.
+
+        Returns:
+            If return_object is True, the adata and the clustering object is returned.
+            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
+            that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt

@@ -31,6 +31,8 @@ class ClusteringSpace(PerturbationSpace):
             true_label_col: ground truth labels.
             cluster_col: cluster computed labels.
             metrics: Metrics to compute. Defaults to ['nmi', 'ari', 'asw'].
+            **kwargs: Additional arguments to pass to the metrics. For nmi, average_method can be passed.
+                For asw, metric, distances, sample_size, and random_state can be passed.
 
         Examples:
             Example usage with KMeansSpace:

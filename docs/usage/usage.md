@@ -9,7 +9,7 @@ import pertpy as pt
 You can then access the respective modules like:
 
 ```python
-pt.pl.cool_fancy_plot()
+pt.tl.cool_fancy_tool()
 ```
 
 ```{eval-rst}
@@ -58,7 +58,7 @@ pt.pl.cool_fancy_plot()
     data.schraivogel_2020_tap_screen_chr11
     data.sciplex3_raw
     data.shifrut_2018
-    data.smillie
+    data.smillie_2019
     data.srivatsan_2020_sciplex2
     data.srivatsan_2020_sciplex3
     data.srivatsan_2020_sciplex4
@@ -106,7 +106,7 @@ sc.pp.log1p(gdo)
 ga = pt.pp.GuideAssignment()
 ga.assign_by_threshold(gdo, 5, layer="counts", output_layer="assigned_guides")
 
-pt.pl.guide.heatmap(gdo, layer="assigned_guides")
+ga.plot_heatmap(gdo, layer="assigned_guides")
 ```
 
 ## Tools
@@ -142,8 +142,8 @@ mdata = pt.dt.papalexi_2021()
 ms = pt.tl.Mixscape()
 ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
 ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
-ms.lda(adata=mdata["rna"], labels="gene_target", layer="X_pert")
-pt.pl.ms.lda(adata=mdata["rna"])
+ms.lda(adata=mdata["rna"], labels="gene_target", layer="X_pert", control="NT")
+ms.plot_lda(adata=mdata["rna"], control="NT")
 ```
 
 See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html) for a more elaborate tutorial.
@@ -213,8 +213,8 @@ Example implementation:
 import pertpy as pt
 
 haber_cells = pt.dt.haber_2017_regions()
-sccoda_model = pt.tl.Sccoda()
-sccoda_data = sccoda_model.load(
+sccoda = pt.tl.Sccoda()
+sccoda_data = sccoda.load(
     haber_cells,
     type="cell_level",
     generate_sample_level=True,
@@ -226,15 +226,15 @@ sccoda_data.mod["coda_salm"] = sccoda_data["coda"][
     sccoda_data["coda"].obs["condition"].isin(["Control", "Salmonella"])
 ].copy()
 
-sccoda_data = sccoda_model.prepare(
+sccoda_data = sccoda.prepare(
     sccoda_data,
     modality_key="coda_salm",
     formula="condition",
     reference_cell_type="Goblet",
 )
-sccoda_model.run_nuts(sccoda_data, modality_key="coda_salm")
-sccoda_model.summary(sccoda_data, modality_key="coda_salm")
-pt.pl.coda.effects_barplot(
+sccoda.run_nuts(sccoda_data, modality_key="coda_salm")
+sccoda.summary(sccoda_data, modality_key="coda_salm")
+sccoda.plot_effects_barplot(
     sccoda_data, modality_key="coda_salm", parameter="Final Parameter"
 )
 ```
@@ -320,30 +320,6 @@ etest = pt.tl.PermutationTest(
 tab = etest(adata, groupby="perturbation", contrast="control")
 ```
 
-### MetaData
-
-MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
-We are currently implementing several sources with more to come.
-
-CellLineMetaData aims to retrieve various types of information related to cell lines, including cell line annotation,
-bulk RNA and protein expression data.
-
-Available databases for cell line metadata:
-
--   The Cancer Dependency Map Project at Broad
--   The Cancer Dependency Map Project at Sanger
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: tools
-
-    tools.CellLineMetaData
-```
-
 ### Response prediction
 
 #### Augur
@@ -417,10 +393,10 @@ train_new = train[
 train_new = train_new.copy()
 
 pt.tl.SCGEN.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
-model = pt.tl.SCGEN(train_new)
-model.train(max_epochs=100, batch_size=32)
+scgen = pt.tl.SCGEN(train_new)
+scgen.train(max_epochs=100, batch_size=32)
 
-pred, delta = model.predict(
+pred, delta = scgen.predict(
     ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T"
 )
 pred.obs["condition"] = "pred"
@@ -510,103 +486,45 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
 
 ## Plots
 
-### Preprocessing
+Every tool has a set of plotting functions that start with `plot_`.
+
+However, we are planning to offer more general plots at a later point.
+
+## MetaData
+
+MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
+We are currently implementing several sources with more to come.
+
+CellLine aims to retrieve various types of information related to cell lines, including cell line annotation,
+bulk RNA and protein expression data.
+
+Available databases for cell line metadata:
+
+-   [The Cancer Dependency Map Project at Broad](https://depmap.org/portal/)
+-   [The Cancer Dependency Map Project at Sanger](https://depmap.sanger.ac.uk/)
+-   [Genomics of Drug Sensitivity in Cancer (GDSC)](https://www.cancerrxgene.org/)
+
+Compound aims to retrieve various types of information related to compounds of interest, including the most common synonym, pubchemID and canonical SMILES.
+
+Available databases for compound metadata:
+
+-   [PubChem](https://pubchem.ncbi.nlm.nih.gov/)
+
+Moa aims to retrieve metadata of mechanism of action studies related to perturbagens of interest, depending on the molecular targets.
+
+Available databases for mechanism of action metadata:
+
+-   [CLUE](https://clue.io/)
 
 ```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.guide
-
+.. currentmodule:: pertpy
 ```
 
-### Pooled CRISPR screens
-
-#### Mixscape
-
 ```{eval-rst}
 .. autosummary::
-    :toctree: plot
+    :toctree: metadata
 
-    plot.ms.violin
-    plot.ms.perturbscore
-    plot.ms.heatmap
-    plot.ms.barplot
-    plot.ms.lda
-```
-
-### Compositional analysis
-
-#### Milo
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.milo.nhood_graph
-    plot.milo.nhood
-    plot.milo.da_beeswarm
-    plot.milo.nhood_counts_by_cond
-```
-
-#### scCODA and tascCODA
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.coda.stacked_barplot
-    plot.coda.effects_barplot
-    plot.coda.boxplots
-    plot.coda.rel_abundance_dispersion_plot
-    plot.coda.draw_tree
-    plot.coda.draw_effects
-    plot.coda.effects_umap
-```
-
-### Multi-cellular programs
-
-#### DIALOGUE
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.dl.split_violins
-    plot.dl.pairplot
-```
-
-### Response prediction
-
-#### Augur
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.ag.dp_scatter
-    plot.ag.important_features
-    plot.ag.lollipop
-    plot.ag.scatterplot
-
-```
-
-#### scGen
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.scg.reg_mean_plot
-    plot.scg.reg_var_plot
-    plot.scg.binary_classifier
-```
-
-#### CINEMA-OT
-
-```{eval-rst}
-.. autosummary::
-    :toctree: plot
-
-    plot.cot.vis_matching
+    metadata.CellLine
+    metadata.Compound
+    metadata.Moa
 ```

@@ -153,3 +153,5 @@ cache
 
 lightning_logs/*
 */lightning_logs/*
+
+node_modules

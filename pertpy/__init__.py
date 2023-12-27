@@ -11,9 +11,10 @@ from numba import NumbaDeprecationWarning
 
 warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
-warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module="scvi._settings")
 
 from . import data as dt
+from . import metadata as md
 from . import plot as pl
 from . import preprocessing as pp
 from . import tools as tl

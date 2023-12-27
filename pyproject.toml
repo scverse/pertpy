@@ -55,7 +55,6 @@ dependencies = [
     "muon",
     "requests",
     "scikit-misc",
-    "plotnine",
     "scipy",
     "scvi-tools",
     "adjusttext",
@@ -66,6 +65,7 @@ dependencies = [
     "ott-jax",
     "sparsecca",
     "openpyxl",
+    "pubchempy",
 ]
 
 [project.optional-dependencies]

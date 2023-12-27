@@ -15,7 +15,7 @@ class PerturbationSpace:
     """Implements various ways of interacting with PerturbationSpaces.
 
     We differentiate between a cell space and a perturbation space.
-    Visually speaking, in cell spaces single dota points in an embeddings summarize a cell,
+    Visually speaking, in cell spaces single data points in an embeddings summarize a cell,
     whereas in a perturbation space, data points summarize whole perturbations.
     """
 
@@ -26,6 +26,7 @@ class PerturbationSpace:
         self,
         adata: AnnData,
         target_col: str = "perturbations",
+        group_col: str = None,
         reference_key: str = "control",
         layer_key: str = None,
         new_layer_key: str = "control_diff",
@@ -33,22 +34,27 @@ class PerturbationSpace:
         new_embedding_key: str = "control_diff",
         all_data: bool = False,
         copy: bool = False,
-    ):
+    ) -> AnnData:
         """Subtract mean of the control from the perturbation.
 
         Args:
             adata: Anndata object of size cells x genes.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
+            group_col: .obs column name that stores the label of the group of eah cell. If None, ignore groups. Defaults to 'perturbations'.
             reference_key: The key of the control values. Defaults to 'control'.
             layer_key: Key of the AnnData layer to use for computation. Defaults to the `X` matrix otherwise.
-            new_layer_key: the results are stored in the given layer. Defaults to 'differential diff'.
+            new_layer_key: the results are stored in the given layer. Defaults to 'control_diff'.
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control diff'.
+            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control_diff'.
             all_data: if True, do the computation in all data representations (X, all layers and all embeddings)
             copy: If True returns a new Anndata of same size with the new column; otherwise it updates the initial AnnData object.
 
+        Returns:
+            Updated AnnData object.
+
         Examples:
             Example usage with PseudobulkSpace:
+
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
@@ -69,48 +75,67 @@ class PerturbationSpace:
             adata = adata.copy()
 
         control_mask = adata.obs[target_col] == reference_key
-        num_control = control_mask.sum()
+        group_masks = (
+            [(adata.obs[group_col] == sample) for sample in adata.obs[group_col].unique()]
+            if group_col
+            else [[True] * adata.n_obs]
+        )
 
         if layer_key:
-            if num_control == 1:
-                control_expression = adata.layers[layer_key][control_mask, :]
-            else:
-                control_expression = np.mean(adata.layers[layer_key][control_mask, :], axis=0)
-            diff_matrix = adata.layers[layer_key] - control_expression
-            adata.layers[new_layer_key] = diff_matrix
+            adata.layers[new_layer_key] = np.zeros((adata.n_obs, adata.n_vars))
+            for mask in group_masks:
+                num_control = (control_mask & mask).sum()
+                if num_control == 1:
+                    control_expression = adata.layers[layer_key][(control_mask & mask), :]
+                elif num_control > 1:
+                    control_expression = np.mean(adata.layers[layer_key][(control_mask & mask), :], axis=0)
+                else:
+                    control_expression = np.zeros((1, adata.n_vars))
+                adata.layers[new_layer_key][mask, :] = adata.layers[layer_key][mask, :] - control_expression
 
         if embedding_key:
-            if num_control == 1:
-                control_expression = adata.obsm[embedding_key][control_mask, :]
-            else:
-                control_expression = np.mean(adata.obsm[embedding_key][control_mask, :], axis=0)
-            diff_matrix = adata.obsm[embedding_key] - control_expression
-            adata.obsm[new_embedding_key] = diff_matrix
+            adata.obsm[new_embedding_key] = np.zeros(adata.obsm[embedding_key].shape)
+            for mask in group_masks:
+                num_control = (control_mask & mask).sum()
+                if num_control == 1:
+                    control_expression = adata.obsm[embedding_key][(control_mask & mask), :]
+                elif num_control > 1:
+                    control_expression = np.mean(adata.obsm[embedding_key][(control_mask & mask), :], axis=0)
+                else:
+                    control_expression = np.zeros((1, adata.n_vars))
+                adata.obsm[new_embedding_key][mask, :] = adata.obsm[embedding_key][mask, :] - control_expression
 
         if (not layer_key and not embedding_key) or all_data:
-            if num_control == 1:
-                control_expression = adata.X[control_mask, :]
-            else:
-                control_expression = np.mean(adata.X[control_mask, :], axis=0)
-            diff_matrix = adata.X - control_expression
-            adata.X = diff_matrix
+            adata_x = np.zeros((adata.n_obs, adata.n_vars))
+            for mask in group_masks:
+                num_control = (control_mask & mask).sum()
+                if num_control == 1:
+                    control_expression = adata.X[(control_mask & mask), :]
+                elif num_control > 1:
+                    control_expression = np.mean(adata.X[(control_mask & mask), :], axis=0)
+                else:
+                    control_expression = np.zeros((1, adata.n_vars))
+                adata_x[mask, :] = adata.X[mask, :] - control_expression
+            adata.X = adata_x
 
         if all_data:
             layers_keys = list(adata.layers.keys())
             for local_layer_key in layers_keys:
                 if local_layer_key != layer_key and local_layer_key != new_layer_key:
-                    diff_matrix = adata.layers[local_layer_key] - np.mean(
-                        adata.layers[local_layer_key][control_mask, :], axis=0
-                    )
-                    adata.layers[local_layer_key + "_control_diff"] = diff_matrix
+                    adata.layers[local_layer_key + "_control_diff"] = np.zeros((adata.n_obs, adata.n_vars))
+                    for mask in group_masks:
+                        adata.layers[local_layer_key + "_control_diff"][mask, :] = adata.layers[local_layer_key][
+                            mask, :
+                        ] - np.mean(adata.layers[local_layer_key][(control_mask & mask), :], axis=0)
 
             embedding_keys = list(adata.obsm_keys())
             for local_embedding_key in embedding_keys:
                 if local_embedding_key != embedding_key and local_embedding_key != new_embedding_key:
-                    diff_matrix = adata.obsm[local_embedding_key] - np.mean(
-                        adata.obsm[local_embedding_key][control_mask, :], axis=0
-                    )
-                    adata.obsm[local_embedding_key + "_control_diff"] = diff_matrix
+                    adata.obsm[local_embedding_key + "_control_diff"] = np.zeros(adata.obsm[local_embedding_key].shape)
+                    for mask in group_masks:
+                        adata.obsm[local_embedding_key + "_control_diff"][mask, :] = adata.obsm[local_embedding_key][
+                            mask, :
+                        ] - np.mean(adata.obsm[local_embedding_key][(control_mask & mask), :], axis=0)
 
         self.control_diff_computed = True
 
@@ -123,18 +148,24 @@ class PerturbationSpace:
         reference_key: str = "control",
         ensure_consistency: bool = False,
         target_col: str = "perturbations",
-    ):
+    ) -> AnnData:
         """Add perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to add.
-            reference_key: perturbation source from which the perturbation summation starts.
+            reference_key: perturbation source from which the perturbation summation starts. Defaults to 'control'.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 
+        Returns:
+            Anndata object of size (n_perts+1) x dim, where the last row is the addition of the specified perturbations.
+            If ensure_consistency is True, returns a tuple of (new_perturbation, adata) where adata is the AnnData object
+            provided as input but updated using compute_control_diff.
+
         Examples:
             Example usage with PseudobulkSpace:
+
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
@@ -224,23 +255,29 @@ class PerturbationSpace:
         reference_key: str = "control",
         ensure_consistency: bool = False,
         target_col: str = "perturbations",
-    ):
+    ) -> AnnData:
         """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
             adata: Anndata object of size n_perts x dim.
-            perturbations: Perturbations to subtract,
-            reference_key: Perturbation source from which the perturbation subtraction starts
+            perturbations: Perturbations to subtract.
+            reference_key: Perturbation source from which the perturbation subtraction starts. Defaults to 'control'.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 
+        Returns:
+            Anndata object of size (n_perts+1) x dim, where the last row is the subtraction of the specified perturbations.
+            If ensure_consistency is True, returns a tuple of (new_perturbation, adata) where adata is the AnnData object
+            provided as input but updated using compute_control_diff.
+
         Examples:
             Example usage with PseudobulkSpace:
+
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
-            >>> new_perturbation = ps.add(ps_adata, reference_key="ATF2", perturbations=["BRD4", "CUL3"])
+            >>> new_perturbation = ps.subtract(ps_adata, reference_key="ATF2", perturbations=["BRD4", "CUL3"])
         """
         new_pert_name = reference_key + "-"
         for perturbation in perturbations:

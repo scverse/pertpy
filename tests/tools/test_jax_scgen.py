@@ -12,14 +12,13 @@ def test_scgen():
         labels_key="labels",
     )
 
-    model = pt.tl.SCGEN(adata)
-    model.train(max_epochs=1, batch_size=32, early_stopping=True, early_stopping_patience=25)
+    scg = pt.tl.SCGEN(adata)
+    scg.train(max_epochs=1, batch_size=32, early_stopping=True, early_stopping_patience=25)
 
-    # batch Removal
-    model.batch_removal()
+    scg.batch_removal()
 
     # predict
-    pred, delta = model.predict(ctrl_key="batch_0", stim_key="batch_1", celltype_to_predict="label_0")
+    pred, delta = scg.predict(ctrl_key="batch_0", stim_key="batch_1", celltype_to_predict="label_0")
     pred.obs["batch"] = "pred"
 
     # reg mean and reg var
@@ -30,7 +29,7 @@ def test_scgen():
     sc.tl.rank_genes_groups(label_0, groupby="batch", method="wilcoxon")
     diff_genes = label_0.uns["rank_genes_groups"]["names"]["batch_1"]
 
-    pt.pl.scg.reg_mean_plot(
+    scg.plot_reg_mean_plot(
         eval_adata,
         condition_key="batch",
         axis_keys={"x": "pred", "y": "batch_1"},
@@ -41,7 +40,7 @@ def test_scgen():
         legend=False,
     )
 
-    pt.pl.scg.reg_var_plot(
+    scg.plot_reg_var_plot(
         eval_adata,
         condition_key="batch",
         axis_keys={"x": "pred", "y": "batch_1"},

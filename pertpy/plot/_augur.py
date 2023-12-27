@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Any
 
 from anndata import AnnData
@@ -42,34 +43,20 @@ class AugurpyPlot:
 
             >>> pvals = ag_rfc.predict_differential_prioritization(augur_results1=results_15, augur_results2=results_48, \
                 permuted_results1=results_15_permute, permuted_results2=results_48_permute)
-            >>> pt.pl.ag.dp_scatter(pvals)
+            >>> ag_rfc.plot_dp_scatter(pvals)
         """
-        x = results["mean_augur_score1"]
-        y = results["mean_augur_score2"]
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-        if ax is None:
-            fig, ax = plt.subplots()
-        scatter = ax.scatter(x, y, c=results.z, cmap="Greens")
+        from pertpy.tools import Augur
 
-        # adding optional labels
-        top_n_index = results.sort_values(by="pval").index[:top_n]
-        for idx in top_n_index:
-            ax.annotate(
-                results.loc[idx, "cell_type"],
-                (results.loc[idx, "mean_augur_score1"], results.loc[idx, "mean_augur_score2"]),
-            )
+        ag = Augur("random_forest_classifier")
 
-        # add diagonal
-        limits = max(ax.get_xlim(), ax.get_ylim())
-        (diag_line,) = ax.plot(limits, limits, ls="--", c=".3")
-
-        # formatting and details
-        plt.xlabel("Augur scores 1")
-        plt.ylabel("Augur scores 2")
-        legend1 = ax.legend(*scatter.legend_elements(), loc="center left", title="z-scores", bbox_to_anchor=(1, 0.5))
-        ax.add_artist(legend1)
-
-        return fig if return_figure else ax
+        return ag.plot_dp_scatter(results=results, top_n=top_n, ax=ax, return_figure=return_figure)
 
     @staticmethod
     def important_features(
@@ -93,38 +80,20 @@ class AugurpyPlot:
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
-            >>> pt.pl.ag.important_features(v_results)
+            >>> ag_rfc.plot_important_features(v_results)
         """
-        if isinstance(data, AnnData):
-            results = data.uns[key]
-        else:
-            results = data
-        # top_n features to plot
-        n_features = (
-            results["feature_importances"]
-            .groupby("genes", as_index=False)
-            .feature_importances.mean()
-            .sort_values(by="feature_importances")[-top_n:]
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
         )
 
-        if ax is None:
-            fig, ax = plt.subplots()
-        y_axes_range = range(1, top_n + 1)
-        ax.hlines(
-            y_axes_range,
-            xmin=0,
-            xmax=n_features["feature_importances"],
-        )
+        from pertpy.tools import Augur
 
-        # drawing the markers (circle)
-        ax.plot(n_features["feature_importances"], y_axes_range, "o")
+        ag = Augur("random_forest_classifier")
 
-        # formatting and details
-        plt.xlabel("Mean Feature Importance")
-        plt.ylabel("Gene")
-        plt.yticks(y_axes_range, n_features["genes"])
-
-        return fig if return_figure else ax
+        return ag.plot_important_features(data=data, key=key, top_n=top_n, ax=ax, return_figure=return_figure)
 
     @staticmethod
     def lollipop(
@@ -147,34 +116,20 @@ class AugurpyPlot:
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
-            >>> pt.pl.ag.lollipop(v_results)
+            >>> ag_rfc.plot_lollipop(v_results)
         """
-        if isinstance(data, AnnData):
-            results = data.uns[key]
-        else:
-            results = data
-        if ax is None:
-            fig, ax = plt.subplots()
-        y_axes_range = range(1, len(results["summary_metrics"].columns) + 1)
-        ax.hlines(
-            y_axes_range,
-            xmin=0,
-            xmax=results["summary_metrics"].sort_values("mean_augur_score", axis=1).loc["mean_augur_score"],
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
         )
 
-        # drawing the markers (circle)
-        ax.plot(
-            results["summary_metrics"].sort_values("mean_augur_score", axis=1).loc["mean_augur_score"],
-            y_axes_range,
-            "o",
-        )
+        from pertpy.tools import Augur
 
-        # formatting and details
-        plt.xlabel("Mean Augur Score")
-        plt.ylabel("Cell Type")
-        plt.yticks(y_axes_range, results["summary_metrics"].sort_values("mean_augur_score", axis=1).columns)
+        ag = Augur("random_forest_classifier")
 
-        return fig if return_figure else ax
+        return ag.plot_lollipop(data=data, key=key, ax=ax, return_figure=return_figure)
 
     @staticmethod
     def scatterplot(
@@ -198,37 +153,17 @@ class AugurpyPlot:
             >>> loaded_data = ag_rfc.load(adata)
             >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)
             >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
-            >>> pt.pl.ag.scatterplot(v_results, h_results)
+            >>> ag_rfc.plot_scatterplot(v_results, h_results)
         """
-        cell_types = results1["summary_metrics"].columns
-
-        fig, ax = plt.subplots()
-        ax.scatter(
-            results1["summary_metrics"].loc["mean_augur_score", cell_types],
-            results2["summary_metrics"].loc["mean_augur_score", cell_types],
+        warnings.warn(
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
+            " Please use the corresponding 'pt.tl' object",
+            FutureWarning,
+            stacklevel=2,
         )
 
-        # adding optional labels
-        top_n_cell_types = (
-            (results1["summary_metrics"].loc["mean_augur_score"] - results2["summary_metrics"].loc["mean_augur_score"])
-            .sort_values(ascending=False)
-            .index[:top_n]
-        )
-        for txt in top_n_cell_types:
-            ax.annotate(
-                txt,
-                (
-                    results1["summary_metrics"].loc["mean_augur_score", txt],
-                    results2["summary_metrics"].loc["mean_augur_score", txt],
-                ),
-            )
+        from pertpy.tools import Augur
 
-        # adding diagonal
-        limits = max(ax.get_xlim(), ax.get_ylim())
-        (diag_line,) = ax.plot(limits, limits, ls="--", c=".3")
+        ag = Augur("random_forest_classifier")
 
-        # formatting and details
-        plt.xlabel("Augur scores 1")
-        plt.ylabel("Augur scores 2")
-
-        return fig if return_figure else ax
+        return ag.plot_scatterplot(results1=results1, results2=results2, top_n=top_n, return_figure=return_figure)
