@@ -85,7 +85,7 @@ class TestDistances:
     @mark.parametrize("distance", all_distances)
     def test_distance_layers(self, adata, distance):
         Distance = pt.tl.Distance(distance, layer_key="lognorm")
-        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
+        df = Distance.pairwise(adata, groupby="perturbation")
 
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
@@ -94,7 +94,7 @@ class TestDistances:
     @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
     def test_distance_counts(self, adata, distance):
         Distance = pt.tl.Distance(distance, layer_key="counts")
-        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
+        df = Distance.pairwise(adata, groupby="perturbation")
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0
@@ -118,7 +118,7 @@ class TestDistances:
     def test_distance_pairwise(self, adata, distance):
         # Test consistency of pairwise distance results
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
+        df = Distance.pairwise(adata, groupby="perturbation")
 
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
@@ -129,8 +129,6 @@ class TestDistances:
         # Test consistency of one-sided distance results
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
         selected_group = adata.obs.perturbation.unique()[0]
-        df = Distance.onesided_distances(
-            adata, groupby="perturbation", selected_group=selected_group, show_progressbar=True
-        )
+        df = Distance.onesided_distances(adata, groupby="perturbation", selected_group=selected_group)
         assert isinstance(df, Series)
         assert df.loc[selected_group] == 0  # distance to self is 0

@@ -3,12 +3,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import numba
 import numpy as np
 import pandas as pd
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
+from pandas import Series
 from rich.progress import track
 from scipy.sparse import issparse
 from scipy.spatial.distance import cosine
@@ -20,8 +22,6 @@ from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from anndata import AnnData
 
 
@@ -313,7 +313,7 @@ class Distance:
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
         if self.metric == "classifier_cp":
-            return self.metric_fct.onesided_distances(
+            return self.metric_fct.onesided_distances(  # type: ignore
                 adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs
             )
 
@@ -490,11 +490,8 @@ class WassersteinDistance(AbstractDistance):
         return self.solve_ot_problem(geom, **kwargs)
 
     def solve_ot_problem(self, geom: Geometry, **kwargs):
-        # Define a linear problem with that cost structure.
         ot_prob = LinearProblem(geom)
-        # Create a Sinkhorn solver
         solver = Sinkhorn()
-        # Solve OT problem
         ot = solver(ot_prob, **kwargs)
         return ot.reg_ot_cost.item()
 
@@ -721,28 +718,12 @@ class NBLL(AbstractDistance):
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBLL distance only works for raw counts.")
 
-        nlls = []
-        genes_skipped = 0
-        for i in range(X.shape[1]):
-            x, y = X[:, i], Y[:, i]
-            try:
-                nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
-            except np.linalg.linalg.LinAlgError:
-                ## This error occurs when the gene cannot be parameterized, most commonly due to too much sparsity.
-                ## If the gene has fewer than 10 counts on average in both populations, we treat it as a vector of
-                ## zeroes and assign a distance of zero.
-                ## If the control vector cannot be parameterized not because it is sparse, we omit calculation for this gene.
-                if x.mean() < 10 and y.mean() < 10:
-                    nlls.append(0)
-                else:
-                    genes_skipped += 1
-                continue
-            mu = np.repeat(np.exp(nb_params[0]), y.shape[0])
-            theta = np.repeat(1 / nb_params[1], y.shape[0])
-            if mu[0] == np.nan or theta[0] == np.nan:
-                raise ValueError("Could not fit a negative binomial distribution to the input data")
-            # calculate the nll of y
-            eps = np.repeat(epsilon, y.shape[0])
+        @numba.jit
+        def _compute_nll(y: np.ndarray, nb_params: tuple[float, float], epsilon: float) -> float:
+            mu = np.exp(nb_params[0])
+            theta = 1 / nb_params[1]
+            eps = epsilon
+
             log_theta_mu_eps = np.log(theta + mu + eps)
             nll = (
                 theta * (np.log(theta + eps) - log_theta_mu_eps)
@@ -751,12 +732,32 @@ class NBLL(AbstractDistance):
                 - gammaln(theta)
                 - gammaln(y + 1)
             )
-            nlls.append(nll.mean())
+            return nll.mean()
+
+        def _process_gene(x: np.ndarray, y: np.ndarray, epsilon: float) -> float:
+            try:
+                nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
+                return _compute_nll(y, nb_params, epsilon)
+            except np.linalg.linalg.LinAlgError:
+                if x.mean() < 10 and y.mean() < 10:
+                    return 0.0
+                else:
+                    return np.nan  # Use NaN to indicate skipped genes
+
+        nlls = []
+        genes_skipped = 0
+
+        for i in range(X.shape[1]):
+            nll = _process_gene(X[:, i], Y[:, i], epsilon)
+            if np.isnan(nll):
+                genes_skipped += 1
+            else:
+                nlls.append(nll)
 
         if genes_skipped > X.shape[1] / 2:
             raise AttributeError(f"{genes_skipped} genes could not be fit, which is over half.")
 
-        return -sum(nlls) / len(nlls)
+        return -np.sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
@@ -782,7 +783,8 @@ def _sample(X, frac=None, n=None):
 class ClassifierProbaDistance(AbstractDistance):
     """Average of classification probabilites of a binary classifier.
 
-    Assumes the first condition is control and the second is perturbed. Always holds out 20% of the perturbed condition.
+    Assumes the first condition is control and the second is perturbed.
+    Always holds out 20% of the perturbed condition.
     """
 
     def __init__(self) -> None:
@@ -825,8 +827,11 @@ class ClassifierClassProjection(AbstractDistance):
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
-    ) -> pd.DataFrame:
-        """Unlike the parent function, all groups except the selected group are factored into the classifier. Similar to the parent function, the returned dataframe contains only the specified groups."""
+    ) -> Series:
+        """Unlike the parent function, all groups except the selected group are factored into the classifier.
+
+        Similar to the parent function, the returned dataframe contains only the specified groups.
+        """
         groups = adata.obs[groupby].unique() if groups is None else groups
 
         X = adata[adata.obs[groupby] != selected_group].X
@@ -846,6 +851,7 @@ class ClassifierClassProjection(AbstractDistance):
                 df.loc[group] = 1 - np.mean(test_probas[:, class_idx])
         df.index.name = groupby
         df.name = f"classifier_cp to {selected_group}"
+
         return df
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
