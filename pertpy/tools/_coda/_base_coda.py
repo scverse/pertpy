@@ -2496,7 +2496,8 @@ def from_scanpy(
         cell_type_identifier: column name in adata.obs that specifies the cell types
         sample_identifier: column name or list of column names in adata.obs that uniquely identify each sample
         covariate_uns: key for adata.uns, where covariate values are stored
-        covariate_obs: list of column names in adata.obs, where covariate values are stored. Note: If covariate values are not unique for a value of sample_identifier, this covaariate will be skipped.
+        covariate_obs: list of column names in adata.obs, where covariate values are stored.
+                       Note: If covariate values are not unique for a value of sample_identifier, this covaariate will be skipped.
         covariate_df: DataFrame with covariates
 
     Returns:
@@ -2505,50 +2506,37 @@ def from_scanpy(
     if isinstance(sample_identifier, str):
         sample_identifier = [sample_identifier]
 
-    if covariate_obs:
-        covariate_obs += [i for i in sample_identifier if i not in covariate_obs]
-    else:
-        covariate_obs = sample_identifier  # type: ignore
-
-    # join sample identifiers
-    if isinstance(sample_identifier, list):
+    if len(sample_identifier) > 1:
         adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
+    else:
+        sample_identifier = sample_identifier[0]
 
-    # get cell type counts
-    groups = adata.obs.value_counts([sample_identifier, cell_type_identifier])
-    count_data = groups.unstack(level=cell_type_identifier)
+    # get cell by covariate counts
+    count_data = pd.crosstab(adata.obs[sample_identifier], adata.obs[cell_type_identifier])
     count_data = count_data.fillna(0)
 
     # get covariates from different sources
     covariate_df_ = pd.DataFrame(index=count_data.index)
 
-    if covariate_df is None and covariate_obs is None and covariate_uns is None:
-        print("No covariate information specified!")
-
     if covariate_uns is not None:
-        covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns])
-        covariate_df_ = pd.concat((covariate_df_, covariate_df_uns), axis=1)
+        covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns], index=count_data.index)
+        covariate_df_ = covariate_df_.join(covariate_df_uns, how="left")
 
-    if covariate_obs is not None:
-        for c in covariate_obs:
-            if any(adata.obs.groupby(sample_identifier).nunique()[c] != 1):
-                print(f"Covariate {c} has non-unique values! Skipping...")
-                covariate_obs.remove(c)
-
-        covariate_df_obs = adata.obs.groupby(sample_identifier).first()[covariate_obs]
-        covariate_df_ = pd.concat((covariate_df_, covariate_df_obs), axis=1)
+    if covariate_obs:
+        unique_covariates = [c for c in covariate_obs if adata.obs.groupby(sample_identifier)[c].nunique().eq(1).all()]
+        if len(unique_covariates) < len(covariate_obs):
+            skipped = set(covariate_obs) - set(unique_covariates)
+            print(f"[bold yellow]Covariates {skipped} have non-unique values! Skipping...")
+        if unique_covariates:
+            covariate_df_obs = adata.obs.groupby(sample_identifier).first()[unique_covariates]
+            covariate_df_ = covariate_df_.join(covariate_df_obs, how="left")
 
     if covariate_df is not None:
-        if set(covariate_df.index) != set(count_data.index):
-            raise ValueError("anndata sample names and covariate_df index do not have the same elements!")
-        covs_ord = covariate_df.reindex(count_data.index)
-        covariate_df_ = pd.concat((covariate_df_, covs_ord), axis=1)
+        if not covariate_df.index.equals(count_data.index):
+            raise ValueError("AnnData sample names and covariate_df index do not have the same elements!")
+        covariate_df_ = covariate_df_.join(covariate_df, how="left")
 
-    covariate_df_.index = covariate_df_.index.astype(str)
-
-    # create var (number of cells for each type as only column)
     var_dat = count_data.sum(axis=0).rename("n_cells").to_frame()
-    var_dat.index = var_dat.index.astype(str)
 
     return AnnData(X=count_data.values, var=var_dat, obs=covariate_df_)
