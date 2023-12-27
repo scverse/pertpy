@@ -34,7 +34,7 @@ class PerturbationSpace:
         new_embedding_key: str = "control_diff",
         all_data: bool = False,
         copy: bool = False,
-    ):
+    ) -> AnnData:
         """Subtract mean of the control from the perturbation.
 
         Args:
@@ -43,14 +43,18 @@ class PerturbationSpace:
             group_col: .obs column name that stores the label of the group of eah cell. If None, ignore groups. Defaults to 'perturbations'.
             reference_key: The key of the control values. Defaults to 'control'.
             layer_key: Key of the AnnData layer to use for computation. Defaults to the `X` matrix otherwise.
-            new_layer_key: the results are stored in the given layer. Defaults to 'differential diff'.
+            new_layer_key: the results are stored in the given layer. Defaults to 'control_diff'.
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control diff'.
+            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control_diff'.
             all_data: if True, do the computation in all data representations (X, all layers and all embeddings)
             copy: If True returns a new Anndata of same size with the new column; otherwise it updates the initial AnnData object.
 
+        Returns:
+            Updated AnnData object.
+
         Examples:
             Example usage with PseudobulkSpace:
+
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
@@ -144,18 +148,24 @@ class PerturbationSpace:
         reference_key: str = "control",
         ensure_consistency: bool = False,
         target_col: str = "perturbations",
-    ):
+    ) -> AnnData:
         """Add perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to add.
-            reference_key: perturbation source from which the perturbation summation starts.
+            reference_key: perturbation source from which the perturbation summation starts. Defaults to 'control'.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 
+        Returns:
+            Anndata object of size (n_perts+1) x dim, where the last row is the addition of the specified perturbations.
+            If ensure_consistency is True, returns a tuple of (new_perturbation, adata) where adata is the AnnData object
+            provided as input but updated using compute_control_diff.
+
         Examples:
             Example usage with PseudobulkSpace:
+
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
@@ -245,23 +255,29 @@ class PerturbationSpace:
         reference_key: str = "control",
         ensure_consistency: bool = False,
         target_col: str = "perturbations",
-    ):
+    ) -> AnnData:
         """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
             adata: Anndata object of size n_perts x dim.
-            perturbations: Perturbations to subtract,
-            reference_key: Perturbation source from which the perturbation subtraction starts
+            perturbations: Perturbations to subtract.
+            reference_key: Perturbation source from which the perturbation subtraction starts. Defaults to 'control'.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 
+        Returns:
+            Anndata object of size (n_perts+1) x dim, where the last row is the subtraction of the specified perturbations.
+            If ensure_consistency is True, returns a tuple of (new_perturbation, adata) where adata is the AnnData object
+            provided as input but updated using compute_control_diff.
+
         Examples:
             Example usage with PseudobulkSpace:
+
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
-            >>> new_perturbation = ps.add(ps_adata, reference_key="ATF2", perturbations=["BRD4", "CUL3"])
+            >>> new_perturbation = ps.subtract(ps_adata, reference_key="ATF2", perturbations=["BRD4", "CUL3"])
         """
         new_pert_name = reference_key + "-"
         for perturbation in perturbations:
