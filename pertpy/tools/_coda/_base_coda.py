@@ -2512,15 +2512,15 @@ def from_scanpy(
     else:
         sample_identifier = sample_identifier[0]
 
-    # get cell by covariate counts
-    count_data = pd.crosstab(adata.obs[sample_identifier], adata.obs[cell_type_identifier])
-    count_data = count_data.fillna(0)
+    # get cell type counts
+    ct_count_data = pd.crosstab(adata.obs[sample_identifier], adata.obs[cell_type_identifier])
+    ct_count_data = ct_count_data.fillna(0)
 
     # get covariates from different sources
-    covariate_df_ = pd.DataFrame(index=count_data.index)
+    covariate_df_ = pd.DataFrame(index=ct_count_data.index)
 
     if covariate_uns is not None:
-        covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns], index=count_data.index)
+        covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns], index=ct_count_data.index)
         covariate_df_ = covariate_df_.join(covariate_df_uns, how="left")
 
     if covariate_obs:
@@ -2533,10 +2533,10 @@ def from_scanpy(
             covariate_df_ = covariate_df_.join(covariate_df_obs, how="left")
 
     if covariate_df is not None:
-        if not covariate_df.index.equals(count_data.index):
+        if not covariate_df.index.equals(ct_count_data.index):
             raise ValueError("AnnData sample names and covariate_df index do not have the same elements!")
         covariate_df_ = covariate_df_.join(covariate_df, how="left")
 
-    var_dat = count_data.sum(axis=0).rename("n_cells").to_frame()
+    var_dat = ct_count_data.sum(axis=0).rename("n_cells").to_frame()
 
-    return AnnData(X=count_data.values, var=var_dat, obs=covariate_df_)
+    return AnnData(X=ct_count_data.values, var=var_dat, obs=covariate_df_)
