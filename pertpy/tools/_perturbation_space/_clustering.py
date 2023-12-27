@@ -21,7 +21,7 @@ class ClusteringSpace(PerturbationSpace):
         adata: AnnData,
         true_label_col: str,
         cluster_col: str,
-        metrics: list[str] = None,
+        metrics: list[str] = ["nmi", "ari", "asw"],
         **kwargs,
     ):
         """Evaluation of previously computed clustering against ground truth labels.
@@ -31,6 +31,8 @@ class ClusteringSpace(PerturbationSpace):
             true_label_col: ground truth labels.
             cluster_col: cluster computed labels.
             metrics: Metrics to compute. Defaults to ['nmi', 'ari', 'asw'].
+            **kwargs: Additional arguments to pass to the metrics. For nmi, average_method can be passed.
+                For asw, metric, distances, sample_size, and random_state can be passed.
 
         Examples:
             Example usage with KMeansSpace:
@@ -41,8 +43,6 @@ class ClusteringSpace(PerturbationSpace):
             >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
             >>> results = kmeans.evaluate_clustering(kmeans_adata, true_label_col="gene_target", cluster_col="k-means", metrics=['nmi'])
         """
-        if metrics is None:
-            metrics = ["nmi", "ari", "asw"]
         true_labels = adata.obs[true_label_col]
 
         results = {}

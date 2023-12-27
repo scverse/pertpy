@@ -133,7 +133,7 @@ class PerturbationSpace:
         Args:
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to add.
-            reference_key: perturbation source from which the perturbation summation starts.
+            reference_key: perturbation source from which the perturbation summation starts. Defaults to 'control'.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 
@@ -239,8 +239,8 @@ class PerturbationSpace:
 
         Args:
             adata: Anndata object of size n_perts x dim.
-            perturbations: Perturbations to subtract,
-            reference_key: Perturbation source from which the perturbation subtraction starts
+            perturbations: Perturbations to subtract.
+            reference_key: Perturbation source from which the perturbation subtraction starts. Defaults to 'control'.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
             target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
 

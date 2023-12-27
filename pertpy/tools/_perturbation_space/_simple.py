@@ -254,7 +254,7 @@ class DBSCANSpace(ClusteringSpace):
         Returns:
             If return_object is True, the adata and the clustering object is returned.
             Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
-             that stores the cluster labels.
+            that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt
