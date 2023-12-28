@@ -16,8 +16,12 @@ distances = [
     "mean_pairwise",
     "mmd",
     "r2_distance",
-    "kl_divergence",
+    "sym_kldiv",
     "t_test",
+    "ks_test",
+    "classifier_proba",
+    # "classifier_cp",
+    # "nbll",
 ]
 
 count_distances = ["nb_ll"]

@@ -248,12 +248,15 @@ class TestMilopy:
         adata.obs["replicate"] = rng.choice(["R1", "R2", "R3"], size=adata.n_obs)
         adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
         milo_mdata = self.milo.count_nhoods(adata, sample_col="sample")
+
         return milo_mdata
 
     def test_add_nhood_expression_nhood_mean_range(self, add_nhood_expression_mdata):
         mdata = add_nhood_expression_mdata.copy()
         self.milo.add_nhood_expression(mdata)
+
         assert mdata["milo"].varm["expr"].shape[1] == mdata["rna"].n_vars
+
         mdata = add_nhood_expression_mdata.copy()
         self.milo.add_nhood_expression(mdata)
         nhood_ix = 10
