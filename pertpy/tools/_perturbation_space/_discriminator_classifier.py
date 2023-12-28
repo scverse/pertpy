@@ -182,7 +182,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
                     pert_adata = anndata.concat([pert_adata, batch_adata])
 
         # Add .obs annotations to the pert_adata. Because shuffle=False and num_workers=0, the order of the data is stable
-        # and we can just add the annotations from the original adata
+        # and we can just add the annotations from the original AnnData object
         pert_adata.obs = pert_adata.obs.reset_index(drop=True)
         pert_adata.obs = pd.concat([pert_adata.obs, self.adata_obs], axis=1)
 
