@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import anndata
-import pytorch_lightning as pl
-import scipy
 import numpy as np
 import pandas as pd
-import torch
+import pytorch_lightning as pl
+import scipy
 import torch
 from anndata import AnnData
 from pytorch_lightning.callbacks import EarlyStopping
@@ -17,9 +16,6 @@ from torch import optim
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 class DiscriminatorClassifierSpace(PerturbationSpace):
@@ -35,7 +31,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         adata: AnnData,
         target_col: str = "perturbations",
         layer_key: str = None,
-        hidden_dim: list[int] = [512],
+        hidden_dim: list[int] = None,
         dropout: float = 0.0,
         batch_norm: bool = True,
         batch_size: int = 256,
@@ -68,6 +64,8 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             >>> dcs = pt.tl.DiscriminatorClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
         """
+        if hidden_dim is None:
+            hidden_dim = [512]
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
 
@@ -106,7 +104,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         train_weights = 1 / (1 + torch.sum(torch.tensor(train_dataset.labels), dim=1))
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
-        self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size,  sampler=train_sampler, num_workers=4)
+        self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=4)
         self.test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         self.valid_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
@@ -188,8 +186,8 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         pert_adata.obs = pert_adata.obs.reset_index(drop=True)
         pert_adata.obs = pd.concat([pert_adata.obs, self.adata_obs], axis=1)
 
-    # Drop the 'encoded_perturbations' colums, which is not needed anymore
-        pert_adata.obs = pert_adata.obs.drop('encoded_perturbations', axis=1)
+        # Drop the 'encoded_perturbations' colums, which is not needed anymore
+        pert_adata.obs = pert_adata.obs.drop("encoded_perturbations", axis=1)
 
         return pert_adata
 
@@ -307,7 +305,7 @@ class PerturbationClassifier(pl.LightningModule):
     def __init__(
         self,
         model: torch.nn.Module,
-            batch_size:int,
+        batch_size: int,
         layers: list = [512],  # noqa
         dropout: float = 0.0,
         batch_norm: bool = True,
