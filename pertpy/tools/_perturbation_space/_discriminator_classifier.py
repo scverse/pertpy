@@ -6,6 +6,8 @@ import anndata
 import pytorch_lightning as pl
 import scipy
 import numpy as np
+import pandas as pd
+import torch
 import torch
 from anndata import AnnData
 from pytorch_lightning.callbacks import EarlyStopping
@@ -105,8 +107,8 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
         self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size,  sampler=train_sampler, num_workers=4)
-        self.test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-        self.valid_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+        self.test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+        self.valid_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
         # Define the network
         sizes = [adata.n_vars] + hidden_dim + [n_classes]
@@ -116,7 +118,10 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         total_dataset = PLDataset(
             adata=adata, target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
-        self.entire_dataset = DataLoader(total_dataset, batch_size=batch_size * 2, shuffle=False, num_workers=4)
+        self.entire_dataset = DataLoader(total_dataset, batch_size=batch_size * 2, shuffle=False, num_workers=0)
+
+        # Save adata observations for embedding annotations in get_embeddings
+        self.adata_obs = adata.obs.reset_index(drop=True)
 
         return self
 
@@ -145,7 +150,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             accelerator="auto",
         )
 
-        self.model = PerturbationClassifier(model=self.net)
+        self.model = PerturbationClassifier(model=self.net, batch_size=self.train_dataloader.batch_size)
 
         self.trainer.fit(
             model=self.model, train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader
@@ -178,6 +183,14 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
                 else:
                     pert_adata = anndata.concat([pert_adata, batch_adata])
 
+        # Add .obs annotations to the pert_adata. Because shuffle=False and num_workers=0, the order of the data is stable
+        # and we can just add the annotations from the original adata
+        pert_adata.obs = pert_adata.obs.reset_index(drop=True)
+        pert_adata.obs = pd.concat([pert_adata.obs, self.adata_obs], axis=1)
+
+    # Drop the 'encoded_perturbations' colums, which is not needed anymore
+        pert_adata.obs = pert_adata.obs.drop('encoded_perturbations', axis=1)
+
         return pert_adata
 
 
@@ -207,7 +220,7 @@ class MLP(torch.nn.Module):
         for s in range(len(sizes) - 1):
             layers += [
                 torch.nn.Linear(sizes[s], sizes[s + 1]),
-                torch.nn.BatchNorm1d(sizes[s + 1]) if batch_norm and s < len(sizes) - 2 else None,
+                torch.nn.BatchNorm1d(1) if batch_norm and s < len(sizes) - 2 else None,
                 torch.nn.LayerNorm(sizes[s + 1]) if layer_norm and s < len(sizes) - 2 and not batch_norm else None,
                 torch.nn.ReLU(),
                 torch.nn.Dropout(dropout) if s < len(sizes) - 2 else None,
@@ -294,6 +307,7 @@ class PerturbationClassifier(pl.LightningModule):
     def __init__(
         self,
         model: torch.nn.Module,
+            batch_size:int,
         layers: list = [512],  # noqa
         dropout: float = 0.0,
         batch_norm: bool = True,
@@ -304,6 +318,8 @@ class PerturbationClassifier(pl.LightningModule):
     ):
         """
         Args:
+            model: model to be trained
+            batch_size: batch size
             layers: list of layers of the MLP
             dropout: dropout probability
             batch_norm: whether to apply batch norm
@@ -313,6 +329,7 @@ class PerturbationClassifier(pl.LightningModule):
             seed: random seed
         """
         super().__init__()
+        self.batch_size = batch_size
         self.save_hyperparameters()
         if model:
             self.net = model
@@ -346,7 +363,7 @@ class PerturbationClassifier(pl.LightningModule):
         y_hat = y_hat.squeeze()
 
         loss = torch.nn.functional.cross_entropy(y_hat, y)
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True, batch_size=self.batch_size)
 
         return loss
 
@@ -359,7 +376,7 @@ class PerturbationClassifier(pl.LightningModule):
         y_hat = y_hat.squeeze()
 
         loss = torch.nn.functional.cross_entropy(y_hat, y)
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, batch_size=self.batch_size)
 
         return loss
 
@@ -372,7 +389,7 @@ class PerturbationClassifier(pl.LightningModule):
         y_hat = y_hat.squeeze()
 
         loss = torch.nn.functional.cross_entropy(y_hat, y)
-        self.log("test_loss", loss, prog_bar=True)
+        self.log("test_loss", loss, prog_bar=True, batch_size=self.batch_size)
 
         return loss
 
