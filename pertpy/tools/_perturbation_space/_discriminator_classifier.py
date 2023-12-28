@@ -339,10 +339,11 @@ class PerturbationClassifier(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y, _ = batch
-        x = x.to(torch.float32)
-        y = y.to(torch.long)
 
         y_hat = self.forward(x)
+
+        y = torch.argmax(y, dim=1)
+        y_hat = y_hat.squeeze()
 
         loss = torch.nn.functional.cross_entropy(y_hat, y)
         self.log("train_loss", loss, prog_bar=True)
@@ -351,10 +352,11 @@ class PerturbationClassifier(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y, _ = batch
-        x = x.to(torch.float32)
-        y = y.to(torch.long)
 
         y_hat = self.forward(x)
+
+        y = torch.argmax(y, dim=1)
+        y_hat = y_hat.squeeze()
 
         loss = torch.nn.functional.cross_entropy(y_hat, y)
         self.log("val_loss", loss, prog_bar=True)
@@ -363,10 +365,11 @@ class PerturbationClassifier(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y, _ = batch
-        x = x.to(torch.float32)
-        y = y.to(torch.long)
 
         y_hat = self.forward(x)
+
+        y = torch.argmax(y, dim=1)
+        y_hat = y_hat.squeeze()
 
         loss = torch.nn.functional.cross_entropy(y_hat, y)
         self.log("test_loss", loss, prog_bar=True)
