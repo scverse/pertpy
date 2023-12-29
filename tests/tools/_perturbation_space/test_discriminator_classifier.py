@@ -44,7 +44,7 @@ def test_discriminator_classifier():
 
     # Compute the embeddings using the classifier
     ps = pt.tl.DiscriminatorClassifierSpace()
-    classifier_ps = ps.load(adata, hidden_dim=128)
+    classifier_ps = ps.load(adata, hidden_dim=[128])
     classifier_ps.train(max_epochs=5)
     pert_embeddings = classifier_ps.get_embeddings()
 
