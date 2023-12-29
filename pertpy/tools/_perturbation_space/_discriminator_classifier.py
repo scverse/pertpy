@@ -64,13 +64,14 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             >>> dcs = pt.tl.DiscriminatorClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
         """
-        if hidden_dim is None:
-            hidden_dim = [512]
         if layer_key is not None and layer_key not in adata.obs.columns:
-            raise ValueError(f"Layer key {layer_key} not found in adata. {layer_key}")
+            raise ValueError(f"Layer key {layer_key} not found in adata.")
 
         if target_col not in adata.obs:
             raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
+
+        if hidden_dim is None:
+            hidden_dim = [512]
 
         # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
@@ -186,7 +187,8 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         pert_adata.obs = pert_adata.obs.reset_index(drop=True)
         pert_adata.obs = pd.concat([pert_adata.obs, self.adata_obs], axis=1)
 
-        # Drop the 'encoded_perturbations' colums, which is not needed anymore
+        # Drop the 'encoded_perturbations' colums, since this stores the one-hot encoded labels as numpy arrays,
+        # which would cause errors in the downstream processing of the AnnData object (e.g. when plotting)
         pert_adata.obs = pert_adata.obs.drop("encoded_perturbations", axis=1)
 
         return pert_adata
@@ -218,7 +220,7 @@ class MLP(torch.nn.Module):
         for s in range(len(sizes) - 1):
             layers += [
                 torch.nn.Linear(sizes[s], sizes[s + 1]),
-                torch.nn.BatchNorm1d(1) if batch_norm and s < len(sizes) - 2 else None,
+                torch.nn.BatchNorm1d(sizes[s + 1]) if batch_norm and s < len(sizes) - 2 else None,
                 torch.nn.LayerNorm(sizes[s + 1]) if layer_norm and s < len(sizes) - 2 and not batch_norm else None,
                 torch.nn.ReLU(),
                 torch.nn.Dropout(dropout) if s < len(sizes) - 2 else None,
@@ -293,8 +295,7 @@ class PLDataset(Dataset):
 
     def __getitem__(self, idx):
         """Returns a sample and corresponding perturbations applied (labels)"""
-
-        sample = self.data[idx].A if scipy.sparse.issparse(self.data) else self.data[idx]
+        sample = self.data[idx].A.squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
         num_label = self.labels.iloc[idx]
         str_label = self.pert_labels.iloc[idx]
 
@@ -354,6 +355,7 @@ class PerturbationClassifier(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y, _ = batch
+        x = x.to(torch.float32)
 
         y_hat = self.forward(x)
 
@@ -367,6 +369,7 @@ class PerturbationClassifier(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y, _ = batch
+        x = x.to(torch.float32)
 
         y_hat = self.forward(x)
 
@@ -380,6 +383,7 @@ class PerturbationClassifier(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y, _ = batch
+        x = x.to(torch.float32)
 
         y_hat = self.forward(x)
 

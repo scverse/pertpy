@@ -5,7 +5,7 @@ from anndata import AnnData
 
 
 def test_discriminator_classifier():
-    X = np.zeros((20, 5))
+    X = np.zeros((20, 5), dtype=np.float32)
 
     pert_index = [
         "control",
@@ -44,7 +44,7 @@ def test_discriminator_classifier():
 
     # Compute the embeddings using the classifier
     ps = pt.tl.DiscriminatorClassifierSpace()
-    classifier_ps = ps.load(adata)
+    classifier_ps = ps.load(adata, hidden_dim=128)
     classifier_ps.train(max_epochs=5)
     pert_embeddings = classifier_ps.get_embeddings()
 
