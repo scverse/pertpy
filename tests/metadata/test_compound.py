@@ -12,7 +12,7 @@ NUM_CELLS_PER_ID = NUM_CELLS // 4
 
 
 class TestMetaData:
-    pt_metadata = pt.md.Compound()
+    pt_compound = pt.md.Compound()
 
     @pytest.fixture
     def adata(self) -> AnnData:
@@ -37,7 +37,7 @@ class TestMetaData:
         return adata
 
     def test_compound_annotation(self, adata):
-        self.pt_metadata.annotate_compounds(adata=adata, query_id="perturbation")
+        self.pt_compound.annotate_compounds(adata=adata, query_id="perturbation")
         assert len(adata.obs.columns) == 5
         pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
         assert pubchemid == list(adata.obs["pubchem_ID"])

@@ -11,8 +11,8 @@ NUM_GENES = 100
 NUM_CELLS_PER_ID = NUM_CELLS // 4
 
 
-class TestMetaData:
-    pt_metadata = pt.md.Moa()
+class TestMoA:
+    pt_moa = pt.md.Moa()
 
     @pytest.fixture
     def adata(self) -> AnnData:
@@ -37,8 +37,8 @@ class TestMetaData:
         return adata
 
     def test_moa_annotation(self, adata):
-        self.pt_metadata.annotate_moa(adata=adata, query_id="perturbation")
-        assert len(adata.obs.columns) == len(self.pt_metadata.moa.columns) + 1  # due to the DepMap_ID column
+        self.pt_moa.annotate(adata=adata, query_id="perturbation")
+        assert len(adata.obs.columns) == len(self.pt_moa.clue.columns) + 1  # due to the DepMap_ID column
         assert {"moa", "target"}.issubset(adata.obs)
         moa = [
             "EGFR inhibitor|JAK inhibitor",
