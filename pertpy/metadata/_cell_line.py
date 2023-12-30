@@ -26,12 +26,12 @@ class CellLine(MetaData):
     """Utilities to fetch cell line metadata."""
 
     def __init__(self):
-        # Download cell line metadata from DepMap
-        # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
         super().__init__()
 
-        cell_line_file_path = settings.cachedir.__str__() + "/sample_info.csv"
-        if not Path(cell_line_file_path).exists():
+        # Download cell line metadata from DepMap
+        # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
+        depmap_cell_line_path = Path(settings.cachedir) / "sample_info.csv"
+        if not Path(depmap_cell_line_path).exists():
             print("[bold yellow]No DepMap metadata file found. Starting download now.")
             _download(
                 url="https://ndownloader.figshare.com/files/35020903",
@@ -40,14 +40,12 @@ class CellLine(MetaData):
                 block_size=4096,
                 is_zip=False,
             )
-        self.cell_line_meta = pd.read_csv(cell_line_file_path)
+        self.depmap = pd.read_csv(depmap_cell_line_path)
 
         # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
         # Source: https://www.cancerrxgene.org/celllines
-        cell_line_cancer_project_file_path = settings.cachedir.__str__() + "/cell_line_cancer_project.csv"
-        cell_line_cancer_project_transformed_path = (
-            settings.cachedir.__str__() + "/cell_line_cancer_project_transformed.csv"
-        )
+        cell_line_cancer_project_file_path = Path(settings.cachedir) / "cell_line_cancer_project.csv"
+        cell_line_cancer_project_transformed_path = Path(settings.cachedir) / "cell_line_cancer_project_transformed.csv"
 
         if not Path(cell_line_cancer_project_transformed_path).exists():
             if not Path(cell_line_cancer_project_file_path).exists():
@@ -96,7 +94,7 @@ class CellLine(MetaData):
 
         # Download metadata for driver genes from DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
-        gene_annotation_file_path = settings.cachedir.__str__() + "/gene_identifiers_20191101.csv"
+        gene_annotation_file_path = Path(settings.cachedir) / "gene_identifiers_20191101.csv"
         if not Path(gene_annotation_file_path).exists():
             print("[bold yellow]No metadata file was found for gene annotation." " Starting download now.")
             _download(
@@ -112,7 +110,7 @@ class CellLine(MetaData):
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
         # issue: read count values contain random whitespace
         # solution: remove the white space and convert to int before depmap updates the metadata
-        bulk_rna_sanger_file_path = settings.cachedir.__str__() + "/rnaseq_read_count_20220624_processed.csv"
+        bulk_rna_sanger_file_path = Path(settings.cachedir) / "rnaseq_read_count_20220624_processed.csv"
         if not Path(bulk_rna_sanger_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
@@ -129,7 +127,7 @@ class CellLine(MetaData):
 
         # Download CCLE expression data from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-        bulk_rna_broad_file_path = settings.cachedir.__str__() + "/CCLE_expression_full.csv"
+        bulk_rna_broad_file_path = Path(settings.cachedir) / "CCLE_expression_full.csv"
         if not Path(bulk_rna_broad_file_path).exists():
             print("[bold yellow]No metadata file was found for CCLE expression data. Starting download now.")
             _download(
@@ -143,7 +141,7 @@ class CellLine(MetaData):
 
         # Download proteomics data processed by DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
-        proteomics_file_path = settings.cachedir.__str__() + "/proteomics_all_20221214_processed.csv"
+        proteomics_file_path = Path(settings.cachedir) / "proteomics_all_20221214_processed.csv"
         if not Path(proteomics_file_path).exists():
             print("[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger). Starting download now.")
             _download(
@@ -153,12 +151,12 @@ class CellLine(MetaData):
                 block_size=4096,
                 is_zip=False,
             )
-        self.proteomics_data = pd.read_csv(proteomics_file_path, index_col=0)
+        self.proteomics = pd.read_csv(proteomics_file_path, index_col=0)
 
         # Download GDSC drug response data
         # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
         # URL: https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx
-        drug_response_gdsc1_file_path = settings.cachedir.__str__() + "/ic50_gdsc1.csv"
+        drug_response_gdsc1_file_path = Path(settings.cachedir) / "ic50_gdsc1.csv"
         if not Path(drug_response_gdsc1_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for drug response data of GDSC1 dataset."
@@ -173,7 +171,7 @@ class CellLine(MetaData):
             )
         self.drug_response_gdsc1 = pd.read_csv(drug_response_gdsc1_file_path, index_col=0)
 
-        drug_response_gdsc2_file_path = settings.cachedir.__str__() + "/ic50_gdsc2.csv"
+        drug_response_gdsc2_file_path = Path(settings.cachedir) / "ic50_gdsc2.csv"
         if not Path(drug_response_gdsc2_file_path).exists():
             print(
                 "[bold yellow]No metadata file was found for drug response data of GDSC2 dataset."
@@ -198,7 +196,7 @@ class CellLine(MetaData):
         verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
-        """Fetch cell line annotation from DepMap.
+        """Annotate cell lines by DepMap information.
 
         For each cell, we fetch cell line annotation from Dependency Map (DepMap).
 
@@ -232,7 +230,7 @@ class CellLine(MetaData):
             adata = adata.copy()
 
         if cell_line_source == "DepMap":
-            cell_line_meta = self.cell_line_meta
+            cell_line_meta = self.depmap
         else:
             reference_id = "stripped_cell_line_name"
             if query_id == "DepMap_ID":
@@ -453,7 +451,7 @@ class CellLine(MetaData):
                 "This ensures that the required query ID is included in your data."
             )
 
-        if reference_id not in self.proteomics_data.columns:
+        if reference_id not in self.proteomics.columns:
             raise ValueError(
                 f"The specified `reference_id`{reference_id} can't be found in the protein expression data. \n"
                 "To solve the issue, please use the reference identifier available in the metadata.  \n"
@@ -461,7 +459,7 @@ class CellLine(MetaData):
             )
 
         identifier_num_all = len(adata.obs[query_id].unique())
-        not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.proteomics_data[reference_id]))
+        not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.proteomics[reference_id]))
 
         self._warn_unmatch(
             total_identifiers=identifier_num_all,
@@ -474,7 +472,7 @@ class CellLine(MetaData):
 
         # convert the original protein intensities table from long format to wide format, group by the cell lines
         adata.obsm["proteomics_" + protein_information] = (
-            self.proteomics_data[[reference_id, protein_id, protein_information]]
+            self.proteomics[[reference_id, protein_id, protein_information]]
             .pivot(index=reference_id, columns=protein_id, values=protein_information)
             .reindex(adata.obs.index)
         )
@@ -493,7 +491,8 @@ class CellLine(MetaData):
     ) -> AnnData:
         """Fetch drug response data from GDSC.
 
-        For each cell, we fetch drug response data as natural log of the fitted IC50 for its corresponding cell line and perturbation from GDSC fitted data results file.
+        For each cell, we fetch drug response data as natural log of the fitted IC50 for its
+        corresponding cell line and perturbation from GDSC fitted data results file.
 
         Args:
             adata: The data object to annotate.
@@ -503,14 +502,14 @@ class CellLine(MetaData):
             query_perturbation: The column of `.obs` with perturbation information.
                                 Defaults to "perturbation".
             reference_perturbation: The type of perturbation in the meta data, drug_name or drug_id.
-                                    Defaults to "drug_name".
+                                    Defaults to 'drug_name'.
             gdsc_dataset: The GDSC dataset, 1 or 2.
                           The GDSC1 dataset updates previous releases with additional drug screening data from the
-                          Wellcome Sanger Institute and Massachusetts General Hospital.
+                          Sanger Institute and Massachusetts General Hospital.
                           It covers 970 Cell lines and 403 Compounds with 333292 IC50s.
-                          GDSC2 is new and has 243,466 IC50 results from the latest screening at the Wellcome Sanger Institute using improved experimental procedures.
+                          GDSC2 is new and has 243,466 IC50 results from the latest screening at the Sanger Institute.
                           Defaults to 1.
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or 'all'.
                        Defaults to 5.
             copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
@@ -528,7 +527,7 @@ class CellLine(MetaData):
         if query_id not in adata.obs.columns:
             raise ValueError(
                 f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Ensure that you are using one of the available query IDs present in 'adata.obs' for the annotation. \n"
+                "Ensure that you are using one of the available query IDs present in 'adata.obs' for the annotation.\n"
                 "If the desired query ID is not available, you can fetch the cell line metadata "
                 "using the `annotate()` function before calling `annotate_from_gdsc()`. "
                 "This ensures that the required query ID is included in your data."
@@ -569,7 +568,7 @@ class CellLine(MetaData):
         compare with the query_id in their own data.
 
         Returns:
-            Returns a LookUp object specific for cell line annotation.
+            A LookUp object specific for cell line annotation.
 
         Examples:
             >>> import pertpy as pt
@@ -579,12 +578,12 @@ class CellLine(MetaData):
         return LookUp(
             type="cell_line",
             transfer_metadata=[
-                self.cell_line_meta,
+                self.depmap,
                 self.cl_cancer_project_meta,
                 self.gene_annotation,
                 self.bulk_rna_sanger,
                 self.bulk_rna_broad,
-                self.proteomics_data,
+                self.proteomics,
                 self.drug_response_gdsc1,
                 self.drug_response_gdsc2,
             ],

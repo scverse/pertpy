@@ -7,6 +7,8 @@ if TYPE_CHECKING:
 
 
 class MetaData:
+    """Superclass for pertpy's MetaData components."""
+
     def _warn_unmatch(
         self,
         total_identifiers: int,
@@ -30,8 +32,11 @@ class MetaData:
             unmatched_identifiers: Unmatched identifiers in the `adata` object.
             query_id: The column of `.obs` with cell line information.
             reference_id: The type of cell line identifier in the meta data.
-            metadata_type: The type of metadata where some identifiers are not matched during annotation, cell line, protein expression, bulk RNA expression, drug response, moa or compound. Defaults to "cell line".
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
+            metadata_type: The type of metadata where some identifiers are not matched during annotation such as
+                           cell line, protein expression, bulk RNA expression, drug response, moa or compound.
+                           Defaults to 'cell line'.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or 'all'.
+                       Defaults to 5.
         """
         if isinstance(verbosity, str):
             if verbosity != "all":
