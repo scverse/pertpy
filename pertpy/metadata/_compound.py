@@ -1,15 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
-import numpy as np
 import pandas as pd
 import pubchempy as pcp
-from rich import print
-from scanpy import settings
-
-from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -49,7 +43,7 @@ class Compound(MetaData):
             adata = adata.copy()
 
         if query_id not in adata.obs.columns:
-            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n" "Please check again. ")
+            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n" f"Please check again. ")
 
         query_dict = {}
         not_matched_identifiers = []
@@ -118,6 +112,7 @@ class Compound(MetaData):
                 .set_index(adata.obs.index)
             )
             adata.obs.pubchem_ID = adata.obs.pubchem_ID.astype("Int64")
+
         return adata
 
     def lookup(self) -> LookUp:

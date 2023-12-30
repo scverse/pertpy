@@ -39,10 +39,8 @@ class TestMetaData:
 
     def test_cell_line_annotation(self, adata):
         self.pt_metadata.annotate(adata=adata)
-        assert (
-            len(adata.obs.columns) == len(self.pt_metadata.cell_line_meta.columns) + 1
-        )  # due to the perturbation column
-        assert set(self.pt_metadata.cell_line_meta.columns).issubset(adata.obs)
+        assert len(adata.obs.columns) == len(self.pt_metadata.depmap.columns) + 1  # due to the perturbation column
+        assert set(self.pt_metadata.depmap.columns).issubset(adata.obs)
         stripped_cell_line_name = ["SLR21", "HEKTE", "TK10", "22RV1"] * NUM_CELLS_PER_ID
         assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
 
@@ -58,7 +56,7 @@ class TestMetaData:
         assert len(adata.obsm) == 1
         assert adata.obsm["proteomics_protein_intensity"].shape == (
             NUM_GENES,
-            len(self.pt_metadata.proteomics_data.uniprot_id.unique()),
+            len(self.pt_metadata.proteomics.uniprot_id.unique()),
         )
 
     def test_bulk_rna_expression_annotation(self, adata):
