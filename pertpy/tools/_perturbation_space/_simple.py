@@ -104,6 +104,8 @@ class CentroidSpace(PerturbationSpace):
                     mapping = {pert: obs_df.loc[pert][obs_name] for pert in index}
                     ps_adata.obs[obs_name] = ps_adata.obs[target_col].map(mapping)
 
+        ps_adata.obs[target_col] = ps_adata.obs[target_col].astype('category')
+
         return ps_adata
 
 
@@ -158,6 +160,8 @@ class PseudobulkSpace(PerturbationSpace):
                 adata = adata_emb
 
         ps_adata = dc.get_pseudobulk(adata, sample_col=target_col, layer=layer_key, **kwargs)  # type: ignore
+
+        ps_adata.obs[target_col] = ps_adata.obs[target_col].astype('category')
 
         return ps_adata
 
@@ -220,6 +224,7 @@ class KMeansSpace(ClusteringSpace):
 
         clustering = KMeans(**kwargs).fit(self.X)
         adata.obs[cluster_key] = clustering.labels_
+        adata.obs[cluster_key] = adata.obs[cluster_key].astype('category')
 
         if return_object:
             return adata, clustering
@@ -282,6 +287,7 @@ class DBSCANSpace(ClusteringSpace):
 
         clustering = DBSCAN(**kwargs).fit(self.X)
         adata.obs[cluster_key] = clustering.labels_
+        adata.obs[cluster_key] = adata.obs[cluster_key].astype('category')
 
         if return_object:
             return adata, clustering
