@@ -243,6 +243,8 @@ class PerturbationSpace:
                     key_name = key.removesuffix("_control_diff")
                 new_perturbation.obsm[key_name] = data["embeddings"][key]
 
+        new_perturbation.obs[target_col] = new_perturbation.obs_names.astype('category')
+
         if ensure_consistency:
             return new_perturbation, adata
 
@@ -349,6 +351,8 @@ class PerturbationSpace:
                 if key.endswith("_control_diff"):
                     key_name = key.removesuffix("_control_diff")
                 new_perturbation.obsm[key_name] = data["embeddings"][key]
+
+        new_perturbation.obs[target_col] = new_perturbation.obs_names.astype('category')
 
         if ensure_consistency:
             return new_perturbation, adata
