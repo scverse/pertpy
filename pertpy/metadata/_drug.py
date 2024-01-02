@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
+from collections import ChainMap
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import numpy as np
 import pandas as pd
 from rich import print
 from scanpy import settings
@@ -22,17 +23,21 @@ class Drug(MetaData):
 
     def __init__(self):
         # Prepared in https://github.com/theislab/pertpy-datasets/blob/main/chembl_data.ipynb
-        chembl_path = Path(settings.cachedir) / "chembl.parquet"
+        chembl_path = Path(settings.cachedir) / "chembl.json"
         if not Path(chembl_path).exists():
             print("[bold yellow]No metadata file was found for chembl. Starting download now.")
             _download(
-                url="https://figshare.com/ndownloader/files/43848687",
-                output_file_name="chembl.parquet",
+                url="https://figshare.com/ndownloader/files/43871718",
+                output_file_name="chembl.json",
                 output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
-        self.chembl = pd.read_parquet(chembl_path)
+        with chembl_path.open() as file:
+            chembl_json = json.load(file)
+        self._chembl_json = chembl_json
+        targets = dict(ChainMap(*[chembl_json[cat] for cat in chembl_json]))
+        self.chembl = pd.DataFrame([{"Compound": k, "Targets": v} for k, v in targets.items()])
         self.chembl.rename(columns={"Targets": "targets", "Compound": "compounds"}, inplace=True)
 
     def annotate(self, adata: AnnData, copy: bool = False) -> AnnData:
