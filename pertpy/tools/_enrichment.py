@@ -4,7 +4,9 @@ from typing import Literal, Union
 
 import numpy as np
 import pandas as pd
+import scanpy as sc
 from anndata import AnnData
+from scanpy.plotting import DotPlot
 from scanpy.tools._score_genes import _sparse_nanmean
 from scipy.sparse import issparse
 
@@ -138,6 +140,7 @@ class Enrichment:
             scores = scores - seurat
 
         adata.uns["pertpy_enrichment_score"] = scores
+        adata.uns["pertpy_enrichment_variables"] = weights.columns
 
         adata.uns["pertpy_enrichment_genes"] = {"var": pd.DataFrame(columns=["genes"]).astype(object)}
         adata.uns["pertpy_enrichment_all_genes"] = {"var": pd.DataFrame(columns=["all_genes"]).astype(object)}
@@ -145,3 +148,79 @@ class Enrichment:
         for drug in weights.columns:
             adata.uns["pertpy_enrichment_genes"]["var"].loc[drug, "genes"] = "|".join(adata.var_names[targets[drug]])
             adata.uns["pertpy_enrichment_all_genes"]["var"].loc[drug, "all_genes"] = "|".join(full_targets[drug])
+
+    def plot_dotplot(
+        self,
+        adata: AnnData,
+        targets: dict[str, list[str]] | dict[str, dict[str, list[str]]] = None,
+        categories: Sequence[str] = None,
+        groupby: str = None,
+        **kwargs,
+    ) -> Union[DotPlot, dict, None]:
+        """Plots a dotplot by groupby and categories.
+
+        Wraps scanpy's dotplot but formats it nicely by categories.
+
+        Args:
+            adata: An AnnData object with enrichment results stored in `.uns["pertpy_enrichment_score"]`.
+            targets: Gene groups to evaluate, which can be targets of known drugs, GO terms, pathway memberships, etc.
+                     Accepts two forms:
+                     - A dictionary with group names as keys and corresponding gene lists as entries.
+                     - A dictionary of dictionaries with group categories as keys. Use `nested=True` in this case.
+                     If not provided, ChEMBL-derived drug target sets are used.
+            categories: To subset the gene groups to specific categories, especially when `targets=None` or `nested=True`.
+                            For ChEMBL drug targets, these are ATC level 1/level 2 category codes.
+            groupby: dotplot groupby such as clusters or cell types.
+            kwargs: Passed to scanpy dotplot.
+
+        Returns:
+            If `return_fig` is `True`, returns a :class:`~scanpy.pl.DotPlot` object,
+            else if `show` is false, return axes dict.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> pt_enrichment = pt.tl.Enrichment()
+            >>> pt_enrichment.plot_dotplot(adata, categories=["B01","B02","B03"], groupby="leiden")
+        """
+        if categories is not None:
+            if isinstance(categories, str):
+                categories = [categories]
+            else:
+                categories = list(categories)
+
+        if targets is None:
+            pt_drug = Drug()
+            targets = pt_drug._chembl_json
+        else:
+            targets = targets.copy()
+        if categories is not None:
+            targets = {k: targets[k] for k in categories}  # type: ignore
+
+        for group in targets:
+            targets[group] = list(targets[group].keys())  # type: ignore
+        var_names: list[str] = []
+        var_group_positions: list[tuple[int, int]] = []
+        var_group_labels: list[str] = []
+        start = 0
+
+        enrichment_score_adata = AnnData(adata.uns["pertpy_enrichment_score"], obs=adata.obs)
+        enrichment_score_adata.var_names = adata.uns["pertpy_enrichment_variables"]
+
+        for group in targets:
+            targets[group] = list(  # type: ignore
+                enrichment_score_adata.var_names[np.isin(enrichment_score_adata.var_names, targets[group])]
+            )
+            if len(targets[group]) == 0:
+                continue
+            var_names = var_names + targets[group]  # type: ignore
+            var_group_positions = var_group_positions + [(start, len(var_names) - 1)]
+            var_group_labels = var_group_labels + [group]
+            start = len(var_names)
+
+        plot_args = {
+            "var_names": var_names,
+            "var_group_positions": var_group_positions,
+            "var_group_labels": var_group_labels,
+        }
+
+        return sc.pl.dotplot(enrichment_score_adata, groupby=groupby, swap_axes=True, **plot_args, **kwargs)
