@@ -2401,8 +2401,8 @@ def import_tree(
 
     Args:
         data: A tascCODA-compatible data object.
-        modality_1: If `data` is MuData, specifiy the modality name to the original cell level anndata object. Defaults to None.
-        modality_2: If `data` is MuData, specifiy the modality name to the aggregated level anndata object. Defaults to None.
+        modality_1: If `data` is MuData, specify the modality name to the original cell level anndata object. Defaults to None.
+        modality_2: If `data` is MuData, specify the modality name to the aggregated level anndata object. Defaults to None.
         dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
         levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
         levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
@@ -2487,9 +2487,9 @@ def from_scanpy(
 
     The anndata object needs to have a column in adata.obs that contains the cell type assignment.
     Further, it must contain one column or a set of columns (e.g. subject id, treatment, disease status) that uniquely identify each (statistical) sample.
-    Further covariates (e.g. subject age) can either be specified via addidional column names in adata.obs, a key in adata.uns, or as a separate DataFrame.
+    Further covariates (e.g. subject age) can either be specified via additional column names in adata.obs, a key in adata.uns, or as a separate DataFrame.
 
-    NOTE: The order of samples in the returned dataset is determined by the first occurence of cells from each sample in `adata`
+    NOTE: The order of samples in the returned dataset is determined by the first occurrence of cells from each sample in `adata`
 
     Args:
         adata: An anndata object from scanpy
@@ -2497,7 +2497,7 @@ def from_scanpy(
         sample_identifier: column name or list of column names in adata.obs that uniquely identify each sample
         covariate_uns: key for adata.uns, where covariate values are stored
         covariate_obs: list of column names in adata.obs, where covariate values are stored.
-                       Note: If covariate values are not unique for a value of sample_identifier, this covaariate will be skipped.
+                       Note: If covariate values are not unique for a value of sample_identifier, this covariate will be skipped.
         covariate_df: DataFrame with covariates
 
     Returns:
