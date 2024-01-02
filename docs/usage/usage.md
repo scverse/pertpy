@@ -239,7 +239,7 @@ sccoda.plot_effects_barplot(
 )
 ```
 
-### Multi-cellular or gene programs
+### Multi-cellular and gene programs
 
 #### DIALOGUE
 
@@ -282,6 +282,29 @@ all_results, new_mcps = dl.multilevel_modeling(
     ws_dict=ws,
     confounder="gender",
 )
+```
+
+#### Enrichment
+
+```{eval-rst}
+.. currentmodule:: pertpy
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Enrichment
+```
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+adata = sc.datasets.pbmc3k_processed()
+
+pt_enricher = pt.tl.Enrichment()
+pt_enricher.score(adata)
 ```
 
 ### Distances and Permutation Tests
@@ -484,12 +507,6 @@ ps_adata = ps.compute(
 
 See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html) for a more elaborate tutorial.
 
-## Plots
-
-Every tool has a set of plotting functions that start with `plot_`.
-
-However, we are planning to offer more general plots at a later point.
-
 ## MetaData
 
 MetaData provides tooling to fetch and add more metadata to perturbations by querying a couple of databases.
@@ -527,4 +544,10 @@ Available databases for mechanism of action metadata:
     metadata.CellLine
     metadata.Compound
     metadata.Moa
+    metadata.Drug
 ```
+
+## Plots
+
+Every tool has a set of plotting functions that start with `plot_`.
+However, we are planning to offer more general plots at a later point.
