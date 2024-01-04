@@ -878,7 +878,7 @@ class Mixscape:
             keys = [keys]
         keys = list(OrderedDict.fromkeys(keys))  # remove duplicates, preserving the order
 
-        if isinstance(ylabel, (str, type(None))):
+        if isinstance(ylabel, str | type(None)):
             ylabel = [ylabel] * (1 if groupby is None else len(keys))
         if groupby is None:
             if len(ylabel) != 1:
@@ -924,7 +924,7 @@ class Mixscape:
 
             if stripplot:
                 grouped_df = obs_tidy.groupby(x)
-                for ax_id, key in zip(range(g.axes.shape[1]), keys):
+                for ax_id, key in zip(range(g.axes.shape[1]), keys, strict=False):
                     sns.stripplot(
                         y=y,
                         data=grouped_df.get_group(key),
@@ -954,7 +954,7 @@ class Mixscape:
                 )
             else:
                 axs = [ax]
-            for ax, y, ylab in zip(axs, ys, ylabel):
+            for ax, y, ylab in zip(axs, ys, ylabel, strict=False):
                 ax = sns.violinplot(
                     x=x,
                     y=y,

@@ -20,7 +20,7 @@ def _prepare_targets(
     targets: dict[str, list[str]] | dict[str, dict[str, list[str]]] = None,
     nested: bool = False,
     categories: str | Sequence[str] = None,
-) -> Union[ChainMap, dict]:
+) -> ChainMap | dict:
     if categories is not None:
         if isinstance(categories, str):
             categories = [categories]
@@ -283,7 +283,7 @@ class Enrichment:
         categories: Sequence[str] = None,
         groupby: str = None,
         **kwargs,
-    ) -> Union[DotPlot, dict, None]:
+    ) -> DotPlot | dict | None:
         """Plots a dotplot by groupby and categories.
 
         Wraps scanpy's dotplot but formats it nicely by categories.

@@ -710,7 +710,7 @@ class CellLine(MetaData):
                 plt.ylabel("Baseline")
             else:
                 subset_identifier_list = (
-                    [subset_identifier] if isinstance(subset_identifier, (str, int)) else list(subset_identifier)
+                    [subset_identifier] if isinstance(subset_identifier, str | int) else list(subset_identifier)
                 )
 
                 if all(isinstance(id, int) and 0 <= id < adata.n_obs for id in subset_identifier_list):

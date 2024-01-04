@@ -22,10 +22,10 @@ class CodaPlot:
         type_names: list[str],
         title: str,
         level_names: list[str],
-        figsize: Optional[tuple[float, float]] = None,
-        dpi: Optional[int] = 100,
-        cmap: Optional[ListedColormap] = cm.tab20,
-        show_legend: Optional[bool] = True,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
+        cmap: ListedColormap | None = cm.tab20,
+        show_legend: bool | None = True,
     ) -> plt.Axes:
         """Plots a stacked barplot for one (discrete) covariate.
 
@@ -57,7 +57,7 @@ class CodaPlot:
         cum_bars = np.zeros(n_bars)
 
         for n in range(n_types):
-            bars = [i / j * 100 for i, j in zip([y[k][n] for k in range(n_bars)], sample_sums)]
+            bars = [i / j * 100 for i, j in zip([y[k][n] for k in range(n_bars)], sample_sums, strict=False)]
             plt.bar(
                 r,
                 bars,
@@ -80,13 +80,13 @@ class CodaPlot:
 
     @staticmethod
     def stacked_barplot(  # pragma: no cover
-        data: Union[AnnData, MuData],
+        data: AnnData | MuData,
         feature_name: str,
         modality_key: str = "coda",
-        figsize: Optional[tuple[float, float]] = None,
-        dpi: Optional[int] = 100,
-        cmap: Optional[ListedColormap] = cm.tab20,
-        show_legend: Optional[bool] = True,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
+        cmap: ListedColormap | None = cm.tab20,
+        show_legend: bool | None = True,
         level_order: list[str] = None,
     ) -> plt.Axes:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
@@ -136,19 +136,19 @@ class CodaPlot:
 
     @staticmethod
     def effects_barplot(  # pragma: no cover
-        data: Union[AnnData, MuData],
+        data: AnnData | MuData,
         modality_key: str = "coda",
-        covariates: Optional[Union[str, list]] = None,
+        covariates: str | list | None = None,
         parameter: Literal["log2-fold change", "Final Parameter", "Expected Sample"] = "log2-fold change",
         plot_facets: bool = True,
         plot_zero_covariate: bool = True,
         plot_zero_cell_type: bool = False,
-        figsize: Optional[tuple[float, float]] = None,
-        dpi: Optional[int] = 100,
-        cmap: Optional[Union[str, ListedColormap]] = cm.tab20,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
+        cmap: str | ListedColormap | None = cm.tab20,
         level_order: list[str] = None,
-        args_barplot: Optional[dict] = None,
-    ) -> Optional[Union[plt.Axes, sns.axisgrid.FacetGrid]]:
+        args_barplot: dict | None = None,
+    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -213,21 +213,21 @@ class CodaPlot:
 
     @staticmethod
     def boxplots(  # pragma: no cover
-        data: Union[AnnData, MuData],
+        data: AnnData | MuData,
         feature_name: str,
         modality_key: str = "coda",
         y_scale: Literal["relative", "log", "log10", "count"] = "relative",
         plot_facets: bool = False,
         add_dots: bool = False,
-        cell_types: Optional[list] = None,
-        args_boxplot: Optional[dict] = None,
-        args_swarmplot: Optional[dict] = None,
-        figsize: Optional[tuple[float, float]] = None,
-        dpi: Optional[int] = 100,
-        cmap: Optional[str] = "Blues",
-        show_legend: Optional[bool] = True,
+        cell_types: list | None = None,
+        args_boxplot: dict | None = None,
+        args_swarmplot: dict | None = None,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
+        cmap: str | None = "Blues",
+        show_legend: bool | None = True,
         level_order: list[str] = None,
-    ) -> Optional[Union[plt.Axes, sns.axisgrid.FacetGrid]]:
+    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
         """Grouped boxplot visualization. The cell counts for each cell type are shown as a group of boxplots,
             with intra--group separation by a covariate from data.obs.
 
@@ -292,14 +292,14 @@ class CodaPlot:
 
     @staticmethod
     def rel_abundance_dispersion_plot(  # pragma: no cover
-        data: Union[AnnData, MuData],
+        data: AnnData | MuData,
         modality_key: str = "coda",
-        abundant_threshold: Optional[float] = 0.9,
-        default_color: Optional[str] = "Grey",
-        abundant_color: Optional[str] = "Red",
+        abundant_threshold: float | None = 0.9,
+        default_color: str | None = "Grey",
+        abundant_color: str | None = "Red",
         label_cell_types: bool = True,
-        figsize: Optional[tuple[float, float]] = None,
-        dpi: Optional[int] = 100,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
         ax: Axes = None,
     ) -> plt.Axes:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
@@ -357,17 +357,17 @@ class CodaPlot:
 
     @staticmethod
     def draw_tree(  # pragma: no cover
-        data: Union[AnnData, MuData],
+        data: AnnData | MuData,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
-        tight_text: Optional[bool] = False,
-        show_scale: Optional[bool] = False,
-        show: Optional[bool] = True,
-        file_name: Optional[str] = None,
-        units: Optional[Literal["px", "mm", "in"]] = "px",
-        h: Optional[float] = None,
-        w: Optional[float] = None,
-        dpi: Optional[int] = 90,
+        tight_text: bool | None = False,
+        show_scale: bool | None = False,
+        show: bool | None = True,
+        file_name: str | None = None,
+        units: Literal["px", "mm", "in"] | None = "px",
+        h: float | None = None,
+        w: float | None = None,
+        dpi: int | None = 90,
     ):
         """Plot a tree using input ete3 tree object.
 
@@ -439,20 +439,20 @@ class CodaPlot:
 
     @staticmethod
     def draw_effects(  # pragma: no cover
-        data: Union[AnnData, MuData],
+        data: AnnData | MuData,
         covariate: str,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
-        show_legend: Optional[bool] = None,
-        show_leaf_effects: Optional[bool] = False,
-        tight_text: Optional[bool] = False,
-        show_scale: Optional[bool] = False,
-        show: Optional[bool] = True,
-        file_name: Optional[str] = None,
-        units: Optional[Literal["px", "mm", "in"]] = "in",
-        h: Optional[float] = None,
-        w: Optional[float] = None,
-        dpi: Optional[int] = 90,
+        show_legend: bool | None = None,
+        show_leaf_effects: bool | None = False,
+        tight_text: bool | None = False,
+        show_scale: bool | None = False,
+        show: bool | None = True,
+        file_name: str | None = None,
+        units: Literal["px", "mm", "in"] | None = "in",
+        h: float | None = None,
+        w: float | None = None,
+        dpi: int | None = 90,
     ):
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
@@ -529,7 +529,7 @@ class CodaPlot:
     @staticmethod
     def effects_umap(  # pragma: no cover
         data: MuData,
-        effect_name: Optional[Union[str, list]],
+        effect_name: str | list | None,
         cluster_key: str,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",

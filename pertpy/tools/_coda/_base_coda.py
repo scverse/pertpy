@@ -557,7 +557,11 @@ class CompositionalModel2(ABC):
         intercept_df = intercept_df.loc[:, ["final_parameter", hdis[0], hdis[1], "sd", "expected_sample"]].copy()
         intercept_df = intercept_df.rename(
             columns=dict(
-                zip(intercept_df.columns, ["Final Parameter", hdis_new[0], hdis_new[1], "SD", "Expected Sample"])
+                zip(
+                    intercept_df.columns,
+                    ["Final Parameter", hdis_new[0], hdis_new[1], "SD", "Expected Sample"],
+                    strict=False,
+                )
             )
         )
 
@@ -570,6 +574,7 @@ class CompositionalModel2(ABC):
                     zip(
                         effect_df.columns,
                         ["Effect", "Median", hdis_new[0], hdis_new[1], "SD", "Expected Sample", "log2-fold change"],
+                        strict=False,
                     )
                 )
             )
@@ -590,6 +595,7 @@ class CompositionalModel2(ABC):
                             "Expected Sample",
                             "log2-fold change",
                         ],
+                        strict=False,
                     )
                 )
             )
@@ -603,6 +609,7 @@ class CompositionalModel2(ABC):
                     zip(
                         node_df.columns,
                         ["Final Parameter", "Median", hdis_new[0], hdis_new[1], "SD", "Delta", "Is credible"],
+                        strict=False,
                     )
                 )  # type: ignore
             )  # type: ignore
@@ -1163,7 +1170,7 @@ class CompositionalModel2(ABC):
         cum_bars = np.zeros(n_bars)
 
         for n in range(n_types):
-            bars = [i / j * 100 for i, j in zip([y[k][n] for k in range(n_bars)], sample_sums)]
+            bars = [i / j * 100 for i, j in zip([y[k][n] for k in range(n_bars)], sample_sums, strict=False)]
             plt.bar(
                 r,
                 bars,
@@ -1657,7 +1664,7 @@ class CompositionalModel2(ABC):
                 handles, labels = ax.get_legend_handles_labels()
                 handout = []
                 labelout = []
-                for h, l in zip(handles, labels):
+                for h, l in zip(handles, labels, strict=False):
                     if l not in labelout:
                         labelout.append(l)
                         handout.append(h)

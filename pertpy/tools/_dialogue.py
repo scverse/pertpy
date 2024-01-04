@@ -402,7 +402,7 @@ class Dialogue:
 
         x_final = np.zeros(A_orig.shape[0])
         Ax = np.zeros(A_orig.shape[1])
-        for _, mask in zip(sig_ranks, masks):
+        for _, mask in zip(sig_ranks, masks, strict=False):
             A = A_orig[mask].T
             coef_nnls, _ = nnls(A, y, maxiter=n_iter)
             y = y - A @ coef_nnls  # residuals

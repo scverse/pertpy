@@ -667,7 +667,7 @@ class Xi:
         # same as pandas rank method 'first'
         rankdata = ss.rankdata(randomized, method="ordinal")
         # Reindexing based on pairs of indices before and after
-        unrandomized = [rankdata[j] for i, j in sorted(zip(randomized_indices, range(len_x)))]
+        unrandomized = [rankdata[j] for i, j in sorted(zip(randomized_indices, range(len_x), strict=False))]
         return unrandomized
 
     @property
@@ -705,6 +705,7 @@ class Xi:
                         for x, y in zip(
                             x1,
                             x2,
+                            strict=False,
                         )
                     ]
                 )
@@ -751,13 +752,16 @@ class Xi:
         ind = [i + 1 for i in range(self.sample_size)]
         ind2 = [2 * self.sample_size - 2 * ind[i - 1] + 1 for i in ind]
 
-        a = np.mean([i * j * j for i, j in zip(ind2, sorted_ordered_x_rank)]) / self.sample_size
+        a = np.mean([i * j * j for i, j in zip(ind2, sorted_ordered_x_rank, strict=False)]) / self.sample_size
 
-        c = np.mean([i * j for i, j in zip(ind2, sorted_ordered_x_rank)]) / self.sample_size
+        c = np.mean([i * j for i, j in zip(ind2, sorted_ordered_x_rank, strict=False)]) / self.sample_size
 
         cq = np.cumsum(sorted_ordered_x_rank)
 
-        m = [(i + (self.sample_size - j) * k) / self.sample_size for i, j, k in zip(cq, ind, sorted_ordered_x_rank)]
+        m = [
+            (i + (self.sample_size - j) * k) / self.sample_size
+            for i, j, k in zip(cq, ind, sorted_ordered_x_rank, strict=False)
+        ]
 
         b = np.mean([np.square(i) for i in m])
         v = (a - 2 * b + np.square(c)) / np.square(self.inverse_g_mean)
