@@ -181,6 +181,7 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/tasccoda": "_static/tutorials/tasccoda.png",
     "tutorials/notebooks/milo": "_static/tutorials/milo.png",
     "tutorials/notebooks/dialogue": "_static/tutorials/dialogue.png",
+    "tutorials/notebooks/enrichment": "_static/tutorials/enrichment.png",
     "tutorials/notebooks/distances": "_static/tutorials/distances.png",
     "tutorials/notebooks/distance_tests": "_static/tutorials/distances_tests.png",
     "tutorials/notebooks/cinemaot": "_static/tutorials/cinemaot.png",
