@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import pytest
 import scanpy as sc
 from anndata import AnnData
@@ -8,7 +7,6 @@ from pertpy.tools import Enrichment
 
 @pytest.fixture
 def dummy_adata():
-    """Fixture to create a dummy AnnData object."""
     n_obs = 10
     n_vars = 5
     rng = np.random.default_rng()
@@ -23,7 +21,6 @@ def dummy_adata():
 
 @pytest.fixture
 def enrichment_instance():
-    """Fixture to create an instance of the Enrichment class."""
     return Enrichment()
 
 
