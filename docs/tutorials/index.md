@@ -29,6 +29,7 @@ For questions about the usage of pertpy use [Github Discussions].
    notebooks/cinemaot
    notebooks/scgen_perturbation_prediction
    notebooks/ontology_mapping
+   notebooks/perturbation_space
 ```
 
 ### Glossary

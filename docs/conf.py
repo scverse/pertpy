@@ -186,4 +186,5 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/cinemaot": "_static/tutorials/cinemaot.png",
     "tutorials/notebooks/scgen_perturbation_prediction": "_static/tutorials/scgen_perturbation_prediction.png",
     "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
+    "tutorials/notebooks/perturbation_space": "_static/tutorials/placeholder.png"
 }
