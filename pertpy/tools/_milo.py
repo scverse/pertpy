@@ -878,7 +878,11 @@ class Milo:
             obs_col = nhood_adata.uns["annotation_obs"]
             if palette is None:
                 palette = dict(
-                    zip(mdata[feature_key].obs[obs_col].cat.categories, mdata[feature_key].uns[f"{obs_col}_colors"])
+                    zip(
+                        mdata[feature_key].obs[obs_col].cat.categories,
+                        mdata[feature_key].uns[f"{obs_col}_colors"],
+                        strict=False,
+                    )
                 )
             sns.violinplot(
                 data=anno_df,

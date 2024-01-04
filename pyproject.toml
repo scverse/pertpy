@@ -7,7 +7,7 @@ name = "pertpy"
 version = "0.7.0"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -42,7 +42,6 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -66,7 +65,8 @@ dependencies = [
     "sparsecca",
     "openpyxl",
     "pubchempy",
-    "pyarrow"
+    "pyarrow",
+    "blitzgsea"
 ]
 
 [project.optional-dependencies]

@@ -493,7 +493,7 @@ class Augur:
         # feature importances
         feature_importances = defaultdict(list)
         if isinstance(self.estimator, RandomForestClassifier) or isinstance(self.estimator, RandomForestRegressor):
-            for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"])):
+            for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
                 feature_importances["genes"].extend(x.columns.tolist())
                 feature_importances["feature_importances"].extend(estimator.feature_importances_.tolist())
                 feature_importances["subsample_idx"].extend(len(x.columns) * [subsample_idx])
@@ -502,7 +502,7 @@ class Augur:
         # standardized coefficients with Agresti method
         # cf. https://think-lab.github.io/d/205/#3
         if isinstance(self.estimator, LogisticRegression):
-            for fold, self.estimator in list(zip(range(len(results["estimator"])), results["estimator"])):
+            for fold, self.estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
                 feature_importances["genes"].extend(x.columns.tolist())
                 feature_importances["feature_importances"].extend(
                     (self.estimator.coef_ * self.estimator.coef_.std()).flatten().tolist()
@@ -809,7 +809,7 @@ class Augur:
                     * (len(results["feature_importances"]["genes"]) - len(results["feature_importances"]["cell_type"]))
                 )
 
-                for idx, cv in zip(range(n_subsamples), results[cell_type]):
+                for idx, cv in zip(range(n_subsamples), results[cell_type], strict=False):
                     results["full_results"]["idx"].extend([idx] * folds)
                     results["full_results"]["augur_score"].extend(cv["test_augur_score"])
                     results["full_results"]["folds"].extend(range(folds))
