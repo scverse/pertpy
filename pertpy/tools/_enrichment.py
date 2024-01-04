@@ -1,7 +1,8 @@
 from collections import ChainMap
 from collections.abc import Sequence
-from typing import Literal, Union
+from typing import Any, Literal, Union
 
+import blitzgsea
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -227,6 +228,54 @@ class Enrichment:
 
         return overrepresentation
 
+    def gsea(
+        self,
+        adata: "AnnData",
+        targets: dict[str, list[str] | dict[str, list[str]]] | None = None,
+        nested: bool = False,
+        categories: str | list[str] | None = None,
+        absolute: bool = False,
+    ) -> dict[str, pd.DataFrame] | tuple[dict[str, pd.DataFrame], dict[str, dict]]:  # pragma: no cover
+        """Perform gene set enrichment analysis on the marker gene scores using blitzgsea.
+
+        Args:
+            adata: AnnData object with marker genes computed via `sc.tl.rank_genes_groups()`
+                   in the original expression space.
+            targets: The gene groups to evaluate, either as a dictionary with names of the
+                     groups as keys and gene lists as values, or a dictionary of dictionaries
+                     with names of gene group categories as keys. Defaults to None, in which
+                     case it uses `d2c.score()` output or loads ChEMBL-derived drug target sets.
+            nested: Indicates if `targets` is a dictionary of dictionaries with group
+                    categories as keys. Defaults to False.
+            categories: Used to subset the gene groups to one or more categories,
+                        applicable if `targets=None` or `nested=True`. Defaults to None.
+            absolute: If True, passes the absolute values of scores to GSEA, improving
+                      statistical power. Defaults to False.
+
+        Returns:
+            A dictionary with clusters as keys and data frames of test results sorted on
+            q-value as the items.
+        """
+        targets = _prepare_targets(targets=targets, nested=nested, categories=categories)  # type: ignore
+        enrichment = {}
+        plot_gsea_args: dict[str, Any] = {"targets": targets, "scores": {}}
+        for cluster in adata.uns["rank_genes_groups"]["names"].dtype.names:
+            df = pd.DataFrame(
+                {
+                    "0": adata.uns["rank_genes_groups"]["names"][cluster],
+                    "1": adata.uns["rank_genes_groups"]["scores"][cluster],
+                }
+            )
+            if absolute:
+                df["1"] = np.absolute(df["1"])
+                df = df.sort_values("1", ascending=False)
+            enrichment[cluster] = blitzgsea.gsea(df, targets)
+            plot_gsea_args["scores"][cluster] = df
+
+        adata.uns["pertpy_enrichment_gsea"] = plot_gsea_args
+
+        return enrichment
+
     def plot_dotplot(
         self,
         adata: AnnData,
@@ -302,3 +351,25 @@ class Enrichment:
         }
 
         return sc.pl.dotplot(enrichment_score_adata, groupby=groupby, swap_axes=True, **plot_args, **kwargs)
+
+    def plot_gsea(self, adata: AnnData, enrichment: dict[str, pd.DataFrame], n: int = 10) -> None:
+        """Generates a blitzgsea top_table plot.
+
+        This function is designed to visualize the results from a Gene Set Enrichment Analysis (GSEA).
+        It uses the output from the `gsea()` method, which provides the enrichment data,
+        and displays the top results using blitzgsea's `top_table()` plot.
+
+        Args:
+            adata: AnnData object to plot.
+            enrichment: Cluster names as keys, blitzgsea's ``gsea()`` output as values.
+            n: How many top scores to show for each group. Defaults to 10.
+        """
+        for cluster in enrichment:
+            fig = blitzgsea.plot.top_table(
+                adata.uns["pertpy_enrichment_gsea"]["scores"][cluster],
+                adata.uns["pertpy_enrichment_gsea"]["targets"],
+                enrichment[cluster],
+                n=n,
+            )
+            fig.suptitle(cluster)
+            fig.show()

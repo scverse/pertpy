@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import scanpy as sc
 from anndata import AnnData
@@ -47,14 +48,12 @@ def test_score_with_nested_targets(dummy_adata, enrichment_instance):
 
 
 def test_hypergeometric_basic(dummy_adata, enrichment_instance):
-    """Test the basic functionality of the hypergeometric function."""
     targets = {"group1": ["gene1", "gene2"]}
     results = enrichment_instance.hypergeometric(dummy_adata, targets)
     assert isinstance(results, dict)
 
 
 def test_hypergeometric_with_nested_targets(dummy_adata, enrichment_instance):
-    """Test the hypergeometric function with nested targets."""
     targets = {"category1": {"group1": ["gene1", "gene2"]}}
     results = enrichment_instance.hypergeometric(dummy_adata, targets, nested=True)
     assert isinstance(results, dict)
@@ -62,7 +61,6 @@ def test_hypergeometric_with_nested_targets(dummy_adata, enrichment_instance):
 
 @pytest.mark.parametrize("direction", ["up", "down", "both"])
 def test_hypergeometric_with_different_directions(dummy_adata, enrichment_instance, direction):
-    """Test the hypergeometric function with different direction parameters."""
     targets = {"group1": ["gene1", "gene2"]}
     results = enrichment_instance.hypergeometric(dummy_adata, targets, direction=direction)
     assert isinstance(results, dict)

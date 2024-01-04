@@ -66,7 +66,8 @@ dependencies = [
     "sparsecca",
     "openpyxl",
     "pubchempy",
-    "pyarrow"
+    "pyarrow",
+    "blitzgsea"
 ]
 
 [project.optional-dependencies]
