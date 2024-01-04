@@ -9,6 +9,8 @@ from anndata import AnnData
 from scanpy.plotting import DotPlot
 from scanpy.tools._score_genes import _sparse_nanmean
 from scipy.sparse import issparse
+from scipy.stats import hypergeom
+from statsmodels.stats.multitest import multipletests
 
 from pertpy.metadata import Drug
 
@@ -75,10 +77,12 @@ class Enrichment:
                      - A dictionary with group names as keys and corresponding gene lists as entries.
                      - A dictionary of dictionaries with group categories as keys. Use `nested=True` in this case.
                      If not provided, ChEMBL-derived drug target sets are used.
-            nested: Indicates if `targets` is a dictionary of dictionaries with group categories as keys. Defaults to False.
+            nested: Indicates if `targets` is a dictionary of dictionaries with group categories as keys.
+                    Defaults to False.
             categories: To subset the gene groups to specific categories, especially when `targets=None` or `nested=True`.
                         For ChEMBL drug targets, these are ATC level 1/level 2 category codes.
-            method: Method for scoring gene groups. `"mean"` calculates the mean over all genes, while `"seurat"` uses a background profile subtraction approach.
+            method: Method for scoring gene groups. `"mean"` calculates the mean over all genes,
+                    while `"seurat"` uses a background profile subtraction approach.
                     Defaults to 'mean'.
             layer: Specifies which `.layers` of AnnData to use for expression values. Defaults to `.X` if None.
             n_bins: The number of expression bins for the `'seurat'` method.
@@ -148,6 +152,80 @@ class Enrichment:
         for drug in weights.columns:
             adata.uns["pertpy_enrichment_genes"]["var"].loc[drug, "genes"] = "|".join(adata.var_names[targets[drug]])
             adata.uns["pertpy_enrichment_all_genes"]["var"].loc[drug, "all_genes"] = "|".join(full_targets[drug])
+
+    def hypergeometric(
+        self,
+        adata: AnnData,
+        targets: dict[str, list[str] | dict[str, list[str]]] | None = None,
+        nested: bool = False,
+        categories: str | list[str] | None = None,
+        pvals_adj_thresh: float = 0.05,
+        direction: str = "both",
+        corr_method: Literal["benjamini-hochberg", "bonferroni"] = "benjamini-hochberg",
+    ):
+        """Perform a hypergeometric test to assess the overrepresentation of gene group members.
+
+        Args:
+            adata: With marker genes computed via `sc.tl.rank_genes_groups()` in the original expression space.
+            targets: The gene groups to evaluate. Can be targets of known drugs, GO terms, pathway memberships, anything you can assign genes to.
+                     If `None`, will use `d2c.score()` output if present, and if not present load the ChEMBL-derived drug target sets distributed with the package.
+                     Accepts two forms:
+                     - A dictionary with the names of the groups as keys, and the entries being the corresponding gene lists.
+                     - A dictionary of dictionaries defined like above, with names of gene group categories as keys. If passing one of those, specify `nested=True`.
+            nested: Whether `targets` is a dictionary of dictionaries with group categories as keys.
+            categories: If `targets=None` or `nested=True`, this argument can be used to subset the gene groups to one or more categories (keys of the original dictionary). In case of the ChEMBL drug targets, these are ATC level 1/level 2 category codes.
+            pvals_adj_thresh: The `pvals_adj` cutoff to use on the `sc.tl.rank_genes_groups()` output to identify markers.
+            direction: Whether to seek out up/down-regulated genes for the groups, based on the values from `scores`.
+                       Can be `up`, `down`, or `both` (for no selection).
+            corr_method: Which FDR correction to apply to the p-values of the hypergeometric test.
+                         Can be `benjamini-hochberg` or `bonferroni`.
+
+        Returns:
+            Dictionary with clusters for which the original object markers were computed as the keys,
+            and data frames of test results sorted on q-value as the items.
+        """
+        universe = set(adata.var_names)
+        targets = _prepare_targets(targets=targets, nested=nested, categories=categories)  # type: ignore
+        for group in targets:
+            targets[group] = set(targets[group]).intersection(universe)  # type: ignore
+        # We remove empty keys since we don't need them
+        targets = {k: v for k, v in targets.items() if v}
+
+        overrepresentation = {}
+        for cluster in adata.uns["rank_genes_groups"]["names"].dtype.names:
+            results = pd.DataFrame(
+                1,
+                index=list(targets.keys()),
+                columns=["intersection", "gene_group", "markers", "universe", "pvals", "pvals_adj"],
+            )
+            mask = adata.uns["rank_genes_groups"]["pvals_adj"][cluster] < pvals_adj_thresh
+            if direction == "up":
+                mask = mask & (adata.uns["rank_genes_groups"]["scores"][cluster] > 0)
+            elif direction == "down":
+                mask = mask & (adata.uns["rank_genes_groups"]["scores"][cluster] < 0)
+            markers = set(adata.uns["rank_genes_groups"]["names"][cluster][mask])
+            results["markers"] = len(markers)
+            results["universe"] = len(universe)
+            results["pvals"] = results["pvals"].astype(float)
+
+            for ind in results.index:
+                gene_group = targets[ind]
+                common = gene_group.intersection(markers)  # type: ignore
+                results.loc[ind, "intersection"] = len(common)
+                results.loc[ind, "gene_group"] = len(gene_group)
+                # need to subtract 1 from the intersection length
+                # https://alexlenail.medium.com/understanding-and-implementing-the-hypergeometric-test-in-python-a7db688a7458
+                pval = hypergeom.sf(len(common) - 1, len(universe), len(markers), len(gene_group))
+                results.loc[ind, "pvals"] = pval
+            # Just in case any NaNs popped up somehow, fill them to 1 so FDR works
+            results = results.fillna(1)
+            if corr_method == "benjamini-hochberg":
+                results["pvals_adj"] = multipletests(results["pvals"], method="fdr_bh")[1]
+            elif corr_method == "bonferroni":
+                results["pvals_adj"] = np.minimum(results["pvals"] * results.shape[0], 1.0)
+            overrepresentation[cluster] = results.sort_values("pvals_adj")
+
+        return overrepresentation
 
     def plot_dotplot(
         self,
