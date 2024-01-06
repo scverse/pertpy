@@ -57,8 +57,6 @@ class Dialogue:
 
         Copied from `https://github.com/schillerlab/sc-toolbox/blob/397e80dc5e8fb8017b75f6c3fa634a1e1213d484/sc_toolbox/tools/__init__.py#L458`
 
-        # TODO: Replace with decoupler's implementation
-
         Args:
             groupby: The key to groupby for pseudobulks
             strategy: The pseudobulking strategy. One of "median" or "mean"
@@ -66,6 +64,7 @@ class Dialogue:
         Returns:
             A Pandas DataFrame of pseudobulk counts
         """
+        # TODO: Replace with decoupler's implementation
         pseudobulk = {"Genes": adata.var_names.values}
 
         for category in adata.obs.loc[:, groupby].cat.categories:
@@ -105,8 +104,6 @@ class Dialogue:
     def _scale_data(self, pseudobulks: pd.DataFrame, normalize: bool = True) -> np.ndarray:
         """Row-wise mean center and scale by the standard deviation.
 
-        TODO: the `scale` function we implemented to match the R `scale` fn should already contain this functionality.
-
         Args:
             pseudobulks: The pseudobulk PCA components.
             normalize: Whether to mimic DIALOGUE behavior or not.
@@ -114,9 +111,9 @@ class Dialogue:
         Returns:
             The scaled count matrix.
         """
+        # TODO: the `scale` function we implemented to match the R `scale` fn should already contain this functionality.
         # DIALOGUE doesn't scale the data before passing to multicca, unlike what is recommended by sparsecca.
         # However, performing this scaling _does_ increase overall correlation of the end result
-        # WHEN SAMPLE ORDER AND DIALOGUE2+3 PROCESSING IS IGNORED.
         if normalize:
             return pseudobulks.to_numpy()
         else:
@@ -371,7 +368,7 @@ class Dialogue:
         return np.array(resid)
 
     def _iterative_nnls(self, A_orig: np.ndarray, y_orig: np.ndarray, feature_ranks: list[int], n_iter: int = 1000):
-        """Solves non-negative least squares separately for different feature categories.
+        """Solves non-negative least-squares separately for different feature categories.
 
         Mimics DLG.iterative.nnls.
         Variables are notated according to:
@@ -628,9 +625,8 @@ class Dialogue:
             >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", n_counts_key = "nCount_RNA", n_mpcs = 3)
             >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
         """
-        # IMPORTANT NOTE: the order in which matrices are passed to multicca matters. As such,
-        # it is important here that to obtain the same result as in R, we pass the matrices in
-        # in the same order.
+        # IMPORTANT NOTE: the order in which matrices are passed to multicca matters.
+        # As such, it is important here that to obtain the same result as in R, we pass the matrices in the same order.
         if ct_order is not None:
             cell_types = ct_order
         else:
@@ -798,7 +794,7 @@ class Dialogue:
                 for mcp in mcps:
                     mixed_model_progress.update(mm_task, description=f"[bold blue]Determining mixed effects for {mcp}")
 
-                    # TODO Check that the genes in result{sig_genes_1] are different and if so note that somewhere and explain why
+                    # TODO Check whether the genes in result{sig_genes_1] are different and if so note that somewhere and explain why
                     result = {}
                     result["HLM_result_1"], result["sig_genes_1"] = self._apply_HLM_per_MCP_for_one_pair(
                         mcp_name=mcp,
@@ -868,22 +864,19 @@ class Dialogue:
         sample_label = self.sample_id
         n_mcps = self.n_mcps
 
-        # create conditions_compare if not supplied
         if conditions_compare is None:
             conditions_compare = list(adata.obs["path_str"].cat.categories)  # type: ignore
             if len(conditions_compare) != 2:
                 raise ValueError("Please specify conditions to compare or supply an object with only 2 conditions")
 
-        # create data frames to store results
         pvals = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
         tstats = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
         pvals_adj = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
 
         response = adata.obs.groupby(sample_label)[condition_label].agg(pd.Series.mode)
         for celltype in adata.obs[celltype_label].unique():
-            # subset data to cell type
             df = adata.obs[adata.obs[celltype_label] == celltype]
-            # run t-test for each MCP
+
             for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
                 mns = df.groupby(sample_label)[mcpnum].mean()
                 mns = pd.concat([mns, response], axis=1)
@@ -893,11 +886,10 @@ class Dialogue:
                 )
                 pvals.loc[celltype, mcpnum] = res[1]
                 tstats.loc[celltype, mcpnum] = res[0]
-                # return(res)
 
-        # benjamini-hochberg correction for number of cell types (use BH because correlated MCPs)
         for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
             pvals_adj[mcpnum] = multipletests(pvals[mcpnum], method="fdr_bh")[1]
+
         return {"pvals": pvals, "tstats": tstats, "pvals_adj": pvals_adj}
 
     def get_mlm_mcp_genes(
@@ -914,7 +906,7 @@ class Dialogue:
             celltype: Cell type of interest.
             results: dl.MultilevelModeling result object.
             MCP: MCP key of the result object.
-            threshhold: Number between [0,1]. The fraction of cell types compared against which must have the associated MCP gene.
+            threshold: Number between [0,1]. The fraction of cell types compared against which must have the associated MCP gene.
                         Defaults to 0.70.
             focal_celltypes: None (compare against all cell types) or a list of other cell types which you want to compare against.
                              Defaults to None.
@@ -938,7 +930,6 @@ class Dialogue:
         # REMOVE THIS BLOCK ONCE MLM OUTPUT MATCHES STANDARD
         if MCP.startswith("mcp_"):
             MCP = MCP.replace("mcp_", "MCP")
-            # convert from MCPx to MCPx+1
             MCP = "MCP" + str(int(MCP[3:]) - 1)
 
         # Extract all comparison keys from the results object
@@ -1007,17 +998,16 @@ class Dialogue:
             objects containing the results of gene ranking analysis.
 
         Examples:
-            ct_subs = {
-            "subpop1": anndata_obj1,
-            "subpop2": anndata_obj2,
-            # ... more subpopulations ...
-            }
-            genes_results = _get_extrema_MCP_genes_single(ct_subs, mcp="mcp_4", fraction=0.2)
+            >>> ct_subs = {
+            >>> "subpop1": anndata_obj1,
+            >>> "subpop2": anndata_obj2,
+            >>> # ... more subpopulations ...
+            >>> }
+            >>> genes_results = _get_extrema_MCP_genes_single(ct_subs, mcp="mcp_4", fraction=0.2)
         """
         genes = {}
         for ct in ct_subs.keys():
             mini = ct_subs[ct]
-            mini.obs[mcp]
             mini.obs["extrema"] = pd.qcut(
                 mini.obs[mcp],
                 [0, 0 + fraction, 1 - fraction, 1.0],
@@ -1027,6 +1017,7 @@ class Dialogue:
                 mini, "extrema", groups=["high" + mcp + " " + ct], reference="low " + mcp + " " + ct
             )
             genes[ct] = mini  # .uns['rank_genes_groups']
+
         return genes
 
     def get_extrema_MCP_genes(self, ct_subs: dict, fraction: float = 0.1):
@@ -1064,11 +1055,12 @@ class Dialogue:
             rank_dfs[mcp] = {}
             ct_ranked = self._get_extrema_MCP_genes_single(ct_subs, mcp=mcp, fraction=fraction)
             for celltype in ct_ranked.keys():
-                rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype], group=None)
+                rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype])
 
         return rank_dfs
 
     def plot_split_violins(
+        self,
         adata: AnnData,
         split_key: str,
         celltype_key=str,
@@ -1111,7 +1103,9 @@ class Dialogue:
 
         return ax
 
-    def plot_pairplot(adata: AnnData, celltype_key: str, color: str, sample_id: str, mcp: str = "mcp_0") -> PairGrid:
+    def plot_pairplot(
+        self, adata: AnnData, celltype_key: str, color: str, sample_id: str, mcp: str = "mcp_0"
+    ) -> PairGrid:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,
@@ -1119,10 +1113,10 @@ class Dialogue:
 
         Args:
             adata: Annotated data object.
-            celltype_key: Key in adata.obs containing cell type annotations.
-            color: Key in adata.obs for color annotations. This parameter is used as the hue
-            sample_id: Key in adata.obs for the sample annotations.
-            mcp: Key in adata.obs for MCP feature values. Defaults to "mcp_0".
+            celltype_key: Key in `adata.obs` containing cell type annotations.
+            color: Key in `adata.obs` for color annotations. This parameter is used as the hue
+            sample_id: Key in `adata.obs` for the sample annotations.
+            mcp: Key in `adata.obs` for MCP feature values. Defaults to `"mcp_0"`.
 
         Returns:
             Seaborn Pairgrid object.
