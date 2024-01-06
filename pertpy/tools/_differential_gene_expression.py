@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING, Literal
 import decoupler as dc
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
+from scipy.stats import kendalltau, pearsonr, spearmanr
 
 if TYPE_CHECKING:
-    import pandas as pd
     from anndata import AnnData
 
 
@@ -142,6 +143,78 @@ class DifferentialGeneExpression:
         filtered_adata = adata[:, genes].copy()
 
         return filtered_adata
+
+    def calculate_correlation(
+        self,
+        de_res_1: pd.DataFrame,
+        de_res_2: pd.DataFrame,
+        method: Literal["spearman", "pearson", "kendall-tau"] = "spearman",
+    ) -> pd.DataFrame:
+        """Calculate the Spearman correlation coefficient for 'pvals_adj' and 'logfoldchanges' columns.
+
+        Args:
+            de_res_1: A DataFrame with DE result columns.
+            de_res_2: Another DataFrame with the same DE result columns.
+            method: The correlation method to apply. One of `spearman`, `pearson`, `kendall-tau`.
+                    Defaults to `spearman`.
+
+        Returns:
+            A DataFrame with the Spearman correlation coefficients for 'pvals_adj' and 'logfoldchanges'.
+        """
+        columns_of_interest = ["pvals_adj", "logfoldchanges"]
+        correlation_data = {}
+        for col in columns_of_interest:
+            match method:
+                case "spearman":
+                    correlation, _ = spearmanr(de_res_1[col], de_res_2[col])
+                case "pearson":
+                    correlation, _ = pearsonr(de_res_1[col], de_res_2[col])
+                case "kendall-tau":
+                    correlation, _ = kendalltau(de_res_1[col], de_res_2[col])
+                case _:
+                    raise ValueError("Unknown correlation method.")
+            correlation_data[col] = correlation
+
+        return pd.DataFrame([correlation_data], columns=columns_of_interest)
+
+    def calculate_jaccard_index(self, de_res_1: pd.DataFrame, de_res_2: pd.DataFrame, threshold: float = 0.05) -> float:
+        """Calculate the Jaccard index for sets of significantly expressed genes/features based on a p-value threshold.
+
+        Args:
+            de_res_1: A DataFrame with DE result columns, including 'pvals'.
+            de_res_2: Another DataFrame with the same DE result columns.
+            threshold: A threshold for determining significant expression (default is 0.05).
+
+        Returns:
+            The Jaccard index.
+        """
+        significant_set_1 = set(de_res_1[de_res_1["pvals"] <= threshold].index)
+        significant_set_2 = set(de_res_2[de_res_2["pvals"] <= threshold].index)
+
+        intersection = significant_set_1.intersection(significant_set_2)
+        union = significant_set_1.union(significant_set_2)
+
+        return len(intersection) / len(union) if union else 0
+
+    def calculate_cohens_d(self, de_res_1: pd.DataFrame, de_res_2: pd.DataFrame) -> pd.Series:
+        """Calculate Cohen's D for the logfoldchanges.
+
+        Args:
+            de_res_1: A DataFrame with DE result columns, including 'logfoldchanges'.
+            de_res_2: Another DataFrame with the same DE result columns.
+
+        Returns:
+            A pandas Series containing Cohen's D for each gene/feature.
+        """
+        means_1 = de_res_1["logfoldchanges"].mean()
+        means_2 = de_res_2["logfoldchanges"].mean()
+        sd_1 = de_res_1["logfoldchanges"].std()
+        sd_2 = de_res_2["logfoldchanges"].std()
+
+        pooled_sd = np.sqrt((sd_1**2 + sd_2**2) / 2)
+        cohens_d = (means_1 - means_2) / pooled_sd
+
+        return cohens_d
 
     def de_analysis(
         self,
