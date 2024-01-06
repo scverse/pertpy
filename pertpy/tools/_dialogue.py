@@ -8,6 +8,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import scipy
 import seaborn as sns
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
@@ -70,9 +71,9 @@ class Dialogue:
         for category in adata.obs.loc[:, groupby].cat.categories:
             temp = adata.obs.loc[:, groupby] == category
             if strategy == "median":
-                pseudobulk[category] = adata[temp].X.median(axis=0).A1
+                pseudobulk[category] = adata[temp].X.median(axis=0)
             elif strategy == "mean":
-                pseudobulk[category] = adata[temp].X.mean(axis=0).A1
+                pseudobulk[category] = adata[temp].X.mean(axis=0)
 
         pseudobulk = pd.DataFrame(pseudobulk).set_index("Genes")
 
@@ -517,8 +518,8 @@ class Dialogue:
             # TODO: probably format the up and down within get_top_elements
             cca_sig: dict[str, Any] = defaultdict(dict)
             for i in range(0, int(len(cca_sig_unformatted) / 2)):
-                cca_sig[f"MCP{i + 1}"]["up"] = cca_sig_unformatted[i * 2]
-                cca_sig[f"MCP{i + 1}"]["down"] = cca_sig_unformatted[i * 2 + 1]
+                cca_sig[f"MCP{i}"]["up"] = cca_sig_unformatted[i * 2]
+                cca_sig[f"MCP{i}"]["down"] = cca_sig_unformatted[i * 2 + 1]
 
             cca_sig = dict(cca_sig)
             cca_sig_results[ct] = cca_sig
@@ -710,7 +711,7 @@ class Dialogue:
             formula = f"y ~ x + {self.n_counts_key}"
 
         # Hierarchical modeling expects DataFrames
-        mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(self.n_mcps)}
+        mcp_cell_types = {f"MCP{i}": cell_types for i in range(self.n_mcps)}
         mcp_scores_df = {
             ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=list(mcp_cell_types.keys()))
             for ct, v in mcp_scores.items()
@@ -1055,7 +1056,7 @@ class Dialogue:
             rank_dfs[mcp] = {}
             ct_ranked = self._get_extrema_MCP_genes_single(ct_subs, mcp=mcp, fraction=fraction)
             for celltype in ct_ranked.keys():
-                rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype])
+                rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype], group=None)
 
         return rank_dfs
 
