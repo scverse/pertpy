@@ -317,13 +317,13 @@ class Dialogue:
     def _apply_HLM_per_MCP_for_one_pair(
         self,
         mcp_name: str,
-        scores_df: dict,
+        scores_df: pd.DataFrame,
         ct_data: AnnData,
         tme: pd.DataFrame,
         sig: dict,
         n_counts: str,
         formula: str,
-        confounder: str,
+        confounder: str | None,
     ) -> tuple[pd.DataFrame, dict[str, Any]]:
         """Applies hierarchical modeling for a single MCP.
 
@@ -344,7 +344,7 @@ class Dialogue:
         """
         HLM_result = self._mixed_effects(
             scores=scores_df[[mcp_name]],
-            x_labels=ct_data.obs[[n_counts, confounder]],
+            x_labels=ct_data.obs[[n_counts, confounder]] if confounder else ct_data.obs[[n_counts]],
             tme=tme,
             genes_in_mcp=list(sig[mcp_name]["up"]) + list(sig[mcp_name]["down"]),
             formula=formula,
@@ -678,7 +678,7 @@ class Dialogue:
         ct_subs: dict,
         mcp_scores: dict,
         ws_dict: dict,
-        confounder: str,
+        confounder: str | None,
         formula: str = None,
     ):
         """Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.
@@ -706,7 +706,7 @@ class Dialogue:
             >>> all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs, mcp_scores=mcps, ws_dict=ws, \
                 confounder="gender")
         """
-        # all possible pairs of cell types with out pairing same cell type
+        # all possible pairs of cell types without pairing same cell type
         cell_types = list(ct_subs.keys())
         pairs = list(itertools.combinations(cell_types, 2))
 
@@ -716,7 +716,7 @@ class Dialogue:
         # Hierarchical modeling expects DataFrames
         mcp_cell_types = {f"MCP{i + 1}": cell_types for i in range(self.n_mcps)}
         mcp_scores_df = {
-            ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=mcp_cell_types.keys())
+            ct: pd.DataFrame(v, index=ct_subs[ct].obs.index, columns=list(mcp_cell_types.keys()))
             for ct, v in mcp_scores.items()
         }
 
