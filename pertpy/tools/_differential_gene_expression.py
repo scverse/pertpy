@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from scipy.stats import kendalltau, pearsonr, spearmanr
+from statsmodels.stats.multitest import fdrcorrection
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -215,6 +216,78 @@ class DifferentialGeneExpression:
         cohens_d = (means_1 - means_2) / pooled_sd
 
         return cohens_d
+
+    def de_res_to_anndata(
+        self,
+        adata: AnnData,
+        de_res: pd.DataFrame,
+        *,
+        groupby: str,
+        gene_id_col: str = "gene_symbols",
+        score_col: str = "scores",
+        pval_col: str = "pvals",
+        pval_adj_col: str | None = "pvals_adj",
+        lfc_col: str = "logfoldchanges",
+        key_added: str = "rank_genes_groups",
+    ) -> None:
+        """Add tabular differential expression result to AnnData as if it was produced by `scanpy.tl.rank_genes_groups`.
+
+        Args:
+            adata:
+                Annotated data matrix
+            de_res:
+                Tablular de result
+            groupby:
+                Column in `de_res` that indicates the group. This column must also exist in `adata.obs`.
+            gene_id_col:
+                Column in `de_res` that holds the gene identifiers
+            score_col:
+                Column in `de_res` that holds the score (results will be ordered by score).
+            pval_col:
+                Column in `de_res` that holds the unadjusted pvalue
+            pval_adj_col:
+                Column in `de_res` that holds the adjusted pvalue.
+                If not specified, the unadjusted pvalues will be FDR-adjusted.
+            lfc_col:
+                Column in `de_res` that holds the log fold change
+            key_added:
+                Key under which the results will be stored in `adata.uns`
+        """
+        if groupby not in adata.obs.columns or groupby not in de_res.columns:
+            raise ValueError("groupby column must exist in both adata and de_res.")
+        res_dict = {
+            "params": {
+                "groupby": groupby,
+                "reference": "rest",
+                "method": "other",
+                "use_raw": True,
+                "layer": None,
+                "corr_method": "other",
+            },
+            "names": [],
+            "scores": [],
+            "pvals": [],
+            "pvals_adj": [],
+            "logfoldchanges": [],
+        }
+        df_groupby = de_res.groupby(groupby)
+        for _, tmp_df in df_groupby:
+            tmp_df = tmp_df.sort_values(score_col, ascending=False)
+            res_dict["names"].append(tmp_df[gene_id_col].values)  # type: ignore
+            res_dict["scores"].append(tmp_df[score_col].values)  # type: ignore
+            res_dict["pvals"].append(tmp_df[pval_col].values)  # type: ignore
+            if pval_adj_col is not None:
+                res_dict["pvals_adj"].append(tmp_df[pval_adj_col].values)  # type: ignore
+            else:
+                res_dict["pvals_adj"].append(fdrcorrection(tmp_df[pval_col].values)[1])  # type: ignore
+            res_dict["logfoldchanges"].append(tmp_df[lfc_col].values)  # type: ignore
+
+        for key in ["names", "scores", "pvals", "pvals_adj", "logfoldchanges"]:
+            res_dict[key] = pd.DataFrame(
+                np.vstack(res_dict[key]).T,
+                columns=list(df_groupby.groups.keys()),
+            ).to_records(index=False, column_dtypes="O")
+        adata.uns[key_added] = res_dict
 
     def de_analysis(
         self,
