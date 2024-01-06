@@ -81,10 +81,6 @@ Simple functions for:
 Assigning guides based on thresholds. Each cell is assigned to the most expressed gRNA if it has at least the specified number of counts.
 
 ```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
 .. autosummary::
     :toctree: preprocessing
     :nosignatures:
@@ -111,6 +107,20 @@ ga.plot_heatmap(gdo, layer="assigned_guides")
 
 ## Tools
 
+### Differential gene expression
+
+Differential gene expression involves the quantitative comparison of gene expression levels between two or more groups,
+such as different cell types, tissues, or conditions to discern genes that are significantly up- or downregulated in response to specific biological contexts or stimuli.
+Pertpy provides utilities to conduct differential gene expression tests through a common interface that supports complex designs and methods.
+
+```{eval-rst}
+.. autosummary::
+    :toctree: preprocessing
+    :nosignatures:
+
+    tools.DifferentialGeneExpression
+```
+
 ### Pooled CRISPR screens
 
 #### Mixscape
@@ -121,10 +131,6 @@ Papalexi et al. [Characterizing the molecular regulation of inhibitory immune ch
 Mixscape first tries to remove confounding sources of variation such as cell cycle or replicate effect by embedding the cells into a perturbation space (the perturbation signature).
 Next, it determines which targeted cells were affected by the genetic perturbation (=KO) and which targeted cells were not (=NP) with the use of mixture models.
 Finally, it visualizes similarities and differences across different perturbations.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
@@ -154,10 +160,6 @@ See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebo
 
 A Python implementation of Milo for differential abundance testing on KNN graphs, to ease interoperability with scverse pipelines for single-cell analysis.
 See [Differential abundance testing on single-cell data using k-nearest neighbor graphs](https://www.nature.com/articles/s41587-021-01033-z) for details on the statistical framework.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
@@ -194,10 +196,6 @@ milo.da_nhoods(mdata, design="~Status")
 
 Reimplementation of scCODA for identification of compositional changes in high-throughput sequencing count data and tascCODA for sparse, tree-aggregated modeling of high-throughput sequencing data.
 See [scCODA is a Bayesian model for compositional single-cell data analysis](https://www.nature.com/articles/s41467-021-27150-6) for statistical methodology and benchmarking performance of scCODA and [tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data](https://www.frontiersin.org/articles/10.3389/fgene.2021.766405/full) for statistical methodology and benchmarking performance of tascCODA.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
@@ -247,10 +245,6 @@ A **work in progress (!)** Python implementation of DIALOGUE for the discovery o
 See [DIALOGUE maps multicellular programs in tissue from single-cell or spatial transcriptomics data](https://www.nature.com/articles/s41587-022-01288-0) for more details on the methodology.
 
 ```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
 .. autosummary::
     :toctree: tools
 
@@ -287,10 +281,6 @@ all_results, new_mcps = dl.multilevel_modeling(
 #### Enrichment
 
 ```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
 .. autosummary::
     :toctree: tools
 
@@ -311,10 +301,6 @@ pt_enricher.score(adata)
 
 General purpose functions for distances and permutation tests.
 Reimplements functions from [scperturb](http://projects.sanderlab.org/scperturb/) package.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
@@ -376,10 +362,6 @@ results["summary_metrics"]
 See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augur.html) for a more elaborate tutorial.
 
 ```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
 .. autosummary::
     :toctree: tools
     :nosignatures:
@@ -391,10 +373,6 @@ See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks
 
 Reimplementation of scGen for perturbation response prediction of scRNA-seq data in Jax.
 See [scGen predicts single-cell perturbation responses](https://www.nature.com/articles/s41592-019-0494-8) for more details.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
@@ -436,10 +414,6 @@ These cell pairs represent causal perturbation responses permitting a number of 
 See [Causal identification of single-cell experimental perturbation effects with CINEMA-OT](https://www.biorxiv.org/content/10.1101/2022.07.31.502173v3.abstract) for more details.
 
 ```{eval-rst}
-.. currentmodule:: pertpy
-```
-
-```{eval-rst}
 .. autosummary::
     :toctree: tools
 
@@ -472,10 +446,6 @@ See [CINEMA-OT tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteb
 ### Perturbation space
 
 Various modules for calculating and evaluating perturbation spaces.
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
@@ -532,10 +502,6 @@ Moa aims to retrieve metadata of mechanism of action studies related to perturba
 Available databases for mechanism of action metadata:
 
 -   [CLUE](https://clue.io/)
-
-```{eval-rst}
-.. currentmodule:: pertpy
-```
 
 ```{eval-rst}
 .. autosummary::
