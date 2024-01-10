@@ -904,7 +904,7 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
 
 
 def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
-    """K562 cells transduced with CRISPRi (day 8 after transcduction).
+    """K562 cells transduced with CRISPRi (day 8 after transduction).
 
     Here, the authors used a compact, multiplexed CRISPR interference (CRISPRi) library
     to assay thousands of loss-of-function genetic perturbations with single-cell RNA sequencing
@@ -935,7 +935,7 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
 
 
 def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
-    """RPE1 cells transduced with CRISPRi (day 7 after transcduction).
+    """RPE1 cells transduced with CRISPRi (day 7 after transduction).
 
     For day 7 essential-scale Perturb-seq experiment in retinal pigment epithelial (RPE1)
     cell lines, library lentivirus was packaged into lentivirus in 293T cells and
