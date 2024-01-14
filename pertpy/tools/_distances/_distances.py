@@ -294,16 +294,30 @@ class Distance:
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
                 for group_y in groups[index_x:]:  # type: ignore
-                    if group_x == group_y:
-                        dist = 0.0  # by distance axiom
+                    # subset the pairwise distance matrix to the two groups
+                    idx_y = grouping == group_y
+                    sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
+                    sub_idx = grouping[idx_x | idx_y] == group_x
+                    if not bootstrap:
+                        if group_x == group_y:
+                            dist = 0.0  # by distance axiom
+                        else:
+                            dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
+                        df.loc[group_x, group_y] = dist
+                        df.loc[group_y, group_x] = dist
+
                     else:
-                        idx_y = grouping == group_y
-                        # subset the pairwise distance matrix to the two groups
-                        sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
-                        sub_idx = grouping[idx_x | idx_y] == group_x
-                        dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
-                    df.loc[group_x, group_y] = dist
-                    df.loc[group_y, group_x] = dist
+                        bootstrap_output = self._bootstrap_mode_precomputed(
+                            sub_pwd,
+                            sub_idx,
+                            n_bootstraps=n_bootstrap,
+                            bootstrap_random_state=bootstrap_random_state,
+                            **kwargs,
+                        )
+                        # In the bootstrap case, distance of group to itself is a mean and can be non-zero
+                        df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
+                        df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
+
         else:
             if self.layer_key:
                 embedding = adata.layers[self.layer_key]
@@ -338,6 +352,7 @@ class Distance:
         if not bootstrap:
             return df
         else:
+            df = df.fillna(0)
             df_var.index.name = groupby
             df_var.columns.name = groupby
             df_var = df_var.fillna(0)
@@ -529,7 +544,7 @@ class Distance:
             bootstrap_idx = np.concatenate([bootstrap_pos_idx, bootstrap_neg_idx])
             bootstrap_idx_nrs = sub_idx.index.get_indexer(bootstrap_idx)
 
-            bootstrap_sub_idx = sub_idx[bootstrap_idx_nrs]
+            bootstrap_sub_idx = sub_idx[bootstrap_idx]
             bootstrap_sub_pwd = sub_pwd[bootstrap_idx_nrs, :][:, bootstrap_idx_nrs]
 
             distance = self.metric_fct.from_precomputed(bootstrap_sub_pwd, bootstrap_sub_idx, **kwargs)
