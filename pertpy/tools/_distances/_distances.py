@@ -253,7 +253,7 @@ class Distance:
         bootstrap_random_state: int = 0,
         n_jobs: int = -1,
         **kwargs,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
         """Get pairwise distances between groups of cells.
 
         Args:
@@ -357,7 +357,7 @@ class Distance:
         bootstrap_random_state: int = 0,
         n_jobs: int = -1,
         **kwargs,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
         """Get pairwise distances between groups of cells.
 
         Args:
@@ -412,11 +412,25 @@ class Distance:
                     dist = 0.0  # by distance axiom
                 else:
                     idx_y = grouping == group_y
+
                     # subset the pairwise distance matrix to the two groups
                     sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
                     sub_idx = grouping[idx_x | idx_y] == group_x
-                    dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
-                df.loc[group_x] = dist
+
+                    if not bootstrap:
+                        dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
+                        df.loc[group_x] = dist
+                    else:
+                        bootstrap_output = self._bootstrap_mode_precomputed(
+                            sub_pwd,
+                            sub_idx,
+                            n_bootstraps=n_bootstrap,
+                            bootstrap_random_state=bootstrap_random_state,
+                            **kwargs,
+                        )
+                        df.loc[group_x] = bootstrap_output.mean
+                        df_var.loc[group_x] = bootstrap_output.variance
+
         else:
             if self.layer_key:
                 embedding = adata.layers[self.layer_key]
@@ -495,6 +509,30 @@ class Distance:
             Y_bootstrapped = Y[rng.choice(a=Y.shape[0], size=X.shape[0], replace=True)]
 
             distance = self(X_bootstrapped, Y_bootstrapped, **kwargs)
+            distances.append(distance)
+
+        mean = np.mean(distances)
+        variance = np.var(distances)
+        return MeanVar(mean=mean, variance=variance)
+
+    def _bootstrap_mode_precomputed(
+        self, sub_pwd, sub_idx, n_bootstraps=100, bootstrap_random_state=0, **kwargs
+    ) -> MeanVar:
+        rng = np.random.default_rng(bootstrap_random_state)
+
+        distances = []
+        for _ in range(n_bootstraps):
+            # in order to maintain the number of cells for both groups (whatever balancing they may have),
+            # we sample the positive and negative indices separately
+            bootstrap_pos_idx = rng.choice(a=sub_idx[sub_idx].index, size=sub_idx[sub_idx].size, replace=True)
+            bootstrap_neg_idx = rng.choice(a=sub_idx[~sub_idx].index, size=sub_idx[~sub_idx].size, replace=True)
+            bootstrap_idx = np.concatenate([bootstrap_pos_idx, bootstrap_neg_idx])
+            bootstrap_idx_nrs = sub_idx.index.get_indexer(bootstrap_idx)
+
+            bootstrap_sub_idx = sub_idx[bootstrap_idx_nrs]
+            bootstrap_sub_pwd = sub_pwd[bootstrap_idx_nrs, :][:, bootstrap_idx_nrs]
+
+            distance = self.metric_fct.from_precomputed(bootstrap_sub_pwd, bootstrap_sub_idx, **kwargs)
             distances.append(distance)
 
         mean = np.mean(distances)
