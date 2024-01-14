@@ -563,7 +563,6 @@ class Mixscape:
         all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
         all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
         NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
-        _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
         if not show:
             color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
             unique_genes = NP_KO_cells["gene"].unique()
@@ -602,7 +601,7 @@ class Mixscape:
                 title_fontsize=legend_title_size,
             )
             pl.tight_layout()
-
+            _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
             return ax
 
     def plot_heatmap(  # pragma: no cover
