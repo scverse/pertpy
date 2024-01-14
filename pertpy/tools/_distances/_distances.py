@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numba
 import numpy as np
@@ -23,6 +23,11 @@ from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 if TYPE_CHECKING:
     from anndata import AnnData
+
+
+class MeanVar(NamedTuple):
+    mean: float
+    variance: float
 
 
 class Distance:
@@ -203,12 +208,49 @@ class Distance:
 
         return self.metric_fct(X, Y, **kwargs)
 
+    def bootstrap(
+        self,
+        X: np.ndarray,
+        Y: np.ndarray,
+        *,
+        n_bootstrap: int = 100,
+        bootstrap_random_state: int = 0,
+        **kwargs,
+    ) -> MeanVar:
+        """Bootstrap computation of mean and variance of the distance between vectors X and Y.
+
+        Args:
+            X: First vector of shape (n_samples, n_features).
+            Y: Second vector of shape (n_samples, n_features).
+
+        Returns:
+            MeanVar: Mean and variance of distance between X and Y.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example()
+            >>> Distance = pt.tools.Distance(metric="edistance")
+            >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+            >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
+            >>> D = Distance.bootstrap(X, Y)
+        """
+        return self._bootstrap_mode(
+            X,
+            Y,
+            n_bootstraps=n_bootstrap,
+            bootstrap_random_state=bootstrap_random_state,
+            **kwargs,
+        )
+
     def pairwise(
         self,
         adata: AnnData,
         groupby: str,
         groups: list[str] | None = None,
         show_progressbar: bool = True,
+        bootstrap: bool = False,
+        n_bootstrap: int = 100,
+        bootstrap_random_state: int = 0,
         n_jobs: int = -1,
         **kwargs,
     ) -> pd.DataFrame:
@@ -235,6 +277,8 @@ class Distance:
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
+        if bootstrap:
+            df_var = pd.DataFrame(index=groups, columns=groups, dtype=float)
         fct = track if show_progressbar else lambda iterable: iterable
 
         # Some metrics are able to handle precomputed distances. This means that
@@ -268,18 +312,38 @@ class Distance:
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[grouping == group_x].copy()
                 for group_y in groups[index_x:]:  # type: ignore
-                    if group_x == group_y:
-                        dist = 0.0
+                    cells_y = embedding[grouping == group_y].copy()
+                    if not bootstrap:
+                        # By distance axiom, the distance between a group and itself is 0
+                        dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
+
+                        df.loc[group_x, group_y] = dist
+                        df.loc[group_y, group_x] = dist
                     else:
-                        cells_y = embedding[grouping == group_y].copy()
-                        dist = self(cells_x, cells_y, **kwargs)
-                    df.loc[group_x, group_y] = dist
-                    df.loc[group_y, group_x] = dist
+                        bootstrap_output = self.bootstrap(
+                            cells_x,
+                            cells_y,
+                            n_bootstrap=n_bootstrap,
+                            bootstrap_random_state=bootstrap_random_state,
+                            **kwargs,
+                        )
+                        # In the bootstrap case, distance of group to itself is a mean and can be non-zero
+                        df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
+                        df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
+
         df.index.name = groupby
         df.columns.name = groupby
         df.name = f"pairwise {self.metric}"
 
-        return df
+        if not bootstrap:
+            return df
+        else:
+            df_var.index.name = groupby
+            df_var.columns.name = groupby
+            df_var = df_var.fillna(0)
+            df_var.name = f"pairwise {self.metric} variance"
+
+            return df, df_var
 
     def onesided_distances(
         self,
@@ -288,6 +352,9 @@ class Distance:
         selected_group: str | None = None,
         groups: list[str] | None = None,
         show_progressbar: bool = True,
+        bootstrap: bool = False,
+        n_bootstrap: int = 100,
+        bootstrap_random_state: int = 0,
         n_jobs: int = -1,
         **kwargs,
     ) -> pd.DataFrame:
@@ -300,6 +367,9 @@ class Distance:
             groups: List of groups to compute distances to selected_group for.
                     If None, uses all groups. Defaults to None.
             show_progressbar: Whether to show progress bar. Defaults to True.
+            bootstrap: Whether to bootstrap the distance. Defaults to False.
+            n_bootstrap: Number of bootstrap samples. Defaults to 100.
+            bootstrap_random_state: Random state for bootstrapping. Defaults to 0.
             n_jobs: Number of cores to use. Defaults to -1 (all).
             kwargs: Additional keyword arguments passed to the metric function.
 
@@ -312,6 +382,7 @@ class Distance:
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
+
         if self.metric == "classifier_cp":
             return self.metric_fct.onesided_distances(  # type: ignore
                 adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs
@@ -320,6 +391,8 @@ class Distance:
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.Series(index=groups, dtype=float)
+        if bootstrap:
+            df_var = pd.Series(index=groups, dtype=float)
         fct = track if show_progressbar else lambda iterable: iterable
 
         # Some metrics are able to handle precomputed distances. This means that
@@ -352,15 +425,42 @@ class Distance:
             for group_x in fct(groups):
                 cells_x = embedding[grouping == group_x].copy()
                 group_y = selected_group
-                if group_x == group_y:
-                    dist = 0.0
+                # if group_x == group_y:
+                #     dist = 0.0
+                # else:
+                #     cells_y = embedding[grouping == group_y].copy()
+                #     dist = self(cells_x, cells_y, **kwargs)
+                # df.loc[group_x] = dist
+
+                cells_y = embedding[grouping == group_y].copy()
+                if not bootstrap:
+                    # By distance axiom, the distance between a group and itself is 0
+                    dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
+
+                    df.loc[group_x] = dist
                 else:
-                    cells_y = embedding[grouping == group_y].copy()
-                    dist = self(cells_x, cells_y, **kwargs)
-                df.loc[group_x] = dist
+                    bootstrap_output = self.bootstrap(
+                        cells_x,
+                        cells_y,
+                        n_bootstrap=n_bootstrap,
+                        bootstrap_random_state=bootstrap_random_state,
+                        **kwargs,
+                    )
+                    # In the bootstrap case, distance of group to itself is a mean and can be non-zero
+                    df.loc[group_x] = bootstrap_output.mean
+                    df_var.loc[group_x] = bootstrap_output.variance
+
         df.index.name = groupby
         df.name = f"{self.metric} to {selected_group}"
-        return df
+
+        if not bootstrap:
+            return df
+        else:
+            df_var.index.name = groupby
+            df_var = df_var.fillna(0)
+            df_var.name = f"pairwise {self.metric} variance to {selected_group}"
+
+            return df, df_var
 
     def precompute_distances(self, adata: AnnData, n_jobs: int = -1) -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
@@ -385,6 +485,21 @@ class Distance:
             cells = adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
+
+    def _bootstrap_mode(self, X, Y, n_bootstraps=100, bootstrap_random_state=0, **kwargs) -> MeanVar:
+        rng = np.random.default_rng(bootstrap_random_state)
+
+        distances = []
+        for _ in range(n_bootstraps):
+            X_bootstrapped = X[rng.choice(a=X.shape[0], size=X.shape[0], replace=True)]
+            Y_bootstrapped = Y[rng.choice(a=Y.shape[0], size=X.shape[0], replace=True)]
+
+            distance = self(X_bootstrapped, Y_bootstrapped, **kwargs)
+            distances.append(distance)
+
+        mean = np.mean(distances)
+        variance = np.var(distances)
+        return MeanVar(mean=mean, variance=variance)
 
 
 class AbstractDistance(ABC):
