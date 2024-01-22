@@ -235,7 +235,7 @@ class Augur:
                         random_state=random_state,
                     )
                 )
-            subsample = AnnData.concat(*label_subsamples, index_unique=None)
+            subsample = AnnData.concatenate(*label_subsamples, index_unique=None)
         else:
             subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
 
