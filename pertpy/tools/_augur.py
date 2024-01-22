@@ -6,13 +6,13 @@ from dataclasses import dataclass
 from math import floor, nan
 from typing import TYPE_CHECKING, Any, Literal
 
+import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import statsmodels.api as sm
 from anndata import AnnData
-import anndata as ad
 from joblib import Parallel, delayed
 from rich import print
 from rich.progress import track
