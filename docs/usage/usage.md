@@ -168,8 +168,6 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
     tools.Milo
 ```
 
-See [milo tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milo.html) for a more elaborate tutorial.
-
 Example implementation:
 
 ```python
@@ -191,6 +189,8 @@ mdata["rna"].obs["Status"] = (
 )
 milo.da_nhoods(mdata, design="~Status")
 ```
+
+See [milo tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milo.html) for a more elaborate tutorial.
 
 #### scCODA and tascCODA
 
@@ -237,6 +237,8 @@ sccoda.plot_effects_barplot(
 )
 ```
 
+See [sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda.html), [extended sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda_extended.html) and [tasccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/tasccoda.html) for more elaborate tutorials.
+
 ### Multi-cellular and gene programs
 
 #### DIALOGUE
@@ -251,7 +253,7 @@ See [DIALOGUE maps multicellular programs in tissue from single-cell or spatial 
     tools.Dialogue
 ```
 
-See [dialogue tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html) for a more elaborate tutorial.
+Example implementation:
 
 ```python
 import pertpy as pt
@@ -278,6 +280,8 @@ all_results, new_mcps = dl.multilevel_modeling(
 )
 ```
 
+See [dialogue tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html) for a more elaborate tutorial.
+
 #### Enrichment
 
 ```{eval-rst}
@@ -286,6 +290,8 @@ all_results, new_mcps = dl.multilevel_modeling(
 
     tools.Enrichment
 ```
+
+Example implementation:
 
 ```python
 import pertpy as pt
@@ -296,6 +302,8 @@ adata = sc.datasets.pbmc3k_processed()
 pt_enricher = pt.tl.Enrichment()
 pt_enricher.score(adata)
 ```
+
+See [enrichment tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/enrichment.html) for a more elaborate tutorial.
 
 ### Distances and Permutation Tests
 
@@ -310,8 +318,7 @@ Reimplements functions from [scperturb](http://projects.sanderlab.org/scperturb/
     tools.DistanceTest
 ```
 
-See [Distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
-and [Permutation test tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html) for a more elaborate tutorial.
+Example implementation:
 
 ```python
 import pertpy as pt
@@ -328,6 +335,9 @@ etest = pt.tl.PermutationTest(
 )
 tab = etest(adata, groupby="perturbation", contrast="control")
 ```
+
+See [distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
+and [distance tests tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html) for more elaborate tutorials.
 
 ### Response prediction
 
