@@ -12,6 +12,7 @@ import pandas as pd
 import scanpy as sc
 import statsmodels.api as sm
 from anndata import AnnData
+import anndata as ad
 from joblib import Parallel, delayed
 from rich import print
 from rich.progress import track
@@ -140,7 +141,7 @@ class Augur:
             # filter samples according to label
             if condition_label is not None and treatment_label is not None:
                 print(f"Filtering samples with {condition_label} and {treatment_label} labels.")
-                adata = anndata.concat(
+                adata = ad.concat(
                     adata[adata.obs["label"] == condition_label], adata[adata.obs["label"] == treatment_label]
                 )
             label_encoder = LabelEncoder()
@@ -235,7 +236,7 @@ class Augur:
                         random_state=random_state,
                     )
                 )
-            subsample = anndata.concat(*label_subsamples, index_unique=None)
+            subsample = ad.concat(*label_subsamples, index_unique=None)
         else:
             subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
 
