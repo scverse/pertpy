@@ -602,7 +602,7 @@ class Mixscape:
             )
             pl.tight_layout()
             _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
-            
+
             return ax
 
     def plot_heatmap(  # pragma: no cover
