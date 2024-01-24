@@ -544,7 +544,7 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_barplot(mdata['rna'], guide_rna_column='NT')
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/mixscape_barplot.png
         """
@@ -651,7 +651,7 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_heatmap(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', layer='X_pert', control='NT')
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/mixscape_heatmap.png
         """
@@ -715,7 +715,7 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_perturbscore(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', color = 'orange')
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/mixscape_perturbscore.png
         """
@@ -875,7 +875,7 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_violin(adata = mdata['rna'], target_gene_idents=['NT', 'IFNGR2 NP', 'IFNGR2 KO'], groupby='mixscape_class')
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/mixscape_violin.png
         """
@@ -1057,7 +1057,7 @@ class Mixscape:
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.lda(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_lda(adata=mdata['rna'], control='NT')
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/mixscape_lda.png
         """
