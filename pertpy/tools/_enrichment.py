@@ -324,7 +324,7 @@ class Enrichment:
             >>> pt_enrichment.score(adata)
             >>> sc.tl.rank_genes_groups(adata, method="wilcoxon", groupby="louvain")
             >>> pt_enrichment.plot_dotplot(adata, categories=["B01", "B02", "B03"], groupby="louvain")
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/enrichment_dotplot.png
         """
@@ -391,7 +391,7 @@ class Enrichment:
             n: How many top scores to show for each group. Defaults to 10.
             key: GSEA results key in `uns`. Defaults to "pertpy_enrichment_gsea".
             interactive_plot: Whether to plot interactively or not. Defaults to False.
-        
+
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
@@ -401,7 +401,7 @@ class Enrichment:
             >>> sc.tl.rank_genes_groups(adata, method="wilcoxon", groupby="louvain")
             >>> enrichment = pt_enrichment.gsea(adata)
             >>> pt_enrichment.plot_gsea(adata, enrichment, interactive_plot=True)
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/enrichment_gsea.png
         """
