@@ -392,7 +392,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         y_coeff=0.8,
         fontsize=14,
         **kwargs,
-    ):
+    ) -> tuple[float, float] | float:
         """Plots mean matching for a set of specified genes.
 
         Args:
@@ -527,7 +527,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         y_coeff=0.8,
         fontsize=14,
         **kwargs,
-    ):
+    ) -> tuple[float, float] | float:
         """Plots variance matching for a set of specified genes.
 
         Args:
@@ -648,7 +648,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         path_to_save,
         save=True,
         fontsize=14,
-    ):
+    ) -> None:
         """Plots the dot product between delta and latent representation of a linear classifier.
 
         Builds a linear classifier based on the dot product between
