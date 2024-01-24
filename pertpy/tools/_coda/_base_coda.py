@@ -1225,7 +1225,7 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
             >>> sccoda.plot_stacked_barplot(mdata, feature_name="samples")
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/sccoda_stacked_barplot.png
         """
@@ -1330,7 +1330,7 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> sccoda.plot_effects_barplot(mdata)
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/sccoda_effects_barplot.png
         """
@@ -1513,7 +1513,7 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
             >>> sccoda.plot_boxplots(mdata, feature_name="condition", add_dots=True)
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/sccoda_boxplots.png
         """
@@ -1732,7 +1732,7 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> sccoda.plot_rel_abundance_dispersion_plot(mdata)
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/sccoda_rel_abundance_dispersion_plot.png
         """
@@ -1864,7 +1864,7 @@ class CompositionalModel2(ABC):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
-        
+
         Preview:
             #TODO: Add preview
         """
@@ -1956,7 +1956,7 @@ class CompositionalModel2(ABC):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
-        
+
         Preview:
             #TODO: Add preview
         """
