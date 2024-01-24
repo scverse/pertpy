@@ -1091,7 +1091,7 @@ class Dialogue:
                 n_counts_key = "nCount_RNA", n_mpcs = 3)
             >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
             >>> dl.plot_split_violins(adata, split_key='gender', celltype_key='cell.subtypes')
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/dialogue_violin.png
         """
@@ -1108,12 +1108,7 @@ class Dialogue:
         return ax
 
     def plot_pairplot(
-        self, 
-        adata: AnnData, 
-        celltype_key: str, 
-        color: str, 
-        sample_id: str, 
-        mcp: str = "mcp_0"
+        self, adata: AnnData, celltype_key: str, color: str, sample_id: str, mcp: str = "mcp_0"
     ) -> PairGrid:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
@@ -1139,7 +1134,7 @@ class Dialogue:
                 n_counts_key = "nCount_RNA", n_mpcs = 3)
             >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
             >>> dl.plot_pairplot(adata, celltype_key="cell.subtypes", color="gender", sample_id="clinical.status")
-        
+
         Preview:
             .. image:: ../_static/docstring_previews/dialogue_pairplot.png
         """
