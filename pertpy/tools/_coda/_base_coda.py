@@ -1707,7 +1707,7 @@ class CompositionalModel2(ABC):
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
 
         Args:
-            data: AnnData object or MuData object.
+            data: AnnData or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
                           Defaults to "coda".
             abundant_threshold: Presence threshold for abundant cell types. Defaults to 0.9.
@@ -1821,7 +1821,7 @@ class CompositionalModel2(ABC):
         h: float | None = None,
         w: float | None = None,
         dpi: int | None = 90,
-    ):
+    ) -> ete3.TreeNode | ete3.TreeStyle | None:
         """Plot a tree using input ete3 tree object.
 
         Args:
@@ -1911,7 +1911,7 @@ class CompositionalModel2(ABC):
         h: float | None = None,
         w: float | None = None,
         dpi: int | None = 90,
-    ):
+    ) -> ete3.TreeNode | ete3.TreeStyle | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:
@@ -2101,7 +2101,7 @@ class CompositionalModel2(ABC):
         show: bool = None,
         ax: Axes = None,
         **kwargs,
-    ):
+    ) -> plt.Axes | None:
         """Plot a UMAP visualization colored by effect strength.
 
         Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData
