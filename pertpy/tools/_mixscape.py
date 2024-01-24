@@ -514,7 +514,7 @@ class Mixscape:
         self,
         adata: AnnData,
         guide_rna_column: str,
-        mixscape_class_global="mixscape_class_global",
+        mixscape_class_global: str = "mixscape_class_global",
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
         axis_title_size: int = 8,
@@ -522,7 +522,7 @@ class Mixscape:
         legend_text_size: int = 8,
         show: bool | None = None,
         save: bool | str | None = None,
-    ):
+    ) -> Axes | None:
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
 
         Args:
@@ -535,7 +535,7 @@ class Mixscape:
                   Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
 
         Returns:
-            If show is False, return ggplot object used to draw the plot.
+            If `show==False`, return a :class:`~matplotlib.axes.Axes.
 
         Examples:
             >>> import pertpy as pt
@@ -619,7 +619,7 @@ class Mixscape:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
-    ):
+    ) -> Axes | None:
         """Heatmap plot using mixscape results. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
@@ -637,6 +637,9 @@ class Mixscape:
                   Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             ax: A matplotlib axes object. Only works if plotting a single component.
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
+        
+        Returns:
+            If `show==False`, return a :class:`~matplotlib.axes.Axes`.
 
         Examples:
             >>> import pertpy as pt
@@ -670,10 +673,10 @@ class Mixscape:
         adata: AnnData,
         labels: str,
         target_gene: str,
-        mixscape_class="mixscape_class",
-        color="orange",
-        split_by: str = None,
-        before_mixscape=False,
+        mixscape_class: str = "mixscape_class",
+        color: str = "orange",
+        split_by: str | None = None,
+        before_mixscape: bool = False,
         perturbation_type: str = "KO",
     ) -> None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
@@ -691,11 +694,11 @@ class Mixscape:
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                       the perturbation signature for every replicate separately.
             before_mixscape: Option to split densities based on mixscape classification (default) or original target gene classification.
-                             Default is set to NULL and plots cells by original class ID.
+                             Default is set to False and plots cells by original class ID.
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to `KO`.
 
         Returns:
-            The ggplot object used for drawn.
+            None.
 
         Examples:
             Visualizing the perturbation scores for the cells in a dataset:
@@ -832,7 +835,7 @@ class Mixscape:
         save: bool | str | None = None,
         ax: Axes | None = None,
         **kwargs,
-    ):
+    ) -> Axes | None:
         """Violin plot using mixscape results. Requires `pt.tl.mixscape` to be run first.
 
         Args:
@@ -1009,8 +1012,8 @@ class Mixscape:
         self,
         adata: AnnData,
         control: str,
-        mixscape_class="mixscape_class",
-        mixscape_class_global="mixscape_class_global",
+        mixscape_class: str = "mixscape_class",
+        mixscape_class_global: str = "mixscape_class_global",
         perturbation_type: str | None = "KO",
         lda_key: str | None = "mixscape_lda",
         n_components: int | None = None,
