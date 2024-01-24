@@ -114,7 +114,7 @@ class CodaPlot:
             >>> sccoda.plot_stacked_barplot(mdata, feature_name="samples")
 
         Preview:
-            .. image:: ../_static/docstring_previews/coda_stacked_barplot.png
+            .. image:: ../_static/docstring_previews/sccoda_stacked_barplot.png
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
@@ -190,7 +190,7 @@ class CodaPlot:
             >>> sccoda.plot_effects_barplot(mdata)
 
         Preview:
-            .. image:: ../_static/docstring_previews/coda_effects_barplot.png
+            .. image:: ../_static/docstring_previews/sccoda_effects_barplot.png
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
@@ -270,7 +270,7 @@ class CodaPlot:
             >>> sccoda.plot_boxplots(mdata, feature_name="condition", add_dots=True)
 
         Preview:
-            .. image:: ../_static/docstring_previews/coda_boxplots.png
+            .. image:: ../_static/docstring_previews/sccoda_boxplots.png
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
@@ -343,7 +343,7 @@ class CodaPlot:
             >>> sccoda.plot_rel_abundance_dispersion_plot(mdata)
 
         Preview:
-            .. image:: ../_static/docstring_previews/coda_rel_abundance_dispersion_plot.png
+            .. image:: ../_static/docstring_previews/sccoda_rel_abundance_dispersion_plot.png
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
