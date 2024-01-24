@@ -637,7 +637,7 @@ class Mixscape:
                   Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             ax: A matplotlib axes object. Only works if plotting a single component.
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
-        
+
         Returns:
             If `show==False`, return a :class:`~matplotlib.axes.Axes`.
 
