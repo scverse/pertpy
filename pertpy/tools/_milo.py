@@ -734,6 +734,9 @@ class Milo:
             >>>            model_contrasts='labelwithdraw_15d_Cocaine-labelwithdraw_48h_Cocaine')
             >>> milo.build_nhood_graph(mdata)
             >>> milo.plot_nhood_graph(mdata)
+        
+        Preview:
+            .. image:: ../_static/docstring_previews/milo_nhood_graph.png
         """
         nhood_adata = mdata["milo"].T.copy()
 
@@ -804,6 +807,9 @@ class Milo:
             >>> sc.tl.umap(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> milo.plot_nhood(mdata, ix=0)
+        
+        Preview:
+            .. image:: ../_static/docstring_previews/milo_nhood.png
         """
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
         sc.pl.embedding(
