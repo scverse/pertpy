@@ -782,7 +782,7 @@ class Milo:
         mdata: MuData,
         ix: int,
         feature_key: str | None = "rna",
-        basis="X_umap",
+        basis: str = "X_umap",
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
@@ -824,7 +824,7 @@ class Milo:
         alpha: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
-    ):
+    ) -> None:
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
@@ -934,7 +934,7 @@ class Milo:
         test_var: str,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
-    ):
+    ) -> None:
         """Plot boxplot of cell numbers vs condition of interest.
 
         Args:
