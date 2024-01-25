@@ -29,6 +29,8 @@ pt.tl.cool_fancy_tool()
     data.bhattacherjee
     data.burczynski_crohn
     data.chang_2021
+    data.combosciplex
+    data.cinemaot_example
     data.datlinger_2017
     data.datlinger_2021
     data.dialogue_example
