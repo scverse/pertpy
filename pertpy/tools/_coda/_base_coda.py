@@ -1821,7 +1821,7 @@ class CompositionalModel2(ABC):
         h: float | None = None,
         w: float | None = None,
         dpi: int | None = 90,
-    ) -> ete3.TreeNode | ete3.TreeStyle | None:
+    ):
         """Plot a tree using input ete3 tree object.
 
         Args:
@@ -1911,7 +1911,7 @@ class CompositionalModel2(ABC):
         h: float | None = None,
         w: float | None = None,
         dpi: int | None = 90,
-    ) -> ete3.TreeNode | ete3.TreeStyle | None:
+    ):
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:

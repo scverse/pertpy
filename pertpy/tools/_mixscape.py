@@ -522,7 +522,7 @@ class Mixscape:
         legend_text_size: int = 8,
         show: bool | None = None,
         save: bool | str | None = None,
-    ) -> Axes | None:
+    ):
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
 
         Args:
@@ -844,7 +844,7 @@ class Mixscape:
         save: bool | str | None = None,
         ax: Axes | None = None,
         **kwargs,
-    ) -> Axes | None:
+    ):
         """Violin plot using mixscape results. Requires `pt.tl.mixscape` to be run first.
 
         Args:
