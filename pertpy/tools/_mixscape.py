@@ -672,6 +672,7 @@ class Mixscape:
         target_gene: str,
         mixscape_class="mixscape_class",
         color="orange",
+        palette: dict[str, str] = None,
         split_by: str = None,
         before_mixscape=False,
         perturbation_type: str = "KO",
@@ -688,11 +689,13 @@ class Mixscape:
             target_gene: Target gene name to visualize perturbation scores for.
             mixscape_class: The column of `.obs` with mixscape classifications.
             color: Specify color of target gene class or knockout cell class. For control non-targeting and non-perturbed cells, colors are set to different shades of grey.
+            palette: Optional full color palette to overwrite all colors.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                       the perturbation signature for every replicate separately.
             before_mixscape: Option to split densities based on mixscape classification (default) or original target gene classification.
                              Default is set to NULL and plots cells by original class ID.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to `KO`.
+            perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
+                               Defaults to `KO`.
 
         Returns:
             The ggplot object used for drawn.
@@ -721,7 +724,7 @@ class Mixscape:
         gd = list(set(perturbation_score[labels]).difference({target_gene}))[0]
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
-            cols = {gd: "#7d7d7d", target_gene: color}
+            palette = {gd: "#7d7d7d", target_gene: color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[cond].get_data()[1].max() for cond in range(len(plot_dens.get_lines())))
             pl.close()
@@ -737,10 +740,10 @@ class Mixscape:
             if split_by is not None:
                 sns.set(style="whitegrid")
                 g = sns.FacetGrid(
-                    data=perturbation_score, col=split_by, hue=split_by, palette=cols, height=5, sharey=False
+                    data=perturbation_score, col=split_by, hue=split_by, palette=palette, height=5, sharey=False
                 )
-                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False)
-                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
+                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False, palette=palette)
+                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5, palette=palette)
                 g.set_axis_labels("Perturbation score", "Cell density")
                 g.add_legend(title=split_by, fontsize=14, title_fontsize=16)
                 g.despine(left=True)
@@ -749,10 +752,10 @@ class Mixscape:
             else:
                 sns.set(style="whitegrid")
                 sns.kdeplot(
-                    data=perturbation_score, x="pvec", hue="gene_target", fill=True, common_norm=False, palette=cols
+                    data=perturbation_score, x="pvec", hue="gene_target", fill=True, common_norm=False, palette=palette
                 )
                 sns.scatterplot(
-                    data=perturbation_score, x="pvec", y="y_jitter", hue="gene_target", palette=cols, s=10, alpha=0.5
+                    data=perturbation_score, x="pvec", y="y_jitter", hue="gene_target", palette=palette, s=10, alpha=0.5
                 )
                 pl.xlabel("Perturbation score", fontsize=16)
                 pl.ylabel("Cell density", fontsize=16)
@@ -762,7 +765,8 @@ class Mixscape:
 
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
-            cols = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
+            if palette is None:
+                palette = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[i].get_data()[1].max() for i in range(len(plot_dens.get_lines())))
             pl.close()
@@ -786,7 +790,7 @@ class Mixscape:
             if split_by is not None:
                 sns.set(style="whitegrid")
                 g = sns.FacetGrid(
-                    data=perturbation_score, col=split_by, hue="mix", palette=cols, height=5, sharey=False
+                    data=perturbation_score, col=split_by, hue="mix", palette=palette, height=5, sharey=False
                 )
                 g.map(sns.kdeplot, "pvec", fill=True, common_norm=False, alpha=0.7)
                 g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
@@ -798,10 +802,16 @@ class Mixscape:
             else:
                 sns.set(style="whitegrid")
                 sns.kdeplot(
-                    data=perturbation_score, x="pvec", hue="mix", fill=True, common_norm=False, palette=cols, alpha=0.7
+                    data=perturbation_score,
+                    x="pvec",
+                    hue="mix",
+                    fill=True,
+                    common_norm=False,
+                    palette=palette,
+                    alpha=0.7,
                 )
                 sns.scatterplot(
-                    data=perturbation_score, x="pvec", y="y_jitter", hue="mix", palette=cols, s=10, alpha=0.5
+                    data=perturbation_score, x="pvec", y="y_jitter", hue="mix", palette=palette, s=10, alpha=0.5
                 )
                 pl.xlabel("Perturbation score", fontsize=16)
                 pl.ylabel("Cell density", fontsize=16)
