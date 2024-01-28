@@ -40,7 +40,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
     import muon as mu
 
     output_file_name = "papalexi_2021.h5mu"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/36509460",
@@ -63,7 +63,7 @@ def sc_sim_augur() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of a simulated single-cell RNA seq dataset
     """
     output_file_name = "sc_sim_augur.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/31645886",
@@ -93,7 +93,7 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
     """
     output_file_name = "bhattacherjee_rna.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34526528",
@@ -110,9 +110,7 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
     """Raw sciplex3 perturbation dataset curated for perturbation modeling.
 
     References:
-        Srivatsan SR, McFaline-Figueroa JL, Ramani V, Saunders L, Cao J, Packer J,
-        Pliner HA, Jackson DL, Daza RM, Christiansen L, Zhang F, Steemers F,
-        Shendure J, Trapnell C. Massively multiplex chemical transcriptomics at
+        Srivatsan SR et al., Trapnell C. Massively multiplex chemical transcriptomics at
         single-cell resolution. Science. 2020 Jan 3;367(6473):45-51.
         doi: 10.1126/science.aax6234. Epub 2019 Dec 5. PMID: 31806696; PMCID: PMC7289078.
 
@@ -120,7 +118,7 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
     """
     output_file_name = "sciplex3.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/33979517",
@@ -148,7 +146,7 @@ def tasccoda_example() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of the dataset.
     """
     output_file_name = "tasccoda_smillie.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/38648585",
@@ -177,7 +175,7 @@ def frangieh_2021() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of the Perturb-CITE-seq data.
     """
     output_file_name = "frangieh_2021.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34013717",
@@ -206,7 +204,7 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data.
     """
     output_file_name = "frangieh_2021_raw.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34012565",
@@ -235,7 +233,7 @@ def dixit_2016_raw() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of raw Perturb-seq data.
     """
     output_file_name = "dixit_2016_raw.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34012565",
@@ -264,7 +262,7 @@ def dixit_2016() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of Perturb-seq data
     """
     output_file_name = "dixit_2016.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34014608",
@@ -292,7 +290,7 @@ def norman_2019() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of single-cell pooled CRISPR screening.
     """
     output_file_name = "norman_2019.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34027562",
@@ -320,7 +318,7 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of raw single-cell pooled CRISPR screening
     """
     output_file_name = "norman_2019_raw.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34002548",
@@ -343,7 +341,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object
     """
     output_file_name = "dialogue_example.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/43462662",
@@ -365,7 +363,7 @@ def distance_example() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object
     """
     output_file_name = "distances_example_data.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/39561379",
@@ -396,7 +394,7 @@ def kang_2018() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of droplet-based single cell RNA-sequencing
     """
     output_file_name = "kang_2018.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/34464122",
@@ -425,7 +423,7 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scRNA-seq profiles
     """
     output_file_name = "stephenson_2021_subsampled.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/38171703",
@@ -452,7 +450,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object
     """
     output_file_name = "haber_2017_regions.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/38169900",
@@ -479,10 +477,10 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "adamson_2016_pilot.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/AdamsonWeissman2016_GSM2406675_10X001.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/AdamsonWeissman2016_GSM2406675_10X001.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -510,10 +508,10 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb preparedsingle-cell perturbation data
     """
     output_file_name = "adamson_2016_upr_epistasis.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/AdamsonWeissman2016_GSM2406677_10X005.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/AdamsonWeissman2016_GSM2406677_10X005.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -539,10 +537,10 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "adamson_2016_upr_perturb_seq.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/AdamsonWeissman2016_GSM2406681_10X010.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/AdamsonWeissman2016_GSM2406681_10X010.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -566,10 +564,10 @@ def aissa_2021() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
     output_file_name = "aissa_2021.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/AissaBenevolenskaya2021.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/AissaBenevolenskaya2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -595,10 +593,10 @@ def chang_2021() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "chang_2021.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/ChangYe2021.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/ChangYe2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -626,10 +624,10 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "datlinger_2017.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/DatlingerBock2017.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/DatlingerBock2017.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -656,10 +654,10 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
          :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "datlinger_2021.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/DatlingerBock2021.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/DatlingerBock2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -687,10 +685,10 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "frangieh_2021_protein.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/FrangiehIzar2021_protein.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/FrangiehIzar2021_protein.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -718,10 +716,10 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "frangieh_2021_rna.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/FrangiehIzar2021_RNA.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/FrangiehIzar2021_RNA.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -746,10 +744,10 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "gasperini_2019_atscale.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/GasperiniShendure2019_atscale.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/GasperiniShendure2019_atscale.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -775,10 +773,10 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
     output_file_name = "gasperini_2019_highmoi.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/GasperiniShendure2019_highMOI.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/GasperiniShendure2019_highMOI.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -804,10 +802,10 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "gasperini_2019_lowmoi.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/GasperiniShendure2019_lowMOI.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/GasperiniShendure2019_lowMOI.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -832,10 +830,10 @@ def gehring_2019() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of a scPerturb prepared single-cell dataset
     """
     output_file_name = "gehring_2019.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/GehringPachter2019.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/GehringPachter2019.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -861,10 +859,10 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
     output_file_name = "mcfarland_2020.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/McFarlandTsherniak2020.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/McFarlandTsherniak2020.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -890,10 +888,10 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "replogle_2022_k562_essential.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/ReplogleWeissman2022_K562_essential.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/ReplogleWeissman2022_K562_essential.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -921,10 +919,10 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "replogle_2022_k562_gwps.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/ReplogleWeissman2022_K562_gwps.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/ReplogleWeissman2022_K562_gwps.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -951,10 +949,10 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "replogle_2022_rpe1.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/ReplogleWeissman2022_rpe1.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/ReplogleWeissman2022_rpe1.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -982,10 +980,10 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
     output_file_name = "schiebinger_2019_16day.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/SchiebingerLander2019_GSE106340.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/SchiebingerLander2019_GSE106340.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1011,10 +1009,10 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
     output_file_name = "Schiebinger_2019_18day.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/SchiebingerLander2019_GSE115943.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/SchiebingerLander2019_GSE115943.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1040,10 +1038,10 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
     output_file_name = "schraivogel_2020_tap_screen_chr11.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_11_screen.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_11_screen.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1069,10 +1067,10 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "schraivogel_2020_tap_screen_chr8.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_8_screen.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_8_screen.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1099,10 +1097,10 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "shifrut_2018.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/ShifrutMarson2018.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/ShifrutMarson2018.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1130,10 +1128,10 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "srivatsan_2020_sciplex2.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/SrivatsanTrapnell2020_sciplex2.h5ad?download=1",
+            url="https://zenodo.org/record/10044268/files/SrivatsanTrapnell2020_sciplex2.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1159,10 +1157,10 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "srivatsan_2020_sciplex3.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/SrivatsanTrapnell2020_sciplex3.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/SrivatsanTrapnell2020_sciplex3.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1191,10 +1189,10 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "srivatsan_2020_sciplex4.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/SrivatsanTrapnell2020_sciplex4.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/SrivatsanTrapnell2020_sciplex4.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1223,10 +1221,10 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "tian_2019_day7neuron.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/TianKampmann2019_day7neuron.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2019_day7neuron.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1255,10 +1253,10 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "tian_2019_iPSC.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/TianKampmann2019_iPSC.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2019_iPSC.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1285,10 +1283,10 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
     output_file_name = "tian_2021_crispra.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/TianKampmann2021_CRISPRa.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2021_CRISPRa.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1315,10 +1313,10 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "tian_2021_crispri.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/TianKampmann2021_CRISPRi.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2021_CRISPRi.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1342,10 +1340,10 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "weinreb_2020.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/WeinrebKlein2020.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/WeinrebKlein2020.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1370,10 +1368,10 @@ def xie_2017() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "xie_2017.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/XieHon2017.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/XieHon2017.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1400,10 +1398,10 @@ def zhao_2021() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "zhaoSims2021.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/7278143/files/ZhaoSims2021.h5ad?download=1",
+            url="https://zenodo.org/records/10044268/files/ZhaoSims2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1425,7 +1423,7 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
         :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
     """
     output_file_name = "cinemaot_example.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/42362796?private_link=270b0d2c7f1ea57c366d",
@@ -1453,7 +1451,7 @@ def dong_2023() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
     """
     output_file_name = "dong_2023.h5ad"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name
+    output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/43068190",
@@ -1479,13 +1477,38 @@ def smillie_2019() -> AnnData:  # pragma: no cover
         :class:`~anndata.AnnData` object of the dataset.
     """
     output_file_name = "smillie_2019.h5ad.zip"
-    output_file_path = settings.datasetdir.__str__() + "/" + output_file_name.replace(".zip", "")
+    output_file_path = settings.datasetdir / Path(output_file_name).with_suffix("")
     if not Path(output_file_path).exists():
         _download(
             url="https://figshare.com/ndownloader/files/43317285",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=True,
+        )
+    adata = sc.read_h5ad(output_file_path)
+
+    return adata
+
+
+def combosciplex() -> AnnData:  # pragma: no cover
+    """scRNA-seq subset of the combinatorial experiment of sciplex3.
+
+    References:
+        Srivatsan SR et al., Trapnell C. Massively multiplex chemical transcriptomics at
+        single-cell resolution. Science. 2020 Jan 3;367(6473):45-51.
+        doi: 10.1126/science.aax6234. Epub 2019 Dec 5. PMID: 31806696; PMCID: PMC7289078.
+
+    Returns:
+        :class:`~anndata.AnnData` object of the dataset.
+    """
+    output_file_name = "combosciplex.h5ad"
+    output_file_path = settings.datasetdir / output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/44229635",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
         )
     adata = sc.read_h5ad(output_file_path)
 

@@ -2,7 +2,6 @@ import tempfile
 from pathlib import Path
 from random import choice
 from string import ascii_lowercase
-from typing import Union
 from zipfile import ZipFile
 
 import requests
@@ -64,5 +63,4 @@ def _download(  # pragma: no cover
         output_path = output_path or tempfile.gettempdir()
         with ZipFile(download_to_path, "r") as zip_obj:
             zip_obj.extractall(path=output_path)
-            extracted = zip_obj.namelist()
-            print(extracted)
+            zip_obj.namelist()
