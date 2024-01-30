@@ -796,7 +796,7 @@ class ClassifierProbaDistance(AbstractDistance):
         label = ["c"] * X.shape[0] + ["p"] * Y_train.shape[0]
         train = np.concatenate([X, Y_train])
 
-        reg = LogisticRegression()  # TODO dynamically pass this?
+        reg = LogisticRegression()
         reg.fit(train, label)
         test_labels = reg.predict_proba(Y_test)
         return np.mean(test_labels[:, 1])
