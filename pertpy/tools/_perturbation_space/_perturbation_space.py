@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from pynndescent import NNDescent
 from rich import print
 
 if TYPE_CHECKING:
@@ -25,7 +26,7 @@ class PerturbationSpace:
     def compute_control_diff(  # type: ignore
         self,
         adata: AnnData,
-        target_col: str = "perturbations",
+        target_col: str = "perturbation",
         group_col: str = None,
         reference_key: str = "control",
         layer_key: str = None,
@@ -147,8 +148,8 @@ class PerturbationSpace:
         perturbations: Iterable[str],
         reference_key: str = "control",
         ensure_consistency: bool = False,
-        target_col: str = "perturbations",
-    ) -> AnnData:
+        target_col: str = "perturbation",
+    ) -> tuple[AnnData, AnnData] | AnnData:
         """Add perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
@@ -156,7 +157,7 @@ class PerturbationSpace:
             perturbations: Perturbations to add.
             reference_key: perturbation source from which the perturbation summation starts. Defaults to 'control'.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
-            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
+            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbation'.
 
         Returns:
             Anndata object of size (n_perts+1) x dim, where the last row is the addition of the specified perturbations.
@@ -256,8 +257,8 @@ class PerturbationSpace:
         perturbations: Iterable[str],
         reference_key: str = "control",
         ensure_consistency: bool = False,
-        target_col: str = "perturbations",
-    ) -> AnnData:
+        target_col: str = "perturbation",
+    ) -> tuple[AnnData, AnnData] | AnnData:
         """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
 
         Args:
@@ -358,3 +359,51 @@ class PerturbationSpace:
             return new_perturbation, adata
 
         return new_perturbation
+
+    def knn_impute(
+        self,
+        adata: AnnData,
+        column: str = "perturbation",
+        target_val: str = "unknown",
+        n_neighbors: int = 5,
+        use_rep: str = "X_umap",
+    ) -> None:
+        """Impute missing values in the specified column using KNN imputation in the space defined by `use_rep`.
+
+        Args:
+            adata: The AnnData object containing single-cell data.
+            column: The column name in AnnData object to perform imputation on. Defaults to "perturbation".
+            target_val: The target value to impute. Defaults to "unknown".
+            n_neighbors: Number of neighbors to use for imputation. Defaults to 5.
+            use_rep: The key in `adata.obsm` where the embedding (UMAP, PCA, etc.) is stored. Defaults to 'X_umap'.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> import numpy as np
+            >>> adata = sc.datasets.pbmc68k_reduced()
+            >>> rng = np.random.default_rng()
+            >>> adata.obs["perturbation"] = rng.choice(["A", "B", "C", "unknown"], size=adata.n_obs, p=[0.33, 0.33, 0.33, 0.01])
+            >>> sc.pp.neighbors(adata)
+            >>> sc.tl.umap(adata)
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> ps.knn_impute(adata, n_neighbors=5, use_rep="X_umap")
+        """
+        if use_rep not in adata.obsm:
+            raise ValueError(f"Representation {use_rep} not found in the AnnData object.")
+
+        embedding = adata.obsm[use_rep]
+
+        nnd = NNDescent(embedding, n_neighbors=n_neighbors)
+        indices, _ = nnd.query(embedding, k=n_neighbors)
+
+        perturbations = np.array(adata.obs[column])
+        missing_mask = perturbations == target_val
+
+        for idx in np.where(missing_mask)[0]:
+            neighbor_indices = indices[idx]
+            neighbor_categories = perturbations[neighbor_indices]
+            most_common = pd.Series(neighbor_categories).mode()[0]
+            perturbations[idx] = most_common
+
+        adata.obs[column] = perturbations

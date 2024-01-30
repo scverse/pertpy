@@ -64,7 +64,7 @@ class TestDistances:
         assert all(np.diag(df.values) == 0)  # distance to self is 0
 
         # (M2) Positivity
-        assert len(df) == np.sum(df.values == 0)  # distance to other is not 0 (TODO)
+        assert len(df) == np.sum(df.values == 0)  # distance to other is not 0
         assert all(df.values.flatten() >= 0)  # distance is non-negative
 
         # (M3) Symmetry
