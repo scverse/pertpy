@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import warnings
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Literal
 
@@ -10,7 +9,6 @@ import pandas as pd
 import scanpy as sc
 import seaborn as sns
 from matplotlib import pyplot as pl
-from rich import print
 from scanpy import get
 from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
@@ -477,15 +475,6 @@ class Mixscape:
         return perturbation_markers
 
     def _get_column_indices(self, adata, col_names):
-        """Fetches the column indices in X for a given list of column names
-
-        Args:
-            adata: :class:`~anndata.AnnData` object
-            col_names: Column names to extract the indices for
-
-        Returns:
-            Set of column indices
-        """
         if isinstance(col_names, str):  # pragma: no cover
             col_names = [col_names]
 
@@ -815,7 +804,7 @@ class Mixscape:
                 )
                 pl.xlabel("Perturbation score", fontsize=16)
                 pl.ylabel("Cell density", fontsize=16)
-                pl.title("Density Plot using Seaborn and Matplotlib", fontsize=18)
+                pl.title("Density", fontsize=18)
                 pl.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
@@ -843,19 +832,21 @@ class Mixscape:
         ax: Axes | None = None,
         **kwargs,
     ):
-        """Violin plot using mixscape results. Requires `pt.tl.mixscape` to be run first.
+        """Violin plot using mixscape results.
+
+        Requires `pt.tl.mixscape` to be run first.
 
         Args:
             adata: The annotated data object.
-            target_gene: Target gene name to plot.
+            target_gene_idents: Target gene name to plot.
             keys: Keys for accessing variables of `.var_names` or fields of `.obs`. Default is 'mixscape_class_p_ko'.
             groupby: The key of the observation grouping to consider. Default is 'mixscape_class'.
             log: Plot on logarithmic axis.
             use_raw: Whether to use `raw` attribute of `adata`. Defaults to `True` if `.raw` is present.
             stripplot: Add a stripplot on top of the violin plot.
             order: Order in which to show the categories.
-            xlabel: Label of the x axis. Defaults to `groupby` if `rotation` is `None`, otherwise, no label is shown.
-            ylabel: Label of the y axis. If `None` and `groupby` is `None`, defaults to `'value'`.
+            xlabel: Label of the x-axis. Defaults to `groupby` if `rotation` is `None`, otherwise, no label is shown.
+            ylabel: Label of the y-axis. If `None` and `groupby` is `None`, defaults to `'value'`.
                     If `None` and `groubpy` is not `None`, defaults to `keys`.
             show: Show the plot, do not return axis.
             save: If `True` or a `str`, save the figure. A string is appended to the default filename.
@@ -1054,11 +1045,9 @@ class Mixscape:
             >>> ms_pt.plot_lda(adata=mdata['rna'], control='NT')
         """
         if mixscape_class not in adata.obs:
-            raise ValueError(
-                f'Did not find `.obs["{mixscape_class!r}"]`. Please run the `mixscape` function first first.'
-            )
+            raise ValueError(f'Did not find `.obs["{mixscape_class!r}"]`. Please run the `mixscape` function first.')
         if lda_key not in adata.uns:
-            raise ValueError(f'Did not find `.uns["{lda_key!r}"]`. Run the `lda` function first.')
+            raise ValueError(f'Did not find `.uns["{lda_key!r}"]`. Please run the `lda` function first.')
 
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
