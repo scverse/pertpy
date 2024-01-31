@@ -244,7 +244,7 @@ class DBSCANSpace(ClusteringSpace):
         copy: bool = True,
         return_object: bool = False,
         **kwargs,
-    ) -> tuple[AnnData, object | AnnData]:
+    ) -> tuple[AnnData, object] | AnnData:
         """Computes a clustering using Density-based spatial clustering of applications (DBSCAN).
 
         Args:

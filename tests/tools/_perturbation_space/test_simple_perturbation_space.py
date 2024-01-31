@@ -7,11 +7,6 @@ from anndata import AnnData
 
 
 @pytest.fixture
-def rng():
-    return np.random.default_rng()
-
-
-@pytest.fixture
 def adata(rng):
     X = rng.random((69, 50))
     adata = AnnData(X)
@@ -135,7 +130,7 @@ def test_centroid_umap_response():
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
 
     ps = pt.tl.CentroidSpace()
-    psadata = ps.compute(adata)  # if nothing specific, compute with X, and X and X_umap are the same
+    psadata = ps.compute(adata)
 
     adata_target1 = adata[adata.obs.perturbation == "target1"].obsm["X_umap"].mean(0)
     np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
@@ -220,21 +215,18 @@ def test_linear_operations():
     )
     ps_inner_vector = ps_adata2["target1-target1"].X
 
-    # Compare process data vs pseudobulk before, should be the same
     np.testing.assert_allclose(ps_inner_vector, ps_vector, rtol=1e-4)
 
     np.testing.assert_allclose(
         data_compare["control"].obsm["X_umap_control_diff"], ps_adata2["target1-target1"].obsm["X_umap"], rtol=1e-4
     )
 
-    # Check that the function raises an error if the perturbation is not found
     with pytest.raises(ValueError):
         ps.add(
             ps_adata,
             perturbations=["target1", "target3"],
         )
 
-    # Check that the function raises an error if some key is not found
     with pytest.raises(ValueError):
         ps.add(
             ps_adata,
@@ -242,7 +234,7 @@ def test_linear_operations():
         )
 
 
-def test_knn_impute():
+def test_label_transfer():
     rng = np.random.default_rng()
     X = rng.standard_normal((69, 50))
     adata = AnnData(X)
@@ -252,5 +244,5 @@ def test_knn_impute():
     sc.tl.umap(adata)
 
     ps = pt.tl.PseudobulkSpace()
-    ps.knn_impute(adata, n_neighbors=5, use_rep="X_umap")
+    ps.label_transfer(adata, n_neighbors=5, use_rep="X_umap")
     assert "unknown" not in adata.obs["perturbation"]

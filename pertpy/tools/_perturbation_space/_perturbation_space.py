@@ -360,7 +360,7 @@ class PerturbationSpace:
 
         return new_perturbation
 
-    def knn_impute(
+    def label_transfer(
         self,
         adata: AnnData,
         column: str = "perturbation",
@@ -387,7 +387,7 @@ class PerturbationSpace:
             >>> sc.pp.neighbors(adata)
             >>> sc.tl.umap(adata)
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> ps.knn_impute(adata, n_neighbors=5, use_rep="X_umap")
+            >>> ps.label_transfer(adata, n_neighbors=5, use_rep="X_umap")
         """
         if use_rep not in adata.obsm:
             raise ValueError(f"Representation {use_rep} not found in the AnnData object.")
