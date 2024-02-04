@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from math import floor, nan
 from typing import TYPE_CHECKING, Any, Literal
 
+import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -140,8 +141,8 @@ class Augur:
             # filter samples according to label
             if condition_label is not None and treatment_label is not None:
                 print(f"Filtering samples with {condition_label} and {treatment_label} labels.")
-                adata = AnnData.concatenate(
-                    adata[adata.obs["label"] == condition_label], adata[adata.obs["label"] == treatment_label]
+                adata = ad.concat(
+                    [adata[adata.obs["label"] == condition_label], adata[adata.obs["label"] == treatment_label]]
                 )
             label_encoder = LabelEncoder()
             adata.obs["y_"] = label_encoder.fit_transform(adata.obs["label"])
@@ -235,7 +236,7 @@ class Augur:
                         random_state=random_state,
                     )
                 )
-            subsample = AnnData.concatenate(*label_subsamples, index_unique=None)
+            subsample = ad.concat([*label_subsamples], index_unique=None)
         else:
             subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
 
@@ -414,8 +415,8 @@ class Augur:
         """
         if multiclass:
             return {
-                "augur_score": make_scorer(roc_auc_score, multi_class="ovo", needs_proba=True),
-                "auc": make_scorer(roc_auc_score, multi_class="ovo", needs_proba=True),
+                "augur_score": make_scorer(roc_auc_score, multi_class="ovo", response_method="predict_proba"),
+                "auc": make_scorer(roc_auc_score, multi_class="ovo", response_method="predict_proba"),
                 "accuracy": make_scorer(accuracy_score),
                 "precision": make_scorer(precision_score, average="macro", zero_division=zero_division),
                 "f1": make_scorer(f1_score, average="macro"),
@@ -423,8 +424,8 @@ class Augur:
             }
         return (
             {
-                "augur_score": make_scorer(roc_auc_score, needs_proba=True),
-                "auc": make_scorer(roc_auc_score, needs_proba=True),
+                "augur_score": make_scorer(roc_auc_score, response_method="predict_proba"),
+                "auc": make_scorer(roc_auc_score, response_method="predict_proba"),
                 "accuracy": make_scorer(accuracy_score),
                 "precision": make_scorer(precision_score, average="binary", zero_division=zero_division),
                 "f1": make_scorer(f1_score, average="binary"),

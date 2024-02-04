@@ -15,7 +15,7 @@ class CentroidSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
-        target_col: str = "perturbations",
+        target_col: str = "perturbation",
         layer_key: str = None,
         embedding_key: str = "X_umap",
         keep_obs: bool = True,
@@ -115,7 +115,7 @@ class PseudobulkSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
-        target_col: str = "perturbations",
+        target_col: str = "perturbation",
         layer_key: str = None,
         embedding_key: str = None,
         **kwargs,
@@ -133,13 +133,13 @@ class PseudobulkSpace(PerturbationSpace):
              AnnData object with one observation per perturbation.
 
         Examples:
-            >>> import pertpy as pp
+            >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
         """
         if "groups_col" not in kwargs:
-            kwargs["groups_col"] = "perturbations"
+            kwargs["groups_col"] = "perturbation"
 
         if layer_key is not None and embedding_key is not None:
             raise ValueError("Please, select just either layer or embedding for computation.")
@@ -244,7 +244,7 @@ class DBSCANSpace(ClusteringSpace):
         copy: bool = True,
         return_object: bool = False,
         **kwargs,
-    ) -> tuple[AnnData, object | AnnData]:
+    ) -> tuple[AnnData, object] | AnnData:
         """Computes a clustering using Density-based spatial clustering of applications (DBSCAN).
 
         Args:
