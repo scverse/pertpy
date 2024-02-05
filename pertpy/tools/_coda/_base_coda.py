@@ -1864,9 +1864,6 @@ class CompositionalModel2(ABC):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
-
-        Preview:
-            #TODO: Add preview
         """
         try:
             from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
@@ -1956,9 +1953,6 @@ class CompositionalModel2(ABC):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
-
-        Preview:
-            #TODO: Add preview
         """
         try:
             from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
@@ -2150,9 +2144,6 @@ class CompositionalModel2(ABC):
             >>>                                      "effect_df_condition[T.Hpoly.Day10]"],
             >>>                                       cluster_key="nsbm_level_1",
             >>>                         )
-
-        Preview:
-            #TODO: Add preview
         """
         # TODO: Add effect_name parameter and cluster_key and test the example
         data_rna = data[modality_key_1]

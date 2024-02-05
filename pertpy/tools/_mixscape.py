@@ -443,7 +443,7 @@ class Mixscape:
         min_de_genes: float,
         logfc_threshold: float,
     ) -> dict[tuple, np.ndarray]:
-        """determine gene sets across all splits/groups through differential gene expression
+        """Determine gene sets across all splits/groups through differential gene expression
 
         Args:
             adata: :class:`~anndata.AnnData` object
@@ -694,9 +694,6 @@ class Mixscape:
                              Default is set to NULL and plots cells by original class ID.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
                                Defaults to `KO`.
-
-        Returns:
-            None.
 
         Examples:
             Visualizing the perturbation scores for the cells in a dataset:
