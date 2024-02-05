@@ -736,7 +736,7 @@ class Milo:
             >>> milo.plot_nhood_graph(mdata)
 
         Preview:
-            .. image:: ../_static/docstring_previews/milo_nhood_graph.png
+            .. image:: /_static/docstring_previews/milo_nhood_graph.png
         """
         nhood_adata = mdata["milo"].T.copy()
 
@@ -809,7 +809,7 @@ class Milo:
             >>> milo.plot_nhood(mdata, ix=0)
 
         Preview:
-            .. image:: ../_static/docstring_previews/milo_nhood.png
+            .. image:: /_static/docstring_previews/milo_nhood.png
         """
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
         sc.pl.embedding(

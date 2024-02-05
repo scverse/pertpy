@@ -1093,7 +1093,7 @@ class Dialogue:
             >>> dl.plot_split_violins(adata, split_key='gender', celltype_key='cell.subtypes')
 
         Preview:
-            .. image:: ../_static/docstring_previews/dialogue_violin.png
+            .. image:: /_static/docstring_previews/dialogue_violin.png
         """
         df = sc.get.obs_df(adata, [celltype_key, mcp, split_key])
         if split_which is None:
@@ -1136,7 +1136,7 @@ class Dialogue:
             >>> dl.plot_pairplot(adata, celltype_key="cell.subtypes", color="gender", sample_id="clinical.status")
 
         Preview:
-            .. image:: ../_static/docstring_previews/dialogue_pairplot.png
+            .. image:: /_static/docstring_previews/dialogue_pairplot.png
         """
         mean_mcps = adata.obs.groupby([sample_id, celltype_key])[mcp].mean()
         mean_mcps = mean_mcps.reset_index()

@@ -326,7 +326,7 @@ class Enrichment:
             >>> pt_enrichment.plot_dotplot(adata, categories=["B01", "B02", "B03"], groupby="louvain")
 
         Preview:
-            .. image:: ../_static/docstring_previews/enrichment_dotplot.png
+            .. image:: /_static/docstring_previews/enrichment_dotplot.png
         """
         if categories is not None:
             if isinstance(categories, str):
@@ -403,7 +403,7 @@ class Enrichment:
             >>> pt_enrichment.plot_gsea(adata, enrichment, interactive_plot=True)
 
         Preview:
-            .. image:: ../_static/docstring_previews/enrichment_gsea.png
+            .. image:: /_static/docstring_previews/enrichment_gsea.png
         """
         for cluster in enrichment:
             fig = blitzgsea.plot.top_table(

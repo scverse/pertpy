@@ -998,9 +998,6 @@ class Augur:
             >>> pvals = ag_rfc.predict_differential_prioritization(augur_results1=results_15, augur_results2=results_48, \
                 permuted_results1=results_15_permute, permuted_results2=results_48_permute)
             >>> ag_rfc.plot_dp_scatter(pvals)
-
-        Preview:
-        # TODO: add preview
         """
         x = results["mean_augur_score1"]
         y = results["mean_augur_score2"]
@@ -1056,9 +1053,6 @@ class Augur:
             >>> loaded_data = ag_rfc.load(adata)
             >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
             >>> ag_rfc.plot_important_features(v_results)
-
-        Preview:
-        # TODO: add preview
         """
         if isinstance(data, AnnData):
             results = data.uns[key]
@@ -1109,9 +1103,6 @@ class Augur:
             >>> loaded_data = ag_rfc.load(adata)
             >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
             >>> ag_rfc.plot_lollipop(v_results)
-
-        Preview:
-        # TODO: add preview
         """
         if isinstance(data, AnnData):
             results = data.uns[key]
@@ -1160,9 +1151,6 @@ class Augur:
             >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)
             >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
             >>> ag_rfc.plot_scatterplot(v_results, h_results)
-
-        Preview:
-        # TODO: add preview
         """
         cell_types = results1["summary_metrics"].columns
 

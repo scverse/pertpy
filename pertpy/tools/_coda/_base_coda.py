@@ -1227,7 +1227,7 @@ class CompositionalModel2(ABC):
             >>> sccoda.plot_stacked_barplot(mdata, feature_name="samples")
 
         Preview:
-            .. image:: ../_static/docstring_previews/sccoda_stacked_barplot.png
+            .. image:: /_static/docstring_previews/sccoda_stacked_barplot.png
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -1332,7 +1332,7 @@ class CompositionalModel2(ABC):
             >>> sccoda.plot_effects_barplot(mdata)
 
         Preview:
-            .. image:: ../_static/docstring_previews/sccoda_effects_barplot.png
+            .. image:: /_static/docstring_previews/sccoda_effects_barplot.png
         """
         if args_barplot is None:
             args_barplot = {}
@@ -1515,7 +1515,7 @@ class CompositionalModel2(ABC):
             >>> sccoda.plot_boxplots(mdata, feature_name="condition", add_dots=True)
 
         Preview:
-            .. image:: ../_static/docstring_previews/sccoda_boxplots.png
+            .. image:: /_static/docstring_previews/sccoda_boxplots.png
         """
         if args_boxplot is None:
             args_boxplot = {}
@@ -1734,7 +1734,7 @@ class CompositionalModel2(ABC):
             >>> sccoda.plot_rel_abundance_dispersion_plot(mdata)
 
         Preview:
-            .. image:: ../_static/docstring_previews/sccoda_rel_abundance_dispersion_plot.png
+            .. image:: /_static/docstring_previews/sccoda_rel_abundance_dispersion_plot.png
         """
         if isinstance(data, MuData):
             data = data[modality_key]
