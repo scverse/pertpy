@@ -1225,6 +1225,9 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
             >>> sccoda.plot_stacked_barplot(mdata, feature_name="samples")
+
+        Preview:
+            .. image:: /_static/docstring_previews/sccoda_stacked_barplot.png
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -1327,6 +1330,9 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> sccoda.plot_effects_barplot(mdata)
+
+        Preview:
+            .. image:: /_static/docstring_previews/sccoda_effects_barplot.png
         """
         if args_barplot is None:
             args_barplot = {}
@@ -1507,6 +1513,9 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
             >>> sccoda.plot_boxplots(mdata, feature_name="condition", add_dots=True)
+
+        Preview:
+            .. image:: /_static/docstring_previews/sccoda_boxplots.png
         """
         if args_boxplot is None:
             args_boxplot = {}
@@ -1698,7 +1707,7 @@ class CompositionalModel2(ABC):
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
 
         Args:
-            data: AnnData object or MuData object.
+            data: AnnData or MuData object.
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
                           Defaults to "coda".
             abundant_threshold: Presence threshold for abundant cell types. Defaults to 0.9.
@@ -1723,6 +1732,9 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> sccoda.plot_rel_abundance_dispersion_plot(mdata)
+
+        Preview:
+            .. image:: /_static/docstring_previews/sccoda_rel_abundance_dispersion_plot.png
         """
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -2083,7 +2095,7 @@ class CompositionalModel2(ABC):
         show: bool = None,
         ax: Axes = None,
         **kwargs,
-    ):
+    ) -> plt.Axes | None:
         """Plot a UMAP visualization colored by effect strength.
 
         Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData

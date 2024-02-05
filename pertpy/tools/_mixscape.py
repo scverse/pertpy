@@ -443,7 +443,7 @@ class Mixscape:
         min_de_genes: float,
         logfc_threshold: float,
     ) -> dict[tuple, np.ndarray]:
-        """determine gene sets across all splits/groups through differential gene expression
+        """Determine gene sets across all splits/groups through differential gene expression
 
         Args:
             adata: :class:`~anndata.AnnData` object
@@ -503,7 +503,7 @@ class Mixscape:
         self,
         adata: AnnData,
         guide_rna_column: str,
-        mixscape_class_global="mixscape_class_global",
+        mixscape_class_global: str = "mixscape_class_global",
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
         axis_title_size: int = 8,
@@ -524,7 +524,7 @@ class Mixscape:
                   Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
 
         Returns:
-            If show is False, return ggplot object used to draw the plot.
+            If `show==False`, return a :class:`~matplotlib.axes.Axes.
 
         Examples:
             >>> import pertpy as pt
@@ -533,6 +533,9 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_barplot(mdata['rna'], guide_rna_column='NT')
+
+        Preview:
+            .. image:: /_static/docstring_previews/mixscape_barplot.png
         """
         if mixscape_class_global not in adata.obs:
             raise ValueError("Please run the `mixscape` function first.")
@@ -608,7 +611,7 @@ class Mixscape:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
-    ):
+    ) -> Axes | None:
         """Heatmap plot using mixscape results. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
@@ -627,6 +630,9 @@ class Mixscape:
             ax: A matplotlib axes object. Only works if plotting a single component.
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
 
+        Returns:
+            If `show==False`, return a :class:`~matplotlib.axes.Axes`.
+
         Examples:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
@@ -634,6 +640,9 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_heatmap(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', layer='X_pert', control='NT')
+
+        Preview:
+            .. image:: /_static/docstring_previews/mixscape_heatmap.png
         """
         if "mixscape_class" not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
@@ -686,9 +695,6 @@ class Mixscape:
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
                                Defaults to `KO`.
 
-        Returns:
-            The ggplot object used for drawn.
-
         Examples:
             Visualizing the perturbation scores for the cells in a dataset:
 
@@ -698,6 +704,9 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_perturbscore(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', color = 'orange')
+
+        Preview:
+            .. image:: /_static/docstring_previews/mixscape_perturbscore.png
         """
         if "mixscape" not in adata.uns:
             raise ValueError("Please run the `mixscape` function first.")
@@ -864,6 +873,9 @@ class Mixscape:
             >>> ms_pt.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_violin(adata = mdata['rna'], target_gene_idents=['NT', 'IFNGR2 NP', 'IFNGR2 KO'], groupby='mixscape_class')
+
+        Preview:
+            .. image:: /_static/docstring_previews/mixscape_violin.png
         """
         if isinstance(target_gene_idents, str):
             mixscape_class_mask = adata.obs[groupby] == target_gene_idents
@@ -1010,8 +1022,8 @@ class Mixscape:
         self,
         adata: AnnData,
         control: str,
-        mixscape_class="mixscape_class",
-        mixscape_class_global="mixscape_class_global",
+        mixscape_class: str = "mixscape_class",
+        mixscape_class_global: str = "mixscape_class_global",
         perturbation_type: str | None = "KO",
         lda_key: str | None = "mixscape_lda",
         n_components: int | None = None,
@@ -1043,6 +1055,9 @@ class Mixscape:
             >>> ms_pt.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.lda(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
             >>> ms_pt.plot_lda(adata=mdata['rna'], control='NT')
+
+        Preview:
+            .. image:: /_static/docstring_previews/mixscape_lda.png
         """
         if mixscape_class not in adata.obs:
             raise ValueError(f'Did not find `.obs["{mixscape_class!r}"]`. Please run the `mixscape` function first.')

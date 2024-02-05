@@ -969,7 +969,7 @@ class Augur:
         return delta
 
     def plot_dp_scatter(
-        self, results: pd.DataFrame, top_n=None, ax: Axes = None, return_figure: bool = False
+        self, results: pd.DataFrame, top_n: int = None, ax: Axes = None, return_figure: bool = False
     ) -> Figure | Axes:
         """Plot scatterplot of differential prioritization.
 
@@ -1027,7 +1027,12 @@ class Augur:
         return fig if return_figure else ax
 
     def plot_important_features(
-        self, data: dict[str, Any], key: str = "augurpy_results", top_n=10, ax: Axes = None, return_figure: bool = False
+        self,
+        data: dict[str, Any],
+        key: str = "augurpy_results",
+        top_n: int = 10,
+        ax: Axes = None,
+        return_figure: bool = False,
     ) -> Figure | Axes:
         """Plot a lollipop plot of the n features with largest feature importances.
 
@@ -1125,7 +1130,7 @@ class Augur:
         return fig if return_figure else ax
 
     def plot_scatterplot(
-        self, results1: dict[str, Any], results2: dict[str, Any], top_n=None, return_figure: bool = False
+        self, results1: dict[str, Any], results2: dict[str, Any], top_n: int = None, return_figure: bool = False
     ) -> Figure | Axes:
         """Create scatterplot with two augur results.
 

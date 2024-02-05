@@ -734,6 +734,9 @@ class Milo:
             >>>            model_contrasts='labelwithdraw_15d_Cocaine-labelwithdraw_48h_Cocaine')
             >>> milo.build_nhood_graph(mdata)
             >>> milo.plot_nhood_graph(mdata)
+
+        Preview:
+            .. image:: /_static/docstring_previews/milo_nhood_graph.png
         """
         nhood_adata = mdata["milo"].T.copy()
 
@@ -779,7 +782,7 @@ class Milo:
         mdata: MuData,
         ix: int,
         feature_key: str | None = "rna",
-        basis="X_umap",
+        basis: str = "X_umap",
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
@@ -804,6 +807,9 @@ class Milo:
             >>> sc.tl.umap(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> milo.plot_nhood(mdata, ix=0)
+
+        Preview:
+            .. image:: /_static/docstring_previews/milo_nhood.png
         """
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
         sc.pl.embedding(
@@ -818,7 +824,7 @@ class Milo:
         alpha: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
-    ):
+    ) -> None:
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
@@ -928,7 +934,7 @@ class Milo:
         test_var: str,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
-    ):
+    ) -> None:
         """Plot boxplot of cell numbers vs condition of interest.
 
         Args:
