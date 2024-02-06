@@ -37,8 +37,8 @@ class DistanceTest:
     Examples:
         >>> import pertpy as pt
         >>> adata = pt.dt.distance_example_data()
-        >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
-        >>> tab = distance_test(adata, groupby='perturbation', contrast='control')
+        >>> distance_test = pt.tl.DistanceTest("edistance", n_perms=1000)
+        >>> tab = distance_test(adata, groupby="perturbation", contrast="control")
     """
 
     def __init__(
@@ -100,8 +100,8 @@ class DistanceTest:
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.distance_example_data()
-            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
-            >>> tab = distance_test(adata, groupby='perturbation', contrast='control')
+            >>> distance_test = pt.tl.DistanceTest("edistance", n_perms=1000)
+            >>> tab = distance_test(adata, groupby="perturbation", contrast="control")
         """
         if self.distance.metric_fct.accepts_precomputed:
             # Much faster if the metric can be called on the precomputed
@@ -134,8 +134,8 @@ class DistanceTest:
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.distance_example_data()
-            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
-            >>> test_results = distance_test.test_xy(adata, groupby='perturbation', contrast='control')
+            >>> distance_test = pt.tl.DistanceTest("edistance", n_perms=1000)
+            >>> test_results = distance_test.test_xy(adata, groupby="perturbation", contrast="control")
         """
         groups = adata.obs[groupby].unique()
         if contrast not in groups:
@@ -226,8 +226,8 @@ class DistanceTest:
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.distance_example_data()
-            >>> distance_test = pt.tl.DistanceTest('edistance', n_perms=1000)
-            >>> test_results = distance_test.test_precomputed(adata, groupby='perturbation', contrast='control')
+            >>> distance_test = pt.tl.DistanceTest("edistance", n_perms=1000)
+            >>> test_results = distance_test.test_precomputed(adata, groupby="perturbation", contrast="control")
         """
         if not self.distance.metric_fct.accepts_precomputed:
             raise ValueError(f"Metric {self.metric} does not accept precomputed distances.")

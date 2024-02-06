@@ -59,7 +59,7 @@ class PerturbationSpace:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> diff_adata = ps.compute_control_diff(mdata["rna"], target_col="gene_target", reference_key='NT')
+            >>> diff_adata = ps.compute_control_diff(mdata["rna"], target_col="gene_target", reference_key="NT")
         """
         if reference_key not in adata.obs[target_col].unique():
             raise ValueError(
@@ -171,7 +171,7 @@ class PerturbationSpace:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
-            >>> new_perturbation = ps.add(ps_adata, perturbations=["ATF2", "CD86"], reference_key='NT')
+            >>> new_perturbation = ps.add(ps_adata, perturbations=["ATF2", "CD86"], reference_key="NT")
         """
         new_pert_name = ""
         for perturbation in perturbations:
@@ -383,7 +383,9 @@ class PerturbationSpace:
             >>> import numpy as np
             >>> adata = sc.datasets.pbmc68k_reduced()
             >>> rng = np.random.default_rng()
-            >>> adata.obs["perturbation"] = rng.choice(["A", "B", "C", "unknown"], size=adata.n_obs, p=[0.33, 0.33, 0.33, 0.01])
+            >>> adata.obs["perturbation"] = rng.choice(
+            ...     ["A", "B", "C", "unknown"], size=adata.n_obs, p=[0.33, 0.33, 0.33, 0.01]
+            ... )
             >>> sc.pp.neighbors(adata)
             >>> sc.tl.umap(adata)
             >>> ps = pt.tl.PseudobulkSpace()

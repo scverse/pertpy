@@ -41,7 +41,7 @@ class CentroidSpace(PerturbationSpace):
             >>> import scanpy as sc
             >>> mdata = pt.dt.papalexi_2021()
             >>> sc.pp.pca(mdata["rna"])
-            >>> sc.pp.neighbors(mdata['rna'])
+            >>> sc.pp.neighbors(mdata["rna"])
             >>> sc.tl.umap(mdata["rna"])
             >>> cs = pt.tl.CentroidSpace()
             >>> cs_adata = cs.compute(mdata["rna"], target_col="gene_target")

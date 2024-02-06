@@ -86,7 +86,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.SCGEN(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
-            >>> pred, delta = model.predict(ctrl_key='ctrl', stim_key='stim', celltype_to_predict='CD4 T cells')
+            >>> pred, delta = model.predict(ctrl_key="ctrl", stim_key="stim", celltype_to_predict="CD4 T cells")
         """
         # use keys registered from `setup_anndata()`
         cell_type_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.LABELS_KEY).original_key

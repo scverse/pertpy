@@ -218,7 +218,7 @@ class CellLine(MetaData):
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
-            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> adata.obs["cell_line_name"] = "MCF7"
             >>> pt_metadata = pt.md.CellLine()
             >>> adata_annotated = pt_metadata.annotate(adata=adata,
             >>>                                        reference_id='cell_line_name',
@@ -332,9 +332,11 @@ class CellLine(MetaData):
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
-            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> adata.obs["cell_line_name"] = "MCF7"
             >>> pt_metadata = pt.md.CellLine()
-            >>> adata_annotated = pt_metadata.annotate(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> adata_annotated = pt_metadata.annotate(
+            ...     adata=adata, reference_id="cell_line_name", query_id="cell_line_name", copy=True
+            ... )
             >>> pt_metadata.annotate_bulk_rna(adata_annotated)
         """
         if copy:
@@ -433,9 +435,11 @@ class CellLine(MetaData):
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
-            >>> adata.obs['cell_line_name'] = 'MCF7'
+            >>> adata.obs["cell_line_name"] = "MCF7"
             >>> pt_metadata = pt.md.CellLine()
-            >>> adata_annotated = pt_metadata.annotate(adata=adata, reference_id='cell_line_name', query_id='cell_line_name', copy=True)
+            >>> adata_annotated = pt_metadata.annotate(
+            ...     adata=adata, reference_id="cell_line_name", query_id="cell_line_name", copy=True
+            ... )
             >>> pt_metadata.annotate_protein_expression(adata_annotated)
         """
         if copy:
@@ -520,7 +524,7 @@ class CellLine(MetaData):
             >>> import pertpy as pt
             >>> adata = pt.dt.mcfarland_2020()
             >>> pt_metadata = pt.md.CellLine()
-            >>> pt_metadata.annotate_from_gdsc(adata, query_id='cell_line')
+            >>> pt_metadata.annotate_from_gdsc(adata, query_id="cell_line")
         """
         if copy:
             adata = adata.copy()

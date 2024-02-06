@@ -623,7 +623,9 @@ class Dialogue:
             >>> import scanpy as sc
             >>> adata = pt.dt.dialogue_example()
             >>> sc.pp.pca(adata)
-            >>> dl = pt.tl.Dialogue(sample_id = "clinical.status", celltype_key = "cell.subtypes", n_counts_key = "nCount_RNA", n_mpcs = 3)
+            >>> dl = pt.tl.Dialogue(
+            ...     sample_id="clinical.status", celltype_key="cell.subtypes", n_counts_key="nCount_RNA", n_mpcs=3
+            ... )
             >>> adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
         """
         # IMPORTANT NOTE: the order in which matrices are passed to multicca matters.

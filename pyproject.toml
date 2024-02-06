@@ -130,7 +130,12 @@ norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 [tool.ruff]
 src = ["src"]
 line-length = 120
-lint.select = [
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
     "F",  # Errors detected by Pyflakes
     "E",  # Error detected by Pycodestyle
     "W",  # Warning detected by Pycodestyle
@@ -146,7 +151,7 @@ lint.select = [
     "NPY",  # Numpy specific rules
     "PTH"  # Use pathlib
 ]
-lint.ignore = [
+ignore = [
     # line too long -> we accept long comment lines; black gets rid of long code lines
     "E501",
     # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient

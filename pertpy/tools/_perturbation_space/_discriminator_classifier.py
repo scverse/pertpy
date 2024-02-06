@@ -60,7 +60,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.papalexi_2021()['rna']
+            >>> adata = pt.dt.papalexi_2021()["rna"]
             >>> dcs = pt.tl.DiscriminatorClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
         """
@@ -135,7 +135,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.papalexi_2021()['rna']
+            >>> adata = pt.dt.papalexi_2021()["rna"]
             >>> dcs = pt.tl.DiscriminatorClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
             >>> dcs.train(max_epochs=5)
@@ -164,7 +164,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.papalexi_2021()['rna']
+            >>> adata = pt.dt.papalexi_2021()["rna"]
             >>> dcs = pt.tl.DiscriminatorClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
             >>> dcs.train()
