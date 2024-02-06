@@ -1868,7 +1868,9 @@ class CompositionalModel2(ABC):
         try:
             from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
         except ImportError:
-            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+            raise ImportError(
+                "To use tasccoda please install additional dependencies with `pip install pertpy[coda]`"
+            ) from None
 
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -1957,7 +1959,9 @@ class CompositionalModel2(ABC):
         try:
             from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
         except ImportError:
-            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+            raise ImportError(
+                "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+            ) from None
 
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -2318,7 +2322,9 @@ def get_a_2(
     try:
         import ete3 as ete
     except ImportError:
-        raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+        raise ImportError(
+            "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+        ) from None
 
     n_tips = len(tree.get_leaves())
     n_nodes = len(tree.get_descendants())
@@ -2440,7 +2446,9 @@ def import_tree(
     try:
         import ete3 as ete
     except ImportError:
-        raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+        raise ImportError(
+            "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+        ) from None
 
     if isinstance(data, MuData):
         try:
