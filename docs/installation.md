@@ -14,8 +14,17 @@ $ pip install pertpy
 
 This is the preferred method to install pertpy, as it will always install the most recent stable release.
 
-If you don't have [pip] installed, this [Python installation guide] can guide
-you through the process.
+If you don't have [pip] installed, this [Python installation guide] can guide you through the process.
+
+## Google Colab and TascCODA support
+
+TascCODA requires an additional set of dependencies (ete3 and pyqt5) that can be installed using
+
+```console
+$ pip install pertpy[coda]
+```
+
+this also solves any "AttributeError: module 'pertpy.plot' has no attribute 'coda'" issues.
 
 ## From sources
 
@@ -32,12 +41,6 @@ Or download the [tarball]:
 
 ```console
 $ curl -OJL https://github.com/theislab/pertpy/tarball/master
-```
-
-Once you have a copy of the source, you can install it with:
-
-```console
-$ make install
 ```
 
 ## Apple Silicon
@@ -60,7 +63,7 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
 3. Create a new environment using mamba (here with python 3.10) and activate it
 
     ```console
-    $ mamba create -n pertpy-env python=3.10
+    $ mamba create -n pertpy-env python=3.11
     $ mamba activate pertpy-env
     ```
 
