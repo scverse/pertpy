@@ -1864,7 +1864,7 @@ class CompositionalModel2(ABC):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
-        
+
         Preview:
             .. image:: /_static/docstring_previews/tasccoda_draw_tree.png
         """
@@ -1956,9 +1956,9 @@ class CompositionalModel2(ABC):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
-        
+
         Preview:
-            .. image:: /_static/docstring_previews/tasccoda_draw_effects.png    
+            .. image:: /_static/docstring_previews/tasccoda_draw_effects.png
         """
         try:
             from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
