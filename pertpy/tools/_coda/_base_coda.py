@@ -1864,6 +1864,9 @@ class CompositionalModel2(ABC):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
+        
+        Preview:
+            .. image:: /_static/docstring_previews/tasccoda_draw_tree.png
         """
         try:
             from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
@@ -1952,7 +1955,10 @@ class CompositionalModel2(ABC):
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> pt.pl.coda.draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
+            >>> tasccoda.plot_draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
+        
+        Preview:
+            .. image:: /_static/docstring_previews/tasccoda_draw_effects.png    
         """
         try:
             from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
@@ -2128,7 +2134,7 @@ class CompositionalModel2(ABC):
             >>>                 cell_type_identifier="nsbm_level_1",
             >>>                 sample_identifier="batch", covariate_obs=["condition"],
             >>>                 levels_orig=["nsbm_level_4", "nsbm_level_3", "nsbm_level_2", "nsbm_level_1"],
-            >>>                 add_level_name=True)sccoda = pt.tl.Sccoda()
+            >>>                 add_level_name=True)
             >>> tasccoda_model.prepare(
             >>>     tasccoda_data,
             >>>     modality_key="coda",
