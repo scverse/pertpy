@@ -79,7 +79,9 @@ class AugurpyPlot:
             >>> adata = pt.dt.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
-            >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
+            >>> v_adata, v_results = ag_rfc.predict(
+            ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
+            ... )
             >>> ag_rfc.plot_important_features(v_results)
         """
         warnings.warn(
@@ -115,7 +117,9 @@ class AugurpyPlot:
             >>> adata = pt.dt.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
-            >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
+            >>> v_adata, v_results = ag_rfc.predict(
+            ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
+            ... )
             >>> ag_rfc.plot_lollipop(v_results)
         """
         warnings.warn(
@@ -152,7 +156,9 @@ class AugurpyPlot:
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)
-            >>> v_adata, v_results = ag_rfc.predict(loaded_data, subsample_size=20, select_variance_features=True, n_threads=4)
+            >>> v_adata, v_results = ag_rfc.predict(
+            ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
+            ... )
             >>> ag_rfc.plot_scatterplot(v_results, h_results)
         """
         warnings.warn(

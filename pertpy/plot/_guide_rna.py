@@ -46,7 +46,7 @@ class GuideRnaPlot:
 
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
-            >>> gdo = mdata.mod['gdo']
+            >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
             >>> ga.plot_heatmap(gdo)

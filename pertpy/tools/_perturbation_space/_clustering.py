@@ -41,7 +41,9 @@ class ClusteringSpace(PerturbationSpace):
             >>> mdata = pt.dt.papalexi_2021()
             >>> kmeans = pt.tl.KMeansSpace()
             >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
-            >>> results = kmeans.evaluate_clustering(kmeans_adata, true_label_col="gene_target", cluster_col="k-means", metrics=['nmi'])
+            >>> results = kmeans.evaluate_clustering(
+            ...     kmeans_adata, true_label_col="gene_target", cluster_col="k-means", metrics=["nmi"]
+            ... )
         """
         if metrics is None:
             metrics = ["nmi", "ari", "asw"]

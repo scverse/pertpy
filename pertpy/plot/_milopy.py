@@ -155,7 +155,7 @@ class MilopyPlot:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.da_nhoods(mdata, design="~label")
-            >>> milo.annotate_nhoods(mdata, anno_col='cell_type')
+            >>> milo.annotate_nhoods(mdata, anno_col="cell_type")
             >>> milo.plot_da_beeswarm(mdata)
         """
         warnings.warn(

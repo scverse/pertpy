@@ -204,7 +204,9 @@ class Tasccoda(CompositionalModel2):
         try:
             import ete3 as ete
         except ImportError:
-            raise ImportError("To use tasccoda please install ete3 with pip install ete3") from None
+            raise ImportError(
+                "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+            ) from None
 
         # toytree tree - only for legacy reasons, can be removed in the final version
         if isinstance(adata.uns[tree_key], tt.tree):
@@ -332,7 +334,7 @@ class Tasccoda(CompositionalModel2):
             >>> mdata = tasccoda.prepare(
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
-            >>> adata = tasccoda.set_init_mcmc_states(rng_key=42, ref_index=[0,1], sample_adata=mdata['coda'])
+            >>> adata = tasccoda.set_init_mcmc_states(rng_key=42, ref_index=[0, 1], sample_adata=mdata["coda"])
         """
         N, D = sample_adata.obsm["covariate_matrix"].shape
         P = sample_adata.X.shape[1]

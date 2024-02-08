@@ -41,7 +41,7 @@ class GuideAssignment:
 
             >>> import pertpy as pt
             >>> mdata = pt.data.papalexi_2021()
-            >>> gdo = mdata.mod['gdo']
+            >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
         """
@@ -86,7 +86,7 @@ class GuideAssignment:
 
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
-            >>> gdo = mdata.mod['gdo']
+            >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_to_max_guide(gdo, assignment_threshold=5)
         """
@@ -143,7 +143,7 @@ class GuideAssignment:
 
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
-            >>> gdo = mdata.mod['gdo']
+            >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
             >>> ga.heatmap(gdo)

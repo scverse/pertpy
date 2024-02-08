@@ -429,7 +429,7 @@ class Milo:
             >>> sc.pp.neighbors(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
-            >>> milo.annotate_nhoods(mdata, anno_col='cell_type')
+            >>> milo.annotate_nhoods(mdata, anno_col="cell_type")
         """
         try:
             sample_adata = mdata["milo"]
@@ -480,7 +480,7 @@ class Milo:
             >>> sc.pp.neighbors(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
-            >>> milo.annotate_nhoods_continuous(mdata, anno_col='nUMI')
+            >>> milo.annotate_nhoods_continuous(mdata, anno_col="nUMI")
         """
         if "milo" not in mdata.mod:
             raise ValueError(
@@ -845,7 +845,7 @@ class Milo:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.da_nhoods(mdata, design="~label")
-            >>> milo.annotate_nhoods(mdata, anno_col='cell_type')
+            >>> milo.annotate_nhoods(mdata, anno_col="cell_type")
             >>> milo.plot_da_beeswarm(mdata)
         """
         try:

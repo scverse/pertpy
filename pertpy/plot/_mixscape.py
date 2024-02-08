@@ -47,9 +47,9 @@ class MixscapePlot:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms = pt.tl.Mixscape()
-            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> ms.plot_barplot(mdata['rna'], guide_rna_column='NT')
+            >>> ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
+            >>> ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms.plot_barplot(mdata["rna"], guide_rna_column="NT")
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
@@ -109,9 +109,11 @@ class MixscapePlot:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms = pt.tl.Mixscape()
-            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> ms.plot_heatmap(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', layer='X_pert', control='NT')
+            >>> ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
+            >>> ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms.plot_heatmap(
+            ...     adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", layer="X_pert", control="NT"
+            ... )
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
@@ -173,9 +175,11 @@ class MixscapePlot:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> mixscape_identifier = pt.tl.Mixscape()
-            >>> mixscape_identifier.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> mixscape_identifier.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> mixscape_identifier.perturbscore(adata = mdata['rna'], labels='gene_target', target_gene='IFNGR2', color = 'orange')
+            >>> mixscape_identifier.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
+            >>> mixscape_identifier.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> mixscape_identifier.perturbscore(
+            ...     adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", color="orange"
+            ... )
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
@@ -247,9 +251,11 @@ class MixscapePlot:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms = pt.tl.Mixscape()
-            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> ms.plot_violin(adata = mdata['rna'], target_gene_idents=['NT', 'IFNGR2 NP', 'IFNGR2 KO'], groupby='mixscape_class')
+            >>> ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
+            >>> ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms.plot_violin(
+            ...     adata=mdata["rna"], target_gene_idents=["NT", "IFNGR2 NP", "IFNGR2 KO"], groupby="mixscape_class"
+            ... )
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
@@ -319,10 +325,10 @@ class MixscapePlot:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms = pt.tl.Mixscape()
-            >>> ms.perturbation_signature(mdata['rna'], 'perturbation', 'NT', 'replicate')
-            >>> ms.mixscape(adata = mdata['rna'], control = 'NT', labels='gene_target', layer='X_pert')
-            >>> ms.lda(adata=mdata['rna'], control='NT', labels='gene_target', layer='X_pert')
-            >>> ms.plot_lda(adata=mdata['rna'], control='NT')
+            >>> ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
+            >>> ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms.lda(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms.plot_lda(adata=mdata["rna"], control="NT")
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
