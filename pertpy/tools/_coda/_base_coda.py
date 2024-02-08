@@ -2126,9 +2126,11 @@ class CompositionalModel2(ABC):
         Examples:
             Example with tascCODA:
             >>> import pertpy as pt
+            >>> import scanpy as sc
             >>> import schist
             >>> adata = pt.dt.haber_2017_regions()
-            >>> schist.inference.nested_model(adata, samples=100, random_seed=5678)
+            >>> sc.pp.neighbors(adata)
+            >>> schist.inference.nested_model(adata, n_init=100, random_seed=5678)
             >>> tasccoda_model = pt.tl.Tasccoda()
             >>> tasccoda_data = tasccoda_model.load(adata, type="cell_level",
             >>>                 cell_type_identifier="nsbm_level_1",
@@ -2144,12 +2146,16 @@ class CompositionalModel2(ABC):
             >>>     tree_key="tree"
             >>> )
             >>> tasccoda_model.run_nuts(tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000)
+            >>> sc.tl.umap(tasccoda_data["rna"])
             >>> tasccoda_model.plot_effects_umap(tasccoda_data,
             >>>                         effect_name=["effect_df_condition[T.Salmonella]",
             >>>                                      "effect_df_condition[T.Hpoly.Day3]",
             >>>                                      "effect_df_condition[T.Hpoly.Day10]"],
             >>>                                       cluster_key="nsbm_level_1",
             >>>                         )
+        
+        Preview:
+            .. image:: /_static/docstring_previews/tasccoda_effects_umap.png
         """
         # TODO: Add effect_name parameter and cluster_key and test the example
         data_rna = data[modality_key_1]
