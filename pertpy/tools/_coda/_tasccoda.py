@@ -552,7 +552,7 @@ class Tasccoda(CompositionalModel2):
 
         if rng_key is None:
             rng = np.random.default_rng()
-            rng_key = random.PRNGKey(rng.integers(0, 10000))
+            rng_key = random.key(rng.integers(0, 10000))
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
