@@ -2149,7 +2149,9 @@ class CompositionalModel2(ABC):
             >>>     pen_args={"phi": 0, "lambda_1": 3.5},
             >>>     tree_key="tree"
             >>> )
-            >>> tasccoda_model.run_nuts(tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000)
+            >>> tasccoda_model.run_nuts(
+            ...     tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000
+            ... )
             >>> tasccoda_model.run_nuts(
             ...     tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000
             ... )
@@ -2160,7 +2162,7 @@ class CompositionalModel2(ABC):
             >>>                                      "effect_df_condition[T.Hpoly.Day10]"],
             >>>                                       cluster_key="nsbm_level_1",
             >>>                         )
-        
+
         Preview:
             .. image:: /_static/docstring_previews/tasccoda_effects_umap.png
         """
