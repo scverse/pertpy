@@ -73,7 +73,6 @@ class GuideAssignment:
 
         Args:
             adata: Annotated data matrix containing gRNA values
-                   assignment_threshold: If a gRNA is available for at least `assignment_threshold`, it will be recognized as assigned.
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
@@ -122,20 +121,20 @@ class GuideAssignment:
         plots before and after analysis of the guide RNA expression.
         Note: This function expects a log-normalized or binary data.
 
-         Args:
-             adata: Annotated data matrix containing gRNA values
-             layer: Key to the layer containing log normalized count values of the gRNAs.
-                    adata.X is used if layer is None.
-             order_by: The order of cells in y axis. Defaults to None.
-                       If None, cells will be reordered to have a nice sparse representation.
-                       If a string is provided, adata.obs[order_by] will be used as the order.
-                       If a numpy array is provided, the array will be used for ordering.
-             key_to_save_order: The obs key to save cell orders in the current plot. Only saves if not None.
-             kwargs: Are passed to sc.pl.heatmap.
+        Args:
+            adata: Annotated data matrix containing gRNA values
+            layer: Key to the layer containing log normalized count values of the gRNAs.
+                   adata.X is used if layer is None.
+            order_by: The order of cells in y axis. Defaults to None.
+                      If None, cells will be reordered to have a nice sparse representation.
+                      If a string is provided, adata.obs[order_by] will be used as the order.
+                      If a numpy array is provided, the array will be used for ordering.
+            key_to_save_order: The obs key to save cell orders in the current plot. Only saves if not None.
+            kwargs: Are passed to sc.pl.heatmap.
 
-         Returns:
-             List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
-             Order of cells in the y axis will be saved on adata.obs[key_to_save_order] if provided.
+        Returns:
+            List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
+            Order of cells in the y-axis will be saved on adata.obs[key_to_save_order] if provided.
 
         Examples:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell, which is then
@@ -146,7 +145,7 @@ class GuideAssignment:
             >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
-            >>> ga.heatmap(gdo)
+            >>> ga.plot_heatmap(gdo)
         """
         data = adata.X if layer is None else adata.layers[layer]
 
