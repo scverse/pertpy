@@ -877,6 +877,9 @@ class Augur:
             & set(permuted_results1["summary_metrics"].columns)
             & set(permuted_results2["summary_metrics"].columns)
         )
+
+        cell_types = list(cell_types)
+
         # mean augur scores
         augur_score1 = (
             augur_results1["summary_metrics"]
@@ -909,7 +912,7 @@ class Augur:
         # draw mean aucs for permute1 and permute2
         for celltype in permuted_cv_augur1["cell_type"].unique():
             df1 = permuted_cv_augur1[permuted_cv_augur1["cell_type"] == celltype]
-            df2 = permuted_cv_augur2[permuted_cv_augur1["cell_type"] == celltype]
+            df2 = permuted_cv_augur2[permuted_cv_augur2["cell_type"] == celltype]
             for permutation_idx in range(n_permutations):
                 # subsample
                 sample1 = df1.sample(n=n_subsamples, random_state=permutation_idx, axis="index")
