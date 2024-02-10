@@ -878,30 +878,30 @@ class Augur:
             & set(permuted_results2["summary_metrics"].columns)
         )
 
-        cell_types = list(cell_types)
+        cell_types_list = list(cell_types)
 
         # mean augur scores
         augur_score1 = (
             augur_results1["summary_metrics"]
-            .loc["mean_augur_score", cell_types]
+            .loc["mean_augur_score", cell_types_list]
             .reset_index()
             .rename(columns={"index": "cell_type"})
         )
         augur_score2 = (
             augur_results2["summary_metrics"]
-            .loc["mean_augur_score", cell_types]
+            .loc["mean_augur_score", cell_types_list]
             .reset_index()
             .rename(columns={"index": "cell_type"})
         )
 
         # mean permuted scores over cross validation runs
         permuted_cv_augur1 = (
-            permuted_results1["full_results"][permuted_results1["full_results"]["cell_type"].isin(cell_types)]
+            permuted_results1["full_results"][permuted_results1["full_results"]["cell_type"].isin(cell_types_list)]
             .groupby(["cell_type", "idx"], as_index=False)
             .mean()
         )
         permuted_cv_augur2 = (
-            permuted_results2["full_results"][permuted_results2["full_results"]["cell_type"].isin(cell_types)]
+            permuted_results2["full_results"][permuted_results2["full_results"]["cell_type"].isin(cell_types_list)]
             .groupby(["cell_type", "idx"], as_index=False)
             .mean()
         )
