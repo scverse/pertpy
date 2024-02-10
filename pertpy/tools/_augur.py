@@ -877,28 +877,31 @@ class Augur:
             & set(permuted_results1["summary_metrics"].columns)
             & set(permuted_results2["summary_metrics"].columns)
         )
+
+        cell_types_list = list(cell_types)
+
         # mean augur scores
         augur_score1 = (
             augur_results1["summary_metrics"]
-            .loc["mean_augur_score", cell_types]
+            .loc["mean_augur_score", cell_types_list]
             .reset_index()
             .rename(columns={"index": "cell_type"})
         )
         augur_score2 = (
             augur_results2["summary_metrics"]
-            .loc["mean_augur_score", cell_types]
+            .loc["mean_augur_score", cell_types_list]
             .reset_index()
             .rename(columns={"index": "cell_type"})
         )
 
         # mean permuted scores over cross validation runs
         permuted_cv_augur1 = (
-            permuted_results1["full_results"][permuted_results1["full_results"]["cell_type"].isin(cell_types)]
+            permuted_results1["full_results"][permuted_results1["full_results"]["cell_type"].isin(cell_types_list)]
             .groupby(["cell_type", "idx"], as_index=False)
             .mean()
         )
         permuted_cv_augur2 = (
-            permuted_results2["full_results"][permuted_results2["full_results"]["cell_type"].isin(cell_types)]
+            permuted_results2["full_results"][permuted_results2["full_results"]["cell_type"].isin(cell_types_list)]
             .groupby(["cell_type", "idx"], as_index=False)
             .mean()
         )
@@ -909,7 +912,7 @@ class Augur:
         # draw mean aucs for permute1 and permute2
         for celltype in permuted_cv_augur1["cell_type"].unique():
             df1 = permuted_cv_augur1[permuted_cv_augur1["cell_type"] == celltype]
-            df2 = permuted_cv_augur2[permuted_cv_augur1["cell_type"] == celltype]
+            df2 = permuted_cv_augur2[permuted_cv_augur2["cell_type"] == celltype]
             for permutation_idx in range(n_permutations):
                 # subsample
                 sample1 = df1.sample(n=n_subsamples, random_state=permutation_idx, axis="index")
@@ -1000,6 +1003,9 @@ class Augur:
             >>> pvals = ag_rfc.predict_differential_prioritization(augur_results1=results_15, augur_results2=results_48, \
                 permuted_results1=results_15_permute, permuted_results2=results_48_permute)
             >>> ag_rfc.plot_dp_scatter(pvals)
+
+        Preview:
+            .. image:: /_static/docstring_previews/augur_dp_scatter.png
         """
         x = results["mean_augur_score1"]
         y = results["mean_augur_score2"]
@@ -1057,6 +1063,9 @@ class Augur:
             ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
             ... )
             >>> ag_rfc.plot_important_features(v_results)
+
+        Preview:
+            .. image:: /_static/docstring_previews/augur_important_features.png
         """
         if isinstance(data, AnnData):
             results = data.uns[key]
@@ -1109,6 +1118,9 @@ class Augur:
             ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
             ... )
             >>> ag_rfc.plot_lollipop(v_results)
+
+        Preview:
+            .. image:: /_static/docstring_previews/augur_lollipop.png
         """
         if isinstance(data, AnnData):
             results = data.uns[key]
@@ -1159,6 +1171,9 @@ class Augur:
             ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
             ... )
             >>> ag_rfc.plot_scatterplot(v_results, h_results)
+
+        Preview:
+            .. image:: /_static/docstring_previews/augur_scatterplot.png
         """
         cell_types = results1["summary_metrics"].columns
 
