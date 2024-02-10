@@ -1003,7 +1003,7 @@ class Augur:
             >>> pvals = ag_rfc.predict_differential_prioritization(augur_results1=results_15, augur_results2=results_48, \
                 permuted_results1=results_15_permute, permuted_results2=results_48_permute)
             >>> ag_rfc.plot_dp_scatter(pvals)
-        
+
         Preview:
             .. image:: /_static/docstring_previews/augur_dp_scatter.png
         """
@@ -1063,7 +1063,7 @@ class Augur:
             ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
             ... )
             >>> ag_rfc.plot_important_features(v_results)
-        
+
         Preview:
             .. image:: /_static/docstring_previews/augur_important_features.png
         """
@@ -1118,7 +1118,7 @@ class Augur:
             ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
             ... )
             >>> ag_rfc.plot_lollipop(v_results)
-        
+
         Preview:
             .. image:: /_static/docstring_previews/augur_lollipop.png
         """
@@ -1171,7 +1171,7 @@ class Augur:
             ...     loaded_data, subsample_size=20, select_variance_features=True, n_threads=4
             ... )
             >>> ag_rfc.plot_scatterplot(v_results, h_results)
-        
+
         Preview:
             .. image:: /_static/docstring_previews/augur_scatterplot.png
         """
