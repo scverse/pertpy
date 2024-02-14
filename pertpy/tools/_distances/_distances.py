@@ -31,6 +31,7 @@ class Distance:
     The distance metric can be specified by the user. This class also provides a
     method to compute the pairwise distances between all groups of cells.
     Currently available metrics:
+
     - "edistance": Energy distance (Default metric).
         In essence, it is twice the mean pairwise distance between cells of two
         groups minus the mean pairwise distance between cells within each group
