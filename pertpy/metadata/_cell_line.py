@@ -96,7 +96,7 @@ class CellLine(MetaData):
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
         gene_annotation_file_path = Path(settings.cachedir) / "gene_identifiers_20191101.csv"
         if not Path(gene_annotation_file_path).exists():
-            print("[bold yellow]No metadata file was found for gene annotation." " Starting download now.")
+            print("[bold yellow]No metadata file was found for gene annotation. Starting download now.")
             _download(
                 url="https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv",
                 output_file_name="gene_identifiers_20191101.csv",

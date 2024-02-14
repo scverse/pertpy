@@ -430,7 +430,7 @@ See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks
     tools.Augur
 ```
 
-#### scGen
+#### Gene expression prediction with scGen
 
 scGen is a deep generative model that leverages autoencoders and adversarial training to integrate single-cell RNA sequencing data from different conditions or tissues,
 enabling the generation of synthetic single-cell data for cross-condition analysis and predicting cell-type-specific responses to perturbations.
@@ -467,7 +467,7 @@ pred.obs["condition"] = "pred"
 
 See [scgen tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html) for a more elaborate tutorial.
 
-#### CINEMA-OT
+#### Causal perturbation analysis with CINEMA-OT
 
 CINEMA-OT is a causal framework for perturbation effect analysis to identify individual treatment effects and synergy at the single cell level.
 CINEMA-OT separates confounding sources of variation from perturbation effects to obtain an optimal transport matching that reflects counterfactual cell pairs.
