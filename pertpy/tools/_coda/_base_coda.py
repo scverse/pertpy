@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     import numpyro as npy
     import toytree as tt
     from ete3 import Tree
-    from jax._src.prng import PRNGKeyArray
     from jax._src.typing import Array
     from matplotlib.axes import Axes
 
@@ -188,7 +187,7 @@ class CompositionalModel2(ABC):
         self,
         sample_adata: AnnData,
         kernel: npy.infer.mcmc.MCMCKernel,
-        rng_key: Array | PRNGKeyArray,
+        rng_key: Array,
         copy: bool = False,
         *args,
         **kwargs,
@@ -304,7 +303,7 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        rng_key_array = random.PRNGKey(rng_key)
+        rng_key_array = random.key(rng_key)
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
@@ -367,10 +366,10 @@ class CompositionalModel2(ABC):
         # Set rng key if needed
         if rng_key is None:
             rng = np.random.default_rng()
-            rng_key = random.PRNGKey(rng.integers(0, 10000))
+            rng_key = random.key(rng.integers(0, 10000))
             sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = rng_key
         else:
-            rng_key = random.PRNGKey(rng_key)
+            rng_key = random.key(rng_key)
 
         # Set up HMC kernel
         sample_adata = self.set_init_mcmc_states(
