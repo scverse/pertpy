@@ -60,7 +60,6 @@ tutorials/index
 contributing
 code_of_conduct
 Discussions <https://github.com/theislab/pertpy/discussions>
-authors
 references
 ```
 
