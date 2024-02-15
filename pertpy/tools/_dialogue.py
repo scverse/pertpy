@@ -868,7 +868,7 @@ class Dialogue:
         n_mcps = self.n_mcps
 
         if conditions_compare is None:
-            conditions_compare = list(adata.obs["path_str"].cat.categories)  # type: ignore
+            conditions_compare = list(adata.obs[condition_label].cat.categories)  # type: ignore
             if len(conditions_compare) != 2:
                 raise ValueError("Please specify conditions to compare or supply an object with only 2 conditions")
 
