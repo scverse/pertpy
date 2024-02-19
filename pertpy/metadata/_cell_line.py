@@ -30,12 +30,12 @@ class CellLine(MetaData):
 
         # Download cell line metadata from DepMap
         # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-        depmap_cell_line_path = Path(settings.cachedir) / "sample_info.csv"
+        depmap_cell_line_path = Path(settings.cachedir) / "depmap_info.csv"
         if not Path(depmap_cell_line_path).exists():
             print("[bold yellow]No DepMap metadata file found. Starting download now.")
             _download(
                 url="https://ndownloader.figshare.com/files/35020903",
-                output_file_name="sample_info.csv",
+                output_file_name="depmap_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
@@ -44,11 +44,11 @@ class CellLine(MetaData):
 
         # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
         # Source: https://www.cancerrxgene.org/celllines
-        cell_line_cancer_project_file_path = Path(settings.cachedir) / "cell_line_cancer_project.csv"
-        cell_line_cancer_project_transformed_path = Path(settings.cachedir) / "cell_line_cancer_project_transformed.csv"
+        cancerxgene_cell_line_path = Path(settings.cachedir) / "cell_line_cancer_project.csv"
+        transformed_cancerxgene_cell_line_path = Path(settings.cachedir) / "cancerrxgene_info.csv"
 
-        if not Path(cell_line_cancer_project_transformed_path).exists():
-            if not Path(cell_line_cancer_project_file_path).exists():
+        if not Path(transformed_cancerxgene_cell_line_path).exists():
+            if not Path(cancerxgene_cell_line_path).exists():
                 print(
                     "[bold yellow]No cell line metadata file from The Genomics of Drug Sensitivity "
                     "in Cancer Project found. Starting download now."
@@ -68,123 +68,127 @@ class CellLine(MetaData):
                     is_zip=False,
                 )
 
-            self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_file_path)
-            self.cl_cancer_project_meta.columns = self.cl_cancer_project_meta.columns.str.strip()
-            self.cl_cancer_project_meta["stripped_cell_line_name"] = (
-                self.cl_cancer_project_meta["Cell line Name"]
-                .str.replace(r"\-|\.", "", regex=True)
-                .str.upper()
-                .astype("category")
+            self.cancerxgene = pd.read_csv(cancerxgene_cell_line_path)
+            self.cancerxgene.columns = self.cancerxgene.columns.str.strip()
+            self.cancerxgene["stripped_cell_line_name"] = (
+                self.cancerxgene["Cell line Name"].str.replace(r"\-|\.", "", regex=True).str.upper().astype("category")
             )
             # pivot the data frame so that each cell line has only one row of metadata
-            index_col = set(self.cl_cancer_project_meta.columns) - {
+            index_col = set(self.cancerxgene.columns) - {
                 "Datasets",
                 "number of drugs",
             }
-            self.cl_cancer_project_meta = self.cl_cancer_project_meta.pivot(
-                index=index_col, columns="Datasets", values="number of drugs"
-            )
-            self.cl_cancer_project_meta.columns.name = None
-            self.cl_cancer_project_meta = self.cl_cancer_project_meta.reset_index().rename(
-                columns={"Cell line Name": "cell_line_name"}
-            )
-            self.cl_cancer_project_meta.to_csv(cell_line_cancer_project_transformed_path)
+            self.cancerxgene = self.cancerxgene.pivot(index=index_col, columns="Datasets", values="number of drugs")
+            self.cancerxgene.columns.name = None
+            self.cancerxgene = self.cancerxgene.reset_index().rename(columns={"Cell line Name": "cell_line_name"})
+            self.cancerxgene.to_csv(transformed_cancerxgene_cell_line_path)
         else:
-            self.cl_cancer_project_meta = pd.read_csv(cell_line_cancer_project_transformed_path, index_col=0)
+            self.cancerxgene = pd.read_csv(transformed_cancerxgene_cell_line_path, index_col=0)
 
         # Download metadata for driver genes from DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
-        gene_annotation_file_path = Path(settings.cachedir) / "gene_identifiers_20191101.csv"
+        gene_annotation_file_path = Path(settings.cachedir) / "genes_info.csv"
         if not Path(gene_annotation_file_path).exists():
             print("[bold yellow]No metadata file was found for gene annotation. Starting download now.")
             _download(
                 url="https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv",
-                output_file_name="gene_identifiers_20191101.csv",
+                output_file_name="genes_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
         self.gene_annotation = pd.read_table(gene_annotation_file_path, delimiter=",")
 
-        # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute from DepMap.Sanger
-        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
-        # issue: read count values contain random whitespace
-        # solution: remove the white space and convert to int before depmap updates the metadata
-        bulk_rna_sanger_file_path = Path(settings.cachedir) / "rnaseq_read_count_20220624_processed.csv"
-        if not Path(bulk_rna_sanger_file_path).exists():
-            print(
-                "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
-                " Starting download now."
-            )
-            _download(
-                url="https://figshare.com/ndownloader/files/42467103",
-                output_file_name="rnaseq_read_count_20220624_processed.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
-        self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0, dtype="unicode")
+        self.bulk_rna_sanger = None
+        self.bulk_rna_broad = None
+        self.proteomics = None
+        self.drug_response_gdsc1 = None
+        self.drug_response_gdsc2 = None
 
-        # Download CCLE expression data from DepMap
-        # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-        bulk_rna_broad_file_path = Path(settings.cachedir) / "CCLE_expression_full.csv"
-        if not Path(bulk_rna_broad_file_path).exists():
-            print("[bold yellow]No metadata file was found for CCLE expression data. Starting download now.")
-            _download(
-                url="https://figshare.com/ndownloader/files/34989922",
-                output_file_name="CCLE_expression_full.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
-        self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
+    def _download_bulk_rna(self, cell_line_source: Literal["broad", "sanger", "both"] = "both") -> None:
+        if cell_line_source != "broad":
+            # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute from DepMap.Sanger
+            # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
+            # issue: read count values contain random whitespace
+            # solution: remove the white space and convert to int before depmap updates the metadata
+            bulk_rna_sanger_file_path = Path(settings.cachedir) / "rnaseq_sanger_info.csv"
+            if not Path(bulk_rna_sanger_file_path).exists():
+                print(
+                    "[bold yellow]No metadata file was found for bulk RNA-seq data of Sanger cell line."
+                    " Starting download now."
+                )
+                _download(
+                    url="https://figshare.com/ndownloader/files/42467103",
+                    output_file_name="rnaseq_sanger_info.csv",
+                    output_path=settings.cachedir,
+                    block_size=4096,
+                    is_zip=False,
+                )
+            self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0, dtype="unicode")
+        if cell_line_source != "sanger":
+            # Download CCLE expression data from DepMap
+            # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
+            bulk_rna_broad_file_path = Path(settings.cachedir) / "rnaseq_depmap_info.csv"
+            if not Path(bulk_rna_broad_file_path).exists():
+                print("[bold yellow]No metadata file was found for CCLE expression data. Starting download now.")
+                _download(
+                    url="https://figshare.com/ndownloader/files/34989922",
+                    output_file_name="rnaseq_depmap_info.csv",
+                    output_path=settings.cachedir,
+                    block_size=4096,
+                    is_zip=False,
+                )
+            self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
 
+    def _download_proteomics(self) -> None:
         # Download proteomics data processed by DepMap.Sanger
         # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
-        proteomics_file_path = Path(settings.cachedir) / "proteomics_all_20221214_processed.csv"
+        proteomics_file_path = Path(settings.cachedir) / "proteomics_info.csv"
         if not Path(proteomics_file_path).exists():
             print("[bold yellow]No metadata file was found for proteomics data (DepMap.Sanger). Starting download now.")
             _download(
                 url="https://figshare.com/ndownloader/files/42468393",
-                output_file_name="proteomics_all_20221214_processed.csv",
+                output_file_name="proteomics_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
                 is_zip=False,
             )
         self.proteomics = pd.read_csv(proteomics_file_path, index_col=0)
 
-        # Download GDSC drug response data
-        # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
-        # URL: https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx
-        drug_response_gdsc1_file_path = Path(settings.cachedir) / "ic50_gdsc1.csv"
-        if not Path(drug_response_gdsc1_file_path).exists():
-            print(
-                "[bold yellow]No metadata file was found for drug response data of GDSC1 dataset."
-                " Starting download now."
-            )
-            _download(
-                url="https://figshare.com/ndownloader/files/43757235",
-                output_file_name="ic50_gdsc1.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
-        self.drug_response_gdsc1 = pd.read_csv(drug_response_gdsc1_file_path, index_col=0)
-
-        drug_response_gdsc2_file_path = Path(settings.cachedir) / "ic50_gdsc2.csv"
-        if not Path(drug_response_gdsc2_file_path).exists():
-            print(
-                "[bold yellow]No metadata file was found for drug response data of GDSC2 dataset."
-                " Starting download now."
-            )
-            _download(
-                url="https://figshare.com/ndownloader/files/43757232",
-                output_file_name="ic50_gdsc2.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
-        self.drug_response_gdsc2 = pd.read_csv(drug_response_gdsc2_file_path, index_col=0)
+    def _download_gdsc(self, gdsc_dataset: Literal[1, 2] = 1) -> None:
+        if gdsc_dataset == 1:
+            # Download GDSC drug response data
+            # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
+            # URL: https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx
+            drug_response_gdsc1_file_path = Path(settings.cachedir) / "gdsc1_info.csv"
+            if not Path(drug_response_gdsc1_file_path).exists():
+                print(
+                    "[bold yellow]No metadata file was found for drug response data of GDSC1 dataset."
+                    " Starting download now."
+                )
+                _download(
+                    url="https://figshare.com/ndownloader/files/43757235",
+                    output_file_name="gdsc1_info.csv",
+                    output_path=settings.cachedir,
+                    block_size=4096,
+                    is_zip=False,
+                )
+            self.drug_response_gdsc1 = pd.read_csv(drug_response_gdsc1_file_path, index_col=0)
+        if gdsc_dataset == 2:
+            drug_response_gdsc2_file_path = Path(settings.cachedir) / "gdsc2_info.csv"
+            if not Path(drug_response_gdsc2_file_path).exists():
+                print(
+                    "[bold yellow]No metadata file was found for drug response data of GDSC2 dataset."
+                    " Starting download now."
+                )
+                _download(
+                    url="https://figshare.com/ndownloader/files/43757232",
+                    output_file_name="gdsc2_info.csv",
+                    output_path=settings.cachedir,
+                    block_size=4096,
+                    is_zip=False,
+                )
+            self.drug_response_gdsc2 = pd.read_csv(drug_response_gdsc2_file_path, index_col=0)
 
     def annotate(
         self,
@@ -196,9 +200,9 @@ class CellLine(MetaData):
         verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
-        """Annotate cell lines by DepMap information.
+        """Annotate cell lines.
 
-        For each cell, we fetch cell line annotation from Dependency Map (DepMap).
+        For each cell, we fetch cell line annotation from either the Dependency Map (DepMap) or The Genomics of Drug Sensitivity in Cancer Project (Cancerxgene).
 
         Args:
             adata: The data object to annotate.
@@ -241,7 +245,7 @@ class CellLine(MetaData):
                     "Ensure that stripped cell line names are available in 'adata.obs.' ",
                     "or use the DepMap as `cell_line_source` to annotate the cell line first ",
                 )
-            cell_line_meta = self.cl_cancer_project_meta
+            cell_line_meta = self.cancerxgene
 
         if query_id not in adata.obs.columns:
             raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.")
@@ -354,7 +358,11 @@ class CellLine(MetaData):
             )
 
         identifier_num_all = len(adata.obs[query_id].unique())
+
+        # Lazily download the bulk rna expression data
         if cell_line_source == "sanger":
+            if self.bulk_rna_sanger is None:
+                self._download_bulk_rna(cell_line_source="sanger")
             reference_id = "model_name"
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_sanger.index))
         else:
@@ -365,7 +373,8 @@ class CellLine(MetaData):
                 "Ensure that `DepMap_ID` is available in 'adata.obs'. ",
                 "Alternatively, use `annotate()` to annotate the cell line first ",
             )
-
+            if self.bulk_rna_broad is None:
+                self._download_bulk_rna(cell_line_source="broad")
             if query_id == "cell_line_name":
                 query_id = "DepMap_ID"
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_broad.index))
@@ -387,7 +396,7 @@ class CellLine(MetaData):
         else:
             if gene_identifier == "gene_ID":
                 self.bulk_rna_broad.columns = [
-                    gene_name.split(" (")[1].split(")")[0] if "(" in gene_name else gene_name
+                    (gene_name.split(" (")[1].split(")")[0] if "(" in gene_name else gene_name)
                     for gene_name in self.bulk_rna_broad.columns
                 ]
             elif gene_identifier == "gene_name":
@@ -454,7 +463,9 @@ class CellLine(MetaData):
                 "using the `annotate()` function before calling annotate_protein_expression(). \n"
                 "This ensures that the required query ID is included in your data."
             )
-
+        # Lazily download the proteomics data
+        if self.proteomics is None:
+            self._download_proteomics()
         if reference_id not in self.proteomics.columns:
             raise ValueError(
                 f"The specified `reference_id`{reference_id} can't be found in the protein expression data. \n"
@@ -536,9 +547,14 @@ class CellLine(MetaData):
                 "using the `annotate()` function before calling `annotate_from_gdsc()`. "
                 "This ensures that the required query ID is included in your data."
             )
+        # Lazily download the GDSC data
         if gdsc_dataset == 1:
+            if self.drug_response_gdsc1 is None:
+                self._download_gdsc(gdsc_dataset=1)
             gdsc_data = self.drug_response_gdsc1
         else:
+            if self.drug_response_gdsc2 is None:
+                self._download_gdsc(gdsc_dataset=2)
             gdsc_data = self.drug_response_gdsc2
 
         identifier_num_all = len(adata.obs[query_id].unique())
@@ -579,11 +595,24 @@ class CellLine(MetaData):
             >>> pt_metadata = pt.md.CellLine()
             >>> lookup = pt_metadata.lookup()
         """
+        # Fetch the metadata if it hasn't beed downloaded yet
+        if self.bulk_rna_broad is None:
+            self._download_bulk_rna(cell_line_source="broad")
+        if self.bulk_rna_sanger is None:
+            self._download_bulk_rna(cell_line_source="sanger")
+        if self.proteomics is None:
+            self._download_proteomics()
+        if self.drug_response_gdsc1 is None:
+            self._download_gdsc(gdsc_dataset=1)
+        if self.drug_response_gdsc2 is None:
+            self._download_gdsc(gdsc_dataset=2)
+
+        # Transfer the data
         return LookUp(
             type="cell_line",
             transfer_metadata=[
                 self.depmap,
-                self.cl_cancer_project_meta,
+                self.cancerxgene,
                 self.gene_annotation,
                 self.bulk_rna_sanger,
                 self.bulk_rna_broad,
@@ -689,8 +718,8 @@ class CellLine(MetaData):
 
         Args:
             adata: Input data object.
-            corr: Pearson correlation scores. If not available, please call the function `pt.md.CellLine.correlate()` first.
-            pval: P-values for pearson correlation. If not available, please call the function `pt.md.CellLine.correlate()` first.
+            corr: Pearson correlation scores.
+            pval: P-values for pearson correlation.
             identifier: Column in `.obs` containing the identifiers. Defaults to 'DepMap_ID'.
             metadata_key: Key of the AnnData obsm for comparison with the X matrix. Defaults to 'bulk_rna_broad'.
             category: The category for correlation comparison. Defaults to "cell line".
@@ -701,6 +730,11 @@ class CellLine(MetaData):
         Returns:
             Pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
         """
+        if corr is None or pval is None:
+            raise ValueError(
+                "Missing required input parameter: 'corr' or 'pval'. Please call the function `pt.md.CellLine.correlate()` to generate these outputs before proceeding."
+            )
+
         if category == "cell line":
             if subset_identifier is None:
                 annotation = "\n".join(
@@ -716,32 +750,39 @@ class CellLine(MetaData):
                 subset_identifier_list = (
                     [subset_identifier] if isinstance(subset_identifier, str | int) else list(subset_identifier)
                 )
-
-                if all(isinstance(id, int) and 0 <= id < adata.n_obs for id in subset_identifier_list):
-                    # Visualize the chosen cell line at the given index
-                    subset_identifier_list = adata.obs[identifier].values[subset_identifier_list]
-                elif not all(isinstance(id, str) for id in subset_identifier_list) or not set(
-                    subset_identifier_list
-                ).issubset(adata.obs[identifier].unique()):
-                    # The chosen cell line must be found in `identifier`
-                    raise ValueError(
-                        "`Subset_identifier` must contain either all strings or all integers within the index."
-                    )
+                # Convert the valid identifiers to the index list
+                if all(isinstance(id, str) for id in subset_identifier_list):
+                    if set(subset_identifier_list).issubset(adata.obs[identifier].unique()):
+                        subset_identifier_list = np.where(
+                            np.in1d(adata.obs[identifier].values, subset_identifier_list)
+                        )[0]
+                    else:
+                        raise ValueError("`Subset_identifier` must be found in adata.obs.`identifier`.")
+                elif all(isinstance(id, int) and 0 <= id < adata.n_obs for id in subset_identifier_list):
+                    pass
+                elif all(isinstance(id, int) and (id < 0 or id >= adata.n_obs) for id in subset_identifier_list):
+                    raise ValueError("`Subset_identifier` out of index.")
+                else:
+                    raise ValueError("`Subset_identifier` must contain either all strings or all integers.")
 
                 plt.scatter(
-                    x=adata.obsm[metadata_key].loc[subset_identifier_list],
-                    y=adata[adata.obs[identifier].isin(subset_identifier_list)].X,
+                    x=adata.obsm[metadata_key].iloc[subset_identifier_list],
+                    y=adata[subset_identifier_list].X,
                 )
                 plt.xlabel(
-                    f"{metadata_key}: {subset_identifier_list[0]}"
+                    f"{metadata_key}: {adata.obs[identifier].values[subset_identifier_list[0]]}"
                     if len(subset_identifier_list) == 1
                     else f"{metadata_key}"
                 )
-                plt.ylabel(f"Baseline: {subset_identifier_list[0]}" if len(subset_identifier_list) == 1 else "Baseline")
+                plt.ylabel(
+                    f"Baseline: {adata.obs[identifier].values[subset_identifier_list[0]]}"
+                    if len(subset_identifier_list) == 1
+                    else "Baseline"
+                )
 
                 # Annotate with the correlation coefficient and p-value of the chosen cell lines
-                subset_cor = np.mean(np.diag(corr.loc[subset_identifier_list, subset_identifier_list]))
-                subset_pval = np.mean(np.diag(pval.loc[subset_identifier_list, subset_identifier_list]))
+                subset_cor = np.mean(np.diag(corr.iloc[subset_identifier_list, subset_identifier_list]))
+                subset_pval = np.mean(np.diag(pval.iloc[subset_identifier_list, subset_identifier_list]))
                 annotation = "\n".join(
                     (
                         f"Pearson correlation: {subset_cor:.4f}",
