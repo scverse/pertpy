@@ -8,7 +8,6 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import scipy
 import seaborn as sns
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
