@@ -30,6 +30,7 @@ class CellLine(MetaData):
 
         self.depmap = None
         self.cancerxgene = None
+        self.gene_annotation = None
         self.bulk_rna_sanger = None
         self.bulk_rna_broad = None
         self.proteomics = None
@@ -39,13 +40,13 @@ class CellLine(MetaData):
     def _download_cell_line(self, cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap") -> None:
         if cell_line_source == "DepMap":
             # Download cell line metadata from DepMap
-            # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-            depmap_cell_line_path = Path(settings.cachedir) / "depmap_info.csv"
+            # Source: https://depmap.org/portal/download/all/ (DepMap Public 23Q4)
+            depmap_cell_line_path = Path(settings.cachedir) / "depmap_23Q4_info.csv"
             if not Path(depmap_cell_line_path).exists():
                 print("[bold yellow]No DepMap metadata file found. Starting download now.")
                 _download(
-                    url="https://ndownloader.figshare.com/files/35020903",
-                    output_file_name="depmap_info.csv",
+                    url="https://ndownloader.figshare.com/files/43746708",
+                    output_file_name="depmap_23Q4_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
                     is_zip=False,
@@ -202,7 +203,7 @@ class CellLine(MetaData):
         self,
         adata: AnnData,
         query_id: str = "DepMap_ID",
-        reference_id: str = "DepMap_ID",
+        reference_id: str = "ModelID",
         fetch: list[str] | None = None,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
         verbosity: int | str = 5,
@@ -215,9 +216,9 @@ class CellLine(MetaData):
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
-            reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or stripped_cell_line_name.
+            reference_id: The type of cell line identifier in the meta data, e.g. ModelID, CellLineName	or StrippedCellLineName.
                           If fetching cell line metadata from Cancerrxgene, it is recommended to choose
-                          "stripped_cell_line_name". Defaults to "DepMap_ID".
+                          "stripped_cell_line_name". Defaults to "ModelID".
             fetch: The metadata to fetch. Defaults to None (=all).
             cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
@@ -314,7 +315,7 @@ class CellLine(MetaData):
         else:
             raise ValueError(
                 f"The requested cell line type {reference_id} is currently unavailable in the database.\n"
-                "TRefer to the available reference identifier in the chosen database.\n"
+                "Refer to the available reference identifier in the chosen database.\n"
                 "DepMap_ID is compared by default.\n"
                 "Alternatively, create a `CellLineMetaData.lookup()` object to "
                 "obtain the available reference identifiers in the metadata."
@@ -612,6 +613,8 @@ class CellLine(MetaData):
             self._download_cell_line(cell_line_source="DepMap")
         if self.cancerxgene is None:
             self._download_cell_line(cell_line_source="Cancerrxgene")
+        if self.gene_annotation is None:
+            self._download_gene_annotation()
         if self.bulk_rna_broad is None:
             self._download_bulk_rna(cell_line_source="broad")
         if self.bulk_rna_sanger is None:
