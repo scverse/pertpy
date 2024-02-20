@@ -105,7 +105,6 @@ class CodaPlot:
             A :class:`~matplotlib.axes.Axes` object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -176,7 +175,6 @@ class CodaPlot:
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -255,7 +253,6 @@ class CodaPlot:
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -323,7 +320,6 @@ class CodaPlot:
             A :class:`~matplotlib.axes.Axes` object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -398,7 +394,6 @@ class CodaPlot:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
 
         Examples:
-            Example with tascCODA:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
@@ -486,7 +481,6 @@ class CodaPlot:
             or  plot the tree inline (`show = False`)
 
         Examples:
-            Example with tascCODA:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
@@ -561,7 +555,6 @@ class CodaPlot:
             If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
 
         Examples:
-            Example with tascCODA:
             >>> import pertpy as pt
             >>> import schist
             >>> adata = pt.dt.haber_2017_regions()
