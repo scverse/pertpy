@@ -21,7 +21,13 @@ Please read the [documentation](https://pertpy.readthedocs.io/en/latest).
 You can install _pertpy_ via [pip] from [PyPI]:
 
 ```console
-$ pip install pertpy
+pip install pertpy
+```
+
+if you want to use scCODA please install it as:
+
+```console
+pip install pertpy[coda]
 ```
 
 [pip]: https://pip.pypa.io/
