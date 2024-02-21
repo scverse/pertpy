@@ -45,7 +45,7 @@ class Milo:
             input: AnnData
             feature_key: Key to store the cell-level AnnData object in the MuData object
         Returns:
-            MuData: MuData object with original AnnData (default is `mudata[feature_key]`).
+            MuData: MuData object with original AnnData. Defaults to`mudata[feature_key]`.
 
         Examples:
             >>> import pertpy as pt
@@ -77,11 +77,11 @@ class Milo:
             neighbors_key: The key in `adata.obsp` or `mdata[feature_key].obsp` to use as KNN graph.
                            If not specified, `make_nhoods` looks .obsp[‘connectivities’] for connectivities (default storage places for `scanpy.pp.neighbors`).
                            If specified, it looks at .obsp[.uns[neighbors_key][‘connectivities_key’]] for connectivities.
-                           (default: None)
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
-            prop: Fraction of cells to sample for neighbourhood index search. (default: 0.1)
-            seed: Random seed for cell sampling. (default: 0)
-            copy: Determines whether a copy of the `adata` is returned. (default: False)
+                           Defaults to None.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+            prop: Fraction of cells to sample for neighbourhood index search. Defaults to 0.1.
+            seed: Random seed for cell sampling. Defaults to 0.
+            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
 
         Returns:
             If `copy=True`, returns the copy of `adata` with the result in `.obs`, `.obsm`, and `.uns`.
@@ -196,7 +196,7 @@ class Milo:
         Args:
             data: AnnData object with neighbourhoods defined in `obsm['nhoods']` or MuData object with a modality with neighbourhoods defined in `obsm['nhoods']`
             sample_col: Column in adata.obs that contains sample information
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. (default: 'rna')
+            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
 
         Returns:
             MuData object storing the original (i.e. rna) AnnData in `mudata[feature_key]`
@@ -669,7 +669,9 @@ class Milo:
         sample_adata: AnnData,
         neighbors_key: str | None = None,
     ):
-        """FDR correction weighted on inverse of connectivity of neighbourhoods. The distance to the k-th nearest neighbor is used as a measure of connectivity.
+        """FDR correction weighted on inverse of connectivity of neighbourhoods.
+
+        The distance to the k-th nearest neighbor is used as a measure of connectivity.
 
         Args:
             sample_adata: Sample-level AnnData.
@@ -710,7 +712,7 @@ class Milo:
         Args:
             mdata: MuData object
             alpha: Significance threshold. (default: 0.1)
-            min_logFC: Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods. (default: 0)
+            min_logFC: Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods. Defaults to 0.
             min_size: Minimum size of nodes in visualization. (default: 10)
             plot_edges: If edges for neighbourhood overlaps whould be plotted. Defaults to False.
             title: Plot title. Defaults to "DA log-Fold Change".
@@ -831,7 +833,7 @@ class Milo:
             mdata: MuData object
             anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
             alpha: Significance threshold. (default: 0.1)
-            subset_nhoods: List of nhoods to plot. If None, plot all nhoods. (default: None)
+            subset_nhoods: List of nhoods to plot. If None, plot all nhoods. Defaults to None.
             palette: Name of Seaborn color palette for violinplots.
                      Defaults to pre-defined category colors for violinplots.
 
@@ -940,8 +942,8 @@ class Milo:
         Args:
             mdata: MuData object storing cell level and nhood level information
             test_var: Name of column in adata.obs storing condition of interest (y-axis for boxplot)
-            subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods. (default: None)
-            log_counts: Whether to plot log1p of cell counts. (default: False)
+            subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods. Defaults to None.
+            log_counts: Whether to plot log1p of cell counts. Defaults to False.
         """
         try:
             nhood_adata = mdata["milo"].T.copy()

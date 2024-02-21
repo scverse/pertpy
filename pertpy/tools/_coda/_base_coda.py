@@ -343,7 +343,6 @@ class CompositionalModel2(ABC):
             copy: Return a copy instead of writing to adata. Defaults to False.
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -431,7 +430,6 @@ class CompositionalModel2(ABC):
                 - Is credible: Boolean indicator whether effect is credible
 
          Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -441,7 +439,6 @@ class CompositionalModel2(ABC):
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> intercept_df, effect_df = sccoda.summary_prepare(mdata["coda"])
         """
-        # Get model and effect selection types
         select_type = sample_adata.uns["scCODA_params"]["select_type"]
         model_type = sample_adata.uns["scCODA_params"]["model_type"]
 
@@ -796,7 +793,6 @@ class CompositionalModel2(ABC):
             kwargs: Passed to az.summary
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -814,7 +810,7 @@ class CompositionalModel2(ABC):
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
-        # Get model and effect selection types
+
         select_type = sample_adata.uns["scCODA_params"]["select_type"]
         model_type = sample_adata.uns["scCODA_params"]["model_type"]
 
@@ -941,7 +937,6 @@ class CompositionalModel2(ABC):
             pd.DataFrame: Intercept data frame.
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -951,7 +946,6 @@ class CompositionalModel2(ABC):
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> intercepts = sccoda.get_intercept_df(mdata)
         """
-
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]
@@ -974,7 +968,6 @@ class CompositionalModel2(ABC):
             pd.DataFrame: Effect data frame.
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -984,7 +977,6 @@ class CompositionalModel2(ABC):
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> effects = sccoda.get_effect_df(mdata)
         """
-
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]
@@ -1018,7 +1010,6 @@ class CompositionalModel2(ABC):
             pd.DataFrame: Node effect data frame.
 
         Examples:
-            Example with tascCODA (works only for model of type tree_agg, i.e. a tascCODA model):
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
@@ -1217,7 +1208,6 @@ class CompositionalModel2(ABC):
             A :class:`~matplotlib.axes.Axes` object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -1320,7 +1310,6 @@ class CompositionalModel2(ABC):
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -1505,7 +1494,6 @@ class CompositionalModel2(ABC):
             or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -1722,7 +1710,6 @@ class CompositionalModel2(ABC):
             A :class:`~matplotlib.axes.Axes` object
 
         Examples:
-            Example with scCODA:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -1849,7 +1836,6 @@ class CompositionalModel2(ABC):
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
 
         Examples:
-            Example with tascCODA:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
@@ -1943,7 +1929,6 @@ class CompositionalModel2(ABC):
             or  plot the tree inline (`show = False`)
 
         Examples:
-            Example with tascCODA:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
@@ -2127,7 +2112,6 @@ class CompositionalModel2(ABC):
             If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
 
         Examples:
-            Example with tascCODA:
             >>> import pertpy as pt
             >>> import scanpy as sc
             >>> import schist

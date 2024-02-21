@@ -27,7 +27,6 @@ class CellLine(MetaData):
 
     def __init__(self):
         super().__init__()
-
         self.depmap = None
         self.cancerxgene = None
         self.gene_annotation = None
@@ -78,7 +77,6 @@ class CellLine(MetaData):
                         block_size=4096,
                         is_zip=False,
                     )
-
                 self.cancerxgene = pd.read_csv(cancerxgene_cell_line_path)
                 self.cancerxgene.columns = self.cancerxgene.columns.str.strip()
                 self.cancerxgene["stripped_cell_line_name"] = (
