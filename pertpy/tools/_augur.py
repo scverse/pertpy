@@ -731,6 +731,7 @@ class Augur:
             >>> loaded_data = ag_rfc.load(adata)
             >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)
         """
+        adata = adata.copy()
         if augur_mode == "permute" and n_subsamples < 100:
             n_subsamples = 500
         if is_regressor(self.estimator) and len(adata.obs["y_"].unique()) <= 3:
