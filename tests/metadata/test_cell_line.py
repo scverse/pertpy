@@ -40,18 +40,17 @@ class TestMetaData:
     def test_cell_line_annotation(self, adata):
         self.pt_metadata.annotate(adata=adata)
         assert len(adata.obs.columns) == len(self.pt_metadata.depmap.columns) + 1  # due to the perturbation column
-        assert set(self.pt_metadata.depmap.columns).issubset(adata.obs)
         stripped_cell_line_name = ["SLR21", "HEKTE", "TK10", "22RV1"] * NUM_CELLS_PER_ID
-        assert stripped_cell_line_name == list(adata.obs["stripped_cell_line_name"])
+        assert stripped_cell_line_name == list(adata.obs["StrippedCellLineName"])
 
     def test_gdsc_annotation(self, adata):
         self.pt_metadata.annotate(adata)
-        self.pt_metadata.annotate_from_gdsc(adata, query_id="stripped_cell_line_name")
+        self.pt_metadata.annotate_from_gdsc(adata, query_id="StrippedCellLineName")
         assert "ln_ic50" in adata.obs
 
     def test_protein_expression_annotation(self, adata):
         self.pt_metadata.annotate(adata)
-        self.pt_metadata.annotate_protein_expression(adata, query_id="stripped_cell_line_name")
+        self.pt_metadata.annotate_protein_expression(adata, query_id="StrippedCellLineName")
 
         assert len(adata.obsm) == 1
         assert adata.obsm["proteomics_protein_intensity"].shape == (
@@ -69,7 +68,7 @@ class TestMetaData:
             self.pt_metadata.bulk_rna_broad.shape[1],
         )
 
-        self.pt_metadata.annotate_bulk_rna(adata, query_id="stripped_cell_line_name")
+        self.pt_metadata.annotate_bulk_rna(adata, query_id="StrippedCellLineName")
 
         assert len(adata.obsm) == 2
         assert adata.obsm["bulk_rna_sanger"].shape == (

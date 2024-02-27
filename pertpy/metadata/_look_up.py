@@ -49,19 +49,19 @@ class LookUp:
             depmap_data = {
                 "n_cell_line": len(self.cell_line_meta.index),
                 "n_metadata": len(self.cell_line_meta.columns),
-                "cell_line": self.cell_line_meta.DepMap_ID.values,
+                "cell_line": self.cell_line_meta.ModelID.values,
                 "metadata": self.cell_line_meta.columns.values,
                 "reference_id": [
-                    "DepMap_ID",
-                    "cell_line_name",
-                    "stripped_cell_line_name",
+                    "ModelID",
+                    "CellLineName",
+                    "StrippedCellLineName",
                     "CCLE_Name",
                 ],
-                "reference_id_example": "DepMap_ID: ACH-000016 | cell_line_name: SLR 21 | stripped_cell_line_name: SLR21 | CCLE_Name: SLR21_KIDNEY",
+                "reference_id_example": "ModelID: ACH-000001 | CellLineName: NIH:OVCAR-3 | StrippedCellLineName: NIHOVCAR3 | CCLEName: NIHOVCAR3_OVARY",
                 "default_parameter": {
                     "cell_line_source": "DepMap",
                     "query_id": "DepMap_ID",
-                    "reference_id": "DepMap_ID",
+                    "reference_id": "ModelID",
                     "fetch": "None",
                 },
             }
@@ -233,16 +233,16 @@ class LookUp:
     def available_cell_lines(
         self,
         cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap",
-        reference_id: str = "DepMap_ID",
+        reference_id: str = "ModelID",
         query_id_list: Sequence[str] | None = None,
     ) -> None:
         """A brief summary of cell line metadata.
 
         Args:
             cell_line_source: the source of cell line annotation, DepMap or Cancerrxgene. Defaults to "DepMap".
-            reference_id: The type of cell line identifier in the meta data, e.g. DepMap_ID, cell_line_name or
-                stripped_cell_line_name. If fetch cell line metadata from Cancerrxgene, it is recommended to choose
-                "stripped_cell_line_name". Defaults to "DepMap_ID".
+            reference_id: The type of cell line identifier in the meta data, e.g. ModelID, CellLineName	or StrippedCellLineName.
+                If fetch cell line metadata from Cancerrxgene, it is recommended to choose
+                "stripped_cell_line_name". Defaults to "ModelID".
             query_id_list: Unique cell line identifiers to test the number of matched ids present in the
                 metadata. If set to None, the query of metadata identifiers will be disabled. Defaults to None.
         """
@@ -258,7 +258,7 @@ class LookUp:
                     )
                 not_matched_identifiers = list(set(query_id_list) - set(self.cell_line_meta[reference_id]))
             else:
-                if reference_id == "DepMap_ID":
+                if reference_id == "ModelID":
                     reference_id = "stripped_cell_line_name"
                 if reference_id not in self.cl_cancer_project_meta.columns:
                     raise ValueError(
