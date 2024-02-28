@@ -22,6 +22,9 @@ class Drug(MetaData):
     """Utilities to fetch metadata for drug studies."""
 
     def __init__(self):
+        self.chembl = None
+
+    def _download_drug_annotation(self) -> None:
         # Prepared in https://github.com/theislab/pertpy-datasets/blob/main/chembl_data.ipynb
         chembl_path = Path(settings.cachedir) / "chembl.json"
         if not Path(chembl_path).exists():
@@ -55,6 +58,9 @@ class Drug(MetaData):
         if copy:
             adata = adata.copy()
 
+        if self.chembl is None:
+            self._download_drug_annotation()
+
         exploded_df = self.chembl.explode("targets")
 
         gene_compound_dict = (
@@ -77,6 +83,9 @@ class Drug(MetaData):
         Returns:
             Returns a LookUp object specific for MoA annotation.
         """
+        if self.chembl is None:
+            self._download_drug_annotation()
+
         return LookUp(
             type="moa",
             transfer_metadata=[self.chembl],
