@@ -8,8 +8,7 @@ import numpy as np
 import numpyro as npy
 import numpyro.distributions as npd
 from anndata import AnnData
-from jax import random
-from jax.config import config
+from jax import config, random
 from mudata import MuData
 from numpyro.infer import Predictive
 from rich import print
