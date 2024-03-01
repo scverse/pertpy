@@ -21,6 +21,9 @@ class Moa(MetaData):
     """Utilities to fetch metadata for mechanism of action studies."""
 
     def __init__(self):
+        self.clue = None
+
+    def _download_clue(self) -> None:
         clue_path = Path(settings.cachedir) / "repurposing_drugs_20200324.txt"
         if not Path(clue_path).exists():
             print("[bold yellow]No metadata file was found for clue. Starting download now.")
@@ -63,6 +66,9 @@ class Moa(MetaData):
 
         if query_id not in adata.obs.columns:
             raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n" "Please check again.")
+
+        if self.clue is None:
+            self._download_clue()
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id].str.lower()) - set(self.clue["pert_iname"].str.lower()))
@@ -114,6 +120,9 @@ class Moa(MetaData):
         Returns:
             Returns a LookUp object specific for MoA annotation.
         """
+        if self.clue is None:
+            self._download_clue()
+
         return LookUp(
             type="moa",
             transfer_metadata=[self.clue],
