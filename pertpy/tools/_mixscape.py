@@ -309,9 +309,9 @@ class Mixscape:
                         old_classes = adata.obs[new_class_name][all_cells]
                         n_iter += 1
 
-                    adata.obs.loc[
-                        (adata.obs[new_class_name] == gene) & split_mask, new_class_name
-                    ] = f"{gene} {perturbation_type}"
+                    adata.obs.loc[(adata.obs[new_class_name] == gene) & split_mask, new_class_name] = (
+                        f"{gene} {perturbation_type}"
+                    )
 
                 adata.obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in adata.obs[new_class_name]]
                 adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
@@ -778,10 +778,10 @@ class Mixscape:
             perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = rng.uniform(
                 low=0.001, high=top_r / 10, size=sum(perturbation_score["mix"] == gd2)
             ).astype(np.float32)
-            perturbation_score.loc[
-                perturbation_score["mix"] == f"{target_gene} {perturbation_type}", "y_jitter"
-            ] = rng.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} {perturbation_type}")
+            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} {perturbation_type}", "y_jitter"] = (
+                rng.uniform(
+                    low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} {perturbation_type}")
+                )
             )
             perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = rng.uniform(
                 low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} NP")

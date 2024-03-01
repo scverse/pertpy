@@ -23,7 +23,6 @@ config.update("jax_enable_x64", True)
 
 
 class Sccoda(CompositionalModel2):
-
     """
     Statistical model for single-cell differential composition analysis with specification of a reference cell type.
     This is the standard scCODA model and recommended for all uses.
