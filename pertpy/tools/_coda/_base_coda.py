@@ -14,8 +14,7 @@ import scanpy as sc
 import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
-from jax import random
-from jax.config import config
+from jax import config, random
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
 from matplotlib.colors import ListedColormap
