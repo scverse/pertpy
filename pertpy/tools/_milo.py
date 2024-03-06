@@ -861,7 +861,7 @@ class Milo:
             nhood_adata.obs[anno_col]
         except KeyError:
             raise RuntimeError(
-                f"Unable to find {anno_col} in mdata.uns['nhood_adata']. Run 'milopy.utils.annotate_nhoods(adata, anno_col)' first"
+                f"Unable to find {anno_col} in mdata['milo'].var. Run 'milopy.utils.annotate_nhoods(adata, anno_col)' first"
             ) from None
 
         if subset_nhoods is not None:
@@ -897,7 +897,6 @@ class Milo:
                 y=anno_col,
                 x="logFC",
                 order=sorted_annos,
-                size=190,
                 inner=None,
                 orient="h",
                 palette=palette,
@@ -910,7 +909,6 @@ class Milo:
                 y=anno_col,
                 x="logFC",
                 order=sorted_annos,
-                size=190,
                 inner=None,
                 orient="h",
                 linewidth=0,

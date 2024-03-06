@@ -139,7 +139,7 @@ class MilopyPlot:
 
         Args:
             mdata: MuData object
-            anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
+            anno_col: Column in mdata['milo'].var to use as annotation. (default: 'nhood_annotation'.)
             alpha: Significance threshold. (default: 0.1)
             subset_nhoods: List of nhoods to plot. If None, plot all nhoods. (default: None)
             palette: Name of Seaborn color palette for violinplots.
