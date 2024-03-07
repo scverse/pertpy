@@ -849,7 +849,7 @@ class Milo:
             >>> milo.da_nhoods(mdata, design="~label")
             >>> milo.annotate_nhoods(mdata, anno_col="cell_type")
             >>> milo.plot_da_beeswarm(mdata)
-        
+
         Preview:
             .. image:: /_static/docstring_previews/milo_da_beeswarm.png
         """
