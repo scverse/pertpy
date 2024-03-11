@@ -114,7 +114,7 @@ class CodaPlot:
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
-            " Please use the corresponding 'pt.tl' object",
+            " Please use the corresponding 'pt.tl' object for plotting function directly.",
             FutureWarning,
             stacklevel=2,
         )
@@ -128,7 +128,7 @@ class CodaPlot:
             modality_key=modality_key,
             figsize=figsize,
             dpi=dpi,
-            cmap=cmap,
+            palette=cmap,
             show_legend=show_legend,
             level_order=level_order,
         )
@@ -186,7 +186,7 @@ class CodaPlot:
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
-            " Please use the corresponding 'pt.tl' object",
+            " Please use the corresponding 'pt.tl' object for plotting function directly.",
             FutureWarning,
             stacklevel=2,
         )
@@ -204,7 +204,7 @@ class CodaPlot:
             plot_zero_cell_type=plot_zero_cell_type,
             figsize=figsize,
             dpi=dpi,
-            cmap=cmap,
+            palette=cmap,
             level_order=level_order,
             args_barplot=args_barplot,
         )
@@ -262,7 +262,7 @@ class CodaPlot:
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
-            " Please use the corresponding 'pt.tl' object",
+            " Please use the corresponding 'pt.tl' object for plotting function directly.",
             FutureWarning,
             stacklevel=2,
         )
@@ -282,7 +282,7 @@ class CodaPlot:
             args_swarmplot=args_swarmplot,
             figsize=figsize,
             dpi=dpi,
-            cmap=cmap,
+            palette=cmap,
             show_legend=show_legend,
             level_order=level_order,
         )
@@ -331,7 +331,7 @@ class CodaPlot:
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
-            " Please use the corresponding 'pt.tl' object",
+            " Please use the corresponding 'pt.tl' object for plotting function directly.",
             FutureWarning,
             stacklevel=2,
         )
@@ -412,7 +412,7 @@ class CodaPlot:
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
-            " Please use the corresponding 'pt.tl' object",
+            " Please use the corresponding 'pt.tl' object for plotting function directly.",
             FutureWarning,
             stacklevel=2,
         )
@@ -585,7 +585,7 @@ class CodaPlot:
         """
         warnings.warn(
             "This function is deprecated and will be removed in pertpy 0.8.0!"
-            " Please use the corresponding 'pt.tl' object",
+            " Please use the corresponding 'pt.tl' object for plotting function directly.",
             FutureWarning,
             stacklevel=2,
         )

@@ -1126,7 +1126,7 @@ class CompositionalModel2(ABC):
         level_names: list[str],
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        cmap: ListedColormap | None = cm.tab20,
+        palette: ListedColormap | None = cm.tab20,
         show_legend: bool | None = True,
     ) -> plt.Axes:
         """Plots a stacked barplot for one (discrete) covariate.
@@ -1141,7 +1141,7 @@ class CompositionalModel2(ABC):
             level_names: Names of the covariate's levels
             figsize: Figure size. Defaults to None.
             dpi: Dpi setting. Defaults to 100.
-            cmap: The color map for the barplot. Defaults to cm.tab20.
+            palette: The color map for the barplot. Defaults to cm.tab20.
             show_legend: If True, adds a legend. Defaults to True.
 
         Returns:
@@ -1164,7 +1164,7 @@ class CompositionalModel2(ABC):
                 r,
                 bars,
                 bottom=cum_bars,
-                color=cmap(n % cmap.N),
+                color=palette(n % palette.N),
                 width=barwidth,
                 label=type_names[n],
                 linewidth=0,
@@ -1187,9 +1187,10 @@ class CompositionalModel2(ABC):
         modality_key: str = "coda",
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        cmap: ListedColormap | None = cm.tab20,
+        palette: ListedColormap | None = cm.tab20,
         show_legend: bool | None = True,
         level_order: list[str] = None,
+        **kwargs,
     ) -> plt.Axes:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
@@ -1199,7 +1200,7 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
             figsize: Figure size. Defaults to None.
             dpi: Dpi setting. Defaults to 100.
-            cmap: The matplotlib color map for the barplot. Defaults to cm.tab20.
+            palette: The matplotlib color map for the barplot. Defaults to cm.tab20.
             show_legend: If True, adds a legend. Defaults to True.
             level_order: Custom ordering of bars on the x-axis. Defaults to None.
 
@@ -1236,7 +1237,7 @@ class CompositionalModel2(ABC):
                 level_names=data.obs.index,
                 figsize=figsize,
                 dpi=dpi,
-                cmap=cmap,
+                palette=palette,
                 show_legend=show_legend,
             )
         else:
@@ -1262,7 +1263,7 @@ class CompositionalModel2(ABC):
                 level_names=levels,
                 figsize=figsize,
                 dpi=dpi,
-                cmap=cmap,
+                palette=palette,
                 show_legend=show_legend,
             )
         return ax
@@ -1278,7 +1279,7 @@ class CompositionalModel2(ABC):
         plot_zero_cell_type: bool = False,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        cmap: str | ListedColormap | None = cm.tab20,
+        palette: str | ListedColormap | None = cm.tab20,
         level_order: list[str] = None,
         args_barplot: dict | None = None,
     ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
@@ -1300,7 +1301,7 @@ class CompositionalModel2(ABC):
                                  Defaults to False.
             figsize: Figure size. Defaults to None.
             dpi: Figure size. Defaults to 100.
-            cmap: The seaborn color map for the barplot. Defaults to cm.tab20.
+            palette: The seaborn color map for the barplot. Defaults to cm.tab20.
             level_order: Custom ordering of bars on the x-axis. Defaults to None.
             args_barplot: Arguments passed to sns.barplot. Defaults to None.
 
@@ -1380,8 +1381,8 @@ class CompositionalModel2(ABC):
 
         # If plot as facets, create a FacetGrid and map barplot to it.
         if plot_facets:
-            if isinstance(cmap, ListedColormap):
-                cmap = np.array([cmap(i % cmap.N) for i in range(len(plot_df["Cell Type"].unique()))])
+            if isinstance(palette, ListedColormap):
+                palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))])
             if figsize is not None:
                 height = figsize[0]
                 aspect = np.round(figsize[1] / figsize[0], 2)
@@ -1402,7 +1403,7 @@ class CompositionalModel2(ABC):
                 sns.barplot,
                 "Cell Type",
                 "value",
-                palette=cmap,
+                palette=palette,
                 order=level_order,
                 **args_barplot,
             )
@@ -1422,25 +1423,25 @@ class CompositionalModel2(ABC):
         else:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
             if len(covariate_names) == 1:
-                if isinstance(cmap, ListedColormap):
-                    cmap = np.array([cmap(i % cmap.N) for i in range(len(plot_df["Cell Type"].unique()))])
+                if isinstance(palette, ListedColormap):
+                    palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))])
                 sns.barplot(
                     data=plot_df,
                     x="Cell Type",
                     y="value",
-                    palette=cmap,
+                    palette=palette,
                     ax=ax,
                 )
                 ax.set_title(covariate_names[0])
             else:
-                if isinstance(cmap, ListedColormap):
-                    cmap = np.array([cmap(i % cmap.N) for i in range(len(covariate_names))])
+                if isinstance(palette, ListedColormap):
+                    palette = np.array([palette(i % palette.N) for i in range(len(covariate_names))])
                 sns.barplot(
                     data=plot_df,
                     x="Cell Type",
                     y="value",
                     hue="Covariate",
-                    palette=cmap,
+                    palette=palette,
                     ax=ax,
                 )
             cell_types = pd.unique(plot_df["Cell Type"])
@@ -1461,7 +1462,7 @@ class CompositionalModel2(ABC):
         args_swarmplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        cmap: str | None = "Blues",
+        palette: str | None = "Blues",
         show_legend: bool | None = True,
         level_order: list[str] = None,
     ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
@@ -1484,7 +1485,7 @@ class CompositionalModel2(ABC):
             args_swarmplot: Arguments passed to sns.swarmplot. Defaults to {}.
             figsize: Figure size. Defaults to None.
             dpi: Dpi setting. Defaults to 100.
-            cmap: The seaborn color map for the barplot. Defaults to "Blues".
+            palette: The seaborn color map for the barplot. Defaults to "Blues".
             show_legend: If True, adds a legend. Defaults to True.
             level_order: Custom ordering of bars on the x-axis. Defaults to None.
 
@@ -1578,7 +1579,7 @@ class CompositionalModel2(ABC):
                 sns.boxplot,
                 feature_name,
                 value_name,
-                palette=cmap,
+                palette=palette,
                 order=level_order,
                 **args_boxplot,
             )
@@ -1623,7 +1624,7 @@ class CompositionalModel2(ABC):
                 hue=feature_name,
                 data=plot_df,
                 fliersize=1,
-                palette=cmap,
+                palette=palette,
                 ax=ax,
                 **args_boxplot,
             )
