@@ -113,7 +113,7 @@ class CodaPlot:
             >>> sccoda.plot_stacked_barplot(mdata, feature_name="samples")
         """
         warnings.warn(
-            "This function is deprecated and was removed in pertpy 0.7.0!"
+            "This function is deprecated and will be removed in pertpy 0.8.0!"
             " Please use the corresponding 'pt.tl' object for plotting function directly.",
             FutureWarning,
             stacklevel=2,
