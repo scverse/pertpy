@@ -7,9 +7,8 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
 
-needs_sphinx = "4.3"  # Nicer param docs
+needs_sphinx = "4.3"
 
-# General information about the project.
 project = "pertpy"
 copyright = "2021, Lukas Heumos, Theislab"
 author = "Lukas Heumos"
