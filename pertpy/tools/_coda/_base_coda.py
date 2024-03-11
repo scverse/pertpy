@@ -1126,8 +1126,9 @@ class CompositionalModel2(ABC):
         level_names: list[str],
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        cmap: ListedColormap | None = cm.tab20,
+        palette: ListedColormap | None = cm.tab20,
         show_legend: bool | None = True,
+        **kwargs,
     ) -> plt.Axes:
         """Plots a stacked barplot for one (discrete) covariate.
 
@@ -1141,12 +1142,16 @@ class CompositionalModel2(ABC):
             level_names: Names of the covariate's levels
             figsize: Figure size. Defaults to None.
             dpi: Dpi setting. Defaults to 100.
-            cmap: The color map for the barplot. Defaults to cm.tab20.
+            palette: The color map for the barplot. Defaults to cm.tab20.
             show_legend: If True, adds a legend. Defaults to True.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
         """
+        # TODO remove with 0.8.0
+        cmap = kwargs.pop("cmap", None)
+        palette = cmap
+
         n_bars, n_types = y.shape
 
         figsize = rcParams["figure.figsize"] if figsize is None else figsize
@@ -1164,7 +1169,7 @@ class CompositionalModel2(ABC):
                 r,
                 bars,
                 bottom=cum_bars,
-                color=cmap(n % cmap.N),
+                color=palette(n % palette.N),
                 width=barwidth,
                 label=type_names[n],
                 linewidth=0,
@@ -1236,7 +1241,7 @@ class CompositionalModel2(ABC):
                 level_names=data.obs.index,
                 figsize=figsize,
                 dpi=dpi,
-                cmap=cmap,
+                palette=cmap,
                 show_legend=show_legend,
             )
         else:
@@ -1262,7 +1267,7 @@ class CompositionalModel2(ABC):
                 level_names=levels,
                 figsize=figsize,
                 dpi=dpi,
-                cmap=cmap,
+                palette=cmap,
                 show_legend=show_legend,
             )
         return ax
