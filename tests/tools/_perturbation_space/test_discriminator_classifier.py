@@ -4,6 +4,7 @@ import pertpy as pt
 import pytest
 from anndata import AnnData
 
+
 @pytest.fixture
 def adata():
     X = np.zeros((20, 5), dtype=np.float32)
@@ -45,6 +46,7 @@ def adata():
 
     return adata
 
+
 def test_mlp_discriminator_classifier(adata):
     # Compute the embeddings using the MLP classifier
     ps = pt.tl.DiscriminatorClassifierSpace("mlp")
@@ -61,6 +63,7 @@ def test_mlp_discriminator_classifier(adata):
     np.testing.assert_allclose(results["ari"], 0.99, rtol=0.1)
     np.testing.assert_allclose(results["asw"], 0.99, rtol=0.1)
 
+
 def test_regression_discriminator_classifier(adata):
     # Add a MoA annotation to the adata
     adata.obs["MoA"] = ["Growth" if pert == "target1" else "Unknown" for pert in adata.obs["perturbations"]]
@@ -76,4 +79,9 @@ def test_regression_discriminator_classifier(adata):
     assert pert_embeddings.obs[pert_embeddings.obs["perturbations"] == "target1"]["MoA"].values == "Growth"
     assert "Partial Annotation" not in pert_embeddings.obs_names
     # The classifier should be able to distinguish control and target2 from the respective other two classes
-    assert np.all(pert_embeddings.obs[pert_embeddings.obs["perturbations"].isin(["control", "target2"])]["classifier_score"].values == 1.0)
+    assert np.all(
+        pert_embeddings.obs[pert_embeddings.obs["perturbations"].isin(["control", "target2"])][
+            "classifier_score"
+        ].values
+        == 1.0
+    )

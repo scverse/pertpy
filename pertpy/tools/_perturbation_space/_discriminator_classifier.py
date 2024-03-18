@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import anndata
 import numpy as np
@@ -10,12 +10,11 @@ import scipy
 import torch
 from anndata import AnnData
 from pytorch_lightning.callbacks import EarlyStopping
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import LogisticRegression
 from torch import optim
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
-from typing import Literal
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
@@ -109,7 +108,9 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
             # Save adata observations for embedding annotations in get_embeddings
             self.adata_obs = adata.obs.reset_index(drop=True)
-            self.adata_obs = self.adata_obs.groupby(target_col).agg(lambda x: np.nan if len(set(x)) != 1 else list(set(x))[0])
+            self.adata_obs = self.adata_obs.groupby(target_col).agg(
+                lambda x: np.nan if len(set(x)) != 1 else list(set(x))[0]
+            )
 
             return self
 
@@ -188,14 +189,15 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             max_epochs = 40 if self.model == "mlp" else 1000
 
         if self.model == "regression":
-            regression_model = LogisticRegression(max_iter=max_epochs, class_weight='balanced')
+            regression_model = LogisticRegression(max_iter=max_epochs, class_weight="balanced")
             self.regression_embeddings = {}
             self.regression_scores = {}
 
             for perturbation in self.regression_labels.unique():
                 labels = np.where(self.regression_labels == perturbation, 1, 0)
-                X_train, X_test, y_train, y_test = train_test_split(self.regression_data, labels,
-                                                                    test_size=self.test_split_size, stratify=labels)
+                X_train, X_test, y_train, y_test = train_test_split(
+                    self.regression_data, labels, test_size=self.test_split_size, stratify=labels
+                )
 
                 regression_model.fit(X_train, y_train)
                 self.regression_embeddings[perturbation] = regression_model.coef_
@@ -245,7 +247,8 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             for obs_name in self.adata_obs.columns:
                 if not self.adata_obs[obs_name].isnull().values.any():
                     pert_adata.obs[obs_name] = pert_adata.obs["perturbations"].map(
-                        {pert: self.adata_obs.loc[pert][obs_name] for pert in self.adata_obs.index})
+                        {pert: self.adata_obs.loc[pert][obs_name] for pert in self.adata_obs.index}
+                    )
 
             return pert_adata
 
@@ -273,6 +276,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         pert_adata.obs = pert_adata.obs.drop("encoded_perturbations", axis=1)
 
         return pert_adata
+
 
 class MLP(torch.nn.Module):
     """
