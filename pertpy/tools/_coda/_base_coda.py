@@ -1269,11 +1269,11 @@ class CompositionalModel2(ABC):
                 palette=palette,
                 show_legend=show_legend,
             )
-        
+
         if save:
-            plt.savefig(save, bbox_inches='tight')
+            plt.savefig(save, bbox_inches="tight")
             return None
-        if show: 
+        if show:
             plt.show()
             return None
         elif not show or show is None:
@@ -1433,20 +1433,22 @@ class CompositionalModel2(ABC):
                             ax.set_xticks([])
 
             if save:
-                plt.savefig(save, bbox_inches='tight')
+                plt.savefig(save, bbox_inches="tight")
                 return None
-            if show: 
+            if show:
                 plt.show()
                 return None
             elif not show or show is None:
                 return g
-        
+
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
             if len(covariate_names) == 1:
                 if isinstance(palette, ListedColormap):
-                    palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]).tolist()
+                    palette = np.array(
+                        [palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]
+                    ).tolist()
                 sns.barplot(
                     data=plot_df,
                     x="Cell Type",
@@ -1471,7 +1473,7 @@ class CompositionalModel2(ABC):
             ax.set_xticklabels(cell_types, rotation=90)
 
             if save:
-                plt.savefig(save, bbox_inches='tight')
+                plt.savefig(save, bbox_inches="tight")
                 return None
             if show:
                 plt.show()
@@ -1641,9 +1643,9 @@ class CompositionalModel2(ABC):
                         order=level_order,
                         **args_swarmplot,
                     ).set_titles("{col_name}")
-            
+
             if save:
-                plt.savefig(save, bbox_inches='tight')
+                plt.savefig(save, bbox_inches="tight")
                 return None
             if show:
                 plt.show()
@@ -1715,7 +1717,7 @@ class CompositionalModel2(ABC):
                 )
 
             if save:
-                plt.savefig(save, bbox_inches='tight')
+                plt.savefig(save, bbox_inches="tight")
                 return None
             if show:
                 plt.show()
@@ -1840,7 +1842,7 @@ class CompositionalModel2(ABC):
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1, title="Is abundant")
 
         if save:
-            plt.savefig(save, bbox_inches='tight')
+            plt.savefig(save, bbox_inches="tight")
             return None
         if show:
             plt.show()
