@@ -32,7 +32,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
     (simple MLP or logistic regression) and take the penultimate layer as feature space and apply pseudobulking approach.
     """
 
-    def __init__(self, model: Literal["mlp", "regression"] = Literal["mlp"]):
+    def __init__(self, model: Literal["mlp", "regression"] = "mlp"):
         super().__init__()
         if model not in ["mlp", "regression"]:
             raise ValueError("Model must be one of 'mlp' or 'regression'.")
@@ -105,6 +105,10 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
             self.regression_labels = adata.obs[target_col]
             self.test_split_size = test_split_size
+
+            # Save adata observations for embedding annotations in get_embeddings
+            self.adata_obs = adata.obs.reset_index(drop=True)
+            self.adata_obs = self.adata_obs.groupby(target_col).agg(lambda x: np.nan if len(set(x)) != 1 else list(set(x))[0])
 
             return self
 
@@ -228,24 +232,29 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             >>> dcs.train()
             >>> embeddings = dcs.get_embeddings()
         """
-        print(self.model)
         if self.model == "regression":
-            pert_adata = AnnData(X=np.array(list(self.regression_embeddings.values())))
+            pert_adata = AnnData(X=np.array(list(self.regression_embeddings.values())).squeeze())
             pert_adata.obs["perturbations"] = list(self.regression_embeddings.keys())
             pert_adata.obs["classifier_score"] = list(self.regression_scores.values())
 
-        elif self.model == "mlp":
-            with torch.no_grad():
-                self.mlp.eval()
-                for dataset_count, batch in enumerate(self.entire_dataset):
-                    emb, y = self.mlp.get_embeddings(batch)
-                    emb = torch.squeeze(emb)
-                    batch_adata = AnnData(X=emb.cpu().numpy())
-                    batch_adata.obs["perturbations"] = y
-                    if dataset_count == 0:
-                        pert_adata = batch_adata
-                    else:
-                        pert_adata = anndata.concat([pert_adata, batch_adata])
+            # Save adata observations for embedding annotations
+            for obs_name in self.adata_obs.columns:
+                if not obs_df[obs_name].isnull().values.any():
+                    pert_adata.obs[obs_name] = pert_adata.obs["perturbations"].map({pert: obs_df.loc[pert][obs_name] for pert in index})
+
+            return pert_adata
+
+        with torch.no_grad():
+            self.mlp.eval()
+            for dataset_count, batch in enumerate(self.entire_dataset):
+                emb, y = self.mlp.get_embeddings(batch)
+                emb = torch.squeeze(emb)
+                batch_adata = AnnData(X=emb.cpu().numpy())
+                batch_adata.obs["perturbations"] = y
+                if dataset_count == 0:
+                    pert_adata = batch_adata
+                else:
+                    pert_adata = anndata.concat([pert_adata, batch_adata])
 
         # Add .obs annotations to the pert_adata. Because shuffle=False and num_workers=0, the order of the data is stable
         # and we can just add the annotations from the original AnnData object
@@ -258,7 +267,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         # which would cause errors in the downstream processing of the AnnData object (e.g. when plotting)
         pert_adata.obs = pert_adata.obs.drop("encoded_perturbations", axis=1)
 
-        return pert_adata
+
 
 
 class MLP(torch.nn.Module):
