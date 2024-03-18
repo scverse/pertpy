@@ -24,8 +24,9 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
     """Leveraging discriminator classifier. Fit a classifier (MLP or regression) to the data and take the feature space.
 
     You can specify what model to use: either a multilayer perceptron (MLP) or a logistic regression model.
-    By default, the MLP is used. After training, the penultimate MLP layer or the coefficients of the logistic regression
-    model are used as the feature space.
+    By default, the MLP is used. After training, the weights in the last MLP layer or the coefficients of the logistic
+    regression model are used as the feature space. Note that the MLP will result in one embedding per cell, while the
+    regression classifier will result in one embedding per perturbation.
 
     See here https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7289078/ (Dose-response analysis) and Sup 17-19.
     We use either the coefficients of the model for each perturbation as a feature or train a classifier example
@@ -167,7 +168,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         return self
 
     def train(self, max_epochs: int = None, val_epochs_check: int = 5, patience: int = 2):
-        """Trains and tests the neural network model defined in the load step.
+        """Trains and tests the model (MLP or logistic regression) defined in the load step.
 
         Args:
             max_epochs: Maximum number of epochs for training. Default to 40 for mlp and 1000 for regression.
