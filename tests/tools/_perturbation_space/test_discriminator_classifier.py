@@ -62,6 +62,10 @@ def test_mlp_discriminator_classifier(adata):
     np.testing.assert_allclose(results["asw"], 0.99, rtol=0.1)
 
 def test_regression_discriminator_classifier(adata):
+    # Add a MoA annotation to the adata
+    adata.obs["MoA"] = ["Growth" if pert == "target1" else "Unknown" for pert in adata.obs["perturbations"]]
+    adata.obs["Partial Annotation"] = ["Anno1" if pert == "target2" else np.nan for pert in adata.obs["perturbations"]]
+
     # Compute the embeddings using the regression classifier
     ps = pt.tl.DiscriminatorClassifierSpace("regression")
     classifier_ps = ps.load(adata)
@@ -69,5 +73,7 @@ def test_regression_discriminator_classifier(adata):
     pert_embeddings = classifier_ps.get_embeddings()
 
     assert pert_embeddings.shape == (3, 5)
+    assert pert_embeddings.obs[pert_embeddings.obs["perturbations"] == "target1"]["MoA"].values == "Growth"
+    assert "Partial Annotation" not in pert_embeddings.obs_names
     # The classifier should be able to distinguish control and target2 from the respective other two classes
     assert np.all(pert_embeddings.obs[pert_embeddings.obs["perturbations"].isin(["control", "target2"])]["classifier_score"].values == 1.0)

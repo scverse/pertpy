@@ -242,8 +242,9 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
             # Save adata observations for embedding annotations
             for obs_name in self.adata_obs.columns:
-                if not obs_df[obs_name].isnull().values.any():
-                    pert_adata.obs[obs_name] = pert_adata.obs["perturbations"].map({pert: obs_df.loc[pert][obs_name] for pert in index})
+                if not self.adata_obs[obs_name].isnull().values.any():
+                    pert_adata.obs[obs_name] = pert_adata.obs["perturbations"].map(
+                        {pert: self.adata_obs.loc[pert][obs_name] for pert in self.adata_obs.index})
 
             return pert_adata
 
