@@ -192,7 +192,6 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             self.regression_scores = {}
 
             for perturbation in self.regression_labels.unique():
-                print(f"Training regression model for perturbation {perturbation}")
                 labels = np.where(self.regression_labels == perturbation, 1, 0)
                 X_train, X_test, y_train, y_test = train_test_split(self.regression_data, labels,
                                                                     test_size=self.test_split_size, stratify=labels)
@@ -219,7 +218,11 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             self.trainer.test(model=self.mlp, dataloaders=self.test_dataloader)
 
     def get_embeddings(self) -> AnnData:
-        """Obtain the embeddings of the data, i.e., the values in the last layer of the MLP.
+        """Obtain the embeddings of the data.
+
+         For the MLP, this corresponds to the values in the last layer of the MLP. You will get one embedding per cell,
+         so be aware that you might need to apply another perturbation space to aggregate the embeddings per perturbation.
+         For the regression model, this corresponds to the coefficients of the logistic regression model, with one embedding per perturbation.
 
         Returns:
             AnnData whose `X` attribute is the perturbation embedding and whose .obs['perturbations'] are the names of the perturbations.
@@ -267,8 +270,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         # which would cause errors in the downstream processing of the AnnData object (e.g. when plotting)
         pert_adata.obs = pert_adata.obs.drop("encoded_perturbations", axis=1)
 
-
-
+        return pert_adata
 
 class MLP(torch.nn.Module):
     """
