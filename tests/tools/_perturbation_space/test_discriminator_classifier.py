@@ -62,6 +62,8 @@ def test_mlp_discriminator_classifier(adata):
     np.testing.assert_allclose(results["asw"], 0.99, rtol=0.1)
 
 def test_regression_discriminator_classifier(adata):
+    # Compute the embeddings using the classifier
+    ps = pt.tl.DiscriminatorClassifierSpace("regression")
     classifier_ps = ps.load(adata)
     classifier_ps.train()
     pert_embeddings = classifier_ps.get_embeddings()
