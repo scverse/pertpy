@@ -121,6 +121,7 @@ def DiscriminatorClassifierSpace():
         "The DiscriminatorClassifierSpace class is deprecated and will be removed in the future."
         "Please use the MLPClassifierSpace or the LRClassifierSpace class instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
 
     return MLPClassifierSpace()

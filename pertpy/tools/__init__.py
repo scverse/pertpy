@@ -10,7 +10,7 @@ from pertpy.tools._enrichment import Enrichment
 from pertpy.tools._milo import Milo
 from pertpy.tools._mixscape import Mixscape
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
-from pertpy.tools._perturbation_space._discriminator_classifier import (
+from pertpy.tools._perturbation_space._discriminator_classifiers import (
     DiscriminatorClassifierSpace,
     LRClassifierSpace,
     MLPClassifierSpace,
