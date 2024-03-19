@@ -514,7 +514,8 @@ Pertpy offers various modules for calculating and evaluating perturbation spaces
 .. autosummary::
     :toctree: tools
 
-    tools.DiscriminatorClassifierSpace
+    tools.MLPClassifierSpace
+    tools.LRClassifierSpace
     tools.CentroidSpace
     tools.DBSCANSpace
     tools.KMeansSpace

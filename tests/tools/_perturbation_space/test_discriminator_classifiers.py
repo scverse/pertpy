@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 import pertpy as pt
+import pytest
 from anndata import AnnData
 
 
-def test_discriminator_classifier():
+@pytest.fixture
+def adata():
     X = np.zeros((20, 5), dtype=np.float32)
 
     pert_index = [
@@ -42,10 +44,17 @@ def test_discriminator_classifier():
 
     adata = AnnData(X, obs=obs)
 
-    # Compute the embeddings using the classifier
-    ps = pt.tl.DiscriminatorClassifierSpace()
+    # Add a obs annotations to the adata
+    adata.obs["MoA"] = ["Growth" if pert == "target1" else "Unknown" for pert in adata.obs["perturbations"]]
+    adata.obs["Partial Annotation"] = ["Anno1" if pert == "target2" else np.nan for pert in adata.obs["perturbations"]]
+
+    return adata
+
+
+def test_mlp_classifier_space(adata):
+    ps = pt.tl.MLPClassifierSpace()
     classifier_ps = ps.load(adata, hidden_dim=[128])
-    classifier_ps.train(max_epochs=5)
+    classifier_ps.train(max_epochs=2)
     pert_embeddings = classifier_ps.get_embeddings()
 
     # The embeddings should cluster in 3 perfects clusters since the perturbations are easily separable
@@ -56,3 +65,19 @@ def test_discriminator_classifier():
     np.testing.assert_allclose(results["nmi"], 0.99, rtol=0.1)
     np.testing.assert_allclose(results["ari"], 0.99, rtol=0.1)
     np.testing.assert_allclose(results["asw"], 0.99, rtol=0.1)
+
+
+def test_regression_classifier_space(adata):
+    ps = pt.tl.LRClassifierSpace()
+    pert_embeddings = ps.compute(adata)
+
+    assert pert_embeddings.shape == (3, 5)
+    assert pert_embeddings.obs[pert_embeddings.obs["perturbations"] == "target1"]["MoA"].values == "Growth"
+    assert "Partial Annotation" not in pert_embeddings.obs_names
+    # The classifier should be able to distinguish control and target2 from the respective other two classes
+    assert np.all(
+        pert_embeddings.obs[pert_embeddings.obs["perturbations"].isin(["control", "target2"])][
+            "classifier_score"
+        ].values
+        == 1.0
+    )

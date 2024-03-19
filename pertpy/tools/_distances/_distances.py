@@ -292,7 +292,7 @@ class Distance:
         n_jobs: int = -1,
         **kwargs,
     ) -> pd.DataFrame:
-        """Get pairwise distances between groups of cells.
+        """Get distances between one selected cell group and the remaining other cell groups.
 
         Args:
             adata: Annotated data matrix.
