@@ -44,11 +44,14 @@ def adata():
 
     adata = AnnData(X, obs=obs)
 
+    # Add a obs annotations to the adata
+    adata.obs["MoA"] = ["Growth" if pert == "target1" else "Unknown" for pert in adata.obs["perturbations"]]
+    adata.obs["Partial Annotation"] = ["Anno1" if pert == "target2" else np.nan for pert in adata.obs["perturbations"]]
+
     return adata
 
 
 def test_mlp_discriminator_classifier(adata):
-    # Compute the embeddings using the MLP classifier
     ps = pt.tl.DiscriminatorClassifierSpace("mlp")
     classifier_ps = ps.load(adata, hidden_dim=[128])
     classifier_ps.train(max_epochs=2)
@@ -65,11 +68,6 @@ def test_mlp_discriminator_classifier(adata):
 
 
 def test_regression_discriminator_classifier(adata):
-    # Add a MoA annotation to the adata
-    adata.obs["MoA"] = ["Growth" if pert == "target1" else "Unknown" for pert in adata.obs["perturbations"]]
-    adata.obs["Partial Annotation"] = ["Anno1" if pert == "target2" else np.nan for pert in adata.obs["perturbations"]]
-
-    # Compute the embeddings using the regression classifier
     ps = pt.tl.DiscriminatorClassifierSpace("regression")
     classifier_ps = ps.load(adata)
     classifier_ps.train()

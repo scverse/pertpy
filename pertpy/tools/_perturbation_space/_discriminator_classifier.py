@@ -20,9 +20,9 @@ from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpa
 
 
 class DiscriminatorClassifierSpace(PerturbationSpace):
-    """Leveraging discriminator classifier. Fit a classifier (MLP or regression) to the data and take the feature space.
+    """The discriminator classifier fits a classifier (MLP or regression) to the data and takes the feature space as embedding.
 
-    You can specify what model to use: either a multilayer perceptron (MLP) or a logistic regression model.
+    This class supports either a multilayer perceptron (MLP) or a logistic regression model.
     By default, the MLP is used. After training, the weights in the last MLP layer or the coefficients of the logistic
     regression model are used as the feature space. Note that the MLP will result in one embedding per cell, while the
     regression classifier will result in one embedding per perturbation.
@@ -109,7 +109,7 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
             # Save adata observations for embedding annotations in get_embeddings
             self.adata_obs = adata.obs.reset_index(drop=True)
             self.adata_obs = self.adata_obs.groupby(target_col).agg(
-                lambda x: np.nan if len(set(x)) != 1 else list(set(x))[0]
+                lambda pert_group: np.nan if len(set(pert_group)) != 1 else list(set(pert_group))[0]
             )
 
             return self

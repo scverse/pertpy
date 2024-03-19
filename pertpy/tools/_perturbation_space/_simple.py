@@ -98,7 +98,7 @@ class CentroidSpace(PerturbationSpace):
 
         if keep_obs:  # Save the values of the obs columns of interest in the ps_adata object
             obs_df = adata.obs
-            obs_df = obs_df.groupby(target_col).agg(lambda x: np.nan if len(set(x)) != 1 else list(set(x))[0])
+            obs_df = obs_df.groupby(target_col).agg(lambda pert_group: np.nan if len(set(pert_group)) != 1 else list(set(pert_group))[0])
             for obs_name in obs_df.columns:
                 if not obs_df[obs_name].isnull().values.any():
                     mapping = {pert: obs_df.loc[pert][obs_name] for pert in index}
