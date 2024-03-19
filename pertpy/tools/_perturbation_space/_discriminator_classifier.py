@@ -8,6 +8,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import scipy
 import torch
+import warnings
 from anndata import AnnData
 from pytorch_lightning.callbacks import EarlyStopping
 from sklearn.linear_model import LogisticRegression
@@ -18,70 +19,41 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
+class LRClassifierSpace(PerturbationSpace):
+    """Fits a logistic regression model to the data and takes the feature space as embedding.
 
-class DiscriminatorClassifierSpace(PerturbationSpace):
-    """The discriminator classifier fits a classifier (MLP or regression) to the data and takes the feature space as embedding.
-
-    This class supports either a multilayer perceptron (MLP) or a logistic regression model.
-    By default, the MLP is used. After training, the weights in the last MLP layer or the coefficients of the logistic
-    regression model are used as the feature space. Note that the MLP will result in one embedding per cell, while the
-    regression classifier will result in one embedding per perturbation.
-
-    See here https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7289078/ (Dose-response analysis) and Sup 17-19.
-    We use either the coefficients of the model for each perturbation as a feature or train a classifier example
-    (simple MLP or logistic regression) and take the penultimate layer as feature space and apply pseudobulking approach.
+    We fit one logistic regression model per perturbation. After training, the coefficients of the logistic regression
+    model are used as the feature space. This results in one embedding per perturbation.
     """
 
-    def __init__(self, model: Literal["mlp", "regression"] = "mlp"):
-        super().__init__()
-        if model not in ["mlp", "regression"]:
-            raise ValueError("Model must be one of 'mlp' or 'regression'.")
-
-        self.model = model
-
-    def load(  # type: ignore
-        self,
-        adata: AnnData,
-        target_col: str = "perturbations",
-        layer_key: str = None,
-        hidden_dim: list[int] = None,
-        dropout: float = 0.0,
-        batch_norm: bool = True,
-        batch_size: int = 256,
-        test_split_size: float = 0.2,
-        validation_split_size: float = 0.25,
-        embedding_key: str = None,
+    def compute(self,
+                adata: AnnData,
+                target_col: str = "perturbations",
+                layer_key: str = None,
+                embedding_key: str = None,
+                test_split_size: float = 0.2,
+                max_iter: int = 1000
     ):
-        """Creates a classifier model and dataloaders required for training and testing.
-
-        The model can be either a neural network model with the specified parameters (hidden_dim, dropout, batch_norm)
-        or a logistic regression model. Further parameters such as the number of classes to predict (number of perturbations)
-        are obtained from the provided AnnData object directly.
-
-        It further creates dataloaders and fixes class imbalance due to control.
-        Sets the device to a GPU if available.
+        """
+        Fits a logistic regression model to the data and takes the feature space as embedding.
 
         Args:
             adata: AnnData object of size cells x genes
             target_col: .obs column that stores the perturbations. Defaults to "perturbations".
             layer_key: Layer in adata to use. Defaults to None.
-            hidden_dim: List of hidden layers of the neural network. For instance: [512, 256]. Applies only if model is "mlp".
-            dropout: Amount of dropout applied, constant for all layers. Applies only if model is "mlp". Defaults to 0.
-            batch_norm: Whether to apply batch normalization. Applies only if model is "mlp". Defaults to True.
-            batch_size: The batch size, i.e. the number of datapoints to use in one forward/backward pass. Applies only if model is "mlp".
-                Defaults to 256.
-            test_split_size: Fraction of data to put in the test set. Default to 0.2.
-            validation_split_size: Fraction of data to put in the validation set of the resultant train set.
-                E.g. a test_split_size of 0.2 and a validation_split_size of 0.25 means that 25% of 80% of the data
-                will be used for validation. Applies only if model is "mlp". Defaults to 0.25.
             embedding_key: Key of the embedding in obsm to be used as data for the logistic regression classifier.
-                Applies only if model is "regression". Can only be specified if layer_key is none. Defaults to None.
+                Can only be specified if layer_key is None. Defaults to None.
+            test_split_size: Fraction of data to put in the test set. Default to 0.2.
+            max_iter: Maximum number of iterations taken for the solvers to converge. Defaults to 1000.
+
+        Returns:
+            AnnData object with the logistic regression coefficients as the embedding in X and the perturbations as .obs['perturbations'].
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.papalexi_2021()["rna"]
-            >>> dcs = pt.tl.DiscriminatorClassifierSpace()
-            >>> dcs.load(adata, target_col="gene_target")
+            >>> adata = pt.dt.norman_2019()
+            >>> rcs = pt.tl.LRClassifierSpace()
+            >>> rcs.compute(adata, embedding_key="X_pca", target_col="perturbation_name")
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata.")
@@ -95,24 +67,115 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         if target_col not in adata.obs:
             raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
 
-        if self.model == "regression":
-            if layer_key is not None:
-                self.regression_data = adata.layers[layer_key]
-            elif embedding_key is not None:
-                self.regression_data = adata.obsm[embedding_key]
-            else:
-                self.regression_data = adata.X
+        if layer_key is not None:
+            regression_data = adata.layers[layer_key]
+        elif embedding_key is not None:
+            regression_data = adata.obsm[embedding_key]
+        else:
+            regression_data = adata.X
 
-            self.regression_labels = adata.obs[target_col]
-            self.test_split_size = test_split_size
+        regression_labels = adata.obs[target_col]
 
-            # Save adata observations for embedding annotations in get_embeddings
-            self.adata_obs = adata.obs.reset_index(drop=True)
-            self.adata_obs = self.adata_obs.groupby(target_col).agg(
-                lambda pert_group: np.nan if len(set(pert_group)) != 1 else list(set(pert_group))[0]
+        # Save adata observations for embedding annotations in get_embeddings
+        adata_obs = adata.obs.reset_index(drop=True)
+        adata_obs = adata_obs.groupby(target_col).agg(
+            lambda pert_group: np.nan if len(set(pert_group)) != 1 else list(set(pert_group))[0]
+        )
+
+        # Fit a logistic regression model for each perturbation
+        regression_model = LogisticRegression(max_iter=max_iter, class_weight="balanced")
+        regression_embeddings = {}
+        regression_scores = {}
+
+        for perturbation in regression_labels.unique():
+            labels = np.where(regression_labels == perturbation, 1, 0)
+            X_train, X_test, y_train, y_test = train_test_split(
+                regression_data, labels, test_size=test_split_size, stratify=labels
             )
 
-            return self
+            regression_model.fit(X_train, y_train)
+            regression_embeddings[perturbation] = regression_model.coef_
+            regression_scores[perturbation] = regression_model.score(X_test, y_test)
+
+        # Save the regression embeddings and scores in an AnnData object
+        pert_adata = AnnData(X=np.array(list(regression_embeddings.values())).squeeze())
+        pert_adata.obs["perturbations"] = list(regression_embeddings.keys())
+        pert_adata.obs["classifier_score"] = list(regression_scores.values())
+
+        # Save adata observations for embedding annotations
+        for obs_name in adata_obs.columns:
+            if not adata_obs[obs_name].isnull().values.any():
+                pert_adata.obs[obs_name] = pert_adata.obs["perturbations"].map(
+                    {pert: adata_obs.loc[pert][obs_name] for pert in adata_obs.index}
+                )
+
+        return pert_adata
+
+#Ensure backward compatibility with DiscriminatorClassifierSpace
+def DiscriminatorClassifierSpace():
+    warnings.warn(
+        "The DiscriminatorClassifierSpace class is deprecated and will be removed in the future."
+        "Please use the MLPClassifierSpace or the LRClassifierSpace class instead.",
+        DeprecationWarning,
+    )
+
+    return MLPClassifierSpace()
+
+
+class MLPClassifierSpace(PerturbationSpace):
+    """Fits an ANN classifier to the data and takes the feature space (weights in the last layer) as embedding.
+
+    We train the ANN to classify the different perturbations. After training, the penultimate layer is used as the
+    feature space, resulting in one embedding per cell.
+
+    See here https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7289078/ (Dose-response analysis) and Sup 17-19.
+    We use either the coefficients of the model for each perturbation as a feature or train a classifier example
+    (simple MLP or logistic regression) and take the penultimate layer as feature space and apply pseudobulking approach.
+    """
+
+    def load(  # type: ignore
+        self,
+        adata: AnnData,
+        target_col: str = "perturbations",
+        layer_key: str = None,
+        hidden_dim: list[int] = None,
+        dropout: float = 0.0,
+        batch_norm: bool = True,
+        batch_size: int = 256,
+        test_split_size: float = 0.2,
+        validation_split_size: float = 0.25,
+    ):
+        """Creates a classifier model and dataloaders required for training and testing.
+
+        A model is created using the specified parameters (hidden_dim, dropout, batch_norm). Further parameters such as
+        the number of classes to predict (number of perturbations) are obtained from the provided AnnData object directly.
+        It further creates dataloaders and fixes class imbalance due to control.
+        Sets the device to a GPU if available.
+
+        Args:
+            adata: AnnData object of size cells x genes
+            target_col: .obs column that stores the perturbations. Defaults to "perturbations".
+            layer_key: Layer in adata to use. Defaults to None.
+            hidden_dim: List of hidden layers of the neural network. For instance: [512, 256].
+            dropout: Amount of dropout applied, constant for all layers. Defaults to 0.
+            batch_norm: Whether to apply batch normalization. Defaults to True.
+            batch_size: The batch size, i.e. the number of datapoints to use in one forward/backward pass. Defaults to 256.
+            test_split_size: Fraction of data to put in the test set. Default to 0.2.
+            validation_split_size: Fraction of data to put in the validation set of the resultant train set.
+                E.g. a test_split_size of 0.2 and a validation_split_size of 0.25 means that 25% of 80% of the data
+                will be used for validation. Defaults to 0.25.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.papalexi_2021()["rna"]
+            >>> dcs = pt.tl.MLPClassifierSpace()
+            >>> dcs.load(adata, target_col="gene_target")
+        """
+        if layer_key is not None and layer_key not in adata.obs.columns:
+            raise ValueError(f"Layer key {layer_key} not found in adata.")
+
+        if target_col not in adata.obs:
+            raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
 
         if hidden_dim is None:
             hidden_dim = [512]
@@ -168,64 +231,44 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
 
         return self
 
-    def train(self, max_epochs: int = None, val_epochs_check: int = 5, patience: int = 2):
-        """Trains and tests the model (MLP or logistic regression) defined in the load step.
+    def train(self, max_epochs: int = 40, val_epochs_check: int = 5, patience: int = 2):
+        """Trains and tests the ANN model defined in the load step.
 
         Args:
-            max_epochs: Maximum number of epochs for training. Default to 40 for mlp and 1000 for regression.
+            max_epochs: Maximum number of epochs for training. Defaults to 40.
             val_epochs_check: Test performance on validation dataset after every val_epochs_check training epochs.
-                Applies only if model is "mlp". Defaults to 5.
+                Defaults to 5.
             patience: Number of validation performance checks without improvement, after which the early stopping flag
-                is activated and training is therefore stopped. Applies only if model is "mlp". Defaults to 2.
+                is activated and training is therefore stopped. Defaults to 2.
 
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.papalexi_2021()["rna"]
-            >>> dcs = pt.tl.DiscriminatorClassifierSpace()
+            >>> dcs = pt.tl.MLPClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
             >>> dcs.train(max_epochs=5)
         """
-        if max_epochs is None:
-            max_epochs = 40 if self.model == "mlp" else 1000
+        self.trainer = pl.Trainer(
+            min_epochs=1,
+            max_epochs=max_epochs,
+            check_val_every_n_epoch=val_epochs_check,
+            callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=patience)],
+            devices="auto",
+            accelerator="auto",
+        )
 
-        if self.model == "regression":
-            regression_model = LogisticRegression(max_iter=max_epochs, class_weight="balanced")
-            self.regression_embeddings = {}
-            self.regression_scores = {}
+        self.mlp = PerturbationClassifier(model=self.net, batch_size=self.train_dataloader.batch_size)
 
-            for perturbation in self.regression_labels.unique():
-                labels = np.where(self.regression_labels == perturbation, 1, 0)
-                X_train, X_test, y_train, y_test = train_test_split(
-                    self.regression_data, labels, test_size=self.test_split_size, stratify=labels
-                )
-
-                regression_model.fit(X_train, y_train)
-                self.regression_embeddings[perturbation] = regression_model.coef_
-                self.regression_scores[perturbation] = regression_model.score(X_test, y_test)
-
-        elif self.model == "mlp":
-            self.trainer = pl.Trainer(
-                min_epochs=1,
-                max_epochs=max_epochs,
-                check_val_every_n_epoch=val_epochs_check,
-                callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=patience)],
-                devices="auto",
-                accelerator="auto",
-            )
-
-            self.mlp = PerturbationClassifier(model=self.net, batch_size=self.train_dataloader.batch_size)
-
-            self.trainer.fit(
-                model=self.mlp, train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader
-            )
-            self.trainer.test(model=self.mlp, dataloaders=self.test_dataloader)
+        self.trainer.fit(
+            model=self.mlp, train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader
+        )
+        self.trainer.test(model=self.mlp, dataloaders=self.test_dataloader)
 
     def get_embeddings(self) -> AnnData:
         """Obtain the embeddings of the data.
 
-         For the MLP, this corresponds to the values in the last layer of the MLP. You will get one embedding per cell,
+         The embeddings correspond to the values in the last layer of the MLP. You will get one embedding per cell,
          so be aware that you might need to apply another perturbation space to aggregate the embeddings per perturbation.
-         For the regression model, this corresponds to the coefficients of the logistic regression model, with one embedding per perturbation.
 
         Returns:
             AnnData whose `X` attribute is the perturbation embedding and whose .obs['perturbations'] are the names of the perturbations.
@@ -233,25 +276,11 @@ class DiscriminatorClassifierSpace(PerturbationSpace):
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.papalexi_2021()["rna"]
-            >>> dcs = pt.tl.DiscriminatorClassifierSpace()
+            >>> dcs = pt.tl.MLPClassifierSpace()
             >>> dcs.load(adata, target_col="gene_target")
             >>> dcs.train()
             >>> embeddings = dcs.get_embeddings()
         """
-        if self.model == "regression":
-            pert_adata = AnnData(X=np.array(list(self.regression_embeddings.values())).squeeze())
-            pert_adata.obs["perturbations"] = list(self.regression_embeddings.keys())
-            pert_adata.obs["classifier_score"] = list(self.regression_scores.values())
-
-            # Save adata observations for embedding annotations
-            for obs_name in self.adata_obs.columns:
-                if not self.adata_obs[obs_name].isnull().values.any():
-                    pert_adata.obs[obs_name] = pert_adata.obs["perturbations"].map(
-                        {pert: self.adata_obs.loc[pert][obs_name] for pert in self.adata_obs.index}
-                    )
-
-            return pert_adata
-
         with torch.no_grad():
             self.mlp.eval()
             for dataset_count, batch in enumerate(self.entire_dataset):

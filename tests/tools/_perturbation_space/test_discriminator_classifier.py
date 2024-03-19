@@ -52,7 +52,7 @@ def adata():
 
 
 def test_mlp_discriminator_classifier(adata):
-    ps = pt.tl.DiscriminatorClassifierSpace("mlp")
+    ps = pt.tl.MLPClassifierSpace()
     classifier_ps = ps.load(adata, hidden_dim=[128])
     classifier_ps.train(max_epochs=2)
     pert_embeddings = classifier_ps.get_embeddings()
@@ -68,10 +68,8 @@ def test_mlp_discriminator_classifier(adata):
 
 
 def test_regression_discriminator_classifier(adata):
-    ps = pt.tl.DiscriminatorClassifierSpace("regression")
-    classifier_ps = ps.load(adata)
-    classifier_ps.train()
-    pert_embeddings = classifier_ps.get_embeddings()
+    ps = pt.tl.LRClassifierSpace()
+    pert_embeddings = ps.compute(adata)
 
     assert pert_embeddings.shape == (3, 5)
     assert pert_embeddings.obs[pert_embeddings.obs["perturbations"] == "target1"]["MoA"].values == "Growth"
