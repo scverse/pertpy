@@ -2123,8 +2123,8 @@ class CompositionalModel2(ABC):
             plt.xlim(-leaf_eff_max, leaf_eff_max)
             plt.subplots_adjust(wspace=0)
 
-            if file_name is not None:
-                plt.savefig(file_name)
+            if save is not None:
+                plt.savefig(save)
 
         if save is not None and not show_leaf_effects:
             tree2.render(save, tree_style=tree_style, units=units)
