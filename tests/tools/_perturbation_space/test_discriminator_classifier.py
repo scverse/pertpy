@@ -51,7 +51,7 @@ def adata():
     return adata
 
 
-def test_mlp_discriminator_classifier(adata):
+def test_mlp_classifier_space(adata):
     ps = pt.tl.MLPClassifierSpace()
     classifier_ps = ps.load(adata, hidden_dim=[128])
     classifier_ps.train(max_epochs=2)
@@ -67,7 +67,7 @@ def test_mlp_discriminator_classifier(adata):
     np.testing.assert_allclose(results["asw"], 0.99, rtol=0.1)
 
 
-def test_regression_discriminator_classifier(adata):
+def test_regression_classifier_space(adata):
     ps = pt.tl.LRClassifierSpace()
     pert_embeddings = ps.compute(adata)
 

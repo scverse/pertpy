@@ -35,7 +35,8 @@ class LRClassifierSpace(PerturbationSpace):
                 max_iter: int = 1000
     ):
         """
-        Fits a logistic regression model to the data and takes the feature space as embedding.
+        Fits a logistic regression model to the data and takes the coefficients of the logistic regression
+        model as perturbation embedding.
 
         Args:
             adata: AnnData object of size cells x genes
@@ -53,7 +54,7 @@ class LRClassifierSpace(PerturbationSpace):
             >>> import pertpy as pt
             >>> adata = pt.dt.norman_2019()
             >>> rcs = pt.tl.LRClassifierSpace()
-            >>> rcs.compute(adata, embedding_key="X_pca", target_col="perturbation_name")
+            >>> pert_embeddings = rcs.compute(adata, embedding_key="X_pca", target_col="perturbation_name")
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata.")
