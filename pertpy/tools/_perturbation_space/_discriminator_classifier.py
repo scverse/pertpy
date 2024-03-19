@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Literal
 
 import anndata
@@ -8,7 +9,6 @@ import pandas as pd
 import pytorch_lightning as pl
 import scipy
 import torch
-import warnings
 from anndata import AnnData
 from pytorch_lightning.callbacks import EarlyStopping
 from sklearn.linear_model import LogisticRegression
@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
+
 class LRClassifierSpace(PerturbationSpace):
     """Fits a logistic regression model to the data and takes the feature space as embedding.
 
@@ -26,13 +27,14 @@ class LRClassifierSpace(PerturbationSpace):
     model are used as the feature space. This results in one embedding per perturbation.
     """
 
-    def compute(self,
-                adata: AnnData,
-                target_col: str = "perturbations",
-                layer_key: str = None,
-                embedding_key: str = None,
-                test_split_size: float = 0.2,
-                max_iter: int = 1000
+    def compute(
+        self,
+        adata: AnnData,
+        target_col: str = "perturbations",
+        layer_key: str = None,
+        embedding_key: str = None,
+        test_split_size: float = 0.2,
+        max_iter: int = 1000,
     ):
         """
         Fits a logistic regression model to the data and takes the feature space as embedding.
@@ -111,7 +113,8 @@ class LRClassifierSpace(PerturbationSpace):
 
         return pert_adata
 
-#Ensure backward compatibility with DiscriminatorClassifierSpace
+
+# Ensure backward compatibility with DiscriminatorClassifierSpace
 def DiscriminatorClassifierSpace():
     warnings.warn(
         "The DiscriminatorClassifierSpace class is deprecated and will be removed in the future."
@@ -259,9 +262,7 @@ class MLPClassifierSpace(PerturbationSpace):
 
         self.mlp = PerturbationClassifier(model=self.net, batch_size=self.train_dataloader.batch_size)
 
-        self.trainer.fit(
-            model=self.mlp, train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader
-        )
+        self.trainer.fit(model=self.mlp, train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader)
         self.trainer.test(model=self.mlp, dataloaders=self.test_dataloader)
 
     def get_embeddings(self) -> AnnData:
