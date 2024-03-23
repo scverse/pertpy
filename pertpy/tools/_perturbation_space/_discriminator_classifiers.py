@@ -165,7 +165,9 @@ class MLPClassifierSpace(PerturbationSpace):
             adata: AnnData object of size cells x genes
             target_col: .obs column that stores the perturbations. Defaults to "perturbations".
             layer_key: Layer in adata to use. Defaults to None.
-            hidden_dim: List of hidden layers of the neural network. For instance: [512, 256].
+            hidden_dim: List of number of neurons in each hidden layers of the neural network. For instance, [512, 256]
+                will create a neural network with two hidden layers, the first with 512 neurons and the second with 256 neurons.
+                Defaults to [512].
             dropout: Amount of dropout applied, constant for all layers. Defaults to 0.
             batch_norm: Whether to apply batch normalization. Defaults to True.
             batch_size: The batch size, i.e. the number of datapoints to use in one forward/backward pass. Defaults to 256.
@@ -185,9 +187,9 @@ class MLPClassifierSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.papalexi_2021()["rna"]
+            >>> adata = pt.dt.norman_2019()
             >>> dcs = pt.tl.MLPClassifierSpace()
-            >>> cell_embeddings = dcs.compute(adata, target_col="gene_target")
+            >>> cell_embeddings = dcs.compute(adata, target_col="perturbation_name")
         """
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata.")
