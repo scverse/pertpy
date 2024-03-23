@@ -148,10 +148,10 @@ class MLPClassifierSpace(PerturbationSpace):
         batch_size: int = 256,
         test_split_size: float = 0.2,
         validation_split_size: float = 0.25,
-            max_epochs: int = 40,
-            val_epochs_check: int = 5,
-            patience: int = 2
-    ) -> AnnData    :
+        max_epochs: int = 40,
+        val_epochs_check: int = 5,
+        patience: int = 2,
+    ) -> AnnData:
         """Creates cell embeddings by training a MLP classifier model to distinguish between perturbations.
 
         A model is created using the specified parameters (hidden_dim, dropout, batch_norm). Further parameters such as
@@ -290,15 +290,23 @@ class MLPClassifierSpace(PerturbationSpace):
 
         return pert_adata
 
-    def load(self, **kwargs):
-        raise  DeprecationError("The load method is deprecated and will be removed in the future. Please use the compute method instead.")
+    def load(self, adata, **kwargs):
+        """This method is deprecated and will be removed in the future. Please use the compute method instead."""
+        raise DeprecationWarning(
+            "The load method is deprecated and will be removed in the future. Please use the compute method instead."
+        )
 
     def train(self, **kwargs):
-        raise DeprecationError("The train method is deprecated and will be removed in the future. Please use the compute method instead.")
-
+        """This method is deprecated and will be removed in the future. Please use the compute method instead."""
+        raise DeprecationWarning(
+            "The train method is deprecated and will be removed in the future. Please use the compute method instead."
+        )
 
     def get_embeddings(self, **kwargs):
-        raise  DeprecationError("The get_embeddings method is deprecated and will be removed in the future. Please use the compute method instead.")
+        """This method is deprecated and will be removed in the future. Please use the compute method instead."""
+        raise DeprecationWarning(
+            "The get_embeddings method is deprecated and will be removed in the future. Please use the compute method instead."
+        )
 
 
 class MLP(torch.nn.Module):

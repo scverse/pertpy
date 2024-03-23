@@ -53,7 +53,7 @@ def adata():
 
 def test_mlp_classifier_space(adata):
     classifier_ps = pt.tl.MLPClassifierSpace()
-    pert_embeddings = classifier_ps.compute(adata, hidden_dim=[128],max_epochs=2)
+    pert_embeddings = classifier_ps.compute(adata, hidden_dim=[128], max_epochs=2)
 
     # The embeddings should cluster in 3 perfects clusters since the perturbations are easily separable
     ps = pt.tl.KMeansSpace()
