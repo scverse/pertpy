@@ -249,7 +249,6 @@ class MLPClassifierSpace(PerturbationSpace):
         # Save adata observations for embedding annotations in get_embeddings
         self.adata_obs = adata.obs.reset_index(drop=True)
 
-        # Train the model
         self.trainer = pl.Trainer(
             min_epochs=1,
             max_epochs=max_epochs,
