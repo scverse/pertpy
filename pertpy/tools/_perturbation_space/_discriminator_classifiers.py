@@ -148,8 +148,8 @@ class MLPClassifierSpace(PerturbationSpace):
         batch_size: int = 256,
         test_split_size: float = 0.2,
         validation_split_size: float = 0.25,
-        max_epochs: int = 40,
-        val_epochs_check: int = 5,
+        max_epochs: int = 20,
+        val_epochs_check: int = 2,
         patience: int = 2,
     ) -> AnnData:
         """Creates cell embeddings by training a MLP classifier model to distinguish between perturbations.
@@ -175,9 +175,10 @@ class MLPClassifierSpace(PerturbationSpace):
             validation_split_size: Fraction of data to put in the validation set of the resultant train set.
                 E.g. a test_split_size of 0.2 and a validation_split_size of 0.25 means that 25% of 80% of the data
                 will be used for validation. Defaults to 0.25.
-            max_epochs: Maximum number of epochs for training. Defaults to 40.
+            max_epochs: Maximum number of epochs for training. Defaults to 20.
             val_epochs_check: Test performance on validation dataset after every val_epochs_check training epochs.
-                Defaults to 5.
+                Note that this affects early stopping, as the model will be stopped if the validation performance does not
+                improve for patience epochs. Defaults to 2.
             patience: Number of validation performance checks without improvement, after which the early stopping flag
                 is activated and training is therefore stopped. Defaults to 2.
 
