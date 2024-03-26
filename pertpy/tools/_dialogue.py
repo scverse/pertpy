@@ -691,7 +691,6 @@ class Dialogue:
             A Pandas DataFrame containing:
             - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
-            TODO: Describe both returns
 
         Examples:
             >>> import pertpy as pt
@@ -704,6 +703,8 @@ class Dialogue:
             >>> all_results, new_mcps = dl.multilevel_modeling(ct_subs=ct_subs, mcp_scores=mcps, ws_dict=ws, \
                 confounder="gender")
         """
+        # TODO the returns of the function better
+
         # all possible pairs of cell types without pairing same cell type
         cell_types = list(ct_subs.keys())
         pairs = list(itertools.combinations(cell_types, 2))
@@ -1001,10 +1002,10 @@ class Dialogue:
 
         Examples:
             >>> ct_subs = {
-            >>> "subpop1": anndata_obj1,
-            >>> "subpop2": anndata_obj2,
-            >>> # ... more subpopulations ...
-            >>> }
+            ...     "subpop1": anndata_obj1,
+            ...     "subpop2": anndata_obj2,
+            ...     # ... more subpopulations ...
+            ... }
             >>> genes_results = _get_extrema_MCP_genes_single(ct_subs, mcp="mcp_4", fraction=0.2)
         """
         genes = {}
@@ -1050,7 +1051,7 @@ class Dialogue:
             >>> extrema_mcp_genes = dl.get_extrema_MCP_genes(ct_subs)
         """
         rank_dfs: dict[str, dict[Any, Any]] = {}
-        _, ct_sub = next(iter(ct_subs.items()))
+        ct_sub = next(iter(ct_subs.values()))
         mcps = [col for col in ct_sub.obs.columns if col.startswith("mcp_")]
 
         for mcp in mcps:
