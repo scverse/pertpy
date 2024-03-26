@@ -10,7 +10,7 @@
 
 # pertpy
 
-![pertpy-wide1](https://user-images.githubusercontent.com/21954664/235677503-0c72f90d-3f6d-4a16-a1ff-ff8c11a540fb.png)
+![fig1](https://github.com/theislab/pertpy/assets/99650244/182fa9c3-6d23-4002-b86a-82bf2a243377)
 
 ## Documentation
 
