@@ -774,6 +774,7 @@ class Augur:
             elif (
                 cell_type_subsample.obs.groupby(
                     ["cell_type", "label"],
+                    observed=True,
                 ).y_.count()
                 < subsample_size
             ).any():
