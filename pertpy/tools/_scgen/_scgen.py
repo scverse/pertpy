@@ -423,7 +423,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             >>> eval_adata = data[data.obs['cell_type'] == 'CD4 T cells'].copy().concatenate(pred)
             >>> r2_value = scg.plot_reg_mean_plot(eval_adata, condition_key='label', axis_keys={"x": "pred", "y": "stim"}, \
                 labels={"x": "predicted", "y": "ground truth"}, save=False, show=True)
-        
+
         Preview:
             .. image:: /_static/docstring_previews/scgen_reg_mean.png
         """
