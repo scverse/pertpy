@@ -24,11 +24,25 @@ Methods table
 ~~~~~~~~~~~~~
 
 .. autosummary::
+
+{% set plotting_methods = [] %}
+{% set other_methods = [] %}
+
 {% for item in methods %}
-    {%- if item != '__init__' %}
+    {%- if item.startswith('plot_') %}
+        {%- set _ = plotting_methods.append(item) %}
+    {% elif item != '__init__' %}
+        {%- set _ = other_methods.append(item) %}
+    {%- endif %}
+{% endfor %}
+
+{% for item in other_methods %}
     ~{{ fullname }}.{{ item }}
-    {%- endif -%}
-{%- endfor %}
+{% endfor %}
+
+{% for item in plotting_methods %}
+    ~{{ fullname }}.{{ item }}
+{% endfor %}
 {% endif %}
 {% endblock %}
 

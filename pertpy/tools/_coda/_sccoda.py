@@ -8,8 +8,7 @@ import numpy as np
 import numpyro as npy
 import numpyro.distributions as npd
 from anndata import AnnData
-from jax import random
-from jax.config import config
+from jax import config, random
 from mudata import MuData
 from numpyro.infer import Predictive
 from rich import print
@@ -23,7 +22,6 @@ config.update("jax_enable_x64", True)
 
 
 class Sccoda(CompositionalModel2):
-
     """
     Statistical model for single-cell differential composition analysis with specification of a reference cell type.
     This is the standard scCODA model and recommended for all uses.
