@@ -1513,3 +1513,30 @@ def combosciplex() -> AnnData:  # pragma: no cover
     adata = sc.read_h5ad(output_file_path)
 
     return adata
+
+
+def sciplex_gxe1() -> AnnData:  # pragma: no cover
+    """sci-Plex-GxE combined chemical and genetic profiling of A172 dCas9-KRAB cells
+    genetically perturbed for HPRT1 or mismtach repair genes exposed to 6-thioguanine and temozolomide,
+    respectively, and A172 dCas9-SunTag cells genetically perturbed for HPRT1 exposed to 6-thioguanine.
+
+    References:
+        McFaline-Figueroa JL et al., Trapnell C. Multiplex single-cell chemical genomics reveals
+        the kinase dependence of the response to targeted therapy. Cell Genomics. 2024 Volume 4, Issue 2.
+        doi: 10.1016/j.xgen.2023.100487
+
+    Returns:
+        :class:`~anndata.AnnData` object of the dataset.
+    """
+    output_file_name = "sciPlexGxE_1_GSM7056148.h5ad"
+    output_file_path = settings.datasetdir / output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/45372454",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+    adata = sc.read_h5ad(output_file_path)
+
+    return adata
