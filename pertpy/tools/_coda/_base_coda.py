@@ -1952,7 +1952,7 @@ class CompositionalModel2(ABC):
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | None = None,
-    ) -> Tree | None:
+    ):
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:
