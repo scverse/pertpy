@@ -4,11 +4,11 @@ import copy
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Literal
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-import matplotlib.pyplot as plt
 from scanpy import get
 from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
@@ -600,7 +600,6 @@ class Mixscape:
                 return ax
             else:
                 return None
-            
 
     def plot_heatmap(  # pragma: no cover
         self,
