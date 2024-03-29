@@ -1185,11 +1185,11 @@ class CompositionalModel2(ABC):
         data: AnnData | MuData,
         feature_name: str,
         modality_key: str = "coda",
-        figsize: tuple[float, float] | None = None,
-        dpi: int | None = 100,
         palette: ListedColormap | None = cm.tab20,
         show_legend: bool | None = True,
         level_order: list[str] = None,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1288,11 +1288,11 @@ class CompositionalModel2(ABC):
         plot_facets: bool = True,
         plot_zero_covariate: bool = True,
         plot_zero_cell_type: bool = False,
-        figsize: tuple[float, float] | None = None,
-        dpi: int | None = 100,
         palette: str | ListedColormap | None = cm.tab20,
         level_order: list[str] = None,
         args_barplot: dict | None = None,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1492,11 +1492,11 @@ class CompositionalModel2(ABC):
         cell_types: list | None = None,
         args_boxplot: dict | None = None,
         args_swarmplot: dict | None = None,
-        figsize: tuple[float, float] | None = None,
-        dpi: int | None = 100,
         palette: str | None = "Blues",
         show_legend: bool | None = True,
         level_order: list[str] = None,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1738,7 +1738,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes:
+    ) -> plt.Axes | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
 
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
@@ -1858,12 +1858,11 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        h: float | None = None,
-        w: float | None = None,
-        dpi: int | None = 90,
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
         show: bool | None = True,
         save: str | bool | None = None,
-    ):
+    ) -> Tree | None:
         """Plot a tree using input ete3 tree object.
 
         Args:
@@ -1882,11 +1881,9 @@ class CompositionalModel2(ABC):
             file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG.
                        Output image can be saved whether show is True or not.
                        Defaults to None.
-            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
-                   Defaults to "px".
-            h: Height of the image in units. Defaults to None.
-            w: Width of the image in units. Defaults to None.
-            dpi: Dots per inches. Defaults to 90.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
+            figsize: Figure size. Defaults to None.
+            dpi: Dots per inches. Defaults to 100.
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
@@ -1931,10 +1928,12 @@ class CompositionalModel2(ABC):
         tree_style.show_leaf_name = False
         tree_style.layout_fn = my_layout
         tree_style.show_scale = show_scale
+        width, height = figsize
+
         if save is not None:
-            tree.render(save, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
+            tree.render(save, tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)  # type: ignore
         if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
+            return tree.render("%%inline", tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
 
@@ -1948,13 +1947,12 @@ class CompositionalModel2(ABC):
         show_leaf_effects: bool | None = False,
         tight_text: bool | None = False,
         show_scale: bool | None = False,
+        units: Literal["px", "mm", "in"] | None = "px",
+        figsize: tuple[float, float] | None = None,
+        dpi: int | None = 100,
         show: bool | None = True,
         save: str | None = None,
-        units: Literal["px", "mm", "in"] | None = "in",
-        h: float | None = None,
-        w: float | None = None,
-        dpi: int | None = 90,
-    ):
+    ) -> Tree | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:
@@ -1975,10 +1973,9 @@ class CompositionalModel2(ABC):
             show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
             file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
                        Defaults to None.
-            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Default is "in". Defaults to "in".
-            h: Height of the image in units. Defaults to None.
-            w: Width of the image in units. Defaults to None.
-            dpi: Dots per inches. Defaults to 90.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
+            figsize: Figure size. Defaults to None.
+            dpi: Dots per inches. Defaults to 100.
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
@@ -2125,26 +2122,29 @@ class CompositionalModel2(ABC):
 
             if save is not None:
                 plt.savefig(save)
+        
+        width, height = figsize
 
         if save is not None and not show_leaf_effects:
             tree2.render(save, tree_style=tree_style, units=units)
         if show:
             if not show_leaf_effects:
-                return tree2.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+                return tree2.render("%%inline", tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)
         else:
             if not show_leaf_effects:
                 return tree2, tree_style
 
     def plot_effects_umap(  # pragma: no cover
         self,
-        data: MuData,
+        mudata: MuData,
         effect_name: str | list | None,
         cluster_key: str,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
+        palette: str | None = None,
+        ax: Axes = None,
         show: bool = None,
         save: str | bool | None = None,
-        ax: Axes = None,
         **kwargs,
     ) -> plt.Axes | None:
         """Plot a UMAP visualization colored by effect strength.
@@ -2153,7 +2153,7 @@ class CompositionalModel2(ABC):
         (default is data['rna']) depending on the cluster they were assigned to.
 
         Args:
-            data: AnnData object or MuData object.
+            mudata: MuData object.
             effect_name: The name of the effect results in .varm of aggregated sample-level AnnData to plot
             cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']).
                          To assign cell types' effects to original cells.
@@ -2207,8 +2207,8 @@ class CompositionalModel2(ABC):
             .. image:: /_static/docstring_previews/tasccoda_effects_umap.png
         """
         # TODO: Add effect_name parameter and cluster_key and test the example
-        data_rna = data[modality_key_1]
-        data_coda = data[modality_key_2]
+        data_rna = mudata[modality_key_1]
+        data_coda = mudata[modality_key_2]
         if isinstance(effect_name, str):
             effect_name = [effect_name]
         for _, effect in enumerate(effect_name):
@@ -2224,7 +2224,7 @@ class CompositionalModel2(ABC):
         else:
             vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
 
-        return sc.pl.umap(data_rna, color=effect_name, vmax=vmax, vmin=vmin, ax=ax, show=show, save=save, **kwargs)
+        return sc.pl.umap(data_rna, color=effect_name, vmax=vmax, vmin=vmin, palette=palette, ax=ax, show=show, save=save, **kwargs)
 
 
 def get_a(
