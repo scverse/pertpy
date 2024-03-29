@@ -2122,7 +2122,7 @@ class CompositionalModel2(ABC):
 
             if save is not None:
                 plt.savefig(save)
-        
+
         width, height = figsize
 
         if save is not None and not show_leaf_effects:
@@ -2224,7 +2224,9 @@ class CompositionalModel2(ABC):
         else:
             vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
 
-        return sc.pl.umap(data_rna, color=effect_name, vmax=vmax, vmin=vmin, palette=palette, ax=ax, show=show, save=save, **kwargs)
+        return sc.pl.umap(
+            data_rna, color=effect_name, vmax=vmax, vmin=vmin, palette=palette, ax=ax, show=show, save=save, **kwargs
+        )
 
 
 def get_a(
