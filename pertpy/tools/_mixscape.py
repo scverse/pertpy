@@ -512,7 +512,7 @@ class Mixscape:
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-    ) -> Axes | None:
+    ):
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
 
         Args:
