@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-from matplotlib import pyplot as pl
+import matplotlib.pyplot as plt
 from scanpy import get
 from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
@@ -509,9 +509,10 @@ class Mixscape:
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
+        ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-    ):
+    ) -> Axes | None:
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
 
         Args:
@@ -558,7 +559,7 @@ class Mixscape:
         if not show:
             color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
             unique_genes = NP_KO_cells["gene"].unique()
-            fig, axs = pl.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
+            fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
             for i, gene in enumerate(unique_genes):
                 ax = axs[int(i / 5), i % 5]
                 grouped_df = (
@@ -592,10 +593,14 @@ class Mixscape:
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
             )
-            pl.tight_layout()
+            plt.tight_layout()
             _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
 
-            return ax
+            if not show or show is None:
+                return ax
+            else:
+                return None
+            
 
     def plot_heatmap(  # pragma: no cover
         self,
@@ -727,7 +732,7 @@ class Mixscape:
             palette = {gd: "#7d7d7d", target_gene: color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[cond].get_data()[1].max() for cond in range(len(plot_dens.get_lines())))
-            pl.close()
+            plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
             perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = rng.uniform(
@@ -757,10 +762,10 @@ class Mixscape:
                 sns.scatterplot(
                     data=perturbation_score, x="pvec", y="y_jitter", hue="gene_target", palette=palette, s=10, alpha=0.5
                 )
-                pl.xlabel("Perturbation score", fontsize=16)
-                pl.ylabel("Cell density", fontsize=16)
-                pl.title("Density Plot", fontsize=18)
-                pl.legend(title="gene_target", title_fontsize=14, fontsize=12)
+                plt.xlabel("Perturbation score", fontsize=16)
+                plt.ylabel("Cell density", fontsize=16)
+                plt.title("Density Plot", fontsize=18)
+                plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
 
         # If before_mixscape is False, split densities based on mixscape classifications
@@ -769,7 +774,7 @@ class Mixscape:
                 palette = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[i].get_data()[1].max() for i in range(len(plot_dens.get_lines())))
-            pl.close()
+            plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
             gd2 = list(
@@ -813,10 +818,10 @@ class Mixscape:
                 sns.scatterplot(
                     data=perturbation_score, x="pvec", y="y_jitter", hue="mix", palette=palette, s=10, alpha=0.5
                 )
-                pl.xlabel("Perturbation score", fontsize=16)
-                pl.ylabel("Cell density", fontsize=16)
-                pl.title("Density", fontsize=18)
-                pl.legend(title="mixscape class", title_fontsize=14, fontsize=12)
+                plt.xlabel("Perturbation score", fontsize=16)
+                plt.ylabel("Cell density", fontsize=16)
+                plt.title("Density", fontsize=18)
+                plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
     def plot_violin(  # pragma: no cover
@@ -1011,7 +1016,7 @@ class Mixscape:
 
         show = settings.autoshow if show is None else show
         if hue is not None and stripplot is True:
-            pl.legend(handles, labels)
+            plt.legend(handles, labels)
         _utils.savefig_or_show("mixscape_violin", show=show, save=save)
 
         if not show:
