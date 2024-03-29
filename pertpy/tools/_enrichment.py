@@ -29,6 +29,7 @@ def _prepare_targets(
 
     if targets is None:
         pt_drug = Drug()
+        pt_drug._download_drug_annotation()
         targets = pt_drug._chembl_json
         nested = True
     else:
@@ -203,7 +204,14 @@ class Enrichment:
             results = pd.DataFrame(
                 1,
                 index=list(targets.keys()),
-                columns=["intersection", "gene_group", "markers", "universe", "pvals", "pvals_adj"],
+                columns=[
+                    "intersection",
+                    "gene_group",
+                    "markers",
+                    "universe",
+                    "pvals",
+                    "pvals_adj",
+                ],
             )
             mask = adata.uns["rank_genes_groups"]["pvals_adj"][cluster] < pvals_adj_thresh
             if direction == "up":
@@ -288,7 +296,7 @@ class Enrichment:
     def plot_dotplot(
         self,
         adata: AnnData,
-        targets: dict[str, list[str]] | dict[str, dict[str, list[str]]] = None,
+        targets: dict[str, dict[str, list[str]]] = None,
         categories: Sequence[str] = None,
         groupby: str = None,
         key: str = "pertpy_enrichment",
@@ -301,11 +309,9 @@ class Enrichment:
         Args:
             adata: An AnnData object with enrichment results stored in `.uns["pertpy_enrichment_score"]`.
             targets: Gene groups to evaluate, which can be targets of known drugs, GO terms, pathway memberships, etc.
-                     Accepts two forms:
-                     - A dictionary with group names as keys and corresponding gene lists as entries.
-                     - A dictionary of dictionaries with group categories as keys. Use `nested=True` in this case.
+                     Accepts a dictionary of dictionaries with group categories as keys.
                      If not provided, ChEMBL-derived drug target sets are used.
-            categories: To subset the gene groups to specific categories, especially when `targets=None` or `nested=True`.
+            categories: To subset the gene groups to specific categories, especially when `targets=None`.
                             For ChEMBL drug targets, these are ATC level 1/level 2 category codes.
             groupby: dotplot groupby such as clusters or cell types.
             key: Prefix key of enrichment results in `uns`.
@@ -336,6 +342,7 @@ class Enrichment:
 
         if targets is None:
             pt_drug = Drug()
+            pt_drug._download_drug_annotation(source="chembl")
             targets = pt_drug._chembl_json
         else:
             targets = targets.copy()
@@ -344,6 +351,7 @@ class Enrichment:
 
         for group in targets:
             targets[group] = list(targets[group].keys())  # type: ignore
+
         var_names: list[str] = []
         var_group_positions: list[tuple[int, int]] = []
         var_group_labels: list[str] = []
@@ -369,7 +377,13 @@ class Enrichment:
             "var_group_labels": var_group_labels,
         }
 
-        return sc.pl.dotplot(enrichment_score_adata, groupby=groupby, swap_axes=True, **plot_args, **kwargs)
+        return sc.pl.dotplot(
+            enrichment_score_adata,
+            groupby=groupby,
+            swap_axes=True,
+            **plot_args,
+            **kwargs,
+        )
 
     def plot_gsea(
         self,

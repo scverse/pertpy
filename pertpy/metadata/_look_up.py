@@ -19,18 +19,18 @@ class LookUp:
 
     def __init__(
         self,
-        type: Literal["cell_line", "moa", "compound"] = "cell_line",
+        type: Literal["cell_line", "moa", "compound", "drug"] = "cell_line",
         transfer_metadata: Sequence[pd.DataFrame] | None = None,
     ):
         """
         Args:
-            type: Metadata type for annotation. One of 'cell_line', 'compound' or 'moa'. Defaults to cell_line.
+            type: Metadata type for annotation. One of 'cell_line', 'compound', 'moa' or 'drug. Defaults to cell_line.
             transfer_metadata: DataFrames used to generate Lookup object.
                                This is currently set to None for CompoundMetaData which does not require any dataframes for transfer.
                                Defaults to 'cell_line'.
         """
+        self.type = type
         if type == "cell_line":
-            self.type = type
             self.cell_line_meta = transfer_metadata[0]
             self.cl_cancer_project_meta = transfer_metadata[1]
             self.gene_annotation = transfer_metadata[2]
@@ -85,8 +85,8 @@ class LookUp:
                     "fetch": "None",
                 },
             }
-            ccancerrxgene_record = cell_line_annotation(**cancerrxgene_data)
-            self.cell_lines = cell_lines(depmap_record, ccancerrxgene_record)
+            cancerrxgene_record = cell_line_annotation(**cancerrxgene_data)
+            self.cell_lines = cell_lines(depmap_record, cancerrxgene_record)
 
             bulk_rna_annotation = namedtuple(
                 "bulk_rna_annotation",
@@ -227,6 +227,37 @@ class LookUp:
                 },
             }
             self.compound = compound_annotation(**compound_data)
+
+        elif type == "drug":
+            self.chembl = transfer_metadata[0]
+            self.dgidb = transfer_metadata[1]
+
+            drug_annotation = namedtuple(
+                "drug_annotation",
+                "n_compound compound_example n_target target_example",
+            )
+            drugs = namedtuple("drugs", ["chembl", "dgidb"])
+
+            dgidb_data = {
+                "n_compound": len(self.dgidb.drug_claim_name.unique()),
+                "n_target": len(self.dgidb.gene_claim_name.unique()),
+                "compound_example": self.dgidb.drug_claim_name.values[0:5],
+                "target_example": self.dgidb.gene_claim_name.unique()[0:5],
+            }
+            dgidb_record = drug_annotation(**dgidb_data)
+
+            chembl_targets = list(
+                {t for target in self.chembl.targets.tolist() for t in target}
+            )  # flatten the target column and remove duplicates
+            chembl_data = {
+                "n_compound": len(self.chembl.compounds),
+                "n_target": len(chembl_targets),
+                "compound_example": self.chembl.compounds.values[0:5],
+                "target_example": chembl_targets[0:5],
+            }
+            chembl_record = drug_annotation(**chembl_data)
+            self.drugs = drugs(chembl_record, dgidb_record)
+
         else:
             raise NotImplementedError
 
@@ -447,36 +478,73 @@ class LookUp:
             print(f"{len(not_matched_identifiers)} molecular targets are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} molecular targets are found! ")
 
+    def available_compounds(
+        self,
+        query_id_list: Sequence[str] | None = None,
+        query_id_type: Literal["name", "cid"] = "name",
+    ) -> None:
+        """A brief summary of compound annotation.
 
-def available_compounds(
-    self,
-    query_id_list: Sequence[str] | None = None,
-    query_id_type: Literal["name", "cid"] = "name",
-) -> None:
-    """A brief summary of compound annotation.
+        Args:
+            query_id_list: Unique compounds to test the number of matched ones present in the metadata.
+                        If set to None, query of compound identifiers will be disabled.
+                        Defaults to None.
+            query_id_type: The type of compound identifiers, name or cid. Defaults to 'name'.
+        """
+        if self.type != "compound":
+            raise ValueError("This is not a LookUp object specific for CompoundData!")
+        if query_id_list is not None:
+            identifier_num_all = len(query_id_list)
+            not_matched_identifiers = []
 
-    Args:
-        query_id_list: Unique compounds to test the number of matched ones present in the metadata.
-                       If set to None, query of compound identifiers will be disabled.
-                       Defaults to None.
-        query_id_type: The type of compound identifiers, name or cid. Defaults to 'name'.
-    """
-    if self.type != "compound":
-        raise ValueError("This is not a LookUp object specific for CompoundData!")
-    if query_id_list is not None:
-        identifier_num_all = len(query_id_list)
-        not_matched_identifiers = []
+            for compound in query_id_list:
+                if query_id_type == "name":
+                    cids = pcp.get_compounds(compound, "name")
+                    if len(cids) == 0:  # search did not work
+                        not_matched_identifiers.append(compound)
+                else:
+                    try:
+                        pcp.Compound.from_cid(compound)
+                    except pcp.BadRequestError:
+                        not_matched_identifiers.append(compound)
 
-        for compound in query_id_list:
-            if query_id_type == "name":
-                cids = pcp.get_compounds(compound, "name")
-                if len(cids) == 0:  # search did not work
-                    not_matched_identifiers.append(compound)
+            print(f"{len(not_matched_identifiers)} compounds are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} compounds are found! ")
+
+    def available_drug_annotation(
+        self,
+        drug_annotation_source: Literal["chembl", "dgidb"] = "chembl",
+        query_id_list: Sequence[str] | None = None,
+        query_id_type: Literal["target", "compound"] = "target",
+    ) -> None:
+        """A brief summary of drug annotation.
+
+        Args:
+            drug_annotation_source: the source of drug annotation data, chembl or dgidb. Defaults to "chembl".
+            query_id_list: Unique target or compound names to test the number of matched ones present in the metadata.
+                        If set to None, query of compound identifiers will be disabled.
+                        Defaults to None.
+            query_id_type: The type of identifiers, target or compound. Defaults to 'target'.
+        """
+        if self.type != "drug":
+            raise ValueError("This is not a LookUp object specific for DrugMetaData!")
+        if query_id_list is not None:
+            identifier_num_all = len(query_id_list)
+            not_matched_identifiers = []
+
+            if drug_annotation_source == "chembl":
+                if query_id_type == "target":
+                    chembl_targets = {t for target in self.chembl.targets.tolist() for t in target}
+                    # flatten the target column and remove duplicates
+                    not_matched_identifiers = list(set(query_id_list) - chembl_targets)
+                else:
+                    not_matched_identifiers = list(set(query_id_list) - self.chembl["compounds"])
+
             else:
-                try:
-                    pcp.Compound.from_cid(compound)
-                except pcp.BadRequestError:
-                    not_matched_identifiers.append(compound)
+                if query_id_type == "target":
+                    not_matched_identifiers = list(set(query_id_list) - set(self.dgidb["gene_claim_name"]))
+                else:
+                    not_matched_identifiers = list(set(query_id_list) - set(self.dgidb["drug_claim_name"]))
 
-        print(f"{len(not_matched_identifiers)} compounds are not found in the metadata.")
-        print(f"{identifier_num_all - len(not_matched_identifiers)} compounds are found! ")
+            print(f"{len(not_matched_identifiers)} {query_id_type}s are not found in the metadata.")
+            print(f"{identifier_num_all - len(not_matched_identifiers)} {query_id_type}s are found! ")
