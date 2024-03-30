@@ -384,8 +384,6 @@ class Enrichment:
         n: int = 10,
         key: str = "pertpy_enrichment_gsea",
         interactive_plot: bool = False,
-        save: bool | str | None = None,
-        show: bool | None = None,
     ) -> None:
         """Generates a blitzgsea top_table plot.
 
