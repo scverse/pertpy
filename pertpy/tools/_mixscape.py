@@ -872,6 +872,7 @@ class Mixscape:
         xlabel: str = "",
         ylabel: str | Sequence[str] | None = None,
         rotation: float | None = None,
+        ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
