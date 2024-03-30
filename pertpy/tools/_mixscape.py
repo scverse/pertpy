@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     from anndata import AnnData
     from matplotlib.axes import Axes
+    from matplotlib.colors import Colormap
     from scipy import sparse
 
 
@@ -612,6 +613,8 @@ class Mixscape:
         subsample_number: int | None = 900,
         vmin: float | None = -2,
         vmax: float | None = 2,
+        fontsize: int | None = 8,
+        ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
@@ -664,6 +667,8 @@ class Mixscape:
             vmax=vmax,
             n_genes=20,
             groups=["NT"],
+            fontsize=fontsize,
+            ax=ax,
             show=show,
             save=save,
             **kwds,
@@ -674,12 +679,15 @@ class Mixscape:
         adata: AnnData,
         labels: str,
         target_gene: str,
-        mixscape_class="mixscape_class",
-        color="orange",
+        mixscape_class: str = "mixscape_class",
+        color: str = "orange",
         palette: dict[str, str] = None,
         split_by: str = None,
-        before_mixscape=False,
+        before_mixscape: bool = False,
         perturbation_type: str = "KO",
+        ax: Axes | None = None,
+        show: bool | None = None,
+        save: bool | str | None = None,
     ) -> None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
 
@@ -742,7 +750,7 @@ class Mixscape:
             )
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
-                sns.set(style="whitegrid")
+                sns.set_theme(style="whitegrid")
                 g = sns.FacetGrid(
                     data=perturbation_score, col=split_by, hue=split_by, palette=palette, height=5, sharey=False
                 )
@@ -754,7 +762,7 @@ class Mixscape:
 
             # If split_by is not provided, create a single plot
             else:
-                sns.set(style="whitegrid")
+                sns.set_theme(style="whitegrid")
                 sns.kdeplot(
                     data=perturbation_score, x="pvec", hue="gene_target", fill=True, common_norm=False, palette=palette
                 )
@@ -766,6 +774,17 @@ class Mixscape:
                 plt.title("Density Plot", fontsize=18)
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
+        
+        ax = plt.gca()
+        
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        if show:
+            plt.show()
+            return None
+        elif not show or show is None:
+            return ax
 
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
@@ -792,7 +811,7 @@ class Mixscape:
             )
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
-                sns.set(style="whitegrid")
+                sns.set_theme(style="whitegrid")
                 g = sns.FacetGrid(
                     data=perturbation_score, col=split_by, hue="mix", palette=palette, height=5, sharey=False
                 )
@@ -804,7 +823,7 @@ class Mixscape:
 
             # If split_by is not provided, create a single plot
             else:
-                sns.set(style="whitegrid")
+                sns.set_theme(style="whitegrid")
                 sns.kdeplot(
                     data=perturbation_score,
                     x="pvec",
@@ -822,6 +841,18 @@ class Mixscape:
                 plt.title("Density", fontsize=18)
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
+            
+        ax = plt.gca()
+
+        if save: 
+            plt.savefig(save, bbox_inches='tight')
+            return None
+        if show: 
+            plt.show()
+            return None
+        elif not show or show is None:
+            return ax
+            
 
     def plot_violin(  # pragma: no cover
         self,
@@ -844,7 +875,6 @@ class Mixscape:
         rotation: float | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-        ax: Axes | None = None,
         **kwargs,
     ):
         """Violin plot using mixscape results.
@@ -1035,6 +1065,9 @@ class Mixscape:
         perturbation_type: str | None = "KO",
         lda_key: str | None = "mixscape_lda",
         n_components: int | None = None,
+        color_map: Colormap | str | None = None,
+        palette: str |  Sequence[str] | None = None,
+        ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
@@ -1080,4 +1113,4 @@ class Mixscape:
             n_components = adata_subset.uns[lda_key].shape[1]
         sc.pp.neighbors(adata_subset, use_rep=lda_key)
         sc.tl.umap(adata_subset, n_components=n_components)
-        sc.pl.umap(adata_subset, color=mixscape_class, show=show, save=save, **kwds)
+        sc.pl.umap(adata_subset, color=mixscape_class, palette=palette, color_map=color_map, show=show, save=save, ax=ax, **kwds)

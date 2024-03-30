@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from ete3 import Tree
     from jax._src.typing import Array
     from matplotlib.axes import Axes
+    from matplotlib.colors import Colormap
 
 config.update("jax_enable_x64", True)
 
@@ -1928,12 +1929,11 @@ class CompositionalModel2(ABC):
         tree_style.show_leaf_name = False
         tree_style.layout_fn = my_layout
         tree_style.show_scale = show_scale
-        width, height = figsize
 
         if save is not None:
             tree.render(save, tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)  # type: ignore
         if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)  # type: ignore
+            return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
 
@@ -2123,13 +2123,11 @@ class CompositionalModel2(ABC):
             if save is not None:
                 plt.savefig(save)
 
-        width, height = figsize
-
         if save is not None and not show_leaf_effects:
             tree2.render(save, tree_style=tree_style, units=units)
         if show:
             if not show_leaf_effects:
-                return tree2.render("%%inline", tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)
+                return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
         else:
             if not show_leaf_effects:
                 return tree2, tree_style
@@ -2141,7 +2139,8 @@ class CompositionalModel2(ABC):
         cluster_key: str,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
-        palette: str | None = None,
+        color_map: Colormap | str | None = None,
+        palette: str | Sequence[str]| None = None,
         ax: Axes = None,
         show: bool = None,
         save: str | bool | None = None,
