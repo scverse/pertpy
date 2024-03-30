@@ -26,13 +26,14 @@ from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpyro as npy
     import toytree as tt
     from ete3 import Tree
     from jax._src.typing import Array
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
-    from collections.abc import Sequence
 
 config.update("jax_enable_x64", True)
 
