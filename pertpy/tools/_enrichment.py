@@ -12,6 +12,7 @@ from scanpy.tools._score_genes import _sparse_nanmean
 from scipy.sparse import issparse
 from scipy.stats import hypergeom
 from statsmodels.stats.multitest import multipletests
+from matplotlib.axes import Axes
 
 from pertpy.metadata import Drug
 
@@ -292,6 +293,9 @@ class Enrichment:
         categories: Sequence[str] = None,
         groupby: str = None,
         key: str = "pertpy_enrichment",
+        ax: Axes | None = None,
+        save: bool | str | None = None,
+        show: bool | None = None,
         **kwargs,
     ) -> DotPlot | dict | None:
         """Plots a dotplot by groupby and categories.
@@ -369,7 +373,7 @@ class Enrichment:
             "var_group_labels": var_group_labels,
         }
 
-        return sc.pl.dotplot(enrichment_score_adata, groupby=groupby, swap_axes=True, **plot_args, **kwargs)
+        return sc.pl.dotplot(enrichment_score_adata, groupby=groupby, swap_axes=True, ax=ax, save=save, show=show, **plot_args, **kwargs)
 
     def plot_gsea(
         self,
@@ -378,6 +382,8 @@ class Enrichment:
         n: int = 10,
         key: str = "pertpy_enrichment_gsea",
         interactive_plot: bool = False,
+        save: bool | str | None = None,
+        show: bool | None = None,
     ) -> None:
         """Generates a blitzgsea top_table plot.
 
@@ -413,5 +419,5 @@ class Enrichment:
                 n=n,
                 interactive_plot=interactive_plot,
             )
-            fig.suptitle(cluster)
+            fig.subtitle(cluster)
             fig.show()
