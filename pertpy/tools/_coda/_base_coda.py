@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from jax._src.typing import Array
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
+    from collections.abc import Sequence
 
 config.update("jax_enable_x64", True)
 
