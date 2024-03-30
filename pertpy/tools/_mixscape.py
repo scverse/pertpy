@@ -774,9 +774,9 @@ class Mixscape:
                 plt.title("Density Plot", fontsize=18)
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
-        
+
         ax = plt.gca()
-        
+
         if save:
             plt.savefig(save, bbox_inches="tight")
             return None
@@ -841,18 +841,17 @@ class Mixscape:
                 plt.title("Density", fontsize=18)
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
-            
+
         ax = plt.gca()
 
-        if save: 
-            plt.savefig(save, bbox_inches='tight')
+        if save:
+            plt.savefig(save, bbox_inches="tight")
             return None
-        if show: 
+        if show:
             plt.show()
             return None
         elif not show or show is None:
             return ax
-            
 
     def plot_violin(  # pragma: no cover
         self,
@@ -1066,7 +1065,7 @@ class Mixscape:
         lda_key: str | None = "mixscape_lda",
         n_components: int | None = None,
         color_map: Colormap | str | None = None,
-        palette: str |  Sequence[str] | None = None,
+        palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
@@ -1113,4 +1112,13 @@ class Mixscape:
             n_components = adata_subset.uns[lda_key].shape[1]
         sc.pp.neighbors(adata_subset, use_rep=lda_key)
         sc.tl.umap(adata_subset, n_components=n_components)
-        sc.pl.umap(adata_subset, color=mixscape_class, palette=palette, color_map=color_map, show=show, save=save, ax=ax, **kwds)
+        sc.pl.umap(
+            adata_subset,
+            color=mixscape_class,
+            palette=palette,
+            color_map=color_map,
+            show=show,
+            save=save,
+            ax=ax,
+            **kwds,
+        )

@@ -2140,7 +2140,7 @@ class CompositionalModel2(ABC):
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
-        palette: str | Sequence[str]| None = None,
+        palette: str | Sequence[str] | None = None,
         ax: Axes = None,
         show: bool = None,
         save: str | bool | None = None,
