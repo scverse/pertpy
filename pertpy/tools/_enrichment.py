@@ -7,12 +7,12 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from matplotlib.axes import Axes
 from scanpy.plotting import DotPlot
 from scanpy.tools._score_genes import _sparse_nanmean
 from scipy.sparse import issparse
 from scipy.stats import hypergeom
 from statsmodels.stats.multitest import multipletests
-from matplotlib.axes import Axes
 
 from pertpy.metadata import Drug
 
@@ -373,7 +373,9 @@ class Enrichment:
             "var_group_labels": var_group_labels,
         }
 
-        return sc.pl.dotplot(enrichment_score_adata, groupby=groupby, swap_axes=True, ax=ax, save=save, show=show, **plot_args, **kwargs)
+        return sc.pl.dotplot(
+            enrichment_score_adata, groupby=groupby, swap_axes=True, ax=ax, save=save, show=show, **plot_args, **kwargs
+        )
 
     def plot_gsea(
         self,
