@@ -2136,7 +2136,7 @@ class CompositionalModel2(ABC):
 
     def plot_effects_umap(  # pragma: no cover
         self,
-        mudata: MuData,
+        mdata: MuData,
         effect_name: str | list | None,
         cluster_key: str,
         modality_key_1: str = "rna",
