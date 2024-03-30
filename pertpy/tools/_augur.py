@@ -982,7 +982,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes:
+    ) -> Figure | Axes | None:
         """Plot scatterplot of differential prioritization.
 
         Args:
@@ -1044,6 +1044,7 @@ class Augur:
             return None
         if save:
             plt.savefig(save, bbox_inches="tight")
+            return None
         elif not show or show is None:
             return ax
 
@@ -1055,7 +1056,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes:
+    ) -> Figure | Axes | None:
         """Plot a lollipop plot of the n features with largest feature importances.
 
         Args:
@@ -1112,6 +1113,7 @@ class Augur:
             return None
         if save:
             plt.savefig(save, bbox_inches="tight")
+            return None
         elif not show or show is None:
             return ax
 
@@ -1122,7 +1124,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes:
+    ) -> Figure | Axes | None:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
@@ -1186,7 +1188,7 @@ class Augur:
         top_n: int = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes:
+    ) -> Figure | Axes | None:
         """Create scatterplot with two augur results.
 
         Args:
@@ -1247,5 +1249,6 @@ class Augur:
             return None
         if save:
             plt.savefig(save, bbox_inches="tight")
+            return None
         elif not show or show is None:
             return ax
