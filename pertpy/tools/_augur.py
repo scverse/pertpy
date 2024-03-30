@@ -976,7 +976,12 @@ class Augur:
         return delta
 
     def plot_dp_scatter(
-        self, results: pd.DataFrame, top_n: int = None, ax: Axes = None, return_figure: bool = False
+        self, 
+        results: pd.DataFrame, 
+        top_n: int = None, 
+        ax: Axes = None, 
+        show: bool | None = None,
+        save: str | bool | None = None,
     ) -> Figure | Axes:
         """Plot scatterplot of differential prioritization.
 
@@ -1034,7 +1039,13 @@ class Augur:
         legend1 = ax.legend(*scatter.legend_elements(), loc="center left", title="z-scores", bbox_to_anchor=(1, 0.5))
         ax.add_artist(legend1)
 
-        return fig if return_figure else ax
+        if show:
+            plt.show()
+            return None
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+        elif not show or show is None:
+            return ax
 
     def plot_important_features(
         self,
@@ -1042,7 +1053,8 @@ class Augur:
         key: str = "augurpy_results",
         top_n: int = 10,
         ax: Axes = None,
-        return_figure: bool = False,
+        show: bool | None = None,
+        save: str | bool | None = None,
     ) -> Figure | Axes:
         """Plot a lollipop plot of the n features with largest feature importances.
 
@@ -1095,10 +1107,22 @@ class Augur:
         plt.ylabel("Gene")
         plt.yticks(y_axes_range, n_features["genes"])
 
-        return fig if return_figure else ax
+        if show:
+            plt.show()
+            return None
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+        elif not show or show is None:
+            return ax
+
 
     def plot_lollipop(
-        self, data: dict[str, Any], key: str = "augurpy_results", ax: Axes = None, return_figure: bool = False
+        self, 
+        data: dict[str, Any], 
+        key: str = "augurpy_results", 
+        ax: Axes = None, 
+        show: bool | None = None,
+        save: str | bool | None = None,
     ) -> Figure | Axes:
         """Plot a lollipop plot of the mean augur values.
 
@@ -1147,10 +1171,23 @@ class Augur:
         plt.ylabel("Cell Type")
         plt.yticks(y_axes_range, results["summary_metrics"].sort_values("mean_augur_score", axis=1).columns)
 
-        return fig if return_figure else ax
+        if show:
+            plt.show()
+            return None
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        elif not show or show is None:
+            return ax
+            
 
     def plot_scatterplot(
-        self, results1: dict[str, Any], results2: dict[str, Any], top_n: int = None, return_figure: bool = False
+        self, 
+        results1: dict[str, Any], 
+        results2: dict[str, Any], 
+        top_n: int = None,
+        show: bool | None = None, 
+        save: str | bool | None = None,
     ) -> Figure | Axes:
         """Create scatterplot with two augur results.
 
@@ -1207,4 +1244,10 @@ class Augur:
         plt.xlabel("Augur scores 1")
         plt.ylabel("Augur scores 2")
 
-        return fig if return_figure else ax
+        if show:
+            plt.show()
+            return None
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+        elif not show or show is None:
+            return ax
