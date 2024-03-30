@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import Array
-from matplotlib import pyplot
 from scipy import stats
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
@@ -373,20 +373,19 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
     def plot_reg_mean_plot(
         self,
         adata,
-        condition_key,
-        axis_keys,
-        labels,
-        path_to_save="./reg_mean.pdf",
-        save=True,
-        gene_list=None,
-        show=False,
-        top_100_genes=None,
-        verbose=False,
-        legend=True,
-        title=None,
-        x_coeff=0.30,
-        y_coeff=0.8,
-        fontsize=14,
+        condition_key: str,
+        axis_keys: dict[str, str],
+        labels: dict[str, str],
+        save: str | bool | None = None,
+        gene_list: list[str] = None,
+        show: bool = False,
+        top_100_genes: list[str] = None,
+        verbose: bool = False,
+        legend: bool = True,
+        title: str = None,
+        x_coeff: float = 0.30,
+        y_coeff: float = 0.8,
+        fontsize: float = 14,
         **kwargs,
     ) -> tuple[float, float] | float:
         """Plots mean matching for a set of specified genes.
@@ -423,11 +422,14 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             >>> eval_adata = data[data.obs['cell_type'] == 'CD4 T cells'].copy().concatenate(pred)
             >>> r2_value = scg.plot_reg_mean_plot(eval_adata, condition_key='label', axis_keys={"x": "pred", "y": "stim"}, \
                 labels={"x": "predicted", "y": "ground truth"}, save=False, show=True)
+
+        Preview:
+            .. image:: /_static/docstring_previews/scgen_reg_mean.png
         """
         import seaborn as sns
 
-        sns.set()
-        sns.set(color_codes=True)
+        sns.set_theme()
+        sns.set_theme(color_codes=True)
 
         diff_genes = top_100_genes
         stim = adata[adata.obs[condition_key] == axis_keys["y"]]
@@ -463,11 +465,11 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
                 j = adata.var_names.tolist().index(i)
                 x_bar = x[j]
                 y_bar = y[j]
-                texts.append(pyplot.text(x_bar, y_bar, i, fontsize=11, color="black"))
-                pyplot.plot(x_bar, y_bar, "o", color="red", markersize=5)
+                texts.append(plt.text(x_bar, y_bar, i, fontsize=11, color="black"))
+                plt.plot(x_bar, y_bar, "o", color="red", markersize=5)
                 # if "y1" in axis_keys.keys():
                 # y1_bar = y1[j]
-                # pyplot.text(x_bar, y1_bar, i, fontsize=11, color="black")
+                # plt.text(x_bar, y1_bar, i, fontsize=11, color="black")
         if gene_list is not None:
             adjust_text(
                 texts,
@@ -477,11 +479,11 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
                 force_static=(0.0, 0.0),
             )
         if legend:
-            pyplot.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+            plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         if title is None:
-            pyplot.title("", fontsize=fontsize)
+            plt.title("", fontsize=fontsize)
         else:
-            pyplot.title(title, fontsize=fontsize)
+            plt.title(title, fontsize=fontsize)
         ax.text(
             max(x) - max(x) * x_coeff,
             max(y) - y_coeff * max(y),
@@ -496,10 +498,10 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
                 fontsize=kwargs.get("textsize", fontsize),
             )
         if save:
-            pyplot.savefig(f"{path_to_save}", bbox_inches="tight", dpi=100)
+            plt.savefig(save, bbox_inches="tight")
         if show:
-            pyplot.show()
-        pyplot.close()
+            plt.show()
+        plt.close()
         if diff_genes is not None:
             return r_value**2, r_value_diff**2
         else:
@@ -508,20 +510,19 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
     def plot_reg_var_plot(
         self,
         adata,
-        condition_key,
-        axis_keys,
-        labels,
-        path_to_save="./reg_var.pdf",
-        save=True,
-        gene_list=None,
-        top_100_genes=None,
-        show=False,
-        legend=True,
-        title=None,
-        verbose=False,
-        x_coeff=0.30,
-        y_coeff=0.8,
-        fontsize=14,
+        condition_key: str,
+        axis_keys: dict[str, str],
+        labels: dict[str, str],
+        save: str | bool | None = None,
+        gene_list: list[str] = None,
+        top_100_genes: list[str] = None,
+        show: bool = False,
+        legend: bool = True,
+        title: str = None,
+        verbose: bool = False,
+        x_coeff: float = 0.3,
+        y_coeff: float = 0.8,
+        fontsize: float = 14,
         **kwargs,
     ) -> tuple[float, float] | float:
         """Plots variance matching for a set of specified genes.
@@ -548,8 +549,8 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         """
         import seaborn as sns
 
-        sns.set()
-        sns.set(color_codes=True)
+        sns.set_theme()
+        sns.set_theme(color_codes=True)
 
         sc.tl.rank_genes_groups(adata, groupby=condition_key, n_genes=100, method="wilcoxon")
         diff_genes = top_100_genes
@@ -580,13 +581,13 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             start, stop, step = kwargs.get("range")
             ax.set_xticks(np.arange(start, stop, step))
             ax.set_yticks(np.arange(start, stop, step))
-        # _p1 = pyplot.scatter(x, y, marker=".", label=f"{axis_keys['x']}-{axis_keys['y']}")
-        # pyplot.plot(x, m * x + b, "-", color="green")
+        # _p1 = plt.scatter(x, y, marker=".", label=f"{axis_keys['x']}-{axis_keys['y']}")
+        # plt.plot(x, m * x + b, "-", color="green")
         ax.set_xlabel(labels["x"], fontsize=fontsize)
         ax.set_ylabel(labels["y"], fontsize=fontsize)
         if "y1" in axis_keys.keys():
             y1 = np.asarray(np.var(real_stim.X, axis=0)).ravel()
-            _ = pyplot.scatter(
+            _ = plt.scatter(
                 x,
                 y1,
                 marker="*",
@@ -599,17 +600,17 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
                 j = adata.var_names.tolist().index(i)
                 x_bar = x[j]
                 y_bar = y[j]
-                pyplot.text(x_bar, y_bar, i, fontsize=11, color="black")
-                pyplot.plot(x_bar, y_bar, "o", color="red", markersize=5)
+                plt.text(x_bar, y_bar, i, fontsize=11, color="black")
+                plt.plot(x_bar, y_bar, "o", color="red", markersize=5)
                 if "y1" in axis_keys.keys():
                     y1_bar = y1[j]
-                    pyplot.text(x_bar, y1_bar, "*", color="black", alpha=0.5)
+                    plt.text(x_bar, y1_bar, "*", color="black", alpha=0.5)
         if legend:
-            pyplot.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+            plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         if title is None:
-            pyplot.title("", fontsize=12)
+            plt.title("", fontsize=12)
         else:
-            pyplot.title(title, fontsize=12)
+            plt.title(title, fontsize=12)
         ax.text(
             max(x) - max(x) * x_coeff,
             max(y) - y_coeff * max(y),
@@ -625,25 +626,25 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             )
 
         if save:
-            pyplot.savefig(f"{path_to_save}", bbox_inches="tight", dpi=100)
+            plt.savefig(save, bbox_inches="tight")
         if show:
-            pyplot.show()
-        pyplot.close()
+            plt.show()
+        plt.close()
         if diff_genes is not None:
             return r_value**2, r_value_diff**2
         else:
             return r_value**2
 
-    def plot_plot_binary_classifier(
+    def plot_binary_classifier(
         self,
-        scgen,
-        adata,
-        delta,
-        ctrl_key,
-        stim_key,
-        path_to_save,
-        save=True,
-        fontsize=14,
+        scgen: SCGEN,
+        adata: AnnData | None,
+        delta: np.ndarray,
+        ctrl_key: str,
+        stim_key: str,
+        show: bool = False,
+        save: str | bool | None = None,
+        fontsize: float = 14,
     ) -> None:
         """Plots the dot product between delta and latent representation of a linear classifier.
 
@@ -663,7 +664,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             save: Specify if the plot should be saved or not.
             fontsize: Set the font size of the plot.
         """
-        pyplot.close("all")
+        plt.close("all")
         adata = scgen._validate_anndata(adata)
         condition_key = scgen.adata_manager.get_state_registry(REGISTRY_KEYS.BATCH_KEY).original_key
         cd = adata[adata.obs[condition_key] == ctrl_key, :]
@@ -676,21 +677,26 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             dot_cd[ind] = np.dot(delta, vec)
         for ind, vec in enumerate(all_latent_stim):
             dot_sal[ind] = np.dot(delta, vec)
-        pyplot.hist(
+        plt.hist(
             dot_cd,
             label=ctrl_key,
             bins=50,
         )
-        pyplot.hist(dot_sal, label=stim_key, bins=50)
-        pyplot.axvline(0, color="k", linestyle="dashed", linewidth=1)
-        pyplot.title("  ", fontsize=fontsize)
-        pyplot.xlabel("  ", fontsize=fontsize)
-        pyplot.ylabel("  ", fontsize=fontsize)
-        pyplot.xticks(fontsize=fontsize)
-        pyplot.yticks(fontsize=fontsize)
-        ax = pyplot.gca()
+        plt.hist(dot_sal, label=stim_key, bins=50)
+        plt.axvline(0, color="k", linestyle="dashed", linewidth=1)
+        plt.title("  ", fontsize=fontsize)
+        plt.xlabel("  ", fontsize=fontsize)
+        plt.ylabel("  ", fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        ax = plt.gca()
         ax.grid(False)
 
         if save:
-            pyplot.savefig(f"{path_to_save}", bbox_inches="tight", dpi=100)
-        pyplot.show()
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        if show:
+            plt.show()
+            return None
+        elif not show or show is None:
+            return ax

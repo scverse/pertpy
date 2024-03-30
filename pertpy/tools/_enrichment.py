@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from matplotlib.axes import Axes
 from scanpy.plotting import DotPlot
 from scanpy.tools._score_genes import _sparse_nanmean
 from scipy.sparse import issparse
@@ -300,6 +301,9 @@ class Enrichment:
         categories: Sequence[str] = None,
         groupby: str = None,
         key: str = "pertpy_enrichment",
+        ax: Axes | None = None,
+        save: bool | str | None = None,
+        show: bool | None = None,
         **kwargs,
     ) -> DotPlot | dict | None:
         """Plots a dotplot by groupby and categories.
@@ -378,11 +382,7 @@ class Enrichment:
         }
 
         return sc.pl.dotplot(
-            enrichment_score_adata,
-            groupby=groupby,
-            swap_axes=True,
-            **plot_args,
-            **kwargs,
+            enrichment_score_adata, groupby=groupby, swap_axes=True, ax=ax, save=save, show=show, **plot_args, **kwargs
         )
 
     def plot_gsea(
@@ -427,5 +427,5 @@ class Enrichment:
                 n=n,
                 interactive_plot=interactive_plot,
             )
-            fig.suptitle(cluster)
+            fig.subtitle(cluster)
             fig.show()
