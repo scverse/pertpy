@@ -16,8 +16,9 @@ from rich import print
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from matplotlib.colors import Colormap
+
     from matplotlib.axes import Axes
+    from matplotlib.colors import Colormap
 
 try:
     from rpy2.robjects import conversion, numpy2ri, pandas2ri
@@ -826,7 +827,17 @@ class Milo:
         """
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
         sc.pl.embedding(
-            mdata[feature_key], basis, color="Nhood", size=30, title="Nhood" + str(ix), color_map=color_map, palette=palette, ax=ax, show=show, save=save, **kwargs
+            mdata[feature_key],
+            basis,
+            color="Nhood",
+            size=30,
+            title="Nhood" + str(ix),
+            color_map=color_map,
+            palette=palette,
+            ax=ax,
+            show=show,
+            save=save,
+            **kwargs,
         )
 
     def plot_da_beeswarm(
