@@ -1933,7 +1933,7 @@ class CompositionalModel2(ABC):
         tree_style.show_scale = show_scale
 
         if save is not None:
-            tree.render(save, tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)  # type: ignore
+            tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if show:
             return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         else:
