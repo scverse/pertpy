@@ -5,11 +5,11 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Literal
 
 import anndata as ad
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-import matplotlib.pyplot as plt
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
@@ -1119,14 +1119,13 @@ class Dialogue:
             return None
         elif not show or show is None:
             return ax
-            
 
     def plot_pairplot(
-        self, 
-        adata: AnnData, 
-        celltype_key: str, 
-        color: str, 
-        sample_id: str, 
+        self,
+        adata: AnnData,
+        celltype_key: str,
+        color: str,
+        sample_id: str,
         mcp: str = "mcp_0",
         show: bool | None = None,
         save: bool | str | None = None,
@@ -1177,4 +1176,3 @@ class Dialogue:
             return None
         elif not show or show is None:
             return ax
-            
