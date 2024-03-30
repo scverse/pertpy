@@ -2208,8 +2208,8 @@ class CompositionalModel2(ABC):
             .. image:: /_static/docstring_previews/tasccoda_effects_umap.png
         """
         # TODO: Add effect_name parameter and cluster_key and test the example
-        data_rna = mudata[modality_key_1]
-        data_coda = mudata[modality_key_2]
+        data_rna = mdata[modality_key_1]
+        data_coda = mdata[modality_key_2]
         if isinstance(effect_name, str):
             effect_name = [effect_name]
         for _, effect in enumerate(effect_name):
