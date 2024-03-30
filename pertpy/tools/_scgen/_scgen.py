@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import Array
-import matplotlib.pyplot as plt
 from scipy import stats
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
