@@ -16,6 +16,8 @@ from rich import print
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from matplotlib.colors import Colormap
+    from matplotlib.axes import Axes
 
 try:
     from rpy2.robjects import conversion, numpy2ri, pandas2ri
@@ -703,6 +705,9 @@ class Milo:
         min_size: int = 10,
         plot_edges: bool = False,
         title: str = "DA log-Fold Change",
+        color_map: Colormap | str | None = None,
+        palette: str | Sequence[str] | None = None,
+        ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
@@ -774,6 +779,9 @@ class Milo:
             vmax=vmax,
             vmin=vmin,
             title=title,
+            color_map=color_map,
+            palette=palette,
+            ax=ax,
             show=show,
             save=save,
             **kwargs,
@@ -785,6 +793,9 @@ class Milo:
         ix: int,
         feature_key: str | None = "rna",
         basis: str = "X_umap",
+        color_map: Colormap | str | None = None,
+        palette: str | Sequence[str] | None = None,
+        ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
@@ -815,7 +826,7 @@ class Milo:
         """
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
         sc.pl.embedding(
-            mdata[feature_key], basis, color="Nhood", size=30, title="Nhood" + str(ix), show=show, save=save, **kwargs
+            mdata[feature_key], basis, color="Nhood", size=30, title="Nhood" + str(ix), color_map=color_map, palette=palette, ax=ax, show=show, save=save, **kwargs
         )
 
     def plot_da_beeswarm(
@@ -826,6 +837,8 @@ class Milo:
         alpha: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
+        save: bool | str | None = None,
+        show: bool | None = None,
     ) -> None:
         """Plot beeswarm plot of logFC against nhood labels
 
@@ -931,12 +944,23 @@ class Milo:
         plt.legend(loc="upper left", title=f"< {int(alpha * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        if show:
+            plt.show()
+            return None
+        elif not show or show is None:
+            return plt.gcf()
+
     def plot_nhood_counts_by_cond(
         self,
         mdata: MuData,
         test_var: str,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
+        save: bool | str | None = None,
+        show: bool | None = None,
     ) -> None:
         """Plot boxplot of cell numbers vs condition of interest.
 
@@ -972,3 +996,12 @@ class Milo:
 
         plt.xticks(rotation=90)
         plt.xlabel(test_var)
+
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        if show:
+            plt.show()
+            return None
+        elif not show or show is None:
+            return plt.gcf()
