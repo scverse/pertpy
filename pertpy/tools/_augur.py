@@ -976,10 +976,10 @@ class Augur:
         return delta
 
     def plot_dp_scatter(
-        self, 
-        results: pd.DataFrame, 
-        top_n: int = None, 
-        ax: Axes = None, 
+        self,
+        results: pd.DataFrame,
+        top_n: int = None,
+        ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
     ) -> Figure | Axes:
@@ -1115,12 +1115,11 @@ class Augur:
         elif not show or show is None:
             return ax
 
-
     def plot_lollipop(
-        self, 
-        data: dict[str, Any], 
-        key: str = "augurpy_results", 
-        ax: Axes = None, 
+        self,
+        data: dict[str, Any],
+        key: str = "augurpy_results",
+        ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
     ) -> Figure | Axes:
@@ -1179,14 +1178,13 @@ class Augur:
             return None
         elif not show or show is None:
             return ax
-            
 
     def plot_scatterplot(
-        self, 
-        results1: dict[str, Any], 
-        results2: dict[str, Any], 
+        self,
+        results1: dict[str, Any],
+        results2: dict[str, Any],
         top_n: int = None,
-        show: bool | None = None, 
+        show: bool | None = None,
         save: str | bool | None = None,
     ) -> Figure | Axes:
         """Create scatterplot with two augur results.
