@@ -2226,7 +2226,16 @@ class CompositionalModel2(ABC):
             vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
 
         return sc.pl.umap(
-            data_rna, color=effect_name, vmax=vmax, vmin=vmin, palette=palette, color_map=color_map, ax=ax, show=show, save=save, **kwargs
+            data_rna,
+            color=effect_name,
+            vmax=vmax,
+            vmin=vmin,
+            palette=palette,
+            color_map=color_map,
+            ax=ax,
+            show=show,
+            save=save,
+            **kwargs,
         )
 
 

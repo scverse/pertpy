@@ -98,9 +98,7 @@ class AugurpyPlot:
         return ag.plot_important_features(data=data, key=key, top_n=top_n, ax=ax)
 
     @staticmethod
-    def lollipop(
-        data: dict[str, Any], key: str = "augurpy_results", ax: Axes = None
-    ) -> Figure | Axes | None:
+    def lollipop(data: dict[str, Any], key: str = "augurpy_results", ax: Axes = None) -> Figure | Axes | None:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
