@@ -429,8 +429,7 @@ class CodaPlot:
             show=show,
             save=save,
             units=units,
-            h=h,
-            w=w,
+            figsize=(w, h),
             dpi=dpi,
         )
 
@@ -517,8 +516,7 @@ class CodaPlot:
             show=show,
             save=save,
             units=units,
-            h=h,
-            w=w,
+            figsize=(w, h),
             dpi=dpi,
         )
 

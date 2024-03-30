@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Literal
 
 import anndata as ad
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -1069,7 +1070,10 @@ class Dialogue:
         celltype_key: str,
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
-    ) -> Axes:
+        ax: Axes | None = None,
+        save: bool | str | None = None,
+        show: bool | None = None,
+    ) -> Axes | None:
         """Plots split violin plots for a given MCP and split variable.
 
         Any cells with a value for split_key not in split_which are removed from the plot.
@@ -1107,10 +1111,24 @@ class Dialogue:
 
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 
-        return ax
+        if show:
+            plt.show()
+            return None
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        elif not show or show is None:
+            return ax
 
     def plot_pairplot(
-        self, adata: AnnData, celltype_key: str, color: str, sample_id: str, mcp: str = "mcp_0"
+        self,
+        adata: AnnData,
+        celltype_key: str,
+        color: str,
+        sample_id: str,
+        mcp: str = "mcp_0",
+        show: bool | None = None,
+        save: bool | str | None = None,
     ) -> PairGrid:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
@@ -1150,4 +1168,11 @@ class Dialogue:
         mcp_pivot = pd.concat([mcp_pivot, aggstats[color]], axis=1)
         ax = sns.pairplot(mcp_pivot, hue=color, corner=True)
 
-        return ax
+        if show:
+            plt.show()
+            return None
+        if save:
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        elif not show or show is None:
+            return ax
