@@ -18,12 +18,12 @@ class TestDrug:
 
         return adata
 
-    def test_moa_annotation_chembl(self, adata):
+    def test_drug_chembl(self, adata):
         self.pt_drug.annotate(adata=adata)
         assert {"compounds"}.issubset(adata.var.columns)
         assert "CHEMBL1693" in adata.var["compounds"]["SLC6A2"]
 
-    def test_moa_annotation_dgidb(self, adata):
+    def test_drug_dgidb(self, adata):
         self.pt_drug.annotate(adata=adata, source="dgidb")
         assert {"compounds"}.issubset(adata.var.columns)
         assert "AMITIFADINE" in adata.var["compounds"]["SLC6A2"]

@@ -18,53 +18,46 @@ if TYPE_CHECKING:
     from anndata import AnnData
 
 
+def _download_drug_annotation(
+    source: Literal["chembl", "dgidb"] = "chembl",
+) -> pd.DataFrame | dict[str, dict[str, list[str]]]:
+    if source == "chembl":
+        # Prepared in https://github.com/theislab/pertpy-datasets/blob/main/chembl_data.ipynb
+        chembl_path = Path(settings.cachedir) / "chembl.json"
+        if not Path(chembl_path).exists():
+            print("[bold yellow]No metadata file was found for chembl. Starting download now.")
+            _download(
+                url="https://figshare.com/ndownloader/files/43871718",
+                output_file_name="chembl.json",
+                output_path=settings.cachedir,
+                block_size=4096,
+                is_zip=False,
+            )
+        with chembl_path.open() as file:
+            chembl_json = json.load(file)
+        return chembl_json
+
+    elif source == "dgidb":
+        dgidb_path = Path(settings.cachedir) / "dgidb.tsv"
+        if not Path(dgidb_path).exists():
+            print("[bold yellow]No metadata file was found for dgidb. Starting download now.")
+            _download(
+                url="https://www.dgidb.org/data/latest/interactions.tsv",
+                output_file_name="dgidb.tsv",
+                output_path=settings.cachedir,
+                block_size=4096,
+                is_zip=False,
+            )
+        dgidb_df = pd.read_table(dgidb_path)
+        return dgidb_df
+
+
 class Drug(MetaData):
     """Utilities to fetch metadata for drug studies."""
 
     def __init__(self):
-        self.chembl = None
-        self.dgidb = None
-
-    def _download_drug_annotation(
-        self,
-        source: Literal["chembl", "dgidb"] = "chembl",
-    ) -> None:
-        if source == "chembl" and self.chembl is None:
-            # Prepared in https://github.com/theislab/pertpy-datasets/blob/main/chembl_data.ipynb
-            chembl_path = Path(settings.cachedir) / "chembl.json"
-            if not Path(chembl_path).exists():
-                print("[bold yellow]No metadata file was found for chembl. Starting download now.")
-                _download(
-                    url="https://figshare.com/ndownloader/files/43871718",
-                    output_file_name="chembl.json",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
-            with chembl_path.open() as file:
-                chembl_json = json.load(file)
-            self._chembl_json = chembl_json
-            targets = dict(ChainMap(*[chembl_json[cat] for cat in chembl_json]))
-            self.chembl = pd.DataFrame([{"Compound": k, "Targets": v} for k, v in targets.items()])
-            self.chembl.rename(columns={"Targets": "targets", "Compound": "compounds"}, inplace=True)
-        if source == "dgidb" and self.dgidb is None:
-            dgidb_path = Path(settings.cachedir) / "dgidb.tsv"
-            if not Path(dgidb_path).exists():
-                print("[bold yellow]No metadata file was found for dgidb. Starting download now.")
-                _download(
-                    url="https://www.dgidb.org/data/latest/interactions.tsv",
-                    output_file_name="dgidb.tsv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
-            self.dgidb_df = pd.read_table(dgidb_path)
-            self.dgidb = self.dgidb_df.groupby("drug_claim_name")["gene_claim_name"].apply(list).reset_index()
-            self.dgidb.rename(
-                columns={"gene_claim_name": "targets", "drug_claim_name": "compounds"},
-                inplace=True,
-            )
-            self.dgidb_dict = self.dgidb.set_index("compounds")["targets"].to_dict()
+        self.chembl = self.DrugDataBase(database="chembl")
+        self.dgidb = self.DrugDataBase(database="dgidb")
 
     def annotate(
         self,
@@ -87,13 +80,14 @@ class Drug(MetaData):
         if copy:
             adata = adata.copy()
 
-        self._download_drug_annotation(source)
-
-        interaction = None
         if source == "chembl":
-            interaction = self.chembl
+            if not self.chembl.loaded:
+                self.chembl.set()
+            interaction = self.chembl.dataframe
         else:
-            interaction = self.dgidb
+            if not self.dgidb.loaded:
+                self.dgidb.set()
+            interaction = self.dgidb.dataframe
 
         exploded_df = interaction.explode("targets")
 
@@ -117,12 +111,58 @@ class Drug(MetaData):
         Returns:
             Returns a LookUp object specific for drug annotation.
         """
-        if self.chembl is None:
-            self._download_drug_annotation()
-        if self.dgidb is None:
-            self._download_drug_annotation(source="dgidb")
+        if not self.chembl.loaded:
+            self.chembl.set()
+        if not self.dgidb.loaded:
+            self.dgidb.set()
 
         return LookUp(
             type="drug",
-            transfer_metadata=[self.chembl, self.dgidb_df],
+            transfer_metadata=[self.chembl.dataframe, self.dgidb.data],
         )
+
+    class DrugDataBase:
+        def __init__(self, database: Literal["chembl", "dgidb"] = "chembl"):
+            self.database = database
+            self.loaded = False
+
+        def set(self) -> None:
+            self.loaded = True
+            data = _download_drug_annotation(source=self.database)
+            self.data = data
+            if self.database == "chembl":
+                if not isinstance(data, dict):
+                    raise ValueError(
+                        "The chembl data is in a wrong format. Please clear the cache and reinitialize the object."
+                    )
+                self.dictionary = data
+                targets = dict(ChainMap(*[data[cat] for cat in data]))
+                self.dataframe = pd.DataFrame([{"Compound": k, "Targets": v} for k, v in targets.items()])
+                self.dataframe.rename(
+                    columns={"Targets": "targets", "Compound": "compounds"},
+                    inplace=True,
+                )
+            else:
+                if not isinstance(data, pd.DataFrame):
+                    raise ValueError(
+                        "The dgidb data is in a wrong format. Please clear the cache and reinitialize the object."
+                    )
+                self.dataframe = data.groupby("drug_claim_name")["gene_claim_name"].apply(list).reset_index()
+                self.dataframe.rename(
+                    columns={
+                        "gene_claim_name": "targets",
+                        "drug_claim_name": "compounds",
+                    },
+                    inplace=True,
+                )
+                self.dictionary = self.dataframe.set_index("compounds")["targets"].to_dict()
+
+        def df(self) -> pd.DataFrame:
+            if not self.loaded:
+                self.set()
+            return self.dataframe
+
+        def dict(self) -> dict[str, list[str]] | dict[str, dict[str, list[str]]]:
+            if not self.loaded:
+                self.set()
+            return self.dictionary

@@ -30,8 +30,8 @@ def _prepare_targets(
 
     if targets is None:
         pt_drug = Drug()
-        pt_drug._download_drug_annotation()
-        targets = pt_drug._chembl_json
+        pt_drug.chembl.set()
+        targets = pt_drug.chembl.dictionary
         nested = True
     else:
         targets = targets.copy()
@@ -298,6 +298,8 @@ class Enrichment:
         self,
         adata: AnnData,
         targets: dict[str, dict[str, list[str]]] = None,
+        source: Literal["chembl", "dgidb"] = "chembl",
+        category_name: str = "interaction_type",
         categories: Sequence[str] = None,
         groupby: str = None,
         key: str = "pertpy_enrichment",
@@ -314,9 +316,11 @@ class Enrichment:
             adata: An AnnData object with enrichment results stored in `.uns["pertpy_enrichment_score"]`.
             targets: Gene groups to evaluate, which can be targets of known drugs, GO terms, pathway memberships, etc.
                      Accepts a dictionary of dictionaries with group categories as keys.
-                     If not provided, ChEMBL-derived drug target sets are used.
+                     If not provided, ChEMBL-derived or dgbidb drug target sets are used, given by `source`.
+            source: Source of drug target sets when `targets=None`, `chembl` or `dgidb`. Defaults to `chembl`.
             categories: To subset the gene groups to specific categories, especially when `targets=None`.
                             For ChEMBL drug targets, these are ATC level 1/level 2 category codes.
+            category_name: The name of category used to generate a nested drug target set when `targets=None` and `source=dgidb`. Defaults to `interaction_type`.
             groupby: dotplot groupby such as clusters or cell types.
             key: Prefix key of enrichment results in `uns`.
                  Defaults to `pertpy_enrichment`.
@@ -346,8 +350,20 @@ class Enrichment:
 
         if targets is None:
             pt_drug = Drug()
-            pt_drug._download_drug_annotation(source="chembl")
-            targets = pt_drug._chembl_json
+            if source == "chembl":
+                pt_drug.chembl.set()
+                targets = pt_drug.chembl.dictionary
+            else:
+                pt_drug.dgidb.set()
+                interaction = pt_drug.dgidb.data
+                if category_name not in interaction.columns:
+                    raise ValueError("The category name is not available in dgidb drug target data.")
+                interaction[category_name] = interaction[category_name].fillna("Unknown/Other")
+                targets = (
+                    interaction.groupby(category_name)
+                    .apply(lambda x: x.groupby("drug_claim_name")["gene_claim_name"].apply(list).to_dict())
+                    .to_dict()
+                )
         else:
             targets = targets.copy()
         if categories is not None:
@@ -382,7 +398,14 @@ class Enrichment:
         }
 
         return sc.pl.dotplot(
-            enrichment_score_adata, groupby=groupby, swap_axes=True, ax=ax, save=save, show=show, **plot_args, **kwargs
+            enrichment_score_adata,
+            groupby=groupby,
+            swap_axes=True,
+            ax=ax,
+            save=save,
+            show=show,
+            **plot_args,
+            **kwargs,
         )
 
     def plot_gsea(
