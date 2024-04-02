@@ -231,18 +231,21 @@ class LookUp:
         elif type == "drug":
             self.chembl = transfer_metadata[0]
             self.dgidb = transfer_metadata[1]
+            self.pharmgkb = transfer_metadata[2]
 
             drug_annotation = namedtuple(
                 "drug_annotation",
-                "n_compound compound_example n_target target_example",
+                "n_compound compound_example n_target target_example n_disease disease_example",
             )
-            drugs = namedtuple("drugs", ["chembl", "dgidb"])
+            drugs = namedtuple("drugs", ["chembl", "dgidb", "pharmgkb"])
 
             dgidb_data = {
                 "n_compound": len(self.dgidb.drug_claim_name.unique()),
                 "n_target": len(self.dgidb.gene_claim_name.unique()),
                 "compound_example": self.dgidb.drug_claim_name.values[0:5],
                 "target_example": self.dgidb.gene_claim_name.unique()[0:5],
+                "n_disease": 0,
+                "disease_example": "",
             }
             dgidb_record = drug_annotation(**dgidb_data)
 
@@ -254,9 +257,21 @@ class LookUp:
                 "n_target": len(chembl_targets),
                 "compound_example": self.chembl.compounds.values[0:5],
                 "target_example": chembl_targets[0:5],
+                "n_disease": 0,
+                "disease_example": "",
             }
             chembl_record = drug_annotation(**chembl_data)
-            self.drugs = drugs(chembl_record, dgidb_record)
+
+            pharmgkb_data = {
+                "n_compound": len(self.pharmgkb[self.pharmgkb.Type == "Chemical"]["Compound|Disease"].unique()),
+                "n_target": len(self.pharmgkb.Gene.unique()),
+                "compound_example": self.pharmgkb[self.pharmgkb.Type == "Chemical"]["Compound|Disease"].unique()[0:5],
+                "target_example": self.pharmgkb.Gene.unique()[0:5],
+                "n_disease": len(self.pharmgkb[self.pharmgkb.Type == "Disease"]["Compound|Disease"].unique()),
+                "disease_example": self.pharmgkb[self.pharmgkb.Type == "Disease"]["Compound|Disease"].unique()[0:5],
+            }
+            pharmgkb_record = drug_annotation(**pharmgkb_data)
+            self.drugs = drugs(chembl_record, dgidb_record, pharmgkb_record)
 
         else:
             raise NotImplementedError
@@ -513,18 +528,18 @@ class LookUp:
 
     def available_drug_annotation(
         self,
-        drug_annotation_source: Literal["chembl", "dgidb"] = "chembl",
+        drug_annotation_source: Literal["chembl", "dgidb", "pharmgkb"] = "chembl",
         query_id_list: Sequence[str] | None = None,
-        query_id_type: Literal["target", "compound"] = "target",
+        query_id_type: Literal["target", "compound", "disease"] = "target",
     ) -> None:
         """A brief summary of drug annotation.
 
         Args:
-            drug_annotation_source: the source of drug annotation data, chembl or dgidb. Defaults to "chembl".
+            drug_annotation_source: the source of drug annotation data, chembl, dgidb or pharmgkb. Defaults to "chembl".
             query_id_list: Unique target or compound names to test the number of matched ones present in the metadata.
                         If set to None, query of compound identifiers will be disabled.
                         Defaults to None.
-            query_id_type: The type of identifiers, target or compound. Defaults to 'target'.
+            query_id_type: The type of identifiers, target, compound and disease(pharmgkb only). Defaults to 'target'.
         """
         if self.type != "drug":
             raise ValueError("This is not a LookUp object specific for DrugMetaData!")
@@ -537,14 +552,31 @@ class LookUp:
                     chembl_targets = {t for target in self.chembl.targets.tolist() for t in target}
                     # flatten the target column and remove duplicates
                     not_matched_identifiers = list(set(query_id_list) - chembl_targets)
-                else:
+                elif query_id_type == "compound":
                     not_matched_identifiers = list(set(query_id_list) - self.chembl["compounds"])
+                else:
+                    raise ValueError(
+                        "Gene-disease association is not available in chembl dataset, please try with pharmgkb."
+                    )
 
-            else:
+            elif drug_annotation_source == "dgidb":
                 if query_id_type == "target":
                     not_matched_identifiers = list(set(query_id_list) - set(self.dgidb["gene_claim_name"]))
-                else:
+                elif query_id_type == "compound":
                     not_matched_identifiers = list(set(query_id_list) - set(self.dgidb["drug_claim_name"]))
+                else:
+                    raise ValueError(
+                        "Gene-disease association is not available in dgidb dataset, please try with pharmgkb."
+                    )
+            else:
+                if query_id_type == "target":
+                    not_matched_identifiers = list(set(query_id_list) - set(self.pharmgkb["Gene"]))
+                elif query_id_type == "compound":
+                    compounds = self.pharmgkb[self.pharmgkb["Type"] == "Chemical"]
+                    not_matched_identifiers = list(set(query_id_list) - set(compounds["Compound|Disease"]))
+                else:
+                    diseases = self.pharmgkb[self.pharmgkb["Type"] == "Disease"]
+                    not_matched_identifiers = list(set(query_id_list) - set(diseases["Compound|Disease"]))
 
             print(f"{len(not_matched_identifiers)} {query_id_type}s are not found in the metadata.")
             print(f"{identifier_num_all - len(not_matched_identifiers)} {query_id_type}s are found! ")

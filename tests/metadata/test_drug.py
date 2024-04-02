@@ -27,3 +27,8 @@ class TestDrug:
         self.pt_drug.annotate(adata=adata, source="dgidb")
         assert {"compounds"}.issubset(adata.var.columns)
         assert "AMITIFADINE" in adata.var["compounds"]["SLC6A2"]
+
+    def test_drug_pharmgkb(self, adata):
+        self.pt_drug.annotate(adata=adata, source="pharmgkb")
+        assert {"compounds"}.issubset(adata.var.columns)
+        assert "3,4-methylenedioxymethamphetamine" in adata.var["compounds"]["SLC6A2"]

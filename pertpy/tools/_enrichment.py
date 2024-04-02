@@ -298,7 +298,7 @@ class Enrichment:
         self,
         adata: AnnData,
         targets: dict[str, dict[str, list[str]]] = None,
-        source: Literal["chembl", "dgidb"] = "chembl",
+        source: Literal["chembl", "dgidb", "pharmgkb"] = "chembl",
         category_name: str = "interaction_type",
         categories: Sequence[str] = None,
         groupby: str = None,
@@ -317,10 +317,10 @@ class Enrichment:
             targets: Gene groups to evaluate, which can be targets of known drugs, GO terms, pathway memberships, etc.
                      Accepts a dictionary of dictionaries with group categories as keys.
                      If not provided, ChEMBL-derived or dgbidb drug target sets are used, given by `source`.
-            source: Source of drug target sets when `targets=None`, `chembl` or `dgidb`. Defaults to `chembl`.
+            source: Source of drug target sets when `targets=None`, `chembl`, `dgidb` or `pharmgkb`. Defaults to `chembl`.
             categories: To subset the gene groups to specific categories, especially when `targets=None`.
                             For ChEMBL drug targets, these are ATC level 1/level 2 category codes.
-            category_name: The name of category used to generate a nested drug target set when `targets=None` and `source=dgidb`. Defaults to `interaction_type`.
+            category_name: The name of category used to generate a nested drug target set when `targets=None` and `source=dgidb|pharmgkb`. Defaults to `interaction_type`.
             groupby: dotplot groupby such as clusters or cell types.
             key: Prefix key of enrichment results in `uns`.
                  Defaults to `pertpy_enrichment`.
@@ -353,7 +353,7 @@ class Enrichment:
             if source == "chembl":
                 pt_drug.chembl.set()
                 targets = pt_drug.chembl.dictionary
-            else:
+            elif source == "dgidb":
                 pt_drug.dgidb.set()
                 interaction = pt_drug.dgidb.data
                 if category_name not in interaction.columns:
@@ -362,6 +362,17 @@ class Enrichment:
                 targets = (
                     interaction.groupby(category_name)
                     .apply(lambda x: x.groupby("drug_claim_name")["gene_claim_name"].apply(list).to_dict())
+                    .to_dict()
+                )
+            else:
+                pt_drug.pharmgkb.set()
+                interaction = pt_drug.pharmgkb.data
+                if category_name not in interaction.columns:
+                    raise ValueError("The category name is not available in pharmgkb drug target data.")
+                interaction[category_name] = interaction[category_name].fillna("Unknown/Other")
+                targets = (
+                    interaction.groupby(category_name)
+                    .apply(lambda x: x.groupby("Compound|Disease")["Gene"].apply(list).to_dict())
                     .to_dict()
                 )
         else:
