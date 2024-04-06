@@ -613,8 +613,6 @@ class Mixscape:
         subsample_number: int | None = 900,
         vmin: float | None = -2,
         vmax: float | None = 2,
-        fontsize: int | None = 8,
-        ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
@@ -667,8 +665,6 @@ class Mixscape:
             vmax=vmax,
             n_genes=20,
             groups=["NT"],
-            fontsize=fontsize,
-            ax=ax,
             show=show,
             save=save,
             **kwds,
@@ -775,17 +771,6 @@ class Mixscape:
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-        ax = plt.gca()
-
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
-        if show:
-            plt.show()
-            return None
-        elif not show or show is None:
-            return ax
-
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
             if palette is None:
@@ -841,17 +826,6 @@ class Mixscape:
                 plt.title("Density", fontsize=18)
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
-
-        ax = plt.gca()
-
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
-        if show:
-            plt.show()
-            return None
-        elif not show or show is None:
-            return ax
 
     def plot_violin(  # pragma: no cover
         self,
