@@ -1399,7 +1399,7 @@ class CompositionalModel2(ABC):
         # If plot as facets, create a FacetGrid and map barplot to it.
         if plot_facets:
             if isinstance(palette, ListedColormap):
-                palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))])
+                palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]).tolist()
             if figsize is not None:
                 height = figsize[0]
                 aspect = np.round(figsize[1] / figsize[0], 2)
@@ -1861,7 +1861,8 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        figsize: tuple[float, float] | None = None,
+        w: float | None = None,
+        h: float | None = None,
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | bool | None = None,
@@ -1933,9 +1934,9 @@ class CompositionalModel2(ABC):
         tree_style.show_scale = show_scale
 
         if save is not None:
-            tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
+            tree.render(save, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
+            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
 
@@ -1950,7 +1951,8 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        figsize: tuple[float, float] | None = None,
+        w: float | None = None,
+        h: float | None = None,
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | None = None,
@@ -2129,7 +2131,7 @@ class CompositionalModel2(ABC):
             tree2.render(save, tree_style=tree_style, units=units)
         if show:
             if not show_leaf_effects:
-                return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
+                return tree2.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
         else:
             if not show_leaf_effects:
                 return tree2, tree_style
@@ -2620,14 +2622,14 @@ def from_scanpy(
         covariate_df_ = covariate_df_.join(covariate_df_uns, how="left")
 
     if covariate_obs:
-        is_unique = adata.obs.groupby(sample_identifier).transform(lambda x: x.nunique() == 1)
+        is_unique = adata.obs.groupby(sample_identifier, observed=True).transform(lambda x: x.nunique() == 1)
         unique_covariates = is_unique.columns[is_unique.all()].tolist()
 
         if len(unique_covariates) < len(covariate_obs):
             skipped = set(covariate_obs) - set(unique_covariates)
             print(f"[bold yellow]Covariates {skipped} have non-unique values! Skipping...")
         if unique_covariates:
-            covariate_df_obs = adata.obs.groupby(sample_identifier).first()[unique_covariates]
+            covariate_df_obs = adata.obs.groupby(sample_identifier, observed=True).first()[unique_covariates]
             covariate_df_ = covariate_df_.join(covariate_df_obs, how="left")
 
     if covariate_df is not None:
