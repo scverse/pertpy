@@ -696,6 +696,6 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        if (not show and not save) or (show is None and save is None):
+        if not (show or save):
             return ax
         return None

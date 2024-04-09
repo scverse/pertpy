@@ -773,7 +773,7 @@ class Mixscape:
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
-            if (not show and not save) or (show is None and save is None):
+            if not (show or save):
                 return plt.gca()
 
         # If before_mixscape is False, split densities based on mixscape classifications
@@ -836,7 +836,7 @@ class Mixscape:
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
-            if (not show and not save) or (show is None and save is None):
+            if not (show or save):
                 return plt.gca()
 
     def plot_violin(  # pragma: no cover

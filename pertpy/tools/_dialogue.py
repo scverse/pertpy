@@ -1115,7 +1115,7 @@ class Dialogue:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        elif (not show and not save) or (show is None and save is None):
+        if not (show or save):
             return ax
         return None
 
@@ -1171,6 +1171,6 @@ class Dialogue:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        elif (not show and not save) or (show is None and save is None):
+        if not (show or save):
             return ax
         return None
