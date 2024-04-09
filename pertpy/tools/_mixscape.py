@@ -557,7 +557,7 @@ class Mixscape:
         all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
         all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
         NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
-        
+
         if show:
             color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
             unique_genes = NP_KO_cells["gene"].unique()
@@ -595,9 +595,9 @@ class Mixscape:
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
             )
-        
+
         plt.tight_layout()
-        _utils.savefig_or_show("mixscape_barplot", show=show, save=save) 
+        _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
 
     def plot_heatmap(  # pragma: no cover
         self,
@@ -768,7 +768,7 @@ class Mixscape:
                 plt.title("Density Plot", fontsize=18)
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
-            
+
             if show and save:
                 plt.savefig(save, bbox_inches="tight")
                 plt.show()
@@ -837,7 +837,7 @@ class Mixscape:
                 plt.title("Density", fontsize=18)
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
-            
+
             if show and save:
                 plt.savefig(save, bbox_inches="tight")
                 plt.show()
