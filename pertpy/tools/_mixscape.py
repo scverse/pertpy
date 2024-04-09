@@ -557,7 +557,8 @@ class Mixscape:
         all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
         all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
         NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
-        if not show:
+        
+        if show:
             color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
             unique_genes = NP_KO_cells["gene"].unique()
             fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
@@ -594,13 +595,9 @@ class Mixscape:
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
             )
-            plt.tight_layout()
-            _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
-
-            if not show or show is None:
-                return ax
-            else:
-                return None
+        
+        plt.tight_layout()
+        _utils.savefig_or_show("mixscape_barplot", show=show, save=save) 
 
     def plot_heatmap(  # pragma: no cover
         self,
@@ -730,6 +727,7 @@ class Mixscape:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
         perturbation_score["mix"] = adata.obs[mixscape_class][perturbation_score.index]
         gd = list(set(perturbation_score[labels]).difference({target_gene}))[0]
+
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             palette = {gd: "#7d7d7d", target_gene: color}
@@ -770,6 +768,19 @@ class Mixscape:
                 plt.title("Density Plot", fontsize=18)
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
+            
+            if show and save:
+                plt.savefig(save, bbox_inches="tight")
+                plt.show()
+                return None
+            elif show and not save:
+                plt.show()
+                return None
+            elif not show and save:
+                plt.savefig(save, bbox_inches="tight")
+                return None
+            elif (not show and not save) or (show is None and save is None):
+                return plt.gca()
 
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
@@ -826,6 +837,19 @@ class Mixscape:
                 plt.title("Density", fontsize=18)
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
+            
+            if show and save:
+                plt.savefig(save, bbox_inches="tight")
+                plt.show()
+                return None
+            elif show and not save:
+                plt.show()
+                return None
+            elif not show and save:
+                plt.savefig(save, bbox_inches="tight")
+                return None
+            elif (not show and not save) or (show is None and save is None):
+                return plt.gca()
 
     def plot_violin(  # pragma: no cover
         self,
