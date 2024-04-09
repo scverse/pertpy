@@ -698,3 +698,4 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             plt.show()
         if (not show and not save) or (show is None and save is None):
             return ax
+        return None

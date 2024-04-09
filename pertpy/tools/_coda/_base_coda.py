@@ -1279,6 +1279,7 @@ class CompositionalModel2(ABC):
             plt.show()
         if (not show and not save) or (show is None and save is None):
             return ax
+        return None
 
     def plot_effects_barplot(  # pragma: no cover
         self,
@@ -1439,6 +1440,7 @@ class CompositionalModel2(ABC):
                 plt.show()
             if (not show and not save) or (show is None and save is None):
                 return g
+            return None
 
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
@@ -1477,6 +1479,7 @@ class CompositionalModel2(ABC):
                 plt.show()
             if (not show and not save) or (show is None and save is None):
                 return ax
+            return None
 
     def plot_boxplots(  # pragma: no cover
         self,
@@ -1647,6 +1650,7 @@ class CompositionalModel2(ABC):
                 plt.show()
             if (not show and not save) or (show is None and save is None):
                 return g
+            return None
 
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
         else:
@@ -1717,6 +1721,7 @@ class CompositionalModel2(ABC):
                 plt.show()
             if (not show and not save) or (show is None and save is None):
                 return ax
+            return None
 
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
         self,
@@ -1840,6 +1845,7 @@ class CompositionalModel2(ABC):
             plt.show()
         if (not show and not save) or (show is None and save is None):
             return ax
+        return None
 
     def plot_draw_tree(  # pragma: no cover
         self,

@@ -1117,6 +1117,7 @@ class Dialogue:
             plt.show()
         elif (not show and not save) or (show is None and save is None):
             return ax
+        return None
 
     def plot_pairplot(
         self,
@@ -1172,3 +1173,4 @@ class Dialogue:
             plt.show()
         elif (not show and not save) or (show is None and save is None):
             return ax
+        return None
