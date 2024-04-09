@@ -2127,6 +2127,7 @@ class CompositionalModel2(ABC):
         else:
             if not show_leaf_effects:
                 return tree2, tree_style
+        return None
 
     def plot_effects_umap(  # pragma: no cover
         self,
