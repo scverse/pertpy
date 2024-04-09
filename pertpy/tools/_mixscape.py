@@ -769,17 +769,11 @@ class Mixscape:
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            if show and save:
+            if save:
                 plt.savefig(save, bbox_inches="tight")
+            if show:
                 plt.show()
-                return None
-            elif show and not save:
-                plt.show()
-                return None
-            elif not show and save:
-                plt.savefig(save, bbox_inches="tight")
-                return None
-            elif (not show and not save) or (show is None and save is None):
+            if (not show and not save) or (show is None and save is None):
                 return plt.gca()
 
         # If before_mixscape is False, split densities based on mixscape classifications
@@ -838,17 +832,11 @@ class Mixscape:
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            if show and save:
+            if save:
                 plt.savefig(save, bbox_inches="tight")
+            if show:
                 plt.show()
-                return None
-            elif show and not save:
-                plt.show()
-                return None
-            elif not show and save:
-                plt.savefig(save, bbox_inches="tight")
-                return None
-            elif (not show and not save) or (show is None and save is None):
+            if (not show and not save) or (show is None and save is None):
                 return plt.gca()
 
     def plot_violin(  # pragma: no cover
