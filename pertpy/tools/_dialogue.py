@@ -1111,13 +1111,17 @@ class Dialogue:
 
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 
-        if show:
+        if show and save:
+            plt.savefig(save, bbox_inches="tight")
             plt.show()
             return None
-        if save:
+        elif show and not save:
+            plt.show()
+            return None
+        elif not show and save:
             plt.savefig(save, bbox_inches="tight")
             return None
-        elif not show or show is None:
+        elif (not show and not save) or (show is None and save is None):
             return ax
 
     def plot_pairplot(
@@ -1168,11 +1172,15 @@ class Dialogue:
         mcp_pivot = pd.concat([mcp_pivot, aggstats[color]], axis=1)
         ax = sns.pairplot(mcp_pivot, hue=color, corner=True)
 
-        if show:
+        if show and save:
+            plt.savefig(save, bbox_inches="tight")
             plt.show()
             return None
-        if save:
+        elif show and not save:
+            plt.show()
+            return None
+        elif not show and save:
             plt.savefig(save, bbox_inches="tight")
             return None
-        elif not show or show is None:
+        elif (not show and not save) or (show is None and save is None):
             return ax
