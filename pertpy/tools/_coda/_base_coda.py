@@ -1197,7 +1197,7 @@ class CompositionalModel2(ABC):
         show: bool | None = None,
         save: str | bool | None = None,
         **kwargs,
-    ):
+    ) -> plt.Axes | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
         Args:
@@ -1272,18 +1272,12 @@ class CompositionalModel2(ABC):
                 palette=palette,
                 show_legend=show_legend,
             )
-
-        if show and save:
+        
+        if save:
             plt.savefig(save, bbox_inches="tight")
+        if show:
             plt.show()
-            return None
-        elif show and not save:
-            plt.show()
-            return None
-        elif not show and save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
-        elif (not show and not save) or (show is None and save is None):
+        if (not show and not save) or (show is None and save is None):
             return ax
 
     def plot_effects_barplot(  # pragma: no cover
@@ -1303,7 +1297,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ):
+    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1439,17 +1433,11 @@ class CompositionalModel2(ABC):
                         if ax.get_xticklabels()[0]._text == "zero":
                             ax.set_xticks([])
 
-            if show and save:
+            if save:
                 plt.savefig(save, bbox_inches="tight")
+            if show:
                 plt.show()
-                return None
-            elif show and not save:
-                plt.show()
-                return None
-            elif not show and save:
-                plt.savefig(save, bbox_inches="tight")
-                return None
-            elif (not show and not save) or (show is None and save is None):
+            if (not show and not save) or (show is None and save is None):
                 return g
 
         # If not plot as facets, call barplot to plot cell types on the x-axis.
@@ -1483,17 +1471,11 @@ class CompositionalModel2(ABC):
             cell_types = pd.unique(plot_df["Cell Type"])
             ax.set_xticklabels(cell_types, rotation=90)
 
-            if show and save:
+            if save:
                 plt.savefig(save, bbox_inches="tight")
+            if show:
                 plt.show()
-                return None
-            elif show and not save:
-                plt.show()
-                return None
-            elif not show and save:
-                plt.savefig(save, bbox_inches="tight")
-                return None
-            elif (not show and not save) or (show is None and save is None):
+            if (not show and not save) or (show is None and save is None):
                 return ax
 
     def plot_boxplots(  # pragma: no cover
@@ -1515,7 +1497,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ):
+    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
@@ -1659,17 +1641,11 @@ class CompositionalModel2(ABC):
                         **args_swarmplot,
                     ).set_titles("{col_name}")
 
-            if show and save:
+            if save:
                 plt.savefig(save, bbox_inches="tight")
+            if show:
                 plt.show()
-                return None
-            elif show and not save:
-                plt.show()
-                return None
-            elif not show and save:
-                plt.savefig(save, bbox_inches="tight")
-                return None
-            elif (not show and not save) or (show is None and save is None):
+            if (not show and not save) or (show is None and save is None):
                 return g
 
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
@@ -1735,17 +1711,11 @@ class CompositionalModel2(ABC):
                     title=feature_name,
                 )
 
-            if show and save:
+            if save:
                 plt.savefig(save, bbox_inches="tight")
+            if show:
                 plt.show()
-                return None
-            elif show and not save:
-                plt.show()
-                return None
-            elif not show and save:
-                plt.savefig(save, bbox_inches="tight")
-                return None
-            elif (not show and not save) or (show is None and save is None):
+            if (not show and not save) or (show is None and save is None):
                 return ax
 
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
@@ -1866,11 +1836,9 @@ class CompositionalModel2(ABC):
 
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
         if show:
             plt.show()
-            return None
-        elif not show or show is None:
+        if (not show and not save) or (show is None and save is None):
             return ax
 
     def plot_draw_tree(  # pragma: no cover
@@ -1974,7 +1942,7 @@ class CompositionalModel2(ABC):
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | None = None,
-    ):
+    ) -> Tree | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:
