@@ -645,7 +645,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         show: bool = False,
         save: str | bool | None = None,
         fontsize: float = 14,
-    ) -> None:
+    ) -> plt.Axes | None:
         """Plots the dot product between delta and latent representation of a linear classifier.
 
         Builds a linear classifier based on the dot product between
@@ -694,9 +694,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
 
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
         if show:
             plt.show()
-            return None
-        elif not show or show is None:
+        if (not show and not save) or (show is None and save is None):
             return ax
