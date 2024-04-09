@@ -1073,7 +1073,7 @@ class Dialogue:
         ax: Axes | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> Axes | None:
+    ):
         """Plots split violin plots for a given MCP and split variable.
 
         Any cells with a value for split_key not in split_which are removed from the plot.
@@ -1133,7 +1133,7 @@ class Dialogue:
         mcp: str = "mcp_0",
         show: bool | None = None,
         save: bool | str | None = None,
-    ) -> PairGrid:
+    ):
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,
