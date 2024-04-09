@@ -1045,6 +1045,7 @@ class Augur:
             plt.show()
         elif (not show and not save) or (show is None and save is None):
             return ax
+        return None
 
     def plot_important_features(
         self,
@@ -1112,6 +1113,7 @@ class Augur:
             plt.show()
         elif (not show and not save) or (show is None and save is None):
             return ax
+        return None
 
     def plot_lollipop(
         self,
@@ -1174,6 +1176,7 @@ class Augur:
             plt.show()
         elif (not show and not save) or (show is None and save is None):
             return ax
+        return None
 
     def plot_scatterplot(
         self,
@@ -1244,3 +1247,4 @@ class Augur:
             plt.show()
         elif (not show and not save) or (show is None and save is None):
             return ax
+        return None
