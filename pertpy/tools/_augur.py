@@ -989,7 +989,6 @@ class Augur:
             results: Results after running differential prioritization.
             top_n: optionally, the number of top prioritized cell types to label in the plot
             ax: optionally, axes used to draw plot
-            return_figure: if `True` returns figure of the plot
 
         Returns:
             Axes of the plot.
@@ -1043,7 +1042,7 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        elif (not show and not save) or (show is None and save is None):
+        if not (show or save):
             return ax
         return None
 
@@ -1111,7 +1110,7 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        elif (not show and not save) or (show is None and save is None):
+        if not (show or save):
             return ax
         return None
 
@@ -1174,7 +1173,7 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        elif (not show and not save) or (show is None and save is None):
+        if not (show or save):
             return ax
         return None
 
@@ -1245,6 +1244,6 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        elif (not show and not save) or (show is None and save is None):
+        if not (show or save):
             return ax
         return None
