@@ -982,7 +982,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ):
+    ) -> Axes | None:
         """Plot scatterplot of differential prioritization.
 
         Args:
@@ -1039,16 +1039,10 @@ class Augur:
         legend1 = ax.legend(*scatter.legend_elements(), loc="center left", title="z-scores", bbox_to_anchor=(1, 0.5))
         ax.add_artist(legend1)
 
-        if show and save:
+        if save:
             plt.savefig(save, bbox_inches="tight")
+        if show:
             plt.show()
-            return None
-        elif show and not save:
-            plt.show()
-            return None
-        elif not show and save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
         elif (not show and not save) or (show is None and save is None):
             return ax
 
@@ -1060,7 +1054,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ):
+    ) -> Axes | None:
         """Plot a lollipop plot of the n features with largest feature importances.
 
         Args:
@@ -1112,16 +1106,10 @@ class Augur:
         plt.ylabel("Gene")
         plt.yticks(y_axes_range, n_features["genes"])
 
-        if show and save:
+        if save:
             plt.savefig(save, bbox_inches="tight")
+        if show:
             plt.show()
-            return None
-        elif show and not save:
-            plt.show()
-            return None
-        elif not show and save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
         elif (not show and not save) or (show is None and save is None):
             return ax
 
@@ -1132,7 +1120,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ):
+    ) -> Axes | None:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
@@ -1180,16 +1168,10 @@ class Augur:
         plt.ylabel("Cell Type")
         plt.yticks(y_axes_range, results["summary_metrics"].sort_values("mean_augur_score", axis=1).columns)
 
-        if show and save:
+        if save:
             plt.savefig(save, bbox_inches="tight")
+        if show:
             plt.show()
-            return None
-        elif show and not save:
-            plt.show()
-            return None
-        elif not show and save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
         elif (not show and not save) or (show is None and save is None):
             return ax
 
@@ -1200,7 +1182,7 @@ class Augur:
         top_n: int = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ):
+    ) -> Axes | None:
         """Create scatterplot with two augur results.
 
         Args:
@@ -1256,15 +1238,9 @@ class Augur:
         plt.xlabel("Augur scores 1")
         plt.ylabel("Augur scores 2")
 
-        if show and save:
+        if save:
             plt.savefig(save, bbox_inches="tight")
+        if show:
             plt.show()
-            return None
-        elif show and not save:
-            plt.show()
-            return None
-        elif not show and save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
         elif (not show and not save) or (show is None and save is None):
             return ax
