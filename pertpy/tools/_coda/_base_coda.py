@@ -1273,13 +1273,17 @@ class CompositionalModel2(ABC):
                 show_legend=show_legend,
             )
 
-        if save:
+        if show and save:
             plt.savefig(save, bbox_inches="tight")
-            return None
-        if show:
             plt.show()
             return None
-        elif not show or show is None:
+        elif show and not save:
+            plt.show()
+            return None
+        elif not show and save:
+            plt.savefig(save, bbox_inches="tight")
+            return None
+        elif (not show and not save) or (show is None and save is None):
             return ax
 
     def plot_effects_barplot(  # pragma: no cover
@@ -1435,13 +1439,17 @@ class CompositionalModel2(ABC):
                         if ax.get_xticklabels()[0]._text == "zero":
                             ax.set_xticks([])
 
-            if save:
+            if show and save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
-            if show:
                 plt.show()
                 return None
-            elif not show or show is None:
+            elif show and not save:
+                plt.show()
+                return None
+            elif not show and save:
+                plt.savefig(save, bbox_inches="tight")
+                return None
+            elif (not show and not save) or (show is None and save is None):
                 return g
 
         # If not plot as facets, call barplot to plot cell types on the x-axis.
@@ -1475,15 +1483,19 @@ class CompositionalModel2(ABC):
             cell_types = pd.unique(plot_df["Cell Type"])
             ax.set_xticklabels(cell_types, rotation=90)
 
-            if save:
+            if show and save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
-            if show:
                 plt.show()
                 return None
-            if not show or show is None:
+            elif show and not save:
+                plt.show()
+                return None
+            elif not show and save:
+                plt.savefig(save, bbox_inches="tight")
+                return None
+            elif (not show and not save) or (show is None and save is None):
                 return ax
-
+              
     def plot_boxplots(  # pragma: no cover
         self,
         data: AnnData | MuData,
@@ -1647,13 +1659,17 @@ class CompositionalModel2(ABC):
                         **args_swarmplot,
                     ).set_titles("{col_name}")
 
-            if save:
+            if show and save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
-            if show:
                 plt.show()
                 return None
-            elif not show or show is None:
+            elif show and not save:
+                plt.show()
+                return None
+            elif not show and save:
+                plt.savefig(save, bbox_inches="tight")
+                return None
+            elif (not show and not save) or (show is None and save is None):
                 return g
 
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
@@ -1719,13 +1735,17 @@ class CompositionalModel2(ABC):
                     title=feature_name,
                 )
 
-            if save:
+            if show and save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
-            if show:
                 plt.show()
                 return None
-            elif not show or show is None:
+            elif show and not save:
+                plt.show()
+                return None
+            elif not show and save:
+                plt.savefig(save, bbox_inches="tight")
+                return None
+            elif (not show and not save) or (show is None and save is None):
                 return ax
 
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
@@ -1861,8 +1881,7 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        w: float | None = None,
-        h: float | None = None,
+        figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | bool | None = None,
@@ -1934,9 +1953,9 @@ class CompositionalModel2(ABC):
         tree_style.show_scale = show_scale
 
         if save is not None:
-            tree.render(save, tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
+            tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)  # type: ignore
+            return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
 
@@ -1951,8 +1970,7 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        w: float | None = None,
-        h: float | None = None,
+        figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | None = None,
@@ -2131,7 +2149,7 @@ class CompositionalModel2(ABC):
             tree2.render(save, tree_style=tree_style, units=units)
         if show:
             if not show_leaf_effects:
-                return tree2.render("%%inline", tree_style=tree_style, units=units, w=w, h=h, dpi=dpi)
+                return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
         else:
             if not show_leaf_effects:
                 return tree2, tree_style
