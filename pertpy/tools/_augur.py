@@ -982,7 +982,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes | None:
+    ):
         """Plot scatterplot of differential prioritization.
 
         Args:
@@ -1060,7 +1060,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes | None:
+    ):
         """Plot a lollipop plot of the n features with largest feature importances.
 
         Args:
@@ -1132,7 +1132,7 @@ class Augur:
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes | None:
+    ):
         """Plot a lollipop plot of the mean augur values.
 
         Args:
@@ -1200,7 +1200,7 @@ class Augur:
         top_n: int = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> Figure | Axes | None:
+    ):
         """Create scatterplot with two augur results.
 
         Args:

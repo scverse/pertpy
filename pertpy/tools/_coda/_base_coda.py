@@ -1197,7 +1197,7 @@ class CompositionalModel2(ABC):
         show: bool | None = None,
         save: str | bool | None = None,
         **kwargs,
-    ) -> plt.Figure | None:
+    ):
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
         Args:
@@ -1303,7 +1303,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
+    ):
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1515,7 +1515,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
+    ):
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
