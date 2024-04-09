@@ -1495,7 +1495,7 @@ class CompositionalModel2(ABC):
                 return None
             elif (not show and not save) or (show is None and save is None):
                 return ax
-              
+
     def plot_boxplots(  # pragma: no cover
         self,
         data: AnnData | MuData,
