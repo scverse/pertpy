@@ -957,12 +957,10 @@ class Milo:
 
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
         if show:
             plt.show()
-            return None
-        elif not show or show is None:
-            return plt.gcf()
+        if (not show and not save) or (show is None and save is None):
+            return plt.gca()
 
     def plot_nhood_counts_by_cond(
         self,
@@ -1010,9 +1008,7 @@ class Milo:
 
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
         if show:
             plt.show()
-            return None
-        elif not show or show is None:
-            return plt.gcf()
+        if (not show and not save) or (show is None and save is None):
+            return plt.gca()
