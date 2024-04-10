@@ -979,6 +979,7 @@ class Augur:
         self,
         results: pd.DataFrame,
         top_n: int = None,
+        return_fig: bool | None = None,
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1042,6 +1043,8 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return ax
         return None
@@ -1051,6 +1054,7 @@ class Augur:
         data: dict[str, Any],
         key: str = "augurpy_results",
         top_n: int = 10,
+        return_fig: bool | None = None,
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1110,6 +1114,8 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return ax
         return None
@@ -1118,6 +1124,7 @@ class Augur:
         self,
         data: dict[str, Any],
         key: str = "augurpy_results",
+        return_fig: bool | None = None,
         ax: Axes = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1173,6 +1180,8 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return ax
         return None
@@ -1182,6 +1191,7 @@ class Augur:
         results1: dict[str, Any],
         results2: dict[str, Any],
         top_n: int = None,
+        return_fig: bool | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
     ) -> Axes | None:
@@ -1244,6 +1254,8 @@ class Augur:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return ax
         return None
