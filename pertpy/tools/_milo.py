@@ -19,7 +19,6 @@ if TYPE_CHECKING:
 
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
-    from matplotlib.figure import Figure
 
 try:
     from rpy2.robjects import conversion, numpy2ri, pandas2ri
@@ -802,7 +801,7 @@ class Milo:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
-    ) -> Axes | Figure | None:
+    ) -> None:
         """Visualize cells in a neighbourhood.
 
         Args:
@@ -854,7 +853,7 @@ class Milo:
         return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> Axes | Figure | None:
+    ) -> None:
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
@@ -977,7 +976,7 @@ class Milo:
         return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> Axes | Figure | None:
+    ) -> None:
         """Plot boxplot of cell numbers vs condition of interest.
 
         Args:
