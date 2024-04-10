@@ -33,8 +33,8 @@ if TYPE_CHECKING:
     from ete3 import Tree
     from jax._src.typing import Array
     from matplotlib.axes import Axes
-    from matplotlib.figure import Figure
     from matplotlib.colors import Colormap
+    from matplotlib.figure import Figure
 
 config.update("jax_enable_x64", True)
 
