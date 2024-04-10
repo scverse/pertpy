@@ -610,6 +610,7 @@ class Mixscape:
         subsample_number: int | None = 900,
         vmin: float | None = -2,
         vmax: float | None = 2,
+        return_fig: bool | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
@@ -662,6 +663,7 @@ class Mixscape:
             vmax=vmax,
             n_genes=20,
             groups=["NT"],
+            return_fig=return_fig,
             show=show,
             save=save,
             **kwds,
@@ -678,6 +680,7 @@ class Mixscape:
         split_by: str = None,
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
@@ -773,6 +776,8 @@ class Mixscape:
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
+            if return_fig:
+                return plt.gcf()
             if not (show or save):
                 return plt.gca()
 
@@ -836,6 +841,8 @@ class Mixscape:
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
+            if return_fig:
+                return plt.gcf()
             if not (show or save):
                 return plt.gca()
 
@@ -1053,6 +1060,7 @@ class Mixscape:
         n_components: int | None = None,
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
@@ -1104,6 +1112,7 @@ class Mixscape:
             color=mixscape_class,
             palette=palette,
             color_map=color_map,
+            return_fig=return_fig,
             show=show,
             save=save,
             ax=ax,
