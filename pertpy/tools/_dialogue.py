@@ -1070,6 +1070,7 @@ class Dialogue:
         celltype_key: str,
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
@@ -1115,6 +1116,8 @@ class Dialogue:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return ax
         return None
@@ -1126,6 +1129,7 @@ class Dialogue:
         color: str,
         sample_id: str,
         mcp: str = "mcp_0",
+        return_fig: bool | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
     ) -> PairGrid | None:
@@ -1171,6 +1175,8 @@ class Dialogue:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return ax
         return None
