@@ -1193,6 +1193,7 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1272,11 +1273,13 @@ class CompositionalModel2(ABC):
                 palette=palette,
                 show_legend=show_legend,
             )
-
+ 
         if save:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return ax
         return None
@@ -1295,6 +1298,7 @@ class CompositionalModel2(ABC):
         args_barplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1438,6 +1442,8 @@ class CompositionalModel2(ABC):
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
+            if return_fig:
+                return plt.gcf()
             if not (show or save):
                 return g
             return None
@@ -1477,6 +1483,8 @@ class CompositionalModel2(ABC):
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
+            if return_fig:
+                return plt.gcf()
             if not (show or save):
                 return ax
             return None
@@ -1497,6 +1505,7 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1648,6 +1657,8 @@ class CompositionalModel2(ABC):
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
+            if return_fig:
+                return plt.gcf()
             if not (show or save):
                 return g
             return None
@@ -1719,6 +1730,8 @@ class CompositionalModel2(ABC):
                 plt.savefig(save, bbox_inches="tight")
             if show:
                 plt.show()
+            if return_fig:
+                return plt.gcf()
             if not (show or save):
                 return ax
             return None
@@ -1733,6 +1746,7 @@ class CompositionalModel2(ABC):
         label_cell_types: bool = True,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
@@ -1843,7 +1857,9 @@ class CompositionalModel2(ABC):
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
-        if (not show and not save) or (show is None and save is None):
+        if return_fig:
+            return plt.gcf()
+        if not (show or save):
             return ax
         return None
 
@@ -2138,6 +2154,7 @@ class CompositionalModel2(ABC):
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
+        return_fig: bool | None = None,
         ax: Axes = None,
         show: bool = None,
         save: str | bool | None = None,
@@ -2227,6 +2244,7 @@ class CompositionalModel2(ABC):
             vmin=vmin,
             palette=palette,
             color_map=color_map,
+            return_fig=return_fig,
             ax=ax,
             show=show,
             save=save,
