@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from anndata import AnnData
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
-    from matplotlib.figure import Figure
     from scipy import sparse
 
 
@@ -511,10 +510,11 @@ class Mixscape:
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-    ) -> Axes | None:
+    ):
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
 
         Args:
@@ -615,7 +615,7 @@ class Mixscape:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
-    ) -> Axes | Figure | None:
+    ) -> Axes | None:
         """Heatmap plot using mixscape results. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
@@ -685,7 +685,7 @@ class Mixscape:
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-    ) -> Axes | None:
+    ) -> None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
 
         Requires `pt.tl.mixscape` to be run first.
@@ -870,7 +870,7 @@ class Mixscape:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
-    ) -> Axes | None:
+    ):
         """Violin plot using mixscape results.
 
         Requires `pt.tl.mixscape` to be run first.
@@ -1066,7 +1066,7 @@ class Mixscape:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
-    ) -> Axes | Figure | None:
+    ) -> None:
         """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
