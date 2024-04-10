@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
     from matplotlib.colors import Colormap
 
 try:
@@ -801,7 +802,7 @@ class Milo:
         show: bool | None = None,
         save: bool | str | None = None,
         **kwargs,
-    ) -> None:
+    ) -> Axes | Figure | None:
         """Visualize cells in a neighbourhood.
 
         Args:
@@ -853,7 +854,7 @@ class Milo:
         return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> None:
+    ) -> Axes | Figure | None:
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
@@ -976,7 +977,7 @@ class Milo:
         return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> None:
+    ) -> Axes | Figure | None:
         """Plot boxplot of cell numbers vs condition of interest.
 
         Args:
