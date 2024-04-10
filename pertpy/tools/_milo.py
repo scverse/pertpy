@@ -796,6 +796,7 @@ class Milo:
         basis: str = "X_umap",
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
@@ -834,6 +835,7 @@ class Milo:
             title="Nhood" + str(ix),
             color_map=color_map,
             palette=palette,
+            return_fig=return_fig,
             ax=ax,
             show=show,
             save=save,
@@ -848,6 +850,7 @@ class Milo:
         alpha: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
+        return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
     ) -> None:
@@ -959,6 +962,8 @@ class Milo:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if (not show and not save) or (show is None and save is None):
             return plt.gca()
 
@@ -968,6 +973,7 @@ class Milo:
         test_var: str,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
+        return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
     ) -> None:
@@ -1010,5 +1016,7 @@ class Milo:
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
+        if return_fig:
+            return plt.gcf()
         if not (show or save):
             return plt.gca()
