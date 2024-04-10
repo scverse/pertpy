@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 
     from anndata import AnnData
     from matplotlib.axes import Axes
-    from matplotlib.figure import Figure
     from matplotlib.colors import Colormap
+    from matplotlib.figure import Figure
     from scipy import sparse
 
 
