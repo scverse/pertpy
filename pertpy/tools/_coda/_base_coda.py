@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from ete3 import Tree
     from jax._src.typing import Array
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
     from matplotlib.colors import Colormap
 
 config.update("jax_enable_x64", True)
@@ -1198,7 +1199,7 @@ class CompositionalModel2(ABC):
         show: bool | None = None,
         save: str | bool | None = None,
         **kwargs,
-    ) -> plt.Axes | None:
+    ) -> plt.Axes | plt.Figure | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
         Args:
@@ -1302,7 +1303,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
+    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1509,7 +1510,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
+    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
@@ -1750,7 +1751,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | None:
+    ) -> plt.Axes | plt.Figure | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
 
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
@@ -2159,7 +2160,7 @@ class CompositionalModel2(ABC):
         show: bool = None,
         save: str | bool | None = None,
         **kwargs,
-    ) -> plt.Axes | None:
+    ) -> plt.Axes | plt.Figure | None:
         """Plot a UMAP visualization colored by effect strength.
 
         Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData
