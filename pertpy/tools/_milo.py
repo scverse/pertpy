@@ -18,8 +18,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from matplotlib.axes import Axes
-    from matplotlib.figure import Figure
     from matplotlib.colors import Colormap
+    from matplotlib.figure import Figure
 
 try:
     from rpy2.robjects import conversion, numpy2ri, pandas2ri
