@@ -1273,7 +1273,7 @@ class CompositionalModel2(ABC):
                 palette=palette,
                 show_legend=show_legend,
             )
- 
+
         if save:
             plt.savefig(save, bbox_inches="tight")
         if show:
