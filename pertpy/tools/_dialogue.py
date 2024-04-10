@@ -27,6 +27,7 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 
 class Dialogue:
@@ -1074,7 +1075,7 @@ class Dialogue:
         ax: Axes | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> Axes | None:
+    ) -> Axes | Figure | None:
         """Plots split violin plots for a given MCP and split variable.
 
         Any cells with a value for split_key not in split_which are removed from the plot.
@@ -1132,7 +1133,7 @@ class Dialogue:
         return_fig: bool | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-    ) -> PairGrid | None:
+    ) -> PairGrid | Figure | None:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,
