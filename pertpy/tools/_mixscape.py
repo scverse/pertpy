@@ -510,6 +510,7 @@ class Mixscape:
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
@@ -557,7 +558,8 @@ class Mixscape:
         all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
         all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
         NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
-        if not show:
+
+        if show:
             color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
             unique_genes = NP_KO_cells["gene"].unique()
             fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
@@ -594,13 +596,9 @@ class Mixscape:
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
             )
-            plt.tight_layout()
-            _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
 
-            if not show or show is None:
-                return ax
-            else:
-                return None
+        plt.tight_layout()
+        _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
 
     def plot_heatmap(  # pragma: no cover
         self,
@@ -613,6 +611,7 @@ class Mixscape:
         subsample_number: int | None = 900,
         vmin: float | None = -2,
         vmax: float | None = 2,
+        return_fig: bool | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
         **kwds,
@@ -665,6 +664,7 @@ class Mixscape:
             vmax=vmax,
             n_genes=20,
             groups=["NT"],
+            return_fig=return_fig,
             show=show,
             save=save,
             **kwds,
@@ -681,6 +681,7 @@ class Mixscape:
         split_by: str = None,
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
@@ -730,6 +731,7 @@ class Mixscape:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
         perturbation_score["mix"] = adata.obs[mixscape_class][perturbation_score.index]
         gd = list(set(perturbation_score[labels]).difference({target_gene}))[0]
+
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             palette = {gd: "#7d7d7d", target_gene: color}
@@ -770,6 +772,15 @@ class Mixscape:
                 plt.title("Density Plot", fontsize=18)
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
+
+            if save:
+                plt.savefig(save, bbox_inches="tight")
+            if show:
+                plt.show()
+            if return_fig:
+                return plt.gcf()
+            if not (show or save):
+                return plt.gca()
 
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
@@ -826,6 +837,15 @@ class Mixscape:
                 plt.title("Density", fontsize=18)
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
+
+            if save:
+                plt.savefig(save, bbox_inches="tight")
+            if show:
+                plt.show()
+            if return_fig:
+                return plt.gcf()
+            if not (show or save):
+                return plt.gca()
 
     def plot_violin(  # pragma: no cover
         self,
@@ -1041,6 +1061,7 @@ class Mixscape:
         n_components: int | None = None,
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
@@ -1092,6 +1113,7 @@ class Mixscape:
             color=mixscape_class,
             palette=palette,
             color_map=color_map,
+            return_fig=return_fig,
             show=show,
             save=save,
             ax=ax,
