@@ -461,5 +461,5 @@ class Enrichment:
                 n=n,
                 interactive_plot=interactive_plot,
             )
-            fig.subtitle(cluster)
+            fig.suptitle(cluster)
             fig.show()
