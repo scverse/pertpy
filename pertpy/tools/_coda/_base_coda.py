@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from jax._src.typing import Array
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
+    from matplotlib.figure import Figure
 
 config.update("jax_enable_x64", True)
 
@@ -1193,11 +1194,12 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
         **kwargs,
-    ) -> plt.Figure | None:
+    ) -> plt.Axes | plt.Figure | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
         Args:
@@ -1275,12 +1277,13 @@ class CompositionalModel2(ABC):
 
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
         if show:
             plt.show()
-            return None
-        elif not show or show is None:
+        if return_fig:
+            return plt.gcf()
+        if not (show or save):
             return ax
+        return None
 
     def plot_effects_barplot(  # pragma: no cover
         self,
@@ -1296,10 +1299,11 @@ class CompositionalModel2(ABC):
         args_barplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
+    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1399,7 +1403,7 @@ class CompositionalModel2(ABC):
         # If plot as facets, create a FacetGrid and map barplot to it.
         if plot_facets:
             if isinstance(palette, ListedColormap):
-                palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))])
+                palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]).tolist()
             if figsize is not None:
                 height = figsize[0]
                 aspect = np.round(figsize[1] / figsize[0], 2)
@@ -1437,12 +1441,13 @@ class CompositionalModel2(ABC):
 
             if save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
             if show:
                 plt.show()
-                return None
-            elif not show or show is None:
+            if return_fig:
+                return plt.gcf()
+            if not (show or save):
                 return g
+            return None
 
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
@@ -1477,12 +1482,13 @@ class CompositionalModel2(ABC):
 
             if save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
             if show:
                 plt.show()
-                return None
-            if not show or show is None:
+            if return_fig:
+                return plt.gcf()
+            if not (show or save):
                 return ax
+            return None
 
     def plot_boxplots(  # pragma: no cover
         self,
@@ -1500,10 +1506,11 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | sns.axisgrid.FacetGrid | None:
+    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
@@ -1649,12 +1656,13 @@ class CompositionalModel2(ABC):
 
             if save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
             if show:
                 plt.show()
-                return None
-            elif not show or show is None:
+            if return_fig:
+                return plt.gcf()
+            if not (show or save):
                 return g
+            return None
 
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
         else:
@@ -1721,12 +1729,13 @@ class CompositionalModel2(ABC):
 
             if save:
                 plt.savefig(save, bbox_inches="tight")
-                return None
             if show:
                 plt.show()
-                return None
-            elif not show or show is None:
+            if return_fig:
+                return plt.gcf()
+            if not (show or save):
                 return ax
+            return None
 
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
         self,
@@ -1738,10 +1747,11 @@ class CompositionalModel2(ABC):
         label_cell_types: bool = True,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
         show: bool | None = None,
         save: str | bool | None = None,
-    ) -> plt.Axes | None:
+    ) -> plt.Axes | plt.Figure | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
 
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
@@ -1846,12 +1856,13 @@ class CompositionalModel2(ABC):
 
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
         if show:
             plt.show()
-            return None
-        elif not show or show is None:
+        if return_fig:
+            return plt.gcf()
+        if not (show or save):
             return ax
+        return None
 
     def plot_draw_tree(  # pragma: no cover
         self,
@@ -1861,7 +1872,7 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        figsize: tuple[float, float] | None = None,
+        figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | bool | None = None,
@@ -1950,11 +1961,11 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        figsize: tuple[float, float] | None = None,
+        figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
         show: bool | None = True,
         save: str | None = None,
-    ):
+    ) -> Tree | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
         Args:
@@ -2133,6 +2144,7 @@ class CompositionalModel2(ABC):
         else:
             if not show_leaf_effects:
                 return tree2, tree_style
+        return None
 
     def plot_effects_umap(  # pragma: no cover
         self,
@@ -2143,11 +2155,12 @@ class CompositionalModel2(ABC):
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
+        return_fig: bool | None = None,
         ax: Axes = None,
         show: bool = None,
         save: str | bool | None = None,
         **kwargs,
-    ) -> plt.Axes | None:
+    ) -> plt.Axes | plt.Figure | None:
         """Plot a UMAP visualization colored by effect strength.
 
         Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData
@@ -2232,6 +2245,7 @@ class CompositionalModel2(ABC):
             vmin=vmin,
             palette=palette,
             color_map=color_map,
+            return_fig=return_fig,
             ax=ax,
             show=show,
             save=save,
@@ -2620,14 +2634,14 @@ def from_scanpy(
         covariate_df_ = covariate_df_.join(covariate_df_uns, how="left")
 
     if covariate_obs:
-        is_unique = adata.obs.groupby(sample_identifier).transform(lambda x: x.nunique() == 1)
+        is_unique = adata.obs.groupby(sample_identifier, observed=True).transform(lambda x: x.nunique() == 1)
         unique_covariates = is_unique.columns[is_unique.all()].tolist()
 
         if len(unique_covariates) < len(covariate_obs):
             skipped = set(covariate_obs) - set(unique_covariates)
             print(f"[bold yellow]Covariates {skipped} have non-unique values! Skipping...")
         if unique_covariates:
-            covariate_df_obs = adata.obs.groupby(sample_identifier).first()[unique_covariates]
+            covariate_df_obs = adata.obs.groupby(sample_identifier, observed=True).first()[unique_covariates]
             covariate_df_ = covariate_df_.join(covariate_df_obs, how="left")
 
     if covariate_df is not None:

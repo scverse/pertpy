@@ -361,8 +361,7 @@ class CodaPlot:
         show: bool | None = True,
         save: str | None = None,
         units: Literal["px", "mm", "in"] | None = "px",
-        h: float | None = None,
-        w: float | None = None,
+        figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 90,
     ):
         """Plot a tree using input ete3 tree object.
@@ -429,7 +428,7 @@ class CodaPlot:
             show=show,
             save=save,
             units=units,
-            figsize=(w, h),
+            figsize=figsize,
             dpi=dpi,
         )
 
@@ -446,8 +445,7 @@ class CodaPlot:
         show: bool | None = True,
         save: str | None = None,
         units: Literal["px", "mm", "in"] | None = "in",
-        h: float | None = None,
-        w: float | None = None,
+        figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 90,
     ):
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
@@ -516,7 +514,7 @@ class CodaPlot:
             show=show,
             save=save,
             units=units,
-            figsize=(w, h),
+            figsize=figsize,
             dpi=dpi,
         )
 

@@ -27,6 +27,7 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 
 class Dialogue:
@@ -1070,10 +1071,11 @@ class Dialogue:
         celltype_key: str,
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
+        return_fig: bool | None = None,
         ax: Axes | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> Axes | None:
+    ) -> Axes | Figure | None:
         """Plots split violin plots for a given MCP and split variable.
 
         Any cells with a value for split_key not in split_which are removed from the plot.
@@ -1111,14 +1113,15 @@ class Dialogue:
 
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 
-        if show:
-            plt.show()
-            return None
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
-        elif not show or show is None:
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        if not (show or save):
             return ax
+        return None
 
     def plot_pairplot(
         self,
@@ -1127,9 +1130,10 @@ class Dialogue:
         color: str,
         sample_id: str,
         mcp: str = "mcp_0",
+        return_fig: bool | None = None,
         show: bool | None = None,
         save: bool | str | None = None,
-    ) -> PairGrid:
+    ) -> PairGrid | Figure | None:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,
@@ -1168,11 +1172,12 @@ class Dialogue:
         mcp_pivot = pd.concat([mcp_pivot, aggstats[color]], axis=1)
         ax = sns.pairplot(mcp_pivot, hue=color, corner=True)
 
-        if show:
-            plt.show()
-            return None
         if save:
             plt.savefig(save, bbox_inches="tight")
-            return None
-        elif not show or show is None:
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        if not (show or save):
             return ax
+        return None
