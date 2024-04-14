@@ -860,7 +860,7 @@ class SinkhornKnopp:
 
         return P_eps
 
-    def vis_matching(
+    def plot_vis_matching(
         self,
         adata: AnnData,
         de: AnnData,
