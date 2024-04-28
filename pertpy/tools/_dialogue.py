@@ -13,8 +13,8 @@ import seaborn as sns
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
+from lamin_utils import logger
 from pandas import DataFrame
-from rich import print
 from rich.console import Group
 from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
@@ -756,10 +756,10 @@ class Dialogue:
                         mcps.append(mcp)
 
                 if len(mcps) == 0:
-                    print(f"[bold red]No shared MCPs between {cell_type_1} and {cell_type_2}.")
+                    logger.warning(f"No shared MCPs between {cell_type_1} and {cell_type_2}.")
                     continue
 
-                print(f"[bold blue]{len(mcps)} MCPs identified for {cell_type_1} and {cell_type_2}.")
+                logger.info(f"{len(mcps)} MCPs identified for {cell_type_1} and {cell_type_2}.")
 
                 new_mcp_scores: dict[Any, list[Any]]
                 cca_sig, new_mcp_scores = self._calculate_cca_sig(

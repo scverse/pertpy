@@ -9,6 +9,7 @@ import numpyro as npy
 import numpyro.distributions as npd
 from anndata import AnnData
 from jax import config, random
+from lamin_utils import logger
 from mudata import MuData
 from numpyro.infer import Predictive
 from rich import print
@@ -335,7 +336,7 @@ class Sccoda(CompositionalModel2):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data

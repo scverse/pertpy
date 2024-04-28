@@ -28,7 +28,7 @@ class FlaxEncoder(nn.Module):
 
         Args:
             x: The input data matrix.
-            training: Whether
+            training: Whether to use running training average.
 
         Returns:
             Mean and variance.
@@ -69,12 +69,11 @@ class FlaxDecoder(nn.Module):
 
         Args:
             x: Input data.
-            training:
+            training: Whether to use running training average.
 
         Returns:
             Decoded data.
         """
-
         training = nn.merge_param("training", self.training, training)
 
         for _ in range(self.n_layers):

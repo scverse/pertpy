@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from lamin_utils import logger
 from pynndescent import NNDescent
 from rich import print
 
@@ -182,8 +183,8 @@ class PerturbationSpace:
             new_pert_name += perturbation + "+"
 
         if not ensure_consistency:
-            print(
-                "[bold yellow]Operation might be done in non-consistent space (perturbation - perturbation != control). \n"
+            logger.warning(
+                "Operation might be done in non-consistent space (perturbation - perturbation != control). \n"
                 "Subtract control perturbation needed for consistency of space in all data representations. \n"
                 "Run with ensure_consistency=True"
             )
@@ -291,8 +292,8 @@ class PerturbationSpace:
             new_pert_name += perturbation + "-"
 
         if not ensure_consistency:
-            print(
-                "[bold yellow]Operation might be done in non-consistent space (perturbation - perturbation != control).\n"
+            logger.warning(
+                "Operation might be done in non-consistent space (perturbation - perturbation != control).\n"
                 "Subtract control perturbation needed for consistency of space in all data representations.\n"
                 "Run with ensure_consistency=True"
             )

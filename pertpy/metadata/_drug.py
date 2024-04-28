@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
-from rich import print
 from scanpy import settings
 
 from pertpy.data._dataloader import _download
@@ -25,7 +24,6 @@ def _download_drug_annotation(
         # Prepared in https://github.com/theislab/pertpy-datasets/blob/main/chembl_data.ipynb
         chembl_path = Path(settings.cachedir) / "chembl.json"
         if not Path(chembl_path).exists():
-            print("[bold yellow]No metadata file was found for chembl. Starting download now.")
             _download(
                 url="https://figshare.com/ndownloader/files/43871718",
                 output_file_name="chembl.json",
@@ -40,7 +38,6 @@ def _download_drug_annotation(
     elif source == "dgidb":
         dgidb_path = Path(settings.cachedir) / "dgidb.tsv"
         if not Path(dgidb_path).exists():
-            print("[bold yellow]No metadata file was found for dgidb. Starting download now.")
             _download(
                 url="https://www.dgidb.org/data/latest/interactions.tsv",
                 output_file_name="dgidb.tsv",
@@ -54,7 +51,6 @@ def _download_drug_annotation(
     else:
         pharmgkb_path = Path(settings.cachedir) / "pharmgkb.tsv"
         if not Path(pharmgkb_path).exists():
-            print("[bold yellow]No metadata file was found for pharmGKB. Starting download now.")
             _download(
                 url="https://api.pharmgkb.org/v1/download/file/data/relationships.zip",
                 output_file_name="pharmgkb.zip",

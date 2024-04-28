@@ -5,7 +5,7 @@ from string import ascii_lowercase
 from zipfile import ZipFile
 
 import requests
-from rich import print
+from lamin_utils import logger
 from rich.progress import Progress
 
 
@@ -38,12 +38,12 @@ def _download(  # pragma: no cover
         f"{output_path}{output_file_name}" if str(output_path).endswith("/") else f"{output_path}/{output_file_name}"
     )
     if Path(download_to_path).exists():
-        warning = f"[bold red]File {download_to_path} already exists!"
+        warning = f"File {download_to_path} already exists!"
         if not overwrite:
-            print(warning)
+            logger.warning(warning)
             return
         else:
-            print(f"{warning} Overwriting...")
+            logger.warning(f"{warning} Overwriting...")
 
     response = requests.get(url, stream=True)
     total = int(response.headers.get("content-length", 0))

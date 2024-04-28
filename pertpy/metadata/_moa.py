@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from rich import print
 from scanpy import settings
 
 from pertpy.data._dataloader import _download
@@ -26,7 +25,6 @@ class Moa(MetaData):
     def _download_clue(self) -> None:
         clue_path = Path(settings.cachedir) / "repurposing_drugs_20200324.txt"
         if not Path(clue_path).exists():
-            print("[bold yellow]No metadata file was found for clue. Starting download now.")
             _download(
                 url="https://s3.amazonaws.com/data.clue.io/repurposing/downloads/repurposing_drugs_20200324.txt",
                 output_file_name="repurposing_drugs_20200324.txt",

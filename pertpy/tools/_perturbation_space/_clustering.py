@@ -14,6 +14,7 @@ class ClusteringSpace(PerturbationSpace):
     """Applies various clustering techniques to an embedding."""
 
     def __init__(self):
+        super().__init__()
         self.X = None
 
     def evaluate_clustering(

@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections import namedtuple
 from typing import TYPE_CHECKING, Literal
 
+from lamin_utils import logger
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-from rich import print
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -313,8 +313,8 @@ class LookUp:
                     )
                 not_matched_identifiers = list(set(query_id_list) - set(self.cl_cancer_project_meta[reference_id]))
 
-            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+            logger.info(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
     def available_bulk_rna(
         self,
@@ -340,8 +340,8 @@ class LookUp:
             identifier_num_all = len(query_id_list)
             not_matched_identifiers = list(set(query_id_list) - set(bulk_rna.index))
 
-            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+            logger.info(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
     def available_protein_expression(
         self,
@@ -367,8 +367,8 @@ class LookUp:
                     f"The specified `reference_id` {reference_id} is not available in the proteomics data. "
                 )
             not_matched_identifiers = list(set(query_id_list) - set(self.proteomics_data[reference_id]))
-            print(f"[bold blue]{len(not_matched_identifiers)} cell lines are not found in the metadata.")
-            print(f"[bold yellow]{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+            logger.info(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
     def available_drug_response(
         self,
@@ -410,8 +410,8 @@ class LookUp:
                 )
             identifier_num_all = len(query_id_list)
             not_matched_identifiers = list(set(query_id_list) - set(gdsc_data[reference_id]))
-            print(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
+            logger.info(f"{len(not_matched_identifiers)} cell lines are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} cell lines are found! ")
 
         if query_perturbation_list is not None:
             if reference_perturbation not in gdsc_data.columns:
@@ -420,8 +420,8 @@ class LookUp:
                 )
             identifier_num_all = len(query_perturbation_list)
             not_matched_identifiers = list(set(query_perturbation_list) - set(gdsc_data[reference_perturbation]))
-            print(f"{len(not_matched_identifiers)} perturbation types are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} perturbation types are found! ")
+            logger.info(f"{len(not_matched_identifiers)} perturbation types are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} perturbation types are found! ")
 
     def available_genes_annotation(
         self,
@@ -439,15 +439,15 @@ class LookUp:
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
 
-        print("To summarize: in the DepMap_Sanger gene annotation file, you can find: ")
-        print(f"{len(self.gene_annotation.index)} driver genes")
-        print(
+        logger.info("To summarize: in the DepMap_Sanger gene annotation file, you can find: ")
+        logger.info(f"{len(self.gene_annotation.index)} driver genes")
+        logger.info(
             f"{len(self.gene_annotation.columns)} meta data including: ",
             *list(self.gene_annotation.columns.values),
             sep="\n- ",
         )
-        print("Overview of gene annotation: ")
-        print(self.gene_annotation.head().to_string())
+        logger.info("Overview of gene annotation: ")
+        logger.info(self.gene_annotation.head().to_string())
         """
         #not implemented yet
         print("Default parameters to annotate gene annotation: ")
@@ -477,21 +477,21 @@ class LookUp:
                          If set to None, the comparison of molecular targets in the query of metadata perturbagens will be disabled.
                          Defaults to None.
         """
-        if self.type != "moa":
-            raise ValueError("This is not a LookUp object specific for MoaMetaData!")
         if query_id_list is not None:
+            if self.type != "moa":
+                raise ValueError("This is not a LookUp object specific for MoaMetaData!")
             identifier_num_all = len(query_id_list)
             not_matched_identifiers = list(set(query_id_list) - set(self.moa_meta.pert_iname))
-            print(f"{len(not_matched_identifiers)} perturbagens are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} perturbagens are found! ")
+            logger.info(f"{len(not_matched_identifiers)} perturbagens are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} perturbagens are found! ")
 
         if target_list is not None:
             targets = self.moa_meta.target.astype(str).apply(lambda x: x.split("|"))
             all_targets = [t for tl in targets for t in tl]
             identifier_num_all = len(target_list)
             not_matched_identifiers = list(set(target_list) - set(all_targets))
-            print(f"{len(not_matched_identifiers)} molecular targets are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} molecular targets are found! ")
+            logger.info(f"{len(not_matched_identifiers)} molecular targets are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} molecular targets are found! ")
 
     def available_compounds(
         self,
@@ -523,8 +523,8 @@ class LookUp:
                     except pcp.BadRequestError:
                         not_matched_identifiers.append(compound)
 
-            print(f"{len(not_matched_identifiers)} compounds are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} compounds are found! ")
+            logger.info(f"{len(not_matched_identifiers)} compounds are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} compounds are found! ")
 
     def available_drug_annotation(
         self,
@@ -578,5 +578,5 @@ class LookUp:
                     diseases = self.pharmgkb[self.pharmgkb["Type"] == "Disease"]
                     not_matched_identifiers = list(set(query_id_list) - set(diseases["Compound|Disease"]))
 
-            print(f"{len(not_matched_identifiers)} {query_id_type}s are not found in the metadata.")
-            print(f"{identifier_num_all - len(not_matched_identifiers)} {query_id_type}s are found! ")
+            logger.info(f"{len(not_matched_identifiers)} {query_id_type}s are not found in the metadata.")
+            logger.info(f"{identifier_num_all - len(not_matched_identifiers)} {query_id_type}s are found! ")
