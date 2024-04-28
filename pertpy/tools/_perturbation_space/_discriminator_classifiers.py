@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Literal
 
 import anndata
 import numpy as np

@@ -10,6 +10,7 @@ import scanpy as sc
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import Array
+from lamin_utils import logger
 from scipy import stats
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
@@ -444,12 +445,12 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             y_diff = np.asarray(np.mean(stim_diff.X, axis=0)).ravel()
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
-                print("top_100 DEGs mean: ", r_value_diff**2)
+                logger.info("top_100 DEGs mean: ", r_value_diff**2)
         x = np.asarray(np.mean(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.mean(stim.X, axis=0)).ravel()
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         if verbose:
-            print("All genes mean: ", r_value**2)
+            logger.info("All genes mean: ", r_value**2)
         df = pd.DataFrame({axis_keys["x"]: x, axis_keys["y"]: y})
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)
@@ -566,14 +567,14 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             y_diff = np.asarray(np.var(stim_diff.X, axis=0)).ravel()
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
-                print("Top 100 DEGs var: ", r_value_diff**2)
+                logger.info("Top 100 DEGs var: ", r_value_diff**2)
         if "y1" in axis_keys.keys():
             real_stim = adata[adata.obs[condition_key] == axis_keys["y1"]]
         x = np.asarray(np.var(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.var(stim.X, axis=0)).ravel()
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         if verbose:
-            print("All genes var: ", r_value**2)
+            logger.info("All genes var: ", r_value**2)
         df = pd.DataFrame({axis_keys["x"]: x, axis_keys["y"]: y})
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)

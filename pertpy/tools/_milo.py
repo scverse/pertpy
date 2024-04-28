@@ -11,8 +11,8 @@ import pandas as pd
 import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
+from lamin_utils import logger
 from mudata import MuData
-from rich import print
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -24,9 +24,7 @@ try:
     from rpy2.robjects import conversion, numpy2ri, pandas2ri
     from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
 except ModuleNotFoundError:
-    print(
-        "[bold yellow]ryp2 is not installed. Install with [green]pip install rpy2 [yellow]to run tools with R support."
-    )
+    logger.warn("ryp2 is not installed. Install with pip install rpy2 [yellow]to run tools with R support.")
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import euclidean_distances
 
@@ -128,7 +126,7 @@ class Milo:
             try:
                 knn_graph = adata.obsp["connectivities"].copy()
             except KeyError:
-                print('No "connectivities" slot in adata.obsp -- please run scanpy.pp.neighbors(adata) first')
+                logger.error('No "connectivities" slot in adata.obsp -- please run scanpy.pp.neighbors(adata) first')
                 raise
         else:
             try:
@@ -230,7 +228,7 @@ class Milo:
             try:
                 nhoods = adata.obsm["nhoods"]
             except KeyError:
-                print('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
+                logger.error('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
                 raise
         # Make nhood abundance matrix
         sample_dummies = pd.get_dummies(adata.obs[sample_col])
@@ -297,8 +295,8 @@ class Milo:
         try:
             sample_adata = mdata["milo"]
         except KeyError:
-            print(
-                "[bold red]milo_mdata should be a MuData object with two slots:"
+            logger.error(
+                "milo_mdata should be a MuData object with two slots:"
                 " feature_key and 'milo' - please run milopy.count_nhoods() first"
             )
             raise
@@ -312,7 +310,7 @@ class Milo:
             sample_obs = adata.obs[covariates + [sample_col]].drop_duplicates()
         except KeyError:
             missing_cov = [x for x in covariates if x not in sample_adata.obs.columns]
-            print("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
+            logger.warning("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
             raise
         sample_obs = sample_obs[covariates + [sample_col]]
         sample_obs.index = sample_obs[sample_col].astype("str")
@@ -320,7 +318,7 @@ class Milo:
         try:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
         except AssertionError:
-            print(
+            logger.warning(
                 f"Values in mdata[{feature_key}].obs[{covariates}] cannot be unambiguously assigned to each sample"
                 f" -- each sample value should match a single covariate value"
             )
@@ -332,7 +330,9 @@ class Milo:
             design_df = sample_adata.obs[covariates]
         except KeyError:
             missing_cov = [x for x in covariates if x not in sample_adata.obs.columns]
-            print('Covariates {c} are not columns in adata.uns["sample_adata"].obs'.format(c=" ".join(missing_cov)))
+            logger.error(
+                'Covariates {c} are not columns in adata.uns["sample_adata"].obs'.format(c=" ".join(missing_cov))
+            )
             raise
         # Get count matrix
         count_mat = sample_adata.X.T.toarray()
@@ -383,7 +383,7 @@ class Milo:
                 try:
                     mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
                 except ValueError:
-                    print("Model contrasts must be in the form 'A-B' or 'A+B'")
+                    logger.error("Model contrasts must be in the form 'A-B' or 'A+B'")
                     raise
                 res = base.as_data_frame(
                     edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
@@ -437,7 +437,7 @@ class Milo:
         try:
             sample_adata = mdata["milo"]
         except KeyError:
-            print(
+            logger.error(
                 "milo_mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
             )
             raise
@@ -528,7 +528,7 @@ class Milo:
         try:
             sample_adata = mdata["milo"]
         except KeyError:
-            print(
+            logger.error(
                 "milo_mdata should be a MuData object with two slots: feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
             )
             raise
@@ -542,14 +542,14 @@ class Milo:
             sample_obs = adata.obs[covariates + [sample_col]].drop_duplicates()
         except KeyError:
             missing_cov = [covar for covar in covariates if covar not in sample_adata.obs.columns]
-            print("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
+            logger.error("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
             raise
         sample_obs = sample_obs[covariates + [sample_col]].astype("str")
         sample_obs.index = sample_obs[sample_col]
         try:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
         except ValueError:
-            print(
+            logger.error(
                 "Covariates cannot be unambiguously assigned to each sample -- each sample value should match a single covariate value"
             )
             raise
@@ -618,7 +618,7 @@ class Milo:
         try:
             sample_adata = mdata["milo"]
         except KeyError:
-            print(
+            logger.error(
                 "milo_mdata should be a MuData object with two slots:"
                 " feature_key and 'milo' - please run milopy.count_nhoods(adata) first"
             )
@@ -664,7 +664,7 @@ class Milo:
             _r_lib = importr(name)
             return _r_lib
         except PackageNotInstalledError:
-            print(f"Install Bioconductor library `{name!r}` first as `BiocManager::install({name!r}).`")
+            logger.error(f"Install Bioconductor library `{name!r}` first as `BiocManager::install({name!r}).`")
             raise
 
     def _graph_spatial_fdr(

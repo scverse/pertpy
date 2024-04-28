@@ -14,8 +14,8 @@ copyright = "2021, Lukas Heumos, Theislab"
 author = "Lukas Heumos"
 github_repo = "pertpy"
 
-version = "0.7.0"
-release = "0.7.0"
+version = "0.8.0"
+release = "0.8.0"
 
 extensions = [
     "myst_parser",

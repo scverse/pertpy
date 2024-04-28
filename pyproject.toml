@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "0.7.0"
+version = "0.8.0"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,17 +12,15 @@ license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
     {name = "Yuge Ji"},
+    {name = "Lilly May"},
     {name = "Alejandro Tejada"},
     {name = "Johannes Köster"},
     {name = "Emma Dann"},
     {name = "Xinyue Zhang"},
     {name = "Xichen Wu"},
-    {name = "Amir Moinfar"},
-    {name = "Sergei Rybakov"},
     {name = "Tessa Green"},
     {name = "Stefan Peidli"},
     {name = "Antonia Schumacher"},
-    {name = "Lilly May"},
 ]
 maintainers = [
     {name = "Lukas Heumos", email = "lukas.heumos@posteo.net"},
@@ -66,7 +64,8 @@ dependencies = [
     "openpyxl",
     "pubchempy",
     "pyarrow",
-    "blitzgsea"
+    "blitzgsea",
+    "lamin_utils"
 ]
 
 [project.optional-dependencies]

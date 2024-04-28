@@ -14,6 +14,7 @@ import scanpy as sc
 import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
+from lamin_utils import logger
 from rich import print
 from rich.progress import track
 from scipy import sparse, stats
@@ -127,7 +128,7 @@ class Augur:
                     _ = input[cell_type_col]
                     _ = input[label_col]
                 except KeyError:
-                    print("[bold red]No column names matching cell_type_col and label_col.")
+                    logger.error("No column names matching cell_type_col and label_col.")
 
             label = input[label_col] if meta is None else meta[label_col]
             cell_type = input[cell_type_col] if meta is None else meta[cell_type_col]
@@ -140,7 +141,7 @@ class Augur:
         if adata.obs["label"].dtype.name == "category":
             # filter samples according to label
             if condition_label is not None and treatment_label is not None:
-                print(f"Filtering samples with {condition_label} and {treatment_label} labels.")
+                logger.info(f"Filtering samples with {condition_label} and {treatment_label} labels.")
                 adata = ad.concat(
                     [adata[adata.obs["label"] == condition_label], adata[adata.obs["label"] == treatment_label]]
                 )
@@ -556,7 +557,7 @@ class Augur:
             try:
                 sc.pp.highly_variable_genes(adata)
             except ValueError:
-                print("[bold yellow]Data not normalized. Normalizing now using scanpy log1p normalize.")
+                logger.warn("Data not normalized. Normalizing now using scanpy log1p normalize.")
                 sc.pp.log1p(adata)
                 sc.pp.highly_variable_genes(adata)
 
@@ -751,8 +752,8 @@ class Augur:
             "full_results": defaultdict(list),
         }
         if select_variance_features:
-            print("[bold yellow]Set smaller span value in the case of a `segmentation fault` error.")
-            print("[bold yellow]Set larger span in case of svddc or other near singularities error.")
+            logger.warning("Set smaller span value in the case of a `segmentation fault` error.")
+            logger.warning("Set larger span in case of svddc or other near singularities error.")
         adata.obs["augur_score"] = nan
         for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data..."):
             cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
@@ -768,8 +769,8 @@ class Augur:
                     )
                 )
             if len(cell_type_subsample) < min_cells:
-                print(
-                    f"[bold red]Skipping {cell_type} cell type - {len(cell_type_subsample)} samples is less than min_cells {min_cells}."
+                logger.warning(
+                    f"Skipping {cell_type} cell type - {len(cell_type_subsample)} samples is less than min_cells {min_cells}."
                 )
             elif (
                 cell_type_subsample.obs.groupby(
@@ -778,8 +779,8 @@ class Augur:
                 ).y_.count()
                 < subsample_size
             ).any():
-                print(
-                    f"[bold red]Skipping {cell_type} cell type - the number of samples for at least one class type is less than "
+                logger.warning(
+                    f"Skipping {cell_type} cell type - the number of samples for at least one class type is less than "
                     f"subsample size {subsample_size}."
                 )
             else:
@@ -821,7 +822,7 @@ class Augur:
                 results["full_results"]["cell_type"].extend([cell_type] * folds * n_subsamples)
         # make sure one cell type worked
         if len(results) <= 2:
-            print("[bold red]No cells types had more than min_cells needed. Please adjust data or min_cells parameter.")
+            logger.warning("No cells types had more than min_cells needed. Please adjust data or min_cells parameter.")
 
         results["summary_metrics"] = pd.DataFrame(results["summary_metrics"])
         results["feature_importances"] = pd.DataFrame(results["feature_importances"])
