@@ -849,10 +849,10 @@ class CompositionalModel2(ABC):
         table.add_column("Name", justify="left", style="cyan")
         table.add_column("Value", justify="left")
         table.add_row("Data", "Data: %d samples, %d cell types" % data_dims)
-        table.add_row("Reference cell type", "%s" % str(sample_adata.uns["scCODA_params"]["reference_cell_type"]))
-        table.add_row("Formula", "%s" % sample_adata.uns["scCODA_params"]["formula"])
+        table.add_row("Reference cell type", "{}".format(str(sample_adata.uns["scCODA_params"]["reference_cell_type"])))
+        table.add_row("Formula", "{}".format(sample_adata.uns["scCODA_params"]["formula"]))
         if extended:
-            table.add_row("Reference index", "%s" % str(sample_adata.uns["scCODA_params"]["reference_index"]))
+            table.add_row("Reference index", "{}".format(str(sample_adata.uns["scCODA_params"]["reference_index"])))
             if select_type == "spikeslab":
                 table.add_row(
                     "Spike-and-slab threshold",
