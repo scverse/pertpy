@@ -64,7 +64,8 @@ dependencies = [
     "openpyxl",
     "pubchempy",
     "pyarrow",
-    "blitzgsea"
+    "blitzgsea",
+    "lamin_utils"
 ]
 
 [project.optional-dependencies]

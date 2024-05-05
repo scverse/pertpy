@@ -31,7 +31,7 @@ def kernel_pca(
 
     Returns:
         If `copy=True`, returns the copy of `adata` with kernel pca in `.obsm["X_kpca"]`.
-        Otherwise writes kernel pca directly to `.obsm["X_kpca"]` of the provided `adata`.
+        Otherwise, writes kernel pca directly to `.obsm["X_kpca"]` of the provided `adata`.
         If `return_transformer=True`, returns also the fitted `KernelPCA` transformer.
     """
     if copy:

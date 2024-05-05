@@ -15,6 +15,7 @@ import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import config, random
+from lamin_utils import logger
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
 from matplotlib.colors import ListedColormap
@@ -148,7 +149,7 @@ class CompositionalModel2(ABC):
             ref_index = np.where(cell_type_disp == min_var)[0][0]
 
             ref_cell_type = cell_types[ref_index]
-            print(f"[bold blue]Automatic reference selection! Reference cell type set to {ref_cell_type}")
+            logger.info(f"Automatic reference selection! Reference cell type set to {ref_cell_type}")
 
         # Column name as reference cell type
         elif reference_cell_type in cell_types:
@@ -160,7 +161,7 @@ class CompositionalModel2(ABC):
 
         # Add pseudocount if zeroes are present.
         if np.count_nonzero(sample_adata.X) != np.size(sample_adata.X):
-            print("Zero counts encountered in data! Added a pseudocount of 0.5.")
+            logger.info("Zero counts encountered in data! Added a pseudocount of 0.5.")
             sample_adata.X[sample_adata.X == 0] = 0.5
 
         sample_adata.obsm["sample_counts"] = np.sum(sample_adata.X, axis=1)
@@ -237,13 +238,13 @@ class CompositionalModel2(ABC):
 
         acc_rate = np.array(self.mcmc.last_state.mean_accept_prob)
         if acc_rate < 0.6:
-            print(
-                f"[bold red]Acceptance rate unusually low ({acc_rate} < 0.5)! Results might be incorrect! "
+            logger.warning(
+                f"Acceptance rate unusually low ({acc_rate} < 0.5)! Results might be incorrect! "
                 f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary."
             )
         if acc_rate > 0.95:
-            print(
-                f"[bold red]Acceptance rate unusually high ({acc_rate} > 0.95)! Results might be incorrect! "
+            logger.warning(
+                f"Acceptance rate unusually high ({acc_rate} > 0.95)! Results might be incorrect! "
                 f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary."
             )
 
@@ -299,7 +300,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -358,7 +359,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -809,7 +810,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("[bold red]When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -848,10 +849,10 @@ class CompositionalModel2(ABC):
         table.add_column("Name", justify="left", style="cyan")
         table.add_column("Value", justify="left")
         table.add_row("Data", "Data: %d samples, %d cell types" % data_dims)
-        table.add_row("Reference cell type", "%s" % str(sample_adata.uns["scCODA_params"]["reference_cell_type"]))
-        table.add_row("Formula", "%s" % sample_adata.uns["scCODA_params"]["formula"])
+        table.add_row("Reference cell type", "{}".format(str(sample_adata.uns["scCODA_params"]["reference_cell_type"])))
+        table.add_row("Formula", "{}".format(sample_adata.uns["scCODA_params"]["formula"]))
         if extended:
-            table.add_row("Reference index", "%s" % str(sample_adata.uns["scCODA_params"]["reference_index"]))
+            table.add_row("Reference index", "{}".format(str(sample_adata.uns["scCODA_params"]["reference_index"])))
             if select_type == "spikeslab":
                 table.add_row(
                     "Spike-and-slab threshold",
@@ -953,7 +954,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -984,7 +985,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -1032,7 +1033,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -1057,7 +1058,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -1090,7 +1091,7 @@ class CompositionalModel2(ABC):
             try:
                 sample_adata = data[modality_key]
             except IndexError:
-                print("When data is a MuData object, modality_key must be specified!")
+                logger.error("When data is a MuData object, modality_key must be specified!")
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
@@ -2026,7 +2027,7 @@ class CompositionalModel2(ABC):
         if show_legend is None:
             show_legend = not show_leaf_effects
         elif show_legend:
-            print("Tree leaves and leaf effect bars won't be aligned when legend is shown!")
+            logger.info("Tree leaves and leaf effect bars won't be aligned when legend is shown!")
 
         if isinstance(tree, str):
             tree = data.uns[tree]
@@ -2538,10 +2539,10 @@ def import_tree(
             data_1 = data[modality_1]
             data_2 = data[modality_2]
         except KeyError as name:
-            print(f"No {name} slot in MuData")
+            logger.error(f"No {name} slot in MuData")
             raise
         except IndexError:
-            print("Please specify modality_1 and modality_2 to indicate modalities in MuData")
+            logger.error("Please specify modality_1 and modality_2 to indicate modalities in MuData")
             raise
     else:
         data_1 = data
