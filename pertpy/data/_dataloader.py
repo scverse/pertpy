@@ -53,7 +53,7 @@ def _download(  # pragma: no cover
     with Progress(refresh_per_second=100) as progress:
         task = progress.add_task("[red]Downloading...", total=total)
         Path(output_path).mkdir(parents=True, exist_ok=True)
-        with lock:  # add file lock during downloading
+        with lock:
             with Path(download_to_path).open("wb") as file:
                 for data in response.iter_content(block_size):
                     file.write(data)
