@@ -1,4 +1,5 @@
 import tempfile
+import threading
 from pathlib import Path
 from random import choice
 from string import ascii_lowercase
@@ -48,13 +49,15 @@ def _download(  # pragma: no cover
     response = requests.get(url, stream=True)
     total = int(response.headers.get("content-length", 0))
 
+    lock = threading.Lock()
     with Progress(refresh_per_second=100) as progress:
         task = progress.add_task("[red]Downloading...", total=total)
         Path(output_path).mkdir(parents=True, exist_ok=True)
-        with Path(download_to_path).open("wb") as file:
-            for data in response.iter_content(block_size):
-                file.write(data)
-                progress.update(task, advance=block_size)
+        with lock:  # add file lock during downloading
+            with Path(download_to_path).open("wb") as file:
+                for data in response.iter_content(block_size):
+                    file.write(data)
+                    progress.update(task, advance=block_size)
 
         # force the progress bar to 100% at the end
         progress.update(task, completed=total, refresh=True)
