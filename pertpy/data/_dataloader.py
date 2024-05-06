@@ -1,11 +1,11 @@
 import tempfile
-import threading
 from pathlib import Path
 from random import choice
 from string import ascii_lowercase
 from zipfile import ZipFile
 
 import requests
+from filelock import FileLock
 from lamin_utils import logger
 from rich.progress import Progress
 
@@ -38,32 +38,34 @@ def _download(  # pragma: no cover
     download_to_path = (
         f"{output_path}{output_file_name}" if str(output_path).endswith("/") else f"{output_path}/{output_file_name}"
     )
-    if Path(download_to_path).exists():
-        warning = f"File {download_to_path} already exists!"
-        if not overwrite:
-            logger.warning(warning)
+
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+    lock_path = f"{output_path}/{output_file_name}.lock"
+    with FileLock(lock_path):
+        if Path(download_to_path).exists() and not overwrite:
+            logger.warning(f"File {download_to_path} already exists!")
             return
-        else:
-            logger.warning(f"{warning} Overwriting...")
 
-    response = requests.get(url, stream=True)
-    total = int(response.headers.get("content-length", 0))
+        temp_file_name = f"{download_to_path}.part"
 
-    lock = threading.Lock()
-    with Progress(refresh_per_second=100) as progress:
-        task = progress.add_task("[red]Downloading...", total=total)
-        Path(output_path).mkdir(parents=True, exist_ok=True)
-        with lock:
-            with Path(download_to_path).open("wb") as file:
+        response = requests.get(url, stream=True)
+        total = int(response.headers.get("content-length", 0))
+
+        with Progress(refresh_per_second=100) as progress:
+            task = progress.add_task("[red]Downloading...", total=total)
+            with Path(temp_file_name).open("wb") as file:
                 for data in response.iter_content(block_size):
                     file.write(data)
                     progress.update(task, advance=block_size)
+            progress.update(task, completed=total, refresh=True)
 
-        # force the progress bar to 100% at the end
-        progress.update(task, completed=total, refresh=True)
+        Path(temp_file_name).replace(download_to_path)
+        logger.warning(f"Downloaded and saved to {download_to_path}")
 
-    if is_zip:
-        output_path = output_path or tempfile.gettempdir()
-        with ZipFile(download_to_path, "r") as zip_obj:
-            zip_obj.extractall(path=output_path)
-            zip_obj.namelist()
+        if is_zip:
+            output_path = output_path or tempfile.gettempdir()
+            with ZipFile(download_to_path, "r") as zip_obj:
+                zip_obj.extractall(path=output_path)
+                zip_obj.namelist()
+
+    Path(lock_path).unlink()
