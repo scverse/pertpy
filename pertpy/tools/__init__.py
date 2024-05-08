@@ -17,3 +17,26 @@ from pertpy.tools._perturbation_space._discriminator_classifiers import (
 )
 from pertpy.tools._perturbation_space._simple import CentroidSpace, DBSCANSpace, KMeansSpace, PseudobulkSpace
 from pertpy.tools._scgen import SCGEN
+
+__all__ = [
+    "Augur",
+    "Cinemaot",
+    "Sccoda",
+    "Tasccoda",
+    "Dialogue",
+    "DifferentialGeneExpression",
+    "DistanceTest",
+    "Distance",
+    "Enrichment",
+    "Milo",
+    "Mixscape",
+    "ClusteringSpace",
+    "DiscriminatorClassifierSpace",
+    "LRClassifierSpace",
+    "MLPClassifierSpace",
+    "CentroidSpace",
+    "DBSCANSpace",
+    "KMeansSpace",
+    "PseudobulkSpace",
+    "SCGEN",
+]
