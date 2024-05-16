@@ -2622,11 +2622,11 @@ def from_scanpy(
         sample_identifier = "scCODA_sample_id"
 
     groups = adata.obs.value_counts([sample_identifier, cell_type_identifier])
-    count_data = groups.unstack(level=cell_type_identifier).fillna(0)
-    covariate_df_ = pd.DataFrame(index=count_data.index)
+    ct_count_data = groups.unstack(level=cell_type_identifier).fillna(0)
+    covariate_df_ = pd.DataFrame(index=ct_count_data.index)
 
     if covariate_uns is not None:
-        covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns], index=count_data.index)
+        covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns], index=ct_count_data.index)
         covariate_df_ = pd.concat([covariate_df_, covariate_df_uns], axis=1)
 
     if covariate_obs:
@@ -2640,12 +2640,12 @@ def from_scanpy(
             covariate_df_ = pd.concat([covariate_df_, covariate_df_obs], axis=1)
 
     if covariate_df is not None:
-        if set(covariate_df.index) != set(count_data.index):
+        if set(covariate_df.index) != set(ct_count_data.index):
             raise ValueError("Mismatch between sample names in anndata and covariate_df!")
-        covariate_df_ = pd.concat([covariate_df_, covariate_df.reindex(count_data.index)], axis=1)
+        covariate_df_ = pd.concat([covariate_df_, covariate_df.reindex(ct_count_data.index)], axis=1)
 
-    var_dat = count_data.sum().rename("n_cells").to_frame()
+    var_dat = ct_count_data.sum().rename("n_cells").to_frame()
     var_dat.index = var_dat.index.astype(str)
     covariate_df_.index = covariate_df_.index.astype(str)
 
-    return AnnData(X=count_data.values, var=var_dat, obs=covariate_df_)
+    return AnnData(X=ct_count_data.values, var=var_dat, obs=covariate_df_)
