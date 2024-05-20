@@ -164,8 +164,10 @@ def test_params():
 
 
 @pytest.mark.slow
-def test_differential_prioritization(adata):
+def test_differential_prioritization():
     """Test differential prioritization run."""
+    # Requires the full dataset or it fails because of a lack of statistical power
+    adata = pt.dt.sc_sim_augur()
     ag = pt.tl.Augur("random_forest_classifier", Params(random_state=42))
     ag.load(adata)
 
