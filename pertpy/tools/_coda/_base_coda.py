@@ -2614,43 +2614,38 @@ def from_scanpy(
     Returns:
         AnnData: A data set with cells aggregated to the (sample x cell type) level
     """
-    if isinstance(sample_identifier, str):
-        sample_identifier = [sample_identifier]
+    sample_identifier = [sample_identifier] if isinstance(sample_identifier, str) else sample_identifier
+    covariate_obs = list(set(covariate_obs or []) | set(sample_identifier))
 
-    if len(sample_identifier) > 1:
+    if isinstance(sample_identifier, list):
         adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
-    else:
-        sample_identifier = sample_identifier[0]
 
-    # get cell type counts
-    ct_count_data = pd.crosstab(adata.obs[sample_identifier], adata.obs[cell_type_identifier])
-    ct_count_data = ct_count_data.fillna(0)
-
-    # get covariates from different sources
+    groups = adata.obs.value_counts([sample_identifier, cell_type_identifier])
+    ct_count_data = groups.unstack(level=cell_type_identifier).fillna(0)
     covariate_df_ = pd.DataFrame(index=ct_count_data.index)
 
     if covariate_uns is not None:
         covariate_df_uns = pd.DataFrame(adata.uns[covariate_uns], index=ct_count_data.index)
-        covariate_df_ = covariate_df_.join(covariate_df_uns, how="left")
+        covariate_df_ = pd.concat([covariate_df_, covariate_df_uns], axis=1)
 
     if covariate_obs:
-        is_unique = adata.obs.groupby(sample_identifier, observed=True).transform(lambda x: x.nunique() == 1)
-        unique_covariates = is_unique.columns[is_unique.all()].tolist()
-
-        if len(unique_covariates) < len(covariate_obs):
-            skipped = set(covariate_obs) - set(unique_covariates)
-            print(f"[bold yellow]Covariates {skipped} have non-unique values! Skipping...")
-        if unique_covariates:
-            covariate_df_obs = adata.obs.groupby(sample_identifier, observed=True).first()[unique_covariates]
-            covariate_df_ = covariate_df_.join(covariate_df_obs, how="left")
+        unique_check = adata.obs.groupby(sample_identifier).nunique()
+        for c in covariate_obs.copy():
+            if unique_check[c].max() != 1:
+                logger.warning(f"Covariate {c} has non-unique values for batch! Skipping...")
+                covariate_obs.remove(c)
+        if covariate_obs:
+            covariate_df_obs = adata.obs.groupby(sample_identifier).first()[covariate_obs]
+            covariate_df_ = pd.concat([covariate_df_, covariate_df_obs], axis=1)
 
     if covariate_df is not None:
-        if not covariate_df.index.equals(ct_count_data.index):
-            raise ValueError("AnnData sample names and covariate_df index do not have the same elements!")
-        covariate_df_ = covariate_df_.join(covariate_df, how="left")
+        if set(covariate_df.index) != set(ct_count_data.index):
+            raise ValueError("Mismatch between sample names in anndata and covariate_df!")
+        covariate_df_ = pd.concat([covariate_df_, covariate_df.reindex(ct_count_data.index)], axis=1)
 
-    var_dat = ct_count_data.sum(axis=0).rename("n_cells").to_frame()
+    var_dat = ct_count_data.sum().rename("n_cells").to_frame()
     var_dat.index = var_dat.index.astype(str)
+    covariate_df_.index = covariate_df_.index.astype(str)
 
     return AnnData(X=ct_count_data.values, var=var_dat, obs=covariate_df_)
