@@ -1,8 +1,8 @@
 import numpy as np
+import pertpy as pt
 import pytest
 import scanpy as sc
 from anndata import AnnData
-from pertpy.tools import Enrichment
 
 
 @pytest.fixture
@@ -19,45 +19,45 @@ def dummy_adata():
     return adata
 
 
-@pytest.fixture
-def enrichment_instance():
-    return Enrichment()
+@pytest.fixture(scope="module")
+def enricher():
+    return pt.tl.Enrichment()
 
 
-def test_score_basic(dummy_adata, enrichment_instance):
+def test_score_basic(dummy_adata, enricher):
     targets = {"group1": ["gene1", "gene2"], "group2": ["gene3", "gene4"]}
-    enrichment_instance.score(adata=dummy_adata, targets=targets)
+    enricher.score(adata=dummy_adata, targets=targets)
     assert "pertpy_enrichment_score" in dummy_adata.uns
 
 
-def test_score_with_different_layers(dummy_adata, enrichment_instance):
+def test_score_with_different_layers(dummy_adata, enricher):
     rng = np.random.default_rng()
     dummy_adata.layers["layer"] = rng.random((10, 5))
     targets = {"group1": ["gene1", "gene2"], "group2": ["gene3", "gene4"]}
-    enrichment_instance.score(adata=dummy_adata, layer="layer", targets=targets)
+    enricher.score(adata=dummy_adata, layer="layer", targets=targets)
     assert "pertpy_enrichment_score" in dummy_adata.uns
 
 
-def test_score_with_nested_targets(dummy_adata, enrichment_instance):
+def test_score_with_nested_targets(dummy_adata, enricher):
     targets = {"category1": {"group1": ["gene1", "gene2"]}, "category2": {"group2": ["gene3", "gene4"]}}
-    enrichment_instance.score(adata=dummy_adata, targets=targets, nested=True)
+    enricher.score(adata=dummy_adata, targets=targets, nested=True)
     assert "pertpy_enrichment_score" in dummy_adata.uns
 
 
-def test_hypergeometric_basic(dummy_adata, enrichment_instance):
+def test_hypergeometric_basic(dummy_adata, enricher):
     targets = {"group1": ["gene1", "gene2"]}
-    results = enrichment_instance.hypergeometric(dummy_adata, targets)
+    results = enricher.hypergeometric(dummy_adata, targets)
     assert isinstance(results, dict)
 
 
-def test_hypergeometric_with_nested_targets(dummy_adata, enrichment_instance):
+def test_hypergeometric_with_nested_targets(dummy_adata, enricher):
     targets = {"category1": {"group1": ["gene1", "gene2"]}}
-    results = enrichment_instance.hypergeometric(dummy_adata, targets, nested=True)
+    results = enricher.hypergeometric(dummy_adata, targets, nested=True)
     assert isinstance(results, dict)
 
 
 @pytest.mark.parametrize("direction", ["up", "down", "both"])
-def test_hypergeometric_with_different_directions(dummy_adata, enrichment_instance, direction):
+def test_hypergeometric_with_different_directions(dummy_adata, enricher, direction):
     targets = {"group1": ["gene1", "gene2"]}
-    results = enrichment_instance.hypergeometric(dummy_adata, targets, direction=direction)
+    results = enricher.hypergeometric(dummy_adata, targets, direction=direction)
     assert isinstance(results, dict)
