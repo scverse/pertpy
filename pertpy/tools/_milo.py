@@ -181,6 +181,7 @@ class Milo:
         dist_mat = knn_dists[nhood_ixs, :]
         k_distances = dist_mat.max(1).toarray().ravel()
         adata.obs["nhood_kth_distance"] = 0
+        adata.obs["nhood_kth_distance"] = adata.obs["nhood_kth_distance"].astype(float)
         adata.obs.loc[adata.obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"] = k_distances
 
         if copy:
@@ -236,7 +237,7 @@ class Milo:
         sample_dummies = csr_matrix(sample_dummies.values)
         nhood_count_mat = nhoods.T.dot(sample_dummies)
         sample_obs = pd.DataFrame(index=all_samples)
-        sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs, dtype=np.float32)
+        sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs)
         sample_adata.uns["sample_col"] = sample_col
         # Save nhood index info
         sample_adata.var["index_cell"] = adata.obs_names[adata.obs["nhood_ixs_refined"] == 1]

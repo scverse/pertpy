@@ -338,7 +338,7 @@ class Cinemaot:
             sc.tl.leiden(adata, resolution=cf_resolution)
             df["ct"] = adata.obs["leiden"].astype(str)
         df["ptb"] = "control"
-        df["ptb"][adata.obs[pert_key] != control] = de.obs["leiden"].astype(str)
+        df.loc[adata.obs[pert_key] != control, "ptb"] = de.obs["leiden"].astype(str)
         label_list.append("ptb")
         df = df.groupby(label_list).sum()
         new_index = df.index.map(lambda x: "_".join(map(str, x)))
@@ -432,7 +432,7 @@ class Cinemaot:
         expr_label = "control"
 
         adata_.obs["ct"] = ref_label
-        adata_.obs["ct"][adata_.obs[pert_key] == control] = expr_label
+        adata_.obs.loc[adata_.obs[pert_key] == control, "ct"] = expr_label
         pert_key = "ct"
         z = np.zeros(adata_.shape[0]) + 1
 

@@ -11,33 +11,34 @@ NUM_GENES = 100
 NUM_CELLS_PER_ID = NUM_CELLS // 4
 
 
-class TestMetaData:
-    pt_compound = pt.md.Compound()
+pt_compound = pt.md.Compound()
 
-    @pytest.fixture
-    def adata(self) -> AnnData:
-        rng = np.random.default_rng(1)
-        X = rng.standard_normal((NUM_CELLS, NUM_GENES))
-        X = np.where(X < 0, 0, X)
 
-        obs = pd.DataFrame(
-            {
-                "DepMap_ID": ["ACH-000016", "ACH-000049", "ACH-001208", "ACH-000956"] * NUM_CELLS_PER_ID,
-                "perturbation": ["AG-490", "Iniparib", "TAK-901", "Quercetin"] * NUM_CELLS_PER_ID,
-            },
-            index=[str(i) for i in range(NUM_GENES)],
-        )
+@pytest.fixture
+def adata() -> AnnData:
+    rng = np.random.default_rng(1)
+    X = rng.standard_normal((NUM_CELLS, NUM_GENES))
+    X = np.where(X < 0, 0, X)
 
-        var_data = {"gene_name": [f"gene{i}" for i in range(1, NUM_GENES + 1)]}
-        var = pd.DataFrame(var_data).set_index("gene_name", drop=False).rename_axis("index")
+    obs = pd.DataFrame(
+        {
+            "DepMap_ID": ["ACH-000016", "ACH-000049", "ACH-001208", "ACH-000956"] * NUM_CELLS_PER_ID,
+            "perturbation": ["AG-490", "Iniparib", "TAK-901", "Quercetin"] * NUM_CELLS_PER_ID,
+        },
+        index=[str(i) for i in range(NUM_GENES)],
+    )
 
-        X = sparse.csr_matrix(X)
-        adata = anndata.AnnData(X=X, obs=obs, var=var)
+    var_data = {"gene_name": [f"gene{i}" for i in range(1, NUM_GENES + 1)]}
+    var = pd.DataFrame(var_data).set_index("gene_name", drop=False).rename_axis("index")
 
-        return adata
+    X = sparse.csr_matrix(X)
+    adata = anndata.AnnData(X=X, obs=obs, var=var)
 
-    def test_compound_annotation(self, adata):
-        self.pt_compound.annotate_compounds(adata=adata, query_id="perturbation")
-        assert len(adata.obs.columns) == 5
-        pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
-        assert pubchemid == list(adata.obs["pubchem_ID"])
+    return adata
+
+
+def test_compound_annotation(adata):
+    pt_compound.annotate_compounds(adata=adata, query_id="perturbation")
+    assert len(adata.obs.columns) == 5
+    pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
+    assert pubchemid == list(adata.obs["pubchem_ID"])
