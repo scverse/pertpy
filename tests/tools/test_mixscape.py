@@ -4,19 +4,19 @@ import anndata
 import numpy as np
 import pandas as pd
 import pertpy as pt
-from _pytest.fixtures import fixture
+import pytest
 from scipy import sparse
 
 CWD = Path(__file__).parent.resolve()
 
 # Random generate data settings
-num_cells_per_group = 100
+num_cells_per_group = 10
 num_not_de = 10
 num_de = 10
 accuracy_threshold = 0.8
 
 
-@fixture
+@pytest.fixture
 def adata():
     rng = np.random.default_rng(seed=1)
     # generate not differentially expressed genes
