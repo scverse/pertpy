@@ -1540,3 +1540,35 @@ def sciplex_gxe1() -> AnnData:  # pragma: no cover
     adata = sc.read_h5ad(output_file_path)
 
     return adata
+
+
+def zhang_2021() -> AnnData:  # pragma: no cover
+    """Single-cell RNA-seq of TNBC patients' immune cells exposed to paclitaxel alone or combined with the anti-PD-L1 atezolizumab.
+
+    This analysis, involving 22 patients, identifies immune subtypes predictive of therapeutic
+    responses and underscores potential limitations of combining paclitaxel with atezolizumab in treatment protocols.
+
+    The script that generated this specific AnnData object:
+    https://github.com/tessadgreen/ThesisCode/blob/main/Chapter3/drug_response/import_zhang_data.ipynb
+
+    This dataset does not contain the single-cell ATAC-seq data that was also measured for the paper.
+
+    References:
+        Zhang Y et al., Liu Z. Single-cell analyses reveal key immune cell subsets associated with response to PD-L1 blockade in triple-negative breast cancer.
+        Cancer Cell. 2021 Volume 39, Issue 12. doi: https://doi.org/10.1016/j.ccell.2021.09.010
+
+    Returns:
+        :class:`~anndata.AnnData` object of the dataset.
+    """
+    output_file_name = "zhang_2021.h5ad"
+    output_file_path = settings.datasetdir / output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/46457872",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+    adata = sc.read_h5ad(output_file_path)
+
+    return adata
