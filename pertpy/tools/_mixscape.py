@@ -315,7 +315,9 @@ class Mixscape:
                     )
 
                 adata.obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in adata.obs[new_class_name]]
-                adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
+                adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = np.round(
+                    post_prob
+                ).astype("int64")
         adata.uns["mixscape"] = gv_list
 
         if copy:

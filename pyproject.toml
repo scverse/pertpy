@@ -124,6 +124,9 @@ markers = [
 ]
 minversion = 6.0
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
+filterwarnings = [
+    "ignore::Warning:statsmodels.*"
+]
 
 
 [tool.ruff]
