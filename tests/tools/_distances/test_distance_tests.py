@@ -1,7 +1,7 @@
 import pertpy as pt
+import pytest
 import scanpy as sc
 from pandas import DataFrame
-from pytest import fixture, mark
 
 distances = [
     "edistance",
@@ -27,7 +27,7 @@ distances = [
 count_distances = ["nb_ll"]
 
 
-@fixture
+@pytest.fixture
 def adata():
     adata = pt.dt.distance_example()
     adata = sc.pp.subsample(adata, 0.1, copy=True)
@@ -35,8 +35,11 @@ def adata():
     return adata
 
 
-@mark.parametrize("distance", distances)
+@pytest.mark.parametrize("distance", distances)
 def test_distancetest(adata, distance):
+    if distance == "wasserstein":
+        pytest.mark.apply(pytest.mark.slow)
+
     etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak")
     tab = etest(adata, groupby="perturbation", contrast="control")
 

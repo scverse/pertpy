@@ -62,6 +62,7 @@ def test_protein_expression_annotation(adata):
     )
 
 
+@pytest.mark.slow
 def test_bulk_rna_expression_annotation(adata):
     pt_metadata.annotate(adata)
     pt_metadata.annotate_bulk_rna(adata, query_id="DepMap_ID", cell_line_source="broad")
