@@ -52,6 +52,7 @@ from pertpy.data._datasets import (
     tian_2021_crispri,
     weinreb_2020,
     xie_2017,
+    zhang_2021,
     zhao_2021,
 )
 
@@ -110,4 +111,5 @@ __all__ = [
     "weinreb_2020",
     "xie_2017",
     "zhao_2021",
+    "zhang_2021",
 ]
