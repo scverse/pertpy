@@ -3,7 +3,7 @@ from pertpy.tools._cinemaot import Cinemaot
 from pertpy.tools._coda._sccoda import Sccoda
 from pertpy.tools._coda._tasccoda import Tasccoda
 from pertpy.tools._dialogue import Dialogue
-from pertpy.tools._differential_gene_expression import DifferentialGeneExpression
+from pertpy.tools._differential_gene_expression._differential_gene_expression_OLD import DifferentialGeneExpression
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
 from pertpy.tools._enrichment import Enrichment

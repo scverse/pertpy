@@ -73,6 +73,11 @@ coda = [
     "ete3",
     "pyqt5"  # remove this after ete4 got released
 ]
+de = [
+    "formulaic",
+    "pydeseq2",
+    "rpy2"
+]
 dev = [
     "pre-commit",
 ]
