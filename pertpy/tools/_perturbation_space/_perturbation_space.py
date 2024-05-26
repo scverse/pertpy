@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from lamin_utils import logger
-from pynndescent import NNDescent
 from rich import print
 
 if TYPE_CHECKING:
@@ -396,6 +395,8 @@ class PerturbationSpace:
             raise ValueError(f"Representation {use_rep} not found in the AnnData object.")
 
         embedding = adata.obsm[use_rep]
+
+        from pynndescent import NNDescent
 
         nnd = NNDescent(embedding, n_neighbors=n_neighbors)
         indices, _ = nnd.query(embedding, k=n_neighbors)

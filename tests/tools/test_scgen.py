@@ -1,18 +1,18 @@
 import pertpy as pt
 import scanpy as sc
-import scvi
 from anndata import AnnData
+from scvi.data import synthetic_iid
 
 
 def test_scgen():
-    adata = scvi.data.synthetic_iid()
-    pt.tl.SCGEN.setup_anndata(
+    adata = synthetic_iid()
+    pt.tl.Scgen.setup_anndata(
         adata,
         batch_key="batch",
         labels_key="labels",
     )
 
-    scg = pt.tl.SCGEN(adata)
+    scg = pt.tl.Scgen(adata)
     scg.train(max_epochs=1, batch_size=32, early_stopping=True, early_stopping_patience=25)
 
     scg.batch_removal()

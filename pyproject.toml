@@ -55,7 +55,6 @@ dependencies = [
     "scipy",
     "scvi-tools",
     "adjusttext",
-    "numpyro",
     "decoupler",
     "ott-jax",
     "sparsecca",

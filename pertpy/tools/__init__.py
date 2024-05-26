@@ -15,7 +15,7 @@ from pertpy.tools._perturbation_space._discriminator_classifiers import (
     MLPClassifierSpace,
 )
 from pertpy.tools._perturbation_space._simple import CentroidSpace, DBSCANSpace, KMeansSpace, PseudobulkSpace
-from pertpy.tools._scgen import SCGEN
+from pertpy.tools._scgen import Scgen
 
 __all__ = [
     "Augur",
@@ -40,5 +40,5 @@ __all__ = [
     "DBSCANSpace",
     "KMeansSpace",
     "PseudobulkSpace",
-    "SCGEN",
+    "Scgen",
 ]

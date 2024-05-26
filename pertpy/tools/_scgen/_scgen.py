@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 font = {"family": "Arial", "size": 14}
 
 
-class SCGEN(JaxTrainingMixin, BaseModelClass):
+class Scgen(JaxTrainingMixin, BaseModelClass):
     """Jax Implementation of scGen model for batch removal and perturbation prediction."""
 
     def __init__(
@@ -50,7 +50,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
             **model_kwargs,
         )
         self._model_summary_string = (
-            f"SCGEN Model with the following params: \nn_hidden: {n_hidden}, n_latent: {n_latent}, n_layers: {n_layers}, dropout_rate: "
+            f"Scgen Model with the following params: \nn_hidden: {n_hidden}, n_latent: {n_latent}, n_layers: {n_layers}, dropout_rate: "
             f"{dropout_rate}"
         )
         self.init_params_ = self._get_init_params(locals())
@@ -80,8 +80,8 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         Examples:
             >>> import pertpy as pt
             >>> data = pt.dt.kang_2018()
-            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
-            >>> model = pt.tl.SCGEN(data)
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
             >>> pred, delta = model.predict(ctrl_key="ctrl", stim_key="stim", celltype_to_predict="CD4 T cells")
         """
@@ -167,8 +167,8 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         Examples:
             >>> import pertpy as pt
             >>> data = pt.dt.kang_2018()
-            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
-            >>> model = pt.tl.SCGEN(data)
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
             >>> decoded_X = model.get_decoded_expression()
         """
@@ -201,8 +201,8 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         Examples:
             >>> import pertpy as pt
             >>> data = pt.dt.kang_2018()
-            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
-            >>> model = pt.tl.SCGEN(data)
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
             >>> corrected_adata = model.batch_removal()
         """
@@ -305,7 +305,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         Examples:
             >>> import pertpy as pt
             >>> data = pt.dt.kang_2018()
-            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
         """
         setup_method_args = cls._get_setup_method_args(**locals())
         anndata_fields = [
@@ -346,8 +346,8 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         Examples:
             >>> import pertpy as pt
             >>> data = pt.dt.kang_2018()
-            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
-            >>> model = pt.tl.SCGEN(data)
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
             >>> latent_X = model.get_latent_representation()
         """
@@ -415,8 +415,8 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         Examples:
             >>> import pertpy as pt
             >>> data = pt.dt.kang_2018()
-            >>> pt.tl.SCGEN.setup_anndata(data, batch_key="label", labels_key="cell_type")
-            >>> scg = pt.tl.SCGEN(data)
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> scg = pt.tl.Scgen(data)
             >>> scg.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
             >>> pred, delta = scg.predict(ctrl_key='ctrl', stim_key='stim', celltype_to_predict='CD4 T cells')
             >>> pred.obs['label'] = 'pred'
@@ -638,7 +638,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
 
     def plot_binary_classifier(
         self,
-        scgen: SCGEN,
+        scgen: Scgen,
         adata: AnnData | None,
         delta: np.ndarray,
         ctrl_key: str,
@@ -700,3 +700,7 @@ class SCGEN(JaxTrainingMixin, BaseModelClass):
         if not (show or save):
             return ax
         return None
+
+
+# compatibility
+SCGEN = Scgen
