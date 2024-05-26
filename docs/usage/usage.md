@@ -126,7 +126,11 @@ Pertpy provides utilities to conduct differential gene expression tests through 
     :toctree: preprocessing
     :nosignatures:
 
-    tools.DifferentialGeneExpression
+    tools.Pydeqseq2
+    tools.EdgeR
+    tools.WilcoxonTest
+    tools.TTest
+    Tools.Statsmodels
 ```
 
 ### Pooled CRISPR screens
