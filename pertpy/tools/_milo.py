@@ -13,7 +13,6 @@ import seaborn as sns
 from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
-from rpy2.robjects import conversion
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -399,6 +398,9 @@ class Milo:
                 )
             else:
                 res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
+
+            from rpy2.robjects import conversion
+
             res = conversion.rpy2py(res)
             if not isinstance(res, pd.DataFrame):
                 res = pd.DataFrame(res)
