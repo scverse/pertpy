@@ -19,12 +19,8 @@ if TYPE_CHECKING:
 
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
+    from matplotlib.figure import Figure
 
-try:
-    from rpy2.robjects import conversion, numpy2ri, pandas2ri
-    from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
-except ModuleNotFoundError:
-    logger.warn("ryp2 is not installed. Install with pip install rpy2 [yellow]to run tools with R support.")
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import euclidean_distances
 
@@ -33,7 +29,16 @@ class Milo:
     """Python implementation of Milo."""
 
     def __init__(self):
-        pass
+        try:
+            from rpy2.robjects import conversion, numpy2ri, pandas2ri
+            from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
+        except ModuleNotFoundError:
+            raise ImportError("milo requires rpy2 to be installed.") from None
+
+        try:
+            importr("edgeR")
+        except ImportError as e:
+            raise ImportError("milo requires a valid R installation with edger installed:\n") from e
 
     def load(
         self,
@@ -377,6 +382,8 @@ class Milo:
                     return(colnames(m))
                 }
                 """
+                from rpy2.robjects.packages import STAP
+
                 get_model_cols = STAP(r_str, "get_model_cols")
                 model_mat_cols = get_model_cols.get_model_cols(design_df, design)
                 model_df = pd.DataFrame(model)
@@ -391,6 +398,9 @@ class Milo:
                 )
             else:
                 res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
+
+            from rpy2.robjects import conversion
+
             res = conversion.rpy2py(res)
             if not isinstance(res, pd.DataFrame):
                 res = pd.DataFrame(res)
@@ -643,6 +653,9 @@ class Milo:
         self,
     ):
         """Set up rpy2 to run edgeR"""
+        from rpy2.robjects import numpy2ri, pandas2ri
+        from rpy2.robjects.packages import importr
+
         numpy2ri.activate()
         pandas2ri.activate()
         edgeR = self._try_import_bioc_library("edgeR")
@@ -661,6 +674,8 @@ class Milo:
         Args:
             name (str): R packages name
         """
+        from rpy2.robjects.packages import PackageNotInstalledError, importr
+
         try:
             _r_lib = importr(name)
             return _r_lib
@@ -854,7 +869,7 @@ class Milo:
         return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> None:
+    ) -> Figure | Axes | None:
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
@@ -961,12 +976,16 @@ class Milo:
 
         if save:
             plt.savefig(save, bbox_inches="tight")
+            return None
         if show:
             plt.show()
+            return None
         if return_fig:
             return plt.gcf()
         if (not show and not save) or (show is None and save is None):
             return plt.gca()
+
+        return None
 
     def plot_nhood_counts_by_cond(
         self,
@@ -977,7 +996,7 @@ class Milo:
         return_fig: bool | None = None,
         save: bool | str | None = None,
         show: bool | None = None,
-    ) -> None:
+    ) -> Figure | Axes | None:
         """Plot boxplot of cell numbers vs condition of interest.
 
         Args:
@@ -1015,9 +1034,13 @@ class Milo:
 
         if save:
             plt.savefig(save, bbox_inches="tight")
+            return None
         if show:
             plt.show()
+            return None
         if return_fig:
             return plt.gcf()
         if not (show or save):
             return plt.gca()
+
+        return None

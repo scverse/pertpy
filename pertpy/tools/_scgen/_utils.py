@@ -27,7 +27,7 @@ def extractor(
     Example:
         .. code-block:: python
 
-            import SCGEN
+            import Scgen
             import anndata
 
             train_data = anndata.read("./data/train.h5ad")
@@ -58,7 +58,7 @@ def balancer(
     Example:
         .. code-block:: python
 
-            import SCGEN
+            import Scgen
             import anndata
 
             train_data = anndata.read("./train_kang.h5ad")

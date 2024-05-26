@@ -1,1 +1,1 @@
-from pertpy.tools._scgen._scgen import SCGEN
+from pertpy.tools._scgen._scgen import Scgen
