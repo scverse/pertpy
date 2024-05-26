@@ -20,32 +20,42 @@ actual_distances = [
     "spearman_distance",
     "t_test",
     "wasserstein",
+    "mahalanobis",
 ]
 semi_distances = ["r2_distance", "sym_kldiv", "ks_test"]
 non_distances = ["classifier_proba"]
 onesided_only = ["classifier_cp"]
 pseudo_counts_distances = ["nb_ll"]
+lognorm_counts_distances = ["mean_var_distn"]
 all_distances = actual_distances + semi_distances + non_distances + pseudo_counts_distances  # + onesided_only
 
 
 @pytest.fixture
 def all_pairwise_distances():
     all_calulated_distances = {}
-    no_subsample_distances = ["sym_kldiv", "t_test", "ks_test", "classifier_proba", "classifier_cp"]
+    no_subsample_distances = [
+        "sym_kldiv",
+        "t_test",
+        "ks_test",
+        "classifier_proba",
+        "classifier_cp",
+        "mahalanobis",
+    ]
 
     for distance in all_distances:
         adata = pt.dt.distance_example()
         if distance not in no_subsample_distances:
             adata = sc.pp.subsample(adata, 0.001, copy=True)
-        else:
+        elif distance != "mahalanobis":
             adata = sc.pp.subsample(adata, 0.1, copy=True)
 
         adata.layers["lognorm"] = adata.X.copy()
         adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
         if "X_pca" not in adata.obsm.keys():
             sc.pp.pca(adata, n_comps=5)
-
-        if distance in pseudo_counts_distances:
+        if distance in lognorm_counts_distances:
+            Distance = pt.tl.Distance(distance, layer_key="lognorm")
+        elif distance in pseudo_counts_distances:
             Distance = pt.tl.Distance(distance, layer_key="counts")
         else:
             Distance = pt.tl.Distance(distance, obsm_key="X_pca")

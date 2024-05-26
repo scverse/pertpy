@@ -12,16 +12,50 @@ from ott.problems.linear.linear_problem import LinearProblem
 from ott.solvers.linear.sinkhorn import Sinkhorn
 from pandas import Series
 from rich.progress import track
-from scipy.sparse import issparse
-from scipy.spatial.distance import cosine
+from scipy.sparse import csr_matrix, issparse
+from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
 from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+from sklearn.neighbors import KernelDensity
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
+
+def compute_medoid(arr, axis=None):
+    if len(arr) == 0:
+        return None  # Handle the case when the array is empty
+
+    if axis is not None:
+        # If axis is specified, compute the medoid along that axis
+        return np.apply_along_axis(lambda x: compute_medoid(x), axis, arr)
+
+    # Calculate pairwise distances between all elements
+    distances = np.abs(arr[:, np.newaxis] - arr)
+
+    # Calculate the total distance for each element
+    total_distances = np.sum(distances, axis=1)
+
+    # Find the index of the element with the smallest total distance (medoid)
+    medoid_index = np.argmin(total_distances)
+
+    # Return the medoid value
+    medoid = arr[medoid_index]
+
+    return medoid
+
+
+AGG_FCTS = {
+    "mean": np.mean,
+    "median": np.median,
+    "medoid": compute_medoid,
+    "variance": np.var,
+}
+
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from anndata import AnnData
 
 
@@ -80,6 +114,9 @@ class Distance:
         Average of the classification probability of the perturbation for a binary classifier.
     - "classifier_cp": classifier class projection
         Average of the class
+    - "mean_var_distn": Distance between mean-var distibutions of gene expression.
+    - "mahalanobis": Mahalanobis distance between the cells of two groups.
+
 
     Attributes:
         metric: Name of distance metric.
@@ -99,6 +136,7 @@ class Distance:
     def __init__(
         self,
         metric: str = "edistance",
+        agg_fct: str = "mean",
         layer_key: str = None,
         obsm_key: str = None,
         cell_wise_metric: str = "euclidean",
@@ -107,6 +145,7 @@ class Distance:
 
         Args:
             metric: Distance metric to use. Defaults to "edistance".
+            agg_fct: Name of the aggregation function to generate pseodobulk vectors. Defaults to "mean".
             layer_key: Name of the counts layer containing raw counts to calculate distances for.
                               Mutually exclusive with 'obsm_key'.
                               Defaults to None and is then not used.
@@ -116,6 +155,7 @@ class Distance:
             cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
                                 Defaults to "euclidean".
         """
+        self.aggregation_func = AGG_FCTS[agg_fct]
         metric_fct: AbstractDistance = None
         if metric == "edistance":
             metric_fct = Edistance()
@@ -155,6 +195,10 @@ class Distance:
             metric_fct = ClassifierProbaDistance()
         elif metric == "classifier_cp":
             metric_fct = ClassifierClassProjection()
+        elif metric == "mean_var_distn":
+            metric_fct = MeanVarDistnDistance()
+        elif metric == "mahalanobis":
+            metric_fct = MahalanobisDistance(self.aggregation_func)
         else:
             raise ValueError(f"Metric {metric} not recognized.")
         self.metric_fct = metric_fct
@@ -315,7 +359,13 @@ class Distance:
         """
         if self.metric == "classifier_cp":
             return self.metric_fct.onesided_distances(  # type: ignore
-                adata, groupby, selected_group, groups, show_progressbar, n_jobs, **kwargs
+                adata,
+                groupby,
+                selected_group,
+                groups,
+                show_progressbar,
+                n_jobs,
+                **kwargs,
             )
 
         groups = adata.obs[groupby].unique() if groups is None else groups
@@ -857,3 +907,93 @@ class ClassifierClassProjection(AbstractDistance):
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("ClassifierClassProjection cannot be called on a pairwise distance matrix.")
+
+
+class MeanVarDistnDistance(AbstractDistance):
+    """
+    Distance betweenv mean-var distributions of gene expression.
+
+    """
+
+    def __init__(self, aggregation_func: Callable = np.mean) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        """
+        Difference of mean-var distibutions in 2 matrices
+        :param X,Y: Matrices of cells*genes, normalized and log transformed
+        """
+
+        # Get log mean & var for comparison
+        def mean_var(x, log: bool = False):
+            mean = np.mean(x, axis=0)
+            var = np.var(x, axis=0)
+            positive = mean > 0
+            mean = mean[positive]
+            var = var[positive]
+            if log:
+                mean = np.log(mean)
+                var = np.log(var)
+            return mean, var
+
+        def prep_kde_data(x, y):
+            return np.concatenate([x.reshape(-1, 1), y.reshape(-1, 1)], axis=1)
+
+        mean_x, var_x = mean_var(X, log=True)
+        x = prep_kde_data(mean_x, var_x)
+        mean_y, var_y = mean_var(Y, log=True)
+        y = prep_kde_data(mean_y, var_y)
+
+        def grid_points(d, n_points=100):
+            # Make grid, add 1 bin on lower/upper end to get final n_points
+            d_min = d.min()
+            d_max = d.max()
+            # Compute bin size
+            d_bin = (d_max - d_min) / (n_points - 2)
+            d_min = d_min - d_bin
+            d_max = d_max + d_bin
+            return np.arange(start=d_min + 0.5 * d_bin, stop=d_max, step=d_bin)
+
+        # Gridpoints to eval KDE on
+        mean_grid = grid_points(np.concatenate([mean_x, mean_y]))
+        var_grid = grid_points(np.concatenate([var_x, var_y]))
+        grid = np.array(np.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2)
+
+        # KDE
+        def kde_eval(d, grid):
+            # Kernel choice: Gaussian is too smoothing and cosine or other kernels that do not stretch out
+            # can not be compared well on regions further away from the data as they are -inf
+            return KernelDensity(bandwidth="silverman", kernel="exponential").fit(d).score_samples(grid)
+
+        kde_x = kde_eval(x, grid)
+        kde_y = kde_eval(y, grid)
+
+        # KDE difference
+        kde_diff = ((kde_x - kde_y) ** 2).mean()
+
+        return kde_diff
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("MeanVarDistnDistance cannot be called on a pairwise distance matrix.")
+
+
+class MahalanobisDistance(AbstractDistance):
+    """
+    Mahalanobis distance between pseudobulk vectors.
+    """
+
+    def __init__(self, aggregation_func: Callable = np.mean) -> None:
+        super().__init__()
+        self.accepts_precomputed = False
+        self.aggregation_func = aggregation_func
+
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return mahalanobis(
+            self.aggregation_func(X, axis=0),
+            self.aggregation_func(Y, axis=0),
+            np.linalg.inv(np.cov(X.T)),
+        )
+
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
