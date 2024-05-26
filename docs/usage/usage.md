@@ -130,7 +130,7 @@ Pertpy provides utilities to conduct differential gene expression tests through 
     tools.EdgeR
     tools.WilcoxonTest
     tools.TTest
-    Tools.Statsmodels
+    tools.Statsmodels
 ```
 
 ### Pooled CRISPR screens
