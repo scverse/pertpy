@@ -31,6 +31,7 @@ For questions about the usage of pertpy use the [scverse discourse](https://disc
    notebooks/scgen_perturbation_prediction
    notebooks/perturbation_space
    notebooks/differential_gene_expression
+   notebooks/metadata_annotation
    notebooks/ontology_mapping
 ```
 
