@@ -34,10 +34,14 @@ The DGE interface of pertpy requires additional dependencies that can be install
 pip install pertpy[de]
 ```
 
-Note that edger in pertpy requires edger to be installed:
+Note that edger in pertpy requires edger and rpy2 to be installed:
 
 ```R
 BiocManager::install("edgeR")
+```
+
+```console
+pip install rpy2
 ```
 
 ## From sources

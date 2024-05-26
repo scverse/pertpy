@@ -75,7 +75,6 @@ coda = [
 de = [
     "formulaic",
     "pydeseq2",
-    "rpy2"
 ]
 dev = [
     "pre-commit",
