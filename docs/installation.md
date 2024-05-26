@@ -9,7 +9,7 @@
 To install pertpy, run this command in your terminal:
 
 ```console
-$ pip install pertpy
+pip install pertpy
 ```
 
 This is the preferred method to install pertpy, as it will always install the most recent stable release.
@@ -18,13 +18,27 @@ If you don't have [pip] installed, this [Python installation guide] can guide yo
 
 ## Google Colab and TascCODA support
 
-TascCODA requires an additional set of dependencies (ete3 and pyqt5) that can be installed using
+TascCODA requires an additional set of dependencies (ete3 and pyqt5) that can be installed by running:
 
 ```console
-$ pip install pertpy[coda]
+pip install pertpy[coda]
 ```
 
 this also solves any "AttributeError: module 'pertpy.plot' has no attribute 'coda'" issues.
+
+## Differential gene expression interface
+
+The DGE interface of pertpy requires additional dependencies that can be installed by running:
+
+```console
+pip install pertpy[de]
+```
+
+Note that edger in pertpy requires edger to be installed:
+
+```R
+BiocManager::install("edgeR")
+```
 
 ## From sources
 
@@ -57,27 +71,27 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
    having both mamba and conda won't cause conflicts)
 
     ```console
-    $ brew install --cask mambaforge
+    brew install --cask mambaforge
     ```
 
 3. Create a new environment using mamba (here with python 3.10) and activate it
 
     ```console
-    $ mamba create -n pertpy-env python=3.11
-    $ mamba activate pertpy-env
+    mamba create -n pertpy-env python=3.11
+    mamba activate pertpy-env
     ```
 
 4. Clone the GitHub Repository
 
     ```console
-    $ git clone https://github.com/theislab/pertpy.git
+    git clone https://github.com/theislab/pertpy.git
     ```
 
 5. Go inside the pertpy folder and install pertpy
 
     ```console
-    $ cd pertpy
-    $ pip install .
+    cd pertpy
+    pip install .
     ```
 
 Now you're ready to use pertpy as usual within the environment (`import pertpy`).

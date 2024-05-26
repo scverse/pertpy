@@ -55,8 +55,6 @@ dependencies = [
     "scipy",
     "scvi-tools",
     "adjusttext",
-    "toytree",
-    "arviz",
     "numpyro",
     "decoupler",
     "ott-jax",
@@ -70,6 +68,8 @@ dependencies = [
 
 [project.optional-dependencies]
 coda = [
+    "toytree",
+    "arviz",
     "ete3",
     "pyqt5"  # remove this after ete4 got released
 ]
