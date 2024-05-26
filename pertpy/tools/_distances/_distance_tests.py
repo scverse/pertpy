@@ -66,11 +66,14 @@ class DistanceTest:
         self.alpha = alpha
         self.correction = correction
         self.cell_wise_metric = (
-            cell_wise_metric if cell_wise_metric else Distance(self.metric, self.obsm_key).cell_wise_metric
+            cell_wise_metric if cell_wise_metric else Distance(self.metric, obsm_key=self.obsm_key).cell_wise_metric
         )
 
         self.distance = Distance(
-            self.metric, layer_key=self.layer_key, obsm_key=self.obsm_key, cell_wise_metric=self.cell_wise_metric
+            self.metric,
+            layer_key=self.layer_key,
+            obsm_key=self.obsm_key,
+            cell_wise_metric=self.cell_wise_metric,
         )
 
     def __call__(
@@ -176,7 +179,8 @@ class DistanceTest:
         # Evaluate the test
         # count times shuffling resulted in larger distance
         comparison_results = np.array(
-            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int
+            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0,
+            dtype=int,
         )
         n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
@@ -284,7 +288,8 @@ class DistanceTest:
         # Evaluate the test
         # count times shuffling resulted in larger distance
         comparison_results = np.array(
-            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int
+            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0,
+            dtype=int,
         )
         n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
