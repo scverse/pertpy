@@ -58,7 +58,9 @@ jobs:
             - name: Install test dependencies
               run: python -m pip install --upgrade uv wheel
             - name: Install dependencies
-              run: uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,coda,de]"
+              run: |
+                  uv pip install rpy2
+                  uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,coda,de]"
 
             - name: Test
               env:
