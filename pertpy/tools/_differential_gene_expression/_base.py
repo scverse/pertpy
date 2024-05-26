@@ -94,7 +94,7 @@ class MethodBase(ABC):
         """
         ...
 
-    def volcano(
+    def plot_volcano(
         self,
         data: pd.DataFrame | ad.AnnData,
         *,

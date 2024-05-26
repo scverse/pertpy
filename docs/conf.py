@@ -185,6 +185,7 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/distance_tests": "_static/tutorials/distances_tests.png",
     "tutorials/notebooks/cinemaot": "_static/tutorials/cinemaot.png",
     "tutorials/notebooks/scgen_perturbation_prediction": "_static/tutorials/scgen_perturbation_prediction.png",
-    "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
     "tutorials/notebooks/perturbation_space": "_static/tutorials/perturbation_space.png",
+    "tutorials/notebooks/differential_gene_expression": "_static/tutorials/dge.png",
+    "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
 }
