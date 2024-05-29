@@ -1928,15 +1928,13 @@ class CompositionalModel2(ABC):
             raise ImportError(
                 "To use tasccoda please install additional dependencies with `pip install pertpy[coda]`"
             ) from None
-        
-        
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
             data = data
         if isinstance(tree, str):
             tree = data.uns[tree]
-
 
         def my_layout(node):
             text_face = TextFace(node.name, tight_text=tight_text)
@@ -1953,7 +1951,6 @@ class CompositionalModel2(ABC):
             return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         else:
             return tree, tree_style
-
 
     def plot_draw_effects(  # pragma: no cover
         self,
@@ -2024,7 +2021,7 @@ class CompositionalModel2(ABC):
             raise ImportError(
                 "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
             ) from None
-        
+
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
@@ -2038,7 +2035,7 @@ class CompositionalModel2(ABC):
             tree = data.uns[tree]
         # Collapse tree singularities
         tree2 = collapse_singularities_2(tree)
-        
+
         node_effs = data.uns["scCODA_params"]["node_df"].loc[(covariate + "_node",),].copy()
         node_effs.index = node_effs.index.get_level_values("Node")
 
@@ -2051,7 +2048,7 @@ class CompositionalModel2(ABC):
         )
         leaf_effs = eff_df.loc[(covariate,),].copy()
         leaf_effs.index = leaf_effs.index.get_level_values("Cell Type")
-        
+
         # Add effect values
         for n in tree2.traverse():
             nstyle = NodeStyle()
@@ -2069,8 +2066,8 @@ class CompositionalModel2(ABC):
                 n.add_prop("leaf_effect", 0)
 
         # Scale effect values to get nice node sizes
-        eff_max = np.max([np.abs(n.props.get('node_effect')) for n in tree2.traverse()])
-        leaf_eff_max = np.max([np.abs(n.props.get('leaf_effect')) for n in tree2.traverse()])
+        eff_max = np.max([np.abs(n.props.get("node_effect")) for n in tree2.traverse()])
+        leaf_eff_max = np.max([np.abs(n.props.get("leaf_effect")) for n in tree2.traverse()])
 
         def my_layout(node):
             text_face = TextFace(node.name, tight_text=tight_text)
@@ -2078,10 +2075,10 @@ class CompositionalModel2(ABC):
             faces.add_face_to_node(text_face, node, column=0, aligned=True)
 
             # if node.is_leaf():
-            size = (np.abs(node.props.get('node_effect')) * 10 / eff_max) if node.props.get('node_effect') != 0 else 0
-            if np.sign(node.props.get('node_effect')) == 1:
+            size = (np.abs(node.props.get("node_effect")) * 10 / eff_max) if node.props.get("node_effect") != 0 else 0
+            if np.sign(node.props.get("node_effect")) == 1:
                 color = "blue"
-            elif np.sign(node.props.get('node_effect')) == -1:
+            elif np.sign(node.props.get("node_effect")) == -1:
                 color = "red"
             else:
                 color = "cyan"
@@ -2558,7 +2555,7 @@ def import_tree(
             data_1.uns["dendrogram_cell_label"]["linkage"],
             labels=data_1.uns["dendrogram_cell_label"]["categories_ordered"],
         )
-        #tree = ete.Tree(newick, format=1)
+        # tree = ete.Tree(newick, format=1)
         tree = ete.Tree(newick, parser=1)
         node_id = 0
         for n in tree.descendants():
@@ -2567,9 +2564,9 @@ def import_tree(
                 node_id += 1
     elif levels_orig is not None:
         newick = df2newick(data_1.obs.reset_index(), levels=levels_orig)
-        #tree = ete.Tree(newick, format=8)
+        # tree = ete.Tree(newick, format=8)
         tree = ete.Tree(newick, parser=8)
-        
+
         if add_level_name:
             for n in tree.descendants():
                 if not n.is_leaf:
@@ -2577,7 +2574,7 @@ def import_tree(
                     n.name = f"{levels_orig[int(dist) - 1]}_{n.name}"
     elif levels_agg is not None:
         newick = df2newick(data_2.var.reset_index(), levels=levels_agg)
-        #tree = ete.Tree(newick, format=8)
+        # tree = ete.Tree(newick, format=8)
         tree = ete.Tree(newick, parser=8)
         if add_level_name:
             for n in tree.descendants():
