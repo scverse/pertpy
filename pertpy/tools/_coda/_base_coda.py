@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
     import numpyro as npy
     import toytree as tt
-    from ete3 import Tree
+    from ete4 import Tree
     from jax._src.typing import Array
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
@@ -1869,7 +1869,7 @@ class CompositionalModel2(ABC):
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
-        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
+        tree: str = "tree",  # Also type ete4.Tree. Omitted due to import errors
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
@@ -1878,13 +1878,13 @@ class CompositionalModel2(ABC):
         show: bool | None = True,
         save: str | bool | None = None,
     ) -> Tree | None:
-        """Plot a tree using input ete3 tree object.
+        """Plot a tree using input ete4 tree object.
 
         Args:
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use.
                           Defaults to "coda".
-            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
+            tree: A ete4 tree object or a str to indicate the tree stored in `.uns`.
                   Defaults to "tree".
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
@@ -1901,7 +1901,7 @@ class CompositionalModel2(ABC):
             dpi: Dots per inches. Defaults to 100.
 
         Returns:
-            Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
+            Depending on `show`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
 
         Examples:
             >>> import pertpy as pt
@@ -1922,18 +1922,21 @@ class CompositionalModel2(ABC):
             .. image:: /_static/docstring_previews/tasccoda_draw_tree.png
         """
         try:
-            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+            from ete4 import Tree
+            from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies with `pip install pertpy[coda]`"
             ) from None
-
+        
+        
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
             data = data
         if isinstance(tree, str):
             tree = data.uns[tree]
+
 
         def my_layout(node):
             text_face = TextFace(node.name, tight_text=tight_text)
@@ -1951,12 +1954,13 @@ class CompositionalModel2(ABC):
         else:
             return tree, tree_style
 
+
     def plot_draw_effects(  # pragma: no cover
         self,
         data: AnnData | MuData,
         covariate: str,
         modality_key: str = "coda",
-        tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
+        tree: str = "tree",  # Also type ete4.Tree. Omitted due to import errors
         show_legend: bool | None = None,
         show_leaf_effects: bool | None = False,
         tight_text: bool | None = False,
@@ -1974,7 +1978,7 @@ class CompositionalModel2(ABC):
             covariate: The covariate, whose effects should be plotted.
             modality_key: If data is a MuData object, specify which modality to use.
                           Defaults to "coda".
-            tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
+            tree: A ete4 tree object or a str to indicate the tree stored in `.uns`.
                   Defaults to "tree".
             show_legend: If show legend of nodes significant effects or not.
                          Defaults to False if show_leaf_effects is True.
@@ -1992,7 +1996,7 @@ class CompositionalModel2(ABC):
             dpi: Dots per inches. Defaults to 100.
 
         Returns:
-            Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
+            Depending on `show`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`show = False`)
             or  plot the tree inline (`show = False`)
 
         Examples:
@@ -2014,12 +2018,13 @@ class CompositionalModel2(ABC):
             .. image:: /_static/docstring_previews/tasccoda_draw_effects.png
         """
         try:
-            from ete3 import CircleFace, NodeStyle, TextFace, Tree, TreeStyle, faces
+            from ete4 import Tree
+            from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
             ) from None
-
+        
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(data, AnnData):
@@ -2033,7 +2038,7 @@ class CompositionalModel2(ABC):
             tree = data.uns[tree]
         # Collapse tree singularities
         tree2 = collapse_singularities_2(tree)
-
+        
         node_effs = data.uns["scCODA_params"]["node_df"].loc[(covariate + "_node",),].copy()
         node_effs.index = node_effs.index.get_level_values("Node")
 
@@ -2046,7 +2051,7 @@ class CompositionalModel2(ABC):
         )
         leaf_effs = eff_df.loc[(covariate,),].copy()
         leaf_effs.index = leaf_effs.index.get_level_values("Cell Type")
-
+        
         # Add effect values
         for n in tree2.traverse():
             nstyle = NodeStyle()
@@ -2054,18 +2059,18 @@ class CompositionalModel2(ABC):
             n.set_style(nstyle)
             if n.name in node_effs.index:
                 e = node_effs.loc[n.name, "Final Parameter"]
-                n.add_feature("node_effect", e)
+                n.add_prop("node_effect", e)
             else:
-                n.add_feature("node_effect", 0)
+                n.add_prop("node_effect", 0)
             if n.name in leaf_effs.index:
                 e = leaf_effs.loc[n.name, "Effect"]
-                n.add_feature("leaf_effect", e)
+                n.add_prop("leaf_effect", e)
             else:
-                n.add_feature("leaf_effect", 0)
+                n.add_prop("leaf_effect", 0)
 
         # Scale effect values to get nice node sizes
-        eff_max = np.max([np.abs(n.node_effect) for n in tree2.traverse()])
-        leaf_eff_max = np.max([np.abs(n.leaf_effect) for n in tree2.traverse()])
+        eff_max = np.max([np.abs(n.props.get('node_effect')) for n in tree2.traverse()])
+        leaf_eff_max = np.max([np.abs(n.props.get('leaf_effect')) for n in tree2.traverse()])
 
         def my_layout(node):
             text_face = TextFace(node.name, tight_text=tight_text)
@@ -2073,10 +2078,10 @@ class CompositionalModel2(ABC):
             faces.add_face_to_node(text_face, node, column=0, aligned=True)
 
             # if node.is_leaf():
-            size = (np.abs(node.node_effect) * 10 / eff_max) if node.node_effect != 0 else 0
-            if np.sign(node.node_effect) == 1:
+            size = (np.abs(node.props.get('node_effect')) * 10 / eff_max) if node.props.get('node_effect') != 0 else 0
+            if np.sign(node.props.get('node_effect')) == 1:
                 color = "blue"
-            elif np.sign(node.node_effect) == -1:
+            elif np.sign(node.props.get('node_effect')) == -1:
                 color = "red"
             else:
                 color = "cyan"
@@ -2112,7 +2117,7 @@ class CompositionalModel2(ABC):
                 tree_style.legend.add_face(TextFace(f" {eff_max * i / 4:.2f}"), column=1)
 
         if show_leaf_effects:
-            leaf_name = [node.name for node in tree2.traverse("postorder") if node.is_leaf()]
+            leaf_name = [node.name for node in tree2.traverse("postorder") if node.is_leaf]
             leaf_effs = leaf_effs.loc[leaf_name].reset_index()
             palette = ["blue" if Effect > 0 else "red" for Effect in leaf_effs["Effect"].tolist()]
 
@@ -2319,7 +2324,7 @@ def collapse_singularities(tree: tt.tree) -> tt.tree:
     # _coords.update() scrambles the idx of leaves. Therefore, keep track of it here
     tree_new = tree.copy()
     for node in tree_new.treenode.traverse():
-        node.add_feature("idx_orig", node.idx)
+        node.add_prop("idx_orig", node.idx)
 
     for n in nodes_to_delete:
         node = tree_new.idx_dict[n]
@@ -2386,10 +2391,10 @@ def get_a_2(
     leaf_order: list[str] = None,
     node_order: list[str] = None,
 ) -> tuple[np.ndarray, int]:
-    """Calculate ancestor matrix from a ete3 tree.
+    """Calculate ancestor matrix from a ete4 tree.
 
     Args:
-        tree: A ete3 tree object.
+        tree: A ete4 tree object.
         leaf_order: List of leaf names how they should appear as the rows of the ancestor matrix.
                     If None, the ordering will be as in `tree.iter_leaves()`
         node_order: List of node names how they should appear as the columns of the ancestor matrix
@@ -2404,29 +2409,29 @@ def get_a_2(
             number of nodes in the tree, excluding the root node
     """
     try:
-        import ete3 as ete
+        import ete4 as ete
     except ImportError:
         raise ImportError(
             "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
         ) from None
 
-    n_tips = len(tree.get_leaves())
-    n_nodes = len(tree.get_descendants())
+    n_tips = len(list(tree.leaves()))
+    n_nodes = len(list(tree.descendants()))
 
-    node_names = [n.name for n in tree.iter_descendants()]
+    node_names = [n.name for n in tree.descendants()]
     duplicates = [x for x in node_names if node_names.count(x) > 1]
     if len(duplicates) > 0:
         raise ValueError(f"Tree nodes have duplicate names: {duplicates}. Make sure that node names are unique!")
 
     # Initialize ancestor matrix
     A_ = pd.DataFrame(np.zeros((n_tips, n_nodes)))
-    A_.index = tree.get_leaf_names()
-    A_.columns = [n.name for n in tree.iter_descendants()]
+    A_.index = tree.leaf_names()
+    A_.columns = [n.name for n in tree.descendants()]
 
     # Fill in 1's for all connections
-    for node in tree.iter_descendants():
-        for leaf in tree.get_leaves():
-            if leaf in node.get_leaves():
+    for node in tree.descendants():
+        for leaf in tree.leaves():
+            if leaf in node.leaves():
                 A_.loc[leaf.name, node.name] = 1
 
     # Order rows and columns
@@ -2440,15 +2445,15 @@ def get_a_2(
 
 
 def collapse_singularities_2(tree: Tree) -> Tree:
-    """Collapses (deletes) nodes in a ete3 tree that are singularities (have only one child).
+    """Collapses (deletes) nodes in a ete4 tree that are singularities (have only one child).
 
     Args:
-        tree: A ete3 tree object
+        tree: A ete4 tree object
 
     Returns:
-        A ete3 tree without singularities.
+        A ete4 tree without singularities.
     """
-    for node in tree.iter_descendants():
+    for node in tree.descendants():
         if len(node.get_children()) == 1:
             node.delete()
 
@@ -2473,7 +2478,7 @@ def linkage_to_newick(
     tree = sp_hierarchy.to_tree(Z, False)
 
     def build_newick(node, newick, parentdist, leaf_names):
-        if node.is_leaf():
+        if node.is_leaf:
             return f"{leaf_names[node.id]}:{(parentdist - node.dist) / 2}{newick}"
         else:
             if len(newick) > 0:
@@ -2525,10 +2530,10 @@ def import_tree(
 
         See `key_added` parameter description for the storage path of tree.
 
-        tree: A ete3 tree object.
+        tree: A ete4 tree object.
     """
     try:
-        import ete3 as ete
+        import ete4 as ete
     except ImportError:
         raise ImportError(
             "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
@@ -2553,32 +2558,36 @@ def import_tree(
             data_1.uns["dendrogram_cell_label"]["linkage"],
             labels=data_1.uns["dendrogram_cell_label"]["categories_ordered"],
         )
-        tree = ete.Tree(newick, format=1)
+        #tree = ete.Tree(newick, format=1)
+        tree = ete.Tree(newick, parser=1)
         node_id = 0
-        for n in tree.iter_descendants():
-            if not n.is_leaf():
+        for n in tree.descendants():
+            if not n.is_leaf:
                 n.name = str(node_id)
                 node_id += 1
     elif levels_orig is not None:
         newick = df2newick(data_1.obs.reset_index(), levels=levels_orig)
-        tree = ete.Tree(newick, format=8)
+        #tree = ete.Tree(newick, format=8)
+        tree = ete.Tree(newick, parser=8)
+        
         if add_level_name:
-            for n in tree.iter_descendants():
-                if not n.is_leaf():
-                    dist = n.get_distance(n, tree)
+            for n in tree.descendants():
+                if not n.is_leaf:
+                    dist = n.get_distance(n, tree, topological=True)
                     n.name = f"{levels_orig[int(dist) - 1]}_{n.name}"
     elif levels_agg is not None:
         newick = df2newick(data_2.var.reset_index(), levels=levels_agg)
-        tree = ete.Tree(newick, format=8)
+        #tree = ete.Tree(newick, format=8)
+        tree = ete.Tree(newick, parser=8)
         if add_level_name:
-            for n in tree.iter_descendants():
-                if not n.is_leaf():
-                    dist = n.get_distance(n, tree)
+            for n in tree.descendants():
+                if not n.is_leaf:
+                    dist = n.get_distance(n, tree, topological=True)
                     n.name = f"{levels_agg[int(dist) - 1]}_{n.name}"
     else:
         raise ValueError("Either dendrogram_key, levels_orig or levels_agg must be specified!")
 
-    node_names = [n.name for n in tree.iter_descendants()]
+    node_names = [n.name for n in tree.descendants()]
     duplicates = {x for x in node_names if node_names.count(x) > 1}
     if len(duplicates) > 0:
         raise ValueError(f"Tree nodes have duplicate names: {duplicates}. Make sure that node names are unique!")

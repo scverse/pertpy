@@ -201,7 +201,7 @@ class Tasccoda(CompositionalModel2):
 
         # Scoped import due to installation issues
         try:
-            import ete3 as ete
+            import ete4 as ete
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
@@ -237,7 +237,7 @@ class Tasccoda(CompositionalModel2):
 
             # number of leaves for each internal node (important for aggregation penalty lambda_1)
             if "node_leaves" not in pen_args:
-                node_leaves = [len(n.get_leaves()) for n in phy_tree.idx_dict.values()]
+                node_leaves = [len(n.leaves()) for n in phy_tree.idx_dict.values()]
                 node_leaves.reverse()
                 pen_args["node_leaves"] = np.delete(np.array(node_leaves[:-1]), refs)
 
@@ -246,7 +246,7 @@ class Tasccoda(CompositionalModel2):
             # Collapse singularities in the tree
             phy_tree = collapse_singularities_2(adata.uns[tree_key])
 
-            node_names = [n.name for n in phy_tree.iter_descendants()]
+            node_names = [n.name for n in phy_tree.descendants()]
 
             # Get ancestor matrix
             A, T = get_a_2(phy_tree, leaf_order=adata.var.index.tolist(), node_order=node_names)
@@ -257,7 +257,7 @@ class Tasccoda(CompositionalModel2):
             # Ancestors of reference are a reference, too!
             # Get names of reference nodes
             reference_cell_type = adata.uns["scCODA_params"]["reference_cell_type"]
-            ref_nodes = [n.name for n in phy_tree.search_nodes(name=reference_cell_type)[0].get_ancestors()[:-1]]
+            ref_nodes = [n.name for n in list(next(phy_tree.search_nodes(name=reference_cell_type)).ancestors())[:-1]]
             ref_nodes = [reference_cell_type] + ref_nodes
             adata.uns["scCODA_params"]["reference_nodes"] = ref_nodes
 
@@ -268,12 +268,12 @@ class Tasccoda(CompositionalModel2):
 
             # number of leaves for each internal node (important for aggregation penalty lambda_1)
             if "node_leaves" not in pen_args:
-                node_leaves = [len(n.get_leaves()) for n in phy_tree.iter_descendants()]
+                node_leaves = [len(list(n.leaves())) for n in phy_tree.descendants()]
                 pen_args["node_leaves"] = np.delete(np.array(node_leaves), ref_idxs)
 
         # No valid tree structure
         else:
-            raise ValueError("Tree structure is not a toytree or ete3 tree object")
+            raise ValueError("Tree structure is not a toytree or ete4 tree object")
 
         # Default spike-and-slab LASSO parameters
         if "lambda_0" not in pen_args:
