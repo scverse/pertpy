@@ -2123,7 +2123,7 @@ class CompositionalModel2(ABC):
 
             dir_path = Path.cwd()
             dir_path = Path(dir_path / "tree_effect.png")
-            tree2.render(dir_path, tree_style=tree_style, units="in")
+            tree2.render(dir_path.as_posix(), tree_style=tree_style, units="in")
             _, ax = plt.subplots(1, 2, figsize=(10, 10))
             sns.barplot(data=leaf_effs, x="Effect", y="Cell Type", palette=palette, ax=ax[1])
             img = mpimg.imread(dir_path)
