@@ -2,6 +2,8 @@
 # mypy: ignore-errors
 
 import sys
+from datetime import datetime
+from importlib.metadata import metadata
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -9,13 +11,16 @@ sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
 
 needs_sphinx = "4.3"
 
-project = "pertpy"
-copyright = "2021, Lukas Heumos, Theislab"
-author = "Lukas Heumos"
+info = metadata("pertpy")
+project_name = info["Name"]
+author = info["Author"]
+copyright = f"{datetime.now():%Y}, {author}."
+version = info["Version"]
+urls = dict(pu.split(", ") for pu in info.get_all("Project-URL"))
+repository_url = urls["Source"]
+release = info["Version"]
 github_repo = "pertpy"
 
-version = "0.8.0"
-release = "0.8.0"
 
 extensions = [
     "myst_parser",
