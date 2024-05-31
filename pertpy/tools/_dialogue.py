@@ -633,9 +633,15 @@ class Dialogue:
 
         n_samples = mcca_in[0].shape[1]
         if penalties is None:
-            penalties = multicca_permute(
-                mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
-            )["bestpenalties"]
+            try:
+                penalties = multicca_permute(
+                    mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
+                )["bestpenalties"]
+            except ValueError as e:
+                if "matmul: input operand 1 has a mismatch in its core dimension" in str(e):
+                    raise ValueError("Please ensure that every cell type is represented in every sample.") from e
+                else:
+                    raise
         else:
             penalties = penalties
 
