@@ -102,7 +102,8 @@ intersphinx_mapping = {
 
 language = "en"
 
-# The name of the Pygments (syntax highlighting) style to use.
+typehints_defaults = "comma"
+
 pygments_style = "default"
 pygments_dark_style = "native"
 

@@ -106,15 +106,14 @@ class Distance:
         """Initialize Distance class.
 
         Args:
-            metric: Distance metric to use. Defaults to "edistance".
+            metric: Distance metric to use.
             layer_key: Name of the counts layer containing raw counts to calculate distances for.
                               Mutually exclusive with 'obsm_key'.
-                              Defaults to None and is then not used.
+                              Is not used if `None`.
             obsm_key: Name of embedding in adata.obsm to use.
                       Mutually exclusive with 'counts_layer_key'.
-                      Defaults to None, but is set to "X_pca" if not set explicitly internally.
+                      Defaults to None, but is set to "X_pca" if not explicitly set internally.
             cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
-                                Defaults to "euclidean".
         """
         metric_fct: AbstractDistance = None
         if metric == "edistance":
@@ -219,8 +218,8 @@ class Distance:
             adata: Annotated data matrix.
             groupby: Column name in adata.obs.
             groups: List of groups to compute pairwise distances for.
-                    If None, uses all groups. Defaults to None.
-            show_progressbar: Whether to show progress bar. Defaults to True.
+                    If None, uses all groups.
+            show_progressbar: Whether to show progress bar.
             n_jobs: Number of cores to use. Defaults to -1 (all).
             kwargs: Additional keyword arguments passed to the metric function.
 
@@ -299,8 +298,8 @@ class Distance:
             groupby: Column name in adata.obs.
             selected_group: Group to compute pairwise distances to all other.
             groups: List of groups to compute distances to selected_group for.
-                    If None, uses all groups. Defaults to None.
-            show_progressbar: Whether to show progress bar. Defaults to True.
+                    If None, uses all groups.
+            show_progressbar: Whether to show progress bar.
             n_jobs: Number of cores to use. Defaults to -1 (all).
             kwargs: Additional keyword arguments passed to the metric function.
 

@@ -111,9 +111,9 @@ class CompositionalModel2(ABC):
                 Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.
                 To set a different level as the base category for a categorical covariate, use "C(<CovariateName>, Treatment('<ReferenceLevelName>'))"
             reference_cell_type: Column name that sets the reference cell type.
-                Reference the name of a column. If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen. Defaults to "automatic".
+                Reference the name of a column. If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen.
             automatic_reference_absence_threshold: If using reference_cell_type = "automatic", determine the maximum fraction of zero entries for a cell type
-                to be considered as a possible reference cell type. Defaults to 0.05.
+                to be considered as a possible reference cell type.
 
         Returns:
             AnnData object that is ready for CODA models.
@@ -202,7 +202,7 @@ class CompositionalModel2(ABC):
             sample_adata: anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             kernel: A `numpyro.infer.mcmc.MCMCKernel` object
             rng_key: The rng state used. If None, a random state will be selected
-            copy: Return a copy instead of writing to adata. Defaults to False.
+            copy: Return a copy instead of writing to adata.
             args: Passed to `numpyro.infer.mcmc.MCMC`
             kwargs: Passed to `numpyro.infer.mcmc.MCMC`
 
@@ -287,11 +287,11 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            num_samples: Number of sampled values after burn-in. Defaults to 10000.
-            num_warmup: Number of burn-in (warmup) samples. Defaults to 1000.
-            rng_key: The rng state used. Defaults to 0.
-            copy: Return a copy instead of writing to adata. Defaults to False.
+            modality_key: If data is a MuData object, specify which modality to use.
+            num_samples: Number of sampled values after burn-in.
+            num_warmup: Number of burn-in (warmup) samples.
+            rng_key: The rng state used.
+            copy: Return a copy instead of writing to adata.
 
         Returns:
             Calls `self.__run_mcmc`
@@ -340,11 +340,11 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            num_samples: Number of sampled values after burn-in. Defaults to 20000.
-            num_warmup: Number of burn-in (warmup) samples. Defaults to 5000.
-            rng_key: The rng state used. If None, a random state will be selected. Defaults to None.
-            copy: Return a copy instead of writing to adata. Defaults to False.
+            modality_key: If data is a MuData object, specify which modality to use.
+            num_samples: Number of sampled values after burn-in.
+            num_warmup: Number of burn-in (warmup) samples.
+            rng_key: The rng state used. If None, a random state will be selected.
+            copy: Return a copy instead of writing to adata.
 
         Examples:
             >>> import pertpy as pt
@@ -398,7 +398,7 @@ class CompositionalModel2(ABC):
 
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
-            est_fdr: Desired FDR value. Defaults to 0.05.
+            est_fdr: Desired FDR value.
             args: Passed to ``az.summary``
             kwargs: Passed to ``az.summary``
 
@@ -638,8 +638,8 @@ class CompositionalModel2(ABC):
             effect_df: Effect summary, see ``summary_prepare``
             model_type: String indicating the model type ("classic" or "tree_agg")
             select_type:  String indicating the type of spike_and_slab selection ("spikeslab" or "sslasso")
-            target_fdr: Desired FDR value. Defaults to 0.05.
-            node_df: If using tree aggregation, the node-level effect DataFrame must be passed. Defaults to None.
+            target_fdr: Desired FDR value.
+            node_df: If using tree aggregation, the node-level effect DataFrame must be passed.
 
         Returns:
             pd.DataFrame:  effect DataFrame with inclusion probability, final parameters, expected sample.
@@ -791,8 +791,8 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            extended: If True, return the extended summary with additional statistics. Defaults to False.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            extended: If True, return the extended summary with additional statistics.
+            modality_key: If data is a MuData object, specify which modality to use.
             args: Passed to az.summary
             kwargs: Passed to az.summary
 
@@ -935,7 +935,7 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
             pd.DataFrame: Intercept data frame.
@@ -966,7 +966,7 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
             pd.DataFrame: Effect data frame.
@@ -1008,7 +1008,7 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
             pd.DataFrame: Node effect data frame.
@@ -1047,7 +1047,7 @@ class CompositionalModel2(ABC):
         Args:
             data: AnnData object or MuData object.
             est_fdr: Desired FDR value.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
             args: passed to self.summary_prepare
             kwargs: passed to self.summary_prepare
 
@@ -1081,8 +1081,8 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            est_fdr: Estimated false discovery rate. Must be between 0 and 1. Defaults to None.
+            modality_key: If data is a MuData object, specify which modality to use.
+            est_fdr: Estimated false discovery rate. Must be between 0 and 1.
 
         Returns:
             pd.Series: Credible effect decision series which includes boolean values indicate whether effects are credible under inc_prob_threshold.
@@ -1144,10 +1144,10 @@ class CompositionalModel2(ABC):
             type_names: The names of all cell types
             title: Plot title, usually the covariate's name
             level_names: Names of the covariate's levels
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            palette: The color map for the barplot. Defaults to cm.tab20.
-            show_legend: If True, adds a legend. Defaults to True.
+            figsize: Figure size (matplotlib).
+            dpi: Resolution in DPI (matplotlib).
+            palette: The color map for the barplot.
+            show_legend: If True, adds a legend.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
@@ -1206,12 +1206,12 @@ class CompositionalModel2(ABC):
         Args:
             data: AnnData object or MuData object.
             feature_name: The name of the covariate to plot. If feature_name=="samples", one bar for every sample will be plotted
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            palette: The matplotlib color map for the barplot. Defaults to cm.tab20.
-            show_legend: If True, adds a legend. Defaults to True.
-            level_order: Custom ordering of bars on the x-axis. Defaults to None.
+            modality_key: If data is a MuData object, specify which modality to use.
+            figsize: Figure size.
+            dpi: Dpi setting.
+            palette: The matplotlib color map for the barplot.
+            show_legend: If True, adds a legend.
+            level_order: Custom ordering of bars on the x-axis.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
@@ -1312,20 +1312,17 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            covariates: The name of the covariates in data.obs to plot. Defaults to None.
-            parameter: The parameter in effect summary to plot. Defaults to "log2-fold change".
+            modality_key: If data is a MuData object, specify which modality to use.
+            covariates: The name of the covariates in data.obs to plot.
+            parameter: The parameter in effect summary to plot.
             plot_facets: If False, plot cell types on the x-axis. If True, plot as facets.
-                         Defaults to True.
             plot_zero_covariate: If True, plot covariate that have all zero effects. If False, do not plot.
-                                 Defaults to True.
             plot_zero_cell_type: If True, plot cell type that have zero effect. If False, do not plot.
-                                 Defaults to False.
-            figsize: Figure size. Defaults to None.
-            dpi: Figure size. Defaults to 100.
-            palette: The seaborn color map for the barplot. Defaults to cm.tab20.
-            level_order: Custom ordering of bars on the x-axis. Defaults to None.
-            args_barplot: Arguments passed to sns.barplot. Defaults to None.
+            figsize: Figure size.
+            dpi: Figure size.
+            palette: The seaborn color map for the barplot.
+            level_order: Custom ordering of bars on the x-axis.
+            args_barplot: Arguments passed to sns.barplot.
 
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
@@ -1520,20 +1517,19 @@ class CompositionalModel2(ABC):
         Args:
             data: AnnData object or MuData object
             feature_name: The name of the feature in data.obs to plot
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
             y_scale: Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count),
                      "log10" - log10(count), "count" - absolute abundance (cell counts).
-                     Defaults to "relative".
-            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets. Defaults to False.
-            add_dots: If True, overlay a scatterplot with one dot for each data point. Defaults to False.
-            cell_types: Subset of cell types that should be plotted. Defaults to None.
-            args_boxplot: Arguments passed to sns.boxplot. Defaults to {}.
-            args_swarmplot: Arguments passed to sns.swarmplot. Defaults to {}.
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            palette: The seaborn color map for the barplot. Defaults to "Blues".
-            show_legend: If True, adds a legend. Defaults to True.
-            level_order: Custom ordering of bars on the x-axis. Defaults to None.
+            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets.
+            add_dots: If True, overlay a scatterplot with one dot for each data point.
+            cell_types: Subset of cell types that should be plotted.
+            args_boxplot: Arguments passed to sns.boxplot.
+            args_swarmplot: Arguments passed to sns.swarmplot.
+            figsize: Figure size.
+            dpi: Dpi setting.
+            palette: The seaborn color map for the barplot.
+            show_legend: If True, adds a legend.
+            level_order: Custom ordering of bars on the x-axis.
 
         Returns:
             Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
@@ -1759,16 +1755,14 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-                          Defaults to "coda".
-            abundant_threshold: Presence threshold for abundant cell types. Defaults to 0.9.
-            default_color: Bar color for all non-minimal cell types. Defaults to "Grey".
+            modality_key: If data is a MuData object, specify which modality to use.
+            abundant_threshold: Presence threshold for abundant cell types.
+            default_color: Bar color for all non-minimal cell types.
             abundant_color: Bar color for cell types with abundant percentage larger than abundant_threshold.
-                            Defaults to "Red".
-            label_cell_types: Label dots with cell type names. Defaults to True.
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            ax: A matplotlib axes object. Only works if plotting a single component. Defaults to None.
+            label_cell_types: Label dots with cell type names.
+            figsize: Figure size.
+            dpi: Dpi setting.
+            ax: A matplotlib axes object. Only works if plotting a single component.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
@@ -1883,22 +1877,16 @@ class CompositionalModel2(ABC):
         Args:
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use.
-                          Defaults to "coda".
             tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
-                  Defaults to "tree".
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
-                        Default to False.
             show_scale: Include the scale legend in the tree image or not.
-                        Defaults to False.
             show: If True, plot the tree inline. If false, return tree and tree_style objects.
-                  Defaults to True.
             file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG.
                        Output image can be saved whether show is True or not.
-                       Defaults to None.
-            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
-            figsize: Figure size. Defaults to None.
-            dpi: Dots per inches. Defaults to 100.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
+            figsize: Figure size.
+            dpi: Dots per inches.
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
@@ -1973,23 +1961,18 @@ class CompositionalModel2(ABC):
             data: AnnData object or MuData object.
             covariate: The covariate, whose effects should be plotted.
             modality_key: If data is a MuData object, specify which modality to use.
-                          Defaults to "coda".
             tree: A ete3 tree object or a str to indicate the tree stored in `.uns`.
-                  Defaults to "tree".
             show_legend: If show legend of nodes significant effects or not.
                          Defaults to False if show_leaf_effects is True.
             show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects.
-                               Defaults to False.
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
-                        Defaults to False.
-            show_scale: Include the scale legend in the tree image or not. Defaults to False.
-            show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
+            show_scale: Include the scale legend in the tree image or not.
+            show: If True, plot the tree inline. If false, return tree and tree_style objects.
             file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
-                       Defaults to None.
-            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
-            figsize: Figure size. Defaults to None.
-            dpi: Dots per inches. Defaults to 100.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
+            figsize: Figure size.
+            dpi: Dots per inches.
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
@@ -2172,12 +2155,10 @@ class CompositionalModel2(ABC):
             effect_name: The name of the effect results in .varm of aggregated sample-level AnnData to plot
             cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']).
                          To assign cell types' effects to original cells.
-            modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to "rna".
+            modality_key_1: Key to the cell-level AnnData in the MuData object.
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
-                            Defaults to "coda".
-            show: Whether to display the figure or return axis. Defaults to None.
+            show: Whether to display the figure or return axis.
             ax: A matplotlib axes object. Only works if plotting a single component.
-                Defaults to None.
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
 
         Returns:
@@ -2510,15 +2491,14 @@ def import_tree(
 
     Args:
         data: A tascCODA-compatible data object.
-        modality_1: If `data` is MuData, specify the modality name to the original cell level anndata object. Defaults to None.
-        modality_2: If `data` is MuData, specify the modality name to the aggregated level anndata object. Defaults to None.
-        dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
-        levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
-        levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
+        modality_1: If `data` is MuData, specify the modality name to the original cell level anndata object.
+        modality_2: If `data` is MuData, specify the modality name to the aggregated level anndata object.
+        dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object.
+        levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
+        levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
         add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}.
-                        Defaults to True.
         key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`.
-                   If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
+                   If `data` is MuData, save tree in data[modality_2].
 
     Returns:
         Updates data with the following:

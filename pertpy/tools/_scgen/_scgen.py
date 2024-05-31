@@ -404,12 +404,12 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             gene_list: list of gene names to be plotted.
             show: if `True`: will show to the plot after saving it.
             top_100_genes: List of the top 100 differentially expressed genes. Specify if you want the top 100 DEGs to be assessed extra.
-            verbose: Specify if you want information to be printed while creating the plot, defaults to `False`.
-            legend: if `True`: plots a legend, defaults to `True`.
+            verbose: Specify if you want information to be printed while creating the plot.,
+            legend: Whether to plot a legend.
             title: Set if you want the plot to display a title.
-            x_coeff: Offset to print the R^2 value in x-direction, defaults to 0.3.
-            y_coeff: Offset to print the R^2 value in y-direction, defaults to 0.8.
-            fontsize: Fontsize used for text in the plot, defaults to 14.
+            x_coeff: Offset to print the R^2 value in x-direction.
+            y_coeff: Offset to print the R^2 value in y-direction.
+            fontsize: Fontsize used for text in the plot.
             **kwargs:
 
         Examples:
@@ -541,12 +541,12 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             gene_list: list of gene names to be plotted.
             show: if `True`: will show to the plot after saving it.
             top_100_genes: List of the top 100 differentially expressed genes. Specify if you want the top 100 DEGs to be assessed extra.
-            legend: if `True`: plots a legend, defaults to `True`.
+            legend: Whether to plot a elgend
             title: Set if you want the plot to display a title.
-            verbose: Specify if you want information to be printed while creating the plot, defaults to `False`.
-            x_coeff: Offset to print the R^2 value in x-direction, defaults to 0.3.
-            y_coeff: Offset to print the R^2 value in y-direction, defaults to 0.8.
-            fontsize: Fontsize used for text in the plot, defaults to 14.
+            verbose: Specify if you want information to be printed while creating the plot.
+            x_coeff: Offset to print the R^2 value in x-direction.
+            y_coeff: Offset to print the R^2 value in y-direction.
+            fontsize: Fontsize used for text in the plot.
         """
         import seaborn as sns
 

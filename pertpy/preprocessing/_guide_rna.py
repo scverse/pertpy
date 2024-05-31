@@ -34,9 +34,8 @@ class GuideAssignment:
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
-            output_layer: Assigned guide will be saved on adata.layers[output_key]. Defaults to `assigned_guides`.
+            output_layer: Assigned guide will be saved on adata.layers[output_key].
             only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
-                                 Defaults to False.
 
         Examples:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell.
@@ -127,7 +126,7 @@ class GuideAssignment:
             adata: Annotated data matrix containing gRNA values
             layer: Key to the layer containing log normalized count values of the gRNAs.
                    adata.X is used if layer is None.
-            order_by: The order of cells in y axis. Defaults to None.
+            order_by: The order of cells in y axis.
                       If None, cells will be reordered to have a nice sparse representation.
                       If a string is provided, adata.obs[order_by] will be used as the order.
                       If a numpy array is provided, the array will be used for ordering.

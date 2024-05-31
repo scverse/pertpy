@@ -23,7 +23,7 @@ class Statsmodels(LinearModelBase):
         """Fit the specified regression model.
 
         Args:
-            regression_model: A statsmodels regression model class, either OLS or GLM. Defaults to OLS.
+            regression_model: A statsmodels regression model class, either OLS or GLM.
             **kwargs: Additional arguments for fitting the specific method. In particular, this
                 is where you can specify the family for GLM.
 

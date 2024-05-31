@@ -7,6 +7,8 @@ from sklearn.metrics import pairwise_distances
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from anndata import AnnData
 
 
@@ -22,7 +24,7 @@ class ClusteringSpace(PerturbationSpace):
         adata: AnnData,
         true_label_col: str,
         cluster_col: str,
-        metrics: list[str] = None,
+        metrics: Iterable[str] = None,
         **kwargs,
     ):
         """Evaluation of previously computed clustering against ground truth labels.
@@ -31,7 +33,7 @@ class ClusteringSpace(PerturbationSpace):
             adata: AnnData object that contains the clustered data and the cluster labels.
             true_label_col: ground truth labels.
             cluster_col: cluster computed labels.
-            metrics: Metrics to compute. Defaults to ['nmi', 'ari', 'asw'].
+            metrics: Metrics to compute. If `None` it defaults to ["nmi", "ari", "asw"].
             **kwargs: Additional arguments to pass to the metrics. For nmi, average_method can be passed.
                 For asw, metric, distances, sample_size, and random_state can be passed.
 

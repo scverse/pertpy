@@ -126,28 +126,28 @@ class MethodBase(ABC):
 
         Args:
             data: DataFrame or Anndata to plot.
-            log2fc_col: Column name of log2 Fold-Change values. Defaults to 'log2FoldChange'.
-            pvalue_col: Column name of the p values. Defaults to 'padj'.
-            symbol_col: Column name of gene IDs. Defaults to 'symbol'.
+            log2fc_col: Column name of log2 Fold-Change values.
+            pvalue_col: Column name of the p values.
+            symbol_col: Column name of gene IDs.
             varm_key: Key in Anndata.varm slot to use for plotting if an Anndata object was passed.
-            size_col: Column name to size points by. Defaults to None.
-            point_sizes: Lower and upper bounds of point sizes. Defaults to (15, 150).
-            pval_thresh: Threshold p value for significance. Defaults to 0.05.
-            log2fc_thresh: Threshold for log2 fold change significance. Defaults to 0.75.
-            to_label: Number of top genes or list of genes to label. Defaults to 5.
-            s_curve: Whether to use a reciprocal threshold for up and down gene determination. Defaults to False.
-            color_dict: Dictionary for coloring dots by categories. Defaults to None.
-            shape_dict: Dictionary for shaping dots by categories. Defaults to None.
-            fontsize: Size of gene labels. Defaults to 10.
+            size_col: Column name to size points by.
+            point_sizes: Lower and upper bounds of point sizes.
+            pval_thresh: Threshold p value for significance.
+            log2fc_thresh: Threshold for log2 fold change significance.
+            to_label: Number of top genes or list of genes to label.
+            s_curve: Whether to use a reciprocal threshold for up and down gene determination.
+            color_dict: Dictionary for coloring dots by categories.
+            shape_dict: Dictionary for shaping dots by categories.
+            fontsize: Size of gene labels.
             colors: Colors for [non-DE, up, down] genes. Defaults to ['gray', '#D62728', '#1F77B4'].
-            top_right_frame: Whether to show the top and right frame of the plot. Defaults to False.
-            figsize: Size of the figure. Defaults to (5, 5).
-            legend_pos: Position of the legend as determined by matplotlib. Defaults to (1.6, 1).
-            save: Saves the plot if True or to the path provided. Defaults to None.
-            shapes: List of matplotlib marker ids. Defaults to None.
-            shape_order: Order of categories for shapes. Defaults to None.
-            x_label: Label for the x-axis. Defaults to None.
-            y_label: Label for the y-axis. Defaults to None.
+            top_right_frame: Whether to show the top and right frame of the plot.
+            figsize: Size of the figure.
+            legend_pos: Position of the legend as determined by matplotlib.
+            save: Saves the plot if True or to the path provided.
+            shapes: List of matplotlib marker ids.
+            shape_order: Order of categories for shapes.
+            x_label: Label for the x-axis.
+            y_label: Label for the y-axis.
             **kwargs: Additional arguments for seaborn.scatterplot.
         """
         if colors is None:

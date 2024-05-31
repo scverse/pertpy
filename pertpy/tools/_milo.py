@@ -51,7 +51,7 @@ class Milo:
             input: AnnData
             feature_key: Key to store the cell-level AnnData object in the MuData object
         Returns:
-            MuData: MuData object with original AnnData. Defaults to`mudata[feature_key]`.
+            MuData: MuData object with original AnnData.
 
         Examples:
             >>> import pertpy as pt
@@ -83,11 +83,10 @@ class Milo:
             neighbors_key: The key in `adata.obsp` or `mdata[feature_key].obsp` to use as KNN graph.
                            If not specified, `make_nhoods` looks .obsp[‘connectivities’] for connectivities (default storage places for `scanpy.pp.neighbors`).
                            If specified, it looks at .obsp[.uns[neighbors_key][‘connectivities_key’]] for connectivities.
-                           Defaults to None.
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
-            prop: Fraction of cells to sample for neighbourhood index search. Defaults to 0.1.
-            seed: Random seed for cell sampling. Defaults to 0.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
+            prop: Fraction of cells to sample for neighbourhood index search.
+            seed: Random seed for cell sampling.
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             If `copy=True`, returns the copy of `adata` with the result in `.obs`, `.obsm`, and `.uns`.
@@ -203,7 +202,7 @@ class Milo:
         Args:
             data: AnnData object with neighbourhoods defined in `obsm['nhoods']` or MuData object with a modality with neighbourhoods defined in `obsm['nhoods']`
             sample_col: Column in adata.obs that contains sample information
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
             MuData object storing the original (i.e. rna) AnnData in `mudata[feature_key]`
@@ -274,10 +273,10 @@ class Milo:
             design: Formula for the test, following glm syntax from R (e.g. '~ condition').
                     Terms should be columns in `milo_mdata[feature_key].obs`.
             model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl").
-                             If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group. Defaults to None.
-            subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test. Defaults to None.
-            add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default. Defaults to True.
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+                             If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group.
+            subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test.
+            add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
             solver: The solver to fit the model to. One of "edger" (requires R, rpy2 and edgeR to be installed) or "batchglm"
 
         Returns:
@@ -425,7 +424,7 @@ class Milo:
         Args:
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
             None. Adds in place:
@@ -479,7 +478,7 @@ class Milo:
         Args:
             mdata: MuData object
             anno_col: Column in adata.obs containing the cell annotations to use for nhood labelling
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
             None. Adds in place:
@@ -520,7 +519,7 @@ class Milo:
         Args:
             mdata: MuData object
             new_covariates: columns in `milo_mdata[feature_key].obs` to add to `milo_mdata['milo'].obs`.
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
             None, adds columns to `milo_mdata['milo']` in place
@@ -571,8 +570,8 @@ class Milo:
 
         Args:
             mdata: MuData object
-            basis: Name of the obsm basis to use for layout of neighbourhoods (key in `adata.obsm`). Defaults to "X_umap".
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+            basis: Name of the obsm basis to use for layout of neighbourhoods (key in `adata.obsm`).
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
             - `milo_mdata['milo'].varp['nhood_connectivities']`: graph of overlap between neighbourhoods (i.e. no of shared cells)
@@ -604,13 +603,13 @@ class Milo:
             "distances_key": "",
         }
 
-    def add_nhood_expression(self, mdata: MuData, layer: str | None = None, feature_key: str | None = "rna"):
+    def add_nhood_expression(self, mdata: MuData, layer: str | None = None, feature_key: str | None = "rna") -> None:
         """Calculates the mean expression in neighbourhoods of each feature.
 
         Args:
             mdata: MuData object
-            layer: If provided, use `milo_mdata[feature_key][layer]` as expression matrix instead of `milo_mdata[feature_key].X`. Defaults to None.
-            feature_key: If input data is MuData, specify key to cell-level AnnData object. Defaults to 'rna'.
+            layer: If provided, use `milo_mdata[feature_key][layer]` as expression matrix instead of `milo_mdata[feature_key].X`.
+            feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
             Updates adata in place to store the matrix of average expression in each neighbourhood in `milo_mdata['milo'].varm['expr']`
@@ -694,7 +693,7 @@ class Milo:
 
         Args:
             sample_adata: Sample-level AnnData.
-            neighbors_key: The key in `adata.obsp` to use as KNN graph. Defaults to None.
+            neighbors_key: The key in `adata.obsp` to use as KNN graph.
         """
         # use 1/connectivity as the weighting for the weighted BH adjustment from Cydar
         w = 1 / sample_adata.var["kth_distance"]
@@ -734,10 +733,10 @@ class Milo:
         Args:
             mdata: MuData object
             alpha: Significance threshold. (default: 0.1)
-            min_logFC: Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods. Defaults to 0.
+            min_logFC: Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods.
             min_size: Minimum size of nodes in visualization. (default: 10)
-            plot_edges: If edges for neighbourhood overlaps whould be plotted. Defaults to False.
-            title: Plot title. Defaults to "DA log-Fold Change".
+            plot_edges: If edges for neighbourhood overlaps whould be plotted.
+            title: Plot title.
             show: Show the plot, do not return axis.
             save: If `True` or a `str`, save the figure. A string is appended to the default filename.
                   Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
@@ -823,7 +822,7 @@ class Milo:
         Args:
             mdata: MuData object with feature_key slot, storing neighbourhood assignments in `mdata[feature_key].obsm['nhoods']`
             ix: index of neighbourhood to visualize
-            basis: Embedding to use for visualization. Defaults to "X_umap".
+            basis: Embedding to use for visualization.
             show: Show the plot, do not return axis.
             save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
@@ -876,7 +875,7 @@ class Milo:
             mdata: MuData object
             anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
             alpha: Significance threshold. (default: 0.1)
-            subset_nhoods: List of nhoods to plot. If None, plot all nhoods. Defaults to None.
+            subset_nhoods: List of nhoods to plot. If None, plot all nhoods.
             palette: Name of Seaborn color palette for violinplots.
                      Defaults to pre-defined category colors for violinplots.
 
@@ -1002,8 +1001,8 @@ class Milo:
         Args:
             mdata: MuData object storing cell level and nhood level information
             test_var: Name of column in adata.obs storing condition of interest (y-axis for boxplot)
-            subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods. Defaults to None.
-            log_counts: Whether to plot log1p of cell counts. Defaults to False.
+            subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods.
+            log_counts: Whether to plot log1p of cell counts.
         """
         try:
             nhood_adata = mdata["milo"].T.copy()

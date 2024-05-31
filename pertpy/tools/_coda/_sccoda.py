@@ -74,13 +74,13 @@ class Sccoda(CompositionalModel2):
             adata: AnnData object.
             type : Specify the input adata type, which could be either a cell-level AnnData or an aggregated sample-level AnnData.
             generate_sample_level: Whether to generate an AnnData object on the sample level or create an empty AnnData object.
-            cell_type_identifier: If type is "cell_level", specify column name in adata.obs that specifies the cell types. Defaults to None.
-            sample_identifier: If type is "cell_level", specify column name in adata.obs that specifies the sample. Defaults to None.
-            covariate_uns: If type is "cell_level", specify key for adata.uns, where covariate values are stored. Defaults to None.
-            covariate_obs: If type is "cell_level", specify list of keys for adata.obs, where covariate values are stored. Defaults to None.
-            covariate_df: If type is "cell_level", specify dataFrame with covariates. Defaults to None.
-            modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to "rna".
-            modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object. Defaults to "coda".
+            cell_type_identifier: If type is "cell_level", specify column name in adata.obs that specifies the cell types.
+            sample_identifier: If type is "cell_level", specify column name in adata.obs that specifies the sample.
+            covariate_uns: If type is "cell_level", specify key for adata.uns, where covariate values are stored.
+            covariate_obs: If type is "cell_level", specify list of keys for adata.obs, where covariate values are stored.
+            covariate_df: If type is "cell_level", specify dataFrame with covariates.
+            modality_key_1: Key to the cell-level AnnData in the MuData object.
+            modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
             MuData: MuData object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
@@ -128,10 +128,10 @@ class Sccoda(CompositionalModel2):
                 Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.
                 To set a different level as the base category for a categorical covariate, use "C(<CovariateName>, Treatment('<ReferenceLevelName>'))"
             reference_cell_type: Column name that sets the reference cell type.
-                Reference the name of a column. If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen. Defaults to "automatic".
+                Reference the name of a column. If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen.
             automatic_reference_absence_threshold: If using reference_cell_type = "automatic", determine the maximum fraction of zero entries for a cell type
-                to be considered as a possible reference cell type. Defaults to 0.05.
-            modality_key: If data is a MuData object, specify key to the aggregated sample-level AnnData object in the MuData object. Defaults to "coda".
+                to be considered as a possible reference cell type.
+            modality_key: If data is a MuData object, specify key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
             Return an AnnData (if input data is an AnnData object) or return a MuData (if input data is a MuData object)
@@ -310,10 +310,10 @@ class Sccoda(CompositionalModel2):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            rng_key: The rng state used for the prior simulation. If None, a random state will be selected. Defaults to None.
-            num_prior_samples: Number of prior samples calculated. Defaults to 500.
-            use_posterior_predictive: If True, the posterior predictive will be calculated. Defaults to True.
+            modality_key: If data is a MuData object, specify which modality to use.
+            rng_key: The rng state used for the prior simulation. If None, a random state will be selected.
+            num_prior_samples: Number of prior samples calculated.
+            use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
             az.InferenceData: arviz_data with all MCMC information
