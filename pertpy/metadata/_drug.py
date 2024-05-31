@@ -99,8 +99,8 @@ class Drug(MetaData):
 
         Args:
             adata: AnnData object containing log-normalised data.
-            source: Source of the metadata, chembl, dgidb or pharmgkb. Defaults to chembl.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            source: Source of the metadata, chembl, dgidb or pharmgkb.
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             An AnnData object with a new column `drug` in the var slot.

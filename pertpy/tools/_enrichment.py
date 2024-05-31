@@ -82,18 +82,15 @@ class Enrichment:
                      - A dictionary of dictionaries with group categories as keys. Use `nested=True` in this case.
                      If not provided, ChEMBL-derived drug target sets are used.
             nested: Indicates if `targets` is a dictionary of dictionaries with group categories as keys.
-                    Defaults to False.
             categories: To subset the gene groups to specific categories, especially when `targets=None` or `nested=True`.
                         For ChEMBL drug targets, these are ATC level 1/level 2 category codes.
             method: Method for scoring gene groups. `"mean"` calculates the mean over all genes,
                     while `"seurat"` uses a background profile subtraction approach.
-                    Defaults to 'mean'.
-            layer: Specifies which `.layers` of AnnData to use for expression values. Defaults to `.X` if None.
+            layer: Specifies which `.layers` of AnnData to use for expression values.
             n_bins: The number of expression bins for the `'seurat'` method.
             ctrl_size: The number of genes to randomly sample from each expression bin for the `"seurat"` method.
             key_added: Prefix key that adds the results to `uns`.
                        Note that the actual values are `key_added_score`, `key_added_variables`, `key_added_genes`, `key_added_all_genes`.
-                       Defaults to `pertpy_enrichment`.
 
         Returns:
             An AnnData object with scores.
@@ -259,16 +256,15 @@ class Enrichment:
                    in the original expression space.
             targets: The gene groups to evaluate, either as a dictionary with names of the
                      groups as keys and gene lists as values, or a dictionary of dictionaries
-                     with names of gene group categories as keys. Defaults to None, in which
+                     with names of gene group categories as keys.
                      case it uses `d2c.score()` output or loads ChEMBL-derived drug target sets.
             nested: Indicates if `targets` is a dictionary of dictionaries with group
-                    categories as keys. Defaults to False.
+                    categories as keys.
             categories: Used to subset the gene groups to one or more categories,
-                        applicable if `targets=None` or `nested=True`. Defaults to None.
+                        applicable if `targets=None` or `nested=True`.
             absolute: If True, passes the absolute values of scores to GSEA, improving
-                      statistical power. Defaults to False.
+                      statistical power.
             key_added: Prefix key that adds the results to `uns`.
-                       Defaults to `pertpy_enrichment_gsea`.
 
         Returns:
             A dictionary with clusters as keys and data frames of test results sorted on
@@ -317,13 +313,12 @@ class Enrichment:
             targets: Gene groups to evaluate, which can be targets of known drugs, GO terms, pathway memberships, etc.
                      Accepts a dictionary of dictionaries with group categories as keys.
                      If not provided, ChEMBL-derived or dgbidb drug target sets are used, given by `source`.
-            source: Source of drug target sets when `targets=None`, `chembl`, `dgidb` or `pharmgkb`. Defaults to `chembl`.
+            source: Source of drug target sets when `targets=None`, `chembl`, `dgidb` or `pharmgkb`.
             categories: To subset the gene groups to specific categories, especially when `targets=None`.
                             For ChEMBL drug targets, these are ATC level 1/level 2 category codes.
-            category_name: The name of category used to generate a nested drug target set when `targets=None` and `source=dgidb|pharmgkb`. Defaults to `interaction_type`.
+            category_name: The name of category used to generate a nested drug target set when `targets=None` and `source=dgidb|pharmgkb`.
             groupby: dotplot groupby such as clusters or cell types.
             key: Prefix key of enrichment results in `uns`.
-                 Defaults to `pertpy_enrichment`.
             kwargs: Passed to scanpy dotplot.
 
         Returns:
@@ -436,9 +431,9 @@ class Enrichment:
         Args:
             adata: AnnData object to plot.
             enrichment: Cluster names as keys, blitzgsea's ``gsea()`` output as values.
-            n: How many top scores to show for each group. Defaults to 10.
-            key: GSEA results key in `uns`. Defaults to "pertpy_enrichment_gsea".
-            interactive_plot: Whether to plot interactively or not. Defaults to False.
+            n: How many top scores to show for each group.
+            key: GSEA results key in `uns`.
+            interactive_plot: Whether to plot interactively or not.
 
         Examples:
             >>> import pertpy as pt

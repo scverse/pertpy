@@ -28,7 +28,7 @@ class CentroidSpace(PerturbationSpace):
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
             keep_obs: Whether .obs columns in the input AnnData should be kept in the output pseudobulk AnnData. Only .obs columns with the same value for
-                each cell of one perturbation are kept. Defaults to True.
+                each cell of one perturbation are kept.
 
         Returns:
             AnnData object with one observation per perturbation, storing the embedding data of the
@@ -129,7 +129,7 @@ class PseudobulkSpace(PerturbationSpace):
             adata: Anndata object of size cells x genes
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             groups_col: Optional .obs column that stores a grouping label to consider for pseudobulk computation.
-                The summarized expression per perturbation (target_col) and group (groups_col) is computed. Defaults to None.
+                The summarized expression per perturbation (target_col) and group (groups_col) is computed.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
             **kwargs: Are passed to decoupler's get_pseuobulk.
@@ -254,7 +254,7 @@ class DBSCANSpace(ClusteringSpace):
             adata: Anndata object of size cells x genes
             layer_key: If specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
             embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
-            cluster_key: name of the .obs column to store the cluster labels. Defaults to 'dbscan'
+            cluster_key: name of the .obs column to store the cluster labels.
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
             **kwargs: Are passed to sklearn's DBSCAN.

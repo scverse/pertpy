@@ -40,13 +40,13 @@ class PerturbationSpace:
 
         Args:
             adata: Anndata object of size cells x genes.
-            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
-            group_col: .obs column name that stores the label of the group of eah cell. If None, ignore groups. Defaults to 'perturbations'.
-            reference_key: The key of the control values. Defaults to 'control'.
-            layer_key: Key of the AnnData layer to use for computation. Defaults to the `X` matrix otherwise.
-            new_layer_key: the results are stored in the given layer. Defaults to 'control_diff'.
-            embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            new_embedding_key: Results are stored in a new embedding in `obsm` with this key. Defaults to 'control_diff'.
+            target_col: .obs column name that stores the label of the perturbation applied to each cell.
+            group_col: .obs column name that stores the label of the group of eah cell. If None, ignore groups.
+            reference_key: The key of the control values.
+            layer_key: Key of the AnnData layer to use for computation.
+            new_layer_key: the results are stored in the given layer.
+            embedding_key: `obsm` key of the AnnData embedding to use for computation.
+            new_embedding_key: Results are stored in a new embedding in `obsm` with this key.
             all_data: if True, do the computation in all data representations (X, all layers and all embeddings)
             copy: If True returns a new Anndata of same size with the new column; otherwise it updates the initial AnnData object.
 
@@ -155,9 +155,9 @@ class PerturbationSpace:
         Args:
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to add.
-            reference_key: perturbation source from which the perturbation summation starts. Defaults to 'control'.
+            reference_key: perturbation source from which the perturbation summation starts.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
-            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbation'.
+            target_col: .obs column name that stores the label of the perturbation applied to each cell.
 
         Returns:
             Anndata object of size (n_perts+1) x dim, where the last row is the addition of the specified perturbations.
@@ -264,9 +264,9 @@ class PerturbationSpace:
         Args:
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to subtract.
-            reference_key: Perturbation source from which the perturbation subtraction starts. Defaults to 'control'.
+            reference_key: Perturbation source from which the perturbation subtraction starts.
             ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
-            target_col: .obs column name that stores the label of the perturbation applied to each cell. Defaults to 'perturbations'.
+            target_col: .obs column name that stores the label of the perturbation applied to each cell.
 
         Returns:
             Anndata object of size (n_perts+1) x dim, where the last row is the subtraction of the specified perturbations.
@@ -372,10 +372,10 @@ class PerturbationSpace:
 
         Args:
             adata: The AnnData object containing single-cell data.
-            column: The column name in AnnData object to perform imputation on. Defaults to "perturbation".
-            target_val: The target value to impute. Defaults to "unknown".
-            n_neighbors: Number of neighbors to use for imputation. Defaults to 5.
-            use_rep: The key in `adata.obsm` where the embedding (UMAP, PCA, etc.) is stored. Defaults to 'X_umap'.
+            column: The column name in AnnData object to perform imputation on.
+            target_val: The target value to impute.
+            n_neighbors: Number of neighbors to use for imputation.
+            use_rep: The key in `adata.obsm` where the embedding (UMAP, PCA, etc.) is stored.
 
         Examples:
             >>> import pertpy as pt

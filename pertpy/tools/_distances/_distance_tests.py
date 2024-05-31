@@ -23,16 +23,16 @@ class DistanceTest:
 
     Args:
         metric: Distance metric to use between groups of cells.
-        n_perms: Number of permutations to run. Defaults to 1000.
+        n_perms: Number of permutations to run.
         layer_key: Name of the counts layer containing raw counts to calculate distances for.
                    Mutually exclusive with 'obsm_key'.
-                   Defaults to None and is then not used.
+                   If equal to `None` the parameter is ignored.
         obsm_key: Name of embedding in adata.obsm to use.
                   Mutually exclusive with 'counts_layer_key'.
                   Defaults to None, but is set to "X_pca" if not set explicitly internally.
-        alpha: Significance level. Defaults to 0.05.
-        correction: Multiple testing correction method. Defaults to 'holm-sidak'.
-        cell_wise_metric: Metric to use between single cells. Defaults to "euclidean".
+        alpha: Significance level.
+        correction: Multiple testing correction method.
+        cell_wise_metric: Metric to use between single cells.
 
     Examples:
         >>> import pertpy as pt
@@ -87,7 +87,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            show_progressbar: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -121,7 +121,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            show_progressbar: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -213,7 +213,7 @@ class DistanceTest:
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
             cell_wise_metric: Metric to use for pairwise distances.
-            verbose: Whether to print progress. Defaults to True.
+            verbose: Whether to print progress.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:

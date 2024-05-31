@@ -178,7 +178,7 @@ class Mixscape:
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                     the perturbation signature for every replicate separately.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
-            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications. Defaults to KO.
+            perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -346,15 +346,13 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Key from `adata.layers` whose value will be used to perform tests on.
-            control: Control category from the `pert_key` column. Defaults to 'NT'.
-            n_comps: Number of principal components to use. Defaults to 10.
+            control: Control category from the `pert_key` column.
+            n_comps: Number of principal components to use.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
-                             Defaults to 0.25.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
-                               Defaults to KO.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -706,7 +704,6 @@ class Mixscape:
             before_mixscape: Option to split densities based on mixscape classification (default) or original target gene classification.
                              Default is set to NULL and plots cells by original class ID.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
-                               Defaults to `KO`.
 
         Examples:
             Visualizing the perturbation scores for the cells in a dataset:
@@ -883,7 +880,7 @@ class Mixscape:
             keys: Keys for accessing variables of `.var_names` or fields of `.obs`. Default is 'mixscape_class_p_ko'.
             groupby: The key of the observation grouping to consider. Default is 'mixscape_class'.
             log: Plot on logarithmic axis.
-            use_raw: Whether to use `raw` attribute of `adata`. Defaults to `True` if `.raw` is present.
+            use_raw: Whether to use `raw` attribute of `adata`.
             stripplot: Add a stripplot on top of the violin plot.
             order: Order in which to show the categories.
             xlabel: Label of the x-axis. Defaults to `groupby` if `rotation` is `None`, otherwise, no label is shown.
@@ -1077,7 +1074,6 @@ class Mixscape:
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
-                               Defaults to 'KO'.
             lda_key: If not specified, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
             show: Show the plot, do not return axis.

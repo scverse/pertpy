@@ -194,15 +194,13 @@ class CellLine(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information. Defaults to "DepMap_ID".
+            query_id: The column of `.obs` with cell line information.
             reference_id: The type of cell line identifier in the metadata, e.g. ModelID, CellLineName	or StrippedCellLineName.
-                          If fetching cell line metadata from Cancerrxgene, it is recommended to choose
-                          "stripped_cell_line_name". Defaults to "ModelID".
-            fetch: The metadata to fetch. Defaults to None (=all).
-            cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene. Defaults to "DepMap".
+                          If fetching cell line metadata from Cancerrxgene, it is recommended to choose "stripped_cell_line_name".
+            fetch: The metadata to fetch.
+            cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
-                       Defaults to 5.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             Returns an AnnData object with cell line annotation.
@@ -318,9 +316,9 @@ class CellLine(MetaData):
         Args:
             adata: The data object to annotate.
             query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
-            cell_line_source: The bulk rna expression data from either broad or sanger cell line. Defaults to "sanger".
-            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all". Defaults to 5.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            cell_line_source: The bulk rna expression data from either broad or sanger cell line.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             Returns an AnnData object with bulk rna expression annotation.
@@ -418,16 +416,12 @@ class CellLine(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
+            query_id: The column of `.obs` with cell line information.
             reference_id: The type of cell line identifier in the meta data, model_name or model_id.
-                          Defaults to "model_name".
             protein_information: The type of protein expression data to fetch, protein_intensity or zscore.
-                                 Defaults to "protein_intensity".
             protein_id: The protein identifier saved in the fetched meta data, uniprot_id or symbol.
-                        Defaults to "uniprot_id".
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
-                       Defaults to 5.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             Returns an AnnData object with protein expression annotation.
@@ -502,22 +496,17 @@ class CellLine(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name".
+            query_id: The column of `.obs` with cell line information.
             reference_id: The type of cell line identifier in the metadata, cell_line_name, sanger_model_id or cosmic_id.
-                          Defaults to "cell_line_name".
             query_perturbation: The column of `.obs` with perturbation information.
-                                Defaults to "perturbation".
             reference_perturbation: The type of perturbation in the metadata, drug_name or drug_id.
-                                    Defaults to 'drug_name'.
             gdsc_dataset: The GDSC dataset, 1 or 2.
                           The GDSC1 dataset updates previous releases with additional drug screening data from the
                           Sanger Institute and Massachusetts General Hospital.
                           It covers 970 Cell lines and 403 Compounds with 333292 IC50s.
                           GDSC2 is new and has 243,466 IC50 results from the latest screening at the Sanger Institute.
-                          Defaults to 1.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or 'all'.
-                       Defaults to 5.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             Returns an AnnData object with drug response annotation.
@@ -658,8 +647,8 @@ class CellLine(MetaData):
 
         Args:
             adata: Input data object.
-            identifier: Column in `.obs` containing cell line identifiers. Defaults to "DepMap_ID".
-            metadata_key: Key of the AnnData obsm for comparison with the X matrix. Defaults to "bulk_rna_broad".
+            identifier: Column in `.obs` containing cell line identifiers.
+            metadata_key: Key of the AnnData obsm for comparison with the X matrix.
 
         Returns:
             Returns pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
@@ -706,6 +695,7 @@ class CellLine(MetaData):
         adata: AnnData,
         corr: pd.DataFrame,
         pval: pd.DataFrame,
+        *,
         identifier: str = "DepMap_ID",
         metadata_key: str = "bulk_rna_broad",
         category: str = "cell line",
@@ -717,13 +707,12 @@ class CellLine(MetaData):
             adata: Input data object.
             corr: Pearson correlation scores.
             pval: P-values for pearson correlation.
-            identifier: Column in `.obs` containing the identifiers. Defaults to 'DepMap_ID'.
-            metadata_key: Key of the AnnData obsm for comparison with the X matrix. Defaults to 'bulk_rna_broad'.
-            category: The category for correlation comparison. Defaults to "cell line".
+            identifier: Column in `.obs` containing the identifiers.
+            metadata_key: Key of the AnnData obsm for comparison with the X matrix.
+            category: The category for correlation comparison.
             subset_identifier: Selected identifiers for scatter plot visualization between the X matrix and `metadata_key`.
                               If not None, only the chosen cell line will be plotted, either specified as a value in `identifier` (string) or as an index number.
                               If None, all cell lines will be plotted.
-                              Defaults to None.
         Returns:
             Pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
         """
