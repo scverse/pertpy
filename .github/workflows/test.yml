@@ -53,7 +53,7 @@ jobs:
                   r-version: "4"
 
             - name: Install edgeR
-              run: Rscript --vanilla -e "install.packages(c('BiocManager', 'statmod'), repos='http://cran.us.r-project.org'); library('BiocManager'); BiocManager::install('edgeR')"
+              run: Rscript --vanilla -e "install.packages(c('BiocManager', 'statmod'), repos='https://cloud.r-project.org'); library('BiocManager'); BiocManager::install('edgeR')"
 
             - name: Install test dependencies
               run: python -m pip install --upgrade uv wheel
