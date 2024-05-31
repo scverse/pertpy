@@ -150,7 +150,7 @@ class PerturbationSpace:
         ensure_consistency: bool = False,
         target_col: str = "perturbation",
     ) -> tuple[AnnData, AnnData] | AnnData:
-        """Add perturbations linearly. Assumes input of size n_perts x dimensionality
+        """Add perturbations linearly. Assumes input of size n_perts x dimensionality.
 
         Args:
             adata: Anndata object of size n_perts x dim.
