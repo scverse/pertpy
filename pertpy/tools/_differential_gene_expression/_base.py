@@ -257,13 +257,11 @@ class MethodBase(ABC):
             print("0s encountered for p value, replacing with 1e-323")
             df.loc[df[pvalue_col] == 0, pvalue_col] = 1e-323
 
-        # max for y-axis
-        max_log2fc = df[log2fc_col].max()
-
         # convert p value threshold to nlog10
         pval_thresh = -np.log10(pval_thresh)
         # make nlog10 column
         df["nlog10"] = -np.log10(df[pvalue_col])
+        y_max = df["nlog10"].max() + 1
         # make a column to pick top genes
         df["top_genes"] = df["nlog10"] * df[log2fc_col]
 
@@ -401,7 +399,7 @@ class MethodBase(ABC):
 
         # plot vertical and horizontal lines
         if s_curve:
-            x = np.arange((log2fc_thresh + 0.000001), max_log2fc + 1, 0.01)
+            x = np.arange((log2fc_thresh + 0.000001), y_max, 0.01)
             y = _pval_reciprocal(x)
             ax.plot(x, y, zorder=1, c="k", lw=2, ls="--")
             ax.plot(-x, y, zorder=1, c="k", lw=2, ls="--")
@@ -410,7 +408,7 @@ class MethodBase(ABC):
             ax.axhline(pval_thresh, zorder=1, c="k", lw=2, ls="--")
             ax.axvline(log2fc_thresh, zorder=1, c="k", lw=2, ls="--")
             ax.axvline(log2fc_thresh * -1, zorder=1, c="k", lw=2, ls="--")
-        plt.ylim(0, max_log2fc + 1)
+        plt.ylim(0, y_max)
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
         # make labels
@@ -437,7 +435,7 @@ class MethodBase(ABC):
             ax.spines["right"].set_visible(False)
 
         ax.tick_params(width=2)
-        plt.xticks(size=11)
+        plt.xticks(size=11, fontsize=10)
         plt.yticks(size=11)
 
         # Set default axis titles
