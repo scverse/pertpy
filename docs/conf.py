@@ -2,6 +2,8 @@
 # mypy: ignore-errors
 
 import sys
+from datetime import datetime
+from importlib.metadata import metadata
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -9,13 +11,16 @@ sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
 
 needs_sphinx = "4.3"
 
-project = "pertpy"
-copyright = "2021, Lukas Heumos, Theislab"
-author = "Lukas Heumos"
+info = metadata("pertpy")
+project_name = info["Name"]
+author = info["Author"]
+copyright = f"{datetime.now():%Y}, {author}."
+version = info["Version"]
+urls = dict(pu.split(", ") for pu in info.get_all("Project-URL"))
+repository_url = urls["Source"]
+release = info["Version"]
 github_repo = "pertpy"
 
-version = "0.8.0"
-release = "0.8.0"
 
 extensions = [
     "myst_parser",
@@ -97,7 +102,8 @@ intersphinx_mapping = {
 
 language = "en"
 
-# The name of the Pygments (syntax highlighting) style to use.
+typehints_defaults = "comma"
+
 pygments_style = "default"
 pygments_dark_style = "native"
 
@@ -185,6 +191,8 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/distance_tests": "_static/tutorials/distances_tests.png",
     "tutorials/notebooks/cinemaot": "_static/tutorials/cinemaot.png",
     "tutorials/notebooks/scgen_perturbation_prediction": "_static/tutorials/scgen_perturbation_prediction.png",
-    "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
     "tutorials/notebooks/perturbation_space": "_static/tutorials/perturbation_space.png",
+    "tutorials/notebooks/differential_gene_expression": "_static/tutorials/dge.png",
+    "tutorials/notebooks/metadata_annotation": "_static/tutorials/metadata.png",
+    "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
 }

@@ -30,11 +30,10 @@ class Compound(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with compound identifiers. Defaults to 'perturbation'.
-            query_id_type: The type of compound identifiers, 'name' or 'cid'. Defaults to 'name'.
+            query_id: The column of `.obs` with compound identifiers.
+            query_id_type: The type of compound identifiers, 'name' or 'cid'.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
-                       Defaults to 5.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             Returns an AnnData object with compound annotation.

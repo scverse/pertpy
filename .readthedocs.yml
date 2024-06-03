@@ -17,6 +17,7 @@ python:
           extra_requirements:
               - doc
               - coda
+              - de
 
 submodules:
     include: all

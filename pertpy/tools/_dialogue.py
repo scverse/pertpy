@@ -291,7 +291,7 @@ class Dialogue:
             mcp_name: Name of mcp which was used for calculation of column value.
             max_length: Value needed to later decide at what index the threshold value should be extracted from column.
             min_threshold: Minimal threshold to select final scores by if it is smaller than calculated threshold.
-            index: Column index to use eto calculate the significant genes. Defaults to `z_score`.
+            index: Column index to use eto calculate the significant genes.
 
         Returns:
             According to the values in a df column (default: zscore) the significant up and downregulated gene names
@@ -376,12 +376,6 @@ class Dialogue:
         Variables are notated according to:
 
             `argmin|Ax - y|`
-
-        Args:
-            A_orig:
-            y_orig:
-            feature_ranks:
-            n_iter: Passed to scipy.optimize.nnls. Defaults to 1000.
 
         Returns:
             Returns the aggregated coefficients from nnls.
@@ -572,8 +566,8 @@ class Dialogue:
         Args:
             adata: AnnData object generate celltype objects for
             ct_order: The order of cell types
-            agg_pca: Whether to aggregate pseudobulks with PCA or not. Defaults to True.
-            normalize: Whether to mimic DIALOGUE behavior or not. Defaults to True.
+            agg_pca: Whether to aggregate pseudobulks with PCA or not.
+            normalize: Whether to mimic DIALOGUE behavior or not.
 
         Returns:
             A celltype_label:array dictionary.
@@ -613,7 +607,6 @@ class Dialogue:
             agg_pca: Whether to calculate cell-averaged PCA components.
             solver: Which solver to use for PMD. Must be one of "lp" (linear programming) or "bs" (binary search).
                     For differences between these to please refer to https://github.com/theislab/sparsecca/blob/main/examples/linear_programming_multicca.ipynb
-                    Defaults to 'bs'.
             normalize: Whether to mimic DIALOGUE as close as possible
 
         Returns:
@@ -640,9 +633,15 @@ class Dialogue:
 
         n_samples = mcca_in[0].shape[1]
         if penalties is None:
-            penalties = multicca_permute(
-                mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
-            )["bestpenalties"]
+            try:
+                penalties = multicca_permute(
+                    mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
+                )["bestpenalties"]
+            except ValueError as e:
+                if "matmul: input operand 1 has a mismatch in its core dimension" in str(e):
+                    raise ValueError("Please ensure that every cell type is represented in every sample.") from e
+                else:
+                    raise
         else:
             penalties = penalties
 
@@ -912,9 +911,7 @@ class Dialogue:
             results: dl.MultilevelModeling result object.
             MCP: MCP key of the result object.
             threshold: Number between [0,1]. The fraction of cell types compared against which must have the associated MCP gene.
-                        Defaults to 0.70.
             focal_celltypes: None (compare against all cell types) or a list of other cell types which you want to compare against.
-                             Defaults to None.
 
         Returns:
             Dict with keys 'up_genes' and 'down_genes' and values of lists of genes
@@ -993,10 +990,8 @@ class Dialogue:
         Args:
             ct_subs: Dialogue output ct_subs dictionary
             mcp: The name of the marker gene expression column.
-                 Defaults to "mcp_0".
             fraction: Fraction of extreme cells to consider for gene ranking.
                       Should be between 0 and 1.
-                      Defaults to 0.1.
 
         Returns:
             Dictionary where keys are subpopulation names and values are Anndata
@@ -1035,7 +1030,7 @@ class Dialogue:
         Args:
             ct_subs: Dialogue output ct_subs dictionary
             fraction: Fraction of extreme cells to consider for gene ranking.
-                      Should be between 0 and 1. Defaults to 0.1.
+                      Should be between 0 and 1.
 
         Returns:
             Nested dictionary where keys of the first level are MCPs (of the form "mcp_0" etc)
@@ -1085,7 +1080,7 @@ class Dialogue:
             split_key: Variable in adata.obs used to split the data.
             celltype_key: Key for cell type annotations.
             split_which: Which values of split_key to plot. Required if more than 2 values in split_key.
-            mcp: Key for MCP data. Defaults to "mcp_0".
+            mcp: Key for MCP data.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
@@ -1144,7 +1139,7 @@ class Dialogue:
             celltype_key: Key in `adata.obs` containing cell type annotations.
             color: Key in `adata.obs` for color annotations. This parameter is used as the hue
             sample_id: Key in `adata.obs` for the sample annotations.
-            mcp: Key in `adata.obs` for MCP feature values. Defaults to `"mcp_0"`.
+            mcp: Key in `adata.obs` for MCP feature values.
 
         Returns:
             Seaborn Pairgrid object.

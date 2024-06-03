@@ -24,10 +24,16 @@ You can install _pertpy_ via [pip] from [PyPI]:
 pip install pertpy
 ```
 
-if you want to use scCODA please install it as:
+if you want to use scCODA or tascCODA, please install pertpy as follows:
 
 ```console
 pip install pertpy[coda]
+```
+
+If you want to use the differential gene expression interface, please install pertpy by running:
+
+```console
+pip install pertpy[de]
 ```
 
 [pip]: https://pip.pypa.io/

@@ -29,8 +29,10 @@ For questions about the usage of pertpy use the [scverse discourse](https://disc
    notebooks/distance_tests
    notebooks/cinemaot
    notebooks/scgen_perturbation_prediction
-   notebooks/ontology_mapping
    notebooks/perturbation_space
+   notebooks/differential_gene_expression
+   notebooks/metadata_annotation
+   notebooks/ontology_mapping
 ```
 
 ### Glossary

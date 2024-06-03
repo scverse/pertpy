@@ -609,7 +609,7 @@ class Augur:
             var_quantile: The quantile below which features will be filtered, based on their residuals in a loess model.
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
             span: Smoothing factor, as a fraction of the number of points to take into account.
-                  Should be in the range (0, 1]. Defaults to 0.75
+                  Should be in the range (0, 1].
 
         Return:
             AnnData object with additional select_variance column in var.
@@ -701,13 +701,11 @@ class Augur:
             feature_perc: proportion of genes that are randomly selected as features for input to the classifier in each
                           subsample using the random gene filter
             var_quantile: The quantile below which features will be filtered, based on their residuals in a loess model.
-                          Defaults to 0.5.
             span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range (0, 1].
-                  Defaults to 0.75.
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
             n_threads: number of threads to use for parallelization
             select_variance_features: Whether to select genes based on the original Augur implementation (True)
-                                      or using scanpy's highly_variable_genes (False). Defaults to True.
+                                      or using scanpy's highly_variable_genes (False).
             key_added: Key to add results to in .uns
             augur_mode: One of 'default', 'velocity' or 'permute'. Setting augur_mode = "velocity" disables feature selection,
                         assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,
@@ -851,7 +849,7 @@ class Augur:
             augur2: Augurpy results from condition 2, obtained from `predict()[1]`
             permuted1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
             permuted2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
-            n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation; Defaults to 50.
+            n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation.
             n_permutations: the total number of mean augur scores to calculate from a background distribution
 
         Returns:

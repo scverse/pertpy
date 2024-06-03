@@ -126,7 +126,11 @@ Pertpy provides utilities to conduct differential gene expression tests through 
     :toctree: preprocessing
     :nosignatures:
 
-    tools.DifferentialGeneExpression
+    tools.PyDESeq2
+    tools.EdgeR
+    tools.WilcoxonTest
+    tools.TTest
+    tools.Statsmodels
 ```
 
 ### Pooled CRISPR screens
@@ -455,8 +459,8 @@ train_new = train[
 ]
 train_new = train_new.copy()
 
-pt.tl.SCGEN.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
-scgen = pt.tl.SCGEN(train_new)
+pt.tl.Scgen.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
+scgen = pt.tl.Scgen(train_new)
 scgen.train(max_epochs=100, batch_size=32)
 
 pred, delta = scgen.predict(
