@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import multiprocessing
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -25,22 +26,14 @@ from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 def compute_medoid(arr, axis=None):
     if len(arr) == 0:
-        return None  # Handle the case when the array is empty
+        return None
 
     if axis is not None:
-        # If axis is specified, compute the medoid along that axis
         return np.apply_along_axis(lambda x: compute_medoid(x), axis, arr)
 
-    # Calculate pairwise distances between all elements
     distances = np.abs(arr[:, np.newaxis] - arr)
-
-    # Calculate the total distance for each element
     total_distances = np.sum(distances, axis=1)
-
-    # Find the index of the element with the smallest total distance (medoid)
     medoid_index = np.argmin(total_distances)
-
-    # Return the medoid value
     medoid = arr[medoid_index]
 
     return medoid
@@ -289,10 +282,7 @@ class Distance:
         # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if (
-                f"{self.obsm_key}_{self.cell_wise_metric}_predistances"
-                not in adata.obsp.keys()
-            ):
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
@@ -305,9 +295,7 @@ class Distance:
                         # subset the pairwise distance matrix to the two groups
                         sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
                         sub_idx = grouping[idx_x | idx_y] == group_x
-                        dist = self.metric_fct.from_precomputed(
-                            sub_pwd, sub_idx, **kwargs
-                        )
+                        dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
                     df.loc[group_x, group_y] = dist
                     df.loc[group_y, group_x] = dist
         else:
@@ -385,10 +373,7 @@ class Distance:
         # able to handle precomputed distances such as the PsuedobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if (
-                f"{self.obsm_key}_{self.cell_wise_metric}_predistances"
-                not in adata.obsp.keys()
-            ):
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for group_x in fct(groups):
@@ -442,9 +427,7 @@ class Distance:
             cells = adata.layers[self.layer_key]
         else:
             cells = adata.obsm[self.obsm_key].copy()
-        pwd = pairwise_distances(
-            cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs
-        )
+        pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
 
 
@@ -513,9 +496,7 @@ class MMD(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(
-        self, X: np.ndarray, Y: np.ndarray, kernel="linear", **kwargs
-    ) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, kernel="linear", **kwargs) -> float:
         if kernel == "linear":
             XX = np.dot(X, X.T)
             YY = np.dot(Y, Y.T)
@@ -575,9 +556,7 @@ class EuclideanDistance(AbstractDistance):
         )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "EuclideanDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("EuclideanDistance cannot be called on a pairwise distance matrix.")
 
 
 class MeanSquaredDistance(AbstractDistance):
@@ -589,15 +568,10 @@ class MeanSquaredDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return (
-            np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs) ** 2
-            / X.shape[1]
-        )
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=2, **kwargs) ** 2 / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "MeanSquaredDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("MeanSquaredDistance cannot be called on a pairwise distance matrix.")
 
 
 class MeanAbsoluteDistance(AbstractDistance):
@@ -609,15 +583,10 @@ class MeanAbsoluteDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return (
-            np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs)
-            / X.shape[1]
-        )
+        return np.linalg.norm(X.mean(axis=0) - Y.mean(axis=0), ord=1, **kwargs) / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "MeanAbsoluteDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("MeanAbsoluteDistance cannot be called on a pairwise distance matrix.")
 
 
 class MeanPairwiseDistance(AbstractDistance):
@@ -645,17 +614,10 @@ class PearsonDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return (
-            1
-            - pearsonr(
-                self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0)
-            )[0]
-        )
+        return 1 - pearsonr(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))[0]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "PearsonDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("PearsonDistance cannot be called on a pairwise distance matrix.")
 
 
 class SpearmanDistance(AbstractDistance):
@@ -667,17 +629,10 @@ class SpearmanDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return (
-            1
-            - spearmanr(
-                self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0)
-            )[0]
-        )
+        return 1 - spearmanr(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))[0]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "SpearmanDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("SpearmanDistance cannot be called on a pairwise distance matrix.")
 
 
 class KendallTauDistance(AbstractDistance):
@@ -696,9 +651,7 @@ class KendallTauDistance(AbstractDistance):
         return tau_dist
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "KendallTauDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("KendallTauDistance cannot be called on a pairwise distance matrix.")
 
 
 class CosineDistance(AbstractDistance):
@@ -710,14 +663,10 @@ class CosineDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return cosine(
-            self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0)
-        )
+        return cosine(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "CosineDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("CosineDistance cannot be called on a pairwise distance matrix.")
 
 
 class R2ScoreDistance(AbstractDistance):
@@ -731,14 +680,10 @@ class R2ScoreDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return 1 - r2_score(
-            self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0)
-        )
+        return 1 - r2_score(self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "R2ScoreDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("R2ScoreDistance cannot be called on a pairwise distance matrix.")
 
 
 class SymmetricKLDivergence(AbstractDistance):
@@ -759,23 +704,13 @@ class SymmetricKLDivergence(AbstractDistance):
         for i in range(X.shape[1]):
             x_mean, x_std = X[:, i].mean(), X[:, i].std() + epsilon
             y_mean, y_std = Y[:, i].mean(), Y[:, i].std() + epsilon
-            kl = (
-                np.log(y_std / x_std)
-                + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2)
-                - 1 / 2
-            )
-            klr = (
-                np.log(x_std / y_std)
-                + (y_std**2 + (y_mean - x_mean) ** 2) / (2 * x_std**2)
-                - 1 / 2
-            )
+            kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
+            klr = np.log(x_std / y_std) + (y_std**2 + (y_mean - x_mean) ** 2) / (2 * x_std**2) - 1 / 2
             kl_all.append(kl + klr)
         return sum(kl_all) / len(kl_all)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "SymmetricKLDivergence cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("SymmetricKLDivergence cannot be called on a pairwise distance matrix.")
 
 
 class TTestDistance(AbstractDistance):
@@ -799,9 +734,7 @@ class TTestDistance(AbstractDistance):
         return sum(t_test_all) / len(t_test_all)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "TTestDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("TTestDistance cannot be called on a pairwise distance matrix.")
 
 
 class KSTestDistance(AbstractDistance):
@@ -818,9 +751,7 @@ class KSTestDistance(AbstractDistance):
         return sum(stats) / len(stats)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "KSTestDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("KSTestDistance cannot be called on a pairwise distance matrix.")
 
 
 class NBLL(AbstractDistance):
@@ -835,9 +766,7 @@ class NBLL(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
         def _is_count_matrix(matrix, tolerance=1e-6):
-            if matrix.dtype.kind == "i" or np.all(
-                np.abs(matrix - np.round(matrix)) < tolerance
-            ):
+            if matrix.dtype.kind == "i" or np.all(np.abs(matrix - np.round(matrix)) < tolerance):
                 return True
             else:
                 return False
@@ -846,9 +775,7 @@ class NBLL(AbstractDistance):
             raise ValueError("NBLL distance only works for raw counts.")
 
         @numba.jit(forceobj=True)
-        def _compute_nll(
-            y: np.ndarray, nb_params: tuple[float, float], epsilon: float
-        ) -> float:
+        def _compute_nll(y: np.ndarray, nb_params: tuple[float, float], epsilon: float) -> float:
             mu = np.exp(nb_params[0])
             theta = 1 / nb_params[1]
             eps = epsilon
@@ -884,16 +811,12 @@ class NBLL(AbstractDistance):
                 nlls.append(nll)
 
         if genes_skipped > X.shape[1] / 2:
-            raise AttributeError(
-                f"{genes_skipped} genes could not be fit, which is over half."
-            )
+            raise AttributeError(f"{genes_skipped} genes could not be fit, which is over half.")
 
         return -np.sum(nlls) / len(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "NBLL cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
 
 
 def _sample(X, frac=None, n=None):
@@ -935,9 +858,7 @@ class ClassifierProbaDistance(AbstractDistance):
         return np.mean(test_labels[:, 1])
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "ClassifierProbaDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("ClassifierProbaDistance cannot be called on a pairwise distance matrix.")
 
 
 class ClassifierClassProjection(AbstractDistance):
@@ -951,9 +872,7 @@ class ClassifierClassProjection(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "ClassifierClassProjection can currently only be called with onesided."
-        )
+        raise NotImplementedError("ClassifierClassProjection can currently only be called with onesided.")
 
     def onesided_distances(
         self,
@@ -994,9 +913,7 @@ class ClassifierClassProjection(AbstractDistance):
         return df
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "ClassifierClassProjection cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("ClassifierClassProjection cannot be called on a pairwise distance matrix.")
 
 
 class MeanVarDistnDistance(AbstractDistance):
@@ -1030,11 +947,6 @@ class MeanVarDistnDistance(AbstractDistance):
         def prep_kde_data(x, y):
             return np.concatenate([x.reshape(-1, 1), y.reshape(-1, 1)], axis=1)
 
-        mean_x, var_x = mean_var(X, log=True)
-        x = prep_kde_data(mean_x, var_x)
-        mean_y, var_y = mean_var(Y, log=True)
-        y = prep_kde_data(mean_y, var_y)
-
         def grid_points(d, n_points=100):
             # Make grid, add 1 bin on lower/upper end to get final n_points
             d_min = d.min()
@@ -1045,39 +957,39 @@ class MeanVarDistnDistance(AbstractDistance):
             d_max = d_max + d_bin
             return np.arange(start=d_min + 0.5 * d_bin, stop=d_max, step=d_bin)
 
+        def parrallel_score_samples(kde, samples, thread_count=int(0.875 * multiprocessing.cpu_count())):
+            with multiprocessing.Pool(thread_count) as p:
+                return np.concatenate(p.map(kde.score_samples, np.array_split(samples, thread_count)))
+
+        def kde_eval(d, grid):
+            # Kernel choice: Gaussian is too smoothing and cosine or other kernels that do not stretch out
+            # can not be compared well on regions further away from the data as they are -inf
+            kde = KernelDensity(bandwidth="silverman", kernel="exponential").fit(d)
+            return parrallel_score_samples(kde, grid)
+
+        mean_x, var_x = mean_var(X, log=True)
+        mean_y, var_y = mean_var(Y, log=True)
+
+        x = prep_kde_data(mean_x, var_x)
+        y = prep_kde_data(mean_y, var_y)
+
         # Gridpoints to eval KDE on
         mean_grid = grid_points(np.concatenate([mean_x, mean_y]))
         var_grid = grid_points(np.concatenate([var_x, var_y]))
         grid = np.array(np.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2)
 
-        # KDE
-        def kde_eval(d, grid):
-            # Kernel choice: Gaussian is too smoothing and cosine or other kernels that do not stretch out
-            # can not be compared well on regions further away from the data as they are -inf
-            return (
-                KernelDensity(bandwidth="silverman", kernel="exponential")
-                .fit(d)
-                .score_samples(grid)
-            )
-
         kde_x = kde_eval(x, grid)
         kde_y = kde_eval(y, grid)
-
-        # KDE difference
         kde_diff = ((kde_x - kde_y) ** 2).mean()
 
         return kde_diff
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "MeanVarDistnDistance cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("MeanVarDistnDistance cannot be called on a pairwise distance matrix.")
 
 
 class MahalanobisDistance(AbstractDistance):
-    """
-    Mahalanobis distance between pseudobulk vectors.
-    """
+    """Mahalanobis distance between pseudobulk vectors."""
 
     def __init__(self, aggregation_func: Callable = np.mean) -> None:
         super().__init__()
@@ -1092,6 +1004,4 @@ class MahalanobisDistance(AbstractDistance):
         )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        raise NotImplementedError(
-            "Mahalanobis cannot be called on a pairwise distance matrix."
-        )
+        raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
