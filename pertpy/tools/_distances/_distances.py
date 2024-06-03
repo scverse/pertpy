@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import multiprocessing
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numba
 import numpy as np
@@ -106,9 +106,11 @@ class Distance:
         Average of the classification probability of the perturbation for a binary classifier.
     - "classifier_cp": classifier class projection
         Average of the class
-    - "mean_var_distn": Distance between mean-var distibutions of gene expression.
-    - "mahalanobis": Mahalanobis distance between the cells of two groups.
-
+    - "mean_var_distn": Distance between mean-variance distibutions between cells of 2 groups.
+       Mean square distance between the mean-variance distributions of cells from 2 groups using Kernel Density Estimation (KDE).
+    - "mahalanobis": Mahalanobis disatnce between the means of cells from two groups.
+        It is originally used to measure distance between a point and a distribution.
+        in this context, it quantifies the difference between the mean profiles of a target group and a reference group.
 
     Attributes:
         metric: Name of distance metric.
@@ -128,7 +130,7 @@ class Distance:
     def __init__(
         self,
         metric: str = "edistance",
-        agg_fct: str = "mean",
+        agg_fct: Literal["mean", "median", "medoid", "variance"] = "mean",
         layer_key: str = None,
         obsm_key: str = None,
         cell_wise_metric: str = "euclidean",
@@ -927,11 +929,13 @@ class MeanVarDistnDistance(AbstractDistance):
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         """
         Difference of mean-var distibutions in 2 matrices
-        :param X,Y: Matrices of cells*genes, normalized and log transformed
+        Args:
+            X: Normalized and log transcformed cells*genes count matrix.
+            Y: Normalized and log transcformed cells*genes count matrix.
         """
 
         # Get log mean & var for comparison
-        def mean_var(x, log: bool = False):
+        def _mean_var(x, log: bool = False):
             mean = np.mean(x, axis=0)
             var = np.var(x, axis=0)
             positive = mean > 0
@@ -942,10 +946,10 @@ class MeanVarDistnDistance(AbstractDistance):
                 var = np.log(var)
             return mean, var
 
-        def prep_kde_data(x, y):
+        def _prep_kde_data(x, y):
             return np.concatenate([x.reshape(-1, 1), y.reshape(-1, 1)], axis=1)
 
-        def grid_points(d, n_points=100):
+        def _grid_points(d, n_points=100):
             # Make grid, add 1 bin on lower/upper end to get final n_points
             d_min = d.min()
             d_max = d.max()
@@ -955,29 +959,30 @@ class MeanVarDistnDistance(AbstractDistance):
             d_max = d_max + d_bin
             return np.arange(start=d_min + 0.5 * d_bin, stop=d_max, step=d_bin)
 
-        def parrallel_score_samples(kde, samples, thread_count=int(0.875 * multiprocessing.cpu_count())):
+        def _parrallel_score_samples(kde, samples, thread_count=int(0.875 * multiprocessing.cpu_count())):
             with multiprocessing.Pool(thread_count) as p:
                 return np.concatenate(p.map(kde.score_samples, np.array_split(samples, thread_count)))
 
-        def kde_eval(d, grid):
+        def _kde_eval(d, grid):
             # Kernel choice: Gaussian is too smoothing and cosine or other kernels that do not stretch out
             # can not be compared well on regions further away from the data as they are -inf
             kde = KernelDensity(bandwidth="silverman", kernel="exponential").fit(d)
-            return parrallel_score_samples(kde, grid)
+            return _parrallel_score_samples(kde, grid)
 
-        mean_x, var_x = mean_var(X, log=True)
-        mean_y, var_y = mean_var(Y, log=True)
+        mean_x, var_x = _mean_var(X, log=True)
+        mean_y, var_y = _mean_var(Y, log=True)
 
-        x = prep_kde_data(mean_x, var_x)
-        y = prep_kde_data(mean_y, var_y)
+        x = _prep_kde_data(mean_x, var_x)
+        y = _prep_kde_data(mean_y, var_y)
 
         # Gridpoints to eval KDE on
-        mean_grid = grid_points(np.concatenate([mean_x, mean_y]))
-        var_grid = grid_points(np.concatenate([var_x, var_y]))
+        mean_grid = _grid_points(np.concatenate([mean_x, mean_y]))
+        var_grid = _grid_points(np.concatenate([var_x, var_y]))
         grid = np.array(np.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2)
 
-        kde_x = kde_eval(x, grid)
-        kde_y = kde_eval(y, grid)
+        kde_x = _kde_eval(x, grid)
+        kde_y = _kde_eval(y, grid)
+
         kde_diff = ((kde_x - kde_y) ** 2).mean()
 
         return kde_diff
