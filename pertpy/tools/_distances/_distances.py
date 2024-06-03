@@ -24,10 +24,9 @@ from sklearn.neighbors import KernelDensity
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 
-def compute_medoid(arr, axis=None):
+def compute_medoid(arr: np.ndarray, axis=None):
     if len(arr) == 0:
         return None
-
     if axis is not None:
         return np.apply_along_axis(lambda x: compute_medoid(x), axis, arr)
 
