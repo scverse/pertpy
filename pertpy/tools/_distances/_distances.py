@@ -934,7 +934,6 @@ class MeanVarDistnDistance(AbstractDistance):
             Y: Normalized and log transcformed cells*genes count matrix.
         """
 
-        # Get log mean & var for comparison
         def _mean_var(x, log: bool = False):
             mean = np.mean(x, axis=0)
             var = np.var(x, axis=0)
