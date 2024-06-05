@@ -966,7 +966,7 @@ class MeanVarDistnDistance(AbstractDistance):
             # Kernel choice: Gaussian is too smoothing and cosine or other kernels that do not stretch out
             # can not be compared well on regions further away from the data as they are -inf
             kde = KernelDensity(bandwidth="silverman", kernel="exponential").fit(d)
-            return _parrallel_score_samples(kde, grid)
+            return _parallel_score_samples(kde, grid)
 
         mean_x, var_x = _mean_var(X, log=True)
         mean_y, var_y = _mean_var(Y, log=True)
