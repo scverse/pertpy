@@ -139,7 +139,7 @@ class Distance:
 
         Args:
             metric: Distance metric to use.
-            agg_fct: Name of the aggregation function to generate pseodobulk vectors.
+            agg_fct: Name of the aggregation function to generate pseudobulk vectors.
             layer_key: Name of the counts layer containing raw counts to calculate distances for.
                               Mutually exclusive with 'obsm_key'.
                               Is not used if `None`.
