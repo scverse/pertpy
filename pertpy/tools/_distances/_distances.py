@@ -930,7 +930,7 @@ class MeanVarDistnDistance(AbstractDistance):
         """
         Difference of mean-var distibutions in 2 matrices
         Args:
-            X: Normalized and log transcformed cells*genes count matrix.
+            X: Normalized and log transformed cells x genes count matrix.
             Y: Normalized and log transcformed cells*genes count matrix.
         """
 
