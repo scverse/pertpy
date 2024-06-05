@@ -108,7 +108,7 @@ class Distance:
         Average of the class
     - "mean_var_distn": Distance between mean-variance distibutions between cells of 2 groups.
        Mean square distance between the mean-variance distributions of cells from 2 groups using Kernel Density Estimation (KDE).
-    - "mahalanobis": Mahalanobis disatnce between the means of cells from two groups.
+    - "mahalanobis": Mahalanobis distance between the means of cells from two groups.
         It is originally used to measure distance between a point and a distribution.
         in this context, it quantifies the difference between the mean profiles of a target group and a reference group.
 
