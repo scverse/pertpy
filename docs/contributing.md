@@ -146,7 +146,7 @@ on how to write documentation.
 The documentation is set-up to render jupyter notebooks stored in the `docs/tutorials` directory using [myst-nb][].
 Currently, only notebooks in `.ipynb` format are supported that will be included with both their input and output cells.
 
-These notebooks come from [pert-tutorials](https://github.com/theislab/pertpy-tutorials) which is a git submodule of pertpy.
+These notebooks come from [pert-tutorials](https://github.com/scverse/pertpy-tutorials) which is a git submodule of pertpy.
 
 #### Hints
 
