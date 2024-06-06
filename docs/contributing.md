@@ -13,7 +13,7 @@ In addition to the packages needed to _use_ this package, you need additional py
 the documentation_. It's easy to install them using `pip`:
 
 ```bash
-git clone https://github.com/theislab/pertpy.git
+git clone https://github.com/scverse/pertpy.git
 cd pertpy
 pip install -e ".[dev,test,doc]"
 ```
