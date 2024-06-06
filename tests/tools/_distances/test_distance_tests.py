@@ -23,7 +23,7 @@ distances = [
     # "classifier_cp",
     # "nbll",
     "mahalanobis",
-    "mean_var_distn",
+    "mean_var_distribution",
 ]
 
 count_distances = ["nb_ll"]
@@ -42,7 +42,9 @@ def test_distancetest(adata, distance):
     if distance == "wasserstein":
         pytest.mark.apply(pytest.mark.slow)
 
-    etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak")
+    etest = pt.tl.DistanceTest(
+        distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak"
+    )
     tab = etest(adata, groupby="perturbation", contrast="control")
 
     # Well-defined output

@@ -26,9 +26,13 @@ semi_distances = ["r2_distance", "sym_kldiv", "ks_test"]
 non_distances = ["classifier_proba"]
 onesided_only = ["classifier_cp"]
 pseudo_counts_distances = ["nb_ll"]
-lognorm_counts_distances = ["mean_var_distn"]
+lognorm_counts_distances = ["mean_var_distribution"]
 all_distances = (
-    actual_distances + semi_distances + non_distances + pseudo_counts_distances + lognorm_counts_distances
+    actual_distances
+    + semi_distances
+    + non_distances
+    + pseudo_counts_distances
+    + lognorm_counts_distances
 )  # + onesided_only
 
 
@@ -42,9 +46,11 @@ def all_pairwise_distances():
         "classifier_proba",
         "classifier_cp",
         "mahalanobis",
-        "mean_var_distn",
+        "mean_var_distribution",
     ]
-    no_subsample_distances = ["mahalanobis"]  # mahalanobis only works on the full data without subsampling
+    no_subsample_distances = [
+        "mahalanobis"
+    ]  # mahalanobis only works on the full data without subsampling
 
     for distance in all_distances:
         adata = pt.dt.distance_example()
@@ -98,7 +104,10 @@ def test_triangle_inequality(all_pairwise_distances):
         for _i in range(10):
             rng = np.random.default_rng()
             triplet = rng.choice(df.index, size=3, replace=False)
-            assert df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]] >= df.loc[triplet[0], triplet[2]]
+            assert (
+                df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]]
+                >= df.loc[triplet[0], triplet[2]]
+            )
 
 
 def test_distance_layers(all_pairwise_distances):
@@ -128,7 +137,9 @@ def test_distance_output_type(all_pairwise_distances):
     # Test if distances are outputting floats
     for distance in all_distances:
         df = all_pairwise_distances[distance]
-        assert df.apply(lambda col: pd.api.types.is_float_dtype(col)).all(), "Not all values are floats."
+        assert df.apply(
+            lambda col: pd.api.types.is_float_dtype(col)
+        ).all(), "Not all values are floats."
 
 
 def test_distance_pairwise(all_pairwise_distances):
@@ -149,7 +160,9 @@ def test_distance_onesided():
 
     for distance in onesided_only:
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        df = Distance.onesided_distances(adata, groupby="perturbation", selected_group=selected_group)
+        df = Distance.onesided_distances(
+            adata, groupby="perturbation", selected_group=selected_group
+        )
 
         assert isinstance(df, Series)
         assert df.loc[selected_group] == 0  # distance to self is 0
