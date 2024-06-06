@@ -45,7 +45,7 @@ def _download_drug_annotation(
                 block_size=4096,
                 is_zip=False,
             )
-        dgidb_df = pd.read_table(dgidb_path)
+        dgidb_df = pd.read_table(dgidb_path, delimiter=",")
         return dgidb_df
 
     else:
@@ -64,7 +64,10 @@ def _download_drug_annotation(
         pharmgkb_df = pharmgkb_df[pharmgkb_df["Association"] != "not associated"]
         pharmgkb_df = pharmgkb_df[
             (pharmgkb_df["Entity1_type"] == "Gene")
-            & ((pharmgkb_df["Entity2_type"] == "Chemical") | (pharmgkb_df["Entity2_type"] == "Disease"))
+            & (
+                (pharmgkb_df["Entity2_type"] == "Chemical")
+                | (pharmgkb_df["Entity2_type"] == "Disease")
+            )
         ]
         pharmgkb_df.rename(
             columns={
@@ -74,7 +77,9 @@ def _download_drug_annotation(
             },
             inplace=True,
         )
-        pharmgkb_df.drop(["Entity1_type", "Entity1_id", "Entity2_id"], axis=1, inplace=True)
+        pharmgkb_df.drop(
+            ["Entity1_type", "Entity1_id", "Entity2_id"], axis=1, inplace=True
+        )
 
         return pharmgkb_df
 
@@ -129,7 +134,9 @@ class Drug(MetaData):
                 .to_dict()
             )
 
-            adata.var["compounds"] = adata.var_names.map(lambda gene: gene_compound_dict.get(gene, ""))
+            adata.var["compounds"] = adata.var_names.map(
+                lambda gene: gene_compound_dict.get(gene, "")
+            )
         else:
             compounds = interaction[interaction["Type"] == "Chemical"]
             exploded_df = compounds.explode("Gene")
@@ -139,7 +146,9 @@ class Drug(MetaData):
                 .to_dict()
             )
 
-            adata.var["compounds"] = adata.var_names.map(lambda gene: gene_compound_dict.get(gene, ""))
+            adata.var["compounds"] = adata.var_names.map(
+                lambda gene: gene_compound_dict.get(gene, "")
+            )
             diseases = interaction[interaction["Type"] == "Disease"]
             exploded_df = diseases.explode("Gene")
             gene_disease_dict = (
@@ -148,7 +157,9 @@ class Drug(MetaData):
                 .to_dict()
             )
 
-            adata.var["diseases"] = adata.var_names.map(lambda gene: gene_disease_dict.get(gene, ""))
+            adata.var["diseases"] = adata.var_names.map(
+                lambda gene: gene_disease_dict.get(gene, "")
+            )
         return adata
 
     def lookup(self) -> LookUp:
@@ -193,7 +204,9 @@ class Drug(MetaData):
                     )
                 self.dictionary = data
                 targets = dict(ChainMap(*[data[cat] for cat in data]))
-                self.dataframe = pd.DataFrame([{"Compound": k, "Targets": v} for k, v in targets.items()])
+                self.dataframe = pd.DataFrame(
+                    [{"Compound": k, "Targets": v} for k, v in targets.items()]
+                )
                 self.dataframe.rename(
                     columns={"Targets": "targets", "Compound": "compounds"},
                     inplace=True,
@@ -203,7 +216,11 @@ class Drug(MetaData):
                     raise ValueError(
                         "The dgidb data is in a wrong format. Please clear the cache and reinitialize the object."
                     )
-                self.dataframe = data.groupby("drug_claim_name")["gene_claim_name"].apply(list).reset_index()
+                self.dataframe = (
+                    data.groupby("drug_claim_name")["gene_claim_name"]
+                    .apply(list)
+                    .reset_index()
+                )
                 self.dataframe.rename(
                     columns={
                         "gene_claim_name": "targets",
@@ -211,13 +228,17 @@ class Drug(MetaData):
                     },
                     inplace=True,
                 )
-                self.dictionary = self.dataframe.set_index("compounds")["targets"].to_dict()
+                self.dictionary = self.dataframe.set_index("compounds")[
+                    "targets"
+                ].to_dict()
             else:
                 if not isinstance(data, pd.DataFrame):
                     raise ValueError(
                         "The pharmGKB data is in a wrong format. Please clear the cache and reinitialize the object."
                     )
-                self.dataframe = data.groupby("Compound|Disease")["Gene"].apply(list).reset_index()
+                self.dataframe = (
+                    data.groupby("Compound|Disease")["Gene"].apply(list).reset_index()
+                )
                 self.dataframe.rename(
                     columns={
                         "Gene": "targets",
@@ -225,7 +246,9 @@ class Drug(MetaData):
                     },
                     inplace=True,
                 )
-                self.dictionary = self.dataframe.set_index("compounds|diseases")["targets"].to_dict()
+                self.dictionary = self.dataframe.set_index("compounds|diseases")[
+                    "targets"
+                ].to_dict()
 
         def df(self) -> pd.DataFrame:
             if not self.loaded:
