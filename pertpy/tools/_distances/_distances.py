@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import multiprocessing
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, NamedTuple
 
 import numba
 import numpy as np
@@ -29,6 +29,11 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from anndata import AnnData
+
+
+class MeanVar(NamedTuple):
+    mean: float
+    variance: float
 
 
 class Distance:
@@ -86,7 +91,7 @@ class Distance:
         Average of the classification probability of the perturbation for a binary classifier.
     - "classifier_cp": classifier class projection
         Average of the class
-    - "mean_var_distribution": Distance between mean-variance distibutions between cells of 2 groups.
+    - "mean_var_distribution": Distance between mean-variance distributions between cells of 2 groups.
        Mean square distance between the mean-variance distributions of cells from 2 groups using Kernel Density Estimation (KDE).
     - "mahalanobis": Mahalanobis distance between the means of cells from two groups.
         It is originally used to measure distance between a point and a distribution.
@@ -124,7 +129,7 @@ class Distance:
                               Mutually exclusive with 'obsm_key'.
                               Is not used if `None`.
             obsm_key: Name of embedding in adata.obsm to use.
-                      Mutually exclusive with 'counts_layer_key'.
+                      Mutually exclusive with 'layer_key'.
                       Defaults to None, but is set to "X_pca" if not explicitly set internally.
             cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
         """
@@ -178,8 +183,7 @@ class Distance:
 
         if layer_key and obsm_key:
             raise ValueError(
-                "Cannot use 'counts_layer_key' and 'obsm_key' at the same time.\n"
-                "Please provide only one of the two keys."
+                "Cannot use 'layer_key' and 'obsm_key' at the same time.\n" "Please provide only one of the two keys."
             )
         if not layer_key and not obsm_key:
             obsm_key = "X_pca"
@@ -221,15 +225,54 @@ class Distance:
 
         return self.metric_fct(X, Y, **kwargs)
 
+    def bootstrap(
+        self,
+        X: np.ndarray,
+        Y: np.ndarray,
+        *,
+        n_bootstrap: int = 100,
+        bootstrap_random_state: int = 0,
+        **kwargs,
+    ) -> MeanVar:
+        """Bootstrap computation of mean and variance of the distance between vectors X and Y.
+
+        Args:
+            X: First vector of shape (n_samples, n_features).
+            Y: Second vector of shape (n_samples, n_features).
+            n_bootstrap: Number of bootstrap samples.
+            bootstrap_random_state: Random state for bootstrapping.
+
+        Returns:
+            MeanVar: Mean and variance of distance between X and Y.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.distance_example()
+            >>> Distance = pt.tools.Distance(metric="edistance")
+            >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
+            >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
+            >>> D = Distance.bootstrap(X, Y)
+        """
+        return self._bootstrap_mode(
+            X,
+            Y,
+            n_bootstraps=n_bootstrap,
+            bootstrap_random_state=bootstrap_random_state,
+            **kwargs,
+        )
+
     def pairwise(
         self,
         adata: AnnData,
         groupby: str,
         groups: list[str] | None = None,
+        bootstrap: bool = False,
+        n_bootstrap: int = 100,
+        bootstrap_random_state: int = 0,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
         """Get pairwise distances between groups of cells.
 
         Args:
@@ -237,12 +280,16 @@ class Distance:
             groupby: Column name in adata.obs.
             groups: List of groups to compute pairwise distances for.
                     If None, uses all groups.
+            bootstrap: Whether to bootstrap the distance.
+            n_bootstrap: Number of bootstrap samples.
+            bootstrap_random_state: Random state for bootstrapping.
             show_progressbar: Whether to show progress bar.
             n_jobs: Number of cores to use. Defaults to -1 (all).
             kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
             pd.DataFrame: Dataframe with pairwise distances.
+            tuple[pd.DataFrame, pd.DataFrame]: Two Dataframes, one for the mean and one for the variance of pairwise distances.
 
         Examples:
             >>> import pertpy as pt
@@ -253,6 +300,8 @@ class Distance:
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
+        if bootstrap:
+            df_var = pd.DataFrame(index=groups, columns=groups, dtype=float)
         fct = track if show_progressbar else lambda iterable: iterable
 
         # Some metrics are able to handle precomputed distances. This means that
@@ -268,16 +317,29 @@ class Distance:
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
                 for group_y in groups[index_x:]:  # type: ignore
-                    if group_x == group_y:
-                        dist = 0.0  # by distance axiom
+                    # subset the pairwise distance matrix to the two groups
+                    idx_y = grouping == group_y
+                    sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
+                    sub_idx = grouping[idx_x | idx_y] == group_x
+                    if not bootstrap:
+                        if group_x == group_y:
+                            dist = 0.0
+                        else:
+                            dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
+                        df.loc[group_x, group_y] = dist
+                        df.loc[group_y, group_x] = dist
+
                     else:
-                        idx_y = grouping == group_y
-                        # subset the pairwise distance matrix to the two groups
-                        sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
-                        sub_idx = grouping[idx_x | idx_y] == group_x
-                        dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
-                    df.loc[group_x, group_y] = dist
-                    df.loc[group_y, group_x] = dist
+                        bootstrap_output = self._bootstrap_mode_precomputed(
+                            sub_pwd,
+                            sub_idx,
+                            n_bootstraps=n_bootstrap,
+                            bootstrap_random_state=bootstrap_random_state,
+                            **kwargs,
+                        )
+                        # In the bootstrap case, distance of group to itself is a mean and can be non-zero
+                        df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
+                        df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
         else:
             if self.layer_key:
                 embedding = adata.layers[self.layer_key]
@@ -286,18 +348,39 @@ class Distance:
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[grouping == group_x].copy()
                 for group_y in groups[index_x:]:  # type: ignore
-                    if group_x == group_y:
-                        dist = 0.0
+                    cells_y = embedding[grouping == group_y].copy()
+                    if not bootstrap:
+                        # By distance axiom, the distance between a group and itself is 0
+                        dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
+
+                        df.loc[group_x, group_y] = dist
+                        df.loc[group_y, group_x] = dist
                     else:
-                        cells_y = embedding[grouping == group_y].copy()
-                        dist = self(cells_x, cells_y, **kwargs)
-                    df.loc[group_x, group_y] = dist
-                    df.loc[group_y, group_x] = dist
+                        bootstrap_output = self.bootstrap(
+                            cells_x,
+                            cells_y,
+                            n_bootstrap=n_bootstrap,
+                            bootstrap_random_state=bootstrap_random_state,
+                            **kwargs,
+                        )
+                        # In the bootstrap case, distance of group to itself is a mean and can be non-zero
+                        df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
+                        df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
+
         df.index.name = groupby
         df.columns.name = groupby
         df.name = f"pairwise {self.metric}"
 
-        return df
+        if not bootstrap:
+            return df
+        else:
+            df = df.fillna(0)
+            df_var.index.name = groupby
+            df_var.columns.name = groupby
+            df_var = df_var.fillna(0)
+            df_var.name = f"pairwise {self.metric} variance"
+
+            return df, df_var
 
     def onesided_distances(
         self,
@@ -305,10 +388,13 @@ class Distance:
         groupby: str,
         selected_group: str | None = None,
         groups: list[str] | None = None,
+        bootstrap: bool = False,
+        n_bootstrap: int = 100,
+        bootstrap_random_state: int = 0,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
         """Get distances between one selected cell group and the remaining other cell groups.
 
         Args:
@@ -317,12 +403,17 @@ class Distance:
             selected_group: Group to compute pairwise distances to all other.
             groups: List of groups to compute distances to selected_group for.
                     If None, uses all groups.
+            bootstrap: Whether to bootstrap the distance.
+            n_bootstrap: Number of bootstrap samples.
+            bootstrap_random_state: Random state for bootstrapping.
             show_progressbar: Whether to show progress bar.
             n_jobs: Number of cores to use. Defaults to -1 (all).
             kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
             pd.DataFrame: Dataframe with distances of groups to selected_group.
+            tuple[pd.DataFrame, pd.DataFrame]: Two Dataframes, one for the mean and one for the variance of distances of groups to selected_group.
+
 
         Examples:
             >>> import pertpy as pt
@@ -331,6 +422,8 @@ class Distance:
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
         if self.metric == "classifier_cp":
+            if bootstrap:
+                raise NotImplementedError("Currently, ClassifierClassProjection does not support bootstrapping.")
             return self.metric_fct.onesided_distances(  # type: ignore
                 adata,
                 groupby,
@@ -344,13 +437,15 @@ class Distance:
         groups = adata.obs[groupby].unique() if groups is None else groups
         grouping = adata.obs[groupby].copy()
         df = pd.Series(index=groups, dtype=float)
+        if bootstrap:
+            df_var = pd.Series(index=groups, dtype=float)
         fct = track if show_progressbar else lambda iterable: iterable
 
         # Some metrics are able to handle precomputed distances. This means that
         # the pairwise distances between all cells are computed once and then
         # passed to the metric function. This is much faster than computing the
         # pairwise distances for each group separately. Other metrics are not
-        # able to handle precomputed distances such as the PsuedobulkDistance.
+        # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
@@ -360,14 +455,25 @@ class Distance:
                 idx_x = grouping == group_x
                 group_y = selected_group
                 if group_x == group_y:
-                    dist = 0.0  # by distance axiom
+                    df.loc[group_x] = 0.0  # by distance axiom
                 else:
                     idx_y = grouping == group_y
                     # subset the pairwise distance matrix to the two groups
                     sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
                     sub_idx = grouping[idx_x | idx_y] == group_x
-                    dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
-                df.loc[group_x] = dist
+                    if not bootstrap:
+                        dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
+                        df.loc[group_x] = dist
+                    else:
+                        bootstrap_output = self._bootstrap_mode_precomputed(
+                            sub_pwd,
+                            sub_idx,
+                            n_bootstraps=n_bootstrap,
+                            bootstrap_random_state=bootstrap_random_state,
+                            **kwargs,
+                        )
+                        df.loc[group_x] = bootstrap_output.mean
+                        df_var.loc[group_x] = bootstrap_output.variance
         else:
             if self.layer_key:
                 embedding = adata.layers[self.layer_key]
@@ -376,15 +482,32 @@ class Distance:
             for group_x in fct(groups):
                 cells_x = embedding[grouping == group_x].copy()
                 group_y = selected_group
-                if group_x == group_y:
-                    dist = 0.0
+                cells_y = embedding[grouping == group_y].copy()
+                if not bootstrap:
+                    # By distance axiom, the distance between a group and itself is 0
+                    dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
+                    df.loc[group_x] = dist
                 else:
-                    cells_y = embedding[grouping == group_y].copy()
-                    dist = self(cells_x, cells_y, **kwargs)
-                df.loc[group_x] = dist
+                    bootstrap_output = self.bootstrap(
+                        cells_x,
+                        cells_y,
+                        n_bootstrap=n_bootstrap,
+                        bootstrap_random_state=bootstrap_random_state,
+                        **kwargs,
+                    )
+                    # In the bootstrap case, distance of group to itself is a mean and can be non-zero
+                    df.loc[group_x] = bootstrap_output.mean
+                    df_var.loc[group_x] = bootstrap_output.variance
         df.index.name = groupby
         df.name = f"{self.metric} to {selected_group}"
-        return df
+        if not bootstrap:
+            return df
+        else:
+            df_var.index.name = groupby
+            df_var = df_var.fillna(0)
+            df_var.name = f"pairwise {self.metric} variance to {selected_group}"
+
+            return df, df_var
 
     def precompute_distances(self, adata: AnnData, n_jobs: int = -1) -> None:
         """Precompute pairwise distances between all cells, writes to adata.obsp.
@@ -409,6 +532,45 @@ class Distance:
             cells = adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
+
+    def _bootstrap_mode(self, X, Y, n_bootstraps=100, bootstrap_random_state=0, **kwargs) -> MeanVar:
+        rng = np.random.default_rng(bootstrap_random_state)
+
+        distances = []
+        for _ in range(n_bootstraps):
+            X_bootstrapped = X[rng.choice(a=X.shape[0], size=X.shape[0], replace=True)]
+            Y_bootstrapped = Y[rng.choice(a=Y.shape[0], size=X.shape[0], replace=True)]
+
+            distance = self(X_bootstrapped, Y_bootstrapped, **kwargs)
+            distances.append(distance)
+
+        mean = np.mean(distances)
+        variance = np.var(distances)
+        return MeanVar(mean=mean, variance=variance)
+
+    def _bootstrap_mode_precomputed(
+        self, sub_pwd, sub_idx, n_bootstraps=100, bootstrap_random_state=0, **kwargs
+    ) -> MeanVar:
+        rng = np.random.default_rng(bootstrap_random_state)
+
+        distances = []
+        for _ in range(n_bootstraps):
+            # in order to maintain the number of cells for both groups (whatever balancing they may have),
+            # we sample the positive and negative indices separately
+            bootstrap_pos_idx = rng.choice(a=sub_idx[sub_idx].index, size=sub_idx[sub_idx].size, replace=True)
+            bootstrap_neg_idx = rng.choice(a=sub_idx[~sub_idx].index, size=sub_idx[~sub_idx].size, replace=True)
+            bootstrap_idx = np.concatenate([bootstrap_pos_idx, bootstrap_neg_idx])
+            bootstrap_idx_nrs = sub_idx.index.get_indexer(bootstrap_idx)
+
+            bootstrap_sub_idx = sub_idx[bootstrap_idx]
+            bootstrap_sub_pwd = sub_pwd[bootstrap_idx_nrs, :][:, bootstrap_idx_nrs]
+
+            distance = self.metric_fct.from_precomputed(bootstrap_sub_pwd, bootstrap_sub_idx, **kwargs)
+            distances.append(distance)
+
+        mean = np.mean(distances)
+        variance = np.var(distances)
+        return MeanVar(mean=mean, variance=variance)
 
 
 class AbstractDistance(ABC):
@@ -913,7 +1075,7 @@ class ClassifierClassProjection(AbstractDistance):
 
 class MeanVarDistributionDistance(AbstractDistance):
     """
-    Distance betweenv mean-var distributions of gene expression.
+    Distance between mean-var distributions of gene expression.
 
     """
 
@@ -922,7 +1084,7 @@ class MeanVarDistributionDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        """Difference of mean-var distibutions in 2 matrices.
+        """Difference of mean-var distributions in 2 matrices.
 
         Args:
             X: Normalized and log transformed cells x genes count matrix.
@@ -996,10 +1158,15 @@ class MahalanobisDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        cov = np.cov(X.T)
+        if cov.shape[0] == cov.shape[1] and np.linalg.matrix_rank(cov) == cov.shape[0]:  # check invertiblity
+            inverse_cov = np.linalg.inv(cov)
+        else:  # if not invertible, compute the (Moore-Penrose) pseudo-inverse of a matrix
+            inverse_cov = np.linalg.pinv(cov)
         return mahalanobis(
             self.aggregation_func(X, axis=0),
             self.aggregation_func(Y, axis=0),
-            np.linalg.inv(np.cov(X.T)),
+            inverse_cov,
         )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
