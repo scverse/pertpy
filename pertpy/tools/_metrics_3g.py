@@ -19,9 +19,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def compare_de(
-    X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs
-) -> dict:
+def compare_de(X: np.ndarray, Y: np.ndarray, C: np.ndarray, shared_top: int = 100, **kwargs) -> dict:
     """Compare DEG across real and simulated perturbations.
 
     Computes DEG for real and simulated perturbations vs. control and calculates
@@ -50,39 +48,25 @@ def compare_de(
     for group in ("x", "y"):
         adata_joint = ad.concat((adatas_xy[group], adata_c), index_unique="-")
 
-        sc.tl.rank_genes_groups(
-            adata_joint, groupby="label", reference="ctrl", key_added="de", **kwargs
-        )
+        sc.tl.rank_genes_groups(adata_joint, groupby="label", reference="ctrl", key_added="de", **kwargs)
 
         srt_idx = np.argsort(adata_joint.uns["de"]["names"]["comp"])
         results[f"scores_{group}"] = adata_joint.uns["de"]["scores"]["comp"][srt_idx]
-        results[f"pvals_adj_{group}"] = adata_joint.uns["de"]["pvals_adj"]["comp"][
-            srt_idx
-        ]
+        results[f"pvals_adj_{group}"] = adata_joint.uns["de"]["pvals_adj"]["comp"][srt_idx]
         results[f"ranks_{group}"] = vars_ranks[srt_idx]
 
         top_names.append(adata_joint.uns["de"]["names"]["comp"][:shared_top])
 
     metrics = {}
-    metrics["shared_top_genes"] = (
-        len(set(top_names[0]).intersection(top_names[1])) / shared_top
-    )
-    metrics["scores_corr"] = results["scores_x"].corr(
-        results["scores_y"], method="pearson"
-    )
-    metrics["pvals_adj_corr"] = results["pvals_adj_x"].corr(
-        results["pvals_adj_y"], method="pearson"
-    )
-    metrics["scores_ranks_corr"] = results["ranks_x"].corr(
-        results["ranks_y"], method="spearman"
-    )
+    metrics["shared_top_genes"] = len(set(top_names[0]).intersection(top_names[1])) / shared_top
+    metrics["scores_corr"] = results["scores_x"].corr(results["scores_y"], method="pearson")
+    metrics["pvals_adj_corr"] = results["pvals_adj_x"].corr(results["pvals_adj_y"], method="pearson")
+    metrics["scores_ranks_corr"] = results["ranks_x"].corr(results["ranks_y"], method="spearman")
 
     return metrics
 
 
-def compare_class(
-    X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: Optional[ClassifierMixin] = None
-) -> float:
+def compare_class(X: np.ndarray, Y: np.ndarray, C: np.ndarray, clf: ClassifierMixin | None = None) -> float:
     """Compare classification accuracy between real and simulated perturbations.
 
     Trains a classifier on the real perturbation data + the control data and reports a normalized
@@ -117,7 +101,7 @@ def compare_class(
 def compare_knn(
     X: np.ndarray,
     Y: np.ndarray,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     n_neighbors: int = 20,
     use_Y_knn: bool = False,
     random_state: int = 0,
@@ -169,8 +153,8 @@ def compare_knn(
 
     uq, uq_counts = np.unique(labels[indices], return_counts=True)
     uq_counts_norm = uq_counts / uq_counts.sum()
-    counts = dict(zip(label_groups, [0.0] * len(label_groups)))
-    for group, count_norm in zip(uq, uq_counts_norm):
+    counts = dict(zip(label_groups, [0.0] * len(label_groups), strict=False))
+    for group, count_norm in zip(uq, uq_counts_norm, strict=False):
         counts[group] = count_norm
 
     return counts
@@ -192,7 +176,7 @@ def compare_dist(
         pert: Real perturbed data.
         pred: Simulated perturbed data.
         ctrl: Control data
-        kind: Kind of metric to use.
+        mode: Mode to use.
     """
     metric_fct = partial(Distance(metric).metric_fct, **metric_kwds)
 
@@ -201,13 +185,11 @@ def compare_dist(
     elif mode == "scaled":
         from sklearn.preprocessing import MinMaxScaler
 
-        scaler = MinMaxScaler().fit(
-            np.vstack((pert, ctrl)) if _fit_to_pert_and_ctrl else ctrl
-        )
+        scaler = MinMaxScaler().fit(np.vstack((pert, ctrl)) if _fit_to_pert_and_ctrl else ctrl)
         pred = scaler.transform(pred)
         pert = scaler.transform(pert)
     else:
-        raise ValueError(f"Unknown mode {mod}. Please choose simple or scaled.")
+        raise ValueError(f"Unknown mode {mode}. Please choose simple or scaled.")
 
     d1 = metric_fct(pert, pred)
     d2 = metric_fct(ctrl, pred)

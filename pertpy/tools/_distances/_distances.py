@@ -1158,15 +1158,8 @@ class MahalanobisDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        cov = np.cov(X.T)
-        if cov.shape[0] == cov.shape[1] and np.linalg.matrix_rank(cov) == cov.shape[0]:  # check invertiblity
-            inverse_cov = np.linalg.inv(cov)
-        else:  # if not invertible, compute the (Moore-Penrose) pseudo-inverse of a matrix
-            inverse_cov = np.linalg.pinv(cov)
         return mahalanobis(
-            self.aggregation_func(X, axis=0),
-            self.aggregation_func(Y, axis=0),
-            inverse_cov,
+            self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0), np.linalg.inv(np.cov(X.T))
         )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:

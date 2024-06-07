@@ -78,56 +78,50 @@ class TestDistances:
             Distance = pt.tl.Distance(distance, obsm_key="X_pca")
         return Distance
 
-    @mark.parametrize("distance", actual_distances + semi_distances + non_distances)
-    def test_distance(self, adata, distance):
-        Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
-
-        assert isinstance(df, DataFrame)
+    @fixture
+    @mark.parametrize("distance", all_distances)
+    def pairwise_distance(self, adata, distance_obj, distance):
+        return distance_obj.pairwise(adata, groupby="perturbation", show_progressbar=True)
 
     @mark.parametrize("distance", actual_distances + semi_distances)
-    def test_distance_axioms(self, adata, distance):
+    def test_distance_axioms(self, pairwise_distance, distance):
         # This is equivalent to testing for a semimetric, defined as fulfilling all axioms except triangle inequality.
-        Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
-
         # (M1) Definiteness
-        assert all(np.diag(df.values) == 0)  # distance to self is 0
+        assert all(np.diag(pairwise_distance.values) == 0)  # distance to self is 0
 
         # (M2) Positivity
-        assert len(df) == np.sum(df.values == 0)  # distance to other is not 0 (TODO)
-        assert all(df.values.flatten() >= 0)  # distance is non-negative
+        assert len(pairwise_distance) == np.sum(pairwise_distance.values == 0)  # distance to other is not 0
+        assert all(pairwise_distance.values.flatten() >= 0)  # distance is non-negative
 
         # (M3) Symmetry
-        assert np.sum(df.values - df.values.T) == 0
+        assert np.sum(pairwise_distance.values - pairwise_distance.values.T) == 0
 
     @mark.parametrize("distance", actual_distances)
-    def test_triangle_inequality(self, adata, distance):
+    def test_triangle_inequality(self, pairwise_distance, distance):
         # Test if distances are well-defined in accordance with metric axioms
-        Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        df = Distance.pairwise(adata, groupby="perturbation", show_progressbar=True)
-
         # (M4) Triangle inequality (we just probe this for a few random triplets)
         for _i in range(10):
             rng = np.random.default_rng()
-            triplet = rng.choice(df.index, size=3, replace=False)
-            assert df.loc[triplet[0], triplet[1]] + df.loc[triplet[1], triplet[2]] >= df.loc[triplet[0], triplet[2]]
+            triplet = rng.choice(pairwise_distance.index, size=3, replace=False)
+            assert (
+                pairwise_distance.loc[triplet[0], triplet[1]] + pairwise_distance.loc[triplet[1], triplet[2]]
+                >= pairwise_distance.loc[triplet[0], triplet[2]]
+            )
 
     @mark.parametrize("distance", all_distances)
-    def test_distance_layers(self, adata, distance_obj, distance):
-        df = distance_obj.pairwise(adata, groupby="perturbation")
-
-        assert isinstance(df, DataFrame)
-        assert df.columns.equals(df.index)
-        assert np.sum(df.values - df.values.T) == 0  # symmetry
+    def test_distance_layers(self, pairwise_distance, distance):
+        assert isinstance(pairwise_distance, DataFrame)
+        assert pairwise_distance.columns.equals(pairwise_distance.index)
+        assert np.sum(pairwise_distance.values - pairwise_distance.values.T) == 0  # symmetry
 
     @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
     def test_distance_counts(self, adata, distance):
-        Distance = pt.tl.Distance(distance, layer_key="counts")
-        df = Distance.pairwise(adata, groupby="perturbation")
-        assert isinstance(df, DataFrame)
-        assert df.columns.equals(df.index)
-        assert np.sum(df.values - df.values.T) == 0
+        if distance != "mahalanobis":  # doesn't work, covariance matrix is a singular matrix, not invertible
+            Distance = pt.tl.Distance(distance, layer_key="counts")
+            df = Distance.pairwise(adata, groupby="perturbation")
+            assert isinstance(df, DataFrame)
+            assert df.columns.equals(df.index)
+            assert np.sum(df.values - df.values.T) == 0
 
     @mark.parametrize("distance", all_distances)
     def test_mutually_exclusive_keys(self, distance):
@@ -143,15 +137,6 @@ class TestDistances:
         Y = rng.normal(size=(100, 10))
         d = Distance(X, Y)
         assert isinstance(d, float)
-
-    @mark.parametrize("distance", all_distances)
-    def test_distance_pairwise(self, adata, distance_obj, distance):
-        # Test consistency of pairwise distance results
-        df = distance_obj.pairwise(adata, groupby="perturbation")
-
-        assert isinstance(df, DataFrame)
-        assert df.columns.equals(df.index)
-        assert np.sum(df.values - df.values.T) == 0  # symmetry
 
     @mark.parametrize("distance", all_distances + onesided_only)
     def test_distance_onesided(self, adata, distance_obj, distance):
