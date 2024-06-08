@@ -29,7 +29,8 @@ class Statsmodels(LinearModelBase):
 
         Examples:
             >>> import statsmodels.api as sm
-            >>> model = StatsmodelsDE(adata, design="~condition")
+            >>> import pertpy as pt
+            >>> model = pt.tl.Statsmodels(adata, design="~condition")
             >>> model.fit(sm.GLM, family=sm.families.NegativeBinomial(link=sm.families.links.Log()))
             >>> results = model.test_contrasts(np.array([0, 1]))
         """

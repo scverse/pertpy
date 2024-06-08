@@ -228,10 +228,8 @@ class CellLine(MetaData):
             if query_id == "DepMap_ID":
                 query_id = "stripped_cell_line_name"
                 logger.error(
-                    "`stripped_cell_line_name` is used as reference and query identifier ",
-                    " to annotate cell line metadata from Cancerrxgene. "
-                    "Ensure that stripped cell line names are available in 'adata.obs.' ",
-                    "or use the DepMap as `cell_line_source` to annotate the cell line first ",
+                    "`stripped_cell_line_name` is used as reference and query identifier to annotate cell line metadata from Cancerrxgene. "
+                    "Ensure that stripped cell line names are available in 'adata.obs.' or use the DepMap as `cell_line_source` to annotate the cell line first."
                 )
             if self.cancerxgene is None:
                 self._download_cell_line(cell_line_source="Cancerrxgene")
@@ -528,6 +526,8 @@ class CellLine(MetaData):
                 "This ensures that the required query ID is included in your data."
             )
         # Lazily download the GDSC data
+        if isinstance(gdsc_dataset, str):
+            gdsc_dataset = int(gdsc_dataset)
         if gdsc_dataset == 1:
             if self.drug_response_gdsc1 is None:
                 self._download_gdsc(gdsc_dataset=1)
@@ -552,7 +552,7 @@ class CellLine(MetaData):
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, query_perturbation])
-            .assign(ln_ic50=self.drug_response_gdsc1.set_index([reference_id, reference_perturbation]).ln_ic50)
+            .assign(ln_ic50=gdsc_data.set_index([reference_id, reference_perturbation]).ln_ic50)
             .reset_index()
             .set_index(old_index_name)
         )
