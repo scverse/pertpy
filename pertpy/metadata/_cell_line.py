@@ -532,10 +532,12 @@ class CellLine(MetaData):
             if self.drug_response_gdsc1 is None:
                 self._download_gdsc(gdsc_dataset=1)
             gdsc_data = self.drug_response_gdsc1
-        else:
+        elif gdsc_dataset == 2:
             if self.drug_response_gdsc2 is None:
                 self._download_gdsc(gdsc_dataset=2)
             gdsc_data = self.drug_response_gdsc2
+        else:
+            raise ValueError("The GDSC dataset specified in `gdsc_dataset` must be either 1 or 2.")
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(gdsc_data[reference_id]))
