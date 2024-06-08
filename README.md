@@ -1,16 +1,16 @@
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Build](https://github.com/theislab/pertpy/actions/workflows/build.yml/badge.svg)](https://github.com/theislab/pertpy/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/theislab/pertpy/graph/badge.svg?token=1dTpIPBShv)](https://codecov.io/gh/theislab/pertpy)
-[![License](https://img.shields.io/github/license/theislab/pertpy)](https://opensource.org/licenses/Apache2.0)
+[![Build](https://github.com/scverse/pertpy/actions/workflows/build.yml/badge.svg)](https://github.com/scverse/pertpy/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/scverse/pertpy/graph/badge.svg?token=1dTpIPBShv)](https://codecov.io/gh/scverse/pertpy)
+[![License](https://img.shields.io/github/license/scverse/pertpy)](https://opensource.org/licenses/Apache2.0)
 [![PyPI](https://img.shields.io/pypi/v/pertpy.svg)](https://pypi.org/project/pertpy/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pertpy)](https://pypi.org/project/pertpy)
 [![Read the Docs](https://img.shields.io/readthedocs/pertpy/latest.svg?label=Read%20the%20Docs)](https://pertpy.readthedocs.io/)
-[![Test](https://github.com/theislab/pertpy/actions/workflows/test.yml/badge.svg)](https://github.com/theislab/pertpy/actions/workflows/test.yml)
+[![Test](https://github.com/scverse/pertpy/actions/workflows/test.yml/badge.svg)](https://github.com/scverse/pertpy/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 # pertpy
 
-![fig1](https://github.com/theislab/pertpy/assets/99650244/182fa9c3-6d23-4002-b86a-82bf2a243377)
+![fig1](https://github.com/scverse/pertpy/assets/99650244/182fa9c3-6d23-4002-b86a-82bf2a243377)
 
 ## Documentation
 
