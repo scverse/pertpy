@@ -483,7 +483,7 @@ class CellLine(MetaData):
         reference_id: Literal["cell_line_name", "sanger_model_id", "cosmic_id"] = "cell_line_name",
         query_perturbation: str = "perturbation",
         reference_perturbation: Literal["drug_name", "drug_id"] = "drug_name",
-        gdsc_dataset: Literal[1, 2] = 1,
+        gdsc_dataset: Literal["gdsc_1", "gdsc_2"] = "gdsc_1",
         verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
@@ -526,18 +526,16 @@ class CellLine(MetaData):
                 "This ensures that the required query ID is included in your data."
             )
         # Lazily download the GDSC data
-        if isinstance(gdsc_dataset, str):
-            gdsc_dataset = int(gdsc_dataset)
-        if gdsc_dataset == 1:
+        if gdsc_dataset == "gdsc_1":
             if self.drug_response_gdsc1 is None:
                 self._download_gdsc(gdsc_dataset=1)
             gdsc_data = self.drug_response_gdsc1
-        elif gdsc_dataset == 2:
+        elif gdsc_dataset == "gdsc_2":
             if self.drug_response_gdsc2 is None:
                 self._download_gdsc(gdsc_dataset=2)
             gdsc_data = self.drug_response_gdsc2
         else:
-            raise ValueError("The GDSC dataset specified in `gdsc_dataset` must be either 1 or 2.")
+            raise ValueError("The GDSC dataset specified in `gdsc_dataset` must be either 'gdsc_1' or 'gdsc_2'.")
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(gdsc_data[reference_id]))
