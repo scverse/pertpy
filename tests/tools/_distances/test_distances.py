@@ -33,153 +33,164 @@ all_distances = (
 )  # + onesided_only
 
 
-class TestDistances:
-    @fixture
-    def adata(self, request):
-        low_subsample_distances = [
-            "sym_kldiv",
-            "t_test",
-            "ks_test",
-            "classifier_proba",
-            "classifier_cp",
-            "mahalanobis",
-            "mean_var_distribution",
-        ]
-        no_subsample_distances = ["mahalanobis"]  # mahalanobis only works on the full data without subsampling
+@fixture
+def adata(request):
+    low_subsample_distances = [
+        "sym_kldiv",
+        "t_test",
+        "ks_test",
+        "classifier_proba",
+        "classifier_cp",
+        "mahalanobis",
+        "mean_var_distribution",
+    ]
+    no_subsample_distances = ["mahalanobis"]  # mahalanobis only works on the full data without subsampling
 
-        distance = request.node.callspec.params["distance"]
+    distance = request.node.callspec.params["distance"]
 
-        adata = pt.dt.distance_example()
-        if distance not in no_subsample_distances:
-            if distance in low_subsample_distances:
-                adata = sc.pp.subsample(adata, 0.1, copy=True)
-            else:
-                adata = sc.pp.subsample(adata, 0.001, copy=True)
-
-        adata.layers["lognorm"] = adata.X.copy()
-        adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
-        if "X_pca" not in adata.obsm.keys():
-            sc.pp.pca(adata, n_comps=5)
-        if distance in lognorm_counts_distances:
-            groups = np.unique(adata.obs["perturbation"])
-            # KDE is slow, subset to 5 groups for speed up
-            adata = adata[adata.obs["perturbation"].isin(groups[0:5])].copy()
-
-        return adata
-
-    @fixture
-    def distance_obj(self, request):
-        distance = request.node.callspec.params["distance"]
-        if distance in lognorm_counts_distances:
-            Distance = pt.tl.Distance(distance, layer_key="lognorm")
-        elif distance in pseudo_counts_distances:
-            Distance = pt.tl.Distance(distance, layer_key="counts")
+    adata = pt.dt.distance_example()
+    if distance not in no_subsample_distances:
+        if distance in low_subsample_distances:
+            adata = sc.pp.subsample(adata, 0.1, copy=True)
         else:
-            Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        return Distance
+            adata = sc.pp.subsample(adata, 0.001, copy=True)
 
-    @fixture
-    @mark.parametrize("distance", all_distances)
-    def pairwise_distance(self, adata, distance_obj, distance):
-        return distance_obj.pairwise(adata, groupby="perturbation", show_progressbar=True)
+    adata.layers["lognorm"] = adata.X.copy()
+    adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
+    if "X_pca" not in adata.obsm.keys():
+        sc.pp.pca(adata, n_comps=5)
+    if distance in lognorm_counts_distances:
+        groups = np.unique(adata.obs["perturbation"])
+        # KDE is slow, subset to 5 groups for speed up
+        adata = adata[adata.obs["perturbation"].isin(groups[0:5])].copy()
 
-    @mark.parametrize("distance", actual_distances + semi_distances)
-    def test_distance_axioms(self, pairwise_distance, distance):
-        # This is equivalent to testing for a semimetric, defined as fulfilling all axioms except triangle inequality.
-        # (M1) Definiteness
-        assert all(np.diag(pairwise_distance.values) == 0)  # distance to self is 0
+    return adata
 
-        # (M2) Positivity
-        assert len(pairwise_distance) == np.sum(pairwise_distance.values == 0)  # distance to other is not 0
-        assert all(pairwise_distance.values.flatten() >= 0)  # distance is non-negative
 
-        # (M3) Symmetry
-        assert np.sum(pairwise_distance.values - pairwise_distance.values.T) == 0
-
-    @mark.parametrize("distance", actual_distances)
-    def test_triangle_inequality(self, pairwise_distance, distance):
-        # Test if distances are well-defined in accordance with metric axioms
-        # (M4) Triangle inequality (we just probe this for a few random triplets)
-        for _i in range(10):
-            rng = np.random.default_rng()
-            triplet = rng.choice(pairwise_distance.index, size=3, replace=False)
-            assert (
-                pairwise_distance.loc[triplet[0], triplet[1]] + pairwise_distance.loc[triplet[1], triplet[2]]
-                >= pairwise_distance.loc[triplet[0], triplet[2]]
-            )
-
-    @mark.parametrize("distance", all_distances)
-    def test_distance_layers(self, pairwise_distance, distance):
-        assert isinstance(pairwise_distance, DataFrame)
-        assert pairwise_distance.columns.equals(pairwise_distance.index)
-        assert np.sum(pairwise_distance.values - pairwise_distance.values.T) == 0  # symmetry
-
-    @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
-    def test_distance_counts(self, adata, distance):
-        if distance != "mahalanobis":  # doesn't work, covariance matrix is a singular matrix, not invertible
-            Distance = pt.tl.Distance(distance, layer_key="counts")
-            df = Distance.pairwise(adata, groupby="perturbation")
-            assert isinstance(df, DataFrame)
-            assert df.columns.equals(df.index)
-            assert np.sum(df.values - df.values.T) == 0
-
-    @mark.parametrize("distance", all_distances)
-    def test_mutually_exclusive_keys(self, distance):
-        with pytest.raises(ValueError):
-            _ = pt.tl.Distance(distance, layer_key="counts", obsm_key="X_pca")
-
-    @mark.parametrize("distance", actual_distances + semi_distances + non_distances)
-    def test_distance_output_type(self, distance):
-        # Test if distances are outputting floats
+@fixture
+def distance_obj(request):
+    distance = request.node.callspec.params["distance"]
+    if distance in lognorm_counts_distances:
+        Distance = pt.tl.Distance(distance, layer_key="lognorm")
+    elif distance in pseudo_counts_distances:
+        Distance = pt.tl.Distance(distance, layer_key="counts")
+    else:
         Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+    return Distance
+
+
+@fixture
+@mark.parametrize("distance", all_distances)
+def pairwise_distance(adata, distance_obj, distance):
+    return distance_obj.pairwise(adata, groupby="perturbation", show_progressbar=True)
+
+
+@mark.parametrize("distance", actual_distances + semi_distances)
+def test_distance_axioms(pairwise_distance, distance):
+    # This is equivalent to testing for a semimetric, defined as fulfilling all axioms except triangle inequality.
+    # (M1) Definiteness
+    assert all(np.diag(pairwise_distance.values) == 0)  # distance to self is 0
+
+    # (M2) Positivity
+    assert len(pairwise_distance) == np.sum(pairwise_distance.values == 0)  # distance to other is not 0
+    assert all(pairwise_distance.values.flatten() >= 0)  # distance is non-negative
+
+    # (M3) Symmetry
+    assert np.sum(pairwise_distance.values - pairwise_distance.values.T) == 0
+
+
+@mark.parametrize("distance", actual_distances)
+def test_triangle_inequality(pairwise_distance, distance):
+    # Test if distances are well-defined in accordance with metric axioms
+    # (M4) Triangle inequality (we just probe this for a few random triplets)
+    for _i in range(10):
         rng = np.random.default_rng()
-        X = rng.normal(size=(100, 10))
-        Y = rng.normal(size=(100, 10))
-        d = Distance(X, Y)
-        assert isinstance(d, float)
-
-    @mark.parametrize("distance", all_distances + onesided_only)
-    def test_distance_onesided(self, adata, distance_obj, distance):
-        # Test consistency of one-sided distance results
-        selected_group = adata.obs.perturbation.unique()[0]
-        df = distance_obj.onesided_distances(adata, groupby="perturbation", selected_group=selected_group)
-        assert isinstance(df, Series)
-        assert df.loc[selected_group] == 0  # distance to self is 0
-
-    @mark.parametrize("distance", actual_distances + semi_distances + non_distances)
-    def test_bootstrap_distance_output_type(self, distance):
-        # Test if distances are outputting floats
-        Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-        rng = np.random.default_rng()
-        X = rng.normal(size=(100, 10))
-        Y = rng.normal(size=(100, 10))
-        d = Distance.bootstrap(X, Y, n_bootstrap=10)
-        assert hasattr(d, "mean")
-        assert hasattr(d, "variance")
-
-    @mark.parametrize("distance", all_distances)
-    def test_bootstrap_distance_pairwise(self, adata, distance_obj, distance):
-        # Test consistency of pairwise distance results
-        bootstrap_output = distance_obj.pairwise(adata, groupby="perturbation", bootstrap=True, n_bootstrap=10)
-        assert isinstance(bootstrap_output, tuple)
-
-        mean = bootstrap_output[0]
-        var = bootstrap_output[1]
-
-        assert mean.columns.equals(mean.index)
-        assert np.sum(mean.values - mean.values.T) == 0  # symmetry
-        assert np.sum(var.values - var.values.T) == 0  # symmetry
-
-    @mark.parametrize("distance", all_distances)
-    def test_bootstrap_distance_onesided(self, adata, distance_obj, distance):
-        # Test consistency of one-sided distance results
-        selected_group = adata.obs.perturbation.unique()[0]
-        bootstrap_output = distance_obj.onesided_distances(
-            adata,
-            groupby="perturbation",
-            selected_group=selected_group,
-            bootstrap=True,
-            n_bootstrap=10,
+        triplet = rng.choice(pairwise_distance.index, size=3, replace=False)
+        assert (
+            pairwise_distance.loc[triplet[0], triplet[1]] + pairwise_distance.loc[triplet[1], triplet[2]]
+            >= pairwise_distance.loc[triplet[0], triplet[2]]
         )
 
-        assert isinstance(bootstrap_output, tuple)
+
+@mark.parametrize("distance", all_distances)
+def test_distance_layers(pairwise_distance, distance):
+    assert isinstance(pairwise_distance, DataFrame)
+    assert pairwise_distance.columns.equals(pairwise_distance.index)
+    assert np.sum(pairwise_distance.values - pairwise_distance.values.T) == 0  # symmetry
+
+
+@mark.parametrize("distance", actual_distances + pseudo_counts_distances)
+def test_distance_counts(adata, distance):
+    if distance != "mahalanobis":  # doesn't work, covariance matrix is a singular matrix, not invertible
+        Distance = pt.tl.Distance(distance, layer_key="counts")
+        df = Distance.pairwise(adata, groupby="perturbation")
+        assert isinstance(df, DataFrame)
+        assert df.columns.equals(df.index)
+        assert np.sum(df.values - df.values.T) == 0
+
+
+@mark.parametrize("distance", all_distances)
+def test_mutually_exclusive_keys(distance):
+    with pytest.raises(ValueError):
+        _ = pt.tl.Distance(distance, layer_key="counts", obsm_key="X_pca")
+
+
+@mark.parametrize("distance", actual_distances + semi_distances + non_distances)
+def test_distance_output_type(distance):
+    # Test if distances are outputting floats
+    Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+    rng = np.random.default_rng()
+    X = rng.normal(size=(100, 10))
+    Y = rng.normal(size=(100, 10))
+    d = Distance(X, Y)
+    assert isinstance(d, float)
+
+
+@mark.parametrize("distance", all_distances + onesided_only)
+def test_distance_onesided(adata, distance_obj, distance):
+    # Test consistency of one-sided distance results
+    selected_group = adata.obs.perturbation.unique()[0]
+    df = distance_obj.onesided_distances(adata, groupby="perturbation", selected_group=selected_group)
+    assert isinstance(df, Series)
+    assert df.loc[selected_group] == 0  # distance to self is 0
+
+
+@mark.parametrize("distance", actual_distances + semi_distances + non_distances)
+def test_bootstrap_distance_output_type(distance):
+    # Test if distances are outputting floats
+    Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+    rng = np.random.default_rng()
+    X = rng.normal(size=(100, 10))
+    Y = rng.normal(size=(100, 10))
+    d = Distance.bootstrap(X, Y, n_bootstrap=10)
+    assert hasattr(d, "mean")
+    assert hasattr(d, "variance")
+
+
+@mark.parametrize("distance", all_distances)
+def test_bootstrap_distance_pairwise(adata, distance_obj, distance):
+    # Test consistency of pairwise distance results
+    bootstrap_output = distance_obj.pairwise(adata, groupby="perturbation", bootstrap=True, n_bootstrap=10)
+    assert isinstance(bootstrap_output, tuple)
+
+    mean = bootstrap_output[0]
+    var = bootstrap_output[1]
+
+    assert mean.columns.equals(mean.index)
+    assert np.sum(mean.values - mean.values.T) == 0  # symmetry
+    assert np.sum(var.values - var.values.T) == 0  # symmetry
+
+
+@mark.parametrize("distance", all_distances)
+def test_bootstrap_distance_onesided(adata, distance_obj, distance):
+    # Test consistency of one-sided distance results
+    selected_group = adata.obs.perturbation.unique()[0]
+    bootstrap_output = distance_obj.onesided_distances(
+        adata,
+        groupby="perturbation",
+        selected_group=selected_group,
+        bootstrap=True,
+        n_bootstrap=10,
+    )
+
+    assert isinstance(bootstrap_output, tuple)
