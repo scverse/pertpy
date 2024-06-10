@@ -498,7 +498,7 @@ class CellLine(MetaData):
             reference_id: The type of cell line identifier in the metadata, cell_line_name, sanger_model_id or cosmic_id.
             query_perturbation: The column of `.obs` with perturbation information.
             reference_perturbation: The type of perturbation in the metadata, drug_name or drug_id.
-            gdsc_dataset: The GDSC dataset, 1 or 2.
+            gdsc_dataset: The GDSC dataset, 1 or 2, specified as 'gdsc_1' or 'gdsc_2'.
                           The GDSC1 dataset updates previous releases with additional drug screening data from the
                           Sanger Institute and Massachusetts General Hospital.
                           It covers 970 Cell lines and 403 Compounds with 333292 IC50s.
