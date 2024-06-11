@@ -1572,3 +1572,29 @@ def zhang_2021() -> AnnData:  # pragma: no cover
     adata = sc.read_h5ad(output_file_path)
 
     return adata
+
+
+def hagai_2018() -> AnnData:  # pragma: no cover
+    """Cross-species analysis of primary dermal fibroblasts and bone marrow-derived phagocytes, stimulated with dsRNA and IFNB.
+
+    The study explores immune response variations across humans, macaques, mice, and rats.
+
+    Referenences:
+        Hagai, T., Chen, X., Miragaia, R.J. et al. Gene expression variability across cells and species shapes innate immunity.
+        Nature 563, 197–202 (2018). https://doi.org/10.1038/s41586-018-0657-2
+
+    Returns:
+        :class:`~anndata.AnnData` object of the dataset.
+    """
+    output_file_name = "hagai_2018.h5ad"
+    output_file_path = settings.datasetdir / output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/46978846",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+    adata = sc.read_h5ad(output_file_path)
+
+    return adata
