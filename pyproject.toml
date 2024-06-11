@@ -21,6 +21,7 @@ authors = [
     {name = "Tessa Green"},
     {name = "Stefan Peidli"},
     {name = "Antonia Schumacher"},
+    {name = "Gregor Sturm"},
 ]
 maintainers = [
     {name = "Lukas Heumos", email = "lukas.heumos@posteo.net"},
