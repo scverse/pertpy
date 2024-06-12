@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+
 import numpy as np
+import pandas as pd
 import pertpy as pt
 import pytest
+from anndata import AnnData
 from pertpy.tools._metrics_3g import (
     compare_class,
     compare_de,
-    compare_dist,
+    compare_distance,
     compare_knn,
 )
 
@@ -18,17 +22,76 @@ def test_data():
     return X, Y, C
 
 
-def test_compare_de(test_data):
-    X, Y, C = test_data
-    result = compare_de(X, Y, C, shared_top=5)
-    assert isinstance(result, dict)
-    required_keys = {
-        "shared_top_genes",
-        "scores_corr",
-        "pvals_adj_corr",
-        "scores_ranks_corr",
+@pytest.fixture
+def compare_de_adata():
+    rng = np.random.default_rng()
+    adata = AnnData(rng.normal(size=(100, 10)))
+    genes = np.rec.fromarrays(
+        [np.array([f"gene{i}" for i in range(10)])],
+        names=["group1", "O"],
+    )
+    adata.uns["de_key1"] = {
+        "names": genes,
+        "scores": {"group1": rng.random(10)},
+        "pvals_adj": {"group1": rng.random(10)},
     }
-    assert all(key in result for key in required_keys)
+    adata.uns["de_key2"] = {
+        "names": genes,
+        "scores": {"group1": rng.random(10)},
+        "pvals_adj": {"group1": rng.random(10)},
+    }
+    return adata
+
+
+@pytest.fixture
+def compare_de_dataframe():
+    rng = np.random.default_rng()
+    df1 = pd.DataFrame(
+        {
+            "variable": ["gene" + str(i) for i in range(10)],
+            "log_fc": rng.random(10),
+            "adj_p_value": rng.random(10),
+        }
+    )
+    df2 = pd.DataFrame(
+        {
+            "variable": ["gene" + str(i) for i in range(10)],
+            "log_fc": rng.random(10),
+            "adj_p_value": rng.random(10),
+        }
+    )
+    return df1, df2
+
+
+def test_error_both_keys_and_dfs(compare_de_adata, compare_de_dataframe):
+    with pytest.raises(ValueError):
+        compare_de(adata=compare_de_adata, de_key1="de_key1", de_df1=compare_de_dataframe[0])
+
+
+def test_error_missing_adata():
+    with pytest.raises(ValueError):
+        compare_de(de_key1="de_key1", de_key2="de_key2")
+
+
+def test_error_missing_df(compare_de_dataframe):
+    with pytest.raises(ValueError):
+        compare_de(de_df1=compare_de_dataframe[0])
+
+
+def test_compare_de_key(compare_de_adata):
+    results = compare_de(adata=compare_de_adata, de_key1="de_key1", de_key2="de_key2", shared_top=5)
+    assert "shared_top_genes" in results
+    assert "scores_corr" in results
+    assert "pvals_adj_corr" in results
+    assert "scores_ranks_corr" in results
+
+
+def test_compare_de_df(compare_de_dataframe):
+    results = compare_de(de_df1=compare_de_dataframe[0], de_df2=compare_de_dataframe[1], shared_top=5)
+    assert "shared_top_genes" in results
+    assert "scores_corr" in results
+    assert "pvals_adj_corr" in results
+    assert "scores_ranks_corr" in results
 
 
 def test_compare_class(test_data):
@@ -48,11 +111,11 @@ def test_compare_knn(test_data):
     assert isinstance(result_no_ctrl, dict)
 
 
-def test_compare_dist(test_data):
+def test_compare_distance(test_data):
     X, Y, C = test_data
-    res_simple = compare_dist(X, Y, C, mode="simple")
+    res_simple = compare_distance(X, Y, C, mode="simple")
     assert isinstance(res_simple, float)
-    res_scaled = compare_dist(X, Y, C, mode="scaled")
+    res_scaled = compare_distance(X, Y, C, mode="scaled")
     assert isinstance(res_scaled, float)
     with pytest.raises(ValueError):
-        compare_dist(X, Y, C, mode="new_mode")
+        compare_distance(X, Y, C, mode="new_mode")
