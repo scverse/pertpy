@@ -60,7 +60,6 @@ def _download(  # pragma: no cover
             progress.update(task, completed=total, refresh=True)
 
         Path(temp_file_name).replace(download_to_path)
-        logger.warning(f"Downloaded and saved to {download_to_path}")
 
         if is_zip:
             output_path = output_path or tempfile.gettempdir()
