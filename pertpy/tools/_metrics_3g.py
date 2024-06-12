@@ -45,11 +45,11 @@ def compare_de(
             "Please provide either both `de_key1` and `de_key2` with `adata`, or `de_df1` and `de_df2`, but not both."
         )
 
-    if de_df1 is None and de_df2 is None:  # use df
+    if de_df1 is None and de_df2 is None:  # use keys
         if not de_key1 or not de_key2:
             raise ValueError("Both `de_key1` and `de_key2` must be provided together if using `adata`.")
 
-    else:  # use keys
+    else:  # use dfs
         if de_df1 is None or de_df2 is None:
             raise ValueError("Both `de_df1` and `de_df2` must be provided together if using dataframes.")
 
