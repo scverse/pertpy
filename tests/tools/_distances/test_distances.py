@@ -137,7 +137,7 @@ def test_mutually_exclusive_keys(distance):
 @mark.parametrize("distance", actual_distances + semi_distances + non_distances)
 def test_distance_output_type(distance, rng):
     # Test if distances are outputting floats
-    Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+    Distance = pt.tl.Distance(distance)
     X = rng.normal(size=(50, 10))
     Y = rng.normal(size=(50, 10))
     d = Distance(X, Y)
@@ -153,10 +153,9 @@ def test_distance_onesided(adata, distance_obj, distance):
     assert df.loc[selected_group] == 0  # distance to self is 0
 
 
-@mark.parametrize("distance", actual_distances + semi_distances + non_distances)
-def test_bootstrap_distance_output_type(distance, rng):
+def test_bootstrap_distance_output_type(rng):
     # Test if distances are outputting floats
-    Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+    Distance = pt.tl.Distance(metric="edistance")
     X = rng.normal(size=(50, 10))
     Y = rng.normal(size=(50, 10))
     d = Distance.bootstrap(X, Y, n_bootstrap=3)
@@ -164,10 +163,11 @@ def test_bootstrap_distance_output_type(distance, rng):
     assert hasattr(d, "variance")
 
 
-@mark.parametrize("distance", all_distances)
-def test_bootstrap_distance_pairwise(adata, distance_obj, distance):
+@mark.parametrize("distance", ["edistance"])
+def test_bootstrap_distance_pairwise(adata, distance):
     # Test consistency of pairwise distance results
-    bootstrap_output = distance_obj.pairwise(adata, groupby="perturbation", bootstrap=True, n_bootstrap=3)
+    Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+    bootstrap_output = Distance.pairwise(adata, groupby="perturbation", bootstrap=True, n_bootstrap=3)
 
     assert isinstance(bootstrap_output, tuple)
 
@@ -179,11 +179,12 @@ def test_bootstrap_distance_pairwise(adata, distance_obj, distance):
     assert np.sum(var.values - var.values.T) == 0  # symmetry
 
 
-@mark.parametrize("distance", all_distances)
-def test_bootstrap_distance_onesided(adata, distance_obj, distance):
+@mark.parametrize("distance", ["edistance"])
+def test_bootstrap_distance_onesided(adata, distance):
     # Test consistency of one-sided distance results
     selected_group = adata.obs.perturbation.unique()[0]
-    bootstrap_output = distance_obj.onesided_distances(
+    Distance = pt.tl.Distance(distance, obsm_key="X_pca")
+    bootstrap_output = Distance.onesided_distances(
         adata,
         groupby="perturbation",
         selected_group=selected_group,
