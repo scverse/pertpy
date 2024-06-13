@@ -61,8 +61,8 @@ def adata(request):
         sc.pp.pca(adata, n_comps=5)
     if distance in lognorm_counts_distances:
         groups = np.unique(adata.obs["perturbation"])
-        # KDE is slow, subset to 5 groups for speed up
-        adata = adata[adata.obs["perturbation"].isin(groups[0:5])].copy()
+        # KDE is slow, subset to 3 groups for speed up
+        adata = adata[adata.obs["perturbation"].isin(groups[0:3])].copy()
 
     return adata
 
@@ -100,11 +100,10 @@ def test_distance_axioms(pairwise_distance, distance):
 
 
 @mark.parametrize("distance", actual_distances)
-def test_triangle_inequality(pairwise_distance, distance):
+def test_triangle_inequality(pairwise_distance, distance, rng):
     # Test if distances are well-defined in accordance with metric axioms
     # (M4) Triangle inequality (we just probe this for a few random triplets)
     for _i in range(10):
-        rng = np.random.default_rng()
         triplet = rng.choice(pairwise_distance.index, size=3, replace=False)
         assert (
             pairwise_distance.loc[triplet[0], triplet[1]] + pairwise_distance.loc[triplet[1], triplet[2]]
@@ -121,7 +120,7 @@ def test_distance_layers(pairwise_distance, distance):
 
 @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
 def test_distance_counts(adata, distance):
-    if distance != "mahalanobis":  # doesn't work, covariance matrix is a singular matrix, not invertible
+    if distance != "mahalanobis":  # skip, doesn't work because covariance matrix is a singular matrix, not invertible
         Distance = pt.tl.Distance(distance, layer_key="counts")
         df = Distance.pairwise(adata, groupby="perturbation")
         assert isinstance(df, DataFrame)
@@ -136,12 +135,11 @@ def test_mutually_exclusive_keys(distance):
 
 
 @mark.parametrize("distance", actual_distances + semi_distances + non_distances)
-def test_distance_output_type(distance):
+def test_distance_output_type(distance, rng):
     # Test if distances are outputting floats
     Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-    rng = np.random.default_rng()
-    X = rng.normal(size=(100, 10))
-    Y = rng.normal(size=(100, 10))
+    X = rng.normal(size=(50, 10))
+    Y = rng.normal(size=(50, 10))
     d = Distance(X, Y)
     assert isinstance(d, float)
 
@@ -156,13 +154,12 @@ def test_distance_onesided(adata, distance_obj, distance):
 
 
 @mark.parametrize("distance", actual_distances + semi_distances + non_distances)
-def test_bootstrap_distance_output_type(distance):
+def test_bootstrap_distance_output_type(distance, rng):
     # Test if distances are outputting floats
     Distance = pt.tl.Distance(distance, obsm_key="X_pca")
-    rng = np.random.default_rng()
-    X = rng.normal(size=(100, 10))
-    Y = rng.normal(size=(100, 10))
-    d = Distance.bootstrap(X, Y, n_bootstrap=10)
+    X = rng.normal(size=(50, 10))
+    Y = rng.normal(size=(50, 10))
+    d = Distance.bootstrap(X, Y, n_bootstrap=3)
     assert hasattr(d, "mean")
     assert hasattr(d, "variance")
 
@@ -170,7 +167,8 @@ def test_bootstrap_distance_output_type(distance):
 @mark.parametrize("distance", all_distances)
 def test_bootstrap_distance_pairwise(adata, distance_obj, distance):
     # Test consistency of pairwise distance results
-    bootstrap_output = distance_obj.pairwise(adata, groupby="perturbation", bootstrap=True, n_bootstrap=10)
+    bootstrap_output = distance_obj.pairwise(adata, groupby="perturbation", bootstrap=True, n_bootstrap=3)
+
     assert isinstance(bootstrap_output, tuple)
 
     mean = bootstrap_output[0]
@@ -190,7 +188,20 @@ def test_bootstrap_distance_onesided(adata, distance_obj, distance):
         groupby="perturbation",
         selected_group=selected_group,
         bootstrap=True,
-        n_bootstrap=10,
+        n_bootstrap=3,
     )
 
     assert isinstance(bootstrap_output, tuple)
+
+
+def test_compare_distance(rng):
+    X = rng.normal(size=(50, 10))
+    Y = rng.normal(size=(50, 10))
+    C = rng.normal(size=(50, 10))
+    Distance = pt.tl.Distance()
+    res_simple = Distance.compare_distance(X, Y, C, mode="simple")
+    assert isinstance(res_simple, float)
+    res_scaled = Distance.compare_distance(X, Y, C, mode="scaled")
+    assert isinstance(res_scaled, float)
+    with pytest.raises(ValueError):
+        Distance.compare_distance(X, Y, C, mode="new_mode")

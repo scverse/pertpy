@@ -1,7 +1,4 @@
-from collections.abc import Mapping
-from functools import partial
-from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -11,8 +8,6 @@ from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
 from sklearn.base import ClassifierMixin
 from sklearn.linear_model import LogisticRegression
-
-from pertpy.tools._distances._distances import Distance
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -191,39 +186,3 @@ def compare_knn(
         counts[group] = count_norm
 
     return counts
-
-
-def compare_distance(
-    pert: np.ndarray,
-    pred: np.ndarray,
-    ctrl: np.ndarray,
-    *,
-    metric: str = "euclidean",
-    mode: Literal["simple", "scaled"] = "simple",
-    metric_kwds: Mapping[str, Any] = MappingProxyType({}),
-    _fit_to_pert_and_ctrl: bool = False,
-) -> float:
-    """Compute the score of simulating a perturbation.
-
-    Args:
-        pert: Real perturbed data.
-        pred: Simulated perturbed data.
-        ctrl: Control data
-        mode: Mode to use.
-    """
-    metric_fct = partial(Distance(metric).metric_fct, **metric_kwds)
-
-    if mode == "simple":
-        pass  # nothing to be done
-    elif mode == "scaled":
-        from sklearn.preprocessing import MinMaxScaler
-
-        scaler = MinMaxScaler().fit(np.vstack((pert, ctrl)) if _fit_to_pert_and_ctrl else ctrl)
-        pred = scaler.transform(pred)
-        pert = scaler.transform(pert)
-    else:
-        raise ValueError(f"Unknown mode {mode}. Please choose simple or scaled.")
-
-    d1 = metric_fct(pert, pred)
-    d2 = metric_fct(ctrl, pred)
-    return d1 / d2

@@ -45,7 +45,7 @@ def _download_drug_annotation(
                 block_size=4096,
                 is_zip=False,
             )
-        dgidb_df = pd.read_table(dgidb_path, delimiter=",")
+        dgidb_df = pd.read_table(dgidb_path)
         return dgidb_df
 
     else:

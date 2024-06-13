@@ -23,8 +23,6 @@ from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from sklearn.neighbors import KernelDensity
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
-AGG_FCTS = {"mean": np.mean, "median": np.median, "sum": np.sum}
-
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -115,7 +113,7 @@ class Distance:
     def __init__(
         self,
         metric: str = "edistance",
-        agg_fct: Literal["mean", "median", "sum"] = "mean",
+        agg_fct: Callable = np.mean,
         layer_key: str = None,
         obsm_key: str = None,
         cell_wise_metric: str = "euclidean",
@@ -124,7 +122,7 @@ class Distance:
 
         Args:
             metric: Distance metric to use.
-            agg_fct: Name of the aggregation function to generate pseudobulk vectors.
+            agg_fct: Aggregation function to generate pseudobulk vectors.
             layer_key: Name of the counts layer containing raw counts to calculate distances for.
                               Mutually exclusive with 'obsm_key'.
                               Is not used if `None`.
@@ -133,8 +131,8 @@ class Distance:
                       Defaults to None, but is set to "X_pca" if not explicitly set internally.
             cell_wise_metric: Metric from scipy.spatial.distance to use for pairwise distances between single cells.
         """
-        self.aggregation_func = AGG_FCTS[agg_fct]
         metric_fct: AbstractDistance = None
+        self.aggregation_func = agg_fct
         if metric == "edistance":
             metric_fct = Edistance()
         elif metric == "euclidean":
@@ -231,7 +229,7 @@ class Distance:
         Y: np.ndarray,
         *,
         n_bootstrap: int = 100,
-        bootstrap_random_state: int = 0,
+        random_state: int = 0,
         **kwargs,
     ) -> MeanVar:
         """Bootstrap computation of mean and variance of the distance between vectors X and Y.
@@ -240,7 +238,7 @@ class Distance:
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
             n_bootstrap: Number of bootstrap samples.
-            bootstrap_random_state: Random state for bootstrapping.
+            random_state: Random state for bootstrapping.
 
         Returns:
             MeanVar: Mean and variance of distance between X and Y.
@@ -257,7 +255,7 @@ class Distance:
             X,
             Y,
             n_bootstraps=n_bootstrap,
-            bootstrap_random_state=bootstrap_random_state,
+            random_state=random_state,
             **kwargs,
         )
 
@@ -268,7 +266,7 @@ class Distance:
         groups: list[str] | None = None,
         bootstrap: bool = False,
         n_bootstrap: int = 100,
-        bootstrap_random_state: int = 0,
+        random_state: int = 0,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -282,7 +280,7 @@ class Distance:
                     If None, uses all groups.
             bootstrap: Whether to bootstrap the distance.
             n_bootstrap: Number of bootstrap samples.
-            bootstrap_random_state: Random state for bootstrapping.
+            random_state: Random state for bootstrapping.
             show_progressbar: Whether to show progress bar.
             n_jobs: Number of cores to use. Defaults to -1 (all).
             kwargs: Additional keyword arguments passed to the metric function.
@@ -334,7 +332,7 @@ class Distance:
                             sub_pwd,
                             sub_idx,
                             n_bootstraps=n_bootstrap,
-                            bootstrap_random_state=bootstrap_random_state,
+                            random_state=random_state,
                             **kwargs,
                         )
                         # In the bootstrap case, distance of group to itself is a mean and can be non-zero
@@ -360,7 +358,7 @@ class Distance:
                             cells_x,
                             cells_y,
                             n_bootstrap=n_bootstrap,
-                            bootstrap_random_state=bootstrap_random_state,
+                            random_state=random_state,
                             **kwargs,
                         )
                         # In the bootstrap case, distance of group to itself is a mean and can be non-zero
@@ -390,7 +388,7 @@ class Distance:
         groups: list[str] | None = None,
         bootstrap: bool = False,
         n_bootstrap: int = 100,
-        bootstrap_random_state: int = 0,
+        random_state: int = 0,
         show_progressbar: bool = True,
         n_jobs: int = -1,
         **kwargs,
@@ -405,7 +403,7 @@ class Distance:
                     If None, uses all groups.
             bootstrap: Whether to bootstrap the distance.
             n_bootstrap: Number of bootstrap samples.
-            bootstrap_random_state: Random state for bootstrapping.
+            random_state: Random state for bootstrapping.
             show_progressbar: Whether to show progress bar.
             n_jobs: Number of cores to use. Defaults to -1 (all).
             kwargs: Additional keyword arguments passed to the metric function.
@@ -469,7 +467,7 @@ class Distance:
                             sub_pwd,
                             sub_idx,
                             n_bootstraps=n_bootstrap,
-                            bootstrap_random_state=bootstrap_random_state,
+                            random_state=random_state,
                             **kwargs,
                         )
                         df.loc[group_x] = bootstrap_output.mean
@@ -492,7 +490,7 @@ class Distance:
                         cells_x,
                         cells_y,
                         n_bootstrap=n_bootstrap,
-                        bootstrap_random_state=bootstrap_random_state,
+                        random_state=random_state,
                         **kwargs,
                     )
                     # In the bootstrap case, distance of group to itself is a mean and can be non-zero
@@ -533,8 +531,42 @@ class Distance:
         pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
 
-    def _bootstrap_mode(self, X, Y, n_bootstraps=100, bootstrap_random_state=0, **kwargs) -> MeanVar:
-        rng = np.random.default_rng(bootstrap_random_state)
+    def compare_distance(
+        self,
+        pert: np.ndarray,
+        pred: np.ndarray,
+        ctrl: np.ndarray,
+        mode: Literal["simple", "scaled"] = "simple",
+        fit_to_pert_and_ctrl: bool = False,
+        **kwargs,
+    ) -> float:
+        """Compute the score of simulating a perturbation.
+
+        Args:
+            pert: Real perturbed data.
+            pred: Simulated perturbed data.
+            ctrl: Control data
+            mode: Mode to use.
+            fit_to_pert_and_ctrl: Scales data based on both `pert` and `ctrl` if True, otherwise only on `ctrl`.
+            kwargs: Additional keyword arguments passed to the metric function.
+        """
+        if mode == "simple":
+            pass  # nothing to be done
+        elif mode == "scaled":
+            from sklearn.preprocessing import MinMaxScaler
+
+            scaler = MinMaxScaler().fit(np.vstack((pert, ctrl)) if fit_to_pert_and_ctrl else ctrl)
+            pred = scaler.transform(pred)
+            pert = scaler.transform(pert)
+        else:
+            raise ValueError(f"Unknown mode {mode}. Please choose simple or scaled.")
+
+        d1 = self.metric_fct(pert, pred, **kwargs)
+        d2 = self.metric_fct(ctrl, pred, **kwargs)
+        return d1 / d2
+
+    def _bootstrap_mode(self, X, Y, n_bootstraps=100, random_state=0, **kwargs) -> MeanVar:
+        rng = np.random.default_rng(random_state)
 
         distances = []
         for _ in range(n_bootstraps):
@@ -548,10 +580,8 @@ class Distance:
         variance = np.var(distances)
         return MeanVar(mean=mean, variance=variance)
 
-    def _bootstrap_mode_precomputed(
-        self, sub_pwd, sub_idx, n_bootstraps=100, bootstrap_random_state=0, **kwargs
-    ) -> MeanVar:
-        rng = np.random.default_rng(bootstrap_random_state)
+    def _bootstrap_mode_precomputed(self, sub_pwd, sub_idx, n_bootstraps=100, random_state=0, **kwargs) -> MeanVar:
+        rng = np.random.default_rng(random_state)
 
         distances = []
         for _ in range(n_bootstraps):
@@ -1074,10 +1104,7 @@ class ClassifierClassProjection(AbstractDistance):
 
 
 class MeanVarDistributionDistance(AbstractDistance):
-    """
-    Distance between mean-var distributions of gene expression.
-
-    """
+    """Distance between mean-var distributions of gene expression."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -1159,7 +1186,9 @@ class MahalanobisDistance(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         return mahalanobis(
-            self.aggregation_func(X, axis=0), self.aggregation_func(Y, axis=0), np.linalg.inv(np.cov(X.T))
+            self.aggregation_func(X, axis=0),
+            self.aggregation_func(Y, axis=0),
+            np.linalg.inv(np.cov(X.T)),
         )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:

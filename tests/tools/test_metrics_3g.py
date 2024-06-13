@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 import numpy as np
 import pandas as pd
 import pertpy as pt
@@ -8,14 +6,12 @@ from anndata import AnnData
 from pertpy.tools._metrics_3g import (
     compare_class,
     compare_de,
-    compare_distance,
     compare_knn,
 )
 
 
 @pytest.fixture
-def test_data():
-    rng = np.random.default_rng()
+def test_data(rng):
     X = rng.normal(size=(100, 10))
     Y = rng.normal(size=(100, 10))
     C = rng.normal(size=(100, 10))
@@ -23,8 +19,7 @@ def test_data():
 
 
 @pytest.fixture
-def compare_de_adata():
-    rng = np.random.default_rng()
+def compare_de_adata(rng):
     adata = AnnData(rng.normal(size=(100, 10)))
     genes = np.rec.fromarrays(
         [np.array([f"gene{i}" for i in range(10)])],
@@ -44,8 +39,7 @@ def compare_de_adata():
 
 
 @pytest.fixture
-def compare_de_dataframe():
-    rng = np.random.default_rng()
+def compare_de_dataframe(rng):
     df1 = pd.DataFrame(
         {
             "variable": ["gene" + str(i) for i in range(10)],
@@ -109,13 +103,3 @@ def test_compare_knn(test_data):
 
     result_no_ctrl = compare_knn(X, Y)
     assert isinstance(result_no_ctrl, dict)
-
-
-def test_compare_distance(test_data):
-    X, Y, C = test_data
-    res_simple = compare_distance(X, Y, C, mode="simple")
-    assert isinstance(res_simple, float)
-    res_scaled = compare_distance(X, Y, C, mode="scaled")
-    assert isinstance(res_scaled, float)
-    with pytest.raises(ValueError):
-        compare_distance(X, Y, C, mode="new_mode")
