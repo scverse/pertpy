@@ -1,8 +1,8 @@
-from anndata import AnnData
 import numpy as np
 import pandas as pd
 import pertpy as pt
 import pytest
+from anndata import AnnData
 
 
 @pytest.fixture
@@ -64,9 +64,7 @@ def test_error_missing_df(dataframe):
 
 def test_key(adata):
     pt_DGE = pt.tl.DGE()
-    results = pt_DGE.compare(
-        adata=adata, de_key1="de_key1", de_key2="de_key2", shared_top=5
-    )
+    results = pt_DGE.compare(adata=adata, de_key1="de_key1", de_key2="de_key2", shared_top=5)
     assert "shared_top_genes" in results
     assert "scores_corr" in results
     assert "pvals_adj_corr" in results

@@ -1,5 +1,5 @@
-import pytest
 import pertpy as pt
+import pytest
 
 
 @pytest.fixture

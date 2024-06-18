@@ -1,7 +1,8 @@
+from typing import Dict
+
 import numpy as np
 import pandas as pd
 from anndata import AnnData
-from typing import Dict
 
 
 class DGE:
@@ -13,7 +14,7 @@ class DGE:
         de_df1: pd.DataFrame | None = None,
         de_df2: pd.DataFrame | None = None,
         shared_top: int = 100,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compare two differential expression analyses.
 
         Compare two sets of DE results and evaluate the similarity by the overlap of top DEG and
@@ -35,21 +36,15 @@ class DGE:
 
         if de_df1 is None and de_df2 is None:  # use keys
             if not de_key1 or not de_key2:
-                raise ValueError(
-                    "Both `de_key1` and `de_key2` must be provided together if using `adata`."
-                )
+                raise ValueError("Both `de_key1` and `de_key2` must be provided together if using `adata`.")
 
         else:  # use dfs
             if de_df1 is None or de_df2 is None:
-                raise ValueError(
-                    "Both `de_df1` and `de_df2` must be provided together if using dataframes."
-                )
+                raise ValueError("Both `de_df1` and `de_df2` must be provided together if using dataframes.")
 
         if de_key1:
             if not adata:
-                raise ValueError(
-                    "`adata` should be provided with `de_key1` and `de_key2`. "
-                )
+                raise ValueError("`adata` should be provided with `de_key1` and `de_key2`. ")
             assert all(
                 k in adata.uns for k in [de_key1, de_key2]
             ), "Provided `de_key1` and `de_key2` must exist in `adata.uns`."
@@ -58,13 +53,9 @@ class DGE:
         if de_df1 is not None:
             for df in (de_df1, de_df2):
                 if not {"variable", "log_fc", "adj_p_value"}.issubset(df.columns):
-                    raise ValueError(
-                        "Each DataFrame must contain columns: 'variable', 'log_fc', and 'adj_p_value'."
-                    )
+                    raise ValueError("Each DataFrame must contain columns: 'variable', 'log_fc', and 'adj_p_value'.")
 
-            assert set(de_df1["variable"]) == set(
-                de_df2["variable"]
-            ), "Variables in both dataframes must match."
+            assert set(de_df1["variable"]) == set(de_df2["variable"]), "Variables in both dataframes must match."
             vars = de_df1["variable"].sort_values()
 
         shared_top = min(shared_top, len(vars))
@@ -89,17 +80,9 @@ class DGE:
                 top_names.append(df["variable"][:shared_top])
 
         metrics = {}
-        metrics["shared_top_genes"] = (
-            len(set(top_names[0]).intersection(top_names[1])) / shared_top
-        )
-        metrics["scores_corr"] = results["scores_0"].corr(
-            results["scores_1"], method="pearson"
-        )
-        metrics["pvals_adj_corr"] = results["pvals_adj_0"].corr(
-            results["pvals_adj_1"], method="pearson"
-        )
-        metrics["scores_ranks_corr"] = results["ranks_0"].corr(
-            results["ranks_1"], method="spearman"
-        )
+        metrics["shared_top_genes"] = len(set(top_names[0]).intersection(top_names[1])) / shared_top
+        metrics["scores_corr"] = results["scores_0"].corr(results["scores_1"], method="pearson")
+        metrics["pvals_adj_corr"] = results["pvals_adj_0"].corr(results["pvals_adj_1"], method="pearson")
+        metrics["scores_ranks_corr"] = results["ranks_0"].corr(results["ranks_1"], method="spearman")
 
         return metrics

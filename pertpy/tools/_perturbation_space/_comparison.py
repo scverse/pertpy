@@ -36,17 +36,11 @@ class PerturbationComparison:
         if clf is None:
             clf = LogisticRegression()
         n_x = real.shape[0]
-        data = (
-            sp_vstack((real, control)) if issparse(real) else np.vstack((real, control))
-        )
-        labels = np.concatenate(
-            [np.full(real.shape[0], "comp"), np.full(control.shape[0], "ctrl")]
-        )
+        data = sp_vstack((real, control)) if issparse(real) else np.vstack((real, control))
+        labels = np.concatenate([np.full(real.shape[0], "comp"), np.full(control.shape[0], "ctrl")])
 
         clf.fit(data, labels)
-        norm_score = clf.score(
-            simulated, np.full(simulated.shape[0], "comp")
-        ) / clf.score(real, labels[:n_x])
+        norm_score = clf.score(simulated, np.full(simulated.shape[0], "comp")) / clf.score(real, labels[:n_x])
         norm_score = min(1.0, norm_score)
 
         return norm_score
@@ -85,15 +79,9 @@ class PerturbationComparison:
         n_y = simulated.shape[0]
 
         if control is None:
-            index_data = (
-                sp_vstack((simulated, real))
-                if issparse(real)
-                else np.vstack((simulated, real))
-            )
+            index_data = sp_vstack((simulated, real)) if issparse(real) else np.vstack((simulated, real))
         else:
-            datas = (
-                (simulated, real, control) if use_simulated_for_knn else (real, control)
-            )
+            datas = (simulated, real, control) if use_simulated_for_knn else (real, control)
             index_data = sp_vstack(datas) if issparse(real) else np.vstack(datas)
 
         y_in_index = use_simulated_for_knn or control is None
