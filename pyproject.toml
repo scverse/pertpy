@@ -62,8 +62,7 @@ dependencies = [
     "pubchempy",
     "pyarrow",
     "blitzgsea",
-    "lamin_utils",
-    "numpy<2.0.0"
+    "lamin_utils"
 ]
 
 [project.optional-dependencies]
