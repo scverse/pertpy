@@ -1185,11 +1185,13 @@ class MahalanobisDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return mahalanobis(
-            self.aggregation_func(X, axis=0),
-            self.aggregation_func(Y, axis=0),
-            np.linalg.inv(np.cov(X.T)),
-        )
+        delta = self.aggregation_func(X, axis=0) - self.aggregation_func(Y, axis=0)
+        cov = np.cov(X.T)
+        s, u = np.linalg.eigh(cov)
+        ci = u @ (1 / s[..., None] * u.T)
+        return np.sqrt(np.sum(((delta @ ci) * delta), axis=-1))
+        # ci = np.linalg.pinv(cov)
+        # return np.sqrt(np.sum(((delta @ ci) * delta), axis=-1))
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
