@@ -40,7 +40,7 @@ class DGE:
 
         else:  # use dfs
             if de_df1 is None or de_df2 is None:
-                raise ValueError("Both `de_df1` and `de_df2` must be provided together if using dataframes.")
+                raise ValueError("Both `de_df1` and `de_df2` must be provided together if using DataFrames.")
 
         if de_key1:
             if not adata:

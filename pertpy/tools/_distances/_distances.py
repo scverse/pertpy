@@ -585,7 +585,7 @@ class Distance:
 
         distances = []
         for _ in range(n_bootstraps):
-            # in order to maintain the number of cells for both groups (whatever balancing they may have),
+            # To maintain the number of cells for both groups (whatever balancing they may have),
             # we sample the positive and negative indices separately
             bootstrap_pos_idx = rng.choice(a=sub_idx[sub_idx].index, size=sub_idx[sub_idx].size, replace=True)
             bootstrap_neg_idx = rng.choice(a=sub_idx[~sub_idx].index, size=sub_idx[~sub_idx].size, replace=True)
@@ -1185,13 +1185,11 @@ class MahalanobisDistance(AbstractDistance):
         self.aggregation_func = aggregation_func
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        delta = self.aggregation_func(X, axis=0) - self.aggregation_func(Y, axis=0)
-        cov = np.cov(X.T)
-        s, u = np.linalg.eigh(cov)
-        ci = u @ (1 / s[..., None] * u.T)
-        return np.sqrt(np.sum(((delta @ ci) * delta), axis=-1))
-        # ci = np.linalg.pinv(cov)
-        # return np.sqrt(np.sum(((delta @ ci) * delta), axis=-1))
+        return mahalanobis(
+            self.aggregation_func(X, axis=0),
+            self.aggregation_func(Y, axis=0),
+            np.linalg.inv(np.cov(X.T)),
+        )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("Mahalanobis cannot be called on a pairwise distance matrix.")
