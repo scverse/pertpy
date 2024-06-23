@@ -1,11 +1,9 @@
-from typing import Dict
-
 import numpy as np
 import pandas as pd
 from anndata import AnnData
 
 
-class DGE:
+class DGEEVAL:
     def compare(
         self,
         adata: AnnData | None = None,

@@ -4,7 +4,7 @@ from pertpy.tools._coda._sccoda import Sccoda
 from pertpy.tools._coda._tasccoda import Tasccoda
 from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._differential_gene_expression import (
-    DGE,
+    DGEEVAL,
     EdgeR,
     PyDESeq2,
     Statsmodels,

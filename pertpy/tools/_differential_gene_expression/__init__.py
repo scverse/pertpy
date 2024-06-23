@@ -1,5 +1,5 @@
 from ._base import ContrastType, LinearModelBase, MethodBase
-from ._dge_comparison import DGE
+from ._dge_comparison import DGEEVAL
 from ._edger import EdgeR
 from ._pydeseq2 import PyDESeq2
 from ._simple_tests import SimpleComparisonBase, TTest, WilcoxonTest

@@ -46,24 +46,24 @@ def dataframe(rng):
 
 def test_error_both_keys_and_dfs(adata, dataframe):
     with pytest.raises(ValueError):
-        pt_DGE = pt.tl.DGE()
+        pt_DGE = pt.tl.DGEEVAL()
         pt_DGE.compare(adata=adata, de_key1="de_key1", de_df1=dataframe[0])
 
 
 def test_error_missing_adata():
     with pytest.raises(ValueError):
-        pt_DGE = pt.tl.DGE()
+        pt_DGE = pt.tl.DGEEVAL()
         pt_DGE.compare(de_key1="de_key1", de_key2="de_key2")
 
 
 def test_error_missing_df(dataframe):
     with pytest.raises(ValueError):
-        pt_DGE = pt.tl.DGE()
+        pt_DGE = pt.tl.DGEEVAL()
         pt_DGE.compare(de_df1=dataframe[0])
 
 
 def test_key(adata):
-    pt_DGE = pt.tl.DGE()
+    pt_DGE = pt.tl.DGEEVAL()
     results = pt_DGE.compare(adata=adata, de_key1="de_key1", de_key2="de_key2", shared_top=5)
     assert "shared_top_genes" in results
     assert "scores_corr" in results
@@ -72,7 +72,7 @@ def test_key(adata):
 
 
 def test_df(dataframe):
-    pt_DGE = pt.tl.DGE()
+    pt_DGE = pt.tl.DGEEVAL()
     results = pt_DGE.compare(de_df1=dataframe[0], de_df2=dataframe[1], shared_top=5)
     assert "shared_top_genes" in results
     assert "scores_corr" in results
