@@ -21,13 +21,14 @@ authors = [
     {name = "Tessa Green"},
     {name = "Stefan Peidli"},
     {name = "Antonia Schumacher"},
+    {name = "Gregor Sturm"},
 ]
 maintainers = [
     {name = "Lukas Heumos", email = "lukas.heumos@posteo.net"},
 ]
 urls.Documentation = "https://pertpy.readthedocs.io"
-urls.Source = "https://github.com/theislab/pertpy"
-urls.Home-page = "https://github.com/theislab/pertpy"
+urls.Source = "https://github.com/scverse/pertpy"
+urls.Home-page = "https://github.com/scverse/pertpy"
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",

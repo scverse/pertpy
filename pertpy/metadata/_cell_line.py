@@ -228,10 +228,8 @@ class CellLine(MetaData):
             if query_id == "DepMap_ID":
                 query_id = "stripped_cell_line_name"
                 logger.error(
-                    "`stripped_cell_line_name` is used as reference and query identifier ",
-                    " to annotate cell line metadata from Cancerrxgene. "
-                    "Ensure that stripped cell line names are available in 'adata.obs.' ",
-                    "or use the DepMap as `cell_line_source` to annotate the cell line first ",
+                    "`stripped_cell_line_name` is used as reference and query identifier to annotate cell line metadata from Cancerrxgene. "
+                    "Ensure that stripped cell line names are available in 'adata.obs.' or use the DepMap as `cell_line_source` to annotate the cell line first."
                 )
             if self.cancerxgene is None:
                 self._download_cell_line(cell_line_source="Cancerrxgene")
@@ -485,7 +483,7 @@ class CellLine(MetaData):
         reference_id: Literal["cell_line_name", "sanger_model_id", "cosmic_id"] = "cell_line_name",
         query_perturbation: str = "perturbation",
         reference_perturbation: Literal["drug_name", "drug_id"] = "drug_name",
-        gdsc_dataset: Literal[1, 2] = 1,
+        gdsc_dataset: Literal["gdsc_1", "gdsc_2"] = "gdsc_1",
         verbosity: int | str = 5,
         copy: bool = False,
     ) -> AnnData:
@@ -500,7 +498,7 @@ class CellLine(MetaData):
             reference_id: The type of cell line identifier in the metadata, cell_line_name, sanger_model_id or cosmic_id.
             query_perturbation: The column of `.obs` with perturbation information.
             reference_perturbation: The type of perturbation in the metadata, drug_name or drug_id.
-            gdsc_dataset: The GDSC dataset, 1 or 2.
+            gdsc_dataset: The GDSC dataset, 1 or 2, specified as 'gdsc_1' or 'gdsc_2'.
                           The GDSC1 dataset updates previous releases with additional drug screening data from the
                           Sanger Institute and Massachusetts General Hospital.
                           It covers 970 Cell lines and 403 Compounds with 333292 IC50s.
@@ -528,14 +526,16 @@ class CellLine(MetaData):
                 "This ensures that the required query ID is included in your data."
             )
         # Lazily download the GDSC data
-        if gdsc_dataset == 1:
+        if gdsc_dataset == "gdsc_1":
             if self.drug_response_gdsc1 is None:
                 self._download_gdsc(gdsc_dataset=1)
             gdsc_data = self.drug_response_gdsc1
-        else:
+        elif gdsc_dataset == "gdsc_2":
             if self.drug_response_gdsc2 is None:
                 self._download_gdsc(gdsc_dataset=2)
             gdsc_data = self.drug_response_gdsc2
+        else:
+            raise ValueError("The GDSC dataset specified in `gdsc_dataset` must be either 'gdsc_1' or 'gdsc_2'.")
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(gdsc_data[reference_id]))
@@ -552,7 +552,7 @@ class CellLine(MetaData):
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, query_perturbation])
-            .assign(ln_ic50=self.drug_response_gdsc1.set_index([reference_id, reference_perturbation]).ln_ic50)
+            .assign(ln_ic50=gdsc_data.set_index([reference_id, reference_perturbation]).ln_ic50)
             .reset_index()
             .set_index(old_index_name)
         )

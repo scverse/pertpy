@@ -34,7 +34,7 @@
 
 ```{eval-rst}
 .. card:: GitHub :octicon:`mark-github;1em;`
-    :link: https://github.com/theislab/pertpy
+    :link: https://github.com/scverse/pertpy
 
     Find a bug? Interested in improving pertpy? Checkout our GitHub for the latest developments.
 
@@ -50,7 +50,7 @@ usage/usage
 tutorials/index
 contributing
 code_of_conduct
-Discussions <https://github.com/theislab/pertpy/discussions>
+Discussions <https://github.com/scverse/pertpy/discussions>
 references
 ```
 
