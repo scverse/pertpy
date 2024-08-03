@@ -2236,7 +2236,7 @@ class CompositionalModel2(ABC):
 
 
 def get_a(
-    tree: tt.tree,
+    tree: tt.Toytree,
 ) -> tuple[np.ndarray, int]:
     """Calculate ancestor matrix from a toytree tree
 
@@ -2275,7 +2275,7 @@ def get_a(
     return A, n_nodes - 1
 
 
-def collapse_singularities(tree: tt.tree) -> tt.tree:
+def collapse_singularities(tree: tt.Toytree) -> tt.Toytree:
     """Collapses (deletes) nodes in a toytree tree that are singularities (have only one child).
 
     Args:

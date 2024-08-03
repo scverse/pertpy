@@ -35,7 +35,7 @@ class TestGuideRnaProcessingAndPlotting:
         ga = pt.pp.GuideAssignment()
         ga.assign_by_threshold(adata, assignment_threshold=threshold, output_layer=output_layer)
         assert output_layer in adata.layers
-        assert np.all(np.logical_xor(adata.X < threshold, adata.layers[output_layer].A == 1))
+        assert np.all(np.logical_xor(adata.X < threshold, adata.layers[output_layer].toarray() == 1))
 
     def test_grna_max_assignment(self, adata):
         threshold = 5
