@@ -227,7 +227,7 @@ class Mixscape:
                 X = adata_comp.layers["X_pert"]
             except KeyError:
                 raise KeyError(
-                    "No 'X_pert' found in .layers! Please run pert_sign first to calculate perturbation signature!"
+                    "No 'X_pert' found in .layers! Please run perturbation_signature first to calculate perturbation signature!"
                 ) from None
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
@@ -461,7 +461,13 @@ class Mixscape:
             adata_split = adata[split_mask].copy()
             # find top DE genes between cells with targeting and non-targeting gRNAs
             sc.tl.rank_genes_groups(
-                adata_split, layer=layer, groupby=labels, groups=genes, reference=control, method="t-test"
+                adata_split,
+                layer=layer,
+                groupby=labels,
+                groups=genes,
+                reference=control,
+                method="t-test",
+                use_raw=False,
             )
             # get DE genes for each gene
             for gene in genes:
