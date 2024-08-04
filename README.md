@@ -10,7 +10,7 @@
 
 # pertpy
 
-![fig1](https://github.com/scverse/pertpy/assets/99650244/182fa9c3-6d23-4002-b86a-82bf2a243377)
+![fig1](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
 
 ## Documentation
 
