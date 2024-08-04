@@ -207,7 +207,7 @@ class Tasccoda(CompositionalModel2):
             ) from None
 
         # toytree tree - only for legacy reasons, can be removed in the final version
-        if isinstance(adata.uns[tree_key], tt.tree):
+        if isinstance(adata.uns[tree_key], tt.core.ToyTree):
             # Collapse singularities in the tree
             phy_tree = collapse_singularities(adata.uns[tree_key])
 

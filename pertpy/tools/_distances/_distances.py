@@ -214,9 +214,9 @@ class Distance:
             >>> D = Distance(X, Y)
         """
         if issparse(X):
-            X = X.A
+            X = X.toarray()
         if issparse(Y):
-            Y = Y.A
+            Y = Y.toarray()
 
         if len(X) == 0 or len(Y) == 0:
             raise ValueError("Neither X nor Y can be empty.")
