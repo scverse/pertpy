@@ -4,9 +4,15 @@ import multiprocessing
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple
 
+import jax.numpy as jnp
 import numba
 import numpy as np
 import pandas as pd
+from jax import jit, lax, random, vmap
+from jax._src.numpy.util import check_arraylike, promote_dtypes_inexact
+from jax._src.tree_util import register_pytree_node_class
+from jax.scipy import linalg, special, stats
+from jax.scipy.stats import norm
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
@@ -1118,19 +1124,22 @@ class MeanVarDistributionDistance(AbstractDistance):
             Y: Normalized and log transformed cells x genes count matrix.
         """
 
+        X = jnp.array(X)
+        Y = jnp.array(Y)
+
         def _mean_var(x, log: bool = False):
-            mean = np.mean(x, axis=0)
-            var = np.var(x, axis=0)
+            mean = jnp.mean(x, axis=0)
+            var = jnp.var(x, axis=0)
             positive = mean > 0
             mean = mean[positive]
             var = var[positive]
             if log:
-                mean = np.log(mean)
-                var = np.log(var)
+                mean = jnp.log(mean)
+                var = jnp.log(var)
             return mean, var
 
         def _prep_kde_data(x, y):
-            return np.concatenate([x.reshape(-1, 1), y.reshape(-1, 1)], axis=1)
+            return jnp.concatenate([x.reshape(-1, 1), y.reshape(-1, 1)], axis=1)
 
         def _grid_points(d, n_points=100):
             # Make grid, add 1 bin on lower/upper end to get final n_points
@@ -1140,19 +1149,56 @@ class MeanVarDistributionDistance(AbstractDistance):
             d_bin = (d_max - d_min) / (n_points - 2)
             d_min = d_min - d_bin
             d_max = d_max + d_bin
-            return np.arange(start=d_min + 0.5 * d_bin, stop=d_max, step=d_bin)
+            return jnp.arange(start=d_min + 0.5 * d_bin, stop=d_max, step=d_bin)
 
-        def _parallel_score_samples(kde, samples, thread_count=int(0.875 * multiprocessing.cpu_count())):
-            # the thread_count is determined using the factor 0.875 as recommended here:
-            # https://stackoverflow.com/questions/32625094/scipy-parallel-computing-in-ipython-notebook
-            with multiprocessing.Pool(thread_count) as p:
-                return np.concatenate(p.map(kde.score_samples, np.array_split(samples, thread_count)))
+
+        def logVn(n):
+            """V_n = pi^(n/2) / gamma(n/2 - 1)"""
+            return 0.5 * n * jnp.log(jnp.pi) - lax.lgamma(0.5 * n + 1)
+
+
+        def logSn(n):
+            """V_(n+1) = int_0^1 S_n r^n dr"""
+            return jnp.log(jnp.pi) + logVn(n - 1)
+
+
+        def _gaussian_kernel_eval(in_log, points, values, xi, precision, bandwidth):
+            points, values, xi, precision = promote_dtypes_inexact(
+            points, values, xi, precision)
+            d = points.shape[1]
+            if xi.shape[1] != d:
+                raise ValueError("points and xi must have same trailing dim")
+            if precision.shape != (d, d):
+                raise ValueError("precision matrix must match data dims")
+            whitening = linalg.cholesky(precision, lower=True)
+            points = jnp.dot(points, whitening)
+            xi = jnp.dot(xi, whitening)
+            log_norm = jnp.sum(jnp.log(
+            jnp.diag(whitening))) - logSn(2 - 1) + lax.lgamma(2.0)
+            def kernel(x_test, x_train, y_train):
+                arg = log_norm- jnp.sum(jnp.abs(x_train - x_test))*(1-bandwidth)
+                if in_log:
+                    return jnp.log(y_train) + arg
+                else:
+                    return y_train * jnp.exp(arg)
+
+            reduce = special.logsumexp if in_log else jnp.sum
+            reduced_kernel = lambda x: reduce(vmap(kernel, in_axes=(None, 0, 0))
+                                            (x, points, values),
+                                            axis=0)
+            mapped_kernel = vmap(reduced_kernel)
+
+            return mapped_kernel(xi)
 
         def _kde_eval(d, grid):
-            # Kernel choice: Gaussian is too smoothing and cosine or other kernels that do not stretch out
-            # can not be compared well on regions further away from the data as they are -inf
-            kde = KernelDensity(bandwidth="silverman", kernel="exponential").fit(d)
-            return _parallel_score_samples(kde, grid)
+            bw = (d.shape[0] * (d.shape[1] + 2) / 4) ** (
+                    -1 / (d.shape[1] + 4)
+                )
+            kde =stats.gaussian_kde(d.T,bw_method=bw)
+            x = kde._reshape_points(grid.T)
+            result = _gaussian_kernel_eval(True, kde.dataset.T, kde.weights[:, None],
+                                        x.T, kde.inv_cov, bw)
+            return result[:, 0].ravel()
 
         mean_x, var_x = _mean_var(X, log=True)
         mean_y, var_y = _mean_var(Y, log=True)
@@ -1161,16 +1207,16 @@ class MeanVarDistributionDistance(AbstractDistance):
         y = _prep_kde_data(mean_y, var_y)
 
         # Gridpoints to eval KDE on
-        mean_grid = _grid_points(np.concatenate([mean_x, mean_y]))
-        var_grid = _grid_points(np.concatenate([var_x, var_y]))
-        grid = np.array(np.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2)
+        mean_grid = _grid_points(jnp.concatenate([mean_x, mean_y]))
+        var_grid = _grid_points(jnp.concatenate([var_x, var_y]))
+        grid = jnp.array(jnp.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2)
 
         kde_x = _kde_eval(x, grid)
         kde_y = _kde_eval(y, grid)
 
         kde_diff = ((kde_x - kde_y) ** 2).mean()
 
-        return kde_diff
+        return np.array(kde_diff)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MeanVarDistributionDistance cannot be called on a pairwise distance matrix.")
