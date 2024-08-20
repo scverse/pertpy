@@ -18,7 +18,10 @@ Please read the [documentation](https://pertpy.readthedocs.io/en/latest).
 
 ## Installation
 
-You can install _pertpy_ via [pip] from [PyPI]:
+We recommend installing and running pertpy on a recent version of Linux (e.g. Ubuntu 24.04 LTS).
+No particular hardware beyond a standard laptop is required.
+
+You can install _pertpy_ in less than a minute via [pip] from [PyPI]:
 
 ```console
 pip install pertpy
