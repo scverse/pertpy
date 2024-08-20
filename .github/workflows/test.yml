@@ -25,13 +25,13 @@ jobs:
                       python: "3.10"
                       run_mode: "slow"
                     - os: ubuntu-latest
-                      python: "3.11"
+                      python: "3.12"
                       run_mode: "slow"
                     - os: ubuntu-latest
-                      python: "3.11"
+                      python: "3.12"
                       run_mode: "fast"
                     - os: ubuntu-latest
-                      python: "3.11"
+                      python: "3.12"
                       run_mode: slow
                       pip-flags: "--pre"
 
