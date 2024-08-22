@@ -1014,7 +1014,7 @@ class Milo:
         if subset_nhoods is None:
             subset_nhoods = nhood_adata.obs_names
 
-        pl_df = pd.DataFrame(nhood_adata[subset_nhoods].X.A, columns=nhood_adata.var_names).melt(
+        pl_df = pd.DataFrame(nhood_adata[subset_nhoods].X.toarray(), columns=nhood_adata.var_names).melt(
             var_name=nhood_adata.uns["sample_col"], value_name="n_cells"
         )
         pl_df = pd.merge(pl_df, nhood_adata.var)

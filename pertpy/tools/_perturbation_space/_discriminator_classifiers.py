@@ -408,7 +408,7 @@ class PLDataset(Dataset):
 
     def __getitem__(self, idx):
         """Returns a sample and corresponding perturbations applied (labels)"""
-        sample = self.data[idx].A.squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
+        sample = self.data[idx].toarray().squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
         num_label = self.labels.iloc[idx]
         str_label = self.pert_labels.iloc[idx]
 

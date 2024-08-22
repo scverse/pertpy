@@ -48,7 +48,7 @@ class GuideAssignment:
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):
-            counts = counts.A
+            counts = counts.toarray()
 
         assigned_grnas = np.where(counts >= assignment_threshold, 1, 0)
         assigned_grnas = scipy.sparse.csr_matrix(assigned_grnas)
@@ -92,7 +92,7 @@ class GuideAssignment:
         """
         counts = adata.X if layer is None else adata.layers[layer]
         if scipy.sparse.issparse(counts):
-            counts = counts.A
+            counts = counts.toarray()
 
         assigned_grna = np.where(
             counts.max(axis=1).squeeze() >= assignment_threshold,
@@ -152,9 +152,9 @@ class GuideAssignment:
 
         if order_by is None:
             if scipy.sparse.issparse(data):
-                max_values = data.max(axis=1).A.squeeze()
+                max_values = data.max(axis=1).toarray().squeeze()
                 data_argmax = data.argmax(axis=1).A.squeeze()
-                max_guide_index = np.where(max_values != data.min(axis=1).A.squeeze(), data_argmax, -1)
+                max_guide_index = np.where(max_values != data.min(axis=1).toarray().squeeze(), data_argmax, -1)
             else:
                 max_guide_index = np.where(
                     data.max(axis=1).squeeze() != data.min(axis=1).squeeze(), data.argmax(axis=1).squeeze(), -1
