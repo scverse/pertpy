@@ -1,7 +1,7 @@
 from importlib import import_module
 
 
-def lazy_import(import_path, extras):
+def lazy_import(module_path, class_name, extras):
     def _import():
         try:
             for extra in extras:
@@ -11,9 +11,8 @@ def lazy_import(import_path, extras):
                 f"Extra dependencies required: {', '.join(extras)}. "
                 f"Please install with: pip install {' '.join(extras)}"
             ) from e
-
-        module = import_module(import_path)
-        return getattr(module, import_path.split(".")[-1])
+        module = import_module(module_path)
+        return getattr(module, class_name)
 
     return _import
 
@@ -40,17 +39,17 @@ from pertpy.tools._perturbation_space._simple import (
 )
 from pertpy.tools._scgen import Scgen
 
-CODA_EXTRAS = ["toytree", "arviz", "ete3"]  # TODO also pyqt5 but can't be checked for as import
-Sccoda = lazy_import("pertpy.tools._coda._sccoda", CODA_EXTRAS)
-Tasccoda = lazy_import("pertpy.tools._coda._tasccoda", CODA_EXTRAS)
+CODA_EXTRAS = ["toytree", "arviz", "ete3"]  # also pyqt5 technically
+Sccoda = lazy_import("pertpy.tools._coda._sccoda", "Sccoda", CODA_EXTRAS)
+Tasccoda = lazy_import("pertpy.tools._coda._tasccoda", "Tasccoda", CODA_EXTRAS)
 
 DE_EXTRAS = ["formulaic", "pydeseq2"]
-EdgeR = lazy_import("pertpy.tools._differential_gene_expression.edger", DE_EXTRAS + ["edger"])
-PyDESeq2 = lazy_import("pertpy.tools._differential_gene_expression.pydeseq2", DE_EXTRAS)
-Statsmodels = lazy_import("pertpy.tools._differential_gene_expression.statsmodels", DE_EXTRAS + ["statsmodels"])
-DGEEVAL = lazy_import("pertpy.tools._differential_gene_expression.dgeeval", DE_EXTRAS)
-TTest = lazy_import("pertpy.tools._differential_gene_expression.ttest", DE_EXTRAS)
-WilcoxonTest = lazy_import("pertpy.tools._differential_gene_expression.wilcoxon", DE_EXTRAS)
+DGEEVAL = lazy_import("pertpy.tools._differential_gene_expression", "DGEEVAL", DE_EXTRAS)
+EdgeR = lazy_import("pertpy.tools._differential_gene_expression", "EdgeR", DE_EXTRAS + ["edger"])
+PyDESeq2 = lazy_import("pertpy.tools._differential_gene_expression", "PyDESeq2", DE_EXTRAS)
+Statsmodels = lazy_import("pertpy.tools._differential_gene_expression", "Statsmodels", DE_EXTRAS + ["statsmodels"])
+TTest = lazy_import("pertpy.tools._differential_gene_expression", "TTest", DE_EXTRAS)
+WilcoxonTest = lazy_import("pertpy.tools._differential_gene_expression", "WilcoxonTest", DE_EXTRAS)
 
 __all__ = [
     "Augur",
