@@ -40,7 +40,7 @@ from pertpy.tools._perturbation_space._simple import (
 )
 from pertpy.tools._scgen import Scgen
 
-CODA_EXTRAS = ["toytree", "arviz", "ete3", "pyqt5"]
+CODA_EXTRAS = ["toytree", "arviz", "ete3"]  # TODO also pyqt5 but can't be checked for as import
 Sccoda = lazy_import("pertpy.tools._coda._sccoda", CODA_EXTRAS)
 Tasccoda = lazy_import("pertpy.tools._coda._tasccoda", CODA_EXTRAS)
 
