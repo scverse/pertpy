@@ -16,7 +16,7 @@ from matplotlib.ticker import MaxNLocator
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
 from pertpy.tools._differential_gene_expression._formulaic import (
     AmbiguousAttributeError,
-    Factor,
+    FactorMetadata,
     get_factor_storage_and_materializer,
     resolve_ambiguous,
 )
@@ -623,7 +623,7 @@ class LinearModelBase(MethodBase):
 
     def _get_default_value(self, var):
         factor_metadata = self._get_factor_metadata_for_variable(var)
-        if resolve_ambiguous(factor_metadata, "kind") == Factor.Kind.CATEGORICAL:
+        if resolve_ambiguous(factor_metadata, "kind") == FactorMetadata.Kind.CATEGORICAL:
             try:
                 tmp_base = resolve_ambiguous(factor_metadata, "base")
             except AmbiguousAttributeError as e:
@@ -637,7 +637,10 @@ class LinearModelBase(MethodBase):
     def _check_category(self, var, value):
         factor_metadata = self._get_factor_metadata_for_variable(var)
         tmp_categories = resolve_ambiguous(factor_metadata, "categories")
-        if resolve_ambiguous(factor_metadata, "kind") == Factor.Kind.CATEGORICAL and value not in tmp_categories:
+        if (
+            resolve_ambiguous(factor_metadata, "kind") == FactorMetadata.Kind.CATEGORICAL
+            and value not in tmp_categories
+        ):
             raise ValueError(
                 f"You specified a non-existant category for {var}. Possible categories: {', '.join(tmp_categories)}"
             )
