@@ -1,16 +1,25 @@
+from importlib import import_module
+
+
+def lazy_import(module_path, class_name, extras):
+    def _import():
+        try:
+            for extra in extras:
+                import_module(extra)
+        except ImportError as e:
+            raise ImportError(
+                f"Extra dependencies required: {', '.join(extras)}. "
+                f"Please install with: pip install {' '.join(extras)}"
+            ) from e
+        module = import_module(module_path)
+        return getattr(module, class_name)
+
+    return _import
+
+
 from pertpy.tools._augur import Augur
 from pertpy.tools._cinemaot import Cinemaot
-from pertpy.tools._coda._sccoda import Sccoda
-from pertpy.tools._coda._tasccoda import Tasccoda
 from pertpy.tools._dialogue import Dialogue
-from pertpy.tools._differential_gene_expression import (
-    DGEEVAL,
-    EdgeR,
-    PyDESeq2,
-    Statsmodels,
-    TTest,
-    WilcoxonTest,
-)
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
 from pertpy.tools._enrichment import Enrichment
@@ -29,6 +38,19 @@ from pertpy.tools._perturbation_space._simple import (
     PseudobulkSpace,
 )
 from pertpy.tools._scgen import Scgen
+
+# from pertpy.tools._differential_gene_expression import DGEEVAL
+
+CODA_EXTRAS = ["toytree", "arviz", "ete3"]  # also pyqt5 technically
+Sccoda = lazy_import("pertpy.tools._coda._sccoda", "Sccoda", CODA_EXTRAS)
+Tasccoda = lazy_import("pertpy.tools._coda._tasccoda", "Tasccoda", CODA_EXTRAS)
+
+DE_EXTRAS = ["formulaic", "pydeseq2"]
+EdgeR = lazy_import("pertpy.tools._differential_gene_expression", "EdgeR", DE_EXTRAS + ["edger"])
+PyDESeq2 = lazy_import("pertpy.tools._differential_gene_expression", "PyDESeq2", DE_EXTRAS)
+Statsmodels = lazy_import("pertpy.tools._differential_gene_expression", "Statsmodels", DE_EXTRAS + ["statsmodels"])
+TTest = lazy_import("pertpy.tools._differential_gene_expression", "TTest", DE_EXTRAS)
+WilcoxonTest = lazy_import("pertpy.tools._differential_gene_expression", "WilcoxonTest", DE_EXTRAS)
 
 __all__ = [
     "Augur",
@@ -54,4 +76,5 @@ __all__ = [
     "KMeansSpace",
     "PseudobulkSpace",
     "Scgen",
+    "DGEEVAL",
 ]

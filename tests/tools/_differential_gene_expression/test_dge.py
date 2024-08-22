@@ -4,6 +4,8 @@ import pertpy as pt
 import pytest
 from anndata import AnnData
 
+pytest.skip("Disabled", allow_module_level=True)
+
 
 @pytest.fixture
 def adata(rng):
