@@ -1,3 +1,4 @@
+from functools import wraps
 from importlib import import_module
 
 
@@ -14,7 +15,11 @@ def lazy_import(module_path, class_name, extras):
         module = import_module(module_path)
         return getattr(module, class_name)
 
-    return _import
+    @wraps(_import)
+    def wrapper(*args, **kwargs):
+        return _import()(*args, **kwargs)
+
+    return wrapper
 
 
 from pertpy.tools._augur import Augur
@@ -38,8 +43,6 @@ from pertpy.tools._perturbation_space._simple import (
     PseudobulkSpace,
 )
 from pertpy.tools._scgen import Scgen
-
-# from pertpy.tools._differential_gene_expression import DGEEVAL
 
 CODA_EXTRAS = ["toytree", "arviz", "ete3"]  # also pyqt5 technically
 Sccoda = lazy_import("pertpy.tools._coda._sccoda", "Sccoda", CODA_EXTRAS)
@@ -76,5 +79,4 @@ __all__ = [
     "KMeansSpace",
     "PseudobulkSpace",
     "Scgen",
-    "DGEEVAL",
 ]
