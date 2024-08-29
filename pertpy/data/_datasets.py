@@ -1100,7 +1100,7 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/record/10044268/files/ShifrutMarson2018.h5ad?download=1",
+            url="https://zenodo.org/record/13350497/files/ShifrutMarson2018.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1160,7 +1160,7 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://zenodo.org/records/10044268/files/SrivatsanTrapnell2020_sciplex3.h5ad?download=1",
+            url="https://zenodo.org/records/13350497/files/SrivatsanTrapnell2020_sciplex3.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
