@@ -14,7 +14,7 @@ def lazy_import(module_path, class_name, extras):
                 raise ImportError(
                     f"Extra dependencies required: {', '.join(extras)}. "
                     f"Please install with: pip install {' '.join(extras)}"
-                ) from e
+                )
 
         return Placeholder
 
