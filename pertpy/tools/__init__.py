@@ -1,25 +1,20 @@
-from functools import wraps
 from importlib import import_module
 
-
 def lazy_import(module_path, class_name, extras):
-    def _import():
-        try:
-            for extra in extras:
-                import_module(extra)
-        except ImportError as e:
-            raise ImportError(
-                f"Extra dependencies required: {', '.join(extras)}. "
-                f"Please install with: pip install {' '.join(extras)}"
-            ) from e
+    try:
+        for extra in extras:
+            import_module(extra)
         module = import_module(module_path)
         return getattr(module, class_name)
+    except ImportError as e:
+        class Placeholder:
+            def __init__(self, *args, **kwargs):
+                raise ImportError(
+                    f"Extra dependencies required: {', '.join(extras)}. "
+                    f"Please install with: pip install {' '.join(extras)}"
+                ) from e
 
-    @wraps(_import)
-    def wrapper(*args, **kwargs):
-        return _import()(*args, **kwargs)
-
-    return wrapper
+        return Placeholder
 
 
 from pertpy.tools._augur import Augur
