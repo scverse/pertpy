@@ -1,12 +1,14 @@
 from importlib import import_module
 
+
 def lazy_import(module_path, class_name, extras):
     try:
         for extra in extras:
             import_module(extra)
         module = import_module(module_path)
         return getattr(module, class_name)
-    except ImportError as e:
+    except ImportError:
+
         class Placeholder:
             def __init__(self, *args, **kwargs):
                 raise ImportError(
