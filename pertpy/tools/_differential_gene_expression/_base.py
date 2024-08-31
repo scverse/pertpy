@@ -1,7 +1,9 @@
+import math
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
-from itertools import chain
+from itertools import chain, zip_longest
 from types import MappingProxyType
 
 import adjustText
@@ -10,7 +12,10 @@ import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy
 import seaborn as sns
+import statsmodels
+from lamin_utils import logger
 from matplotlib.ticker import MaxNLocator
 
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
@@ -149,6 +154,28 @@ class MethodBase(ABC):
             x_label: Label for the x-axis.
             y_label: Label for the y-axis.
             **kwargs: Additional arguments for seaborn.scatterplot.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_volcano(res_df, log2fc_thresh=0)
         """
         if colors is None:
             colors = ["gray", "#D62728", "#1F77B4"]
@@ -243,7 +270,7 @@ class MethodBase(ABC):
             if varm_key is None:
                 raise ValueError("Please pass a .varm key to use for plotting")
 
-            raise NotImplementedError("Anndata not implemented yet")
+            raise NotImplementedError("Anndata not implemented yet")  # TODO: Implement this
             df = data.varm[varm_key].copy()
 
         df = data.copy(deep=True)
@@ -463,6 +490,191 @@ class MethodBase(ABC):
             plt.savefig(save + ".svg", bbox_inches="tight")
 
         plt.show()
+
+    def plot_paired(
+        self,
+        adata: ad.AnnData,
+        var_names: Sequence[str],
+        groupby: str,
+        *,
+        pairedby: str = None,
+        hue: str = None,
+        return_fig: bool = False,
+        n_cols: int = 4,
+        panel_size: tuple[int, int] = (5, 5),
+        show_legend: bool = True,
+        size: int = 10,
+        y_label: str = "expression",
+        pvalues: Sequence[float] = None,  # TODO
+        pvalue_template=lambda x: f"unadj. p={x:.2f}, t-test",  # TODO
+        adjust_fdr: bool = False,
+        boxplot_properties=None,
+        palette=None,
+    ):
+        """Creates a pairwise expression plot from a pandas DataFrame or Anndata.
+
+        Makes on panel with a paired scatterplot for each variable.
+
+        Args:
+            adata: AnnData object, can be pseudobulked.
+            var_names: Variables to plot.
+            groupby: Column in adata.obs containing the grouping. Must contain exactly two different values.
+            pairedby: Column in adata.obs containing the pairing (e.g. "patient_id"). If None, an independent t-test is performed.
+            hue: Column in adata.obs to color by.
+            return_fig: Whether to return the figure.
+            n_cols: Number of columns in the plot.
+            panel_size: Size of each panel.
+            show_legend: Whether to show the legend.
+            size: Size of the points.
+            y_label: Label for the y-axis.
+            pvalues: P-values for each variable. If None, they are calculated.
+            pvalue_template: Template for the p-value string displayed in the title of each panel.
+            adjust_fdr: Whether to correct p-values for false discovery rate.
+            boxplot_properties: Additional properties for the boxplot, passed to seaborn.boxplot.
+            palette: Color palette for the line- and stripplot.
+
+
+
+
+        """
+        if boxplot_properties is None:
+            boxplot_properties = {}
+        groups = adata.obs[groupby].unique()
+        if len(groups) != 2:
+            raise ValueError("The number of groups in the group_by column must be exactely 2")
+
+        X = adata[:, var_names].X
+        try:
+            X = X.toarray()
+        except AttributeError:
+            pass
+
+        groupby_cols = [groupby]
+        if pairedby is not None:
+            groupby_cols.insert(0, pairedby)
+        if hue is not None:
+            groupby_cols.insert(0, hue)
+
+        df = adata.obs.loc[:, groupby_cols].join(pd.DataFrame(X, index=adata.obs_names, columns=var_names))
+
+        if pairedby is not None:
+            # remove unpaired samples
+            df[pairedby] = df[pairedby].astype(str)
+            df.set_index(pairedby, inplace=True)
+            has_matching_samples = df.groupby(pairedby).apply(lambda x: sorted(x[groupby]) == sorted(groups))
+            has_matching_samples = has_matching_samples.index[has_matching_samples].values
+            removed_samples = adata.obs[pairedby].nunique() - len(has_matching_samples)
+            if removed_samples:
+                logger.warning(f"{removed_samples} unpaired samples removed")
+
+            # perform statistics (paired ttest)
+            if pvalues is None:
+                _, pvalues = scipy.stats.ttest_rel(
+                    df.loc[
+                        df[groupby] == groups[0],
+                        var_names,
+                    ].loc[has_matching_samples, :],
+                    df.loc[
+                        df[groupby] == groups[1],
+                        var_names,
+                    ].loc[has_matching_samples],
+                )
+
+            df = df.loc[has_matching_samples, :]
+            df.reset_index(drop=False, inplace=True)
+
+        else:
+            if pvalues is None:
+                _, pvalues = scipy.stats.ttest_ind(
+                    df.loc[
+                        df[groupby] == groups[0],
+                        var_names,
+                    ],
+                    df.loc[
+                        df[groupby] == groups[1],
+                        var_names,
+                    ],
+                )
+
+        if adjust_fdr:
+            pvalues = statsmodels.stats.multitest.fdrcorrection(pvalues)[1]
+
+        # transform data for seaborn
+        df_melt = df.melt(
+            id_vars=groupby_cols,
+            var_name="var",
+            value_name="val",
+        )
+
+        # start plotting
+        n_panels = len(var_names)
+        nrows = math.ceil(n_panels / n_cols)
+        ncols = min(n_cols, n_panels)
+
+        fig, axes = plt.subplots(
+            nrows,
+            ncols,
+            figsize=(ncols * panel_size[0], nrows * panel_size[1]),
+            tight_layout=True,
+            squeeze=False,
+        )
+        axes = axes.flatten()
+        if hue is None:
+            hue = pairedby
+        for i, (var, ax) in enumerate(zip_longest(var_names, axes)):
+            if var is not None:
+                sns.boxplot(
+                    x=groupby,
+                    data=df_melt.loc[df_melt["var"] == var],
+                    y="val",
+                    ax=ax,
+                    color="white",
+                    fliersize=0,
+                    **boxplot_properties,
+                )
+                if pairedby is not None:
+                    sns.lineplot(
+                        x=groupby,
+                        data=df_melt.loc[df_melt["var"] == var],
+                        hue=hue,
+                        y="val",
+                        ax=ax,
+                        legend=False,
+                        errorbar=None,
+                        palette=palette,
+                    )
+                sns.stripplot(
+                    x=groupby,
+                    data=df_melt.loc[df_melt["var"] == var],
+                    y="val",
+                    ax=ax,
+                    hue=hue,
+                    size=size,
+                    linewidth=1,
+                    palette=palette,
+                )
+
+                ax.set_xlabel("")
+                ax.tick_params(
+                    axis="x",
+                    # rotation=0,
+                    labelsize=15,
+                )
+                ax.legend().set_visible(False)
+                ax.set_ylabel(y_label)
+                ax.set_title(f"{var}\n{pvalue_template(pvalues[i])}")
+            else:
+                ax.set_visible(False)
+        fig.tight_layout()
+
+        if show_legend is True:
+            axes[n_panels - 1].legend().set_visible(True)
+            axes[n_panels - 1].legend(bbox_to_anchor=(1.1, 1.05))
+
+        plt.show()
+
+        if return_fig:
+            return fig
 
 
 class LinearModelBase(MethodBase):

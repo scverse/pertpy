@@ -6,13 +6,16 @@ def test_edger_simple(test_adata):
 
     1. Initialized
     2. Fitted
-    3. and that test_contrast returns a DataFrame with the correct number of rows.
+    3. That test_contrast returns a DataFrame with the correct number of rows
+    4. That the plot_volcano method works
     """
     method = EdgeR(adata=test_adata, design="~condition")
     method.fit()
     res_df = method.test_contrasts(method.contrast("condition", "A", "B"))
 
     assert len(res_df) == test_adata.n_vars
+
+    method.plot_volcano(res_df, save=False)
 
 
 def test_edger_complex(test_adata):

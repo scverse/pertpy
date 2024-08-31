@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import random
 import re
 from typing import TYPE_CHECKING, Literal
@@ -125,7 +124,7 @@ class Milo:
             try:
                 use_rep = adata.uns["neighbors"]["params"]["use_rep"]
             except KeyError:
-                logging.warning("Using X_pca as default embedding")
+                logger.warning("Using X_pca as default embedding")
                 use_rep = "X_pca"
             try:
                 knn_graph = adata.obsp["connectivities"].copy()
@@ -136,7 +135,7 @@ class Milo:
             try:
                 use_rep = adata.uns[neighbors_key]["params"]["use_rep"]
             except KeyError:
-                logging.warning("Using X_pca as default embedding")
+                logger.warning("Using X_pca as default embedding")
                 use_rep = "X_pca"
             knn_graph = adata.obsp[neighbors_key + "_connectivities"].copy()
 
