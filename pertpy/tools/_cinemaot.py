@@ -190,7 +190,7 @@ class Cinemaot:
         TE.obsm["X_embedding"] = embedding
 
         if return_matching:
-            TE.obsm["ot"] = ot_sink.matrix.T
+            TE.obsm["ot"] = np.asarray(ot_sink.matrix.T)
             return TE
         else:
             return TE
