@@ -78,10 +78,10 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
     brew install --cask mambaforge
     ```
 
-3. Create a new environment using mamba (here with python 3.10) and activate it
+3. Create a new environment using mamba and activate it
 
     ```console
-    mamba create -n pertpy-env python=3.11
+    mamba create -n pertpy-env
     mamba activate pertpy-env
     ```
 

@@ -1,25 +1,22 @@
-from functools import wraps
 from importlib import import_module
 
 
 def lazy_import(module_path, class_name, extras):
-    def _import():
-        try:
-            for extra in extras:
-                import_module(extra)
-        except ImportError as e:
-            raise ImportError(
-                f"Extra dependencies required: {', '.join(extras)}. "
-                f"Please install with: pip install {' '.join(extras)}"
-            ) from e
+    try:
+        for extra in extras:
+            import_module(extra)
         module = import_module(module_path)
         return getattr(module, class_name)
+    except ImportError:
 
-    @wraps(_import)
-    def wrapper(*args, **kwargs):
-        return _import()(*args, **kwargs)
+        class Placeholder:
+            def __init__(self, *args, **kwargs):
+                raise ImportError(
+                    f"Extra dependencies required: {', '.join(extras)}. "
+                    f"Please install with: pip install {' '.join(extras)}"
+                )
 
-    return wrapper
+        return Placeholder
 
 
 from pertpy.tools._augur import Augur
@@ -49,9 +46,7 @@ Sccoda = lazy_import("pertpy.tools._coda._sccoda", "Sccoda", CODA_EXTRAS)
 Tasccoda = lazy_import("pertpy.tools._coda._tasccoda", "Tasccoda", CODA_EXTRAS)
 
 DE_EXTRAS = ["formulaic", "pydeseq2"]
-EdgeR = lazy_import(
-    "pertpy.tools._differential_gene_expression", "EdgeR", DE_EXTRAS
-)  # not edgeR as this is imported via rpy2
+EdgeR = lazy_import("pertpy.tools._differential_gene_expression", "EdgeR", DE_EXTRAS) # edgeR will be imported via rpy2
 PyDESeq2 = lazy_import("pertpy.tools._differential_gene_expression", "PyDESeq2", DE_EXTRAS)
 Statsmodels = lazy_import("pertpy.tools._differential_gene_expression", "Statsmodels", DE_EXTRAS + ["statsmodels"])
 TTest = lazy_import("pertpy.tools._differential_gene_expression", "TTest", DE_EXTRAS)

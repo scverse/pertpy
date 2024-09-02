@@ -450,7 +450,7 @@ See [scGen predicts single-cell perturbation responses](https://www.nature.com/a
 .. autosummary::
     :toctree: tools
 
-    tools.SCGEN
+    tools.Scgen
 ```
 
 Example implementation:
