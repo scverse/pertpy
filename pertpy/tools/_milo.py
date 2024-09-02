@@ -12,6 +12,7 @@ import seaborn as sns
 from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -712,6 +713,7 @@ class Milo:
         sample_adata.var["SpatialFDR"] = np.nan
         sample_adata.var.loc[keep_nhoods, "SpatialFDR"] = adjp
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_nhood_graph(
         self,
         mdata: MuData,
@@ -723,8 +725,9 @@ class Milo:
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
     ) -> None:
         """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding)
@@ -736,9 +739,7 @@ class Milo:
             min_size: Minimum size of nodes in visualization. (default: 10)
             plot_edges: If edges for neighbourhood overlaps whould be plotted.
             title: Plot title.
-            show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
-                  Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
+            {common_plot_args}
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
 
         Examples:
@@ -781,7 +782,7 @@ class Milo:
         vmax = np.max([nhood_adata.obs["graph_color"].max(), abs(nhood_adata.obs["graph_color"].min())])
         vmin = -vmax
 
-        sc.pl.embedding(
+        fig = sc.pl.embedding(
             nhood_adata,
             "X_milo_graph",
             color="graph_color",
@@ -797,10 +798,15 @@ class Milo:
             color_map=color_map,
             palette=palette,
             ax=ax,
-            show=show,
+            show=False,
             save=save,
             **kwargs,
         )
+
+        if show:
+            plt.show()
+        if return_fig:
+            return fig
 
     def plot_nhood(
         self,

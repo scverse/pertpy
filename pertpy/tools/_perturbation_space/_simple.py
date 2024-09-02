@@ -7,6 +7,7 @@ from sklearn.cluster import DBSCAN, KMeans
 
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+from pertpy._utils import savefig_or_show
 
 
 class CentroidSpace(PerturbationSpace):
@@ -167,6 +168,38 @@ class PseudobulkSpace(PerturbationSpace):
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
         return ps_adata
+
+    def plot_psbulk_samples(self,
+                            adata: AnnData,
+                            groupby:str,
+                            show: bool = True,
+                            save: bool | str | None = None,
+                            **kwargs
+    ) -> Axes | Figure | None:
+        """Plot the pseudobulk samples of an AnnData object. It uses Decoupler implementation.
+
+        Args:
+            adata: Anndata containing pseudobulk samples.
+            groupby: .obs column to color the samples by.
+            show: If True, the plot is shown and the figure/axis is not returned. Set to False to return the figure. Defaults to True.
+            save:
+            **kwargs: Are passed to decoupler's plot_psbulk_samples.
+
+        Returns:
+            None
+
+        Examples:
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> ps = pt.tl.PseudobulkSpace()
+            #TODO
+            >>> ps.plot_psbulk_samples(mdata["rna"], target_col="gene_target")
+
+        Preview:
+
+        """
+        dc.plot_psbulk_samples(adata, groupby, **kwargs)
+        savefig_or_show("pseudobulk_samples", show, save)
 
 
 class KMeansSpace(ClusteringSpace):

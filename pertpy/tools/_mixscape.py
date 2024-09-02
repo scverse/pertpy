@@ -18,6 +18,7 @@ from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 import pertpy as pt
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -506,6 +507,7 @@ class Mixscape:
 
         return [mu, sd]
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_barplot(  # pragma: no cover
         self,
         adata: AnnData,
@@ -516,10 +518,10 @@ class Mixscape:
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
-        return_fig: bool | None = None,
         ax: Axes | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
     ):
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
 
@@ -528,12 +530,10 @@ class Mixscape:
             guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels.
                               The format must be <gene_target>g<#>. Examples are 'STAT2g1' and 'ATF2g1'.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
-            show: Show the plot, do not return axis.
-            save: If True or a str, save the figure. A string is appended to the default filename.
-                  Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
+            {common_plot_args}
 
         Returns:
-            If `show==False`, return a :class:`~matplotlib.axes.Axes.
+            If `return_fig==True`, return a :class:`~matplotlib.axes.Axes.
 
         Examples:
             >>> import pertpy as pt
@@ -604,7 +604,7 @@ class Mixscape:
             )
 
         plt.tight_layout()
-        _utils.savefig_or_show("mixscape_barplot", show=show, save=save)
+        return savefig_or_show("mixscape_barplot", show=show, save=save, return_fig=return_fig)
 
     def plot_heatmap(  # pragma: no cover
         self,
@@ -663,19 +663,25 @@ class Mixscape:
         sc.pp.scale(adata_subset, max_value=vmax)
         sc.pp.subsample(adata_subset, n_obs=subsample_number)
 
-        return sc.pl.rank_genes_groups_heatmap(
+        fig = sc.pl.rank_genes_groups_heatmap(
             adata_subset,
             groupby="mixscape_class",
             vmin=vmin,
             vmax=vmax,
             n_genes=20,
             groups=["NT"],
-            return_fig=return_fig,
-            show=show,
+            show=False,
             save=save,
             **kwds,
         )
 
+        if show:
+            plt.show()
+        if return_fig:
+            return fig
+
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_perturbscore(  # pragma: no cover
         self,
         adata: AnnData,
@@ -687,11 +693,10 @@ class Mixscape:
         split_by: str = None,
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
-        return_fig: bool | None = None,
-        ax: Axes | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
-    ) -> None:
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
 
         Requires `pt.tl.mixscape` to be run first.
@@ -710,6 +715,7 @@ class Mixscape:
             before_mixscape: Option to split densities based on mixscape classification (default) or original target gene classification.
                              Default is set to NULL and plots cells by original class ID.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
+            {common_plot_args}
 
         Examples:
             Visualizing the perturbation scores for the cells in a dataset:
@@ -778,14 +784,7 @@ class Mixscape:
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return plt.gca()
+            return savefig_or_show("mixscape_perturbscore", show=show, save=save, return_fig=return_fig)
 
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
@@ -843,15 +842,9 @@ class Mixscape:
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return plt.gca()
+            return savefig_or_show("mixscape_perturbscore", show=show, save=save, return_fig=return_fig)
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_violin(  # pragma: no cover
         self,
         adata: AnnData,
@@ -872,10 +865,11 @@ class Mixscape:
         ylabel: str | Sequence[str] | None = None,
         rotation: float | None = None,
         ax: Axes | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
-    ):
+    ) -> Axes | None:
         """Violin plot using mixscape results.
 
         Requires `pt.tl.mixscape` to be run first.
@@ -892,10 +886,8 @@ class Mixscape:
             xlabel: Label of the x-axis. Defaults to `groupby` if `rotation` is `None`, otherwise, no label is shown.
             ylabel: Label of the y-axis. If `None` and `groupby` is `None`, defaults to `'value'`.
                     If `None` and `groubpy` is not `None`, defaults to `keys`.
-            show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
-                  Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
             ax: A matplotlib axes object. Only works if plotting a single component.
+            {common_plot_args}
             **kwargs: Additional arguments to `seaborn.violinplot`.
 
         Returns:
@@ -1045,9 +1037,10 @@ class Mixscape:
         show = settings.autoshow if show is None else show
         if hue is not None and stripplot is True:
             plt.legend(handles, labels)
-        _utils.savefig_or_show("mixscape_violin", show=show, save=save)
 
-        if not show:
+        savefig_or_show("mixscape_violin", show=show, save=save, return_fig=False)
+
+        if return_fig:
             if multi_panel and groupby is None and len(ys) == 1:
                 return g
             elif len(axs) == 1:
@@ -1055,6 +1048,7 @@ class Mixscape:
             else:
                 return axs
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_lda(  # pragma: no cover
         self,
         adata: AnnData,
@@ -1066,10 +1060,10 @@ class Mixscape:
         n_components: int | None = None,
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
-        return_fig: bool | None = None,
         ax: Axes | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwds,
     ) -> None:
         """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
@@ -1082,9 +1076,7 @@ class Mixscape:
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
             lda_key: If not specified, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
-            show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
-                  Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
+            {common_plot_args}
             **kwds: Additional arguments to `scanpy.pl.umap`.
 
         Examples:
@@ -1112,14 +1104,19 @@ class Mixscape:
             n_components = adata_subset.uns[lda_key].shape[1]
         sc.pp.neighbors(adata_subset, use_rep=lda_key)
         sc.tl.umap(adata_subset, n_components=n_components)
-        sc.pl.umap(
+        fig = sc.pl.umap(
             adata_subset,
             color=mixscape_class,
             palette=palette,
             color_map=color_map,
             return_fig=return_fig,
-            show=show,
+            show=False,
             save=save,
             ax=ax,
             **kwds,
         )
+
+        if show:
+            plt.show()
+        if return_fig:
+            return fig

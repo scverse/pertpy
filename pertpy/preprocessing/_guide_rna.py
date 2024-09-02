@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import uuid
 from typing import TYPE_CHECKING
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+import matplotlib.pyplot as plt
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -106,12 +108,16 @@ class GuideAssignment:
 
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_heatmap(
         self,
         adata: AnnData,
         layer: str | None = None,
         order_by: np.ndarray | str | None = None,
         key_to_save_order: str = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
     ) -> list[Axes]:
         """Heatmap plotting of guide RNA expression matrix.
@@ -131,10 +137,11 @@ class GuideAssignment:
                       If a string is provided, adata.obs[order_by] will be used as the order.
                       If a numpy array is provided, the array will be used for ordering.
             key_to_save_order: The obs key to save cell orders in the current plot. Only saves if not None.
+            {common_plot_args}
             kwargs: Are passed to sc.pl.heatmap.
 
         Returns:
-            List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
+            If return_fig is True, returns a list of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
             Order of cells in the y-axis will be saved on adata.obs[key_to_save_order] if provided.
 
         Examples:
@@ -180,9 +187,14 @@ class GuideAssignment:
                 use_raw=False,
                 dendrogram=False,
                 layer=layer,
+                save=save,
+                show=False,
                 **kwargs,
             )
         finally:
             del adata.obs[temp_col_name]
 
-        return axis_group
+        if show:
+            plt.show()
+        if return_fig:
+            return axis_group

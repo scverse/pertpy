@@ -5,6 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from math import floor, nan
 from typing import TYPE_CHECKING, Any, Literal
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 import anndata as ad
 import matplotlib.pyplot as plt
@@ -15,7 +16,6 @@ import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
 from lamin_utils import logger
-from rich import print
 from rich.progress import track
 from scipy import sparse, stats
 from sklearn.base import is_classifier, is_regressor
@@ -1119,25 +1119,26 @@ class Augur:
             return ax
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_lollipop(
         self,
-        data: dict[str, Any],
+        data: dict[str, Any] | AnnData,
         key: str = "augurpy_results",
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
     ) -> Axes | Figure | None:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
-            results: results after running `predict()` as dictionary or the AnnData object.
-            key: Key in the AnnData object of the results
-            ax: optionally, axes used to draw plot
-            return_figure: if `True` returns figure of the plot
+            data: results after running `predict()` as dictionary or the AnnData object.
+            key: .uns key in the results AnnData object.
+            ax: optionally, axes used to draw plot.
+            {common_plot_args}
 
         Returns:
-            Axes of the plot.
+            Axes of the plot, if `return_fig` is `True`, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1175,15 +1176,7 @@ class Augur:
         plt.ylabel("Cell Type")
         plt.yticks(y_axes_range, results["summary_metrics"].sort_values("mean_augur_score", axis=1).columns)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
-        if return_fig:
-            return plt.gcf()
-        if not (show or save):
-            return ax
-        return None
+        return savefig_or_show("augur_lollipop", show=show, save=save, return_fig=return_fig)
 
     def plot_scatterplot(
         self,

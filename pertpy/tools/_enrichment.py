@@ -15,6 +15,7 @@ from scipy.stats import hypergeom
 from statsmodels.stats.multitest import multipletests
 
 from pertpy.metadata import Drug
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 
 def _prepare_targets(
@@ -290,6 +291,7 @@ class Enrichment:
 
         return enrichment
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_dotplot(
         self,
         adata: AnnData,
@@ -300,8 +302,9 @@ class Enrichment:
         groupby: str = None,
         key: str = "pertpy_enrichment",
         ax: Axes | None = None,
-        save: bool | str | None = None,
-        show: bool | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
     ) -> DotPlot | dict | None:
         """Plots a dotplot by groupby and categories.
@@ -319,6 +322,7 @@ class Enrichment:
             category_name: The name of category used to generate a nested drug target set when `targets=None` and `source=dgidb|pharmgkb`.
             groupby: dotplot groupby such as clusters or cell types.
             key: Prefix key of enrichment results in `uns`.
+            {common_plot_args}
             kwargs: Passed to scanpy dotplot.
 
         Returns:
@@ -403,16 +407,21 @@ class Enrichment:
             "var_group_labels": var_group_labels,
         }
 
-        return sc.pl.dotplot(
+        fig = sc.pl.dotplot(
             enrichment_score_adata,
             groupby=groupby,
             swap_axes=True,
             ax=ax,
             save=save,
-            show=show,
+            show=False,
             **plot_args,
             **kwargs,
         )
+
+        if show:
+            plt.show()
+        if return_fig:
+            return fig
 
     def plot_gsea(
         self,
