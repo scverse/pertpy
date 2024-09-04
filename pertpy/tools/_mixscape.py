@@ -534,7 +534,7 @@ class Mixscape:
             {common_plot_args}
 
         Returns:
-            If `return_fig==True`, return a :class:`~matplotlib.axes.Axes.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -715,6 +715,9 @@ class Mixscape:
                              Default is set to NULL and plots cells by original class ID.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
             {common_plot_args}
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             Visualizing the perturbation scores for the cells in a dataset:

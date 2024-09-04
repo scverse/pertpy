@@ -99,6 +99,24 @@ class MethodBase(ABC):
 
         Returns:
             Pandas dataframe with results ordered by significance. If multiple comparisons were performed this is indicated in an additional column.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
         """
         ...
 
@@ -185,6 +203,9 @@ class MethodBase(ABC):
             ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
             ... )
             >>> edgr.plot_volcano(res_df, log2fc_thresh=0)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_volcano.png
         """
         if colors is None:
             colors = ["gray", "#D62728", "#1F77B4"]
@@ -560,7 +581,7 @@ class MethodBase(ABC):
             >>> edgr.plot_paired(pdata, var_names=res_df["variable"][:8], groupby="Treatment", pairedby="Major celltype")
 
         Preview:
-            .. image:: /_static/docstring_previews/paired_expression.png
+            .. image:: /_static/docstring_previews/de_paired_expression.png
         """
         if boxplot_properties is None:
             boxplot_properties = {}
@@ -769,7 +790,7 @@ class MethodBase(ABC):
             >>> edgr.plot_fold_change(res_df)
 
         Preview:
-            .. image:: /_static/docstring_previews/fold_change.png
+            .. image:: /_static/docstring_previews/de_fold_change.png
         """
         if var_names is None:
             var_names = results_df.sort_values("log_fc", ascending=False).head(n_top_vars)["variable"].tolist()
@@ -866,7 +887,7 @@ class MethodBase(ABC):
             >>> edgr.plot_multicomparison_fc(res_df)
 
         Preview:
-            .. image:: /_static/docstring_previews/multicomparison_fc.png
+            .. image:: /_static/docstring_previews/de_multicomparison_fc.png
         """
         groups = results_df[contrast_col].unique().tolist()
 
@@ -1042,9 +1063,10 @@ class LinearModelBase(MethodBase):
             modelB: the reduced model against which to test.
 
         Example:
-            modelA = Model().fit()
-            modelB = Model().fit()
-            modelA.test_reduced(modelB)
+            >>> import pertpy as pt
+            >>> modelA = Model().fit()
+            >>> modelB = Model().fit()
+            >>> modelA.test_reduced(modelB)
         """
         raise NotImplementedError
 

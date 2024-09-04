@@ -18,9 +18,12 @@ from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors
 
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+
 if TYPE_CHECKING:
     from anndata import AnnData
     from matplotlib.axes import Axes
+    from matplotlib.pyplot import Figure
     from statsmodels.tools.typing import ArrayLike
 
 
@@ -639,6 +642,7 @@ class Cinemaot:
         s_effect = (np.linalg.norm(e1, axis=0) + 1e-6) / (np.linalg.norm(e0, axis=0) + 1e-6)
         return c_effect, s_effect
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_vis_matching(
         self,
         adata: AnnData,
@@ -652,11 +656,12 @@ class Cinemaot:
         normalize: str = "col",
         title: str = "CINEMA-OT matching matrix",
         min_val: float = 0.01,
-        show: bool = True,
-        save: str | None = None,
         ax: Axes | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Figure | None:
         """Visualize the CINEMA-OT matching matrix.
 
         Args:
@@ -710,12 +715,14 @@ class Cinemaot:
 
         g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
-        _utils.savefig_or_show("matching_heatmap", show=show, save=save)
-        if not show:
+
+        savefig_or_show("matching_heatmap", show=show, save=save, return_fig=False)
+        if return_fig:
             if ax is not None:
                 return ax
             else:
                 return g
+        return None
 
 
 class Xi:

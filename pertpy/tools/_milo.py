@@ -809,6 +809,7 @@ class Milo:
         if return_fig:
             return fig
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_nhood(
         self,
         mdata: MuData,
@@ -817,20 +818,23 @@ class Milo:
         basis: str = "X_umap",
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
-        return_fig: bool | None = None,
         ax: Axes | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Figure | None:
         """Visualize cells in a neighbourhood.
 
         Args:
             mdata: MuData object with feature_key slot, storing neighbourhood assignments in `mdata[feature_key].obsm['nhoods']`
             ix: index of neighbourhood to visualize
+            feature_key: Key in mdata to the cell-level AnnData object.
             basis: Embedding to use for visualization.
-            show: Show the plot, do not return axis.
-            save: If True or a str, save the figure. A string is appended to the default filename. Infer the filetype if ending on {'.pdf', '.png', '.svg'}.
+            color_map: Colormap to use for coloring.
+            palette: Color palette to use for coloring.
+            ax: Axes to plot on.
+            {common_plot_args}
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
 
         Examples:
@@ -848,7 +852,7 @@ class Milo:
             .. image:: /_static/docstring_previews/milo_nhood.png
         """
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
-        sc.pl.embedding(
+        fig = sc.pl.embedding(
             mdata[feature_key],
             basis,
             color="Nhood",
@@ -858,11 +862,16 @@ class Milo:
             palette=palette,
             return_fig=return_fig,
             ax=ax,
-            show=show,
+            show=False,
             save=save,
             **kwargs,
         )
 
+        if show:
+            plt.show()
+        return fig if return_fig else None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_da_beeswarm(
         self,
         mdata: MuData,
@@ -871,19 +880,21 @@ class Milo:
         alpha: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
-        return_fig: bool | None = None,
-        save: bool | str | None = None,
-        show: bool | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
     ) -> Figure | Axes | None:
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
             mdata: MuData object
+            feature_key: Key in mdata to the cell-level AnnData object.
             anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
             alpha: Significance threshold. (default: 0.1)
             subset_nhoods: List of nhoods to plot. If None, plot all nhoods.
             palette: Name of Seaborn color palette for violinplots.
                      Defaults to pre-defined category colors for violinplots.
+            {common_plot_args}
 
         Examples:
             >>> import pertpy as pt
@@ -979,28 +990,18 @@ class Milo:
         plt.legend(loc="upper left", title=f"< {int(alpha * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
-        if show:
-            plt.show()
-            return None
-        if return_fig:
-            return plt.gcf()
-        if (not show and not save) or (show is None and save is None):
-            return plt.gca()
+        return savefig_or_show("da_beeswarm", show=show, save=save, return_fig=return_fig)
 
-        return None
-
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_nhood_counts_by_cond(
         self,
         mdata: MuData,
         test_var: str,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
-        return_fig: bool | None = None,
-        save: bool | str | None = None,
-        show: bool | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
     ) -> Figure | Axes | None:
         """Plot boxplot of cell numbers vs condition of interest.
 
@@ -1009,6 +1010,7 @@ class Milo:
             test_var: Name of column in adata.obs storing condition of interest (y-axis for boxplot)
             subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods.
             log_counts: Whether to plot log1p of cell counts.
+            {common_plot_args}
         """
         try:
             nhood_adata = mdata["milo"].T.copy()
@@ -1037,15 +1039,4 @@ class Milo:
         plt.xticks(rotation=90)
         plt.xlabel(test_var)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-            return None
-        if show:
-            plt.show()
-            return None
-        if return_fig:
-            return plt.gcf()
-        if not (show or save):
-            return plt.gca()
-
-        return None
+        return savefig_or_show("nhood_counts_by_cond", show=show, save=save, return_fig=return_fig)
