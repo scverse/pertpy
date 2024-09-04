@@ -1,7 +1,8 @@
-import matplotlib.pyplot as plt
-import os
-from matplotlib.pyplot import Figure
+from pathlib import Path
 from textwrap import dedent
+
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import Figure
 
 
 def savefig_or_show(
@@ -24,8 +25,8 @@ def savefig_or_show(
         save = True
 
     if save:
-        os.makedirs("figures", exist_ok=True)
-        plt.savefig(os.path.join("figures", f"{writekey}.{ext}"), dpi=dpi, bbox_inches="tight")
+        Path.mkdir(Path("figures"), exist_ok=True)
+        plt.savefig(f"figures/{writekey}.{ext}", dpi=dpi, bbox_inches="tight")
     if show:
         plt.show()
     if save:

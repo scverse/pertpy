@@ -5,7 +5,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from math import floor, nan
 from typing import TYPE_CHECKING, Any, Literal
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 import anndata as ad
 import matplotlib.pyplot as plt
@@ -36,6 +35,8 @@ from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
 from skmisc.loess import loess
 from statsmodels.stats.multitest import fdrcorrection
+
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes

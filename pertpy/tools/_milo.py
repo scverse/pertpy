@@ -12,6 +12,7 @@ import seaborn as sns
 from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
+
 from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 if TYPE_CHECKING:

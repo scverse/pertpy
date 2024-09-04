@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import Any, Literal
 
 import blitzgsea
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -14,8 +15,8 @@ from scipy.sparse import issparse
 from scipy.stats import hypergeom
 from statsmodels.stats.multitest import multipletests
 
-from pertpy.metadata import Drug
 from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy.metadata import Drug
 
 
 def _prepare_targets(
@@ -306,7 +307,7 @@ class Enrichment:
         save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
-    ) -> DotPlot | dict | None:
+    ) -> DotPlot | None:
         """Plots a dotplot by groupby and categories.
 
         Wraps scanpy's dotplot but formats it nicely by categories.
@@ -326,8 +327,7 @@ class Enrichment:
             kwargs: Passed to scanpy dotplot.
 
         Returns:
-            If `return_fig` is `True`, returns a :class:`~scanpy.pl.DotPlot` object,
-            else if `show` is false, return axes dict.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -422,6 +422,7 @@ class Enrichment:
             plt.show()
         if return_fig:
             return fig
+        return None
 
     def plot_gsea(
         self,

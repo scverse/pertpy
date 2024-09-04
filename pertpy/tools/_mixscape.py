@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from anndata import AnnData
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
+    from matplotlib.pyplot import Figure
     from scipy import sparse
 
 
@@ -606,6 +607,7 @@ class Mixscape:
         plt.tight_layout()
         return savefig_or_show("mixscape_barplot", show=show, save=save, return_fig=return_fig)
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_heatmap(  # pragma: no cover
         self,
         adata: AnnData,
@@ -617,9 +619,9 @@ class Mixscape:
         subsample_number: int | None = 900,
         vmin: float | None = -2,
         vmax: float | None = 2,
-        return_fig: bool | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwds,
     ) -> Axes | None:
         """Heatmap plot using mixscape results. Requires `pt.tl.mixscape()` to be run first.
@@ -641,7 +643,7 @@ class Mixscape:
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
 
         Returns:
-            If `show==False`, return a :class:`~matplotlib.axes.Axes`.
+            If `return_fig` is `True`, return a :class:`~matplotlib.axes.Axes`.
 
         Examples:
             >>> import pertpy as pt
@@ -679,7 +681,7 @@ class Mixscape:
             plt.show()
         if return_fig:
             return fig
-
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_perturbscore(  # pragma: no cover
@@ -1047,6 +1049,7 @@ class Mixscape:
                 return axs[0]
             else:
                 return axs
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_lda(  # pragma: no cover

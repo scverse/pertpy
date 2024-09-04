@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import decoupler as dc
 import numpy as np
 from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
 
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
-from pertpy._utils import savefig_or_show
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Figure
 
 
 class CentroidSpace(PerturbationSpace):
@@ -169,37 +174,47 @@ class PseudobulkSpace(PerturbationSpace):
 
         return ps_adata
 
-    def plot_psbulk_samples(self,
-                            adata: AnnData,
-                            groupby:str,
-                            show: bool = True,
-                            save: bool | str | None = None,
-                            **kwargs
-    ) -> Axes | Figure | None:
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_psbulk_samples(
+        self,
+        adata: AnnData,
+        groupby: str,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
+        **kwargs,
+    ) -> Figure | None:
         """Plot the pseudobulk samples of an AnnData object. It uses Decoupler implementation.
+
+        Plot the count number vs. the number of cells per pseudobulk sample.
 
         Args:
             adata: Anndata containing pseudobulk samples.
             groupby: .obs column to color the samples by.
-            show: If True, the plot is shown and the figure/axis is not returned. Set to False to return the figure. Defaults to True.
-            save:
+            {common_plot_args}
             **kwargs: Are passed to decoupler's plot_psbulk_samples.
 
         Returns:
-            None
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> adata = pt.dt.zhang_2021()
             >>> ps = pt.tl.PseudobulkSpace()
-            #TODO
-            >>> ps.plot_psbulk_samples(mdata["rna"], target_col="gene_target")
+            >>> pdata = ps.compute(
+            ...     adata, target_col="Patient", groups_col="Cluster", mode="sum", min_cells=10, min_counts=1000
+            ... )
+            >>> ps.plot_psbulk_samples(pdata, groupby=["Patient", "Major celltype"], figsize=(12, 4))
 
         Preview:
-
+            .. image:: /_static/docstring_previews/pseudobulk_samples.png
         """
-        dc.plot_psbulk_samples(adata, groupby, **kwargs)
-        savefig_or_show("pseudobulk_samples", show, save)
+        fig = dc.plot_psbulk_samples(adata, groupby, return_fig=True, **kwargs)
+        savefig_or_show("pseudobulk_samples", show=show, save=save, return_fig=False)
+
+        if return_fig:
+            return fig
+        return None
 
 
 class KMeansSpace(ClusteringSpace):

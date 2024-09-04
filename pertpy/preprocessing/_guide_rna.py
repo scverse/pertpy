@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import uuid
 from typing import TYPE_CHECKING
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
-import matplotlib.pyplot as plt
+
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -198,3 +199,4 @@ class GuideAssignment:
             plt.show()
         if return_fig:
             return axis_group
+        return None
