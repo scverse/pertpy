@@ -636,10 +636,7 @@ class Mixscape:
             subsample_number: Subsample to this number of observations.
             vmin: The value representing the lower limit of the color scale. Values smaller than vmin are plotted with the same color as vmin.
             vmax: The value representing the upper limit of the color scale. Values larger than vmax are plotted with the same color as vmax.
-            show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
-                  Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
-            ax: A matplotlib axes object. Only works if plotting a single component.
+            {common_plot_args}
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
 
         Returns:

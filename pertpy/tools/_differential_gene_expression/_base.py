@@ -723,8 +723,9 @@ class MethodBase(ABC):
         *,
         pairedby: str = None,  # TODO: Discuss how to include
         var_names: Sequence[str] = None,
-        n_top_vars=15,
+        n_top_vars: int = 15,
         y_label: str = "Log2 fold change",
+        figsize: tuple[int, int] = (10, 5),
         show: bool = True,
         save: str | bool = False,
         return_fig: bool = False,
@@ -738,6 +739,7 @@ class MethodBase(ABC):
             var_names: Variables to plot. If None, the top n_top_vars variables based on the log2 fold change are plotted.
             n_top_vars: Number of top variables to plot. The top and bottom n_top_vars variables are plotted, respectively.
             y_label: Label for the y-axis.
+            figsize: Size of the figure.
             {common_plot_args}
             **barplot_kwargs: Additional arguments for seaborn.barplot.
 
@@ -767,7 +769,7 @@ class MethodBase(ABC):
             >>> edgr.plot_fold_change(res_df)
 
         Preview:
-            .. image:: /_static/docstring_previews/TODO.png
+            .. image:: /_static/docstring_previews/fold_change.png
         """
         if var_names is None:
             var_names = results_df.sort_values("log_fc", ascending=False).head(n_top_vars)["variable"].tolist()
@@ -790,6 +792,7 @@ class MethodBase(ABC):
 
         df["color"] = df["log_fc"].apply(value_to_color)
 
+        plt.figure(figsize=figsize)
         sns.barplot(
             x="variable",
             y="log_fc",
@@ -840,7 +843,30 @@ class MethodBase(ABC):
             {common_plot_args}
             **heatmap_kwargs: Additional arguments for seaborn.heatmap.
 
-        #TODO
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
+            >>> edgr.plot_multicomparison_fc(res_df)
+
+        Preview:
+            .. image:: /_static/docstring_previews/multicomparison_fc.png
         """
         groups = results_df[contrast_col].unique().tolist()
 
