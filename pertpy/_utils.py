@@ -51,6 +51,6 @@ def _doc_params(**kwds):  # pragma: no cover
 
 doc_common_plot_args = """\
 show: if `True`, shows the plot.
-            save: if `True`, saves the plot under a default filename. If `str`, appends the specified string to the default filename.
+            save: if `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`.pdf`, `.png`, `.svg`}.
             return_fig: if `True`, returns figure of the plot.\
 """

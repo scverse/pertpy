@@ -675,9 +675,7 @@ class Cinemaot:
             normalize: normalize the coarse-grained matching matrix by row / column.
             title: the title for the figure.
             min_val: The min value to truncate the matching matrix.
-            show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
-                Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
+            {common_plot_args}
             **kwargs: Other parameters to input for seaborn.heatmap.
 
         Examples:

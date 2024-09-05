@@ -523,8 +523,8 @@ class MethodBase(ABC):
         show_legend: bool = True,
         size: int = 10,
         y_label: str = "expression",
-        pvalues: Sequence[float] = None,  # TODO
-        pvalue_template=lambda x: f"unadj. p={x:.2f}, t-test",  # TODO
+        pvalues: Sequence[float] = None,
+        pvalue_template=lambda x: f"unadj. p={x:.2f}, t-test",
         adjust_fdr: bool = False,
         boxplot_properties=None,
         palette=None,
@@ -621,11 +621,6 @@ class MethodBase(ABC):
             # remove unpaired samples
             paired_samples = set(df[df[groupby] == groups[0]][pairedby]) & set(df[df[groupby] == groups[1]][pairedby])
             df = df[df[pairedby].isin(paired_samples)]
-
-            # df[pairedby] = df[pairedby].astype(str) TODO: Tidy up!
-            # df.set_index(pairedby, inplace=True)
-            # has_matching_samples = df.groupby(pairedby).apply(lambda x: sorted(x[groupby]) == sorted(groups))
-            # has_matching_samples = has_matching_samples.index[has_matching_samples].values
             removed_samples = adata.obs[pairedby].nunique() - len(df[pairedby].unique())
             if removed_samples > 0:
                 logger.warning(f"{removed_samples} unpaired samples removed")
@@ -636,14 +631,13 @@ class MethodBase(ABC):
                     df.loc[
                         df[groupby] == groups[0],
                         var_names,
-                    ],  # .loc[has_matching_samples, :]
+                    ],
                     df.loc[
                         df[groupby] == groups[1],
                         var_names,
-                    ],  # .loc[has_matching_samples]
+                    ],
                 )
 
-            # df = df.loc[has_matching_samples, :]
             df.reset_index(drop=False, inplace=True)
 
         else:
