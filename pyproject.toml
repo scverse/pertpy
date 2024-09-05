@@ -65,7 +65,7 @@ dependencies = [
     "pyarrow",
     "blitzgsea",
     "lamin_utils",
-    "anndata <0.10.9"  # pydeseq2 bug
+    "anndata",
 ]
 
 [project.optional-dependencies]
