@@ -18,11 +18,15 @@ from scvi.data.fields import CategoricalObsField, LayerField
 from scvi.model.base import BaseModelClass, JaxTrainingMixin
 from scvi.utils import setup_anndata_dsp
 
+from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+
 from ._scgenvae import JaxSCGENVAE
 from ._utils import balancer, extractor
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from matplotlib.pyplot import Figure
 
 font = {"family": "Arial", "size": 14}
 
@@ -371,15 +375,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
 
         return self.module.as_numpy_array(latent)
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_reg_mean_plot(
         self,
         adata,
         condition_key: str,
         axis_keys: dict[str, str],
         labels: dict[str, str],
-        save: str | bool | None = None,
         gene_list: list[str] = None,
-        show: bool = False,
         top_100_genes: list[str] = None,
         verbose: bool = False,
         legend: bool = True,
@@ -387,8 +390,11 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         x_coeff: float = 0.30,
         y_coeff: float = 0.8,
         fontsize: float = 14,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
-    ) -> tuple[float, float] | float:
+    ) -> tuple[Figure, float, float] | tuple[Figure, float] | tuple[float, float] | float:
         """Plots mean matching for a set of specified genes.
 
         Args:
@@ -399,7 +405,6 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             axis_keys: Dictionary of `adata.obs` keys that are used by the axes of the plot. Has to be in the following form:
                        `{"x": "Key for x-axis", "y": "Key for y-axis"}`.
             labels: Dictionary of axes labels of the form `{"x": "x-axis-name", "y": "y-axis name"}`.
-            path_to_save: path to save the plot.
             save: Specify if the plot should be saved or not.
             gene_list: list of gene names to be plotted.
             show: if `True`: will show to the plot after saving it.
@@ -410,7 +415,12 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             x_coeff: Offset to print the R^2 value in x-direction.
             y_coeff: Offset to print the R^2 value in y-direction.
             fontsize: Fontsize used for text in the plot.
+            {common_plot_args}
             **kwargs:
+
+        Returns:
+            If `return_fig` is `True`, returns the matplotlib figure. Additionally, returns R^2 value for all genes and
+            R^2 value for top 100 DEGs if `top_100_genes` is not `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -498,34 +508,40 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff ** 2:.2f}",
                 fontsize=kwargs.get("textsize", fontsize),
             )
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
-        plt.close()
-        if diff_genes is not None:
-            return r_value**2, r_value_diff**2
-        else:
-            return r_value**2
 
+        fig = savefig_or_show("scgen_reg_mean", save=save, show=show, return_fig=True)
+
+        if diff_genes is not None:
+            if return_fig:
+                return fig, r_value**2, r_value_diff**2
+            else:
+                return r_value**2, r_value_diff**2
+        else:
+            if return_fig:
+                return fig, r_value**2
+            else:
+                return r_value**2
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_reg_var_plot(
         self,
         adata,
         condition_key: str,
         axis_keys: dict[str, str],
         labels: dict[str, str],
-        save: str | bool | None = None,
         gene_list: list[str] = None,
         top_100_genes: list[str] = None,
-        show: bool = False,
         legend: bool = True,
         title: str = None,
         verbose: bool = False,
         x_coeff: float = 0.3,
         y_coeff: float = 0.8,
         fontsize: float = 14,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
         **kwargs,
-    ) -> tuple[float, float] | float:
+    ) -> tuple[Figure, float, float] | tuple[Figure, float] | tuple[float, float] | float:
         """Plots variance matching for a set of specified genes.
 
         Args:
@@ -536,7 +552,6 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             axis_keys: Dictionary of `adata.obs` keys that are used by the axes of the plot. Has to be in the following form:
                        `{"x": "Key for x-axis", "y": "Key for y-axis"}`.
             labels: Dictionary of axes labels of the form `{"x": "x-axis-name", "y": "y-axis name"}`.
-            path_to_save: path to save the plot.
             save: Specify if the plot should be saved or not.
             gene_list: list of gene names to be plotted.
             show: if `True`: will show to the plot after saving it.
@@ -547,6 +562,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             x_coeff: Offset to print the R^2 value in x-direction.
             y_coeff: Offset to print the R^2 value in y-direction.
             fontsize: Fontsize used for text in the plot.
+            {common_plot_args}
         """
         import seaborn as sns
 
@@ -626,16 +642,20 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 fontsize=kwargs.get("textsize", fontsize),
             )
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
-        plt.close()
-        if diff_genes is not None:
-            return r_value**2, r_value_diff**2
-        else:
-            return r_value**2
+        fig = savefig_or_show("scgen_reg_mean", save=save, show=show, return_fig=True)
 
+        if diff_genes is not None:
+            if return_fig:
+                return fig, r_value**2, r_value_diff**2
+            else:
+                return r_value**2, r_value_diff**2
+        else:
+            if return_fig:
+                return fig, r_value**2
+            else:
+                return r_value**2
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_binary_classifier(
         self,
         scgen: Scgen,
@@ -643,9 +663,10 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         delta: np.ndarray,
         ctrl_key: str,
         stim_key: str,
-        show: bool = False,
-        save: str | bool | None = None,
         fontsize: float = 14,
+        show: bool = True,
+        save: str | bool = False,
+        return_fig: bool = False,
     ) -> plt.Axes | None:
         """Plots the dot product between delta and latent representation of a linear classifier.
 
@@ -661,9 +682,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             delta: Difference between stimulated and control cells in latent space
             ctrl_key: Key for `control` part of the `data` found in `condition_key`.
             stim_key: Key for `stimulated` part of the `data` found in `condition_key`.
-            path_to_save: Path to save the plot.
-            save: Specify if the plot should be saved or not.
             fontsize: Set the font size of the plot.
+            {common_plot_args}
         """
         plt.close("all")
         adata = scgen._validate_anndata(adata)
@@ -693,13 +713,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax = plt.gca()
         ax.grid(False)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
-        if not (show or save):
-            return ax
-        return None
+        return savefig_or_show("scgen_binary_classifier", save=save, show=show, return_fig=return_fig)
 
 
 # compatibility
