@@ -14,13 +14,11 @@ def savefig_or_show(
     ext: str = "png",
 ) -> Figure | None:
     if isinstance(save, str):
-        # check whether `save` contains a figure extension
         for try_ext in [".svg", ".pdf", ".png"]:
             if save.endswith(try_ext):
                 ext = try_ext[1:]
                 save = save.replace(try_ext, "")
                 break
-        # append extension
         writekey += f"_{save}"
         save = True
 

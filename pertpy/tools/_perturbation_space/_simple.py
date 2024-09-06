@@ -184,13 +184,13 @@ class PseudobulkSpace(PerturbationSpace):
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
-        """Plot the pseudobulk samples of an AnnData object. It uses Decoupler implementation.
+        """Plot the pseudobulk samples of an AnnData object.
 
         Plot the count number vs. the number of cells per pseudobulk sample.
 
         Args:
             adata: Anndata containing pseudobulk samples.
-            groupby: .obs column to color the samples by.
+            groupby: `.obs` column to color the samples by.
             {common_plot_args}
             **kwargs: Are passed to decoupler's plot_psbulk_samples.
 
