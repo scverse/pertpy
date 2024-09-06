@@ -928,9 +928,9 @@ class MethodBase(ABC):
                     c="white",
                 )
 
-        plt.scatter([], [], s=marker_size, marker="*", c="white", label="< 0.001")
-        plt.scatter([], [], s=math.floor(marker_size / 2), marker="*", c="white", label="< 0.01")
-        plt.scatter([], [], s=math.floor(marker_size / 4), marker="*", c="white", label="< 0.1")
+        plt.scatter([], [], s=marker_size, marker="*", c="black", label="< 0.001")
+        plt.scatter([], [], s=math.floor(marker_size / 2), marker="*", c="black", label="< 0.01")
+        plt.scatter([], [], s=math.floor(marker_size / 4), marker="*", c="black", label="< 0.1")
         plt.legend(title="Significance", bbox_to_anchor=(1.2, -0.05))
 
         plt.xlabel(x_label)
