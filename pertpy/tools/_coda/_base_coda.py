@@ -1025,7 +1025,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi" : 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> node_effects = tasccoda.get_node_df(mdata)
@@ -1843,9 +1843,6 @@ class CompositionalModel2(ABC):
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
             show_scale: Include the scale legend in the tree image or not.
-            show: If True, plot the tree inline. If false, return tree and tree_style objects.
-            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG.
-                       Output image can be saved whether show is True or not.
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
             figsize: Figure size.
             dpi: Dots per inches.
@@ -1864,7 +1861,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args=dict(phi=0)
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
@@ -1934,7 +1931,6 @@ class CompositionalModel2(ABC):
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
             show_scale: Include the scale legend in the tree image or not.
-            file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
             figsize: Figure size.
             dpi: Dots per inches.
@@ -1954,7 +1950,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args=dict(phi=0)
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
@@ -2151,7 +2147,7 @@ class CompositionalModel2(ABC):
             >>>     modality_key="coda",
             >>>     reference_cell_type="18",
             >>>     formula="condition",
-            >>>     pen_args={"phi": 0, "lambda_1": 3.5},
+            >>>     pen_args=dict(phi=0, lambda_1=3.5),
             >>>     tree_key="tree"
             >>> )
             >>> tasccoda_model.run_nuts(
