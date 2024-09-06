@@ -532,7 +532,7 @@ class MethodBase(ABC):
         save: str | bool = False,
         return_fig: bool = False,
     ) -> Figure | None:
-        """Creates a pairwise expression plot from a pandas DataFrame or Anndata.
+        """Creates a pairwise expression plot from a Pandas DataFrame or Anndata.
 
         Visualizes a panel of paired scatterplots per variable.
 
