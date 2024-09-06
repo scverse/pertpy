@@ -534,7 +534,7 @@ class MethodBase(ABC):
     ) -> Figure | None:
         """Creates a pairwise expression plot from a pandas DataFrame or Anndata.
 
-        Makes on panel with a paired scatterplot for each variable.
+        Visualizes a panel of paired scatterplots per variable.
 
         Args:
             adata: AnnData object, can be pseudobulked.
