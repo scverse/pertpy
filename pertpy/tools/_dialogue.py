@@ -25,7 +25,7 @@ from sklearn.linear_model import LinearRegression
 from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 from statsmodels.sandbox.stats.multicomp import multipletests
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes

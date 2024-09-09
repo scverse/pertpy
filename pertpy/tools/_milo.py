@@ -13,7 +13,7 @@ from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

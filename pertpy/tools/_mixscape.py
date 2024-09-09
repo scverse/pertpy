@@ -18,7 +18,7 @@ from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 import pertpy as pt
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -16,7 +16,7 @@ import pandas as pd
 from scanpy import settings
 from scipy import stats
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp

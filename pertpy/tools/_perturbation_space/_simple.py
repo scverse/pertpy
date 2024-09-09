@@ -8,7 +8,7 @@ import numpy as np
 from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 

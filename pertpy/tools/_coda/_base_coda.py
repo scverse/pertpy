@@ -26,7 +26,7 @@ from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -36,7 +36,7 @@ from sklearn.preprocessing import LabelEncoder
 from skmisc.loess import loess
 from statsmodels.stats.multitest import fdrcorrection
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes

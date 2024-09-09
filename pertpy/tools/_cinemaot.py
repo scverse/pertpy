@@ -18,7 +18,7 @@ from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from anndata import AnnData

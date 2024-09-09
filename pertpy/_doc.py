@@ -1,20 +1,4 @@
-from pathlib import Path
 from textwrap import dedent
-
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import Figure
-
-
-def return_fig_or_show(
-    show: bool,
-    return_fig: bool = False,
-) -> Figure | None:
-    plt.tight_layout()
-    if show:
-        plt.show()
-    if return_fig:
-        return plt.gcf()
-    return None
 
 
 def _doc_params(**kwds):  # pragma: no cover

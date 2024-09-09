@@ -15,7 +15,7 @@ from scipy.sparse import issparse
 from scipy.stats import hypergeom
 from statsmodels.stats.multitest import multipletests
 
-from pertpy._utils import _doc_params, doc_common_plot_args
+from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.metadata import Drug
 
 
