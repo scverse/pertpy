@@ -742,7 +742,6 @@ class MethodBase(ABC):
         self,
         results_df: pd.DataFrame,
         *,
-        pairedby: str = None,  # TODO: Discuss how to include
         var_names: Sequence[str] = None,
         n_top_vars: int = 15,
         y_label: str = "Log2 fold change",
