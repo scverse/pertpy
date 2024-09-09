@@ -5,30 +5,13 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import Figure
 
 
-def savefig_or_show(
-    writekey: str,
+def return_fig_or_show(
     show: bool,
-    save: bool | str,
     return_fig: bool = False,
-    dpi: int = 150,
-    ext: str = "png",
 ) -> Figure | None:
-    if isinstance(save, str):
-        for try_ext in [".svg", ".pdf", ".png"]:
-            if save.endswith(try_ext):
-                ext = try_ext[1:]
-                save = save.replace(try_ext, "")
-                break
-        writekey += f"_{save}"
-        save = True
-
-    if save:
-        Path.mkdir(Path("figures"), exist_ok=True)
-        plt.savefig(f"figures/{writekey}.{ext}", dpi=dpi, bbox_inches="tight")
+    plt.tight_layout()
     if show:
         plt.show()
-    if save:
-        plt.close()  # clear figure
     if return_fig:
         return plt.gcf()
     return None
@@ -49,6 +32,5 @@ def _doc_params(**kwds):  # pragma: no cover
 
 doc_common_plot_args = """\
 show: if `True`, shows the plot.
-            save: if `True` or a `str`, save the figure. A string is appended to the default filename. Infer the filetype if ending on {`.pdf`, `.png`, `.svg`}.
             return_fig: if `True`, returns figure of the plot.\
 """

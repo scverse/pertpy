@@ -18,7 +18,7 @@ from scvi.data.fields import CategoricalObsField, LayerField
 from scvi.model.base import BaseModelClass, JaxTrainingMixin
 from scvi.utils import setup_anndata_dsp
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 from ._scgenvae import JaxSCGENVAE
 from ._utils import balancer, extractor
@@ -411,7 +411,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             x_coeff: Offset to print the R^2 value in x-direction.
             y_coeff: Offset to print the R^2 value in y-direction.
             fontsize: Fontsize used for text in the plot.
-            show: if `True`: will show to the plot after saving it.
+            show: if `True`, will show to the plot after saving it.
             save: Specify if the plot should be saved or not.
             **kwargs:
 
@@ -551,7 +551,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             x_coeff: Offset to print the R^2 value in x-direction.
             y_coeff: Offset to print the R^2 value in y-direction.
             fontsize: Fontsize used for text in the plot.
-            show: if `True`: will show to the plot after saving it.
+            show: if `True`, will show to the plot after saving it.
             save: Specify if the plot should be saved or not.
         """
         import seaborn as sns
@@ -652,7 +652,6 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         stim_key: str,
         fontsize: float = 14,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> plt.Axes | None:
         """Plots the dot product between delta and latent representation of a linear classifier.
@@ -700,7 +699,11 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax = plt.gca()
         ax.grid(False)
 
-        return savefig_or_show("scgen_binary_classifier", save=save, show=show, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
 
 # compatibility

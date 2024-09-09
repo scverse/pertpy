@@ -13,7 +13,7 @@ from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -727,10 +727,9 @@ class Milo:
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Figure | None:
         """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding)
 
         Args:
@@ -800,7 +799,6 @@ class Milo:
             palette=palette,
             ax=ax,
             show=False,
-            save=save,
             **kwargs,
         )
 
@@ -808,6 +806,7 @@ class Milo:
             plt.show()
         if return_fig:
             return fig
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_nhood(
@@ -820,7 +819,6 @@ class Milo:
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -863,13 +861,14 @@ class Milo:
             return_fig=return_fig,
             ax=ax,
             show=False,
-            save=save,
             **kwargs,
         )
 
         if show:
             plt.show()
-        return fig if return_fig else None
+        if return_fig:
+            return fig
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_da_beeswarm(
@@ -881,7 +880,6 @@ class Milo:
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> Figure | Axes | None:
         """Plot beeswarm plot of logFC against nhood labels
@@ -990,7 +988,11 @@ class Milo:
         plt.legend(loc="upper left", title=f"< {int(alpha * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
-        return savefig_or_show("da_beeswarm", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_nhood_counts_by_cond(
@@ -1000,7 +1002,6 @@ class Milo:
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> Figure | Axes | None:
         """Plot boxplot of cell numbers vs condition of interest.
@@ -1039,4 +1040,8 @@ class Milo:
         plt.xticks(rotation=90)
         plt.xlabel(test_var)
 
-        return savefig_or_show("nhood_counts_by_cond", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None

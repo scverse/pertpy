@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import decoupler as dc
+import matplotlib.pyplot as plt
 import numpy as np
 from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
 
@@ -180,7 +181,6 @@ class PseudobulkSpace(PerturbationSpace):
         adata: AnnData,
         groupby: str,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -210,8 +210,9 @@ class PseudobulkSpace(PerturbationSpace):
             .. image:: /_static/docstring_previews/pseudobulk_samples.png
         """
         fig = dc.plot_psbulk_samples(adata, groupby, return_fig=True, **kwargs)
-        savefig_or_show("pseudobulk_samples", show=show, save=save, return_fig=False)
 
+        if show:
+            plt.show()
         if return_fig:
             return fig
         return None

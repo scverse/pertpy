@@ -19,7 +19,7 @@ from lamin_utils import logger
 from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
 from pertpy.tools._differential_gene_expression._formulaic import (
@@ -147,7 +147,6 @@ class MethodBase(ABC):
         x_label: str | None = None,
         y_label: str | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs: int,
     ) -> Figure | None:
@@ -506,7 +505,11 @@ class MethodBase(ABC):
 
         plt.legend(loc=1, bbox_to_anchor=legend_pos, frameon=False)
 
-        return savefig_or_show("volcano_de", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_paired(
@@ -529,7 +532,6 @@ class MethodBase(ABC):
         boxplot_properties=None,
         palette=None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> Figure | None:
         """Creates a pairwise expression plot from a Pandas DataFrame or Anndata.
@@ -729,7 +731,11 @@ class MethodBase(ABC):
             axes[n_panels - 1].legend().set_visible(True)
             axes[n_panels - 1].legend(bbox_to_anchor=(1.1, 1.05))
 
-        return savefig_or_show("paired_expression", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_fold_change(
@@ -742,7 +748,6 @@ class MethodBase(ABC):
         y_label: str = "Log2 fold change",
         figsize: tuple[int, int] = (10, 5),
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **barplot_kwargs,
     ) -> Figure | None:
@@ -821,7 +826,11 @@ class MethodBase(ABC):
         plt.xlabel("")
         plt.ylabel(y_label)
 
-        return savefig_or_show("paired_fc", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_multicomparison_fc(
@@ -838,7 +847,6 @@ class MethodBase(ABC):
         x_label: str = "Contrast",
         y_label: str = "Gene",
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **heatmap_kwargs,
     ) -> Figure | None:
@@ -936,7 +944,11 @@ class MethodBase(ABC):
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
-        return savefig_or_show("multicomparison_fc", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
 
 class LinearModelBase(MethodBase):

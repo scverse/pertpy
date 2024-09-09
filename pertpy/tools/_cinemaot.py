@@ -18,7 +18,7 @@ from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -658,7 +658,6 @@ class Cinemaot:
         min_val: float = 0.01,
         ax: Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -714,7 +713,8 @@ class Cinemaot:
         g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
 
-        savefig_or_show("matching_heatmap", show=show, save=save, return_fig=False)
+        if show:
+            plt.show()
         if return_fig:
             if ax is not None:
                 return ax

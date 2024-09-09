@@ -25,7 +25,7 @@ from sklearn.linear_model import LinearRegression
 from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 from statsmodels.sandbox.stats.multicomp import multipletests
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -1070,7 +1070,6 @@ class Dialogue:
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> Axes | Figure | None:
         """Plots split violin plots for a given MCP and split variable.
@@ -1108,10 +1107,13 @@ class Dialogue:
         df[split_key] = df[split_key].cat.remove_unused_categories()
 
         ax = sns.violinplot(data=df, x=celltype_key, y=mcp, hue=split_key, split=True)
-
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 
-        return savefig_or_show("dialogue_violin", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_pairplot(
@@ -1122,7 +1124,6 @@ class Dialogue:
         sample_id: str,
         mcp: str = "mcp_0",
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> PairGrid | Figure | None:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
@@ -1164,4 +1165,8 @@ class Dialogue:
         mcp_pivot = pd.concat([mcp_pivot, aggstats[color]], axis=1)
         sns.pairplot(mcp_pivot, hue=color, corner=True)
 
-        return savefig_or_show("dialogue_pairplot", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None

@@ -304,7 +304,6 @@ class Enrichment:
         key: str = "pertpy_enrichment",
         ax: Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
     ) -> DotPlot | None:
@@ -412,7 +411,6 @@ class Enrichment:
             groupby=groupby,
             swap_axes=True,
             ax=ax,
-            save=save,
             show=False,
             **plot_args,
             **kwargs,

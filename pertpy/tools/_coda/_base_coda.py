@@ -26,7 +26,7 @@ from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -1199,7 +1199,6 @@ class CompositionalModel2(ABC):
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> plt.Axes | Figure | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
@@ -1278,7 +1277,11 @@ class CompositionalModel2(ABC):
                 show_legend=show_legend,
             )
 
-        return savefig_or_show("coda_stacked_barplot", show=show, save=save, return_fig=return_fig, dpi=dpi)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_effects_barplot(  # pragma: no cover
@@ -1296,7 +1299,6 @@ class CompositionalModel2(ABC):
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
         """Barplot visualization for effects.
@@ -1432,8 +1434,6 @@ class CompositionalModel2(ABC):
                         if ax.get_xticklabels()[0]._text == "zero":
                             ax.set_xticks([])
 
-            return savefig_or_show("coda_effects_barplot", show=show, save=save, return_fig=return_fig, dpi=dpi)
-
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
@@ -1465,7 +1465,11 @@ class CompositionalModel2(ABC):
             cell_types = pd.unique(plot_df["Cell Type"])
             ax.set_xticklabels(cell_types, rotation=90)
 
-            return savefig_or_show("coda_effects_barplot", show=show, save=save, return_fig=return_fig, dpi=dpi)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_boxplots(  # pragma: no cover
@@ -1485,7 +1489,6 @@ class CompositionalModel2(ABC):
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
         """Grouped boxplot visualization.
@@ -1631,8 +1634,6 @@ class CompositionalModel2(ABC):
                         **args_swarmplot,
                     ).set_titles("{col_name}")
 
-            return savefig_or_show("coda_boxplots", show=show, save=save, return_fig=return_fig, dpi=dpi)
-
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
         else:
             if level_order:
@@ -1696,7 +1697,11 @@ class CompositionalModel2(ABC):
                     title=feature_name,
                 )
 
-            return savefig_or_show("coda_boxplots", show=show, save=save, return_fig=return_fig, dpi=dpi)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
@@ -1711,7 +1716,6 @@ class CompositionalModel2(ABC):
         dpi: int | None = 100,
         ax: plt.Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> plt.Axes | plt.Figure | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
@@ -1815,9 +1819,11 @@ class CompositionalModel2(ABC):
 
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1, title="Is abundant")
 
-        return savefig_or_show(
-            "coda_rel_abundance_dispersion_plot", show=show, save=save, return_fig=return_fig, dpi=dpi
-        )
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_draw_tree(  # pragma: no cover
@@ -1830,8 +1836,8 @@ class CompositionalModel2(ABC):
         units: Literal["px", "mm", "in"] | None = "px",
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
-        show: bool = True,
         save: str | bool = False,
+        show: bool = True,
         return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree using input ete3 tree object.
@@ -1846,6 +1852,7 @@ class CompositionalModel2(ABC):
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
             figsize: Figure size.
             dpi: Dots per inches.
+            save: Save the tree plot to a file. You can specify the file name here.
             {common_plot_args}
 
         Returns:
@@ -1914,8 +1921,8 @@ class CompositionalModel2(ABC):
         units: Literal["px", "mm", "in"] | None = "px",
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
-        show: bool = True,
         save: str | bool = False,
+        show: bool = True,
         return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
@@ -1934,6 +1941,7 @@ class CompositionalModel2(ABC):
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
             figsize: Figure size.
             dpi: Dots per inches.
+            save: Save the tree plot to a file. You can specify the file name here.
             {common_plot_args}
 
         Returns:
@@ -2104,7 +2112,6 @@ class CompositionalModel2(ABC):
         palette: str | Sequence[str] | None = None,
         ax: Axes = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
     ) -> plt.Axes | plt.Figure | None:
@@ -2195,7 +2202,6 @@ class CompositionalModel2(ABC):
             return_fig=return_fig,
             ax=ax,
             show=False,
-            save=save,
             **kwargs,
         )
 

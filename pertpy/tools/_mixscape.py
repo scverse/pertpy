@@ -18,7 +18,7 @@ from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 import pertpy as pt
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -521,7 +521,6 @@ class Mixscape:
         legend_text_size: int = 8,
         ax: Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ):
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
@@ -566,33 +565,31 @@ class Mixscape:
         all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
         NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
 
-        if show:
-            color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
-            unique_genes = NP_KO_cells["gene"].unique()
-            fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
-            for i, gene in enumerate(unique_genes):
-                ax = axs[int(i / 5), i % 5]
-                grouped_df = (
-                    NP_KO_cells[NP_KO_cells["gene"] == gene]
-                    .groupby(["guide_number", "mixscape_class_global"], observed=False)["value"]
-                    .sum()
-                    .unstack()
-                )
-                grouped_df.plot(
-                    kind="bar",
-                    stacked=True,
-                    color=[color_mapping[col] for col in grouped_df.columns],
-                    ax=ax,
-                    width=0.8,
-                    legend=False,
-                )
-                ax.set_title(
-                    gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size
-                )
-                ax.set(xlabel="sgRNA", ylabel="% of cells")
-                sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
-                ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
-                ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
+        color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
+        unique_genes = NP_KO_cells["gene"].unique()
+        fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
+        for i, gene in enumerate(unique_genes):
+            ax = axs[int(i / 5), i % 5]
+            grouped_df = (
+                NP_KO_cells[NP_KO_cells["gene"] == gene]
+                .groupby(["guide_number", "mixscape_class_global"], observed=False)["value"]
+                .sum()
+                .unstack()
+            )
+            grouped_df.plot(
+                kind="bar",
+                stacked=True,
+                color=[color_mapping[col] for col in grouped_df.columns],
+                ax=ax,
+                width=0.8,
+                legend=False,
+            )
+            ax.set_title(gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size)
+            ax.set(xlabel="sgRNA", ylabel="% of cells")
+            sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
+            ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
+
             fig.subplots_adjust(right=0.8)
             fig.subplots_adjust(hspace=0.5, wspace=0.5)
             ax.legend(
@@ -604,8 +601,11 @@ class Mixscape:
                 title_fontsize=legend_title_size,
             )
 
-        plt.tight_layout()
-        return savefig_or_show("mixscape_barplot", show=show, save=save, return_fig=return_fig)
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_heatmap(  # pragma: no cover
@@ -620,7 +620,6 @@ class Mixscape:
         vmin: float | None = -2,
         vmax: float | None = 2,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwds,
     ) -> Axes | None:
@@ -670,7 +669,6 @@ class Mixscape:
             n_genes=20,
             groups=["NT"],
             show=False,
-            save=save,
             **kwds,
         )
 
@@ -693,7 +691,6 @@ class Mixscape:
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
     ) -> Figure | None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
@@ -786,7 +783,11 @@ class Mixscape:
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            return savefig_or_show("mixscape_perturbscore", show=show, save=save, return_fig=return_fig)
+            if show:
+                plt.show()
+            if return_fig:
+                return plt.gcf()
+            return None
 
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
@@ -844,7 +845,11 @@ class Mixscape:
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            return savefig_or_show("mixscape_perturbscore", show=show, save=save, return_fig=return_fig)
+            if show:
+                plt.show()
+            if return_fig:
+                return plt.gcf()
+            return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_violin(  # pragma: no cover
@@ -868,7 +873,6 @@ class Mixscape:
         rotation: float | None = None,
         ax: Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
     ) -> Axes | None:
@@ -1040,8 +1044,8 @@ class Mixscape:
         if hue is not None and stripplot is True:
             plt.legend(handles, labels)
 
-        savefig_or_show("mixscape_violin", show=show, save=save, return_fig=False)
-
+        if show:
+            plt.show()
         if return_fig:
             if multi_panel and groupby is None and len(ys) == 1:
                 return g
@@ -1065,10 +1069,9 @@ class Mixscape:
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwds,
-    ) -> None:
+    ) -> Figure | None:
         """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
@@ -1114,7 +1117,6 @@ class Mixscape:
             color_map=color_map,
             return_fig=return_fig,
             show=False,
-            save=save,
             ax=ax,
             **kwds,
         )
@@ -1123,3 +1125,4 @@ class Mixscape:
             plt.show()
         if return_fig:
             return fig
+        return None

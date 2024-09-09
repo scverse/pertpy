@@ -9,7 +9,7 @@ import pandas as pd
 import scanpy as sc
 import scipy
 
-from pertpy._utils import _doc_params, doc_common_plot_args, savefig_or_show
+from pertpy._utils import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -117,7 +117,6 @@ class GuideAssignment:
         order_by: np.ndarray | str | None = None,
         key_to_save_order: str = None,
         show: bool = True,
-        save: str | bool = False,
         return_fig: bool = False,
         **kwargs,
     ) -> list[Axes]:
@@ -188,7 +187,6 @@ class GuideAssignment:
                 use_raw=False,
                 dendrogram=False,
                 layer=layer,
-                save=save,
                 show=False,
                 **kwargs,
             )
