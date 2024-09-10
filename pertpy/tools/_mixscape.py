@@ -513,16 +513,16 @@ class Mixscape:
         self,
         adata: AnnData,
         guide_rna_column: str,
+        *,
         mixscape_class_global: str = "mixscape_class_global",
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
-        ax: Axes | None = None,
         show: bool = True,
         return_fig: bool = False,
-    ):
+    ) -> Figure | None:
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
 
         Args:
@@ -614,6 +614,7 @@ class Mixscape:
         labels: str,
         target_gene: str,
         control: str,
+        *,
         layer: str | None = None,
         method: str | None = "wilcoxon",
         subsample_number: int | None = 900,
@@ -622,7 +623,7 @@ class Mixscape:
         show: bool = True,
         return_fig: bool = False,
         **kwds,
-    ) -> Axes | None:
+    ) -> Figure | None:
         """Heatmap plot using mixscape results. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
@@ -639,7 +640,7 @@ class Mixscape:
             **kwds: Additional arguments to `scanpy.pl.rank_genes_groups_heatmap`.
 
         Returns:
-            If `return_fig` is `True`, return a :class:`~matplotlib.axes.Axes`.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -684,6 +685,7 @@ class Mixscape:
         adata: AnnData,
         labels: str,
         target_gene: str,
+        *,
         mixscape_class: str = "mixscape_class",
         color: str = "orange",
         palette: dict[str, str] = None,
@@ -856,6 +858,7 @@ class Mixscape:
         self,
         adata: AnnData,
         target_gene_idents: str | list[str],
+        *,
         keys: str | Sequence[str] = "mixscape_class_p_ko",
         groupby: str | None = "mixscape_class",
         log: bool = False,
@@ -875,7 +878,7 @@ class Mixscape:
         show: bool = True,
         return_fig: bool = False,
         **kwargs,
-    ) -> Axes | None:
+    ) -> Axes | Figure | None:
         """Violin plot using mixscape results.
 
         Requires `pt.tl.mixscape` to be run first.
@@ -897,7 +900,7 @@ class Mixscape:
             **kwargs: Additional arguments to `seaborn.violinplot`.
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object if `ax` is `None` else `None`.
+            If `return_fig` is `True`, returns the figure (as Axes list if it's a multi-panel plot), otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1060,6 +1063,7 @@ class Mixscape:
         self,
         adata: AnnData,
         control: str,
+        *,
         mixscape_class: str = "mixscape_class",
         mixscape_class_global: str = "mixscape_class_global",
         perturbation_type: str | None = "KO",

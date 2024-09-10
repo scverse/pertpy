@@ -180,6 +180,7 @@ class PseudobulkSpace(PerturbationSpace):
         self,
         adata: AnnData,
         groupby: str,
+        *,
         show: bool = True,
         return_fig: bool = False,
         **kwargs,

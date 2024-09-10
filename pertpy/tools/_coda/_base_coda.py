@@ -1192,6 +1192,7 @@ class CompositionalModel2(ABC):
         self,
         data: AnnData | MuData,
         feature_name: str,
+        *,
         modality_key: str = "coda",
         palette: ListedColormap | None = cm.tab20,
         show_legend: bool | None = True,
@@ -1200,7 +1201,7 @@ class CompositionalModel2(ABC):
         dpi: int | None = 100,
         show: bool = True,
         return_fig: bool = False,
-    ) -> plt.Axes | Figure | None:
+    ) -> Figure | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
         Args:
@@ -1287,6 +1288,7 @@ class CompositionalModel2(ABC):
     def plot_effects_barplot(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         covariates: str | list | None = None,
         parameter: Literal["log2-fold change", "Final Parameter", "Expected Sample"] = "log2-fold change",
@@ -1300,7 +1302,7 @@ class CompositionalModel2(ABC):
         dpi: int | None = 100,
         show: bool = True,
         return_fig: bool = False,
-    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
+    ) -> Figure | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1322,8 +1324,7 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
-            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1476,6 +1477,7 @@ class CompositionalModel2(ABC):
         self,
         data: AnnData | MuData,
         feature_name: str,
+        *,
         modality_key: str = "coda",
         y_scale: Literal["relative", "log", "log10", "count"] = "relative",
         plot_facets: bool = False,
@@ -1490,7 +1492,7 @@ class CompositionalModel2(ABC):
         dpi: int | None = 100,
         show: bool = True,
         return_fig: bool = False,
-    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
+    ) -> Figure | None:
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
@@ -1515,8 +1517,7 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
-            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1707,6 +1708,7 @@ class CompositionalModel2(ABC):
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         abundant_threshold: float | None = 0.9,
         default_color: str | None = "Grey",
@@ -1717,7 +1719,7 @@ class CompositionalModel2(ABC):
         ax: plt.Axes | None = None,
         show: bool = True,
         return_fig: bool = False,
-    ) -> plt.Axes | plt.Figure | None:
+    ) -> Figure | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
 
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
@@ -1735,7 +1737,7 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1829,6 +1831,7 @@ class CompositionalModel2(ABC):
     def plot_draw_tree(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         tight_text: bool | None = False,
@@ -1912,6 +1915,7 @@ class CompositionalModel2(ABC):
         self,
         data: AnnData | MuData,
         covariate: str,
+        *,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         show_legend: bool | None = None,
@@ -2106,6 +2110,7 @@ class CompositionalModel2(ABC):
         mdata: MuData,
         effect_name: str | list | None,
         cluster_key: str,
+        *,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
@@ -2114,7 +2119,7 @@ class CompositionalModel2(ABC):
         show: bool = True,
         return_fig: bool = False,
         **kwargs,
-    ) -> plt.Axes | plt.Figure | None:
+    ) -> Figure | None:
         """Plot a UMAP visualization colored by effect strength.
 
         Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData
@@ -2134,7 +2139,7 @@ class CompositionalModel2(ABC):
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
 
         Returns:
-            If `return_fig==True` a :class:`~matplotlib.axes.Axes` or a list of it.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt

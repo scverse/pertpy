@@ -529,7 +529,7 @@ class MethodBase(ABC):
         show_legend: bool = True,
         size: int = 10,
         y_label: str = "expression",
-        pvalue_template=lambda x: f"unadj. p={x:.2e}, t-test",
+        pvalue_template=lambda x: f"p={x:.2e}",
         boxplot_properties=None,
         palette=None,
         show: bool = True,
@@ -594,7 +594,7 @@ class MethodBase(ABC):
             raise ValueError("The number of groups in the group_by column must be exactly 2 to enable paired testing")
 
         if var_names is None:
-            var_names = results_df.sort_values(pvalue_col, ascending=True).head(n_top_vars)[symbol_col].tolist()
+            var_names = results_df.head(n_top_vars)[symbol_col].tolist()
 
         adata = adata[:, var_names]
 

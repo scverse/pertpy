@@ -296,6 +296,7 @@ class Enrichment:
     def plot_dotplot(
         self,
         adata: AnnData,
+        *,
         targets: dict[str, dict[str, list[str]]] = None,
         source: Literal["chembl", "dgidb", "pharmgkb"] = "chembl",
         category_name: str = "interaction_type",
@@ -426,6 +427,7 @@ class Enrichment:
         self,
         adata: AnnData,
         enrichment: dict[str, pd.DataFrame],
+        *,
         n: int = 10,
         key: str = "pertpy_enrichment_gsea",
         interactive_plot: bool = False,

@@ -13,7 +13,7 @@ from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from anndata import AnnData
-    from matplotlib.axes import Axes
+    from matplotlib.pyplot import Figure
 
 
 class GuideAssignment:
@@ -113,13 +113,14 @@ class GuideAssignment:
     def plot_heatmap(
         self,
         adata: AnnData,
+        *,
         layer: str | None = None,
         order_by: np.ndarray | str | None = None,
         key_to_save_order: str = None,
         show: bool = True,
         return_fig: bool = False,
         **kwargs,
-    ) -> list[Axes]:
+    ) -> Figure | None:
         """Heatmap plotting of guide RNA expression matrix.
 
         Assuming guides have sparse expression, this function reorders cells
@@ -141,8 +142,8 @@ class GuideAssignment:
             kwargs: Are passed to sc.pl.heatmap.
 
         Returns:
-            If return_fig is True, returns a list of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
-            Order of cells in the y-axis will be saved on adata.obs[key_to_save_order] if provided.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+            Order of cells in the y-axis will be saved on `adata.obs[key_to_save_order]` if provided.
 
         Examples:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell, which is then
@@ -179,7 +180,7 @@ class GuideAssignment:
             adata.obs[key_to_save_order] = pd.Categorical(order)
 
         try:
-            axis_group = sc.pl.heatmap(
+            fig = sc.pl.heatmap(
                 adata[order, :],
                 var_names=adata.var.index.tolist(),
                 groupby=temp_col_name,
@@ -196,5 +197,5 @@ class GuideAssignment:
         if show:
             plt.show()
         if return_fig:
-            return axis_group
+            return fig
         return None

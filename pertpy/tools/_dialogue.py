@@ -1067,11 +1067,12 @@ class Dialogue:
         adata: AnnData,
         split_key: str,
         celltype_key: str,
+        *,
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
         show: bool = True,
         return_fig: bool = False,
-    ) -> Axes | Figure | None:
+    ) -> Figure | None:
         """Plots split violin plots for a given MCP and split variable.
 
         Any cells with a value for split_key not in split_which are removed from the plot.
@@ -1122,10 +1123,11 @@ class Dialogue:
         celltype_key: str,
         color: str,
         sample_id: str,
+        *,
         mcp: str = "mcp_0",
         show: bool = True,
         return_fig: bool = False,
-    ) -> PairGrid | Figure | None:
+    ) -> Figure | None:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,

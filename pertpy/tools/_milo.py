@@ -718,6 +718,7 @@ class Milo:
     def plot_nhood_graph(
         self,
         mdata: MuData,
+        *,
         alpha: float = 0.1,
         min_logFC: float = 0,
         min_size: int = 10,
@@ -813,6 +814,7 @@ class Milo:
         self,
         mdata: MuData,
         ix: int,
+        *,
         feature_key: str | None = "rna",
         basis: str = "X_umap",
         color_map: Colormap | str | None = None,
@@ -874,6 +876,7 @@ class Milo:
     def plot_da_beeswarm(
         self,
         mdata: MuData,
+        *,
         feature_key: str | None = "rna",
         anno_col: str = "nhood_annotation",
         alpha: float = 0.1,
@@ -881,7 +884,7 @@ class Milo:
         palette: str | Sequence[str] | dict[str, str] | None = None,
         show: bool = True,
         return_fig: bool = False,
-    ) -> Figure | Axes | None:
+    ) -> Figure | None:
         """Plot beeswarm plot of logFC against nhood labels
 
         Args:
@@ -893,6 +896,9 @@ class Milo:
             palette: Name of Seaborn color palette for violinplots.
                      Defaults to pre-defined category colors for violinplots.
             {common_plot_args}
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -999,11 +1005,12 @@ class Milo:
         self,
         mdata: MuData,
         test_var: str,
+        *,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
         show: bool = True,
         return_fig: bool = False,
-    ) -> Figure | Axes | None:
+    ) -> Figure | None:
         """Plot boxplot of cell numbers vs condition of interest.
 
         Args:
@@ -1012,6 +1019,9 @@ class Milo:
             subset_nhoods: List of obs_names for neighbourhoods to include in plot. If None, plot all nhoods.
             log_counts: Whether to plot log1p of cell counts.
             {common_plot_args}
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
         """
         try:
             nhood_adata = mdata["milo"].T.copy()

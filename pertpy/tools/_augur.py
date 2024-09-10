@@ -979,6 +979,7 @@ class Augur:
     def plot_dp_scatter(
         self,
         results: pd.DataFrame,
+        *,
         top_n: int = None,
         ax: Axes = None,
         show: bool = True,
@@ -1050,6 +1051,7 @@ class Augur:
     def plot_important_features(
         self,
         data: dict[str, Any],
+        *,
         key: str = "augurpy_results",
         top_n: int = 10,
         ax: Axes = None,
@@ -1117,11 +1119,12 @@ class Augur:
     def plot_lollipop(
         self,
         data: dict[str, Any] | AnnData,
+        *,
         key: str = "augurpy_results",
         ax: Axes = None,
         show: bool = True,
         return_fig: bool = False,
-    ) -> Axes | Figure | None:
+    ) -> Figure | None:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
@@ -1180,6 +1183,7 @@ class Augur:
         self,
         results1: dict[str, Any],
         results2: dict[str, Any],
+        *,
         top_n: int = None,
         show: bool = True,
         return_fig: bool = False,

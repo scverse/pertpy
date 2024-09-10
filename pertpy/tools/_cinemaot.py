@@ -651,6 +651,7 @@ class Cinemaot:
         control: str,
         de_label: str,
         source_label: str,
+        *,
         matching_rep: str = "ot",
         resolution: float = 0.5,
         normalize: str = "col",
@@ -676,6 +677,9 @@ class Cinemaot:
             min_val: The min value to truncate the matching matrix.
             {common_plot_args}
             **kwargs: Other parameters to input for seaborn.heatmap.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -716,10 +720,7 @@ class Cinemaot:
         if show:
             plt.show()
         if return_fig:
-            if ax is not None:
-                return ax
-            else:
-                return g
+            return g
         return None
 
 

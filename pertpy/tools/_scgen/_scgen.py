@@ -381,6 +381,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         condition_key: str,
         axis_keys: dict[str, str],
         labels: dict[str, str],
+        *,
         gene_list: list[str] = None,
         top_100_genes: list[str] = None,
         verbose: bool = False,
@@ -521,6 +522,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         condition_key: str,
         axis_keys: dict[str, str],
         labels: dict[str, str],
+        *,
         gene_list: list[str] = None,
         top_100_genes: list[str] = None,
         legend: bool = True,
@@ -650,10 +652,11 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         delta: np.ndarray,
         ctrl_key: str,
         stim_key: str,
+        *,
         fontsize: float = 14,
         show: bool = True,
         return_fig: bool = False,
-    ) -> plt.Axes | None:
+    ) -> Figure | None:
         """Plots the dot product between delta and latent representation of a linear classifier.
 
         Builds a linear classifier based on the dot product between
@@ -670,6 +673,9 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             stim_key: Key for `stimulated` part of the `data` found in `condition_key`.
             fontsize: Set the font size of the plot.
             {common_plot_args}
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
         """
         plt.close("all")
         adata = scgen._validate_anndata(adata)
