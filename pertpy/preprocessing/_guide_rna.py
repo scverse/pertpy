@@ -3,14 +3,17 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
 
+from pertpy._doc import _doc_params, doc_common_plot_args
+
 if TYPE_CHECKING:
     from anndata import AnnData
-    from matplotlib.axes import Axes
+    from matplotlib.pyplot import Figure
 
 
 class GuideAssignment:
@@ -106,14 +109,18 @@ class GuideAssignment:
 
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_heatmap(
         self,
         adata: AnnData,
+        *,
         layer: str | None = None,
         order_by: np.ndarray | str | None = None,
         key_to_save_order: str = None,
+        show: bool = True,
+        return_fig: bool = False,
         **kwargs,
-    ) -> list[Axes]:
+    ) -> Figure | None:
         """Heatmap plotting of guide RNA expression matrix.
 
         Assuming guides have sparse expression, this function reorders cells
@@ -131,11 +138,12 @@ class GuideAssignment:
                       If a string is provided, adata.obs[order_by] will be used as the order.
                       If a numpy array is provided, the array will be used for ordering.
             key_to_save_order: The obs key to save cell orders in the current plot. Only saves if not None.
+            {common_plot_args}
             kwargs: Are passed to sc.pl.heatmap.
 
         Returns:
-            List of Axes. Alternatively you can pass save or show parameters as they will be passed to sc.pl.heatmap.
-            Order of cells in the y-axis will be saved on adata.obs[key_to_save_order] if provided.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+            Order of cells in the y-axis will be saved on `adata.obs[key_to_save_order]` if provided.
 
         Examples:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell, which is then
@@ -172,7 +180,7 @@ class GuideAssignment:
             adata.obs[key_to_save_order] = pd.Categorical(order)
 
         try:
-            axis_group = sc.pl.heatmap(
+            fig = sc.pl.heatmap(
                 adata[order, :],
                 var_names=adata.var.index.tolist(),
                 groupby=temp_col_name,
@@ -180,9 +188,14 @@ class GuideAssignment:
                 use_raw=False,
                 dendrogram=False,
                 layer=layer,
+                show=False,
                 **kwargs,
             )
         finally:
             del adata.obs[temp_col_name]
 
-        return axis_group
+        if show:
+            plt.show()
+        if return_fig:
+            return fig
+        return None

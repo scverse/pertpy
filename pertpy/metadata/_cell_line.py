@@ -8,12 +8,15 @@ from lamin_utils import logger
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from matplotlib.pyplot import Figure
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scanpy import settings
 from scipy import stats
 
+from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
@@ -690,6 +693,7 @@ class CellLine(MetaData):
 
         return corr, pvals, new_corr, new_pvals
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_correlation(
         self,
         adata: AnnData,
@@ -700,7 +704,9 @@ class CellLine(MetaData):
         metadata_key: str = "bulk_rna_broad",
         category: str = "cell line",
         subset_identifier: str | int | Iterable[str] | Iterable[int] | None = None,
-    ) -> None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Visualise the correlation of cell lines with annotated metadata.
 
         Args:
@@ -713,6 +719,8 @@ class CellLine(MetaData):
             subset_identifier: Selected identifiers for scatter plot visualization between the X matrix and `metadata_key`.
                               If not None, only the chosen cell line will be plotted, either specified as a value in `identifier` (string) or as an index number.
                               If None, all cell lines will be plotted.
+            {common_plot_args}
+
         Returns:
             Pearson correlation coefficients and their corresponding p-values for matched and unmatched cell lines separately.
         """
@@ -790,6 +798,11 @@ class CellLine(MetaData):
                     "edgecolor": "black",
                 },
             )
-            plt.show()
+
+            if show:
+                plt.show()
+            if return_fig:
+                return plt.gcf()
+            return None
         else:
             raise NotImplementedError

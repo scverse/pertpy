@@ -25,6 +25,8 @@ from sklearn.linear_model import LinearRegression
 from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 from statsmodels.sandbox.stats.multicomp import multipletests
 
+from pertpy._doc import _doc_params, doc_common_plot_args
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
@@ -1059,18 +1061,18 @@ class Dialogue:
 
         return rank_dfs
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_split_violins(
         self,
         adata: AnnData,
         split_key: str,
         celltype_key: str,
+        *,
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
-        return_fig: bool | None = None,
-        ax: Axes | None = None,
-        save: bool | str | None = None,
-        show: bool | None = None,
-    ) -> Axes | Figure | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plots split violin plots for a given MCP and split variable.
 
         Any cells with a value for split_key not in split_which are removed from the plot.
@@ -1081,9 +1083,10 @@ class Dialogue:
             celltype_key: Key for cell type annotations.
             split_which: Which values of split_key to plot. Required if more than 2 values in split_key.
             mcp: Key for MCP data.
+            {common_plot_args}
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1105,30 +1108,26 @@ class Dialogue:
         df[split_key] = df[split_key].cat.remove_unused_categories()
 
         ax = sns.violinplot(data=df, x=celltype_key, y=mcp, hue=split_key, split=True)
-
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_pairplot(
         self,
         adata: AnnData,
         celltype_key: str,
         color: str,
         sample_id: str,
+        *,
         mcp: str = "mcp_0",
-        return_fig: bool | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
-    ) -> PairGrid | Figure | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,
@@ -1140,9 +1139,10 @@ class Dialogue:
             color: Key in `adata.obs` for color annotations. This parameter is used as the hue
             sample_id: Key in `adata.obs` for the sample annotations.
             mcp: Key in `adata.obs` for MCP feature values.
+            {common_plot_args}
 
         Returns:
-            Seaborn Pairgrid object.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1165,14 +1165,10 @@ class Dialogue:
         aggstats = aggstats.loc[list(mcp_pivot.index), :]
         aggstats[color] = aggstats["top"]
         mcp_pivot = pd.concat([mcp_pivot, aggstats[color]], axis=1)
-        ax = sns.pairplot(mcp_pivot, hue=color, corner=True)
+        sns.pairplot(mcp_pivot, hue=color, corner=True)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None

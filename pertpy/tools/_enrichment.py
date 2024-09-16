@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import Any, Literal
 
 import blitzgsea
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -14,6 +15,7 @@ from scipy.sparse import issparse
 from scipy.stats import hypergeom
 from statsmodels.stats.multitest import multipletests
 
+from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.metadata import Drug
 
 
@@ -290,9 +292,11 @@ class Enrichment:
 
         return enrichment
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_dotplot(
         self,
         adata: AnnData,
+        *,
         targets: dict[str, dict[str, list[str]]] = None,
         source: Literal["chembl", "dgidb", "pharmgkb"] = "chembl",
         category_name: str = "interaction_type",
@@ -300,10 +304,10 @@ class Enrichment:
         groupby: str = None,
         key: str = "pertpy_enrichment",
         ax: Axes | None = None,
-        save: bool | str | None = None,
-        show: bool | None = None,
+        show: bool = True,
+        return_fig: bool = False,
         **kwargs,
-    ) -> DotPlot | dict | None:
+    ) -> DotPlot | None:
         """Plots a dotplot by groupby and categories.
 
         Wraps scanpy's dotplot but formats it nicely by categories.
@@ -319,11 +323,11 @@ class Enrichment:
             category_name: The name of category used to generate a nested drug target set when `targets=None` and `source=dgidb|pharmgkb`.
             groupby: dotplot groupby such as clusters or cell types.
             key: Prefix key of enrichment results in `uns`.
+            {common_plot_args}
             kwargs: Passed to scanpy dotplot.
 
         Returns:
-            If `return_fig` is `True`, returns a :class:`~scanpy.pl.DotPlot` object,
-            else if `show` is false, return axes dict.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -403,21 +407,27 @@ class Enrichment:
             "var_group_labels": var_group_labels,
         }
 
-        return sc.pl.dotplot(
+        fig = sc.pl.dotplot(
             enrichment_score_adata,
             groupby=groupby,
             swap_axes=True,
             ax=ax,
-            save=save,
-            show=show,
+            show=False,
             **plot_args,
             **kwargs,
         )
+
+        if show:
+            plt.show()
+        if return_fig:
+            return fig
+        return None
 
     def plot_gsea(
         self,
         adata: AnnData,
         enrichment: dict[str, pd.DataFrame],
+        *,
         n: int = 10,
         key: str = "pertpy_enrichment_gsea",
         interactive_plot: bool = False,

@@ -1,7 +1,9 @@
+import math
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
-from itertools import chain
+from itertools import chain, zip_longest
 from types import MappingProxyType
 
 import adjustText
@@ -10,9 +12,15 @@ import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy
 import seaborn as sns
+import statsmodels
+from lamin_utils import logger
+from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
 
+from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
 from pertpy.tools._differential_gene_expression._formulaic import (
     AmbiguousAttributeError,
@@ -91,9 +99,28 @@ class MethodBase(ABC):
 
         Returns:
             Pandas dataframe with results ordered by significance. If multiple comparisons were performed this is indicated in an additional column.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
         """
         ...
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_volcano(
         self,
         data: pd.DataFrame | ad.AnnData,
@@ -115,13 +142,14 @@ class MethodBase(ABC):
         figsize: tuple[int, int] = (5, 5),
         legend_pos: tuple[float, float] = (1.6, 1),
         point_sizes: tuple[int, int] = (15, 150),
-        save: bool | str | None = None,
         shapes: list[str] | None = None,
         shape_order: list[str] | None = None,
         x_label: str | None = None,
         y_label: str | None = None,
+        show: bool = True,
+        return_fig: bool = False,
         **kwargs: int,
-    ) -> None:
+    ) -> Figure | None:
         """Creates a volcano plot from a pandas DataFrame or Anndata.
 
         Args:
@@ -143,12 +171,40 @@ class MethodBase(ABC):
             top_right_frame: Whether to show the top and right frame of the plot.
             figsize: Size of the figure.
             legend_pos: Position of the legend as determined by matplotlib.
-            save: Saves the plot if True or to the path provided.
             shapes: List of matplotlib marker ids.
             shape_order: Order of categories for shapes.
             x_label: Label for the x-axis.
             y_label: Label for the y-axis.
+            {common_plot_args}
             **kwargs: Additional arguments for seaborn.scatterplot.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_volcano(res_df, log2fc_thresh=0)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_volcano.png
         """
         if colors is None:
             colors = ["gray", "#D62728", "#1F77B4"]
@@ -243,7 +299,7 @@ class MethodBase(ABC):
             if varm_key is None:
                 raise ValueError("Please pass a .varm key to use for plotting")
 
-            raise NotImplementedError("Anndata not implemented yet")
+            raise NotImplementedError("Anndata not implemented yet")  # TODO: Implement this
             df = data.varm[varm_key].copy()
 
         df = data.copy(deep=True)
@@ -449,20 +505,407 @@ class MethodBase(ABC):
 
         plt.legend(loc=1, bbox_to_anchor=legend_pos, frameon=False)
 
-        # TODO replace with scanpy save style
-        if save:
-            files = os.listdir()
-            for x in range(100):
-                file_pref = "volcano_" + "%02d" % (x,)
-                if len([x for x in files if x.startswith(file_pref)]) == 0:
-                    plt.savefig(file_pref + ".png", dpi=300, bbox_inches="tight")
-                    plt.savefig(file_pref + ".svg", bbox_inches="tight")
-                    break
-        elif isinstance(save, str):
-            plt.savefig(save + ".png", dpi=300, bbox_inches="tight")
-            plt.savefig(save + ".svg", bbox_inches="tight")
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
-        plt.show()
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_paired(
+        self,
+        adata: ad.AnnData,
+        results_df: pd.DataFrame,
+        groupby: str,
+        pairedby: str,
+        *,
+        var_names: Sequence[str] = None,
+        n_top_vars: int = 15,
+        layer: str = None,
+        pvalue_col: str = "adj_p_value",
+        symbol_col: str = "variable",
+        n_cols: int = 4,
+        panel_size: tuple[int, int] = (5, 5),
+        show_legend: bool = True,
+        size: int = 10,
+        y_label: str = "expression",
+        pvalue_template=lambda x: f"p={x:.2e}",
+        boxplot_properties=None,
+        palette=None,
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
+        """Creates a pairwise expression plot from a Pandas DataFrame or Anndata.
+
+        Visualizes a panel of paired scatterplots per variable.
+
+        Args:
+            adata: AnnData object, can be pseudobulked.
+            results_df: DataFrame with results from a differential expression test.
+            groupby: .obs column containing the grouping. Must contain exactly two different values.
+            pairedby: .obs column containing the pairing (e.g. "patient_id"). If None, an independent t-test is performed.
+            var_names: Variables to plot.
+            n_top_vars: Number of top variables to plot.
+            layer: Layer to use for plotting.
+            pvalue_col: Column name of the p values.
+            symbol_col: Column name of gene IDs.
+            n_cols: Number of columns in the plot.
+            panel_size: Size of each panel.
+            show_legend: Whether to show the legend.
+            size: Size of the points.
+            y_label: Label for the y-axis.
+            pvalue_template: Template for the p-value string displayed in the title of each panel.
+            boxplot_properties: Additional properties for the boxplot, passed to seaborn.boxplot.
+            palette: Color palette for the line- and stripplot.
+            {common_plot_args}
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_paired(pdata, results_df=res_df, n_top_vars=8, groupby="Treatment", pairedby="Efficacy")
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_paired_expression.png
+        """
+        if boxplot_properties is None:
+            boxplot_properties = {}
+        groups = adata.obs[groupby].unique()
+        if len(groups) != 2:
+            raise ValueError("The number of groups in the group_by column must be exactly 2 to enable paired testing")
+
+        if var_names is None:
+            var_names = results_df.head(n_top_vars)[symbol_col].tolist()
+
+        adata = adata[:, var_names]
+
+        if any(adata.obs[[groupby, pairedby]].value_counts() > 1):
+            logger.info("Performing pseudobulk for paired samples")
+            ps = PseudobulkSpace()
+            adata = ps.compute(
+                adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum", min_cells=1, min_counts=1
+            )
+
+        if layer is not None:
+            X = adata.layers[layer]
+        else:
+            X = adata.X
+        try:
+            X = X.toarray()
+        except AttributeError:
+            pass
+
+        groupby_cols = [pairedby, groupby]
+        df = adata.obs.loc[:, groupby_cols].join(pd.DataFrame(X, index=adata.obs_names, columns=var_names))
+
+        # remove unpaired samples
+        paired_samples = set(df[df[groupby] == groups[0]][pairedby]) & set(df[df[groupby] == groups[1]][pairedby])
+        df = df[df[pairedby].isin(paired_samples)]
+        removed_samples = adata.obs[pairedby].nunique() - len(df[pairedby].unique())
+        if removed_samples > 0:
+            logger.warning(f"{removed_samples} unpaired samples removed")
+
+        pvalues = results_df.set_index(symbol_col).loc[var_names, pvalue_col].values
+        df.reset_index(drop=False, inplace=True)
+
+        # transform data for seaborn
+        df_melt = df.melt(
+            id_vars=groupby_cols,
+            var_name="var",
+            value_name="val",
+        )
+
+        n_panels = len(var_names)
+        nrows = math.ceil(n_panels / n_cols)
+        ncols = min(n_cols, n_panels)
+
+        fig, axes = plt.subplots(
+            nrows,
+            ncols,
+            figsize=(ncols * panel_size[0], nrows * panel_size[1]),
+            tight_layout=True,
+            squeeze=False,
+        )
+        axes = axes.flatten()
+        for i, (var, ax) in enumerate(zip_longest(var_names, axes)):
+            if var is not None:
+                sns.boxplot(
+                    x=groupby,
+                    data=df_melt.loc[df_melt["var"] == var],
+                    y="val",
+                    ax=ax,
+                    color="white",
+                    fliersize=0,
+                    **boxplot_properties,
+                )
+                if pairedby is not None:
+                    sns.lineplot(
+                        x=groupby,
+                        data=df_melt.loc[df_melt["var"] == var],
+                        y="val",
+                        ax=ax,
+                        hue=pairedby,
+                        legend=False,
+                        errorbar=None,
+                        palette=palette,
+                    )
+                jitter = 0 if pairedby else True
+                sns.stripplot(
+                    x=groupby,
+                    data=df_melt.loc[df_melt["var"] == var],
+                    y="val",
+                    ax=ax,
+                    hue=pairedby,
+                    jitter=jitter,
+                    size=size,
+                    linewidth=1,
+                    palette=palette,
+                )
+
+                ax.set_xlabel("")
+                ax.tick_params(
+                    axis="x",
+                    labelsize=15,
+                )
+                ax.legend().set_visible(False)
+                ax.set_ylabel(y_label)
+                ax.set_title(f"{var}\n{pvalue_template(pvalues[i])}")
+            else:
+                ax.set_visible(False)
+        fig.tight_layout()
+
+        if show_legend is True:
+            axes[n_panels - 1].legend().set_visible(True)
+            axes[n_panels - 1].legend(
+                bbox_to_anchor=(0.5, -0.1), loc="upper center", ncol=adata.obs[pairedby].nunique()
+            )
+
+        plt.tight_layout()
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_fold_change(
+        self,
+        results_df: pd.DataFrame,
+        *,
+        var_names: Sequence[str] = None,
+        n_top_vars: int = 15,
+        log2fc_col: str = "log_fc",
+        symbol_col: str = "variable",
+        y_label: str = "Log2 fold change",
+        figsize: tuple[int, int] = (10, 5),
+        show: bool = True,
+        return_fig: bool = False,
+        **barplot_kwargs,
+    ) -> Figure | None:
+        """Plot a metric from the results as a bar chart, optionally with additional information about paired samples in a scatter plot.
+
+        Args:
+            results_df: DataFrame with results from DE analysis.
+            var_names: Variables to plot. If None, the top n_top_vars variables based on the log2 fold change are plotted.
+            n_top_vars: Number of top variables to plot. The top and bottom n_top_vars variables are plotted, respectively.
+            log2fc_col: Column name of log2 Fold-Change values.
+            symbol_col: Column name of gene IDs.
+            y_label: Label for the y-axis.
+            figsize: Size of the figure.
+            {common_plot_args}
+            **barplot_kwargs: Additional arguments for seaborn.barplot.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_fold_change(res_df)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_fold_change.png
+        """
+        if var_names is None:
+            var_names = results_df.sort_values(log2fc_col, ascending=False).head(n_top_vars)[symbol_col].tolist()
+            var_names += results_df.sort_values(log2fc_col, ascending=True).head(n_top_vars)[symbol_col].tolist()
+            assert len(var_names) == 2 * n_top_vars
+
+        df = results_df[results_df[symbol_col].isin(var_names)]
+        df.sort_values(log2fc_col, ascending=False, inplace=True)
+
+        plt.figure(figsize=figsize)
+        sns.barplot(
+            x=symbol_col,
+            y=log2fc_col,
+            data=df,
+            palette="RdBu",
+            legend=False,
+            **barplot_kwargs,
+        )
+        plt.xticks(rotation=90)
+        plt.xlabel("")
+        plt.ylabel(y_label)
+
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_multicomparison_fc(
+        self,
+        results_df: pd.DataFrame,
+        *,
+        n_top_vars=15,
+        contrast_col: str = "contrast",
+        log2fc_col: str = "log_fc",
+        pvalue_col: str = "adj_p_value",
+        symbol_col: str = "variable",
+        marker_size: int = 100,
+        figsize: tuple[int, int] = (10, 2),
+        x_label: str = "Contrast",
+        y_label: str = "Gene",
+        show: bool = True,
+        return_fig: bool = False,
+        **heatmap_kwargs,
+    ) -> Figure | None:
+        """Plot a matrix of log2 fold changes from the results.
+
+        Args:
+            results_df: DataFrame with results from DE analysis.
+            n_top_vars: Number of top variables to plot per group.
+            contrast_col: Column in results_df containing information about the contrast.
+            log2fc_col: Column in results_df containing the log2 fold change.
+            pvalue_col: Column in results_df containing the p-value. Can be used to switch between adjusted and unadjusted p-values.
+            symbol_col: Column in results_df containing the gene symbol.
+            marker_size: Size of the biggest marker for significant variables.
+            figsize: Size of the figure.
+            x_label: Label for the x-axis.
+            y_label: Label for the y-axis.
+            {common_plot_args}
+            **heatmap_kwargs: Additional arguments for seaborn.heatmap.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(
+            ...     adata,
+            ...     target_col="Patient",
+            ...     groups_col="Cluster",
+            ...     layer_key="counts",
+            ...     mode="sum",
+            ...     min_cells=10,
+            ...     min_counts=1000,
+            ... )
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
+            >>> edgr.plot_multicomparison_fc(res_df)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_multicomparison_fc.png
+        """
+        groups = results_df[contrast_col].unique().tolist()
+
+        results_df["abs_log_fc"] = results_df[log2fc_col].abs()
+
+        def _get_significance(p_val):
+            if p_val < 0.001:
+                return "< 0.001"
+            elif p_val < 0.01:
+                return "< 0.01"
+            elif p_val < 0.1:
+                return "< 0.1"
+            else:
+                return "n.s."
+
+        results_df["significance"] = results_df[pvalue_col].apply(_get_significance)
+
+        var_names = []
+        for group in groups:
+            var_names += (
+                results_df[results_df[contrast_col] == group]
+                .sort_values("abs_log_fc", ascending=False)
+                .head(n_top_vars)[symbol_col]
+                .tolist()
+            )
+
+        results_df = results_df[results_df[symbol_col].isin(var_names)]
+        df = results_df.pivot(index=contrast_col, columns=symbol_col, values=log2fc_col)[var_names]
+
+        plt.figure(figsize=figsize)
+        sns.heatmap(df, **heatmap_kwargs, cmap="coolwarm", center=0, cbar_kws={"label": "Log2 fold change"})
+
+        _size = {"< 0.001": marker_size, "< 0.01": math.floor(marker_size / 2), "< 0.1": math.floor(marker_size / 4)}
+        x_locs, x_labels = plt.xticks()[0], [label.get_text() for label in plt.xticks()[1]]
+        y_locs, y_labels = plt.yticks()[0], [label.get_text() for label in plt.yticks()[1]]
+
+        for _i, row in results_df.iterrows():
+            if row["significance"] != "n.s.":
+                plt.scatter(
+                    x=x_locs[x_labels.index(row[symbol_col])],
+                    y=y_locs[y_labels.index(row[contrast_col])],
+                    s=_size[row["significance"]],
+                    marker="*",
+                    c="white",
+                )
+
+        plt.scatter([], [], s=marker_size, marker="*", c="black", label="< 0.001")
+        plt.scatter([], [], s=math.floor(marker_size / 2), marker="*", c="black", label="< 0.01")
+        plt.scatter([], [], s=math.floor(marker_size / 4), marker="*", c="black", label="< 0.1")
+        plt.legend(title="Significance", bbox_to_anchor=(1.2, -0.05))
+
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
 
 class LinearModelBase(MethodBase):
@@ -583,9 +1026,10 @@ class LinearModelBase(MethodBase):
             modelB: the reduced model against which to test.
 
         Example:
-            modelA = Model().fit()
-            modelB = Model().fit()
-            modelA.test_reduced(modelB)
+            >>> import pertpy as pt
+            >>> modelA = Model().fit()
+            >>> modelB = Model().fit()
+            >>> modelA.test_reduced(modelB)
         """
         raise NotImplementedError
 

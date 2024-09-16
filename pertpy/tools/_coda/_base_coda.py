@@ -26,6 +26,8 @@ from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
 
+from pertpy._doc import _doc_params, doc_common_plot_args
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -1023,7 +1025,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi" : 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> node_effects = tasccoda.get_node_df(mdata)
@@ -1185,22 +1187,21 @@ class CompositionalModel2(ABC):
 
         return ax
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_stacked_barplot(  # pragma: no cover
         self,
         data: AnnData | MuData,
         feature_name: str,
+        *,
         modality_key: str = "coda",
         palette: ListedColormap | None = cm.tab20,
         show_legend: bool | None = True,
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
-        ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-        **kwargs,
-    ) -> plt.Axes | plt.Figure | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
         Args:
@@ -1212,9 +1213,10 @@ class CompositionalModel2(ABC):
             palette: The matplotlib color map for the barplot.
             show_legend: If True, adds a legend.
             level_order: Custom ordering of bars on the x-axis.
+            {common_plot_args}
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1239,7 +1241,7 @@ class CompositionalModel2(ABC):
             if level_order:
                 assert set(level_order) == set(data.obs.index), "level order is inconsistent with levels"
                 data = data[level_order]
-            ax = self._stackbar(
+            self._stackbar(
                 data.X,
                 type_names=data.var.index,
                 title="samples",
@@ -1265,7 +1267,7 @@ class CompositionalModel2(ABC):
                 l_indices = np.where(data.obs[feature_name] == levels[level])
                 feature_totals[level] = np.sum(data.X[l_indices], axis=0)
 
-            ax = self._stackbar(
+            self._stackbar(
                 feature_totals,
                 type_names=ct_names,
                 title=feature_name,
@@ -1276,19 +1278,17 @@ class CompositionalModel2(ABC):
                 show_legend=show_legend,
             )
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_effects_barplot(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         covariates: str | list | None = None,
         parameter: Literal["log2-fold change", "Final Parameter", "Expected Sample"] = "log2-fold change",
@@ -1300,11 +1300,9 @@ class CompositionalModel2(ABC):
         args_barplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
-        ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1323,10 +1321,10 @@ class CompositionalModel2(ABC):
             palette: The seaborn color map for the barplot.
             level_order: Custom ordering of bars on the x-axis.
             args_barplot: Arguments passed to sns.barplot.
+            {common_plot_args}
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
-            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1437,16 +1435,6 @@ class CompositionalModel2(ABC):
                         if ax.get_xticklabels()[0]._text == "zero":
                             ax.set_xticks([])
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return g
-            return None
-
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
@@ -1478,20 +1466,18 @@ class CompositionalModel2(ABC):
             cell_types = pd.unique(plot_df["Cell Type"])
             ax.set_xticklabels(cell_types, rotation=90)
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return ax
-            return None
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_boxplots(  # pragma: no cover
         self,
         data: AnnData | MuData,
         feature_name: str,
+        *,
         modality_key: str = "coda",
         y_scale: Literal["relative", "log", "log10", "count"] = "relative",
         plot_facets: bool = False,
@@ -1504,11 +1490,9 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
-        ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
@@ -1530,10 +1514,10 @@ class CompositionalModel2(ABC):
             palette: The seaborn color map for the barplot.
             show_legend: If True, adds a legend.
             level_order: Custom ordering of bars on the x-axis.
+            {common_plot_args}
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
-            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1651,16 +1635,6 @@ class CompositionalModel2(ABC):
                         **args_swarmplot,
                     ).set_titles("{col_name}")
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return g
-            return None
-
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
         else:
             if level_order:
@@ -1724,19 +1698,17 @@ class CompositionalModel2(ABC):
                     title=feature_name,
                 )
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return ax
-            return None
+        if show:
+            plt.show()
+        if return_fig:
+            return plt.gcf()
+        return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         abundant_threshold: float | None = 0.9,
         default_color: str | None = "Grey",
@@ -1744,11 +1716,10 @@ class CompositionalModel2(ABC):
         label_cell_types: bool = True,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> plt.Axes | plt.Figure | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
 
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
@@ -1763,9 +1734,10 @@ class CompositionalModel2(ABC):
             figsize: Figure size.
             dpi: Dpi setting.
             ax: A matplotlib axes object. Only works if plotting a single component.
+            {common_plot_args}
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1849,19 +1821,17 @@ class CompositionalModel2(ABC):
 
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1, title="Is abundant")
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_draw_tree(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         tight_text: bool | None = False,
@@ -1869,8 +1839,9 @@ class CompositionalModel2(ABC):
         units: Literal["px", "mm", "in"] | None = "px",
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
-        show: bool | None = True,
-        save: str | bool | None = None,
+        save: str | bool = False,
+        show: bool = True,
+        return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree using input ete3 tree object.
 
@@ -1881,12 +1852,11 @@ class CompositionalModel2(ABC):
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
             show_scale: Include the scale legend in the tree image or not.
-            show: If True, plot the tree inline. If false, return tree and tree_style objects.
-            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG.
-                       Output image can be saved whether show is True or not.
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
             figsize: Figure size.
             dpi: Dots per inches.
+            save: Save the tree plot to a file. You can specify the file name here.
+            {common_plot_args}
 
         Returns:
             Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
@@ -1901,7 +1871,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args=dict(phi=0)
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
@@ -1936,13 +1906,16 @@ class CompositionalModel2(ABC):
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if show:
             return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
-        else:
+        if return_fig:
             return tree, tree_style
+        return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_draw_effects(  # pragma: no cover
         self,
         data: AnnData | MuData,
         covariate: str,
+        *,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete3.Tree. Omitted due to import errors
         show_legend: bool | None = None,
@@ -1952,8 +1925,9 @@ class CompositionalModel2(ABC):
         units: Literal["px", "mm", "in"] | None = "px",
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
-        show: bool | None = True,
-        save: str | None = None,
+        save: str | bool = False,
+        show: bool = True,
+        return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
@@ -1968,15 +1942,15 @@ class CompositionalModel2(ABC):
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
             show_scale: Include the scale legend in the tree image or not.
-            show: If True, plot the tree inline. If false, return tree and tree_style objects.
-            file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
             units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
             figsize: Figure size.
             dpi: Dots per inches.
+            save: Save the tree plot to a file. You can specify the file name here.
+            {common_plot_args}
 
         Returns:
-            Depending on `show`, returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`show = False`)
-            or  plot the tree inline (`show = False`)
+            Returns :class:`ete3.TreeNode` and :class:`ete3.TreeStyle` (`return_fig = False`)
+            or plot the tree inline (`show = True`)
 
         Examples:
             >>> import pertpy as pt
@@ -1988,7 +1962,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args=dict(phi=0)
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
@@ -2117,52 +2091,55 @@ class CompositionalModel2(ABC):
             plt.xlim(-leaf_eff_max, leaf_eff_max)
             plt.subplots_adjust(wspace=0)
 
-            if save is not None:
+            if save:
                 plt.savefig(save)
 
-        if save is not None and not show_leaf_effects:
+        if save and not show_leaf_effects:
             tree2.render(save, tree_style=tree_style, units=units)
         if show:
             if not show_leaf_effects:
                 return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
-        else:
+        if return_fig:
             if not show_leaf_effects:
                 return tree2, tree_style
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_effects_umap(  # pragma: no cover
         self,
         mdata: MuData,
         effect_name: str | list | None,
         cluster_key: str,
+        *,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool = None,
-        save: str | bool | None = None,
+        show: bool = True,
+        return_fig: bool = False,
         **kwargs,
-    ) -> plt.Axes | plt.Figure | None:
+    ) -> Figure | None:
         """Plot a UMAP visualization colored by effect strength.
 
         Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData
         (default is data['rna']) depending on the cluster they were assigned to.
 
         Args:
-            mudata: MuData object.
+            mdata: MuData object.
             effect_name: The name of the effect results in .varm of aggregated sample-level AnnData to plot
             cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']).
                          To assign cell types' effects to original cells.
             modality_key_1: Key to the cell-level AnnData in the MuData object.
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
-            show: Whether to display the figure or return axis.
+            color_map: The color map to use for plotting.
+            palette: The color palette to use for plotting.
             ax: A matplotlib axes object. Only works if plotting a single component.
+            {common_plot_args}
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
 
         Returns:
-            If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -2182,7 +2159,7 @@ class CompositionalModel2(ABC):
             >>>     modality_key="coda",
             >>>     reference_cell_type="18",
             >>>     formula="condition",
-            >>>     pen_args={"phi": 0, "lambda_1": 3.5},
+            >>>     pen_args=dict(phi=0, lambda_1=3.5),
             >>>     tree_key="tree"
             >>> )
             >>> tasccoda_model.run_nuts(
@@ -2220,7 +2197,7 @@ class CompositionalModel2(ABC):
         else:
             vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
 
-        return sc.pl.umap(
+        fig = sc.pl.umap(
             data_rna,
             color=effect_name,
             vmax=vmax,
@@ -2229,10 +2206,15 @@ class CompositionalModel2(ABC):
             color_map=color_map,
             return_fig=return_fig,
             ax=ax,
-            show=show,
-            save=save,
+            show=False,
             **kwargs,
         )
+
+        if show:
+            plt.show()
+        if return_fig:
+            return fig
+        return None
 
 
 def get_a(

@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
-from scanpy import logging
+from lamin_utils import logger
 from scipy.sparse import issparse
 
 from ._base import LinearModelBase
@@ -60,13 +60,13 @@ class EdgeR(LinearModelBase):
 
         dge = edger.DGEList(counts=expr_r, samples=self.adata.obs)
 
-        logging.info("Calculating NormFactors")
+        logger.info("Calculating NormFactors")
         dge = edger.calcNormFactors(dge)
 
-        logging.info("Estimating Dispersions")
+        logger.info("Estimating Dispersions")
         dge = edger.estimateDisp(dge, design=self.design)
 
-        logging.info("Fitting linear model")
+        logger.info("Fitting linear model")
         fit = edger.glmQLFit(dge, design=self.design, **kwargs)
 
         ro.globalenv["fit"] = fit

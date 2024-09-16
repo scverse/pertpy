@@ -41,7 +41,7 @@ class PerturbationSpace:
         Args:
             adata: Anndata object of size cells x genes.
             target_col: .obs column name that stores the label of the perturbation applied to each cell.
-            group_col: .obs column name that stores the label of the group of eah cell. If None, ignore groups.
+            group_col: .obs column name that stores the label of the group of each cell. If None, ignore groups.
             reference_key: The key of the control values.
             layer_key: Key of the AnnData layer to use for computation.
             new_layer_key: the results are stored in the given layer.

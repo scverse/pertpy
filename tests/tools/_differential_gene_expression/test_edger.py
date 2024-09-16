@@ -6,7 +6,7 @@ def test_edger_simple(test_adata):
 
     1. Initialized
     2. Fitted
-    3. and that test_contrast returns a DataFrame with the correct number of rows.
+    3. That test_contrast returns a DataFrame with the correct number of rows
     """
     method = EdgeR(adata=test_adata, design="~condition")
     method.fit()

@@ -15,7 +15,6 @@ import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
 from lamin_utils import logger
-from rich import print
 from rich.progress import track
 from scipy import sparse, stats
 from sklearn.base import is_classifier, is_regressor
@@ -36,6 +35,8 @@ from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
 from skmisc.loess import loess
 from statsmodels.stats.multitest import fdrcorrection
+
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -974,24 +975,26 @@ class Augur:
 
         return delta
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_dp_scatter(
         self,
         results: pd.DataFrame,
+        *,
         top_n: int = None,
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | Figure | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plot scatterplot of differential prioritization.
 
         Args:
             results: Results after running differential prioritization.
             top_n: optionally, the number of top prioritized cell types to label in the plot
             ax: optionally, axes used to draw plot
+            {common_plot_args}
 
         Returns:
-            Axes of the plot.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1038,37 +1041,34 @@ class Augur:
         legend1 = ax.legend(*scatter.legend_elements(), loc="center left", title="z-scores", bbox_to_anchor=(1, 0.5))
         ax.add_artist(legend1)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_important_features(
         self,
         data: dict[str, Any],
+        *,
         key: str = "augurpy_results",
         top_n: int = 10,
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plot a lollipop plot of the n features with largest feature importances.
 
         Args:
-            results: results after running `predict()` as dictionary or the AnnData object.
+            data: results after running `predict()` as dictionary or the AnnData object.
             key: Key in the AnnData object of the results
             top_n: n number feature importance values to plot. Default is 10.
             ax: optionally, axes used to draw plot
-            return_figure: if `True` returns figure of the plot, default is `False`
+            {common_plot_args}
 
         Returns:
-            Axes of the plot.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1109,35 +1109,32 @@ class Augur:
         plt.ylabel("Gene")
         plt.yticks(y_axes_range, n_features["genes"])
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_lollipop(
         self,
-        data: dict[str, Any],
+        data: dict[str, Any] | AnnData,
+        *,
         key: str = "augurpy_results",
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | Figure | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
-            results: results after running `predict()` as dictionary or the AnnData object.
-            key: Key in the AnnData object of the results
-            ax: optionally, axes used to draw plot
-            return_figure: if `True` returns figure of the plot
+            data: results after running `predict()` as dictionary or the AnnData object.
+            key: .uns key in the results AnnData object.
+            ax: optionally, axes used to draw plot.
+            {common_plot_args}
 
         Returns:
-            Axes of the plot.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1175,32 +1172,29 @@ class Augur:
         plt.ylabel("Cell Type")
         plt.yticks(y_axes_range, results["summary_metrics"].sort_values("mean_augur_score", axis=1).columns)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_scatterplot(
         self,
         results1: dict[str, Any],
         results2: dict[str, Any],
+        *,
         top_n: int = None,
-        return_fig: bool | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | Figure | None:
+        show: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Create scatterplot with two augur results.
 
         Args:
             results1: results after running `predict()`
             results2: results after running `predict()`
             top_n: optionally, the number of top prioritized cell types to label in the plot
-            return_figure: if `True` returns figure of the plot
+            {common_plot_args}
 
         Returns:
             Axes of the plot.
@@ -1249,12 +1243,8 @@ class Augur:
         plt.xlabel("Augur scores 1")
         plt.ylabel("Augur scores 2")
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
         return None
