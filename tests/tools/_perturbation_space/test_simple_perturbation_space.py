@@ -246,3 +246,8 @@ def test_label_transfer():
     ps = pt.tl.PseudobulkSpace()
     ps.label_transfer(adata, n_neighbors=5, use_rep="X_umap")
     assert "unknown" not in adata.obs["perturbation"]
+    assert all(adata.obs["perturbation_transfer_certainty"] >= 0)
+    assert all(adata.obs["perturbation_transfer_certainty"] <= 1)
+    assert not all(adata.obs["perturbation_transfer_certainty"] == 1)
+    is_known = adata.obs["perturbation"] != "unknown"
+    assert all(adata.loc[is_known, "perturbation_transfer_certainty"] == 1)

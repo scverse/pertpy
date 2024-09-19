@@ -364,6 +364,7 @@ class PerturbationSpace:
         self,
         adata: AnnData,
         column: str = "perturbation",
+        column_certainty_score: str = "perturbation_transfer_certainty",
         target_val: str = "unknown",
         n_neighbors: int = 5,
         use_rep: str = "X_umap",
@@ -373,6 +374,7 @@ class PerturbationSpace:
         Args:
             adata: The AnnData object containing single-cell data.
             column: The column name in AnnData object to perform imputation on.
+            column_certainty_score: The column name in AnnData object to store the certainty score of the label transfer.
             target_val: The target value to impute.
             n_neighbors: Number of neighbors to use for imputation.
             use_rep: The key in `adata.obsm` where the embedding (UMAP, PCA, etc.) is stored.
@@ -402,6 +404,7 @@ class PerturbationSpace:
         indices, _ = nnd.query(embedding, k=n_neighbors)
 
         perturbations = np.array(adata.obs[column])
+        certainty = np.ones(adata.n_obs)
         missing_mask = perturbations == target_val
 
         for idx in np.where(missing_mask)[0]:
@@ -409,5 +412,8 @@ class PerturbationSpace:
             neighbor_categories = perturbations[neighbor_indices]
             most_common = pd.Series(neighbor_categories).mode()[0]
             perturbations[idx] = most_common
+            fraction_most_common = np.mean(neighbor_categories == most_common)
+            certainty[idx] = fraction_most_common
 
         adata.obs[column] = perturbations
+        adata.obs[column_certainty_score] = certainty
