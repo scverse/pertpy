@@ -520,6 +520,7 @@ class Mixscape:
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
+        legend_bbox_to_anchor: tuple[float, float] = None,
         show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
@@ -530,6 +531,12 @@ class Mixscape:
             guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels.
                               The format must be <gene_target>g<#>. Examples are 'STAT2g1' and 'ATF2g1'.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
+            axis_text_x_size: Size of the x-axis text.
+            axis_text_y_size: Size of the y-axis text.
+            axis_title_size: Size of the axis title.
+            legend_title_size: Size of the legend title.
+            legend_text_size: Size of the legend text.
+            legend_bbox_to_anchor: The bbox that the legend will be anchored.
             {common_plot_args}
 
         Returns:
@@ -593,9 +600,9 @@ class Mixscape:
             fig.subplots_adjust(right=0.8)
             fig.subplots_adjust(hspace=0.5, wspace=0.5)
             ax.legend(
-                title="mixscape_class_global",
+                title="Mixscape Class",
                 loc="center right",
-                bbox_to_anchor=(2.2, 3.5),
+                bbox_to_anchor=legend_bbox_to_anchor,
                 frameon=True,
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
