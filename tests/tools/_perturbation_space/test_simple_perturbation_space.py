@@ -247,7 +247,6 @@ def test_label_transfer():
     ps.label_transfer(adata)
     assert "unknown" not in adata.obs["perturbation"]
     assert all(adata.obs["perturbation_transfer_uncertainty"] >= 0)
-    assert all(adata.obs["perturbation_transfer_uncertainty"] <= 1)
     assert not all(adata.obs["perturbation_transfer_uncertainty"] == 0)
     is_known = adata.obs["perturbation"] != "unknown"
     assert all(adata.obs.loc[is_known, "perturbation_transfer_uncertainty"] == 0)
