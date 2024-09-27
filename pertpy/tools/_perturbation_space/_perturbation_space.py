@@ -374,7 +374,7 @@ class PerturbationSpace:
         Args:
             adata: The AnnData object containing single-cell data.
             column: The column name in adata.obs to perform imputation on.
-            column_certainty_score: The column name in adata.obs to store the certainty score of the label transfer.
+            column_uncertainty_score_key: The column name in adata.obs to store the uncertainty score of the label transfer.
             target_val: The target value to impute.
             neighbors_key: The key in adata.uns where the neighbors are stored.
 
@@ -398,7 +398,6 @@ class PerturbationSpace:
         labels = adata.obs[column].astype(str)
         target_cells = labels == target_val
 
-        # get neighbor graph from adata
         connectivities = adata.obsp[adata.uns[neighbors_key]["connectivities_key"]]
         # convert labels to an incidence matrix
         one_hot_encoded_labels = adata.obs[column].astype(str).str.get_dummies()
@@ -410,8 +409,6 @@ class PerturbationSpace:
         )
         # choose best label for each target cell
         best_labels = weighted_label_occurence.drop(target_val, axis=1)[target_cells].idxmax(axis=1)
-
-        # apply imputation
         adata.obs[column] = labels
         adata.obs.loc[target_cells, column] = best_labels
 
