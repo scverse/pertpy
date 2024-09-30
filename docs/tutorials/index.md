@@ -35,6 +35,17 @@ For questions about the usage of pertpy use the [scverse discourse](https://disc
    notebooks/ontology_mapping
 ```
 
+## Use cases
+Our use cases showcase a variety of pertpy tools applied to one dataset.
+
+```{eval-rst}
+.. nbgallery::
+
+   notebooks/norman_use_case
+   notebooks/mcfarland_use_case
+   notebooks/zhang_use_case
+```
+
 ### Glossary
 
 ```{eval-rst}
