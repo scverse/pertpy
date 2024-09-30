@@ -246,6 +246,7 @@ def test_label_transfer():
         ps.label_transfer(adata)
 
     sc.pp.neighbors(adata, use_rep="X")
+    sc.tl.umap(adata)
     ps = pt.tl.PseudobulkSpace()
     ps.label_transfer(adata)
     assert "unknown" not in adata.obs["perturbation"]
