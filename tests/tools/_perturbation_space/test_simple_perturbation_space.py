@@ -240,9 +240,17 @@ def test_label_transfer():
     adata = AnnData(X)
     perturbations = np.array(["A", "B", "C"] * 22 + ["unknown"] * 3)
     adata.obs["perturbation"] = perturbations
+
+    with pytest.raises(ValueError):
+        ps = pt.tl.PseudobulkSpace()
+        ps.label_transfer(adata)
+
     sc.pp.neighbors(adata, use_rep="X")
     sc.tl.umap(adata)
-
     ps = pt.tl.PseudobulkSpace()
-    ps.label_transfer(adata, n_neighbors=5, use_rep="X_umap")
+    ps.label_transfer(adata)
     assert "unknown" not in adata.obs["perturbation"]
+    assert all(adata.obs["perturbation_transfer_uncertainty"] >= 0)
+    assert not all(adata.obs["perturbation_transfer_uncertainty"] == 0)
+    is_known = perturbations != "unknown"
+    assert all(adata.obs.loc[is_known, "perturbation_transfer_uncertainty"] == 0)

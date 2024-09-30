@@ -7,6 +7,7 @@ import pandas as pd
 from anndata import AnnData
 from lamin_utils import logger
 from rich import print
+from scipy.stats import entropy
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -364,50 +365,58 @@ class PerturbationSpace:
         self,
         adata: AnnData,
         column: str = "perturbation",
+        column_uncertainty_score_key: str = "perturbation_transfer_uncertainty",
         target_val: str = "unknown",
-        n_neighbors: int = 5,
-        use_rep: str = "X_umap",
+        neighbors_key: str = "neighbors",
     ) -> None:
         """Impute missing values in the specified column using KNN imputation in the space defined by `use_rep`.
 
+        Uncertainty is calculated as the entropy of the label distribution in the neighborhood of the target cell.
+        In other words, a cell where all neighbors have the same set of labels will have an uncertainty of 0, whereas a cell
+        where all neighbors have many different labels will have high uncertainty.
+
         Args:
             adata: The AnnData object containing single-cell data.
-            column: The column name in AnnData object to perform imputation on.
+            column: The column name in adata.obs to perform imputation on.
+            column_uncertainty_score_key: The column name in adata.obs to store the uncertainty score of the label transfer.
             target_val: The target value to impute.
-            n_neighbors: Number of neighbors to use for imputation.
-            use_rep: The key in `adata.obsm` where the embedding (UMAP, PCA, etc.) is stored.
+            neighbors_key: The key in adata.uns where the neighbors are stored.
 
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
             >>> import numpy as np
             >>> adata = sc.datasets.pbmc68k_reduced()
-            >>> rng = np.random.default_rng()
-            >>> adata.obs["perturbation"] = rng.choice(
-            ...     ["A", "B", "C", "unknown"], size=adata.n_obs, p=[0.33, 0.33, 0.33, 0.01]
-            ... )
+            >>> # randomly dropout 10% of the data annotations
+            >>> adata.obs["perturbation"] = adata.obs["louvain"].astype(str).copy()
+            >>> random_cells = np.random.choice(adata.obs.index, int(adata.obs.shape[0] * 0.1), replace=False)
+            >>> adata.obs.loc[random_cells, "perturbation"] = "unknown"
             >>> sc.pp.neighbors(adata)
             >>> sc.tl.umap(adata)
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> ps.label_transfer(adata, n_neighbors=5, use_rep="X_umap")
+            >>> ps.label_transfer(adata)
         """
-        if use_rep not in adata.obsm:
-            raise ValueError(f"Representation {use_rep} not found in the AnnData object.")
+        if neighbors_key not in adata.uns:
+            raise ValueError(f"Key {neighbors_key} not found in adata.uns. Please run `sc.pp.neighbors` first.")
 
-        embedding = adata.obsm[use_rep]
+        labels = adata.obs[column].astype(str)
+        target_cells = labels == target_val
 
-        from pynndescent import NNDescent
+        connectivities = adata.obsp[adata.uns[neighbors_key]["connectivities_key"]]
+        # convert labels to an incidence matrix
+        one_hot_encoded_labels = adata.obs[column].astype(str).str.get_dummies()
+        # convert to distance-weighted neighborhood incidence matrix
+        weighted_label_occurence = pd.DataFrame(
+            (one_hot_encoded_labels.values.T * connectivities).T,
+            index=adata.obs_names,
+            columns=one_hot_encoded_labels.columns,
+        )
+        # choose best label for each target cell
+        best_labels = weighted_label_occurence.drop(target_val, axis=1)[target_cells].idxmax(axis=1)
+        adata.obs[column] = labels
+        adata.obs.loc[target_cells, column] = best_labels
 
-        nnd = NNDescent(embedding, n_neighbors=n_neighbors)
-        indices, _ = nnd.query(embedding, k=n_neighbors)
-
-        perturbations = np.array(adata.obs[column])
-        missing_mask = perturbations == target_val
-
-        for idx in np.where(missing_mask)[0]:
-            neighbor_indices = indices[idx]
-            neighbor_categories = perturbations[neighbor_indices]
-            most_common = pd.Series(neighbor_categories).mode()[0]
-            perturbations[idx] = most_common
-
-        adata.obs[column] = perturbations
+        # calculate uncertainty
+        uncertainty = np.zeros(adata.n_obs)
+        uncertainty[target_cells] = entropy(weighted_label_occurence.drop(target_val, axis=1)[target_cells], axis=1)
+        adata.obs[column_uncertainty_score_key] = uncertainty
