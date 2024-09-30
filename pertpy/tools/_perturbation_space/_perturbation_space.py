@@ -371,6 +371,10 @@ class PerturbationSpace:
     ) -> None:
         """Impute missing values in the specified column using KNN imputation in the space defined by `use_rep`.
 
+        Uncertainty is calculated as the entropy of the label distribution in the neighborhood of the target cell.
+        In other words, a cell where all neighbors have the same set of labels will have an uncertainty of 0, whereas a cell
+        where all neighbors have many different labels will have high uncertainty.
+
         Args:
             adata: The AnnData object containing single-cell data.
             column: The column name in adata.obs to perform imputation on.
