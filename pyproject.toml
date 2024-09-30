@@ -65,7 +65,6 @@ dependencies = [
     "pyarrow",
     "blitzgsea",
     "lamin_utils",
-    "anndata",
 ]
 
 [project.optional-dependencies]
