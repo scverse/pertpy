@@ -11,13 +11,23 @@ Many are also designed to work seamlessly in Google colab.
 For questions about the usage of pertpy use the [scverse discourse](https://discourse.scverse.org/).
 :::
 
-## Quick start
+## Quick start: Tool specific tutorials
 
+### Data transformation
 ```{eval-rst}
 .. nbgallery::
 
    notebooks/guide_rna_assignment
    notebooks/mixscape
+   notebooks/perturbation_space
+   notebooks/metadata_annotation
+   notebooks/ontology_mapping
+```
+
+### Knowledge inference
+```{eval-rst}
+.. nbgallery::
+
    notebooks/augur
    notebooks/sccoda
    notebooks/sccoda_extended
@@ -29,10 +39,7 @@ For questions about the usage of pertpy use the [scverse discourse](https://disc
    notebooks/distance_tests
    notebooks/cinemaot
    notebooks/scgen_perturbation_prediction
-   notebooks/perturbation_space
    notebooks/differential_gene_expression
-   notebooks/metadata_annotation
-   notebooks/ontology_mapping
 ```
 
 ## Use cases
