@@ -341,8 +341,8 @@ class CellLine(MetaData):
         # then we can compare these keys and fetch the corresponding metadata.
         if query_id not in adata.obs.columns:
             raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`.\n"
-                "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation.\n"
+                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
+                "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation."
                 "If the desired query ID is not available, you can fetch the cell line metadata "
                 "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
                 "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
@@ -359,9 +359,8 @@ class CellLine(MetaData):
         else:
             reference_id = "DepMap_ID"
             logger.warning(
-                "To annotate bulk RNA data from Broad Institue, `DepMap_ID` is used as default reference and query identifier if no `reference_id` is given.\n"
-                "Ensure that `DepMap_ID` is available in 'adata.obs'.\n"
-                "Alternatively, use `annotate()` to annotate the cell line first "
+                "To annotate bulk RNA data from Broad Institue, `DepMap_ID` is used as default reference and query identifier if no `reference_id` is given."
+                "If `DepMap_ID` isn't available in 'adata.obs', use `annotate()` to annotate the cell line first."
             )
             if self.bulk_rna_broad is None:
                 self._download_bulk_rna(cell_line_source="broad")

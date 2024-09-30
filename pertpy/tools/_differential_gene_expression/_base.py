@@ -66,7 +66,7 @@ class MethodBase(ABC):
         if self.layer is None:
             return self.adata.X
         else:
-            return self.adata.layer[self.layer]
+            return self.adata.layers[self.layer]
 
     @classmethod
     @abstractmethod
