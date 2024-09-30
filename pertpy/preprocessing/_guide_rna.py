@@ -8,8 +8,11 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+from rich.progress import track
+from scipy.sparse import issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy.preprocessing._guide_rna_mixture import Poisson_Gauss_Mixture
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -107,6 +110,50 @@ class GuideAssignment:
             return assigned_grna
         adata.obs[output_key] = assigned_grna
 
+        return None
+
+    def assign_mixture_model(
+        self,
+        adata: AnnData,
+        model: str = "Poisson_Gauss_Mixture",
+        output_key: str = "assigned_guide",
+        no_grna_assigned_key: str = "NT",
+        multiple_grna_assigned_key: str = "Multiple",
+        only_return_results: bool = False,
+        verbose: bool = False,
+    ) -> np.ndarray | None:
+        if model == "Poisson_Gauss_Mixture":
+            mixture_model = Poisson_Gauss_Mixture()
+        else:
+            raise ValueError("Model not implemented")
+
+        if "log1p" not in adata.uns:
+            raise ValueError("Data should be log transformed")
+
+        res = pd.DataFrame(0, index=adata.obs_names, columns=adata.var_names)
+        fct = track if verbose else lambda iterable: iterable
+        # TODO: This can be parallelized
+        for gene in fct(adata.var_names):
+            is_nonzero = (
+                np.ravel((adata[:, gene].X != 0).todense()) if issparse(adata.X) else np.ravel(adata[:, gene].X != 0)
+            )
+            if sum(is_nonzero) < 2:
+                continue
+            data = adata[is_nonzero, gene].X.todense().A1 if issparse(adata.X) else adata[is_nonzero, gene].X
+
+            assignments = mixture_model.run_model(data)
+            res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
+
+        # Assign guides to genes
+        series = pd.Series(no_grna_assigned_key, index=adata.obs_names)
+        num_guides_assigned = res.sum(1)
+        series.loc[num_guides_assigned == 1] = res.idxmax(1)
+        series.loc[num_guides_assigned > 1] = multiple_grna_assigned_key
+
+        if only_return_results:
+            return series.values
+
+        adata.obs[output_key] = series.values
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
