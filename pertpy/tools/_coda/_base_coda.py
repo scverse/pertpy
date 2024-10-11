@@ -1378,7 +1378,6 @@ class CompositionalModel2(ABC):
         if len(covariate_names_zero) != 0:
             if plot_facets:
                 if plot_zero_covariate and not plot_zero_cell_type:
-                    plot_df = plot_df[plot_df["value"] != 0]
                     for covariate_name_zero in covariate_names_zero:
                         new_row = {
                             "Covariate": covariate_name_zero,
