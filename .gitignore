@@ -155,3 +155,5 @@ lightning_logs/*
 */lightning_logs/*
 
 node_modules
+
+test.ipynb

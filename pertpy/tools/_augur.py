@@ -25,11 +25,11 @@ from sklearn.metrics import (
     explained_variance_score,
     f1_score,
     make_scorer,
-    mean_squared_error,
     precision_score,
     r2_score,
     recall_score,
     roc_auc_score,
+    root_mean_squared_error,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
@@ -440,7 +440,7 @@ class Augur:
                 "augur_score": make_scorer(self.ccc_score),
                 "r2": make_scorer(r2_score),
                 "ccc": make_scorer(self.ccc_score),
-                "neg_mean_squared_error": make_scorer(mean_squared_error),
+                "neg_mean_squared_error": make_scorer(root_mean_squared_error),
                 "explained_variance": make_scorer(explained_variance_score),
             }
         )

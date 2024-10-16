@@ -6,7 +6,6 @@ import pertpy as pt
 import pytest
 import scanpy as sc
 from pertpy.tools._augur import Params
-from sklearn.ensemble import RandomForestRegressor
 
 CWD = Path(__file__).parent.resolve()
 
@@ -145,7 +144,7 @@ def test_select_variance(adata):
     """Test select variance implementation."""
     adata = ag_rfc.load(adata)
     sc.pp.highly_variable_genes(adata)
-    adata_cell_type = adata[adata.obs["cell_type"] == "CellTypeA"]
+    adata_cell_type = adata[adata.obs["cell_type"] == "CellTypeA"].copy()
     ad = ag_rfc.select_variance(adata_cell_type, var_quantile=0.5, span=0.3, filter_negative_residuals=False)
 
     assert 3672 == len(ad.var.index[ad.var["highly_variable"]])
