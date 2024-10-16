@@ -66,7 +66,7 @@ def sc_sim_augur() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://figshare.com/ndownloader/files/31645886",
+            url="https://figshare.com/ndownloader/files/49828902",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
