@@ -56,10 +56,10 @@ from pertpy.data._datasets import (
     zhang_2021,
     zhao_2021,
 )
-from pertpy.data._perturbation_validator import PerturbationValidator
+from pertpy.data._perturbation_validator import PerturbationCurator
 
 __all__ = [
-    "PerturbationValidator",
+    "PerturbationCurator",
     "adamson_2016_pilot",
     "adamson_2016_upr_epistasis",
     "adamson_2016_upr_perturb_seq",

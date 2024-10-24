@@ -18,6 +18,7 @@ python:
               - doc
               - coda
               - de
+              - validator
 
 submodules:
     include: all
