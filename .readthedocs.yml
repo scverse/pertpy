@@ -7,21 +7,13 @@ build:
         - asdf plugin add uv
         - asdf install uv latest
         - asdf global uv latest
-        - uv sync --extra docs --frozen
+        - uv venv
+        - uv pip install .[doc,coda,de,validator]
         - python -c "import pertpy"
-        - uv run -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
+        - .venv/bin/python -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
 sphinx:
     configuration: docs/conf.py
     fail_on_warning: false
-python:
-    install:
-        - method: pip
-          path: .
-          extra_requirements:
-              - doc
-              - coda
-              - de
-              - validator
 
 submodules:
     include: all
