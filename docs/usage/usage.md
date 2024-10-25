@@ -26,7 +26,6 @@ harmonized names and be loadable as MuData objects.
 .. autosummary::
     :toctree: data
 
-    data.PerturbationCurator
     data.adamson_2016_pilot
     data.adamson_2016_upr_epistasis
     data.adamson_2016_upr_perturb_seq
