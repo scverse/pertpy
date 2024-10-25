@@ -96,6 +96,8 @@ try:
 
     except ImproperlyConfigured:
         PerturbationCurator = _PerturbationValidatorUnavailable  # type: ignore
+        # The sphinx docs currently don't have a lamin instance set up
+        _PerturbationValidatorUnavailable.__doc__ = PerturbationCurator.__doc__
 
 except ImportError:
     PerturbationCurator = _PerturbationValidatorUnavailable  # type: ignore
