@@ -2,8 +2,6 @@ from typing import Literal
 
 import anndata as ad
 import pandas as pd
-from django.core.exceptions import ImproperlyConfigured
-from lamin_utils import logger
 
 
 class _PerturbationValidatorUnavailable:
@@ -15,25 +13,31 @@ try:
     import bionty as bt
     import wetlab as wl
     from cellxgene_lamin import CellxGeneFields, Curate
+    from django.core.exceptions import ImproperlyConfigured
+    from lamin_utils import logger
     from lamindb_setup.core.types import UPathStr
     from lnschema_core import Record
     from lnschema_core.types import FieldAttr
 
     pt_defaults = CellxGeneFields.OBS_FIELD_DEFAULTS | {
-        "genetic_treatments": pd.NA,
-        "compound_treatments": pd.NA,
-        "environmental_treatments": pd.NA,
-        "combination_treatments": pd.NA,
+        "cell_line": "unknown",
+        "genetic_treatments": "",
+        "compound_treatments": "",
+        "environmental_treatments": "",
+        "combination_treatments": "",
     }
 
     pt_categoricals = CellxGeneFields.OBS_FIELDS | {
+        "cell_line": bt.CellLine.name,
         "genetic_treatments": wl.GeneticTreatment.name,
-        "compound_treatments": wl.CombinationTreatment.name,
+        "compound_treatments": wl.CompoundTreatment.name,
         "environmental_treatments": wl.EnvironmentalTreatment.name,
         "combination_treatments": wl.CombinationTreatment.name,
     }
 
     pt_sources: dict[str, Record] = {
+        "depmap_id": bt.Source.filter(name="depmap").one(),
+        "cell_line": bt.Source.filter(name="depmap").one(),
         # "compound_treatments": bt.Source.filter(entity="Drug", name="chebi").first()
     }
 
