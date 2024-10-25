@@ -8,11 +8,8 @@ build:
         - asdf install uv latest
         - asdf global uv latest
         - uv sync --extra docs --frozen
+        - python -c "import pertpy"
         - uv run -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
-    jobs:
-        pre_build:
-            - python -c "import pertpy"
-            - pip freeze
 sphinx:
     configuration: docs/conf.py
     fail_on_warning: false
