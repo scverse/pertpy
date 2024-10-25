@@ -4,6 +4,8 @@ import anndata as ad
 
 
 class _PerturbationValidatorUnavailable:
+    """Curator flow for Perturbation data - see pertpy-datasets."""
+
     def __init__(self):
         raise RuntimeError("PerturbationValidator can only be instantiated if connected to a lamindb instance.")
 
@@ -44,6 +46,8 @@ try:
         }
 
         class PerturbationCurator(Curate):
+            """Curator flow for Perturbation data - see pertpy-datasets."""
+
             def __init__(
                 self,
                 adata: ad.AnnData | UPathStr,
@@ -96,8 +100,6 @@ try:
 
     except ImproperlyConfigured:
         PerturbationCurator = _PerturbationValidatorUnavailable  # type: ignore
-        # The sphinx docs currently don't have a lamin instance set up
-        _PerturbationValidatorUnavailable.__doc__ = PerturbationCurator.__doc__
 
 except ImportError:
     PerturbationCurator = _PerturbationValidatorUnavailable  # type: ignore
