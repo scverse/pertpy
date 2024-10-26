@@ -156,4 +156,7 @@ lightning_logs/*
 
 node_modules
 
+# lamindb
 test.ipynb
+test-perturbation
+test-bug

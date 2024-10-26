@@ -3,21 +3,16 @@ build:
     os: ubuntu-22.04
     tools:
         python: "3.11"
-    jobs:
-        pre_build:
-            - python -c "import pertpy"
-            - pip freeze
+    commands:
+        - asdf plugin add uv
+        - asdf install uv latest
+        - asdf global uv latest
+        - uv venv
+        - uv pip install .[doc,coda,de]
+        - .venv/bin/python -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
 sphinx:
     configuration: docs/conf.py
     fail_on_warning: false
-python:
-    install:
-        - method: pip
-          path: .
-          extra_requirements:
-              - doc
-              - coda
-              - de
 
 submodules:
     include: all
