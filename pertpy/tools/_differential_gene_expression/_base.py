@@ -1058,4 +1058,4 @@ class LinearModelBase(MethodBase):
             raise RuntimeError(
                 "Building contrasts with `cond` only works if you specified the model using a formulaic formula. Please manually provide a contrast vector."
             )
-        return self.formulaic_contrasts.cond(*args, **kwargs)
+        return self.formulaic_contrasts.contrast(*args, **kwargs)

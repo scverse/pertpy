@@ -77,7 +77,7 @@ coda = [
 de = [
     "formulaic-contrasts>=0.2.0",
     "formulaic",
-    "pydeseq2",
+    "pydeseq2>=v0.5.0pre1",
 ]
 dev = [
     "pre-commit",
