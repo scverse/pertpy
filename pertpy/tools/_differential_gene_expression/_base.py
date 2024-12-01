@@ -19,15 +19,10 @@ from lamin_utils import logger
 from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
 
+from formulaic_contrasts import FormulaicContrasts
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
-from pertpy.tools._differential_gene_expression._formulaic import (
-    AmbiguousAttributeError,
-    Factor,
-    get_factor_storage_and_materializer,
-    resolve_ambiguous,
-)
 
 
 @dataclass
@@ -923,12 +918,10 @@ class LinearModelBase(MethodBase):
         super().__init__(adata, mask=mask, layer=layer)
         self._check_counts()
 
-        self.factor_storage = None
-        self.variable_to_factors = None
-
+        self.formulaic_contrasts = None
         if isinstance(design, str):
-            self.factor_storage, self.variable_to_factors, materializer_class = get_factor_storage_and_materializer()
-            self.design = materializer_class(adata.obs, record_factor_metadata=True).get_model_matrix(design)
+            self.formulaic_contrasts = FormulaicContrasts(adata.obs, design)
+            self.design = self.formulaic_contrasts.design_matrix
         else:
             self.design = design
 
@@ -968,12 +961,12 @@ class LinearModelBase(MethodBase):
     @property
     def variables(self):
         """Get the names of the variables used in the model definition."""
-        try:
-            return self.design.model_spec.variables_by_source["data"]
-        except AttributeError:
+        if self.formulaic_contrasts is None:
             raise ValueError(
                 "Retrieving variables is only possible if the model was initialized using a formula."
             ) from None
+        else:
+            return self.formulaic_contrasts.variables
 
     @abstractmethod
     def _check_counts(self):
@@ -1043,50 +1036,13 @@ class LinearModelBase(MethodBase):
         Returns:
             A contrast vector that aligns to the columns of the design matrix.
         """
-        if self.factor_storage is None:
+        if self.formulaic_contrasts is None:
             raise RuntimeError(
                 "Building contrasts with `cond` only works if you specified the model using a formulaic formula. Please manually provide a contrast vector."
             )
-        cond_dict = kwargs
-        if not set(cond_dict.keys()).issubset(self.variables):
-            raise ValueError(
-                "You specified a variable that is not part of the model. Available variables: "
-                + ",".join(self.variables)
-            )
-        for var in self.variables:
-            if var in cond_dict:
-                self._check_category(var, cond_dict[var])
-            else:
-                cond_dict[var] = self._get_default_value(var)
-        df = pd.DataFrame([kwargs])
-        return self.design.model_spec.get_model_matrix(df).iloc[0]
+        return self.formulaic_contrasts.cond(**kwargs)
 
-    def _get_factor_metadata_for_variable(self, var):
-        factors = self.variable_to_factors[var]
-        return list(chain.from_iterable(self.factor_storage[f] for f in factors))
-
-    def _get_default_value(self, var):
-        factor_metadata = self._get_factor_metadata_for_variable(var)
-        if resolve_ambiguous(factor_metadata, "kind") == Factor.Kind.CATEGORICAL:
-            try:
-                tmp_base = resolve_ambiguous(factor_metadata, "base")
-            except AmbiguousAttributeError as e:
-                raise ValueError(
-                    f"Could not automatically resolve base category for variable {var}. Please specify it explicity in `model.cond`."
-                ) from e
-            return tmp_base if tmp_base is not None else "\0"
-        else:
-            return 0
-
-    def _check_category(self, var, value):
-        factor_metadata = self._get_factor_metadata_for_variable(var)
-        tmp_categories = resolve_ambiguous(factor_metadata, "categories")
-        if resolve_ambiguous(factor_metadata, "kind") == Factor.Kind.CATEGORICAL and value not in tmp_categories:
-            raise ValueError(
-                f"You specified a non-existant category for {var}. Possible categories: {', '.join(tmp_categories)}"
-            )
-
-    def contrast(self, column, baseline, group_to_compare):
+    def contrast(self, *args, **kwargs):
         """
         Build a simple contrast for pairwise comparisons.
 
@@ -1098,4 +1054,8 @@ class LinearModelBase(MethodBase):
         Returns:
             Numeric contrast vector.
         """
-        return self.cond(**{column: group_to_compare}) - self.cond(**{column: baseline})
+        if self.formulaic_contrasts is None:
+            raise RuntimeError(
+                "Building contrasts with `cond` only works if you specified the model using a formulaic formula. Please manually provide a contrast vector."
+            )
+        return self.formulaic_contrasts.cond(*args, **kwargs)
