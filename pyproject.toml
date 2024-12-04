@@ -7,7 +7,7 @@ name = "pertpy"
 version = "0.9.4"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -80,11 +80,6 @@ de = [
 ]
 dev = [
     "pre-commit",
-]
-validator = [
-    "cellxgene-lamin",
-    "wetlab",
-    "findrefs"
 ]
 doc = [
     "docutils>=0.8,!=0.18.*,!=0.19.*",
