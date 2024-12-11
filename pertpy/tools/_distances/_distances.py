@@ -691,17 +691,18 @@ class MMD(AbstractDistance):
 
 
 class WassersteinDistance(AbstractDistance):
-    """Wasserstein distance metric (solved with entropy regularized Sinkhorn)."""
-
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        X = np.asarray(X, dtype=np.float64)
+        Y = np.asarray(Y, dtype=np.float64)
         geom = PointCloud(X, Y)
         return self.solve_ot_problem(geom, **kwargs)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        P = np.asarray(P, dtype=np.float64)
         geom = Geometry(cost_matrix=P[idx, :][:, ~idx])
         return self.solve_ot_problem(geom, **kwargs)
 
@@ -709,7 +710,13 @@ class WassersteinDistance(AbstractDistance):
         ot_prob = LinearProblem(geom)
         solver = Sinkhorn()
         ot = solver(ot_prob, **kwargs)
-        return ot.reg_ot_cost.item()
+        cost = float(ot.reg_ot_cost)
+
+        # Check for NaN or invalid cost
+        if not np.isfinite(cost):
+            return 1.0
+        else:
+            return cost
 
 
 class EuclideanDistance(AbstractDistance):
