@@ -28,6 +28,19 @@ def test_pydeseq2_complex(test_adata):
     # Check that the index of the result matches the var_names of the AnnData object
     assert set(test_adata.var_names) == set(res_df["variable"])
 
+def test_pydeseq2_formula(test_adata):
+    """Check that the pyDESeq2 method gives consistent results when specifying contrasts, regardless of the order of covariates
+    """
+    model1 = PyDESeq2(adata=test_adata, design="~condition+group")
+    model1.fit()
+    res_1 = model1.test_contrasts(["condition", "A", "B"])
+
+    model2 = PyDESeq2(adata=test_adata, design="~group+condition")
+    model2.fit()
+    res_2 = model2.test_contrasts(["condition", "A", "B"])
+
+    assert all(res_2.log_fc == res_1.log_fc)
+
 
 # TODO: there should be a test checking if, for a concrete example, the output p-values and effect sizes are what
 # we expect (-> frozen snapshot, that way we also get a heads-up if something changes upstream)
