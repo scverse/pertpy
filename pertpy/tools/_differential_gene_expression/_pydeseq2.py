@@ -50,11 +50,6 @@ class PyDESeq2(LinearModelBase):
         dds = DeseqDataSet(
             adata=self.adata, design_factors=processed_covars, refit_cooks=True, inference=inference, **kwargs
         )
-        # workaround code to insert design array
-        des_mtx_cols = dds.obsm["design_matrix"].columns
-        dds.obsm["design_matrix"] = self.design
-        if dds.obsm["design_matrix"].shape[1] == len(des_mtx_cols):
-            dds.obsm["design_matrix"].columns = des_mtx_cols.copy()
 
         dds.deseq2()
         self.dds = dds
