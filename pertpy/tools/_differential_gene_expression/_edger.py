@@ -27,15 +27,10 @@ class EdgeR(LinearModelBase):
         # pandas2ri.activate()
         # rpy2.robjects.numpy2ri.activate()
         try:
-            import rpy2.robjects.numpy2ri
-            import rpy2.robjects.pandas2ri
             from rpy2 import robjects as ro
             from rpy2.robjects import numpy2ri, pandas2ri
-            from rpy2.robjects.conversion import localconverter
+            from rpy2.robjects.conversion import get_conversion, localconverter
             from rpy2.robjects.packages import importr
-
-            pandas2ri.activate()
-            rpy2.robjects.numpy2ri.activate()
 
         except ImportError:
             raise ImportError("edger requires rpy2 to be installed.") from None
@@ -49,25 +44,30 @@ class EdgeR(LinearModelBase):
             ) from e
 
         # Convert dataframe
-        with localconverter(ro.default_converter + numpy2ri.converter):
+        with localconverter(get_conversion() + numpy2ri.converter):
             expr = self.adata.X if self.layer is None else self.adata.layers[self.layer]
             if issparse(expr):
                 expr = expr.T.toarray()
             else:
                 expr = expr.T
 
-        expr_r = ro.conversion.py2rpy(pd.DataFrame(expr, index=self.adata.var_names, columns=self.adata.obs_names))
+        with localconverter(get_conversion() + pandas2ri.converter):
+            expr_r = ro.conversion.py2rpy(pd.DataFrame(expr, index=self.adata.var_names, columns=self.adata.obs_names))
+            samples_r = ro.conversion.py2rpy(self.adata.obs)
 
-        dge = edger.DGEList(counts=expr_r, samples=self.adata.obs)
+        dge = edger.DGEList(counts=expr_r, samples=samples_r)
 
         logger.info("Calculating NormFactors")
         dge = edger.calcNormFactors(dge)
 
+        with localconverter(get_conversion() + pandas2ri.converter):
+            design_r = ro.conversion.py2rpy(pd.DataFrame(self.design))
+
         logger.info("Estimating Dispersions")
-        dge = edger.estimateDisp(dge, design=self.design)
+        dge = edger.estimateDisp(dge, design=design_r)
 
         logger.info("Fitting linear model")
-        fit = edger.glmQLFit(dge, design=self.design, **kwargs)
+        fit = edger.glmQLFit(dge, design=design_r, **kwargs)
 
         ro.globalenv["fit"] = fit
         self.fit = fit
@@ -88,11 +88,9 @@ class EdgeR(LinearModelBase):
         #  Fix mask for .fit()
 
         try:
-            import rpy2.robjects.numpy2ri
-            import rpy2.robjects.pandas2ri
             from rpy2 import robjects as ro
             from rpy2.robjects import numpy2ri, pandas2ri
-            from rpy2.robjects.conversion import localconverter
+            from rpy2.robjects.conversion import get_conversion, localconverter
             from rpy2.robjects.packages import importr
 
         except ImportError:
@@ -106,7 +104,8 @@ class EdgeR(LinearModelBase):
             ) from None
 
         # Convert vector to R, which drops a category like `self.design_matrix` to use the intercept for the left out.
-        contrast_vec_r = ro.conversion.py2rpy(np.asarray(contrast))
+        with localconverter(get_conversion() + numpy2ri.converter):
+            contrast_vec_r = ro.conversion.py2rpy(np.asarray(contrast))
         ro.globalenv["contrast_vec"] = contrast_vec_r
 
         # Test contrast with R
@@ -117,8 +116,18 @@ class EdgeR(LinearModelBase):
             """
         )
 
-        # Convert results to pandas
-        de_res = ro.conversion.rpy2py(ro.globalenv["de_res"])
+        # Retrieve the `de_res` object
+        de_res = ro.globalenv["de_res"]
+
+        # If already a Pandas DataFrame, return it directly
+        if isinstance(de_res, pd.DataFrame):
+            de_res.index.name = "variable"
+            return de_res.reset_index().rename(columns={"PValue": "p_value", "logFC": "log_fc", "FDR": "adj_p_value"})
+
+        # Convert to Pandas DataFrame if still an R object
+        with localconverter(get_conversion() + pandas2ri.converter):
+            de_res = ro.conversion.rpy2py(de_res)
+
         de_res.index.name = "variable"
         de_res = de_res.reset_index()
 
