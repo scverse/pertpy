@@ -25,18 +25,6 @@ from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
 
 
-@dataclass
-class Contrast:
-    """Simple contrast for comparison between groups"""
-
-    column: str
-    baseline: str
-    group_to_compare: str
-
-
-ContrastType = Contrast | tuple[str, str, str]
-
-
 class MethodBase(ABC):
     def __init__(self, adata, *, mask=None, layer=None, **kwargs):
         """
