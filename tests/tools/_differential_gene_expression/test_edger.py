@@ -1,4 +1,5 @@
 from pertpy.tools._differential_gene_expression import EdgeR
+import numpy.testing as npt
 
 
 def test_edger_simple(test_adata):
@@ -13,6 +14,17 @@ def test_edger_simple(test_adata):
     res_df = method.test_contrasts(method.contrast("condition", "A", "B"))
 
     assert len(res_df) == test_adata.n_vars
+    # Compare against snapshot
+    npt.assert_almost_equal(
+        res_df.p_value.values,
+        [8.0000e-05, 1.8000e-04, 5.3000e-04, 1.1800e-03, 3.3800e-02, 3.3820e-02, 7.7980e-02, 1.3715e-01, 2.5052e-01, 9.2485e-01],
+        decimal=4,
+    )
+    npt.assert_almost_equal(
+        res_df.log_fc.values,
+        [ 0.61208, -0.39374,  0.57944,  0.7343 , -0.58675,  0.42575, -0.23951, -0.20761,  0.17489,  0.0247],
+        decimal=4,
+    )
 
 
 def test_edger_complex(test_adata):
@@ -28,6 +40,7 @@ def test_edger_complex(test_adata):
     # Check that the index of the result matches the var_names of the AnnData object
     assert set(test_adata.var_names) == set(res_df["variable"])
 
-
-# TODO: there should be a test checking if, for a concrete example, the output p-values and effect sizes are what
-# we expect (-> frozen snapshot, that way we also get a heads-up if something changes upstream)
+    # Compare against snapshot computed using different method (DESeq2)
+    down_gene = res_df.set_index("variable").loc['gene3', 'log_fc'] 
+    up_gene = res_df.set_index("variable").loc['gene1', 'log_fc'] 
+    assert down_gene < up_gene
