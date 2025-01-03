@@ -1,4 +1,4 @@
-from pertpy.tools._differential_gene_expression import EdgeR
+from pertpy.tools._differential_gene_expression import EdgeR, PyDESeq2
 import numpy.testing as npt
 
 
@@ -40,7 +40,12 @@ def test_edger_complex(test_adata):
     # Check that the index of the result matches the var_names of the AnnData object
     assert set(test_adata.var_names) == set(res_df["variable"])
 
-    # Compare against snapshot computed using different method (DESeq2)
+    # Compare ranking of genes from a different method (without design matrix handling)
     down_gene = res_df.set_index("variable").loc['gene3', 'log_fc'] 
     up_gene = res_df.set_index("variable").loc['gene1', 'log_fc'] 
     assert down_gene < up_gene
+
+    method = PyDESeq2(adata=test_adata, design="~condition1+group")
+    method.fit()
+    deseq_res_df = method.test_contrasts(method.contrast("condition1", "A", "B"))
+    assert all(res_df.sort_values('log_fc')['variable'].values == deseq_res_df.sort_values('log_fc')['variable'].values)
