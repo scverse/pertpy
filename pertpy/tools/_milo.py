@@ -183,7 +183,7 @@ class Milo:
             knn_dists = adata.obsp[neighbors_key + "_distances"]
 
         nhood_ixs = adata.obs["nhood_ixs_refined"] == 1
-        dist_mat = knn_dists[nhood_ixs, :]
+        dist_mat = knn_dists[np.asarray(nhood_ixs), :]
         k_distances = dist_mat.max(1).toarray().ravel()
         adata.obs["nhood_kth_distance"] = 0
         adata.obs["nhood_kth_distance"] = adata.obs["nhood_kth_distance"].astype(float)
@@ -704,8 +704,8 @@ class Milo:
         pvalues = sample_adata.var["PValue"]
         keep_nhoods = ~pvalues.isna()  # Filtering in case of test on subset of nhoods
         o = pvalues[keep_nhoods].argsort()
-        pvalues = pvalues[keep_nhoods][o]
-        w = w[keep_nhoods][o]
+        pvalues = pvalues.loc[keep_nhoods].iloc[o]
+        w = w.loc[keep_nhoods].iloc[o]
 
         adjp = np.zeros(shape=len(o))
         adjp[o] = (sum(w) * pvalues / np.cumsum(w))[::-1].cummin()[::-1]

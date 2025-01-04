@@ -60,8 +60,8 @@ class EdgeR(LinearModelBase):
         logger.info("Calculating NormFactors")
         dge = edger.calcNormFactors(dge)
 
-        with localconverter(get_conversion() + pandas2ri.converter):
-            design_r = ro.conversion.py2rpy(pd.DataFrame(self.design))
+        with localconverter(get_conversion() + numpy2ri.converter):
+            design_r = ro.conversion.py2rpy(self.design.values)
 
         logger.info("Estimating Dispersions")
         dge = edger.estimateDisp(dge, design=design_r)

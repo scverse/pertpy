@@ -104,7 +104,7 @@ class Mixscape:
             control_mask_split = control_mask & split_mask
 
             R_split = representation[split_mask]
-            R_control = representation[control_mask_split]
+            R_control = representation[np.asarray(control_mask_split)]
 
             from pynndescent import NNDescent
 
@@ -112,7 +112,7 @@ class Mixscape:
             nn_index = NNDescent(R_control, **kwargs)
             indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
 
-            X_control = np.expm1(adata.X[control_mask_split])
+            X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
 
             n_split = split_mask.sum()
             n_control = X_control.shape[0]
@@ -256,7 +256,7 @@ class Mixscape:
                 else:
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = self._get_column_indices(adata, list(de_genes))
-                    dat = X[all_cells][:, de_genes_indices]
+                    dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     converged = False
                     n_iter = 0
                     old_classes = adata.obs[labels][all_cells]
@@ -266,8 +266,8 @@ class Mixscape:
                         # get average value for each gene over all selected cells
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
-                        vec = np.mean(X[guide_cells][:, de_genes_indices], axis=0) - np.mean(
-                            X[nt_cells][:, de_genes_indices], axis=0
+                        vec = np.mean(X[np.asarray(guide_cells)][:, de_genes_indices], axis=0) - np.mean(
+                            X[np.asarray(nt_cells)][:, de_genes_indices], axis=0
                         )
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
@@ -596,7 +596,7 @@ class Mixscape:
             ax.set_title(gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size)
             ax.set(xlabel="sgRNA", ylabel="% of cells")
             sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
-            ax.set_xticks(ax.get_xticks(),ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
+            ax.set_xticks(ax.get_xticks(), ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
             ax.set_yticks(ax.get_yticks(), ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
             ax.legend(
                 title="Mixscape Class",
@@ -614,7 +614,7 @@ class Mixscape:
         if show:
             plt.show()
         if return_fig:
-            return  fig
+            return fig
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
