@@ -1,9 +1,7 @@
 import math
-import os
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from dataclasses import dataclass
-from itertools import chain, zip_longest
+from collections.abc import Iterable, Mapping, Sequence
+from itertools import zip_longest
 from types import MappingProxyType
 
 import adjustText
@@ -12,14 +10,12 @@ import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy
 import seaborn as sns
-import statsmodels
+from formulaic_contrasts import FormulaicContrasts
 from lamin_utils import logger
 from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
 
-from formulaic_contrasts import FormulaicContrasts
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
@@ -893,8 +889,7 @@ class MethodBase(ABC):
 
 class LinearModelBase(MethodBase):
     def __init__(self, adata, design, *, mask=None, layer=None, **kwargs):
-        """
-        Initialize the method.
+        """Initialize the method.
 
         Args:
             adata: AnnData object, usually pseudobulked.
@@ -916,14 +911,14 @@ class LinearModelBase(MethodBase):
     @classmethod
     def compare_groups(
         cls,
-        adata,
-        column,
-        baseline,
-        groups_to_compare,
+        adata: ad.AnnData,
+        column: str,
+        baseline: str,
+        groups_to_compare: str | Iterable[str],
         *,
-        paired_by=None,
-        mask=None,
-        layer=None,
+        paired_by: str | None = None,
+        mask: pd.Series | None = None,
+        layer: str | None = None,
         fit_kwargs=MappingProxyType({}),
         test_kwargs=MappingProxyType({}),
     ):
@@ -958,8 +953,7 @@ class LinearModelBase(MethodBase):
 
     @abstractmethod
     def _check_counts(self):
-        """
-        Check that counts are valid for the specific method.
+        """Check that counts are valid for the specific method.
 
         Raises:
             ValueError: if the data matrix does not comply with the expectations.
@@ -968,8 +962,7 @@ class LinearModelBase(MethodBase):
 
     @abstractmethod
     def fit(self, **kwargs):
-        """
-        Fit the model.
+        """Fit the model.
 
         Args:
             **kwargs: Additional arguments for fitting the specific method.
@@ -979,9 +972,8 @@ class LinearModelBase(MethodBase):
     @abstractmethod
     def _test_single_contrast(self, contrast, **kwargs): ...
 
-    def test_contrasts(self, contrasts, **kwargs):
-        """
-        Perform a comparison as specified in a contrast vector.
+    def test_contrasts(self, contrasts: np.ndarray | Mapping[str | None, np.ndarray], **kwargs):
+        """Perform a comparison as specified in a contrast vector.
 
         Args:
             contrasts: Either a numeric contrast vector, or a dictionary of numeric contrast vectors.
@@ -997,11 +989,11 @@ class LinearModelBase(MethodBase):
             results.append(self._test_single_contrast(contrast, **kwargs).assign(contrast=name))
 
         results_df = pd.concat(results)
+
         return results_df
 
     def test_reduced(self, modelB):
-        """
-        Test against a reduced model.
+        """Test against a reduced model.
 
         Args:
             modelB: the reduced model against which to test.
@@ -1015,8 +1007,7 @@ class LinearModelBase(MethodBase):
         raise NotImplementedError
 
     def cond(self, **kwargs):
-        """
-        Get a contrast vector representing a specific condition.
+        """Get a contrast vector representing a specific condition.
 
         Args:
             **kwargs: column/value pairs.
@@ -1031,8 +1022,7 @@ class LinearModelBase(MethodBase):
         return self.formulaic_contrasts.cond(**kwargs)
 
     def contrast(self, *args, **kwargs):
-        """
-        Build a simple contrast for pairwise comparisons.
+        """Build a simple contrast for pairwise comparisons.
 
         Args:
             column: column in adata.obs to test on.

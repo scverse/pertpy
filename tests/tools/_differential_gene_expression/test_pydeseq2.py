@@ -1,5 +1,5 @@
-from pertpy.tools._differential_gene_expression import PyDESeq2
 import numpy.testing as npt
+from pertpy.tools._differential_gene_expression import PyDESeq2
 
 
 def test_pydeseq2_simple(test_adata):
