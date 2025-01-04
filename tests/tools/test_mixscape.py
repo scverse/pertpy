@@ -99,6 +99,7 @@ def test_lda(adata):
 
     assert "mixscape_lda" in adata.uns
 
+
 def test_deterministic_perturbation_signature():
     n_genes = 5
     n_cells_per_class = 50
@@ -130,6 +131,16 @@ def test_deterministic_perturbation_signature():
 
     mixscape_identifier = pt.tl.Mixscape()
     mixscape_identifier.perturbation_signature(adata, pert_key="perturbation", control="control", n_neighbors=5, split_by="group")
+
+    assert "X_pert" in adata.layers
+    assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NT"], 0)
+    assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NP"], 0)
+    assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "KO"], -np.concatenate([pert_effect] * len(groups), axis=0))
+
+    del adata.layers["X_pert"]
+
+    mixscape_identifier = pt.tl.Mixscape()
+    mixscape_identifier.perturbation_signature(adata, pert_key="perturbation", control="control", ref_selection_mode="manual", split_by="group")
 
     assert "X_pert" in adata.layers
     assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NT"], 0)
