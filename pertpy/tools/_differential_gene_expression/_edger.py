@@ -61,8 +61,6 @@ class EdgeR(LinearModelBase):
         dge = edger.calcNormFactors(dge)
 
         with localconverter(get_conversion() + numpy2ri.converter):
-            # dt = np.dtype([(name, 'float64') for name in self.design.columns])
-            # design_array = np.array(self.design.values, dtype=dt)
             design_r = ro.conversion.py2rpy(self.design.values)
 
         logger.info("Estimating Dispersions")
