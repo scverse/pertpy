@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "0.9.4"
+version = "0.9.5"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
