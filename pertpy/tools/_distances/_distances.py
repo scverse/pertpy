@@ -344,9 +344,9 @@ class Distance:
             else:
                 embedding = adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
-                cells_x = embedding[grouping == group_x].copy()
+                cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 for group_y in groups[index_x:]:  # type: ignore
-                    cells_y = embedding[grouping == group_y].copy()
+                    cells_y = embedding[np.asarray(grouping == group_y)].copy()
                     if not bootstrap:
                         # By distance axiom, the distance between a group and itself is 0
                         dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
@@ -478,9 +478,9 @@ class Distance:
             else:
                 embedding = adata.obsm[self.obsm_key].copy()
             for group_x in fct(groups):
-                cells_x = embedding[grouping == group_x].copy()
+                cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 group_y = selected_group
-                cells_y = embedding[grouping == group_y].copy()
+                cells_y = embedding[np.asarray(grouping == group_y)].copy()
                 if not bootstrap:
                     # By distance axiom, the distance between a group and itself is 0
                     dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
@@ -988,7 +988,7 @@ class NBLL(AbstractDistance):
             try:
                 nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
                 return _compute_nll(y, nb_params, epsilon)
-            except np.linalg.linalg.LinAlgError:
+            except np.linalg.LinAlgError:
                 if x.mean() < 10 and y.mean() < 10:
                     return 0.0
                 else:
