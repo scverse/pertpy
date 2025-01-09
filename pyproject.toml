@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "0.9.4"
+version = "0.10.0"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
@@ -75,8 +75,9 @@ coda = [
     "pyqt5"  # remove this after ete4 got released
 ]
 de = [
+    "formulaic-contrasts>=0.2.0",
     "formulaic",
-    "pydeseq2",
+    "pydeseq2>=v0.5.0pre1",
 ]
 dev = [
     "pre-commit",
@@ -131,9 +132,21 @@ markers = [
 minversion = 6.0
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 filterwarnings = [
-    "ignore::Warning:statsmodels.*"
+    "ignore::Warning:statsmodels.*",
+    "ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
+    "ignore:lbfgs failed to converge",
+    "ignore:Mean of empty slice:RuntimeWarning",
+    "ignore:invalid value encountered in divide",
+    "ignore:Importing read_csv from `anndata` is deprecated:FutureWarning",
+    "ignore:Importing read_loom from `anndata` is deprecated:FutureWarning",
+    "ignore:Importing read_text from `anndata` is deprecated:FutureWarning",
+    "ignore:Importing CSCDataset from `anndata.experimental` is deprecated:FutureWarning",
+    "ignore:Importing CSRDataset from `anndata.experimental` is deprecated:FutureWarning",
+    "ignore:Importing read_elem from `anndata.experimental` is deprecated:FutureWarning",
+    "ignore:ast.NameConstant is deprecated and will be removed in Python 3.14; use ast.Constant instead:DeprecationWarning",
+    "ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
+    "ignore:In the future, the default backend for leiden will be igraph instead of leidenalg:FutureWarning"
 ]
-
 
 [tool.ruff]
 src = ["src"]
