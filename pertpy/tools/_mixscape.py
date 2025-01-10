@@ -110,7 +110,6 @@ class Mixscape:
                 control_mask_group = control_mask & split_mask
                 control_mean_expr = adata.X[control_mask_group].mean(0)
                 adata.layers["X_pert"][split_mask] = np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0) - adata.layers["X_pert"][split_mask]
-
         else:
             if split_by is None:
                 split_masks = [np.full(adata.n_obs, True, dtype=bool)]
@@ -125,8 +124,8 @@ class Mixscape:
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
 
-            R_split = representation[split_mask]
-            R_control = representation[np.asarray(control_mask_split)]
+                R_split = representation[split_mask]
+                R_control = representation[np.asarray(control_mask_split)]
 
                 from pynndescent import NNDescent
 
@@ -134,7 +133,7 @@ class Mixscape:
                 nn_index = NNDescent(R_control, **kwargs)
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
 
-            X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
+                X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
 
                 n_split = split_mask.sum()
                 n_control = X_control.shape[0]
@@ -156,15 +155,15 @@ class Mixscape:
                     size = min(i + batch_size, n_split)
                     select = slice(i, size)
 
-                        batch = np.ravel(indices[select])
-                        split_batch = split_indices[select]
+                    batch = np.ravel(indices[select])
+                    split_batch = split_indices[select]
 
-                        size = size - i
+                    size = size - i
 
-                        # sparse is very slow
-                        means_batch = X_control[batch]
-                        means_batch = means_batch.toarray() if is_sparse else means_batch
-                        means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
+                    # sparse is very slow
+                    means_batch = X_control[batch]
+                    means_batch = means_batch.toarray() if is_sparse else means_batch
+                    means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
 
                     adata.layers["X_pert"][split_batch] = np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
 
