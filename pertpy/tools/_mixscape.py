@@ -41,9 +41,8 @@ class Mixscape:
         adata: AnnData,
         pert_key: str,
         control: str,
-        ref_selection_mode: Literal["neighest_neighbors", "manual"] = "neighest_neighbors",
+        ref_selection_mode: Literal["nn", "manual"] = "nn",
         split_by: str | None = None,
-        group_key: str | None = None,
         n_neighbors: int = 20,
         use_rep: str | None = None,
         n_dims: int | None = 15,
@@ -56,12 +55,14 @@ class Mixscape:
 
         The perturbation signature is calculated by subtracting the averaged mRNA expression profile of the control
         cells (selected according to `ref_selection_mode`) from the mRNA expression profile of each cell.
+        The implementation resembles https://satijalab.org/seurat/reference/runmixscape. Note that in the original implementation, the
+        perturbation signature is calculated on unscaled data by default and we therefore recommend to do the same.
 
         Args:
             adata: The annotated data object.
             pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
             control: Name of the control category from the `pert_key` column.
-            ref_selection_mode: Method to select reference cells for the perturbation signature calculation. If `neighest_neighbors`,
+            ref_selection_mode: Method to select reference cells for the perturbation signature calculation. If `nn`,
                 the `n_neighbors` cells from the control pool with the most similar mRNA expression profiles are selected. If `manual`,
                 the control cells from the same split in `split_by` (e.g. indicating biological replicates) are used to calculate the perturbation signature.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
@@ -89,10 +90,10 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
         """
-        if ref_selection_mode not in ["neighest_neighbors", "manual"]:
-            raise ValueError("ref_selection_mode must be either 'neighest_neighbors' or 'manual'.")
+        if ref_selection_mode not in ["nn", "manual"]:
+            raise ValueError("ref_selection_mode must be either 'nn' or 'manual'.")
         if ref_selection_mode == "manual" and split_by is None:
                 raise ValueError("split_by must be provided if ref_selection_mode is 'manual'.")
 
@@ -188,8 +189,7 @@ class Mixscape:
     ):
         """Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
 
-        The implementation resembles https://satijalab.org/seurat/reference/runmixscape. Note that in the original implementation, the
-        perturbation signature is calculated on unscaled data by default and we therefore recommend to do the same.
+        The implementation resembles https://satijalab.org/seurat/reference/runmixscape.
 
         Args:
             adata: The annotated data object.
