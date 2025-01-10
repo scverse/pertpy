@@ -747,7 +747,7 @@ class CellLine(MetaData):
                 if all(isinstance(id, str) for id in subset_identifier_list):
                     if set(subset_identifier_list).issubset(adata.obs[identifier].unique()):
                         subset_identifier_list = np.where(
-                            np.in1d(adata.obs[identifier].values, subset_identifier_list)
+                            np.isin(adata.obs[identifier].values, subset_identifier_list)
                         )[0]
                     else:
                         raise ValueError("`Subset_identifier` must be found in adata.obs.`identifier`.")

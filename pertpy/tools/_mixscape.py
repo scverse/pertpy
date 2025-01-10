@@ -67,8 +67,10 @@ class Mixscape:
                 If `None`, the representation is chosen automatically:
                 For `.n_vars` < 50, `.X` is used, otherwise 'X_pca' is used.
                 If 'X_pca' is not present, it’s computed with default parameters.
-            n_dims: Number of dimensions to use from the representation to calculate the perturbation signature. If `None`, use all dimensions.
-            n_pcs: If PCA representation is used, the number of principal components to compute. If `n_pcs==0` use `.X` if `use_rep is None`.
+            n_dims: Number of dimensions to use from the representation to calculate the perturbation signature.
+                If `None`, use all dimensions.
+            n_pcs: If PCA representation is used, the number of principal components to compute.
+                If `n_pcs==0` use `.X` if `use_rep is None`.
             batch_size: Size of batch to calculate the perturbation signature.
                 If 'None', the perturbation signature is calcuated in the full mode, requiring more memory.
                 The batched mode is very inefficient for sparse data.
@@ -130,7 +132,9 @@ class Mixscape:
                     shape=(n_split, n_control),
                 )
                 neigh_matrix /= n_neighbors
-                adata.layers["X_pert"][split_mask] = np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                adata.layers["X_pert"][split_mask] = (
+                    np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                )
             else:
                 is_sparse = issparse(X_control)
                 split_indices = np.where(split_mask)[0]
@@ -166,7 +170,7 @@ class Mixscape:
         split_by: str | None = None,
         pval_cutoff: float | None = 5e-2,
         perturbation_type: str | None = "KO",
-            random_state: int | None = 0,
+        random_state: int | None = 0,
         copy: bool | None = False,
     ):
         """Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
@@ -238,6 +242,7 @@ class Mixscape:
                 raise KeyError(
                     "No 'X_pert' found in .layers! Please run perturbation_signature first to calculate perturbation signature!"
                 ) from None
+
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
         adata.obs[new_class_name] = adata.obs[labels].astype(str)
@@ -248,6 +253,8 @@ class Mixscape:
             dtype=np.object_,
         )
         gv_list: dict[str, dict] = {}
+
+        adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
             genes = list(set(adata[split_mask].obs[labels]).difference([control]))
@@ -325,9 +332,7 @@ class Mixscape:
                     )
 
                 adata.obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in adata.obs[new_class_name]]
-                adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = np.round(
-                    post_prob
-                ).astype("int64")
+                adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
         adata.uns["mixscape"] = gv_list
 
         if copy:

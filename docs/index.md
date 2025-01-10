@@ -54,13 +54,13 @@ Discussions <https://github.com/scverse/pertpy/discussions>
 references
 ```
 
--   Consider citing [scanpy Genome Biology (2018)] along with original {doc}`references <references>`.
--   A paper for pertpy is in the works.
+- Consider citing [scanpy Genome Biology (2018)] along with original {doc}`references <references>`.
+- A paper for pertpy is in the works.
 
 # Indices and tables
 
--   {ref}`genindex`
--   {ref}`modindex`
--   {ref}`search`
+- {ref}`genindex`
+- {ref}`modindex`
+- {ref}`search`
 
 [scanpy genome biology (2018)]: https://doi.org/10.1186/s13059-017-1382-0

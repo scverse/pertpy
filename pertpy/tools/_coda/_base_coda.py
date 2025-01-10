@@ -850,7 +850,7 @@ class CompositionalModel2(ABC):
         table = Table(title="Compositional Analysis summary", box=box.SQUARE, expand=True, highlight=True)
         table.add_column("Name", justify="left", style="cyan")
         table.add_column("Value", justify="left")
-        table.add_row("Data", "Data: %d samples, %d cell types" % data_dims)
+        table.add_row("Data", f"Data: {data_dims[0]} samples, {data_dims[1]} cell types")
         table.add_row("Reference cell type", "{}".format(str(sample_adata.uns["scCODA_params"]["reference_cell_type"])))
         table.add_row("Formula", "{}".format(sample_adata.uns["scCODA_params"]["formula"]))
         if extended:
