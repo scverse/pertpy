@@ -117,9 +117,9 @@ class Mixscape:
                 split_obs = adata.obs[split_by]
                 split_masks = [split_obs == cat for cat in split_obs.unique()]
 
-        representation = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
-        if n_dims is not None and n_dims < representation.shape[1]:
-            representation = representation[:, :n_dims]
+            representation = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
+            if n_dims is not None and n_dims < representation.shape[1]:
+                representation = representation[:, :n_dims]
 
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
@@ -142,30 +142,30 @@ class Mixscape:
                     col_indices = np.ravel(indices)
                     row_indices = np.repeat(np.arange(n_split), n_neighbors)
 
-                neigh_matrix = csr_matrix(
-                    (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
-                    shape=(n_split, n_control),
-                )
-                neigh_matrix /= n_neighbors
-                adata.layers["X_pert"][split_mask] = np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
-            else:
-                is_sparse = issparse(X_control)
-                split_indices = np.where(split_mask)[0]
-                for i in range(0, n_split, batch_size):
-                    size = min(i + batch_size, n_split)
-                    select = slice(i, size)
+                    neigh_matrix = csr_matrix(
+                        (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
+                        shape=(n_split, n_control),
+                    )
+                    neigh_matrix /= n_neighbors
+                    adata.layers["X_pert"][split_mask] = np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                else:
+                    is_sparse = issparse(X_control)
+                    split_indices = np.where(split_mask)[0]
+                    for i in range(0, n_split, batch_size):
+                        size = min(i + batch_size, n_split)
+                        select = slice(i, size)
 
-                    batch = np.ravel(indices[select])
-                    split_batch = split_indices[select]
+                        batch = np.ravel(indices[select])
+                        split_batch = split_indices[select]
 
-                    size = size - i
+                        size = size - i
 
-                    # sparse is very slow
-                    means_batch = X_control[batch]
-                    means_batch = means_batch.toarray() if is_sparse else means_batch
-                    means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
+                        # sparse is very slow
+                        means_batch = X_control[batch]
+                        means_batch = means_batch.toarray() if is_sparse else means_batch
+                        means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
 
-                    adata.layers["X_pert"][split_batch] = np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
+                        adata.layers["X_pert"][split_batch] = np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
 
         if copy:
             return adata
