@@ -908,41 +908,39 @@ class Augur:
             .mean()
         )
 
-        sampled_permuted_cv_augur1 = []
-        sampled_permuted_cv_augur2 = []
+        rng = np.random.default_rng()
+        sampled_data = []
 
         # draw mean aucs for permute1 and permute2
         for celltype in permuted_cv_augur1["cell_type"].unique():
             df1 = permuted_cv_augur1[permuted_cv_augur1["cell_type"] == celltype]
             df2 = permuted_cv_augur2[permuted_cv_augur2["cell_type"] == celltype]
-            for permutation_idx in range(n_permutations):
-                # subsample
-                sample1 = df1.sample(n=n_subsamples, random_state=permutation_idx, axis="index")
-                sampled_permuted_cv_augur1.append(
-                    pd.DataFrame(
-                        {
-                            "cell_type": [celltype],
-                            "permutation_idx": [permutation_idx],
-                            "mean": [sample1["augur_score"].mean(axis=0)],
-                            "std": [sample1["augur_score"].std(axis=0)],
-                        }
-                    )
-                )
 
-                sample2 = df2.sample(n=n_subsamples, random_state=permutation_idx, axis="index")
-                sampled_permuted_cv_augur2.append(
-                    pd.DataFrame(
-                        {
-                            "cell_type": [celltype],
-                            "permutation_idx": [permutation_idx],
-                            "mean": [sample2["augur_score"].mean(axis=0)],
-                            "std": [sample2["augur_score"].std(axis=0)],
-                        }
-                    )
-                )
+            indices1 = rng.choice(len(df1), size=(n_permutations, n_subsamples), replace=True)
+            indices2 = rng.choice(len(df2), size=(n_permutations, n_subsamples), replace=True)
 
-        permuted_samples1 = pd.concat(sampled_permuted_cv_augur1)
-        permuted_samples2 = pd.concat(sampled_permuted_cv_augur2)
+            scores1 = df1["augur_score"].values[indices1]
+            scores2 = df2["augur_score"].values[indices2]
+
+            means1 = scores1.mean(axis=1)
+            means2 = scores2.mean(axis=1)
+            stds1 = scores1.std(axis=1)
+            stds2 = scores2.std(axis=1)
+
+            sampled_data.append(
+                pd.DataFrame(
+                    {
+                        "cell_type": np.repeat(celltype, n_permutations),
+                        "permutation_idx": np.arange(n_permutations),
+                        "mean1": means1,
+                        "mean2": means2,
+                        "std1": stds1,
+                        "std2": stds2,
+                    }
+                )
+            )
+
+        sampled_df = pd.concat(sampled_data)
 
         # delta between augur scores
         delta = augur_score1.merge(augur_score2, on=["cell_type"], suffixes=("1", "2")).assign(
@@ -950,9 +948,7 @@ class Augur:
         )
 
         # delta between permutation scores
-        delta_rnd = permuted_samples1.merge(
-            permuted_samples2, on=["cell_type", "permutation_idx"], suffixes=("1", "2")
-        ).assign(delta_rnd=lambda x: x.mean2 - x.mean1)
+        delta_rnd = sampled_df.assign(delta_rnd=lambda x: x.mean2 - x.mean1)
 
         # number of values where permutations are larger than test statistic
         delta["b"] = (
@@ -967,7 +963,7 @@ class Augur:
         delta["z"] = (
             delta["delta_augur"] - delta_rnd.groupby("cell_type", as_index=False).mean()["delta_rnd"]
         ) / delta_rnd.groupby("cell_type", as_index=False).std()["delta_rnd"]
-        # calculate pvalues
+
         delta["pval"] = np.minimum(
             2 * (delta["b"] + 1) / (delta["m"] + 1), 2 * (delta["m"] - delta["b"] + 1) / (delta["m"] + 1)
         )
