@@ -55,8 +55,7 @@ def adata(request):
         else:
             adata = sc.pp.subsample(adata, 0.001, copy=True)
 
-    rng = np.random.default_rng()
-    adata = adata[:, rng.choice(adata.n_vars, 100, replace=False)].copy()
+    adata = adata[:, np.random.default_rng().choice(adata.n_vars, 100, replace=False)].copy()
 
     adata.layers["lognorm"] = adata.X.copy()
     adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
