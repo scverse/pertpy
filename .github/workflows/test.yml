@@ -24,7 +24,7 @@ jobs:
                     - os: ubuntu-latest
                       python: "3.10"
                       run_mode: "slow"
-                    - os: ubuntu-latest
+                    - os: buildjet-4vcpu-ubuntu-2204
                       python: "3.12"
                       run_mode: "slow"
                     # - os: ubuntu-latest
