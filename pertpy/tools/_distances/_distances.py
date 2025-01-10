@@ -344,9 +344,9 @@ class Distance:
             else:
                 embedding = adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
-                cells_x = embedding[grouping == group_x].copy()
+                cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 for group_y in groups[index_x:]:  # type: ignore
-                    cells_y = embedding[grouping == group_y].copy()
+                    cells_y = embedding[np.asarray(grouping == group_y)].copy()
                     if not bootstrap:
                         # By distance axiom, the distance between a group and itself is 0
                         dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
@@ -478,9 +478,9 @@ class Distance:
             else:
                 embedding = adata.obsm[self.obsm_key].copy()
             for group_x in fct(groups):
-                cells_x = embedding[grouping == group_x].copy()
+                cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 group_y = selected_group
-                cells_y = embedding[grouping == group_y].copy()
+                cells_y = embedding[np.asarray(grouping == group_y)].copy()
                 if not bootstrap:
                     # By distance axiom, the distance between a group and itself is 0
                     dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
@@ -691,17 +691,18 @@ class MMD(AbstractDistance):
 
 
 class WassersteinDistance(AbstractDistance):
-    """Wasserstein distance metric (solved with entropy regularized Sinkhorn)."""
-
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        X = np.asarray(X, dtype=np.float64)
+        Y = np.asarray(Y, dtype=np.float64)
         geom = PointCloud(X, Y)
         return self.solve_ot_problem(geom, **kwargs)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        P = np.asarray(P, dtype=np.float64)
         geom = Geometry(cost_matrix=P[idx, :][:, ~idx])
         return self.solve_ot_problem(geom, **kwargs)
 
@@ -709,7 +710,13 @@ class WassersteinDistance(AbstractDistance):
         ot_prob = LinearProblem(geom)
         solver = Sinkhorn()
         ot = solver(ot_prob, **kwargs)
-        return ot.reg_ot_cost.item()
+        cost = float(ot.reg_ot_cost)
+
+        # Check for NaN or invalid cost
+        if not np.isfinite(cost):
+            return 1.0
+        else:
+            return cost
 
 
 class EuclideanDistance(AbstractDistance):
@@ -981,7 +988,7 @@ class NBLL(AbstractDistance):
             try:
                 nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
                 return _compute_nll(y, nb_params, epsilon)
-            except np.linalg.linalg.LinAlgError:
+            except np.linalg.LinAlgError:
                 if x.mean() < 10 and y.mean() < 10:
                     return 0.0
                 else:

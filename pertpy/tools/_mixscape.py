@@ -118,15 +118,15 @@ class Mixscape:
                 split_obs = adata.obs[split_by]
                 split_masks = [split_obs == cat for cat in split_obs.unique()]
 
-            representation = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
-            if n_dims is not None and n_dims < representation.shape[1]:
-                representation = representation[:, :n_dims]
+        representation = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
+        if n_dims is not None and n_dims < representation.shape[1]:
+            representation = representation[:, :n_dims]
 
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
 
-                R_split = representation[split_mask]
-                R_control = representation[control_mask_split]
+            R_split = representation[split_mask]
+            R_control = representation[np.asarray(control_mask_split)]
 
                 from pynndescent import NNDescent
 
@@ -134,7 +134,7 @@ class Mixscape:
                 nn_index = NNDescent(R_control, **kwargs)
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
 
-                X_control = np.expm1(adata.X[control_mask_split])
+            X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
 
                 n_split = split_mask.sum()
                 n_control = X_control.shape[0]
@@ -143,18 +143,18 @@ class Mixscape:
                     col_indices = np.ravel(indices)
                     row_indices = np.repeat(np.arange(n_split), n_neighbors)
 
-                    neigh_matrix = csr_matrix(
-                        (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
-                        shape=(n_split, n_control),
-                    )
-                    neigh_matrix /= n_neighbors
-                    adata.layers["X_pert"][split_mask] = np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
-                else:
-                    is_sparse = issparse(X_control)
-                    split_indices = np.where(split_mask)[0]
-                    for i in range(0, n_split, batch_size):
-                        size = min(i + batch_size, n_split)
-                        select = slice(i, size)
+                neigh_matrix = csr_matrix(
+                    (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
+                    shape=(n_split, n_control),
+                )
+                neigh_matrix /= n_neighbors
+                adata.layers["X_pert"][split_mask] = np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+            else:
+                is_sparse = issparse(X_control)
+                split_indices = np.where(split_mask)[0]
+                for i in range(0, n_split, batch_size):
+                    size = min(i + batch_size, n_split)
+                    select = slice(i, size)
 
                         batch = np.ravel(indices[select])
                         split_batch = split_indices[select]
@@ -166,7 +166,7 @@ class Mixscape:
                         means_batch = means_batch.toarray() if is_sparse else means_batch
                         means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
 
-                        adata.layers["X_pert"][split_batch] = np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
+                    adata.layers["X_pert"][split_batch] = np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
 
         if copy:
             return adata
@@ -280,7 +280,7 @@ class Mixscape:
                 else:
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = self._get_column_indices(adata, list(de_genes))
-                    dat = X[all_cells][:, de_genes_indices]
+                    dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     converged = False
                     n_iter = 0
                     old_classes = adata.obs[labels][all_cells]
@@ -290,8 +290,8 @@ class Mixscape:
                         # get average value for each gene over all selected cells
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
-                        vec = np.mean(X[guide_cells][:, de_genes_indices], axis=0) - np.mean(
-                            X[nt_cells][:, de_genes_indices], axis=0
+                        vec = np.mean(X[np.asarray(guide_cells)][:, de_genes_indices], axis=0) - np.mean(
+                            X[np.asarray(nt_cells)][:, de_genes_indices], axis=0
                         )
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
@@ -621,7 +621,7 @@ class Mixscape:
             ax.set_title(gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size)
             ax.set(xlabel="sgRNA", ylabel="% of cells")
             sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
-            ax.set_xticks(ax.get_xticks(),ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
+            ax.set_xticks(ax.get_xticks(), ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
             ax.set_yticks(ax.get_yticks(), ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
             ax.legend(
                 title="Mixscape Class",
@@ -639,7 +639,7 @@ class Mixscape:
         if show:
             plt.show()
         if return_fig:
-            return  fig
+            return fig
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
