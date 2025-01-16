@@ -54,7 +54,6 @@ dependencies = [
     "muon",
     "requests",
     "scikit-misc",
-    "scipy",
     "scvi-tools",
     "adjusttext",
     "decoupler",
@@ -64,6 +63,7 @@ dependencies = [
     "pubchempy",
     "pyarrow",
     "blitzgsea",
+    "scikit-learn>= 1.4",  # https://github.com/scverse/pertpy/issues/700
     "lamin_utils",
 ]
 
