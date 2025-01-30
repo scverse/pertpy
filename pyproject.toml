@@ -68,7 +68,7 @@ dependencies = [
     "scipy==1.15.0",
     "torch==2.5.1",
     "toytree==3.0.6",
-    "trion==3.1.0"
+    "triton==3.1.0"
 ]
 
 [project.optional-dependencies]
