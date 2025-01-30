@@ -685,7 +685,7 @@ class Augur:
         span: float = 0.75,
         filter_negative_residuals: bool = False,
         n_threads: int = 4,
-        augur_mode: Literal["permute"] | Literal["default"] | Literal["velocity"] = "default",
+        augur_mode: Literal["default", "permute", "velocity"] = "default",
         select_variance_features: bool = True,
         key_added: str = "augurpy_results",
         random_state: int | None = None,
