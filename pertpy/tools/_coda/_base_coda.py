@@ -1467,8 +1467,10 @@ class CompositionalModel2(ABC):
 
         if show:
             plt.show()
-        if return_fig:
-            return plt.gcf()
+        if return_fig and plot_facets:
+            return g
+        if return_fig and not plot_facets:
+            return  plt.gcf()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
