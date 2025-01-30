@@ -63,7 +63,6 @@ dependencies = [
     "pubchempy",
     "pyarrow",
     "blitzgsea",
-    "scikit-learn>=1.4",  # https://github.com/scverse/pertpy/issues/700
     "lamin_utils",
 ]
 
