@@ -727,7 +727,6 @@ class Milo:
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -803,10 +802,9 @@ class Milo:
             **kwargs,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -820,7 +818,6 @@ class Milo:
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -866,10 +863,9 @@ class Milo:
             **kwargs,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -882,7 +878,6 @@ class Milo:
         alpha: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot beeswarm plot of logFC against nhood labels
@@ -994,10 +989,9 @@ class Milo:
         plt.legend(loc="upper left", title=f"< {int(alpha * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1008,7 +1002,6 @@ class Milo:
         *,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot boxplot of cell numbers vs condition of interest.
@@ -1050,8 +1043,7 @@ class Milo:
         plt.xticks(rotation=90)
         plt.xlabel(test_var)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None

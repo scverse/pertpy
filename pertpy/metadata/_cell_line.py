@@ -703,7 +703,6 @@ class CellLine(MetaData):
         metadata_key: str = "bulk_rna_broad",
         category: str = "cell line",
         subset_identifier: str | int | Iterable[str] | Iterable[int] | None = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Visualise the correlation of cell lines with annotated metadata.
@@ -798,10 +797,9 @@ class CellLine(MetaData):
                 },
             )
 
-            if show:
-                plt.show()
             if return_fig:
                 return plt.gcf()
+            plt.show()
             return None
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only 'cell line' category is supported for correlation comparison.")

@@ -978,7 +978,6 @@ class Augur:
         *,
         top_n: int = None,
         ax: Axes = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot scatterplot of differential prioritization.
@@ -1037,10 +1036,9 @@ class Augur:
         legend1 = ax.legend(*scatter.legend_elements(), loc="center left", title="z-scores", bbox_to_anchor=(1, 0.5))
         ax.add_artist(legend1)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1051,7 +1049,6 @@ class Augur:
         key: str = "augurpy_results",
         top_n: int = 10,
         ax: Axes = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot a lollipop plot of the n features with largest feature importances.
@@ -1105,10 +1102,9 @@ class Augur:
         plt.ylabel("Gene")
         plt.yticks(y_axes_range, n_features["genes"])
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1118,7 +1114,6 @@ class Augur:
         *,
         key: str = "augurpy_results",
         ax: Axes = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot a lollipop plot of the mean augur values.
@@ -1168,10 +1163,9 @@ class Augur:
         plt.ylabel("Cell Type")
         plt.yticks(y_axes_range, results["summary_metrics"].sort_values("mean_augur_score", axis=1).columns)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1181,7 +1175,6 @@ class Augur:
         results2: dict[str, Any],
         *,
         top_n: int = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Create scatterplot with two augur results.
@@ -1239,8 +1232,7 @@ class Augur:
         plt.xlabel("Augur scores 1")
         plt.ylabel("Augur scores 2")
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None

@@ -15,6 +15,5 @@ def _doc_params(**kwds):  # pragma: no cover
 
 
 doc_common_plot_args = """\
-show: if `True`, shows the plot.
-            return_fig: if `True`, returns figure of the plot.\
+return_fig: if `True`, returns figure of the plot, that can be used for saving.\
 """

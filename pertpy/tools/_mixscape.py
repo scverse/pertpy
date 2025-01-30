@@ -535,7 +535,6 @@ class Mixscape:
         legend_text_size: int = 8,
         legend_bbox_to_anchor: tuple[float, float] = None,
         figsize: tuple[float, float] = (25, 25),
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
@@ -624,10 +623,9 @@ class Mixscape:
         fig.subplots_adjust(hspace=0.5, wspace=0.5)
         plt.tight_layout()
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -643,7 +641,6 @@ class Mixscape:
         subsample_number: int | None = 900,
         vmin: float | None = -2,
         vmax: float | None = 2,
-        show: bool = True,
         return_fig: bool = False,
         **kwds,
     ) -> Figure | None:
@@ -696,10 +693,9 @@ class Mixscape:
             **kwds,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -715,7 +711,6 @@ class Mixscape:
         split_by: str = None,
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
@@ -864,10 +859,9 @@ class Mixscape:
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -892,7 +886,6 @@ class Mixscape:
         ylabel: str | Sequence[str] | None = None,
         rotation: float | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Axes | Figure | None:
@@ -1060,12 +1053,9 @@ class Mixscape:
                 if rotation is not None:
                     ax.tick_params(axis="x", labelrotation=rotation)
 
-        show = settings.autoshow if show is None else show
         if hue is not None and stripplot is True:
             plt.legend(handles, labels)
 
-        if show:
-            plt.show()
         if return_fig:
             if multi_panel and groupby is None and len(ys) == 1:
                 return g
@@ -1073,6 +1063,7 @@ class Mixscape:
                 return axs[0]
             else:
                 return axs
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1089,7 +1080,6 @@ class Mixscape:
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwds,
     ) -> Figure | None:
@@ -1142,8 +1132,7 @@ class Mixscape:
             **kwds,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
