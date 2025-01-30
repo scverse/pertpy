@@ -125,7 +125,6 @@ class MethodBase(ABC):
         shape_order: list[str] | None = None,
         x_label: str | None = None,
         y_label: str | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs: int,
     ) -> Figure | None:
@@ -484,10 +483,9 @@ class MethodBase(ABC):
 
         plt.legend(loc=1, bbox_to_anchor=legend_pos, frameon=False)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -511,7 +509,6 @@ class MethodBase(ABC):
         pvalue_template=lambda x: f"p={x:.2e}",
         boxplot_properties=None,
         palette=None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Creates a pairwise expression plot from a Pandas DataFrame or Anndata.
@@ -679,10 +676,9 @@ class MethodBase(ABC):
             )
 
         plt.tight_layout()
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -696,7 +692,6 @@ class MethodBase(ABC):
         symbol_col: str = "variable",
         y_label: str = "Log2 fold change",
         figsize: tuple[int, int] = (10, 5),
-        show: bool = True,
         return_fig: bool = False,
         **barplot_kwargs,
     ) -> Figure | None:
@@ -762,10 +757,9 @@ class MethodBase(ABC):
         plt.xlabel("")
         plt.ylabel(y_label)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -782,7 +776,6 @@ class MethodBase(ABC):
         figsize: tuple[int, int] = (10, 2),
         x_label: str = "Contrast",
         y_label: str = "Gene",
-        show: bool = True,
         return_fig: bool = False,
         **heatmap_kwargs,
     ) -> Figure | None:
@@ -880,10 +873,9 @@ class MethodBase(ABC):
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
 

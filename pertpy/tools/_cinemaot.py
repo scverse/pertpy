@@ -658,7 +658,6 @@ class Cinemaot:
         title: str = "CINEMA-OT matching matrix",
         min_val: float = 0.01,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -717,10 +716,9 @@ class Cinemaot:
         g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
 
-        if show:
-            plt.show()
         if return_fig:
             return g
+        plt.show()
         return None
 
 
