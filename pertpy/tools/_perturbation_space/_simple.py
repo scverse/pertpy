@@ -181,7 +181,6 @@ class PseudobulkSpace(PerturbationSpace):
         adata: AnnData,
         groupby: str,
         *,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -212,10 +211,9 @@ class PseudobulkSpace(PerturbationSpace):
         """
         fig = dc.plot_psbulk_samples(adata, groupby, return_fig=True, **kwargs)
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
 

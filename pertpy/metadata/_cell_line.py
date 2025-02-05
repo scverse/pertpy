@@ -703,7 +703,6 @@ class CellLine(MetaData):
         metadata_key: str = "bulk_rna_broad",
         category: str = "cell line",
         subset_identifier: str | int | Iterable[str] | Iterable[int] | None = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Visualise the correlation of cell lines with annotated metadata.
@@ -747,7 +746,7 @@ class CellLine(MetaData):
                 if all(isinstance(id, str) for id in subset_identifier_list):
                     if set(subset_identifier_list).issubset(adata.obs[identifier].unique()):
                         subset_identifier_list = np.where(
-                            np.in1d(adata.obs[identifier].values, subset_identifier_list)
+                            np.isin(adata.obs[identifier].values, subset_identifier_list)
                         )[0]
                     else:
                         raise ValueError("`Subset_identifier` must be found in adata.obs.`identifier`.")
@@ -798,10 +797,9 @@ class CellLine(MetaData):
                 },
             )
 
-            if show:
-                plt.show()
             if return_fig:
                 return plt.gcf()
+            plt.show()
             return None
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only 'cell line' category is supported for correlation comparison.")

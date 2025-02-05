@@ -168,7 +168,7 @@ def test_differential_prioritization():
     # Requires the full dataset or it fails because of a lack of statistical power
     adata = pt.dt.sc_sim_augur()
     adata = sc.pp.subsample(adata, n_obs=500, copy=True, random_state=10)
-    ag = pt.tl.Augur("random_forest_classifier", Params(random_state=42))
+    ag = pt.tl.Augur("logistic_regression_classifier", Params(random_state=42))
     ag.load(adata)
 
     adata, results1 = ag.predict(adata, n_threads=4, n_subsamples=3, random_state=2)
