@@ -144,20 +144,20 @@ class Mixscape:
                     col_indices = np.ravel(indices)
                     row_indices = np.repeat(np.arange(n_split), n_neighbors)
 
-                neigh_matrix = csr_matrix(
-                    (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
-                    shape=(n_split, n_control),
-                )
-                neigh_matrix /= n_neighbors
-                adata.layers["X_pert"][split_mask] = (
-                    np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
-                )
-            else:
-                is_sparse = issparse(X_control)
-                split_indices = np.where(split_mask)[0]
-                for i in range(0, n_split, batch_size):
-                    size = min(i + batch_size, n_split)
-                    select = slice(i, size)
+                    neigh_matrix = csr_matrix(
+                        (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
+                        shape=(n_split, n_control),
+                    )
+                    neigh_matrix /= n_neighbors
+                    adata.layers["X_pert"][split_mask] = (
+                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                    )
+                else:
+                    is_sparse = issparse(X_control)
+                    split_indices = np.where(split_mask)[0]
+                    for i in range(0, n_split, batch_size):
+                        size = min(i + batch_size, n_split)
+                        select = slice(i, size)
 
                         batch = np.ravel(indices[select])
                         split_batch = split_indices[select]
