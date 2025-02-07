@@ -62,7 +62,7 @@ class MetaData:
             if verbosity > 0:
                 logger.info(
                     f"There are {total_identifiers} identifiers in `adata.obs`."
-                    f"However, {len(unmatched_identifiers)} identifiers can't be found in the {metadata_type} annotation,"
+                    f"However, {len(unmatched_identifiers)} identifiers can't be found in the {metadata_type} annotation, "
                     "leading to the presence of NA values for their respective metadata.\n"
                     f"Please check again: *unmatched_identifiers[:verbosity]..."
                 )

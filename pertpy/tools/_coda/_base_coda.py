@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import arviz as az
 import jax.numpy as jnp
@@ -309,7 +309,7 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        rng_key_array = random.key(rng_key)
+        rng_key_array = random.key_data(random.key(rng_key))
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
@@ -850,7 +850,7 @@ class CompositionalModel2(ABC):
         table = Table(title="Compositional Analysis summary", box=box.SQUARE, expand=True, highlight=True)
         table.add_column("Name", justify="left", style="cyan")
         table.add_column("Value", justify="left")
-        table.add_row("Data", "Data: %d samples, %d cell types" % data_dims)
+        table.add_row("Data", f"Data: {data_dims[0]} samples, {data_dims[1]} cell types")
         table.add_row("Reference cell type", "{}".format(str(sample_adata.uns["scCODA_params"]["reference_cell_type"])))
         table.add_row("Formula", "{}".format(sample_adata.uns["scCODA_params"]["formula"]))
         if extended:
@@ -1199,7 +1199,6 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
@@ -1278,10 +1277,9 @@ class CompositionalModel2(ABC):
                 show_legend=show_legend,
             )
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1300,7 +1298,6 @@ class CompositionalModel2(ABC):
         args_barplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Barplot visualization for effects.
@@ -1378,7 +1375,6 @@ class CompositionalModel2(ABC):
         if len(covariate_names_zero) != 0:
             if plot_facets:
                 if plot_zero_covariate and not plot_zero_cell_type:
-                    plot_df = plot_df[plot_df["value"] != 0]
                     for covariate_name_zero in covariate_names_zero:
                         new_row = {
                             "Covariate": covariate_name_zero,
@@ -1466,10 +1462,11 @@ class CompositionalModel2(ABC):
             cell_types = pd.unique(plot_df["Cell Type"])
             ax.set_xticklabels(cell_types, rotation=90)
 
-        if show:
-            plt.show()
-        if return_fig:
+        if return_fig and plot_facets:
+            return g
+        if return_fig and not plot_facets:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1490,7 +1487,6 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Grouped boxplot visualization.
@@ -1698,10 +1694,11 @@ class CompositionalModel2(ABC):
                     title=feature_name,
                 )
 
-        if show:
-            plt.show()
-        if return_fig:
+        if return_fig and plot_facets:
+            return g
+        if return_fig and not plot_facets:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1717,7 +1714,6 @@ class CompositionalModel2(ABC):
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
         ax: plt.Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
@@ -1821,10 +1817,9 @@ class CompositionalModel2(ABC):
 
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1, title="Is abundant")
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1840,7 +1835,6 @@ class CompositionalModel2(ABC):
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
         save: str | bool = False,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree using input ete3 tree object.
@@ -1904,10 +1898,9 @@ class CompositionalModel2(ABC):
 
         if save is not None:
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
-        if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if return_fig:
             return tree, tree_style
+        return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1926,7 +1919,6 @@ class CompositionalModel2(ABC):
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
         save: str | bool = False,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
@@ -2093,15 +2085,16 @@ class CompositionalModel2(ABC):
 
             if save:
                 plt.savefig(save)
+            if return_fig:
+                return plt.gcf()
 
-        if save and not show_leaf_effects:
-            tree2.render(save, tree_style=tree_style, units=units)
-        if show:
-            if not show_leaf_effects:
-                return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
-        if return_fig:
-            if not show_leaf_effects:
+        else:
+            if save:
+                tree2.render(save, tree_style=tree_style, units=units)
+            if return_fig:
                 return tree2, tree_style
+            return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -2116,7 +2109,6 @@ class CompositionalModel2(ABC):
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -2210,10 +2202,9 @@ class CompositionalModel2(ABC):
             **kwargs,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
 

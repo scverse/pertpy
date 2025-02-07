@@ -1070,7 +1070,6 @@ class Dialogue:
         *,
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plots split violin plots for a given MCP and split variable.
@@ -1110,10 +1109,9 @@ class Dialogue:
         ax = sns.violinplot(data=df, x=celltype_key, y=mcp, hue=split_key, split=True)
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1125,7 +1123,6 @@ class Dialogue:
         sample_id: str,
         *,
         mcp: str = "mcp_0",
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
@@ -1167,8 +1164,7 @@ class Dialogue:
         mcp_pivot = pd.concat([mcp_pivot, aggstats[color]], axis=1)
         sns.pairplot(mcp_pivot, hue=color, corner=True)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None

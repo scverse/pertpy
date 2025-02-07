@@ -195,4 +195,7 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/differential_gene_expression": "_static/tutorials/dge.png",
     "tutorials/notebooks/metadata_annotation": "_static/tutorials/metadata.png",
     "tutorials/notebooks/ontology_mapping": "_static/tutorials/ontology.png",
+    "tutorials/notebooks/norman_use_case": "_static/tutorials/norman.png",
+    "tutorials/notebooks/mcfarland_use_case": "_static/tutorials/mcfarland.png",
+    "tutorials/notebooks/zhang_use_case": "_static/tutorials/zhang.png",
 }

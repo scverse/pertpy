@@ -98,3 +98,50 @@ def test_lda(adata):
     mixscape_identifier.lda(adata=adata, labels="gene_target", control="NT")
 
     assert "mixscape_lda" in adata.uns
+
+
+def test_deterministic_perturbation_signature():
+    n_genes = 5
+    n_cells_per_class = 50
+    cell_classes = ["NT", "KO", "NP"]
+    groups = ["Group1", "Group2"]
+
+    cell_classes_array = np.repeat(cell_classes, n_cells_per_class)
+    groups_array = np.tile(np.repeat(groups, n_cells_per_class // 2), len(cell_classes))
+    obs = pd.DataFrame(
+        {
+            "cell_class": cell_classes_array,
+            "group": groups_array,
+            "perturbation": ["control" if cell_class == "NT" else "pert1" for cell_class in cell_classes_array],
+        }
+    )
+
+    data = np.zeros((len(obs), n_genes))
+    pert_effect = np.random.default_rng().uniform(-1, 1, size=(n_cells_per_class // len(groups), n_genes))
+    for _, group in enumerate(groups):
+        baseline_expr = 2 if group == "Group1" else 10
+        group_mask = obs["group"] == group
+
+        nt_mask = (obs["cell_class"] == "NT") & group_mask
+        data[nt_mask] = baseline_expr
+
+        ko_mask = (obs["cell_class"] == "KO") & group_mask
+        data[ko_mask] = baseline_expr + pert_effect
+
+        np_mask = (obs["cell_class"] == "NP") & group_mask
+        data[np_mask] = baseline_expr
+
+    var = pd.DataFrame(index=[f"Gene{i + 1}" for i in range(n_genes)])
+    adata = anndata.AnnData(X=data, obs=obs, var=var)
+
+    mixscape_identifier = pt.tl.Mixscape()
+    mixscape_identifier.perturbation_signature(
+        adata, pert_key="perturbation", control="control", n_neighbors=5, split_by="group"
+    )
+
+    assert "X_pert" in adata.layers
+    assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NT"], 0)
+    assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NP"], 0)
+    assert np.allclose(
+        adata.layers["X_pert"][obs["cell_class"] == "KO"], -np.concatenate([pert_effect] * len(groups), axis=0)
+    )

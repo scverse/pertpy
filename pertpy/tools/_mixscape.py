@@ -44,6 +44,7 @@ class Mixscape:
         split_by: str | None = None,
         n_neighbors: int = 20,
         use_rep: str | None = None,
+        n_dims: int | None = 15,
         n_pcs: int | None = None,
         batch_size: int | None = None,
         copy: bool = False,
@@ -66,7 +67,10 @@ class Mixscape:
                 If `None`, the representation is chosen automatically:
                 For `.n_vars` < 50, `.X` is used, otherwise 'X_pca' is used.
                 If 'X_pca' is not present, it’s computed with default parameters.
-            n_pcs: Use this many PCs. If `n_pcs==0` use `.X` if `use_rep is None`.
+            n_dims: Number of dimensions to use from the representation to calculate the perturbation signature.
+                If `None`, use all dimensions.
+            n_pcs: If PCA representation is used, the number of principal components to compute.
+                If `n_pcs==0` use `.X` if `use_rep is None`.
             batch_size: Size of batch to calculate the perturbation signature.
                 If 'None', the perturbation signature is calcuated in the full mode, requiring more memory.
                 The batched mode is very inefficient for sparse data.
@@ -99,12 +103,14 @@ class Mixscape:
             split_masks = [split_obs == cat for cat in split_obs.unique()]
 
         representation = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
+        if n_dims is not None and n_dims < representation.shape[1]:
+            representation = representation[:, :n_dims]
 
         for split_mask in split_masks:
             control_mask_split = control_mask & split_mask
 
             R_split = representation[split_mask]
-            R_control = representation[control_mask_split]
+            R_control = representation[np.asarray(control_mask_split)]
 
             from pynndescent import NNDescent
 
@@ -112,7 +118,7 @@ class Mixscape:
             nn_index = NNDescent(R_control, **kwargs)
             indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
 
-            X_control = np.expm1(adata.X[control_mask_split])
+            X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
 
             n_split = split_mask.sum()
             n_control = X_control.shape[0]
@@ -126,7 +132,9 @@ class Mixscape:
                     shape=(n_split, n_control),
                 )
                 neigh_matrix /= n_neighbors
-                adata.layers["X_pert"][split_mask] -= np.log1p(neigh_matrix @ X_control)
+                adata.layers["X_pert"][split_mask] = (
+                    np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                )
             else:
                 is_sparse = issparse(X_control)
                 split_indices = np.where(split_mask)[0]
@@ -144,7 +152,7 @@ class Mixscape:
                     means_batch = means_batch.toarray() if is_sparse else means_batch
                     means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
 
-                    adata.layers["X_pert"][split_batch] -= np.log1p(means_batch)
+                    adata.layers["X_pert"][split_batch] = np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
 
         if copy:
             return adata
@@ -162,11 +170,13 @@ class Mixscape:
         split_by: str | None = None,
         pval_cutoff: float | None = 5e-2,
         perturbation_type: str | None = "KO",
+        random_state: int | None = 0,
         copy: bool | None = False,
     ):
         """Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
 
-        The implementation resembles https://satijalab.org/seurat/reference/runmixscape
+        The implementation resembles https://satijalab.org/seurat/reference/runmixscape. Note that in the original implementation, the
+        perturbation signature is calculated on unscaled data by default and we therefore recommend to do the same.
 
         Args:
             adata: The annotated data object.
@@ -181,6 +191,7 @@ class Mixscape:
                     the perturbation signature for every replicate separately.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications.
+            random_state: Random seed for the GaussianMixture model.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -231,6 +242,7 @@ class Mixscape:
                 raise KeyError(
                     "No 'X_pert' found in .layers! Please run perturbation_signature first to calculate perturbation signature!"
                 ) from None
+
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
         adata.obs[new_class_name] = adata.obs[labels].astype(str)
@@ -241,6 +253,8 @@ class Mixscape:
             dtype=np.object_,
         )
         gv_list: dict[str, dict] = {}
+
+        adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
             genes = list(set(adata[split_mask].obs[labels]).difference([control]))
@@ -256,7 +270,7 @@ class Mixscape:
                 else:
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = self._get_column_indices(adata, list(de_genes))
-                    dat = X[all_cells][:, de_genes_indices]
+                    dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     converged = False
                     n_iter = 0
                     old_classes = adata.obs[labels][all_cells]
@@ -266,8 +280,8 @@ class Mixscape:
                         # get average value for each gene over all selected cells
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
-                        vec = np.mean(X[guide_cells][:, de_genes_indices], axis=0) - np.mean(
-                            X[nt_cells][:, de_genes_indices], axis=0
+                        vec = np.mean(X[np.asarray(guide_cells)][:, de_genes_indices], axis=0) - np.mean(
+                            X[np.asarray(nt_cells)][:, de_genes_indices], axis=0
                         )
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
@@ -293,6 +307,7 @@ class Mixscape:
                             covariance_type="spherical",
                             means_init=means_init,
                             precisions_init=precisions_init,
+                            random_state=random_state,
                         ).fit(np.asarray(pvec).reshape(-1, 1))
                         probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
@@ -317,9 +332,7 @@ class Mixscape:
                     )
 
                 adata.obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in adata.obs[new_class_name]]
-                adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = np.round(
-                    post_prob
-                ).astype("int64")
+                adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
         adata.uns["mixscape"] = gv_list
 
         if copy:
@@ -520,7 +533,8 @@ class Mixscape:
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
-        show: bool = True,
+        legend_bbox_to_anchor: tuple[float, float] = None,
+        figsize: tuple[float, float] = (25, 25),
         return_fig: bool = False,
     ) -> Figure | None:
         """Barplot to visualize perturbation scores calculated by the `mixscape` function.
@@ -530,6 +544,13 @@ class Mixscape:
             guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels.
                               The format must be <gene_target>g<#>. Examples are 'STAT2g1' and 'ATF2g1'.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
+            axis_text_x_size: Size of the x-axis text.
+            axis_text_y_size: Size of the y-axis text.
+            axis_title_size: Size of the axis title.
+            legend_title_size: Size of the legend title.
+            legend_text_size: Size of the legend text.
+            legend_bbox_to_anchor: The bbox that the legend will be anchored.
+            figsize: The size of the figure.
             {common_plot_args}
 
         Returns:
@@ -567,7 +588,7 @@ class Mixscape:
 
         color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
         unique_genes = NP_KO_cells["gene"].unique()
-        fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=(25, 25), sharey=True)
+        fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=figsize, sharey=True)
         for i, gene in enumerate(unique_genes):
             ax = axs[int(i / 5), i % 5]
             grouped_df = (
@@ -587,24 +608,24 @@ class Mixscape:
             ax.set_title(gene, bbox={"facecolor": "white", "edgecolor": "black", "pad": 1}, fontsize=axis_title_size)
             ax.set(xlabel="sgRNA", ylabel="% of cells")
             sns.despine(ax=ax, top=True, right=True, left=False, bottom=False)
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
-            ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
-
-            fig.subplots_adjust(right=0.8)
-            fig.subplots_adjust(hspace=0.5, wspace=0.5)
+            ax.set_xticks(ax.get_xticks(), ax.get_xticklabels(), rotation=0, ha="right", fontsize=axis_text_x_size)
+            ax.set_yticks(ax.get_yticks(), ax.get_yticklabels(), rotation=0, fontsize=axis_text_y_size)
             ax.legend(
-                title="mixscape_class_global",
+                title="Mixscape Class",
                 loc="center right",
-                bbox_to_anchor=(2.2, 3.5),
+                bbox_to_anchor=legend_bbox_to_anchor,
                 frameon=True,
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
             )
 
-        if show:
-            plt.show()
+        fig.subplots_adjust(right=0.8)
+        fig.subplots_adjust(hspace=0.5, wspace=0.5)
+        plt.tight_layout()
+
         if return_fig:
-            return plt.gcf()
+            return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -620,7 +641,6 @@ class Mixscape:
         subsample_number: int | None = 900,
         vmin: float | None = -2,
         vmax: float | None = 2,
-        show: bool = True,
         return_fig: bool = False,
         **kwds,
     ) -> Figure | None:
@@ -673,10 +693,9 @@ class Mixscape:
             **kwds,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -692,7 +711,6 @@ class Mixscape:
         split_by: str = None,
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
@@ -785,12 +803,6 @@ class Mixscape:
                 plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            return None
-
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
             if palette is None:
@@ -847,11 +859,10 @@ class Mixscape:
                 plt.legend(title="mixscape class", title_fontsize=14, fontsize=12)
                 sns.despine()
 
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            return None
+        if return_fig:
+            return plt.gcf()
+        plt.show()
+        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_violin(  # pragma: no cover
@@ -875,7 +886,6 @@ class Mixscape:
         ylabel: str | Sequence[str] | None = None,
         rotation: float | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Axes | Figure | None:
@@ -1043,12 +1053,9 @@ class Mixscape:
                 if rotation is not None:
                     ax.tick_params(axis="x", labelrotation=rotation)
 
-        show = settings.autoshow if show is None else show
         if hue is not None and stripplot is True:
             plt.legend(handles, labels)
 
-        if show:
-            plt.show()
         if return_fig:
             if multi_panel and groupby is None and len(ys) == 1:
                 return g
@@ -1056,6 +1063,7 @@ class Mixscape:
                 return axs[0]
             else:
                 return axs
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1072,7 +1080,6 @@ class Mixscape:
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwds,
     ) -> Figure | None:
@@ -1125,8 +1132,7 @@ class Mixscape:
             **kwds,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None

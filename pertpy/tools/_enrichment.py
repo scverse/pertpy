@@ -304,7 +304,6 @@ class Enrichment:
         groupby: str = None,
         key: str = "pertpy_enrichment",
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> DotPlot | None:
@@ -417,10 +416,9 @@ class Enrichment:
             **kwargs,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     def plot_gsea(
