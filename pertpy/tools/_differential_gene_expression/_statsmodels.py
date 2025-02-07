@@ -59,14 +59,3 @@ class Statsmodels(LinearModelBase):
                 }
             )
         return pd.DataFrame(res).sort_values("p_value")
-
-    def contrast(self, column: str, baseline: str, group_to_compare: str) -> np.ndarray:
-        """Build a simple contrast for pairwise comparisons.
-
-        This is equivalent to
-
-        ```
-        model.cond(<column> = baseline) - model.cond(<column> = group_to_compare)
-        ```
-        """
-        return self.cond(**{column: baseline}) - self.cond(**{column: group_to_compare})

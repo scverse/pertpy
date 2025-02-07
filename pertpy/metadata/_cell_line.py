@@ -341,8 +341,8 @@ class CellLine(MetaData):
         # then we can compare these keys and fetch the corresponding metadata.
         if query_id not in adata.obs.columns:
             raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`.\n"
-                "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation.\n"
+                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
+                "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation."
                 "If the desired query ID is not available, you can fetch the cell line metadata "
                 "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
                 "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
@@ -359,9 +359,8 @@ class CellLine(MetaData):
         else:
             reference_id = "DepMap_ID"
             logger.warning(
-                "To annotate bulk RNA data from Broad Institue, `DepMap_ID` is used as default reference and query identifier if no `reference_id` is given.\n"
-                "Ensure that `DepMap_ID` is available in 'adata.obs'.\n"
-                "Alternatively, use `annotate()` to annotate the cell line first "
+                "To annotate bulk RNA data from Broad Institue, `DepMap_ID` is used as default reference and query identifier if no `reference_id` is given."
+                "If `DepMap_ID` isn't available in 'adata.obs', use `annotate()` to annotate the cell line first."
             )
             if self.bulk_rna_broad is None:
                 self._download_bulk_rna(cell_line_source="broad")
@@ -704,7 +703,6 @@ class CellLine(MetaData):
         metadata_key: str = "bulk_rna_broad",
         category: str = "cell line",
         subset_identifier: str | int | Iterable[str] | Iterable[int] | None = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Visualise the correlation of cell lines with annotated metadata.
@@ -748,7 +746,7 @@ class CellLine(MetaData):
                 if all(isinstance(id, str) for id in subset_identifier_list):
                     if set(subset_identifier_list).issubset(adata.obs[identifier].unique()):
                         subset_identifier_list = np.where(
-                            np.in1d(adata.obs[identifier].values, subset_identifier_list)
+                            np.isin(adata.obs[identifier].values, subset_identifier_list)
                         )[0]
                     else:
                         raise ValueError("`Subset_identifier` must be found in adata.obs.`identifier`.")
@@ -799,10 +797,9 @@ class CellLine(MetaData):
                 },
             )
 
-            if show:
-                plt.show()
             if return_fig:
                 return plt.gcf()
+            plt.show()
             return None
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only 'cell line' category is supported for correlation comparison.")

@@ -164,7 +164,6 @@ class GuideAssignment:
         layer: str | None = None,
         order_by: np.ndarray | str | None = None,
         key_to_save_order: str = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -241,8 +240,7 @@ class GuideAssignment:
         finally:
             del adata.obs[temp_col_name]
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None

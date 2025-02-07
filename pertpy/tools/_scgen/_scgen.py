@@ -654,7 +654,6 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         stim_key: str,
         *,
         fontsize: float = 14,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plots the dot product between delta and latent representation of a linear classifier.
@@ -705,10 +704,9 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax = plt.gca()
         ax.grid(False)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
 
