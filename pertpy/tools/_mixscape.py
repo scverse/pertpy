@@ -41,7 +41,7 @@ class Mixscape:
         adata: AnnData,
         pert_key: str,
         control: str,
-        ref_selection_mode: Literal["nn", "manual"] = "nn",
+        ref_selection_mode: Literal["nn", "split_by"] = "nn",
         split_by: str | None = None,
         n_neighbors: int = 20,
         use_rep: str | None = None,
@@ -63,7 +63,7 @@ class Mixscape:
             pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
             control: Name of the control category from the `pert_key` column.
             ref_selection_mode: Method to select reference cells for the perturbation signature calculation. If `nn`,
-                the `n_neighbors` cells from the control pool with the most similar mRNA expression profiles are selected. If `manual`,
+                the `n_neighbors` cells from the control pool with the most similar mRNA expression profiles are selected. If `split_by`,
                 the control cells from the same split in `split_by` (e.g. indicating biological replicates) are used to calculate the perturbation signature.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                 the perturbation signature for every replicate separately.
@@ -94,10 +94,10 @@ class Mixscape:
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
         """
-        if ref_selection_mode not in ["nn", "manual"]:
-            raise ValueError("ref_selection_mode must be either 'nn' or 'manual'.")
-        if ref_selection_mode == "manual" and split_by is None:
-                raise ValueError("split_by must be provided if ref_selection_mode is 'manual'.")
+        if ref_selection_mode not in ["nn", "split_by"]:
+            raise ValueError("ref_selection_mode must be either 'nn' or 'split_by'.")
+        if ref_selection_mode == "split_by" and split_by is None:
+                raise ValueError("split_by must be provided if ref_selection_mode is 'split_by'.")
 
         if copy:
             adata = adata.copy()
@@ -106,7 +106,7 @@ class Mixscape:
 
         control_mask = adata.obs[pert_key] == control
 
-        if ref_selection_mode == "manual":
+        if ref_selection_mode == "split_by":
             for split in adata.obs[split_by].unique():
                 split_mask = adata.obs[split_by] == split
                 control_mask_group = control_mask & split_mask
