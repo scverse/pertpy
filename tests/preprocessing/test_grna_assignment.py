@@ -1,13 +1,15 @@
 import anndata as ad
+import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import pertpy as pt
 import pytest
+from jax import random
 
 
 class TestGuideRnaProcessingAndPlotting:
     @pytest.fixture
-    def adata(self):
+    def adata_simple(self):
         exp_matrix = np.array(
             [
                 [9, 0, 1, 0, 1, 0, 0],
@@ -48,3 +50,15 @@ class TestGuideRnaProcessingAndPlotting:
         assert tuple(adata.obs[output_key]) == tuple(
             [f"guide_{i}" if i > 0 else "NT" for i in [1, 4, 6, 0, 6, 1, 7, 1]]
         )
+
+    # Not yet working:
+    # def test_grna_mixture_model(self, adata):
+    #     output_key = "assigned_guide"
+    #     assert output_key not in adata.obs
+
+    #     ga = pt.pp.GuideAssignment()
+    #     ga.assign_mixture_model(adata)
+    #     assert output_key in adata.obs
+    #     assert tuple(adata.obs[output_key]) == tuple(
+    #         [f"guide_{i}" if i > 0 else "NT" for i in [1, 4, 6, 0, 6, 1, 7, 1]]
+    #     )

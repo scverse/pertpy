@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 import jax
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 import numpy as np
 import numpyro
 import numpyro.distributions as dist
 from jax import random
 from numpyro.infer import MCMC, NUTS
-
-if TYPE_CHECKING:
-    from anndata import AnnData
-    from matplotlib.pyplot import Figure
 
 
 class MixtureModel(ABC):
@@ -29,9 +23,21 @@ class MixtureModel(ABC):
     - log_likelihood: Calculate the log-likelihood of the data under the model
     """
 
-    def __init__(self, num_warmup=50, num_samples=100):
+    def __init__(
+        self,
+        num_warmup=50,
+        num_samples=100,
+        fraction_positive_expected=0.15,
+        poisson_rate_prior=0.2,
+        gaussian_mean_prior=(3, 2),
+        gaussian_std_prior=1,
+    ):
         self.num_warmup = num_warmup
         self.num_samples = num_samples
+        self.fraction_positive_expected = fraction_positive_expected
+        self.poisson_rate_prior = poisson_rate_prior
+        self.gaussian_mean_prior = gaussian_mean_prior
+        self.gaussian_std_prior = gaussian_std_prior
 
     @abstractmethod
     def initialize(self):
@@ -43,19 +49,22 @@ class MixtureModel(ABC):
 
     def fit_model(self, data):
         nuts_kernel = NUTS(self.mixture_model)
-        mcmc = MCMC(nuts_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples)
+        mcmc = MCMC(nuts_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False)
         mcmc.run(random.PRNGKey(0), data=data)
         return mcmc
 
     def run_model(self, data):
-        self.mcmc = self.fit_model(data)
-        self.samples = self.mcmc.get_samples()
-        self.assignments = self.assignment(self.samples, data)
+        # Runs MCMS on the model and returns the assignments of the data points
+        with numpyro.plate("data", data.shape[0]):
+            self.mcmc = self.fit_model(data)
+            self.samples = self.mcmc.get_samples()
+            self.assignments = self.assignment(self.samples, data)
         return self.assignments
 
     def mixture_model(self, data=None):
         # Note: numpyro does not natively support discrete latent variables.
-        # Hence here we manually marginalize out the discrete latent variable
+        # Hence here we manually marginalize out the discrete latent variable,
+        # which requires us to use a log-likelihood formulation.
 
         params = self.initialize()
 
@@ -70,6 +79,7 @@ class MixtureModel(ABC):
             numpyro.sample("obs", dist.Normal(log_mixture_likelihood, 1.0), obs=data)
 
     def assignment(self, samples, data):
+        # Assigns each data point to a component based on the highest log-likelihood
         params = {key: samples[key].mean(axis=0) for key in samples.keys()}
         self.params = params
 
@@ -84,15 +94,17 @@ class Poisson_Gauss_Mixture(MixtureModel):
     def log_likelihood(self, data, poisson_rate, gaussian_mean, gaussian_std, mix_probs):
         # Defines how to calculate the log-likelihood of the data under the model
 
+        # We penalize the model for positioning the Poisson component to the right of the Gaussian component
+        # Impose a soft constraint to penalize the Poisson rate being larger than the Gaussian mean
         # Heuristic regularization term to prevent flipping of the components
-        regularization = jnp.log(poisson_rate < gaussian_mean) + jnp.log(3 * poisson_rate < gaussian_std)
+        numpyro.factor("separation_penalty", +10 * jnp.heaviside(-poisson_rate + gaussian_mean, 0))
 
         log_likelihoods = jnp.stack(
             [
-                jnp.log(mix_probs[0]) + dist.Poisson(poisson_rate).log_prob(data) + regularization,  # Poisson component
-                jnp.log(mix_probs[1])
-                + dist.Normal(gaussian_mean, gaussian_std).log_prob(data)
-                + regularization,  # Gaussian component
+                # Poisson component
+                jnp.log(mix_probs[0]) + dist.Poisson(poisson_rate).log_prob(data),
+                # Gaussian component
+                jnp.log(mix_probs[1]) + dist.Normal(gaussian_mean, gaussian_std).log_prob(data),
             ],
             axis=-1,
         )
@@ -102,8 +114,11 @@ class Poisson_Gauss_Mixture(MixtureModel):
     def initialize(self):
         # Initialize the parameters of the model
         params = {}
-        params["poisson_rate"] = numpyro.sample("poisson_rate", dist.Exponential(0.5))
-        params["gaussian_mean"] = numpyro.sample("gaussian_mean", dist.Normal(4, 6))
-        params["gaussian_std"] = numpyro.sample("gaussian_std", dist.HalfNormal(6.0))
-        params["mix_probs"] = numpyro.sample("mix_probs", dist.Dirichlet(jnp.array([0.95, 0.05])))
+        params["poisson_rate"] = numpyro.sample("poisson_rate", dist.Exponential(self.poisson_rate_prior))
+        params["gaussian_mean"] = numpyro.sample("gaussian_mean", dist.Normal(*self.gaussian_mean_prior))
+        params["gaussian_std"] = numpyro.sample("gaussian_std", dist.HalfNormal(self.gaussian_std_prior))
+        params["mix_probs"] = numpyro.sample(
+            "mix_probs",
+            dist.Dirichlet(jnp.array([1 - self.fraction_positive_expected, self.fraction_positive_expected])),
+        )
         return params
