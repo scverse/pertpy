@@ -187,6 +187,7 @@ class Mixscape:
         logfc_threshold: float | None = 0.25,
         de_layer: str | None = None,
         iter_num: int | None = 10,
+        scale: bool | None = True,
         split_by: str | None = None,
         pval_cutoff: float | None = 5e-2,
         perturbation_type: str | None = "KO",
@@ -207,6 +208,7 @@ class Mixscape:
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
+            scale: Scale the data specified in `layer` before running the GaussianMixture model on it.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                     the perturbation signature for every replicate separately.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
@@ -287,28 +289,40 @@ class Mixscape:
 
                 if len(perturbation_markers[(category, gene)]) == 0:
                     adata.obs.loc[orig_guide_cells, new_class_name] = f"{gene} NP"
+
                 else:
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = self._get_column_indices(adata, list(de_genes))
-                    dat = X[np.asarray(all_cells)][:, de_genes_indices]
+
+                    dat = X[np.asarray(all_cells)][:, de_genes_indices] #TODO: Improve indexing here
+                    dat_cells = all_cells[all_cells].index
+                    if scale:
+                        dat = sc.pp.scale(dat)
+
                     converged = False
                     n_iter = 0
-                    old_classes = adata.obs[labels][all_cells]
+                    old_classes = adata.obs[new_class_name][all_cells]
+
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
-                        guide_cells = (adata.obs[labels] == gene) & split_mask
+                        guide_cells = (adata.obs[new_class_name] == gene) & split_mask
+
                         # get average value for each gene over all selected cells
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
-                        vec = np.mean(X[np.asarray(guide_cells)][:, de_genes_indices], axis=0) - np.mean(
-                            X[np.asarray(nt_cells)][:, de_genes_indices], axis=0
-                        )
+                        guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
+                        nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
+                        vec = np.mean(dat[guide_cells_dat_idx], axis=0) - np.mean(dat[nt_cells_dat_idx], axis=0)
+
                         # project cells onto the perturbation vector
-                        if isinstance(dat, spmatrix):
-                            pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        if isinstance(dat, spmatrix): #TODO: Why sum?
+                            #pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                            pvec = np.dot(dat.toarray(), vec) / np.dot(vec, vec)
                         else:
-                            pvec = np.sum(np.multiply(dat, vec), axis=1) / np.sum(np.multiply(vec, vec))
+                            #pvec = np.sum(np.multiply(dat, vec), axis=1) / np.sum(np.multiply(vec, vec))
+                            pvec = np.dot(dat, vec) / np.dot(vec, vec)
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
+
                         if n_iter == 0:
                             gv = pd.DataFrame(columns=["pvec", labels])
                             gv["pvec"] = pvec
@@ -332,6 +346,7 @@ class Mixscape:
                         probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
                         post_prob = 1 / (1 + lik_ratio)
+
                         # based on the posterior probability, assign cells to the two classes
                         adata.obs.loc[
                             [orig_guide_cells_index[cell] for cell in np.where(post_prob > 0.5)[0]], new_class_name
@@ -339,11 +354,13 @@ class Mixscape:
                         adata.obs.loc[
                             [orig_guide_cells_index[cell] for cell in np.where(post_prob <= 0.5)[0]], new_class_name
                         ] = f"{gene} NP"
+
                         if sum(adata.obs[new_class_name][split_mask] == gene) < min_de_genes:
                             adata.obs.loc[guide_cells, new_class_name] = "NP"
                             converged = True
                         if adata.obs[new_class_name][all_cells].equals(old_classes):
                             converged = True
+
                         old_classes = adata.obs[new_class_name][all_cells]
                         n_iter += 1
 
@@ -507,7 +524,7 @@ class Mixscape:
                 groupby=labels,
                 groups=gene_targets,
                 reference=control,
-                method="t-test",
+                method="wilcoxon", #"t-test", TODO
                 use_raw=False,
             )
             # get DE genes for each target gene
