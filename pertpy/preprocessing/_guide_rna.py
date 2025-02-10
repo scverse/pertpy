@@ -156,6 +156,11 @@ class GuideAssignment:
         # if "log1p" not in adata.uns:
         #     raise ValueError("Data should be log transformed first. Please use `sc.pp.log1p`.")
 
+        if uns_key not in adata.uns:
+            adata.uns[uns_key] = {}
+        elif type(adata.uns[uns_key]) is not dict:
+            raise ValueError(f"adata.uns['{uns_key}'] should be a dictionary. Please remove it or change the key.")
+
         res = pd.DataFrame(0, index=adata.obs_names, columns=adata.var_names)
         fct = track if verbose else lambda iterable: iterable
         for gene in fct(adata.var_names):
@@ -163,17 +168,26 @@ class GuideAssignment:
                 np.ravel((adata[:, gene].X != 0).todense()) if issparse(adata.X) else np.ravel(adata[:, gene].X != 0)
             )
             if sum(is_nonzero) < 2:
+                # Skip if there are less than 2 cells expressing the guide
                 continue
+            # We are only fitting the model to the non-zero values, the rest is
+            # automatically assigned to the negative class
             data = adata[is_nonzero, gene].X.todense().A1 if issparse(adata.X) else adata[is_nonzero, gene].X
-            data = np.log2(data)  # TODO: Check if this is necessary??? I replaced log1p with log2
 
+            if np.any(data < 0):
+                raise ValueError(
+                    "Data contains negative values. Please use non-negative data for guide assignment with the Mixture Model."
+                )
+
+            data = np.log2(data)
             assignments = mixture_model.run_model(data)
             res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
+            adata.uns[uns_key][gene] = mixture_model.params
 
         # Assign guides to cells
+        # Some cells might have multiple guides assigned
         series = pd.Series(no_grna_assigned_key, index=adata.obs_names)
         num_guides_assigned = res.sum(1)
-        # return series, num_guides_assigned, res
         series.loc[(num_guides_assigned <= max_assignments_per_cell) & (num_guides_assigned != 0)] = res.apply(
             lambda row: row.index[row == 1].tolist(), axis=1
         ).str.join(multiple_grna_assignment_string)
@@ -183,7 +197,6 @@ class GuideAssignment:
             return series.values
 
         adata.obs[output_key] = series.values
-        adata.uns[uns_key] = mixture_model.params
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
