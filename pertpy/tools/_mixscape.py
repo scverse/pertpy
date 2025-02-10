@@ -41,6 +41,7 @@ class Mixscape:
         adata: AnnData,
         pert_key: str,
         control: str,
+        *,
         ref_selection_mode: Literal["nn", "split_by"] = "nn",
         split_by: str | None = None,
         n_neighbors: int = 20,
@@ -53,10 +54,10 @@ class Mixscape:
     ):
         """Calculate perturbation signature.
 
-        The perturbation signature is calculated by subtracting the averaged mRNA expression profile of the control
-        cells (selected according to `ref_selection_mode`) from the mRNA expression profile of each cell.
+        The perturbation signature is calculated by subtracting the mRNA expression profile of each cell from the averaged
+        mRNA expression profile of the control cells (selected according to `ref_selection_mode`).
         The implementation resembles https://satijalab.org/seurat/reference/runmixscape. Note that in the original implementation, the
-        perturbation signature is calculated on unscaled data by default and we therefore recommend to do the same.
+        perturbation signature is calculated on unscaled data by default, and we therefore recommend to do the same.
 
         Args:
             adata: The annotated data object.
@@ -179,10 +180,12 @@ class Mixscape:
         adata: AnnData,
         labels: str,
         control: str,
+        *,
         new_class_name: str | None = "mixscape_class",
-        min_de_genes: int | None = 5,
         layer: str | None = None,
+        min_de_genes: int | None = 5,
         logfc_threshold: float | None = 0.25,
+        de_layer: str | None = None,
         iter_num: int | None = 10,
         split_by: str | None = None,
         pval_cutoff: float | None = 5e-2,
@@ -197,11 +200,12 @@ class Mixscape:
         Args:
             adata: The annotated data object.
             labels: The column of `.obs` with target gene labels.
-            control: Control category from the `pert_key` column.
+            control: Control category from the `labels` column.
             new_class_name: Name of mixscape classification to be stored in `.obs`.
-            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
+            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
+            de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
                     the perturbation signature for every replicate separately.
@@ -230,8 +234,8 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
-            >>> ms_pt.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
         """
         if copy:
             adata = adata.copy()
@@ -245,7 +249,7 @@ class Mixscape:
             split_masks = [split_obs == category for category in categories]
 
         perturbation_markers = self._get_perturbation_markers(
-            adata, split_masks, categories, labels, control, layer, pval_cutoff, min_de_genes, logfc_threshold
+            adata, split_masks, categories, labels, control, de_layer, pval_cutoff, min_de_genes, logfc_threshold
         )
 
         adata_comp = adata
@@ -273,8 +277,8 @@ class Mixscape:
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
-            genes = list(set(adata[split_mask].obs[labels]).difference([control]))
-            for gene in genes:
+            gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
+            for gene in gene_targets:
                 post_prob = 0
                 orig_guide_cells = (adata.obs[labels] == gene) & split_mask
                 orig_guide_cells_index = list(orig_guide_cells.index[orig_guide_cells])
@@ -479,7 +483,13 @@ class Mixscape:
 
         Args:
             adata: :class:`~anndata.AnnData` object
-            col_names: Column names to extract the indices for
+            split_masks: List of boolean masks for each split/group.
+            categories: List of split/group names.
+            labels: The column of `.obs` with target gene labels.
+            control: Control category from the `labels` column.
+            layer: Key from adata.layers whose value will be used to compare gene expression.
+            pval_cutoff: P-value cut-off for selection of significantly DE genes.
+            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
 
         Returns:
             Set of column indices.
@@ -488,20 +498,20 @@ class Mixscape:
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
             # get gene sets for each split
-            genes = list(set(adata[split_mask].obs[labels]).difference([control]))
+            gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
             adata_split = adata[split_mask].copy()
             # find top DE genes between cells with targeting and non-targeting gRNAs
             sc.tl.rank_genes_groups(
                 adata_split,
                 layer=layer,
                 groupby=labels,
-                groups=genes,
+                groups=gene_targets,
                 reference=control,
                 method="t-test",
                 use_raw=False,
             )
-            # get DE genes for each gene
-            for gene in genes:
+            # get DE genes for each target gene
+            for gene in gene_targets:
                 logfc_threshold_mask = adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene] >= logfc_threshold
                 de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
                 pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
