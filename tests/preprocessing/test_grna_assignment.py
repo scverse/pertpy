@@ -29,36 +29,34 @@ class TestGuideRnaProcessingAndPlotting:
         )
         return adata
 
-    def test_grna_threshold_assignment(self, adata):
+    def test_grna_threshold_assignment(self, adata_simple):
         threshold = 5
         output_layer = "assigned_guides"
-        assert output_layer not in adata.layers
+        assert output_layer not in adata_simple.layers
 
         ga = pt.pp.GuideAssignment()
-        ga.assign_by_threshold(adata, assignment_threshold=threshold, output_layer=output_layer)
-        assert output_layer in adata.layers
-        assert np.all(np.logical_xor(adata.X < threshold, adata.layers[output_layer].toarray() == 1))
+        ga.assign_by_threshold(adata_simple, assignment_threshold=threshold, output_layer=output_layer)
+        assert output_layer in adata_simple.layers
+        assert np.all(np.logical_xor(adata_simple.X < threshold, adata_simple.layers[output_layer].toarray() == 1))
 
-    def test_grna_max_assignment(self, adata):
+    def test_grna_max_assignment(self, adata_simple):
         threshold = 5
         output_key = "assigned_guide"
-        assert output_key not in adata.obs
+        assert output_key not in adata_simple.obs
 
         ga = pt.pp.GuideAssignment()
-        ga.assign_to_max_guide(adata, assignment_threshold=threshold, output_key=output_key)
-        assert output_key in adata.obs
-        assert tuple(adata.obs[output_key]) == tuple(
-            [f"guide_{i}" if i > 0 else "NT" for i in [1, 4, 6, 0, 6, 1, 7, 1]]
+        ga.assign_to_max_guide(adata_simple, assignment_threshold=threshold, output_key=output_key)
+        assert output_key in adata_simple.obs
+        assert tuple(adata_simple.obs[output_key]) == tuple(
+            [f"guide_{i}" if i > 0 else "Negative" for i in [1, 4, 6, 0, 6, 1, 7, 1]]
         )
 
-    # Not yet working:
-    # def test_grna_mixture_model(self, adata):
-    #     output_key = "assigned_guide"
-    #     assert output_key not in adata.obs
+    def test_grna_mixture_model(self, adata_simple):
+        output_key = "assigned_guide"
+        assert output_key not in adata_simple.obs
 
-    #     ga = pt.pp.GuideAssignment()
-    #     ga.assign_mixture_model(adata)
-    #     assert output_key in adata.obs
-    #     assert tuple(adata.obs[output_key]) == tuple(
-    #         [f"guide_{i}" if i > 0 else "NT" for i in [1, 4, 6, 0, 6, 1, 7, 1]]
-    #     )
+        ga = pt.pp.GuideAssignment()
+        ga.assign_mixture_model(adata_simple)
+        assert output_key in adata_simple.obs
+        target = [f"guide_{i}" if i > 0 else "Negative" for i in [1, 4, 6, 0, 6, 1, 7, 1, 0]]
+        assert all(t in g for t, g in zip(target, adata_simple.obs[output_key], strict=False))
