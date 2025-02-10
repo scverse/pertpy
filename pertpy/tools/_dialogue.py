@@ -87,6 +87,9 @@ class Dialogue:
     ) -> pd.DataFrame:
         """Return Cell-averaged components from a custom feature space.
 
+        TODO: consider merging with `get_pseudobulks`
+        TODO: DIALOGUE recommends running PCA on each cell type separately before running PMD - this should be implemented as an option here.
+
         Args:
             groupby: The key to groupby for pseudobulks.
             n_components: The number of components to use.
