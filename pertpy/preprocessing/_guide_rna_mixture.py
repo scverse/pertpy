@@ -21,6 +21,14 @@ class MixtureModel(ABC):
     The user needs to implement the following methods:
     - initialize: Initialize the model parameters
     - log_likelihood: Calculate the log-likelihood of the data under the model
+
+    This class has the following parameters:
+    - num_warmup: Number of warmup or "burn-in" steps in MCMC
+    - num_samples: Number of samples in MCMC. Recommended to be at least 100
+    - fraction_positive_expected: Expected fraction of gRNA positive data points
+    - poisson_rate_prior: Prior for the Poisson rate of the negative component
+    - gaussian_mean_prior: Prior for the Gaussian mean of the positive component
+    - gaussian_std_prior: Prior for the Gaussian standard deviation of the positive component
     """
 
     def __init__(
@@ -47,18 +55,18 @@ class MixtureModel(ABC):
     def log_likelihood(self, data, **params):
         pass
 
-    def fit_model(self, data):
+    def fit_model(self, data, seed=0):
         nuts_kernel = NUTS(self.mixture_model)
         mcmc = MCMC(nuts_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False)
-        mcmc.run(random.PRNGKey(0), data=data)
+        mcmc.run(random.PRNGKey(seed), data=data)
         return mcmc
 
-    def run_model(self, data):
+    def run_model(self, data, seed=0):
         # Runs MCMS on the model and returns the assignments of the data points
         with numpyro.plate("data", data.shape[0]):
-            self.mcmc = self.fit_model(data)
+            self.mcmc = self.fit_model(data, seed)
             self.samples = self.mcmc.get_samples()
-            self.assignments = self.assignment(self.samples, data)
+        self.assignments = self.assignment(self.samples, data)
         return self.assignments
 
     def mixture_model(self, data=None):
@@ -95,7 +103,7 @@ class Poisson_Gauss_Mixture(MixtureModel):
         # Defines how to calculate the log-likelihood of the data under the model
 
         # We penalize the model for positioning the Poisson component to the right of the Gaussian component
-        # Impose a soft constraint to penalize the Poisson rate being larger than the Gaussian mean
+        # by imposing a soft constraint to penalize the Poisson rate being larger than the Gaussian mean
         # Heuristic regularization term to prevent flipping of the components
         numpyro.factor("separation_penalty", +10 * jnp.heaviside(-poisson_rate + gaussian_mean, 0))
 
