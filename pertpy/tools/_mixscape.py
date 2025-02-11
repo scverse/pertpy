@@ -186,6 +186,7 @@ class Mixscape:
         min_de_genes: int | None = 5,
         logfc_threshold: float | None = 0.25,
         de_layer: str | None = None,
+        test_method: str | None = "wilcoxon",
         iter_num: int | None = 10,
         scale: bool | None = True,
         split_by: str | None = None,
@@ -207,6 +208,7 @@ class Mixscape:
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
+            test_method: Method to use for differential expression testing.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             scale: Scale the data specified in `layer` before running the GaussianMixture model on it.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
@@ -251,7 +253,7 @@ class Mixscape:
             split_masks = [split_obs == category for category in categories]
 
         perturbation_markers = self._get_perturbation_markers(
-            adata, split_masks, categories, labels, control, de_layer, pval_cutoff, min_de_genes, logfc_threshold
+            adata, split_masks, categories, labels, control, de_layer, pval_cutoff, min_de_genes, logfc_threshold, test_method
         )
 
         adata_comp = adata
@@ -495,6 +497,7 @@ class Mixscape:
         pval_cutoff: float,
         min_de_genes: float,
         logfc_threshold: float,
+        test_method: str,
     ) -> dict[tuple, np.ndarray]:
         """Determine gene sets across all splits/groups through differential gene expression
 
@@ -507,6 +510,8 @@ class Mixscape:
             layer: Key from adata.layers whose value will be used to compare gene expression.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
+            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
+            test_method: Method to use for differential expression testing.
 
         Returns:
             Set of column indices.
@@ -524,7 +529,7 @@ class Mixscape:
                 groupby=labels,
                 groups=gene_targets,
                 reference=control,
-                method="wilcoxon", #"t-test", TODO
+                method=test_method,
                 use_raw=False,
             )
             # get DE genes for each target gene
