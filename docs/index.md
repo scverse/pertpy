@@ -54,13 +54,17 @@ Discussions <https://github.com/scverse/pertpy/discussions>
 references
 ```
 
-- Consider citing [scanpy Genome Biology (2018)] along with original {doc}`references <references>`.
-- A paper for pertpy is in the works.
+## Citation
+
+[Lukas Heumos, Yuge Ji, Lilly May, Tessa Green, Xinyue Zhang, Xichen Wu, Johannes Ostner, Stefan Peidli, Antonia Schumacher, Karin Hrovatin, Michaela Mueller, Faye Chong, Gregor Sturm, Alejandro Tejada, Emma Dann, Mingze Dong, Mojtaba Bahrami, Ilan Gold, Sergei Rybakov, Altana Namsaraeva, Amir Ali Moinfar, Zihe Zheng, Eljas Roellin, Isra Mekki, Chris Sander, Mohammad Lotfollahi, Herbert B. Schiller, Fabian J. Theis
+bioRxiv 2024.08.04.606516; doi: https://doi.org/10.1101/2024.08.04.606516](https://www.biorxiv.org/content/10.1101/2024.08.04.606516v1)
+
+Consider citing [scanpy Genome Biology (2018)] along with the original {doc}`references <references>`.
 
 # Indices and tables
 
-- {ref}`genindex`
-- {ref}`modindex`
-- {ref}`search`
+-   {ref}`genindex`
+-   {ref}`modindex`
+-   {ref}`search`
 
 [scanpy genome biology (2018)]: https://doi.org/10.1186/s13059-017-1382-0
