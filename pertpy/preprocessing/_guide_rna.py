@@ -8,8 +8,11 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+from rich.progress import track
+from scipy.sparse import issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy.preprocessing._guide_rna_mixture import Poisson_Gauss_Mixture
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -67,7 +70,7 @@ class GuideAssignment:
         assignment_threshold: float,
         layer: str | None = None,
         output_key: str = "assigned_guide",
-        no_grna_assigned_key: str = "NT",
+        no_grna_assigned_key: str = "Negative",
         only_return_results: bool = False,
     ) -> np.ndarray | None:
         """Simple threshold based max gRNA assignment function.
@@ -107,6 +110,93 @@ class GuideAssignment:
             return assigned_grna
         adata.obs[output_key] = assigned_grna
 
+        return None
+
+    def assign_mixture_model(
+        self,
+        adata: AnnData,
+        model: str = "Poisson_Gauss_Mixture",
+        output_key: str = "assigned_guide",
+        no_grna_assigned_key: str = "Negative",
+        max_assignments_per_cell: int = 5,
+        multiple_grna_assigned_key: str = "Multiple",
+        multiple_grna_assignment_string: str = "+",
+        only_return_results: bool = False,
+        uns_key: str = "guide_assignment_params",
+        verbose: bool = False,
+        **kwargs,
+    ) -> np.ndarray | None:
+        """Assigns gRNAs to cells using a mixture model.
+
+        Args:
+            adata: Annotated data matrix containing gRNA values
+            model: The model to use for the mixture model. Currently only `Poisson_Gauss_Mixture` is supported.
+            output_key: Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
+            no_grna_assigned_key: The key to return if no gRNA is expressed enough.
+            max_assignments_per_cell: The maximum number of gRNAs that can be assigned to a cell.
+            multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
+            multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
+            only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
+            verbose: If True, shows progress bar.
+            kwargs: Are passed to the mixture model.
+
+        Examples:
+
+            >>> import pertpy as pt
+            >>> mdata = pt.dt.papalexi_2021()
+            >>> gdo = mdata.mod["gdo"]
+            >>> ga = pt.pp.GuideAssignment()
+            >>> ga.assign_mixture_model(gdo)
+        """
+        if model == "Poisson_Gauss_Mixture":
+            mixture_model = Poisson_Gauss_Mixture(**kwargs)
+        else:
+            raise ValueError("Model not implemented")
+
+        # if "log1p" not in adata.uns:
+        #     raise ValueError("Data should be log transformed first. Please use `sc.pp.log1p`.")
+
+        if uns_key not in adata.uns:
+            adata.uns[uns_key] = {}
+        elif type(adata.uns[uns_key]) is not dict:
+            raise ValueError(f"adata.uns['{uns_key}'] should be a dictionary. Please remove it or change the key.")
+
+        res = pd.DataFrame(0, index=adata.obs_names, columns=adata.var_names)
+        fct = track if verbose else lambda iterable: iterable
+        for gene in fct(adata.var_names):
+            is_nonzero = (
+                np.ravel((adata[:, gene].X != 0).todense()) if issparse(adata.X) else np.ravel(adata[:, gene].X != 0)
+            )
+            if sum(is_nonzero) < 2:
+                # Skip if there are less than 2 cells expressing the guide
+                continue
+            # We are only fitting the model to the non-zero values, the rest is
+            # automatically assigned to the negative class
+            data = adata[is_nonzero, gene].X.todense().A1 if issparse(adata.X) else adata[is_nonzero, gene].X
+
+            if np.any(data < 0):
+                raise ValueError(
+                    "Data contains negative values. Please use non-negative data for guide assignment with the Mixture Model."
+                )
+
+            data = np.log2(data)
+            assignments = mixture_model.run_model(data)
+            res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
+            adata.uns[uns_key][gene] = mixture_model.params
+
+        # Assign guides to cells
+        # Some cells might have multiple guides assigned
+        series = pd.Series(no_grna_assigned_key, index=adata.obs_names)
+        num_guides_assigned = res.sum(1)
+        series.loc[(num_guides_assigned <= max_assignments_per_cell) & (num_guides_assigned != 0)] = res.apply(
+            lambda row: row.index[row == 1].tolist(), axis=1
+        ).str.join(multiple_grna_assignment_string)
+        series.loc[num_guides_assigned > max_assignments_per_cell] = multiple_grna_assigned_key
+
+        if only_return_results:
+            return series.values
+
+        adata.obs[output_key] = series.values
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
