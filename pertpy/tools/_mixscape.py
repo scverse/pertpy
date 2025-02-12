@@ -239,7 +239,7 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
         """
         if copy:
             adata = adata.copy()
@@ -382,11 +382,13 @@ class Mixscape:
         adata: AnnData,
         labels: str,
         control: str,
+        *,
         mixscape_class_global: str | None = "mixscape_class_global",
         layer: str | None = None,
         n_comps: int | None = 10,
         min_de_genes: int | None = 5,
         logfc_threshold: float | None = 0.25,
+        test_method: str | None = "wilcoxon",
         split_by: str | None = None,
         pval_cutoff: float | None = 5e-2,
         perturbation_type: str | None = "KO",
@@ -399,11 +401,12 @@ class Mixscape:
             labels: The column of `.obs` with target gene labels.
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
-            layer: Key from `adata.layers` whose value will be used to perform tests on.
+            layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
             control: Control category from the `pert_key` column.
             n_comps: Number of principal components to use.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
+            test_method: Method to use for differential expression testing.
             split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
@@ -422,9 +425,9 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
-            >>> ms_pt.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
-            >>> ms_pt.lda(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.lda(mdata["rna"], "gene_target", "NT", split_by="replicate")
         """
         if copy:
             adata = adata.copy()
@@ -452,6 +455,7 @@ class Mixscape:
             pval_cutoff=pval_cutoff,
             min_de_genes=min_de_genes,
             logfc_threshold=logfc_threshold,
+            test_method=test_method,
         )
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
