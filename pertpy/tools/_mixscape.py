@@ -334,16 +334,15 @@ class Mixscape:
                                 gv_list[gene] = {}
                             gv_list[gene][category] = gv
 
-                        guide_norm = self._define_normal_mixscape(pvec[guide_cells])
-                        nt_norm = self._define_normal_mixscape(pvec[nt_cells])
-                        means_init = np.array([[nt_norm[0]], [guide_norm[0]]])
-                        precisions_init = np.array([nt_norm[1], guide_norm[1]])
+                        means_init = np.array([[pvec[nt_cells].mean()], [pvec[guide_cells].mean()]])
+                        std_init = np.array([pvec[nt_cells].std(), pvec[guide_cells].std()])
                         mm = GaussianMixture(
                             n_components=2,
                             covariance_type="spherical",
                             means_init=means_init,
-                            precisions_init=precisions_init,
+                            precisions_init=1 / (std_init ** 2),
                             random_state=random_state,
+                            max_iter=5000,
                         ).fit(np.asarray(pvec).reshape(-1, 1))
                         probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
@@ -559,20 +558,6 @@ class Mixscape:
 
         return indices
 
-    def _define_normal_mixscape(self, X: np.ndarray | sparse.spmatrix | pd.DataFrame | None) -> list[float]:
-        """Calculates the mean and standard deviation of a matrix.
-
-        Args:
-            X: The matrix to calculate the properties for.
-
-        Returns:
-            Mean and standard deviation of the matrix.
-        """
-        mu = X.mean()
-        sd = X.std()
-
-        return [mu, sd]
-
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_barplot(  # pragma: no cover
         self,
@@ -612,8 +597,8 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
-            >>> ms_pt.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
             >>> ms_pt.plot_barplot(mdata["rna"], guide_rna_column="NT")
 
         Preview:
@@ -718,8 +703,8 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
-            >>> ms_pt.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
             >>> ms_pt.plot_heatmap(
             ...     adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", layer="X_pert", control="NT"
             ... )
@@ -794,8 +779,8 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
-            >>> ms_pt.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
             >>> ms_pt.plot_perturbscore(adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", color="orange")
 
         Preview:
@@ -968,8 +953,8 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
-            >>> ms_pt.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
             >>> ms_pt.plot_violin(
             ...     adata=mdata["rna"], target_gene_idents=["NT", "IFNGR2 NP", "IFNGR2 KO"], groupby="mixscape_class"
             ... )
@@ -1152,9 +1137,9 @@ class Mixscape:
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
-            >>> ms_pt.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
-            >>> ms_pt.lda(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
+            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.lda(mdata["rna"], "gene_target", "NT", split_by="replicate")
             >>> ms_pt.plot_lda(adata=mdata["rna"], control="NT")
 
         Preview:
