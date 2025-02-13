@@ -336,13 +336,15 @@ class Mixscape:
 
                         means_init = np.array([[pvec[nt_cells].mean()], [pvec[guide_cells].mean()]])
                         std_init = np.array([pvec[nt_cells].std(), pvec[guide_cells].std()])
-                        mm = GaussianMixture(
+                        mm = CustomGaussianMixture(
                             n_components=2,
                             covariance_type="spherical",
                             means_init=means_init,
                             precisions_init=1 / (std_init ** 2),
                             random_state=random_state,
                             max_iter=5000,
+                            fixed_means=[pvec[nt_cells].mean(), None],
+                            fixed_covariances=[pvec[nt_cells].std() ** 2, None],
                         ).fit(np.asarray(pvec).reshape(-1, 1))
                         probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
@@ -537,7 +539,7 @@ class Mixscape:
             )
             # get DE genes for each target gene
             for gene in gene_targets:
-                logfc_threshold_mask = adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene] >= logfc_threshold
+                logfc_threshold_mask = np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
                 de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
                 pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
                 de_genes = de_genes[pvals_adj < pval_cutoff]
@@ -1173,3 +1175,41 @@ class Mixscape:
             return fig
         plt.show()
         return None
+
+class CustomGaussianMixture(GaussianMixture): #TODO: Improve class, add tests
+    def __init__(
+        self,
+        n_components: int,
+        fixed_means: None | np.ndarray = None,
+        fixed_covariances: None | np.ndarray = None,
+        **kwargs
+    ):
+        """
+        Custom Gaussian Mixture Model where means and covariances can be fixed for specific components.
+
+        Args:
+            n_components: Number of Gaussian components
+            fixed_means: Means to fix (use None for those that should be estimated)
+            fixed_covariances: Covariances to fix (use None for those that should be estimated)
+            kwargs: Additional arguments passed to scikit-learn's GaussianMixture
+        """
+        super().__init__(n_components=n_components, **kwargs)
+        self.fixed_means = fixed_means
+        self.fixed_covariances = fixed_covariances
+
+    def _m_step(self, X, log_resp):
+        """Modified M-step to respect fixed means and covariances."""
+        super()._m_step(X, log_resp)
+
+        if self.fixed_means is not None:
+            for i in range(self.n_components):
+                if self.fixed_means[i] is not None:
+                    self.means_[i] = self.fixed_means[i]
+
+        if self.fixed_covariances is not None:
+            for i in range(self.n_components):
+                if self.fixed_covariances[i] is not None:
+                    self.covariances_[i] = self.fixed_covariances[i]
+
+        return self
+
