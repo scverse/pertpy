@@ -253,7 +253,16 @@ class Mixscape:
             split_masks = [split_obs == category for category in categories]
 
         perturbation_markers = self._get_perturbation_markers(
-            adata, split_masks, categories, labels, control, de_layer, pval_cutoff, min_de_genes, logfc_threshold, test_method
+            adata=adata,
+            split_masks=split_masks,
+            categories=categories,
+            labels=labels,
+            control=control,
+            layer=de_layer,
+            pval_cutoff=pval_cutoff,
+            min_de_genes=min_de_genes,
+            logfc_threshold=logfc_threshold,
+            test_method=test_method,
         )
 
         adata_comp = adata
@@ -317,11 +326,9 @@ class Mixscape:
                         vec = np.mean(dat[guide_cells_dat_idx], axis=0) - np.mean(dat[nt_cells_dat_idx], axis=0)
 
                         # project cells onto the perturbation vector
-                        if isinstance(dat, spmatrix): #TODO: Why sum?
-                            #pvec = np.sum(np.multiply(dat.toarray(), vec), axis=1) / np.sum(np.multiply(vec, vec))
+                        if isinstance(dat, spmatrix):
                             pvec = np.dot(dat.toarray(), vec) / np.dot(vec, vec)
                         else:
-                            #pvec = np.sum(np.multiply(dat, vec), axis=1) / np.sum(np.multiply(vec, vec))
                             pvec = np.dot(dat, vec) / np.dot(vec, vec)
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
 
@@ -444,9 +451,8 @@ class Mixscape:
             categories = split_obs.unique()
             split_masks = [split_obs == category for category in categories]
 
-        mixscape_identifier = pt.tl.Mixscape()
         # determine gene sets across all splits/groups through differential gene expression
-        perturbation_markers = mixscape_identifier._get_perturbation_markers(
+        perturbation_markers = self._get_perturbation_markers(
             adata=adata,
             split_masks=split_masks,
             categories=categories,
@@ -1176,7 +1182,7 @@ class Mixscape:
         plt.show()
         return None
 
-class CustomGaussianMixture(GaussianMixture): #TODO: Improve class, add tests
+class CustomGaussianMixture(GaussianMixture):
     def __init__(
         self,
         n_components: int,
