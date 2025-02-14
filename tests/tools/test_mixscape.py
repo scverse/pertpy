@@ -3,9 +3,12 @@ from pathlib import Path
 import anndata
 import numpy as np
 import pandas as pd
+import scanpy as sc
 import pertpy as pt
 import pytest
 from scipy import sparse
+
+from pertpy.tools._mixscape import CustomGaussianMixture
 
 CWD = Path(__file__).parent.resolve()
 
@@ -49,7 +52,7 @@ def adata():
     # obs for random AnnData
     gene_target = {"gene_target": ["NT"] * num_cells_per_group + ["target_gene_a"] * num_cells_per_group * 2}
     gene_target = pd.DataFrame(gene_target)
-    label = {"label": ["control", "treatment", "treatment"] * num_cells_per_group}
+    label = {"label": ["control"] * num_cells_per_group + ["treatment"] * num_cells_per_group* 2 }
     label = pd.DataFrame(label)
     obs = pd.concat([gene_target, label], axis=1)
     obs = obs.set_index(np.arange(num_cells_per_group * 3))
@@ -68,9 +71,9 @@ def adata():
 
 
 def test_mixscape(adata):
-    mixscape_identifier = pt.tl.Mixscape()
     adata.layers["X_pert"] = adata.X
-    mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
+    mixscape_identifier = pt.tl.Mixscape()
+    mixscape_identifier.mixscape(adata=adata, labels="gene_target", control="NT", test_method="t-test")
     np_result = adata.obs["mixscape_class_global"] == "NP"
     np_result_correct = np_result[num_cells_per_group : num_cells_per_group * 2]
 
@@ -94,8 +97,8 @@ def test_perturbation_signature(adata):
 def test_lda(adata):
     adata.layers["X_pert"] = adata.X
     mixscape_identifier = pt.tl.Mixscape()
-    mixscape_identifier.mixscape(adata=adata, control="NT", labels="gene_target")
-    mixscape_identifier.lda(adata=adata, labels="gene_target", control="NT")
+    mixscape_identifier.mixscape(adata=adata, labels="gene_target", control="NT", test_method="t-test")
+    mixscape_identifier.lda(adata=adata, labels="gene_target", control="NT", test_method="t-test")
 
     assert "mixscape_lda" in adata.uns
 
@@ -155,4 +158,16 @@ def test_deterministic_perturbation_signature():
     assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NT"], 0)
     assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NP"], 0)
     assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "KO"], -np.concatenate([pert_effect] * len(groups), axis=0))
+
+def test_custom_gaussian_mixture_model():
+    X = np.random.rand(100)
+
+    fixed_means = [0.2, None]
+    fixed_covariances = [None, 0.1]
+
+    model = CustomGaussianMixture(n_components=2, fixed_means=fixed_means, fixed_covariances=fixed_covariances)
+    model.fit(X.reshape(-1, 1))
+
+    assert np.allclose(model.means_[0], fixed_means[0])
+    assert np.allclose(model.covariances_[1], fixed_covariances[1])
 

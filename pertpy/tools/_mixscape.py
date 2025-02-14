@@ -305,7 +305,7 @@ class Mixscape:
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = self._get_column_indices(adata, list(de_genes))
 
-                    dat = X[np.asarray(all_cells)][:, de_genes_indices] #TODO: Improve indexing here
+                    dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     dat_cells = all_cells[all_cells].index
                     if scale:
                         dat = sc.pp.scale(dat)
@@ -1186,8 +1186,8 @@ class CustomGaussianMixture(GaussianMixture):
     def __init__(
         self,
         n_components: int,
-        fixed_means: None | np.ndarray = None,
-        fixed_covariances: None | np.ndarray = None,
+        fixed_means: None | list = None,
+        fixed_covariances: None | list = None,
         **kwargs
     ):
         """
