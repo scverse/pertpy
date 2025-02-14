@@ -3,7 +3,6 @@ from pathlib import Path
 import anndata
 import numpy as np
 import pandas as pd
-import scanpy as sc
 import pertpy as pt
 import pytest
 from scipy import sparse
