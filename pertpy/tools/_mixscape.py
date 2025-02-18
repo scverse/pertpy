@@ -211,8 +211,7 @@ class Mixscape:
             test_method: Method to use for differential expression testing.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             scale: Scale the data specified in `layer` before running the GaussianMixture model on it.
-            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
-                    the perturbation signature for every replicate separately.
+            split_by: Provide `.obs` column with experimental condition/cell type annotation, if perturbations are condition/cell type-specific.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications.
             random_state: Random seed for the GaussianMixture model.
@@ -239,7 +238,7 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
         """
         if copy:
             adata = adata.copy()
@@ -434,8 +433,8 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
-            >>> ms_pt.lda(mdata["rna"], "gene_target", "NT", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
+            >>> ms_pt.lda(mdata["rna"], "gene_target", "NT")
         """
         if copy:
             adata = adata.copy()
@@ -606,7 +605,7 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
             >>> ms_pt.plot_barplot(mdata["rna"], guide_rna_column="NT")
 
         Preview:
@@ -712,7 +711,7 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
             >>> ms_pt.plot_heatmap(
             ...     adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", layer="X_pert", control="NT"
             ... )
@@ -788,7 +787,7 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
             >>> ms_pt.plot_perturbscore(adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", color="orange")
 
         Preview:
@@ -962,7 +961,7 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
             >>> ms_pt.plot_violin(
             ...     adata=mdata["rna"], target_gene_idents=["NT", "IFNGR2 NP", "IFNGR2 KO"], groupby="mixscape_class"
             ... )
@@ -1146,7 +1145,7 @@ class Mixscape:
             >>> mdata = pt.dt.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert", split_by="replicate")
+            >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
             >>> ms_pt.lda(mdata["rna"], "gene_target", "NT", split_by="replicate")
             >>> ms_pt.plot_lda(adata=mdata["rna"], control="NT")
 
