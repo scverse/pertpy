@@ -414,7 +414,7 @@ class Mixscape:
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
             test_method: Method to use for differential expression testing.
-            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
+            split_by: Provide `.obs` column with experimental condition/cell type annotation, if perturbations are condition/cell type-specific.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
             copy: Determines whether a copy of the `adata` is returned.
