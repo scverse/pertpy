@@ -33,12 +33,12 @@ class MixtureModel(ABC):
 
     def __init__(
         self,
-        num_warmup=50,
-        num_samples=100,
-        fraction_positive_expected=0.15,
-        poisson_rate_prior=0.2,
-        gaussian_mean_prior=(3, 2),
-        gaussian_std_prior=1,
+        num_warmup: int = 50,
+        num_samples: int = 100,
+        fraction_positive_expected: float = 0.15,
+        poisson_rate_prior: float = 0.2,
+        gaussian_mean_prior: tuple[int, int] = (3, 2),
+        gaussian_std_prior: float = 1,
     ):
         self.num_warmup = num_warmup
         self.num_samples = num_samples
@@ -48,37 +48,38 @@ class MixtureModel(ABC):
         self.gaussian_std_prior = gaussian_std_prior
 
     @abstractmethod
-    def initialize(self):
+    def initialize_params(self) -> dict:
         pass
 
     @abstractmethod
-    def log_likelihood(self, data, **params):
+    def log_likelihood(self, data: jnp.ndarray, params: dict) -> jnp.ndarray:
         pass
 
-    def fit_model(self, data, seed=0):
+    def fit_model(self, data: jnp.ndarray, seed: int = 0):
         nuts_kernel = NUTS(self.mixture_model)
         mcmc = MCMC(nuts_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False)
         mcmc.run(random.PRNGKey(seed), data=data)
         return mcmc
 
-    def run_model(self, data, seed=0):
+    def run_model(self, data: jnp.ndarray, seed: int = 0) -> np.ndarray:
         # Runs MCMS on the model and returns the assignments of the data points
-        with numpyro.plate("data", data.shape[0]):
+        with numpyro.plate(
+            "data", data.shape[0]
+        ):  # TODO: check if this plate is needed. Already have a plate in mixture_model
             self.mcmc = self.fit_model(data, seed)
             self.samples = self.mcmc.get_samples()
         self.assignments = self.assignment(self.samples, data)
         return self.assignments
 
-    def mixture_model(self, data=None):
+    def mixture_model(self, data: jnp.ndarray) -> None:
         # Note: numpyro does not natively support discrete latent variables.
         # Hence here we manually marginalize out the discrete latent variable,
         # which requires us to use a log-likelihood formulation.
 
-        params = self.initialize()
+        params = self.initialize_params()
 
         with numpyro.plate("data", data.shape[0]):
-            # Calculate log-likelihood for each component
-            log_likelihoods = self.log_likelihood(data, **params)
+            log_likelihoods = self.log_likelihood(data, params)
 
             # Use logsumexp for numerical stability
             log_mixture_likelihood = jax.scipy.special.logsumexp(log_likelihoods, axis=-1)
@@ -86,7 +87,7 @@ class MixtureModel(ABC):
             # Sample the data from the mixture distribution
             numpyro.sample("obs", dist.Normal(log_mixture_likelihood, 1.0), obs=data)
 
-    def assignment(self, samples, data):
+    def assignment(self, samples: dict, data: jnp.ndarray) -> np.ndarray:
         # Assigns each data point to a component based on the highest log-likelihood
         params = {key: samples[key].mean(axis=0) for key in samples.keys()}
         self.params = params
@@ -99,8 +100,13 @@ class MixtureModel(ABC):
 
 
 class Poisson_Gauss_Mixture(MixtureModel):
-    def log_likelihood(self, data, poisson_rate, gaussian_mean, gaussian_std, mix_probs):
+    def log_likelihood(self, data: np.ndarray, params: dict) -> jnp.ndarray:
         # Defines how to calculate the log-likelihood of the data under the model
+
+        poisson_rate = params["poisson_rate"]
+        gaussian_mean = params["gaussian_mean"]
+        gaussian_std = params["gaussian_std"]
+        mix_probs = params["mix_probs"]
 
         # We penalize the model for positioning the Poisson component to the right of the Gaussian component
         # by imposing a soft constraint to penalize the Poisson rate being larger than the Gaussian mean
@@ -119,8 +125,7 @@ class Poisson_Gauss_Mixture(MixtureModel):
 
         return log_likelihoods
 
-    def initialize(self):
-        # Initialize the parameters of the model
+    def initialize_params(self) -> dict:
         params = {}
         params["poisson_rate"] = numpyro.sample("poisson_rate", dist.Exponential(self.poisson_rate_prior))
         params["gaussian_mean"] = numpyro.sample("gaussian_mean", dist.Normal(*self.gaussian_mean_prior))

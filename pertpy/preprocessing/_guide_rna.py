@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
+from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -123,8 +124,8 @@ class GuideAssignment:
         multiple_grna_assignment_string: str = "+",
         only_return_results: bool = False,
         uns_key: str = "guide_assignment_params",
-        verbose: bool = False,
-        **kwargs,
+        show_progress: bool = False,
+        **mixture_model_kwargs,
     ) -> np.ndarray | None:
         """Assigns gRNAs to cells using a mixture model.
 
@@ -132,7 +133,7 @@ class GuideAssignment:
             adata: Annotated data matrix containing gRNA values
             model: The model to use for the mixture model. Currently only `Poisson_Gauss_Mixture` is supported.
             output_key: Assigned guide will be saved on adata.obs[output_key].
-            no_grna_assigned_key: The key to return if no gRNA is expressed enough.
+            no_grna_assigned_key: The key to return if a cell is negative for all gRNAs.
             max_assignments_per_cell: The maximum number of gRNAs that can be assigned to a cell.
             multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
             multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
@@ -147,13 +148,10 @@ class GuideAssignment:
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_mixture_model(gdo)
         """
-        if model == "Poisson_Gauss_Mixture":
-            mixture_model = Poisson_Gauss_Mixture(**kwargs)
+        if model == "poisson_gauss_mixture":
+            mixture_model = Poisson_Gauss_Mixture(**mixture_model_kwargs)
         else:
-            raise ValueError("Model not implemented")
-
-        # if "log1p" not in adata.uns:
-        #     raise ValueError("Data should be log transformed first. Please use `sc.pp.log1p`.")
+            raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
 
         if uns_key not in adata.uns:
             adata.uns[uns_key] = {}
@@ -161,13 +159,13 @@ class GuideAssignment:
             raise ValueError(f"adata.uns['{uns_key}'] should be a dictionary. Please remove it or change the key.")
 
         res = pd.DataFrame(0, index=adata.obs_names, columns=adata.var_names)
-        fct = track if verbose else lambda iterable: iterable
+        fct = track if show_progress else lambda iterable: iterable
         for gene in fct(adata.var_names):
             is_nonzero = (
                 np.ravel((adata[:, gene].X != 0).todense()) if issparse(adata.X) else np.ravel(adata[:, gene].X != 0)
             )
             if sum(is_nonzero) < 2:
-                # Skip if there are less than 2 cells expressing the guide
+                warn(f"Skipping {gene} as there are less than 2 cells expressing the guide at all.", stacklevel=2)
                 continue
             # We are only fitting the model to the non-zero values, the rest is
             # automatically assigned to the negative class
@@ -178,6 +176,7 @@ class GuideAssignment:
                     "Data contains negative values. Please use non-negative data for guide assignment with the Mixture Model."
                 )
 
+            # Log2 transform the data so positive population is approximately normal
             data = np.log2(data)
             assignments = mixture_model.run_model(data)
             res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
@@ -195,7 +194,7 @@ class GuideAssignment:
         if only_return_results:
             return series.values
 
-        adata.obs[output_key] = series.values
+        adata.obs[assigned_guides_key] = series.values
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
