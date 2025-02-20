@@ -145,11 +145,16 @@ class PoissonGaussMixture(MixtureModel):
         gaussian_std = params["gaussian_std"]
         mix_probs = params["mix_probs"]
 
+        # We penalize the model for positioning the Poisson component to the right of the Gaussian component
+        # by imposing a soft constraint to penalize the Poisson rate being larger than the Gaussian mean
+        # Heuristic regularization term to prevent flipping of the components
         numpyro.factor("separation_penalty", +10 * jnp.heaviside(-poisson_rate + gaussian_mean, 0))
 
         log_likelihoods = jnp.stack(
             [
+                # Poisson component
                 jnp.log(mix_probs[0]) + dist.Poisson(poisson_rate).log_prob(data),
+                # Gaussian component
                 jnp.log(mix_probs[1]) + dist.Normal(gaussian_mean, gaussian_std).log_prob(data),
             ],
             axis=-1,
