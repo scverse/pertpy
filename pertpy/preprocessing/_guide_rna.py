@@ -170,6 +170,7 @@ class GuideAssignment:
             # We are only fitting the model to the non-zero values, the rest is
             # automatically assigned to the negative class
             data = adata[is_nonzero, gene].X.todense().A1 if issparse(adata.X) else adata[is_nonzero, gene].X
+            data = np.ravel(data)
 
             if np.any(data < 0):
                 raise ValueError(

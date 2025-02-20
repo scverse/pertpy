@@ -63,11 +63,8 @@ class MixtureModel(ABC):
 
     def run_model(self, data: jnp.ndarray, seed: int = 0) -> np.ndarray:
         # Runs MCMS on the model and returns the assignments of the data points
-        with numpyro.plate(
-            "data", data.shape[0]
-        ):  # TODO: check if this plate is needed. Already have a plate in mixture_model
-            self.mcmc = self.fit_model(data, seed)
-            self.samples = self.mcmc.get_samples()
+        self.mcmc = self.fit_model(data, seed)
+        self.samples = self.mcmc.get_samples()
         self.assignments = self.assignment(self.samples, data)
         return self.assignments
 
@@ -92,7 +89,7 @@ class MixtureModel(ABC):
         params = {key: samples[key].mean(axis=0) for key in samples.keys()}
         self.params = params
 
-        log_likelihoods = self.log_likelihood(data, **params)
+        log_likelihoods = self.log_likelihood(data, params)
         guide_assignments = jnp.argmax(log_likelihoods, axis=-1)
 
         assignments = ["Negative" if assign == 0 else "Positive" for assign in guide_assignments]
