@@ -115,11 +115,11 @@ class GuideAssignment:
     def assign_mixture_model(
         self,
         adata: AnnData,
-        model: str = "Poisson_Gauss_Mixture",
-        output_key: str = "assigned_guide",
-        no_grna_assigned_key: str = "Negative",
+        model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
+        assigned_guides_key: str = "assigned_guide",
+        no_grna_assigned_key: str = "negative",
         max_assignments_per_cell: int = 5,
-        multiple_grna_assigned_key: str = "Multiple",
+        multiple_grna_assigned_key: str = "multiple",
         multiple_grna_assignment_string: str = "+",
         only_return_results: bool = False,
         uns_key: str = "guide_assignment_params",
@@ -131,17 +131,16 @@ class GuideAssignment:
         Args:
             adata: Annotated data matrix containing gRNA values
             model: The model to use for the mixture model. Currently only `Poisson_Gauss_Mixture` is supported.
-            output_key: Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
+            output_key: Assigned guide will be saved on adata.obs[output_key].
             no_grna_assigned_key: The key to return if no gRNA is expressed enough.
             max_assignments_per_cell: The maximum number of gRNAs that can be assigned to a cell.
             multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
             multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
             only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
-            verbose: If True, shows progress bar.
-            kwargs: Are passed to the mixture model.
+            show_progress: If True, shows progress bar.
+            mixture_model_kwargs: Are passed to the mixture model.
 
         Examples:
-
             >>> import pertpy as pt
             >>> mdata = pt.dt.papalexi_2021()
             >>> gdo = mdata.mod["gdo"]
