@@ -13,7 +13,7 @@ from rich.progress import track
 from scipy.sparse import issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy.preprocessing._guide_rna_mixture import Poisson_Gauss_Mixture
+from pertpy.preprocessing._guide_rna_mixture import PoissonGaussMixture
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -37,12 +37,12 @@ class GuideAssignment:
         This function expects unnormalized data as input.
 
         Args:
-            adata: Annotated data matrix containing gRNA values
+            adata: AnnData object containing gRNA values.
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
             output_layer: Assigned guide will be saved on adata.layers[output_key].
-            only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
+            only_return_results: Whether to input AnnData is not modified and the result is returned as an :class:`np.ndarray`.
 
         Examples:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell.
@@ -80,13 +80,13 @@ class GuideAssignment:
         This function expects unnormalized data as input.
 
         Args:
-            adata: Annotated data matrix containing gRNA values
+            adata: AnnData object containing gRNA values.
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
             output_key: Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
             no_grna_assigned_key: The key to return if no gRNA is expressed enough.
-            only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
+            only_return_results: Whether to input AnnData is not modified and the result is returned as an np.ndarray.
 
         Examples:
             Each cell is assigned to the most expressed gRNA if it has at least 5 counts.
@@ -130,15 +130,15 @@ class GuideAssignment:
         """Assigns gRNAs to cells using a mixture model.
 
         Args:
-            adata: Annotated data matrix containing gRNA values
+            adata: AnnData object containing gRNA values.
             model: The model to use for the mixture model. Currently only `Poisson_Gauss_Mixture` is supported.
             output_key: Assigned guide will be saved on adata.obs[output_key].
             no_grna_assigned_key: The key to return if a cell is negative for all gRNAs.
             max_assignments_per_cell: The maximum number of gRNAs that can be assigned to a cell.
             multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
             multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
-            only_return_results: If True, input AnnData is not modified and the result is returned as an np.ndarray.
-            show_progress: If True, shows progress bar.
+            only_return_results: Whether input AnnData is not modified and the result is returned as an np.ndarray.
+            show_progress: Whether to shows progress bar.
             mixture_model_kwargs: Are passed to the mixture model.
 
         Examples:
@@ -149,7 +149,7 @@ class GuideAssignment:
             >>> ga.assign_mixture_model(gdo)
         """
         if model == "poisson_gauss_mixture":
-            mixture_model = Poisson_Gauss_Mixture(**mixture_model_kwargs)
+            mixture_model = PoissonGaussMixture(**mixture_model_kwargs)
         else:
             raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
 
@@ -196,6 +196,7 @@ class GuideAssignment:
             return series.values
 
         adata.obs[assigned_guides_key] = series.values
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
