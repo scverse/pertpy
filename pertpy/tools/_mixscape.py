@@ -97,7 +97,7 @@ class Mixscape:
         if ref_selection_mode not in ["nn", "split_by"]:
             raise ValueError("ref_selection_mode must be either 'nn' or 'split_by'.")
         if ref_selection_mode == "split_by" and split_by is None:
-                raise ValueError("split_by must be provided if ref_selection_mode is 'split_by'.")
+            raise ValueError("split_by must be provided if ref_selection_mode is 'split_by'.")
 
         if copy:
             adata = adata.copy()
@@ -111,7 +111,10 @@ class Mixscape:
                 split_mask = adata.obs[split_by] == split
                 control_mask_group = control_mask & split_mask
                 control_mean_expr = adata.X[control_mask_group].mean(0)
-                adata.layers["X_pert"][split_mask] = np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0) - adata.layers["X_pert"][split_mask]
+                adata.layers["X_pert"][split_mask] = (
+                    np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0)
+                    - adata.layers["X_pert"][split_mask]
+                )
         else:
             if split_by is None:
                 split_masks = [np.full(adata.n_obs, True, dtype=bool)]
@@ -169,7 +172,9 @@ class Mixscape:
                         means_batch = means_batch.toarray() if is_sparse else means_batch
                         means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
 
-                        adata.layers["X_pert"][split_batch] = np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
+                        adata.layers["X_pert"][split_batch] = (
+                            np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
+                        )
 
         if copy:
             return adata
