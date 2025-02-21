@@ -6,8 +6,12 @@ __version__ = "0.10.0"
 
 import warnings
 
+import joblib
 from matplotlib import MatplotlibDeprecationWarning
 from numba import NumbaDeprecationWarning
+
+# Loky seems to be broken at the moment
+joblib.parallel.DEFAULT_BACKEND = "multiprocessing"
 
 warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)

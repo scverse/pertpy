@@ -63,12 +63,8 @@ dependencies = [
     "pubchempy",
     "pyarrow",
     "blitzgsea",
+    "scikit-learn>=1.4",  # https://github.com/scverse/pertpy/issues/700
     "lamin_utils",
-    "joblib",
-    "scipy==1.15.0",
-    "torch==2.5.1",
-    "toytree==3.0.6",
-    "triton==3.1.0"
 ]
 
 [project.optional-dependencies]
