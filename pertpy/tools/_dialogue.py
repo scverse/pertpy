@@ -82,10 +82,10 @@ class Dialogue:
 
         return pseudobulk
 
-    def _pseudobulk_feature(
-        self, adata: AnnData, groupby: str, n_components: int = 50, feature_key: str = "X_pca"
+    def _pseudobulk_feature_space(
+        self, adata: AnnData, groupby: str, n_components: int = 50, feature_space_key: str = "X_pca"
     ) -> pd.DataFrame:
-        """Return Cell-averaged components from a custom feature space.
+        """Return Cell-averaged components from a passed feature space.
 
         TODO: consider merging with `get_pseudobulks`
         TODO: DIALOGUE recommends running PCA on each cell type separately before running PMD - this should be implemented as an option here.
@@ -101,7 +101,7 @@ class Dialogue:
         aggr = {}
         for category in adata.obs.loc[:, groupby].cat.categories:
             temp = adata.obs.loc[:, groupby] == category
-            aggr[category] = adata[temp].obsm[feature_key][:, :n_components].mean(axis=0)
+            aggr[category] = adata[temp].obsm[feature_space_key][:, :n_components].mean(axis=0)
         aggr = pd.DataFrame(aggr)
         return aggr
 
@@ -575,7 +575,7 @@ class Dialogue:
             A celltype_label:array dictionary.
         """
         ct_subs = {ct: adata[adata.obs[self.celltype_key] == ct].copy() for ct in ct_order}
-        fn = self._pseudobulk_feature if agg_feature else self._get_pseudobulks
+        fn = self._pseudobulk_feature_space if agg_feature else self._get_pseudobulks
         ct_aggr = {ct: fn(ad, self.sample_id) for ct, ad in ct_subs.items()}  # type: ignore
 
         # TODO: implement check (as in https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L114-L119)
