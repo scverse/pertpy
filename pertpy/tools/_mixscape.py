@@ -342,7 +342,7 @@ class Mixscape:
 
                         means_init = np.array([[pvec[nt_cells].mean()], [pvec[guide_cells].mean()]])
                         std_init = np.array([pvec[nt_cells].std(), pvec[guide_cells].std()])
-                        mm = CustomGaussianMixture(
+                        mm = MixscapeGaussianMixture(
                             n_components=2,
                             covariance_type="spherical",
                             means_init=means_init,
@@ -1181,16 +1181,15 @@ class Mixscape:
         plt.show()
         return None
 
-class CustomGaussianMixture(GaussianMixture):
+class MixscapeGaussianMixture(GaussianMixture):
     def __init__(
         self,
         n_components: int,
-        fixed_means: None | list = None,
-        fixed_covariances: None | list = None,
+        fixed_means:  Sequence[float] | None = None,
+        fixed_covariances: Sequence[float] | None = None,
         **kwargs
     ):
-        """
-        Custom Gaussian Mixture Model where means and covariances can be fixed for specific components.
+        """Custom Gaussian Mixture Model where means and covariances can be fixed for specific components.
 
         Args:
             n_components: Number of Gaussian components
@@ -1202,7 +1201,7 @@ class CustomGaussianMixture(GaussianMixture):
         self.fixed_means = fixed_means
         self.fixed_covariances = fixed_covariances
 
-    def _m_step(self, X, log_resp):
+    def _m_step(self, X: np.ndarray, log_resp: np.ndarray):
         """Modified M-step to respect fixed means and covariances."""
         super()._m_step(X, log_resp)
 

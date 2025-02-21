@@ -7,7 +7,7 @@ import pertpy as pt
 import pytest
 from scipy import sparse
 
-from pertpy.tools._mixscape import CustomGaussianMixture
+from pertpy.tools._mixscape import MixscapeGaussianMixture
 
 CWD = Path(__file__).parent.resolve()
 
@@ -158,13 +158,13 @@ def test_deterministic_perturbation_signature():
     assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "NP"], 0)
     assert np.allclose(adata.layers["X_pert"][obs["cell_class"] == "KO"], -np.concatenate([pert_effect] * len(groups), axis=0))
 
-def test_custom_gaussian_mixture_model():
+def test_mixscape_gaussian_mixture():
     X = np.random.rand(100)
 
     fixed_means = [0.2, None]
     fixed_covariances = [None, 0.1]
 
-    model = CustomGaussianMixture(n_components=2, fixed_means=fixed_means, fixed_covariances=fixed_covariances)
+    model = MixscapeGaussianMixture(n_components=2, fixed_means=fixed_means, fixed_covariances=fixed_covariances)
     model.fit(X.reshape(-1, 1))
 
     assert np.allclose(model.means_[0], fixed_means[0])
