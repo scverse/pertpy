@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class GuideAssignment:
-    """Offers simple guide assigment based on count thresholds."""
+    """Assign cells to guide RNAs."""
 
     def assign_by_threshold(
         self,
