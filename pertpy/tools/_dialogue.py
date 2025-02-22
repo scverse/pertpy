@@ -716,7 +716,7 @@ class Dialogue:
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         pre_r_scores = {
-            ct: ct_subs[ct].obsm["X_pca"][:, :30] @ ws[i]
+            ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws[i]
             for i, ct in enumerate(cell_types)  # TODO change from 50
         }
 
