@@ -572,8 +572,8 @@ class CellLine(MetaData):
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, query_perturbation])
-            .assign(ln_ic50=gdsc_data.set_index([reference_id, reference_perturbation]).ln_ic50)
-            .assign(auc=gdsc_data.set_index([reference_id, reference_perturbation]).auc)
+            .assign(ln_ic50_gdsc=gdsc_data.set_index([reference_id, reference_perturbation]).ln_ic50)
+            .assign(auc_gdsc=gdsc_data.set_index([reference_id, reference_perturbation]).auc)
             .reset_index()
             .set_index(old_index_name)
         )
@@ -623,6 +623,9 @@ class CellLine(MetaData):
         if self.drug_response_prism is None:
             self._download_prism()
         prism_data = self.drug_response_prism
+        # PRISM starts most drug names with a lowercase letter, so we want to make it case-insensitive
+        prism_data["name_lower"] = prism_data["name"].str.lower()
+        adata.obs["perturbation_lower"] = adata.obs[query_perturbation].str.lower()
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(prism_data["depmap_id"]))
@@ -638,12 +641,13 @@ class CellLine(MetaData):
         old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
-            .set_index([query_id, query_perturbation])
-            .assign(ic50=prism_data.set_index(["depmap_id", "name"]).ic50)
-            .assign(ec50=prism_data.set_index(["depmap_id", "name"]).ec50)
-            .assign(auc=prism_data.set_index(["depmap_id", "name"]).auc)
+            .set_index([query_id, "perturbation_lower"])
+            .assign(ic50_prism=prism_data.set_index(["depmap_id", "name"]).ic50)
+            .assign(ec50_prism=prism_data.set_index(["depmap_id", "name"]).ec50)
+            .assign(auc_prism=prism_data.set_index(["depmap_id", "name"]).auc)
             .reset_index()
             .set_index(old_index_name)
+            .drop(columns="perturbation_lower")
         )
 
         return adata
