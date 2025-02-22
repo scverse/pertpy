@@ -16,10 +16,7 @@ pt_metadata = pt.md.CellLine()
 
 @pytest.fixture
 def adata() -> AnnData:
-    rng = np.random.default_rng(seed=1)
-
-    X = rng.normal(0, 1, (NUM_CELLS, NUM_GENES))
-    X = np.where(X < 0, 0, X)
+    X = np.random.default_rng().normal(0, 1, (NUM_CELLS, NUM_GENES))
 
     obs = pd.DataFrame(
         {

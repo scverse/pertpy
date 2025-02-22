@@ -215,13 +215,13 @@ class CellLine(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information.
+            query_id: The column of ``.obs`` with cell line information.
             reference_id: The type of cell line identifier in the metadata, e.g. ModelID, CellLineName	or StrippedCellLineName.
                           If fetching cell line metadata from Cancerrxgene, it is recommended to choose "stripped_cell_line_name".
             fetch: The metadata to fetch.
             cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
-            copy: Determines whether a copy of the `adata` is returned.
+            copy: Determines whether a copy of ``adata`` is returned.
 
         Returns:
             Returns an AnnData object with cell line annotation.
@@ -334,7 +334,8 @@ class CellLine(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
+            query_id: The column of `.obs` with cell line information.
+                Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
             cell_line_source: The bulk rna expression data from either broad or sanger cell line.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
             copy: Determines whether a copy of the `adata` is returned.
@@ -580,7 +581,6 @@ class CellLine(MetaData):
 
         return adata
 
-
     def annotate_from_prism(
         self,
         adata: AnnData,
@@ -593,6 +593,7 @@ class CellLine(MetaData):
 
         For each cell, we fetch drug response data as IC50, EC50 and AUC for its
         corresponding cell line and perturbation from PRISM fitted data results file.
+        Note that all rows where either `depmap_id` or `name` is missing will be dropped.
 
         Args:
             adata: The data object to annotate.
