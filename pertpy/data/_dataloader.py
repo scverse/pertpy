@@ -51,7 +51,7 @@ def _download(  # pragma: no cover
         response = requests.get(url, stream=True)
         total = int(response.headers.get("content-length", 0))
 
-        with Progress(refresh_per_second=100) as progress:
+        with Progress(refresh_per_second=5) as progress:
             task = progress.add_task("[red]Downloading...", total=total)
             with Path(temp_file_name).open("wb") as file:
                 for data in response.iter_content(block_size):
