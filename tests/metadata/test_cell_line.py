@@ -48,8 +48,8 @@ def test_cell_line_annotation(adata):
 def test_gdsc_annotation(adata):
     pt_metadata.annotate(adata)
     pt_metadata.annotate_from_gdsc(adata, query_id="StrippedCellLineName")
-    assert "ln_ic50" in adata.obs
-    assert "auc" in adata.obs
+    assert "ln_ic50_gdsc" in adata.obs
+    assert "auc_gdsc" in adata.obs
 
 
 def test_prism_annotation(adata):
@@ -63,9 +63,9 @@ def test_prism_annotation(adata):
 
     pt_metadata.annotate(adata)
     pt_metadata.annotate_from_prism(adata, query_id="DepMap_ID")
-    assert "ic50" in adata.obs
-    assert "ec50" in adata.obs
-    assert "auc" in adata.obs
+    assert "ic50_prism" in adata.obs
+    assert "ec50_prism" in adata.obs
+    assert "auc_prism" in adata.obs
 
 
 def test_protein_expression_annotation(adata):
