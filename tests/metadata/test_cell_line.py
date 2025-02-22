@@ -26,7 +26,7 @@ def adata() -> AnnData:
             "DepMap_ID": ["ACH-000016", "ACH-000049", "ACH-001208", "ACH-000956"] * NUM_CELLS_PER_ID,
             "perturbation": ["Midostaurin"] * NUM_CELLS_PER_ID * 4,
         },
-        index=[str(i) for i in range(NUM_GENES)],
+        index=[str(i) for i in range(NUM_CELLS)],
     )
 
     var_data = {"gene_name": [f"gene{i}" for i in range(1, NUM_GENES + 1)]}
@@ -49,6 +49,23 @@ def test_gdsc_annotation(adata):
     pt_metadata.annotate(adata)
     pt_metadata.annotate_from_gdsc(adata, query_id="StrippedCellLineName")
     assert "ln_ic50" in adata.obs
+    assert "auc" in adata.obs
+
+
+def test_prism_annotation(adata):
+    adata.obs = pd.DataFrame(
+        {
+            "DepMap_ID": ["ACH-000879", "ACH-000488", "ACH-000488", "ACH-000008"] * NUM_CELLS_PER_ID,
+            "perturbation": ["cytarabine", "cytarabine", "secnidazole", "flutamide"] * NUM_CELLS_PER_ID,
+        },
+        index=[str(i) for i in range(NUM_CELLS)],
+    )
+
+    pt_metadata.annotate(adata)
+    pt_metadata.annotate_from_prism(adata, query_id="DepMap_ID")
+    assert "ic50" in adata.obs
+    assert "ec50" in adata.obs
+    assert "auc" in adata.obs
 
 
 def test_protein_expression_annotation(adata):
