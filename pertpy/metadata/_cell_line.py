@@ -39,6 +39,7 @@ class CellLine(MetaData):
         self.proteomics = None
         self.drug_response_gdsc1 = None
         self.drug_response_gdsc2 = None
+        self.drug_response_prism = None
 
     def _download_cell_line(self, cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap") -> None:
         if cell_line_source == "DepMap":
@@ -157,7 +158,7 @@ class CellLine(MetaData):
     def _download_gdsc(self, gdsc_dataset: Literal[1, 2] = 1) -> None:
         if gdsc_dataset == 1:
             # Download GDSC drug response data
-            # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s)
+            # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s and AUC)
             # URL: https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx
             drug_response_gdsc1_file_path = Path(settings.cachedir) / "gdsc1_info.csv"
             if not Path(drug_response_gdsc1_file_path).exists():
@@ -181,6 +182,23 @@ class CellLine(MetaData):
                 )
             self.drug_response_gdsc2 = pd.read_csv(drug_response_gdsc2_file_path, index_col=0)
 
+    def _download_prism(self) -> None:
+        # Download PRISM drug response data
+        # Source: DepMap PRISM Repurposing 19Q4 secondary screen dose response curve parameters
+        drug_response_prism_file_path = Path(settings.cachedir) / "prism_info.csv"
+        if not Path(drug_response_prism_file_path).exists():
+            _download(
+                url="https://figshare.com/ndownloader/files/20237739",
+                output_file_name="prism_info.csv",
+                output_path=settings.cachedir,
+                block_size=4096,
+                is_zip=False,
+            )
+        df = pd.read_csv(drug_response_prism_file_path, index_col=0)[["depmap_id", "name", "ic50", "ec50", "auc"]]
+        df = df.dropna(subset=["depmap_id", "name"])
+        df = df.groupby(["depmap_id", "name"]).mean().reset_index()
+        self.drug_response_prism = df
+
     def annotate(
         self,
         adata: AnnData,
@@ -197,13 +215,13 @@ class CellLine(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information.
+            query_id: The column of ``.obs`` with cell line information.
             reference_id: The type of cell line identifier in the metadata, e.g. ModelID, CellLineName	or StrippedCellLineName.
                           If fetching cell line metadata from Cancerrxgene, it is recommended to choose "stripped_cell_line_name".
             fetch: The metadata to fetch.
             cell_line_source: The source of cell line metadata, DepMap or Cancerrxgene.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
-            copy: Determines whether a copy of the `adata` is returned.
+            copy: Determines whether a copy of ``adata`` is returned.
 
         Returns:
             Returns an AnnData object with cell line annotation.
@@ -316,7 +334,8 @@ class CellLine(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with cell line information. Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
+            query_id: The column of `.obs` with cell line information.
+                Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
             cell_line_source: The bulk rna expression data from either broad or sanger cell line.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
             copy: Determines whether a copy of the `adata` is returned.
@@ -491,7 +510,7 @@ class CellLine(MetaData):
     ) -> AnnData:
         """Fetch drug response data from GDSC.
 
-        For each cell, we fetch drug response data as natural log of the fitted IC50 for its
+        For each cell, we fetch drug response data as natural log of the fitted IC50 and AUC for its
         corresponding cell line and perturbation from GDSC fitted data results file.
 
         Args:
@@ -554,9 +573,82 @@ class CellLine(MetaData):
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, query_perturbation])
-            .assign(ln_ic50=gdsc_data.set_index([reference_id, reference_perturbation]).ln_ic50)
+            .assign(ln_ic50_gdsc=gdsc_data.set_index([reference_id, reference_perturbation]).ln_ic50)
+            .assign(auc_gdsc=gdsc_data.set_index([reference_id, reference_perturbation]).auc)
             .reset_index()
             .set_index(old_index_name)
+        )
+
+        return adata
+
+    def annotate_from_prism(
+        self,
+        adata: AnnData,
+        query_id: str = "DepMap_ID",
+        query_perturbation: str = "perturbation",
+        verbosity: int | str = 5,
+        copy: bool = False,
+    ) -> AnnData:
+        """Fetch drug response data from PRISM.
+
+        For each cell, we fetch drug response data as IC50, EC50 and AUC for its
+        corresponding cell line and perturbation from PRISM fitted data results file.
+        Note that all rows where either `depmap_id` or `name` is missing will be dropped.
+
+        Args:
+            adata: The data object to annotate.
+            query_id: The column of `.obs` with cell line information.
+            query_perturbation: The column of `.obs` with perturbation information.
+            verbosity: The number of unmatched identifiers to print, can be either non-negative values or 'all'.
+            copy: Determines whether a copy of the `adata` is returned.
+
+        Returns:
+            Returns an AnnData object with drug response annotation.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.mcfarland_2020()
+            >>> pt_metadata = pt.md.CellLine()
+            >>> pt_metadata.annotate_from_prism(adata, query_id="DepMap_ID")
+        """
+        if copy:
+            adata = adata.copy()
+        if query_id not in adata.obs.columns:
+            raise ValueError(
+                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
+                "Ensure that you are using one of the available query IDs present in 'adata.obs' for the annotation.\n"
+                "If the desired query ID is not available, you can fetch the cell line metadata "
+                "using the `annotate()` function before calling `annotate_from_prism()`. "
+                "This ensures that the required query ID is included in your data."
+            )
+        if self.drug_response_prism is None:
+            self._download_prism()
+        prism_data = self.drug_response_prism
+        # PRISM starts most drug names with a lowercase letter, so we want to make it case-insensitive
+        prism_data["name_lower"] = prism_data["name"].str.lower()
+        adata.obs["perturbation_lower"] = adata.obs[query_perturbation].str.lower()
+
+        identifier_num_all = len(adata.obs[query_id].unique())
+        not_matched_identifiers = list(set(adata.obs[query_id]) - set(prism_data["depmap_id"]))
+        self._warn_unmatch(
+            total_identifiers=identifier_num_all,
+            unmatched_identifiers=not_matched_identifiers,
+            query_id=query_id,
+            reference_id="depmap_id",
+            metadata_type="drug response",
+            verbosity=verbosity,
+        )
+
+        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
+        adata.obs = (
+            adata.obs.reset_index()
+            .set_index([query_id, "perturbation_lower"])
+            .assign(ic50_prism=prism_data.set_index(["depmap_id", "name"]).ic50)
+            .assign(ec50_prism=prism_data.set_index(["depmap_id", "name"]).ec50)
+            .assign(auc_prism=prism_data.set_index(["depmap_id", "name"]).auc)
+            .reset_index()
+            .set_index(old_index_name)
+            .drop(columns="perturbation_lower")
         )
 
         return adata
@@ -577,7 +669,7 @@ class CellLine(MetaData):
             >>> pt_metadata = pt.md.CellLine()
             >>> lookup = pt_metadata.lookup()
         """
-        # Fetch the metadata if it hasn't beed downloaded yet
+        # Fetch the metadata if it hasn't been downloaded yet
         if self.depmap is None:
             self._download_cell_line(cell_line_source="DepMap")
         if self.cancerxgene is None:
@@ -594,6 +686,8 @@ class CellLine(MetaData):
             self._download_gdsc(gdsc_dataset=1)
         if self.drug_response_gdsc2 is None:
             self._download_gdsc(gdsc_dataset=2)
+        if self.drug_response_prism is None:
+            self._download_prism()
 
         # Transfer the data
         return LookUp(
@@ -607,6 +701,7 @@ class CellLine(MetaData):
                 self.proteomics,
                 self.drug_response_gdsc1,
                 self.drug_response_gdsc2,
+                self.drug_response_prism,
             ],
         )
 
