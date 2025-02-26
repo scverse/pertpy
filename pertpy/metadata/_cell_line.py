@@ -55,6 +55,7 @@ class CellLine(MetaData):
                     is_zip=False,
                 )
             self.depmap = pd.read_csv(depmap_cell_line_path)
+            self.depmap = self.depmap.reset_index().rename(columns={"CellLineName": "cell_line_name"})
         else:
             # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
             # Source: https://www.cancerrxgene.org/celllines
@@ -234,7 +235,7 @@ class CellLine(MetaData):
             >>> adata_annotated = pt_metadata.annotate(adata=adata,
             >>>                                        reference_id='cell_line_name',
             >>>                                        query_id='cell_line_name',
-            >>>                                        fetch=["cell_line_name", "age", "primary_disease"],
+            >>>                                        fetch=["cell_line_name", "Age", "OncotreePrimaryDisease"],
             >>>                                        copy=True)
         """
         if copy:
@@ -322,7 +323,7 @@ class CellLine(MetaData):
     def annotate_bulk_rna(
         self,
         adata: AnnData,
-        query_id: str = "cell_line_name",
+        query_id: str = None,
         cell_line_source: Literal["broad", "sanger"] = "sanger",
         verbosity: int | str = 5,
         gene_identifier: Literal["gene_name", "gene_ID", "both"] = "gene_ID",
@@ -338,6 +339,7 @@ class CellLine(MetaData):
                 Defaults to "cell_line_name" if `cell_line_source` is sanger, otherwise "DepMap_ID".
             cell_line_source: The bulk rna expression data from either broad or sanger cell line.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
+            gene_identifier: The type of gene identifier saved in the fetched meta data, 'gene_name', 'gene_ID' or 'both'.
             copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
@@ -359,32 +361,44 @@ class CellLine(MetaData):
         # Make sure that the specified `cell_line_type` can be found in the bulk rna expression data,
         # then we can compare these keys and fetch the corresponding metadata.
         if query_id not in adata.obs.columns:
-            raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation."
-                "If the desired query ID is not available, you can fetch the cell line metadata "
-                "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
-                "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
-            )
-
+            if query_id is not None:
+                raise ValueError(
+                    f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
+                    "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation."
+                    "If the desired query ID is not available, you can fetch the cell line metadata "
+                    "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
+                    "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
+                )
+        if query_id is None:
+            if cell_line_source == "sanger":
+                query_id = "cell_line_name"
+            else:
+                query_id = "DepMap_ID"
         identifier_num_all = len(adata.obs[query_id].unique())
 
         # Lazily download the bulk rna expression data
         if cell_line_source == "sanger":
+            if query_id not in adata.obs.columns:
+                raise ValueError(
+                    "To annotate bulk RNA data from Wellcome Sanger Institute, `cell_line_name` is used as default reference and query identifier if no `query_id` is given."
+                    "Ensure that you have column `cell_line_name` in `adata.obs` or specify column name in which cell line name is stored."
+                    "If cell line name isn't available in 'adata.obs', use `annotate()` to annotate the cell line first."
+                )
             if self.bulk_rna_sanger is None:
                 self._download_bulk_rna(cell_line_source="sanger")
             reference_id = "model_name"
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_sanger.index))
         else:
+            if query_id not in adata.obs.columns:
+                raise ValueError(
+                    "To annotate bulk RNA data from Broad Institue, `DepMap_ID` is used as default reference and query identifier if no `query_id` is given."
+                    "Ensure that you have column `DepMap_ID` in `adata.obs` or specify column name in which DepMap ID is stored."
+                    "If DepMap ID isn't available in 'adata.obs', use `annotate()` to annotate the cell line first."
+                )
             reference_id = "DepMap_ID"
-            logger.warning(
-                "To annotate bulk RNA data from Broad Institue, `DepMap_ID` is used as default reference and query identifier if no `reference_id` is given."
-                "If `DepMap_ID` isn't available in 'adata.obs', use `annotate()` to annotate the cell line first."
-            )
+
             if self.bulk_rna_broad is None:
                 self._download_bulk_rna(cell_line_source="broad")
-            if query_id == "cell_line_name":
-                query_id = "DepMap_ID"
             not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_broad.index))
 
         self._warn_unmatch(
@@ -493,7 +507,8 @@ class CellLine(MetaData):
         adata.obsm["proteomics_" + protein_information] = (
             self.proteomics[[reference_id, protein_id, protein_information]]
             .pivot(index=reference_id, columns=protein_id, values=protein_information)
-            .reindex(adata.obs.index)
+            .reindex(adata.obs[query_id])
+            .set_index(adata.obs.index)
         )
         return adata
 
@@ -759,9 +774,9 @@ class CellLine(MetaData):
                 "Dimensions of adata.X do not match those of metadata. Ensure that they have the same gene list."
             )
         if isinstance(adata.obsm[metadata_key], pd.DataFrame):
-            # Give warning if the genes are not the same
+            # Raise error if the genes are not the same
             if sum(adata.obsm[metadata_key].columns != adata.var.index.values) > 0:
-                logger.warning(
+                raise ValueError(
                     "Column name of metadata is not the same as the index of adata.var. Ensure that the genes are in the same order."
                 )
 
