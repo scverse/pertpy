@@ -27,10 +27,10 @@ jobs:
                     - os: ubuntu-22.04
                       python: "3.13"
                       run_mode: "fast"
-                    # - os: ubuntu-latest
-                    #   python: "3.13"
-                    #   run_mode: slow
-                    #   pip-flags: "--pre"
+                    - os: ubuntu-latest
+                      python: "3.13"
+                      run_mode: slow
+                      pip-flags: "--pre"
 
         env:
             OS: ${{ matrix.os }}

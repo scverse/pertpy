@@ -41,30 +41,35 @@ def _download(  # pragma: no cover
 
     Path(output_path).mkdir(parents=True, exist_ok=True)
     lock_path = f"{output_path}/{output_file_name}.lock"
-    with FileLock(lock_path):
-        if Path(download_to_path).exists() and not overwrite:
-            logger.warning(f"File {download_to_path} already exists!")
-            return
 
-        temp_file_name = f"{download_to_path}.part"
+    try:
+        with FileLock(lock_path, timeout=30):
+            if Path(download_to_path).exists() and not overwrite:
+                logger.warning(f"File {download_to_path} already exists!")
+                return
 
-        response = requests.get(url, stream=True)
-        total = int(response.headers.get("content-length", 0))
+            temp_file_name = f"{download_to_path}.part"
+            response = requests.get(url, stream=True)
+            total = int(response.headers.get("content-length", 0))
 
-        with Progress(refresh_per_second=5) as progress:
-            task = progress.add_task("[red]Downloading...", total=total)
-            with Path(temp_file_name).open("wb") as file:
-                for data in response.iter_content(block_size):
-                    file.write(data)
-                    progress.update(task, advance=block_size)
-            progress.update(task, completed=total, refresh=True)
+            with Progress(refresh_per_second=5) as progress:
+                task = progress.add_task("[red]Downloading...", total=total)
+                with Path(temp_file_name).open("wb") as file:
+                    for data in response.iter_content(block_size):
+                        file.write(data)
+                        progress.update(task, advance=block_size)
+                    progress.update(task, completed=total, refresh=True)
 
-        Path(temp_file_name).replace(download_to_path)
+            Path(temp_file_name).replace(download_to_path)
 
-        if is_zip:
-            output_path = output_path or tempfile.gettempdir()
-            with ZipFile(download_to_path, "r") as zip_obj:
-                zip_obj.extractall(path=output_path)
-                zip_obj.namelist()
-
-    Path(lock_path).unlink()
+            if is_zip:
+                output_path = output_path or tempfile.gettempdir()
+                with ZipFile(download_to_path, "r") as zip_obj:
+                    zip_obj.extractall(path=output_path)
+                    zip_obj.namelist()
+    finally:
+        if Path(lock_path).exists():
+            try:
+                Path(lock_path).unlink()
+            except OSError:
+                pass
