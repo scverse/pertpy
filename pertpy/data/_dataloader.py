@@ -35,41 +35,46 @@ def _download(  # pragma: no cover
     if output_path is None:
         output_path = tempfile.gettempdir()
 
-    download_to_path = (
-        f"{output_path}{output_file_name}" if str(output_path).endswith("/") else f"{output_path}/{output_file_name}"
-    )
+    download_to_path = Path(output_path) / output_file_name
 
     Path(output_path).mkdir(parents=True, exist_ok=True)
-    lock_path = f"{output_path}/{output_file_name}.lock"
+    lock_path = Path(output_path) / f"{output_file_name}.lock"
 
     try:
-        with FileLock(lock_path, timeout=30):
+        with FileLock(lock_path, timeout=300):
             if Path(download_to_path).exists() and not overwrite:
                 logger.warning(f"File {download_to_path} already exists!")
                 return
 
-            temp_file_name = f"{download_to_path}.part"
-            response = requests.get(url, stream=True)
-            total = int(response.headers.get("content-length", 0))
+            temp_file_name = Path(f"{download_to_path}.part")
 
-            with Progress(refresh_per_second=5) as progress:
-                task = progress.add_task("[red]Downloading...", total=total)
-                with Path(temp_file_name).open("wb") as file:
-                    for data in response.iter_content(block_size):
-                        file.write(data)
-                        progress.update(task, advance=block_size)
-                    progress.update(task, completed=total, refresh=True)
+            try:
+                response = requests.get(url, stream=True)
+                response.raise_for_status()  # Raise exception for HTTP errors
+                total = int(response.headers.get("content-length", 0))
 
-            Path(temp_file_name).replace(download_to_path)
+                with Progress(refresh_per_second=5) as progress:
+                    task = progress.add_task("[red]Downloading...", total=total)
+                    with Path(temp_file_name).open("wb") as file:
+                        for data in response.iter_content(block_size):
+                            file.write(data)
+                            progress.update(task, advance=len(data))  # Use actual data length
+                        progress.update(task, completed=total, refresh=True)
 
-            if is_zip:
-                output_path = output_path or tempfile.gettempdir()
-                with ZipFile(download_to_path, "r") as zip_obj:
-                    zip_obj.extractall(path=output_path)
-                    zip_obj.namelist()
+                Path(temp_file_name).replace(download_to_path)
+
+                if is_zip:
+                    output_path = output_path or tempfile.gettempdir()
+                    with ZipFile(download_to_path, "r") as zip_obj:
+                        zip_obj.extractall(path=output_path)
+            except Exception as e:
+                logger.error(f"Download failed: {str(e)}")
+                if Path(temp_file_name).exists():
+                    Path(temp_file_name).unlink(missing_ok=True)
+                raise
     finally:
         if Path(lock_path).exists():
             try:
-                Path(lock_path).unlink()
+                Path(lock_path).unlink(missing_ok=True)
             except OSError:
                 pass
