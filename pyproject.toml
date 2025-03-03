@@ -54,7 +54,6 @@ dependencies = [
     "scanpy[leiden]",
     "muon",
     "requests",
-    "scikit-misc",
     "scvi-tools",
     "adjusttext",
     "decoupler",
