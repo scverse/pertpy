@@ -59,12 +59,10 @@ def _download(  # pragma: no cover
         retry_count = 0
         while retry_count <= max_retries:
             try:
-                # Check available disk space (get file size from HEAD request)
                 head_response = requests.head(url, timeout=timeout)
                 head_response.raise_for_status()
                 content_length = int(head_response.headers.get("content-length", 0))
 
-                # Check if enough disk space is available
                 free_space = shutil.disk_usage(output_path).free
                 if content_length > free_space:
                     raise OSError(
@@ -72,7 +70,7 @@ def _download(  # pragma: no cover
                     )
 
                 response = requests.get(url, stream=True)
-                response.raise_for_status()  # Raise exception for HTTP errors
+                response.raise_for_status()
                 total = int(response.headers.get("content-length", 0))
 
                 with Progress(refresh_per_second=5) as progress:
@@ -80,7 +78,7 @@ def _download(  # pragma: no cover
                     with Path(temp_file_name).open("wb") as file:
                         for data in response.iter_content(block_size):
                             file.write(data)
-                            progress.update(task, advance=len(data))  # Use actual data length
+                            progress.update(task, advance=len(data))
                         progress.update(task, completed=total, refresh=True)
 
                 Path(temp_file_name).replace(download_to_path)
