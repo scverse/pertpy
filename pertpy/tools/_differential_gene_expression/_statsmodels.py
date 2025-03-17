@@ -55,10 +55,11 @@ class Statsmodels(LinearModelBase):
                     "t_value": t_test.tvalue.item(),
                     "sd": t_test.sd.item(),
                     "log_fc": t_test.effect.item(),
-                    "adj_p_value": statsmodels.stats.multitest.fdrcorrection(np.array([t_test.pvalue]))[1].item(),
                 }
             )
-        return pd.DataFrame(res).sort_values("p_value")
+        pd.DataFrame(res).sort_values("p_value").assign(
+            adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1]
+        )
 
     def contrast(self, column: str, baseline: str, group_to_compare: str) -> np.ndarray:
         """Build a simple contrast for pairwise comparisons.
