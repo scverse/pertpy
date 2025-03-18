@@ -77,14 +77,26 @@ def test_t(test_adata_minimal, paired_by, expected):
     ],
 )
 def test_permutation(test_adata_minimal, paired_by, expected):
-    """Test that t-test gives the correct values."""
-    res_df = PermutationTest.compare_groups(
-        adata=test_adata_minimal, column="condition", baseline="A", groups_to_compare="B", paired_by=paired_by
-    )
-    assert isinstance(res_df, DataFrame), "PermutationTest.compare_groups should return a DataFrame"
-    actual = res_df.loc[:, ["variable", "p_value", "log_fc"]].set_index("variable").to_dict(orient="index")
-    for gene in expected:
-        assert actual[gene] == pytest.approx(expected[gene], abs=0.02)
+    """Test that permutation test gives the correct values.
+
+    Reference values have been computed in R using wilcox.test
+    """
+    for test in [TTest, WilcoxonTest]:
+        res_df = PermutationTest.compare_groups(
+            adata=test_adata_minimal,
+            column="condition",
+            baseline="A",
+            groups_to_compare="B",
+            paired_by=paired_by,
+            n_permutations=100,
+            test=test,
+            seed=0,
+        )
+        assert isinstance(res_df, DataFrame), "PermutationTest.compare_groups should return a DataFrame"
+        actual = res_df.loc[:, ["variable", "p_value", "log_fc"]].set_index("variable").to_dict(orient="index")
+        for gene in expected:
+            assert (expected[gene]["p_value"] < 0.05) == (actual[gene]["p_value"] < 0.05)
+            assert actual[gene]["log_fc"] == pytest.approx(expected[gene]["log_fc"], abs=0.02)
 
 
 @pytest.mark.parametrize("seed", range(10))

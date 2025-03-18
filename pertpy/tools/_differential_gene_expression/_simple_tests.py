@@ -4,7 +4,6 @@ import warnings
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -167,7 +166,7 @@ class TTest(SimpleComparisonBase):
 class PermutationTest(SimpleComparisonBase):
     """Perform a permutation test.
 
-    The permutation test relies on another test (e.g. TTest) to perform the actual comparison
+    The permutation test relies on another test (e.g. WilcoxonTest) to perform the actual comparison
     based on permuted data. The p-value is then calculated based on the distribution of the test
     statistic under the null hypothesis.
 
@@ -186,8 +185,9 @@ class PermutationTest(SimpleComparisonBase):
         x0: np.ndarray,
         x1: np.ndarray,
         paired: bool,
-        test: type["SimpleComparisonBase"] = TTest,
+        test: type["SimpleComparisonBase"] = WilcoxonTest,
         n_permutations: int = 100,
+        seed: int = 0,
         **kwargs,
     ) -> float:
         """Perform a permutation test.
@@ -211,6 +211,7 @@ class PermutationTest(SimpleComparisonBase):
                 statistic=call_test,
                 n_resamples=n_permutations,
                 permutation_type="samples",
+                rng=seed,
                 **kwargs,
             ).pvalue
         else:
@@ -219,6 +220,7 @@ class PermutationTest(SimpleComparisonBase):
                 statistic=call_test,
                 n_resamples=n_permutations,
                 permutation_type="independent",
+                rng=seed,
                 **kwargs,
             ).pvalue
 
@@ -229,8 +231,10 @@ class PermutationTest(SimpleComparisonBase):
         column: str,
         baseline: str,
         groups_to_compare: str | Sequence[str],
-        test: type["SimpleComparisonBase"] = TTest,
+        test: type["SimpleComparisonBase"] = WilcoxonTest,
         n_permutations: int = 100,
+        n_jobs: int = -1,
+        seed: int = 0,
         *,
         paired_by: str | None = None,
         mask: str | None = None,
@@ -247,6 +251,7 @@ class PermutationTest(SimpleComparisonBase):
             groups_to_compare: Groups to compare against the baseline.
             test: The test to use for the actual comparison after permutation. Default is TTest.
             n_permutations: Number of permutations to perform.
+            n_jobs: Number of parallel jobs to use.
             paired_by: Column in `adata.obs` to use for pairing.
             mask: Mask to apply to the data.
             layer: Layer to use for the comparison.
@@ -282,13 +287,13 @@ class PermutationTest(SimpleComparisonBase):
                 return np.where(mask)[0]
 
         test_kwargs_mutable = dict(test_kwargs)
-        test_kwargs_mutable.update({"test": test, "n_permutations": n_permutations})
+        test_kwargs_mutable.update({"test": test, "n_permutations": n_permutations, "seed": seed})
 
         res_dfs = []
         baseline_idx = _get_idx(column, baseline)
 
         comparison_indices = [_get_idx(column, group_to_compare) for group_to_compare in groups_to_compare]
-        res_dfs = Parallel(n_jobs=-1)(
+        res_dfs = Parallel(n_jobs=n_jobs)(
             delayed(model._compare_single_group)(baseline_idx, comparison_idx, paired=paired, **test_kwargs_mutable)
             for comparison_idx in comparison_indices
         )
