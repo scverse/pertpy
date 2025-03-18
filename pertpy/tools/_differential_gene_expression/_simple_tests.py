@@ -2,9 +2,9 @@
 
 import warnings
 from abc import abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from types import MappingProxyType
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -97,7 +97,7 @@ class SimpleComparisonBase(MethodBase):
         paired_by: str | None = None,
         mask: str | None = None,
         layer: str | None = None,
-        n_permutations: int = 100,
+        n_permutations: int = 1000,
         permutation_test: type["SimpleComparisonBase"] | None = None,
         fit_kwargs: Mapping = MappingProxyType({}),
         test_kwargs: Mapping = MappingProxyType({}),
@@ -152,7 +152,7 @@ class SimpleComparisonBase(MethodBase):
 
         if permutation_test:
             test_kwargs = dict(test_kwargs)
-            test_kwargs.update({"test": cls, "n_permutations": n_permutations})
+            test_kwargs.update({"test": permutation_test, "n_permutations": n_permutations})
         elif permutation_test is None and cls.__name__ == "PermutationTest":
             logger.warning("No permutation test specified. Using WilcoxonTest as default.")
 
@@ -177,22 +177,22 @@ class WilcoxonTest(SimpleComparisonBase):
     """
 
     @staticmethod
-    def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> float:
+    def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, return_attribute: str = "pvalue", **kwargs) -> float:
         if paired:
-            return scipy.stats.wilcoxon(x0, x1, **kwargs).pvalue
+            return scipy.stats.wilcoxon(x0, x1, **kwargs).__getattribute__(return_attribute)
         else:
-            return scipy.stats.mannwhitneyu(x0, x1, **kwargs).pvalue
+            return scipy.stats.mannwhitneyu(x0, x1, **kwargs).__getattribute__(return_attribute)
 
 
 class TTest(SimpleComparisonBase):
     """Perform a unpaired or paired T-test."""
 
     @staticmethod
-    def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> float:
+    def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, return_attribute: str = "pvalue", **kwargs) -> float:
         if paired:
-            return scipy.stats.ttest_rel(x0, x1, **kwargs).pvalue
+            return scipy.stats.ttest_rel(x0, x1, **kwargs).__getattribute__(return_attribute)
         else:
-            return scipy.stats.ttest_ind(x0, x1, **kwargs).pvalue
+            return scipy.stats.ttest_ind(x0, x1, **kwargs).__getattribute__(return_attribute)
 
 
 class PermutationTest(SimpleComparisonBase):
@@ -217,32 +217,60 @@ class PermutationTest(SimpleComparisonBase):
         x0: np.ndarray,
         x1: np.ndarray,
         paired: bool,
-        test: type["SimpleComparisonBase"] = WilcoxonTest,
-        n_permutations: int = 100,
+        test: type["SimpleComparisonBase"] | Callable = WilcoxonTest,
+        n_permutations: int = 1000,
+        return_attribute: str = "pvalue",
         **kwargs,
     ) -> float:
         """Perform a permutation test.
+
+        This function relies on another test (e.g. WilcoxonTest) to generate a test statistic for each permutation.
+
+        .. code-block:: python
+            from pertpy.tools import PermutationTest, WilcoxonTest
+
+            # Using rank-sum statistic
+            p_value = PermutationTest._test(x0, x1, paired=True, test=WilcoxonTest, n_permutations=1000, rng=0)
+
+
+            # Using a custom test statistic
+            def compare_means(x0, x1, paired):
+                # paired logic not implemented here
+                return np.mean(x1) - np.mean(x0)
+
+
+            p_value = PermutationTest._test(x0, x1, paired=False, test=compare_means, n_permutations=1000, rng=0)
 
         Args:
             x0: Array with baseline values.
             x1: Array with values to compare.
             paired: Whether to perform a paired test
-            test: The test to use for the actual comparison.
+            test: The class or function to generate the test statistic from permuted data.
             n_permutations: Number of permutations to perform.
+            return_attribute: Attribute to return from the test statistic.
             **kwargs: kwargs passed to the permutation test function, not the test function after permutation.
         """
+        if test is PermutationTest:
+            raise ValueError(
+                "The `test` argument cannot be `PermutationTest`. Use a base test like `WilcoxonTest` or `TTest`."
+            )
 
-        def call_test(data_baseline, data_comparison, **kwargs):
+        def call_test(data_baseline, data_comparison, axis: int | None = None, **kwargs):
             """Perform the actual test."""
-            return test._test(data_baseline, data_comparison, paired, **kwargs)
+            # Setting the axis allows the operation to be vectorized
+            if axis is not None:
+                kwargs.update({"axis": axis})
 
-        # Set a seed for reproducibility if not already set
-        kwargs["rng"] = kwargs.get("rng", 0)
+            if not hasattr(test, "_test"):
+                return test(data_baseline, data_comparison, paired, **kwargs)
+
+            return test._test(data_baseline, data_comparison, paired, return_attribute="statistic", **kwargs)
 
         return scipy.stats.permutation_test(
             [x0, x1],
             statistic=call_test,
             n_resamples=n_permutations,
             permutation_type=("samples" if paired else "independent"),
+            vectorized=hasattr(test, "_test"),
             **kwargs,
-        ).pvalue
+        ).__getattribute__(return_attribute)
