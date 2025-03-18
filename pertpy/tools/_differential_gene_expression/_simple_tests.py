@@ -4,7 +4,6 @@ import warnings
 from abc import abstractmethod
 from collections.abc import Callable, Mapping, Sequence
 from types import MappingProxyType
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
