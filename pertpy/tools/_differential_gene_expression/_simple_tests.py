@@ -4,6 +4,7 @@ import warnings
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -95,9 +96,28 @@ class SimpleComparisonBase(MethodBase):
         paired_by: str | None = None,
         mask: str | None = None,
         layer: str | None = None,
+        n_permutations: int = 100,
+        permutation_test: type["SimpleComparisonBase"] | None = None,
         fit_kwargs: Mapping = MappingProxyType({}),
         test_kwargs: Mapping = MappingProxyType({}),
+        n_jobs: int = -1,
     ) -> DataFrame:
+        """Perform a comparison between groups.
+
+        Args:
+            adata (AnnData): Data with observations to compare.
+            column (str): Column in `adata.obs` that contains the groups to compare.
+            baseline (str): Reference group.
+            groups_to_compare (str | Sequence[str]): Groups to compare against the baseline. If None, all other groups are compared.
+            paired_by (str | None): Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
+            mask (str | None): Mask to apply to the data.
+            layer (str | None): Layer to use for the comparison.
+            n_permutations (int): Number of permutations to perform if a permutation test is used.
+            permutation_test (type[SimpleComparisonBase] | None): Test to use after permutation if a permutation test is used.
+            fit_kwargs (Mapping): Not used for simple tests.
+            test_kwargs (Mapping): Additional kwargs passed to the test function.
+            n_jobs (int): Number of parallel jobs to use.
+        """
         if len(fit_kwargs):
             warnings.warn("fit_kwargs not used for simple tests.", UserWarning, stacklevel=2)
         paired = paired_by is not None
@@ -128,13 +148,25 @@ class SimpleComparisonBase(MethodBase):
 
         res_dfs = []
         baseline_idx = _get_idx(column, baseline)
-        for group_to_compare in groups_to_compare:
-            comparison_idx = _get_idx(column, group_to_compare)
-            res_dfs.append(
-                model._compare_single_group(baseline_idx, comparison_idx, paired=paired, **test_kwargs).assign(
-                    comparison=f"{group_to_compare}_vs_{baseline if baseline is not None else 'rest'}"
-                )
+
+        if permutation_test:
+            test_kwargs = dict(test_kwargs)
+            test_kwargs["n_permutations"] = n_permutations
+            test_kwargs["test"] = permutation_test
+        elif permutation_test is None and cls.__name__ == "PermutationTest":
+            raise ValueError("PermutationTest requires a permutation_test argument")
+
+        comparison_indices = [_get_idx(column, group_to_compare) for group_to_compare in groups_to_compare]
+        res_dfs = Parallel(n_jobs=n_jobs)(
+            delayed(model._compare_single_group)(baseline_idx, comparison_idx, paired=paired, **test_kwargs)
+            for comparison_idx in comparison_indices
+        )
+        res_dfs = [
+            df.assign(
+                comparison=f"{group_to_compare}_vs_{baseline if baseline is not None else 'rest'}",
             )
+            for df, group_to_compare in zip(res_dfs, groups_to_compare, strict=False)
+        ]
         return fdr_correction(pd.concat(res_dfs))
 
 
@@ -170,7 +202,7 @@ class PermutationTest(SimpleComparisonBase):
     based on permuted data. The p-value is then calculated based on the distribution of the test
     statistic under the null hypothesis.
 
-    For paired tests, each paired observation is permuted together and distributed randoml between
+    For paired tests, each paired observation is permuted together and distributed randomly between
     the two groups. For unpaired tests, all observations are permuted independently.
 
     The null hypothesis for the unpaired test is that all observations come from the same underlying
@@ -187,7 +219,6 @@ class PermutationTest(SimpleComparisonBase):
         paired: bool,
         test: type["SimpleComparisonBase"] = WilcoxonTest,
         n_permutations: int = 100,
-        seed: int = 0,
         **kwargs,
     ) -> float:
         """Perform a permutation test.
@@ -195,112 +226,23 @@ class PermutationTest(SimpleComparisonBase):
         Args:
             x0: Array with baseline values.
             x1: Array with values to compare.
-            paired: Indicates whether to perform a paired test
+            paired: Whether to perform a paired test
             test: The test to use for the actual comparison.
             n_permutations: Number of permutations to perform.
-            **kwargs: kwargs passed to the test function
+            **kwargs: kwargs passed to the permutation test function, not the test function after permutation.
         """
 
-        def call_test(x0, x1, **kwargs):
+        def call_test(data_baseline, data_comparison, **kwargs):
             """Perform the actual test."""
-            return test._test(x0, x1, paired, **kwargs)
+            return test._test(data_baseline, data_comparison, paired, **kwargs)
 
-        if paired:
-            return scipy.stats.permutation_test(
-                [x0, x1],
-                statistic=call_test,
-                n_resamples=n_permutations,
-                permutation_type="samples",
-                rng=seed,
-                **kwargs,
-            ).pvalue
-        else:
-            return scipy.stats.permutation_test(
-                [x0, x1],
-                statistic=call_test,
-                n_resamples=n_permutations,
-                permutation_type="independent",
-                rng=seed,
-                **kwargs,
-            ).pvalue
+        # Set a seed for reproducibility if not already set
+        kwargs["rng"] = kwargs.get("rng", 0)
 
-    @classmethod
-    def compare_groups(
-        cls,
-        adata: AnnData,
-        column: str,
-        baseline: str,
-        groups_to_compare: str | Sequence[str],
-        test: type["SimpleComparisonBase"] = WilcoxonTest,
-        n_permutations: int = 100,
-        n_jobs: int = -1,
-        seed: int = 0,
-        *,
-        paired_by: str | None = None,
-        mask: str | None = None,
-        layer: str | None = None,
-        fit_kwargs: Mapping = MappingProxyType({}),
-        test_kwargs: Mapping = MappingProxyType({}),
-    ) -> DataFrame:
-        """Perform a comparison between groups using a permutation test.
-
-        Args:
-            adata: Annotated data object.
-            column: Column in `adata.obs` that contains the groups to compare.
-            baseline: Reference group.
-            groups_to_compare: Groups to compare against the baseline.
-            test: The test to use for the actual comparison after permutation. Default is TTest.
-            n_permutations: Number of permutations to perform.
-            n_jobs: Number of parallel jobs to use.
-            paired_by: Column in `adata.obs` to use for pairing.
-            mask: Mask to apply to the data.
-            layer: Layer to use for the comparison.
-            fit_kwargs: Additional kwargs passed to the test function.
-            test_kwargs: Additional kwargs passed to the test function.
-        """
-        if len(fit_kwargs):
-            warnings.warn("fit_kwargs not used for simple tests.", UserWarning, stacklevel=2)
-        paired = paired_by is not None
-        model = cls(adata, mask=mask, layer=layer)
-        if groups_to_compare is None:
-            # compare against all other
-            groups_to_compare = sorted(set(model.adata.obs[column]) - {baseline})
-        if isinstance(groups_to_compare, str):
-            groups_to_compare = [groups_to_compare]
-
-        def _get_idx(column, value):
-            mask = model.adata.obs[column] == value
-            if paired:
-                dummies = pd.get_dummies(model.adata.obs[paired_by], sparse=True).sparse.to_coo().tocsr()
-                if not np.all(np.sum(dummies, axis=0) == 2):
-                    raise ValueError("Pairing is only possible with exactly two values per group")
-                # Use matrix multiplication to only retreive those dummy entries that are associated with the current `value`.
-                # Convert to COO matrix to get rows/cols
-                # row indices refers to the indices of rows that have `column == value` (equivalent to np.where(mask)[0])
-                # col indices refers to the numeric index of each "pair" in obs_names
-                ind_mat = diags(mask.values, dtype=bool) @ dummies
-                if not np.all(np.sum(ind_mat, axis=0) == 1):
-                    raise ValueError("Pairing is only possible with exactly two values per group")
-                ind_mat = ind_mat.tocoo()
-                return ind_mat.row[np.argsort(ind_mat.col)]
-            else:
-                return np.where(mask)[0]
-
-        test_kwargs_mutable = dict(test_kwargs)
-        test_kwargs_mutable.update({"test": test, "n_permutations": n_permutations, "seed": seed})
-
-        res_dfs = []
-        baseline_idx = _get_idx(column, baseline)
-
-        comparison_indices = [_get_idx(column, group_to_compare) for group_to_compare in groups_to_compare]
-        res_dfs = Parallel(n_jobs=n_jobs)(
-            delayed(model._compare_single_group)(baseline_idx, comparison_idx, paired=paired, **test_kwargs_mutable)
-            for comparison_idx in comparison_indices
-        )
-        res_dfs = [
-            df.assign(
-                comparison=f"{group_to_compare}_vs_{baseline if baseline is not None else 'rest'}",
-            )
-            for df, group_to_compare in zip(res_dfs, groups_to_compare, strict=False)
-        ]
-        return fdr_correction(pd.concat(res_dfs))
+        return scipy.stats.permutation_test(
+            [x0, x1],
+            statistic=call_test,
+            n_resamples=n_permutations,
+            permutation_type=("samples" if paired else "independent"),
+            **kwargs,
+        ).pvalue

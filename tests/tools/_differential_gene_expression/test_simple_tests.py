@@ -89,8 +89,8 @@ def test_permutation(test_adata_minimal, paired_by, expected):
             groups_to_compare="B",
             paired_by=paired_by,
             n_permutations=100,
-            test=test,
-            seed=0,
+            permutation_test=test,
+            test_kwargs={"rng": 0},
         )
         assert isinstance(res_df, DataFrame), "PermutationTest.compare_groups should return a DataFrame"
         actual = res_df.loc[:, ["variable", "p_value", "log_fc"]].set_index("variable").to_dict(orient="index")
