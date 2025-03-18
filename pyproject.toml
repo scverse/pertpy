@@ -51,7 +51,7 @@ classifiers = [
 
 dependencies = [
     "rich",
-    "scanpy[leiden]",
+    "scanpy",
     "muon",
     "requests",
     "scikit-misc",
@@ -107,6 +107,7 @@ doc = [
 test = [
     "pytest",
     "coverage",
+    "leidenalg"
 ]
 
 [tool.hatch.version]
