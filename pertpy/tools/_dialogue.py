@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 class Dialogue:
     """Python implementation of DIALOGUE"""
 
-    def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int):
+    def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int, feature_space_key: str = "X_pca", n_components: int = 50):
         """Constructor for Dialogue.
 
         Args:
@@ -43,6 +43,8 @@ class Dialogue:
             celltype_key: The key in AnnData.obs which contains the cell type column.
             n_counts_key: The key of the number of counts in Anndata.obs . Also commonly the size factor.
             n_mpcs: Number of PMD components which corresponds to the number of determined MCPs.
+            feature_space_key: The key in adata.obsm for the feature space (e.g., "X_pca", "X_umap").
+            n_components: The number of components of the feature space to use, e.g. PCA components.
         """
         self.sample_id = sample_id
         self.celltype_key = celltype_key
@@ -53,6 +55,8 @@ class Dialogue:
             )
         self.n_counts_key = n_counts_key
         self.n_mcps = n_mpcs
+        self.feature_space_key = feature_space_key
+        self.n_components = n_components
 
     def _get_pseudobulks(
         self, adata: AnnData, groupby: str, strategy: Literal["median", "mean"] = "median"
@@ -83,7 +87,7 @@ class Dialogue:
         return pseudobulk
 
     def _pseudobulk_feature_space(
-        self, adata: AnnData, groupby: str, n_components: int = 50, feature_space_key: str = "X_pca"
+        self, adata: AnnData, groupby: str,
     ) -> pd.DataFrame:
         """Return Cell-averaged components from a passed feature space.
 
@@ -92,8 +96,6 @@ class Dialogue:
 
         Args:
             groupby: The key to groupby for pseudobulks.
-            n_components: The number of components to use.
-            feature_key: The key in adata.obsm for the feature space (e.g., "X_pca", "X_umap").
 
         Returns:
             A pseudobulk DataFrame of the averaged components.
@@ -101,7 +103,7 @@ class Dialogue:
         aggr = {}
         for category in adata.obs.loc[:, groupby].cat.categories:
             temp = adata.obs.loc[:, groupby] == category
-            aggr[category] = adata[temp].obsm[feature_space_key][:, :n_components].mean(axis=0)
+            aggr[category] = adata[temp].obsm[self.feature_space_key][:, :self.n_components].mean(axis=0)
         aggr = pd.DataFrame(aggr)
         return aggr
 
@@ -523,7 +525,7 @@ class Dialogue:
 
             # This is basically DIALOGUE 3 now
             pre_r_scores = {
-                ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws_dict[ct]
+                ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws_dict[ct]
                 for i, ct in enumerate(ct_subs.keys())
                 # TODO This is a recalculation and not a new calculation
             }
@@ -656,8 +658,8 @@ class Dialogue:
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         pre_r_scores = {
-            ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws[i]
-            for i, ct in enumerate(cell_types)  # TODO change from 50
+            ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws[i]
+            for i, ct in enumerate(cell_types)
         }
 
         # TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it's not at all
