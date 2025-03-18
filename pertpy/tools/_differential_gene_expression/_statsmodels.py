@@ -61,14 +61,3 @@ class Statsmodels(LinearModelBase):
             adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1]
         )
 
-    def contrast(self, column: str, baseline: str, group_to_compare: str) -> np.ndarray:
-        """Build a simple contrast for pairwise comparisons.
-
-        This is equivalent to
-
-        ```
-        model.cond(<column> = baseline) - model.cond(<column> = group_to_compare)
-        ```
-        """
-        return self.cond(**{column: baseline}) - self.cond(**{column: group_to_compare})
-
