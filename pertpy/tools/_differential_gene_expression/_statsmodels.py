@@ -57,7 +57,9 @@ class Statsmodels(LinearModelBase):
                     "log_fc": t_test.effect.item(),
                 }
             )
-        pd.DataFrame(res).sort_values("p_value").assign(
-            adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1]
+        return (
+            pd.DataFrame(res)
+            .sort_values("p_value")
+            .assign(adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1])
         )
 
