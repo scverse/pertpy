@@ -99,7 +99,6 @@ doc = [
     "sphinx-automodapi",
     "sphinxext-opengraph",
     "pygments",
-    "pyenchant",
     "nbsphinx",
     "nbsphinx-link",
     "ipykernel",
