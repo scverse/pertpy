@@ -12,6 +12,7 @@ import scipy.stats
 import statsmodels
 from anndata import AnnData
 from joblib import Parallel, delayed
+from lamin_utils import logger
 from pandas.core.api import DataFrame as DataFrame
 from scipy.sparse import diags, issparse
 from tqdm.auto import tqdm
@@ -151,10 +152,9 @@ class SimpleComparisonBase(MethodBase):
 
         if permutation_test:
             test_kwargs = dict(test_kwargs)
-            test_kwargs["n_permutations"] = n_permutations
-            test_kwargs["test"] = permutation_test
+            test_kwargs.update({"test": cls, "n_permutations": n_permutations})
         elif permutation_test is None and cls.__name__ == "PermutationTest":
-            raise ValueError("PermutationTest requires a permutation_test argument")
+            logger.warning("No permutation test specified. Using WilcoxonTest as default.")
 
         comparison_indices = [_get_idx(column, group_to_compare) for group_to_compare in groups_to_compare]
         res_dfs = Parallel(n_jobs=n_jobs)(
