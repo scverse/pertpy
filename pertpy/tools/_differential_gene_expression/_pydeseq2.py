@@ -2,6 +2,7 @@ import os
 import re
 import warnings
 
+import numpy as np
 import pandas as pd
 from anndata import AnnData
 from numpy import ndarray
@@ -40,33 +41,25 @@ class PyDESeq2(LinearModelBase):
         Args:
             **kwargs: Keyword arguments specific to DeseqDataSet(), except for `n_cpus` which will use all available CPUs minus one if the argument is not passed.
         """
-        inference = DefaultInference(n_cpus=kwargs.pop("n_cpus", os.cpu_count() - 1))
-        covars = self.design.columns.tolist()
-        if "Intercept" not in covars:
-            warnings.warn(
-                "Warning: Pydeseq is hard-coded to use Intercept, please include intercept into the model", stacklevel=2
-            )
-        processed_covars = list({re.sub(r"\[T\.(.*)\]", "", col) for col in covars if col != "Intercept"})
+        try:
+            usable_cpus = len(os.sched_getaffinity(0))
+        except AttributeError:
+            usable_cpus = os.cpu_count()
+
+        inference = DefaultInference(n_cpus=kwargs.pop("n_cpus", usable_cpus))
+
         dds = DeseqDataSet(
-            adata=self.adata, design_factors=processed_covars, refit_cooks=True, inference=inference, **kwargs
+            adata=self.adata,
+            design=self.design,  # initialize using design matrix, not formula
+            refit_cooks=True,
+            inference=inference,
+            **kwargs,
         )
-        # workaround code to insert design array
-        des_mtx_cols = dds.obsm["design_matrix"].columns
-        dds.obsm["design_matrix"] = self.design
-        if dds.obsm["design_matrix"].shape[1] == len(des_mtx_cols):
-            dds.obsm["design_matrix"].columns = des_mtx_cols.copy()
 
         dds.deseq2()
         self.dds = dds
 
-    # TODO: PyDeseq2 doesn't support arbitrary designs and contrasts yet
-    # see https://github.com/owkin/PyDESeq2/issues/213
-
-    # Therefore these functions are overridden in a way to make it work with PyDESeq2,
-    # ingoring the inconsistency of function signatures. Once arbitrary design
-    # matrices and contrasts are supported by PyDEseq2, we can fully support the
-    # Linear model interface.
-    def _test_single_contrast(self, contrast: list[str], alpha=0.05, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _test_single_contrast(self, contrast, alpha=0.05, **kwargs) -> pd.DataFrame:
         """Conduct a specific test and returns a Pandas DataFrame.
 
         Args:
@@ -74,6 +67,7 @@ class PyDESeq2(LinearModelBase):
             alpha: p value threshold used for controlling fdr with independent hypothesis weighting
             **kwargs: extra arguments to pass to DeseqStats()
         """
+        contrast = np.array(contrast)
         stat_res = DeseqStats(self.dds, contrast=contrast, alpha=alpha, **kwargs)
         # Calling `.summary()` is required to fill the `results_df` data frame
         stat_res.summary()
@@ -85,11 +79,3 @@ class PyDESeq2(LinearModelBase):
         res_df.index.name = "variable"
         res_df = res_df.reset_index()
         return res_df
-
-    def cond(self, **kwargs) -> ndarray:
-        raise NotImplementedError(
-            "PyDESeq2 currently doesn't support arbitrary contrasts, see https://github.com/owkin/PyDESeq2/issues/213"
-        )
-
-    def contrast(self, column: str, baseline: str, group_to_compare: str) -> tuple[str, str, str]:  # type: ignore
-        return (column, group_to_compare, baseline)

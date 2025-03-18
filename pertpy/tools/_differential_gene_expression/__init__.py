@@ -1,4 +1,4 @@
-from ._base import ContrastType, LinearModelBase, MethodBase
+from ._base import LinearModelBase, MethodBase
 from ._dge_comparison import DGEEVAL
 from ._edger import EdgeR
 from ._pydeseq2 import PyDESeq2
@@ -14,7 +14,6 @@ __all__ = [
     "SimpleComparisonBase",
     "WilcoxonTest",
     "TTest",
-    "ContrastType",
 ]
 
 AVAILABLE_METHODS = [Statsmodels, EdgeR, PyDESeq2, WilcoxonTest, TTest]

@@ -71,3 +71,4 @@ class Statsmodels(LinearModelBase):
         ```
         """
         return self.cond(**{column: baseline}) - self.cond(**{column: group_to_compare})
+

@@ -21,19 +21,16 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    - os: ubuntu-latest
-                      python: "3.10"
+                    - os: ubuntu-22.04 # ubuntu-latest is currently broken for joblib
+                      python: "3.13"
                       run_mode: "slow"
+                    - os: ubuntu-22.04
+                      python: "3.13"
+                      run_mode: "fast"
                     - os: ubuntu-latest
-                      python: "3.12"
-                      run_mode: "slow"
-                    # - os: ubuntu-latest
-                    #   python: "3.12"
-                    #   run_mode: "fast"
-                    # - os: ubuntu-latest
-                    #   python: "3.12"
-                    #   run_mode: slow
-                    #   pip-flags: "--pre"
+                      python: "3.13"
+                      run_mode: slow
+                      pip-flags: "--pre"
 
         env:
             OS: ${{ matrix.os }}
@@ -60,7 +57,7 @@ jobs:
             - name: Install dependencies
               run: |
                   uv pip install --system rpy2
-                  uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,coda,de,validator]"
+                  uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,coda,de]"
 
             - name: Test
               env:

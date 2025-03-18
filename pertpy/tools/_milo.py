@@ -183,7 +183,7 @@ class Milo:
             knn_dists = adata.obsp[neighbors_key + "_distances"]
 
         nhood_ixs = adata.obs["nhood_ixs_refined"] == 1
-        dist_mat = knn_dists[nhood_ixs, :]
+        dist_mat = knn_dists[np.asarray(nhood_ixs), :]
         k_distances = dist_mat.max(1).toarray().ravel()
         adata.obs["nhood_kth_distance"] = 0
         adata.obs["nhood_kth_distance"] = adata.obs["nhood_kth_distance"].astype(float)
@@ -704,8 +704,8 @@ class Milo:
         pvalues = sample_adata.var["PValue"]
         keep_nhoods = ~pvalues.isna()  # Filtering in case of test on subset of nhoods
         o = pvalues[keep_nhoods].argsort()
-        pvalues = pvalues[keep_nhoods][o]
-        w = w[keep_nhoods][o]
+        pvalues = pvalues.loc[keep_nhoods].iloc[o]
+        w = w.loc[keep_nhoods].iloc[o]
 
         adjp = np.zeros(shape=len(o))
         adjp[o] = (sum(w) * pvalues / np.cumsum(w))[::-1].cummin()[::-1]
@@ -727,7 +727,6 @@ class Milo:
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -803,10 +802,9 @@ class Milo:
             **kwargs,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -820,7 +818,6 @@ class Milo:
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -866,10 +863,9 @@ class Milo:
             **kwargs,
         )
 
-        if show:
-            plt.show()
         if return_fig:
             return fig
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -882,7 +878,6 @@ class Milo:
         alpha: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot beeswarm plot of logFC against nhood labels
@@ -994,10 +989,9 @@ class Milo:
         plt.legend(loc="upper left", title=f"< {int(alpha * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1008,7 +1002,6 @@ class Milo:
         *,
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot boxplot of cell numbers vs condition of interest.
@@ -1050,8 +1043,7 @@ class Milo:
         plt.xticks(rotation=90)
         plt.xlabel(test_var)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None

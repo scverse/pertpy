@@ -1,9 +1,7 @@
 import math
-import os
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from dataclasses import dataclass
-from itertools import chain, zip_longest
+from collections.abc import Iterable, Mapping, Sequence
+from itertools import zip_longest
 from types import MappingProxyType
 
 import adjustText
@@ -12,9 +10,8 @@ import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy
 import seaborn as sns
-import statsmodels
+from formulaic_contrasts import FormulaicContrasts
 from lamin_utils import logger
 from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
@@ -22,24 +19,6 @@ from matplotlib.ticker import MaxNLocator
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
-from pertpy.tools._differential_gene_expression._formulaic import (
-    AmbiguousAttributeError,
-    Factor,
-    get_factor_storage_and_materializer,
-    resolve_ambiguous,
-)
-
-
-@dataclass
-class Contrast:
-    """Simple contrast for comparison between groups"""
-
-    column: str
-    baseline: str
-    group_to_compare: str
-
-
-ContrastType = Contrast | tuple[str, str, str]
 
 
 class MethodBase(ABC):
@@ -146,7 +125,6 @@ class MethodBase(ABC):
         shape_order: list[str] | None = None,
         x_label: str | None = None,
         y_label: str | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs: int,
     ) -> Figure | None:
@@ -505,10 +483,9 @@ class MethodBase(ABC):
 
         plt.legend(loc=1, bbox_to_anchor=legend_pos, frameon=False)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -532,7 +509,6 @@ class MethodBase(ABC):
         pvalue_template=lambda x: f"p={x:.2e}",
         boxplot_properties=None,
         palette=None,
-        show: bool = True,
         return_fig: bool = False,
     ) -> Figure | None:
         """Creates a pairwise expression plot from a Pandas DataFrame or Anndata.
@@ -700,10 +676,9 @@ class MethodBase(ABC):
             )
 
         plt.tight_layout()
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -717,7 +692,6 @@ class MethodBase(ABC):
         symbol_col: str = "variable",
         y_label: str = "Log2 fold change",
         figsize: tuple[int, int] = (10, 5),
-        show: bool = True,
         return_fig: bool = False,
         **barplot_kwargs,
     ) -> Figure | None:
@@ -783,10 +757,9 @@ class MethodBase(ABC):
         plt.xlabel("")
         plt.ylabel(y_label)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -803,7 +776,6 @@ class MethodBase(ABC):
         figsize: tuple[int, int] = (10, 2),
         x_label: str = "Contrast",
         y_label: str = "Gene",
-        show: bool = True,
         return_fig: bool = False,
         **heatmap_kwargs,
     ) -> Figure | None:
@@ -901,17 +873,15 @@ class MethodBase(ABC):
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
+        plt.show()
         return None
 
 
 class LinearModelBase(MethodBase):
     def __init__(self, adata, design, *, mask=None, layer=None, **kwargs):
-        """
-        Initialize the method.
+        """Initialize the method.
 
         Args:
             adata: AnnData object, usually pseudobulked.
@@ -923,26 +893,24 @@ class LinearModelBase(MethodBase):
         super().__init__(adata, mask=mask, layer=layer)
         self._check_counts()
 
-        self.factor_storage = None
-        self.variable_to_factors = None
-
+        self.formulaic_contrasts = None
         if isinstance(design, str):
-            self.factor_storage, self.variable_to_factors, materializer_class = get_factor_storage_and_materializer()
-            self.design = materializer_class(adata.obs, record_factor_metadata=True).get_model_matrix(design)
+            self.formulaic_contrasts = FormulaicContrasts(adata.obs, design)
+            self.design = self.formulaic_contrasts.design_matrix
         else:
             self.design = design
 
     @classmethod
     def compare_groups(
         cls,
-        adata,
-        column,
-        baseline,
-        groups_to_compare,
+        adata: ad.AnnData,
+        column: str,
+        baseline: str,
+        groups_to_compare: str | Iterable[str],
         *,
-        paired_by=None,
-        mask=None,
-        layer=None,
+        paired_by: str | None = None,
+        mask: pd.Series | None = None,
+        layer: str | None = None,
         fit_kwargs=MappingProxyType({}),
         test_kwargs=MappingProxyType({}),
     ):
@@ -968,17 +936,16 @@ class LinearModelBase(MethodBase):
     @property
     def variables(self):
         """Get the names of the variables used in the model definition."""
-        try:
-            return self.design.model_spec.variables_by_source["data"]
-        except AttributeError:
+        if self.formulaic_contrasts is None:
             raise ValueError(
                 "Retrieving variables is only possible if the model was initialized using a formula."
             ) from None
+        else:
+            return self.formulaic_contrasts.variables
 
     @abstractmethod
     def _check_counts(self):
-        """
-        Check that counts are valid for the specific method.
+        """Check that counts are valid for the specific method.
 
         Raises:
             ValueError: if the data matrix does not comply with the expectations.
@@ -987,8 +954,7 @@ class LinearModelBase(MethodBase):
 
     @abstractmethod
     def fit(self, **kwargs):
-        """
-        Fit the model.
+        """Fit the model.
 
         Args:
             **kwargs: Additional arguments for fitting the specific method.
@@ -998,9 +964,8 @@ class LinearModelBase(MethodBase):
     @abstractmethod
     def _test_single_contrast(self, contrast, **kwargs): ...
 
-    def test_contrasts(self, contrasts, **kwargs):
-        """
-        Perform a comparison as specified in a contrast vector.
+    def test_contrasts(self, contrasts: np.ndarray | Mapping[str | None, np.ndarray], **kwargs):
+        """Perform a comparison as specified in a contrast vector.
 
         Args:
             contrasts: Either a numeric contrast vector, or a dictionary of numeric contrast vectors.
@@ -1016,11 +981,11 @@ class LinearModelBase(MethodBase):
             results.append(self._test_single_contrast(contrast, **kwargs).assign(contrast=name))
 
         results_df = pd.concat(results)
+
         return results_df
 
     def test_reduced(self, modelB):
-        """
-        Test against a reduced model.
+        """Test against a reduced model.
 
         Args:
             modelB: the reduced model against which to test.
@@ -1034,8 +999,7 @@ class LinearModelBase(MethodBase):
         raise NotImplementedError
 
     def cond(self, **kwargs):
-        """
-        Get a contrast vector representing a specific condition.
+        """Get a contrast vector representing a specific condition.
 
         Args:
             **kwargs: column/value pairs.
@@ -1043,52 +1007,14 @@ class LinearModelBase(MethodBase):
         Returns:
             A contrast vector that aligns to the columns of the design matrix.
         """
-        if self.factor_storage is None:
+        if self.formulaic_contrasts is None:
             raise RuntimeError(
                 "Building contrasts with `cond` only works if you specified the model using a formulaic formula. Please manually provide a contrast vector."
             )
-        cond_dict = kwargs
-        if not set(cond_dict.keys()).issubset(self.variables):
-            raise ValueError(
-                "You specified a variable that is not part of the model. Available variables: "
-                + ",".join(self.variables)
-            )
-        for var in self.variables:
-            if var in cond_dict:
-                self._check_category(var, cond_dict[var])
-            else:
-                cond_dict[var] = self._get_default_value(var)
-        df = pd.DataFrame([kwargs])
-        return self.design.model_spec.get_model_matrix(df).iloc[0]
+        return self.formulaic_contrasts.cond(**kwargs)
 
-    def _get_factor_metadata_for_variable(self, var):
-        factors = self.variable_to_factors[var]
-        return list(chain.from_iterable(self.factor_storage[f] for f in factors))
-
-    def _get_default_value(self, var):
-        factor_metadata = self._get_factor_metadata_for_variable(var)
-        if resolve_ambiguous(factor_metadata, "kind") == Factor.Kind.CATEGORICAL:
-            try:
-                tmp_base = resolve_ambiguous(factor_metadata, "base")
-            except AmbiguousAttributeError as e:
-                raise ValueError(
-                    f"Could not automatically resolve base category for variable {var}. Please specify it explicity in `model.cond`."
-                ) from e
-            return tmp_base if tmp_base is not None else "\0"
-        else:
-            return 0
-
-    def _check_category(self, var, value):
-        factor_metadata = self._get_factor_metadata_for_variable(var)
-        tmp_categories = resolve_ambiguous(factor_metadata, "categories")
-        if resolve_ambiguous(factor_metadata, "kind") == Factor.Kind.CATEGORICAL and value not in tmp_categories:
-            raise ValueError(
-                f"You specified a non-existant category for {var}. Possible categories: {', '.join(tmp_categories)}"
-            )
-
-    def contrast(self, column, baseline, group_to_compare):
-        """
-        Build a simple contrast for pairwise comparisons.
+    def contrast(self, *args, **kwargs):
+        """Build a simple contrast for pairwise comparisons.
 
         Args:
             column: column in adata.obs to test on.
@@ -1098,4 +1024,8 @@ class LinearModelBase(MethodBase):
         Returns:
             Numeric contrast vector.
         """
-        return self.cond(**{column: group_to_compare}) - self.cond(**{column: baseline})
+        if self.formulaic_contrasts is None:
+            raise RuntimeError(
+                "Building contrasts with `cond` only works if you specified the model using a formulaic formula. Please manually provide a contrast vector."
+            )
+        return self.formulaic_contrasts.contrast(*args, **kwargs)

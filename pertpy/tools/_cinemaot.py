@@ -91,7 +91,7 @@ class Cinemaot:
             dim = self.get_dim(adata, use_rep=use_rep)
 
         transformer = FastICA(n_components=dim, random_state=0, whiten="arbitrary-variance")
-        X_transformed = transformer.fit_transform(adata.obsm[use_rep][:, :dim])
+        X_transformed = np.array(transformer.fit_transform(adata.obsm[use_rep][:, :dim]), dtype=np.float64)
         groupvec = (adata.obs[pert_key] == control * 1).values  # control
         xi = np.zeros(dim)
         j = 0
@@ -100,9 +100,9 @@ class Cinemaot:
             xi[j] = xi_obj.correlation
             j = j + 1
 
-        cf = X_transformed[:, xi < thres]
-        cf1 = cf[adata.obs[pert_key] == control, :]
-        cf2 = cf[adata.obs[pert_key] != control, :]
+        cf = np.array(X_transformed[:, xi < thres], np.float64)
+        cf1 = np.array(cf[adata.obs[pert_key] == control, :], np.float64)
+        cf2 = np.array(cf[adata.obs[pert_key] != control, :], np.float64)
         if sum(xi < thres) == 1:
             sklearn.metrics.pairwise_distances(cf1.reshape(-1, 1), cf2.reshape(-1, 1))
         elif sum(xi < thres) == 0:
@@ -170,7 +170,7 @@ class Cinemaot:
         else:
             _solver = sinkhorn.Sinkhorn(threshold=eps)
             ot_sink = _solver(ot_prob)
-            ot_matrix = ot_sink.matrix.T
+            ot_matrix = np.array(ot_sink.matrix.T, dtype=np.float64)
             embedding = X_transformed[adata.obs[pert_key] != control, :] - np.matmul(
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X_transformed[adata.obs[pert_key] == control, :]
             )
@@ -658,7 +658,6 @@ class Cinemaot:
         title: str = "CINEMA-OT matching matrix",
         min_val: float = 0.01,
         ax: Axes | None = None,
-        show: bool = True,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -717,10 +716,9 @@ class Cinemaot:
         g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
 
-        if show:
-            plt.show()
         if return_fig:
             return g
+        plt.show()
         return None
 
 
