@@ -4,10 +4,10 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "0.10.0"
+version = "0.10.1"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.14"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -44,6 +44,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
@@ -98,7 +99,6 @@ doc = [
     "sphinx-automodapi",
     "sphinxext-opengraph",
     "pygments",
-    "pyenchant",
     "nbsphinx",
     "nbsphinx-link",
     "ipykernel",
