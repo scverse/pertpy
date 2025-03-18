@@ -281,15 +281,15 @@ class PermutationTest(SimpleComparisonBase):
             else:
                 return np.where(mask)[0]
 
-        test_kwargs.__setattr__("test", test)
-        test_kwargs.__setattr__("n_permutations", n_permutations)
+        test_kwargs_mutable = dict(test_kwargs)
+        test_kwargs_mutable.update({"test": test, "n_permutations": n_permutations})
 
         res_dfs = []
         baseline_idx = _get_idx(column, baseline)
 
         comparison_indices = [_get_idx(column, group_to_compare) for group_to_compare in groups_to_compare]
         res_dfs = Parallel(n_jobs=-1)(
-            delayed(model._compare_single_group)(baseline_idx, comparison_idx, paired=paired, **test_kwargs)
+            delayed(model._compare_single_group)(baseline_idx, comparison_idx, paired=paired, **test_kwargs_mutable)
             for comparison_idx in comparison_indices
         )
         res_dfs = [
