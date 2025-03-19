@@ -5,7 +5,6 @@ from abc import abstractmethod
 from collections.abc import Callable, Mapping, Sequence
 from inspect import signature
 from types import MappingProxyType
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -83,7 +82,7 @@ class SimpleComparisonBase(MethodBase):
             test_result = self._test(tmp_x0, tmp_x1, paired, **kwargs)
             mean_x0 = np.mean(tmp_x0)
             mean_x1 = np.mean(tmp_x1)
-            res.append({"variable": var, "log_fc": np.log2(mean_x1) - np.log2(mean_x0)}, **test_result)
+            res.append({"variable": var, "log_fc": np.log2(mean_x1) - np.log2(mean_x0), **test_result})
         return pd.DataFrame(res).sort_values("p_value")
 
     @classmethod
@@ -101,7 +100,6 @@ class SimpleComparisonBase(MethodBase):
         permutation_test_statistic: type["SimpleComparisonBase"] | None = None,
         fit_kwargs: Mapping = MappingProxyType({}),
         test_kwargs: Mapping = MappingProxyType({}),
-        n_jobs: int = -1,
     ) -> DataFrame:
         """Perform a comparison between groups.
 
@@ -119,7 +117,6 @@ class SimpleComparisonBase(MethodBase):
                 permutation test is used.
             fit_kwargs (Mapping): Not used for simple tests.
             test_kwargs (Mapping): Additional kwargs passed to the test function.
-            n_jobs (int): Number of parallel jobs to use.
         """
         if len(fit_kwargs):
             warnings.warn("fit_kwargs not used for simple tests.", UserWarning, stacklevel=2)
@@ -207,18 +204,17 @@ class TTest(SimpleComparisonBase):
 class PermutationTest(SimpleComparisonBase):
     """Perform a permutation test.
 
-    The permutation test relies on another test (e.g. WilcoxonTest) to perform the actual comparison
-    based on permuted data. The p-value is then calculated based on the distribution of the test
-    statistic under the null hypothesis.
+    The permutation test relies on another test statistic (e.g. t-statistic or your own) to obtain a p-value through
+    random permutations of the data and repeated generation of the test statistic.
 
-    For paired tests, each paired observation is permuted together and distributed randomly between
-    the two groups. For unpaired tests, all observations are permuted independently.
+    For paired tests, each paired observation is permuted together and distributed randomly between the two groups. For
+    unpaired tests, all observations are permuted independently.
 
-    The null hypothesis for the unpaired test is that all observations come from the same underlying
-    distribution and have been randomly assigned to one of the samples.
+    The null hypothesis for the unpaired test is that all observations come from the same underlying distribution and
+    have been randomly assigned to one of the samples.
 
-    The null hypothesis for the paired permutation test is that the observations within each pair are
-    drawn from the same underlying distribution and that their assignment to a sample is random.
+    The null hypothesis for the paired permutation test is that the observations within each pair are drawn from the
+    same underlying distribution and that their assignment to a sample is random.
     """
 
     @staticmethod
@@ -271,14 +267,16 @@ class PermutationTest(SimpleComparisonBase):
             """Perform the actual test."""
             if not hasattr(test_statistic, "_test"):
                 if vectorized:
-                    return test_statistic(data_baseline, data_comparison, paired, axis, **kwargs)
+                    return test_statistic(data_baseline, data_comparison, paired=paired, axis=axis, **kwargs)[
+                        "statistic"
+                    ]
 
-                return test_statistic(data_baseline, data_comparison, paired, **kwargs)
+                return test_statistic(data_baseline, data_comparison, paired=paired, **kwargs)["statistic"]
 
             if vectorized:
                 kwargs.update({"axis": axis})
 
-            return test_statistic._test(data_baseline, data_comparison, paired, **kwargs)
+            return test_statistic._test(data_baseline, data_comparison, paired, **kwargs)["statistic"]
 
         test_result = scipy.stats.permutation_test(
             [x0, x1],
