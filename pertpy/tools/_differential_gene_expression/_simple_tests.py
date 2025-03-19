@@ -109,12 +109,14 @@ class SimpleComparisonBase(MethodBase):
             adata (AnnData): Data with observations to compare.
             column (str): Column in `adata.obs` that contains the groups to compare.
             baseline (str): Reference group.
-            groups_to_compare (str | Sequence[str]): Groups to compare against the baseline. If None, all other groups are compared.
+            groups_to_compare (str | Sequence[str]): Groups to compare against the baseline. If None, all other groups
+                are compared.
             paired_by (str | None): Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
             mask (str | None): Mask to apply to the data.
             layer (str | None): Layer to use for the comparison.
             n_permutations (int): Number of permutations to perform if a permutation test is used.
-            permutation_test_statistic (type[SimpleComparisonBase] | None): Test to use after permutation if a permutation test is used.
+            permutation_test_statistic (type[SimpleComparisonBase] | None): Test to use after permutation if a
+                permutation test is used.
             fit_kwargs (Mapping): Not used for simple tests.
             test_kwargs (Mapping): Additional kwargs passed to the test function.
             n_jobs (int): Number of parallel jobs to use.
@@ -251,13 +253,16 @@ class PermutationTest(SimpleComparisonBase):
             x0: Array with baseline values.
             x1: Array with values to compare.
             paired: Whether to perform a paired test
-            test_statistic: The class or function to generate the test statistic from permuted data. If a function is passed, it must have the signature `test_statistic(x0, x1, paired[, axis], **kwargs)`. If it accepts the parameter axis, vectorization will be used.
+            test_statistic: The class or function to generate the test statistic from permuted data. If a function is
+                passed, it must have the signature `test_statistic(x0, x1, paired[, axis], **kwargs)`. If it accepts the
+                parameter axis, vectorization will be used.
             n_permutations: Number of permutations to perform.
             **kwargs: kwargs passed to the permutation test function, not the test function after permutation.
         """
         if test_statistic is PermutationTest:
             raise ValueError(
-                "The `test_statistic` argument cannot be `PermutationTest`. Use a base test like `WilcoxonTest` or `TTest`."
+                "The `test_statistic` argument cannot be `PermutationTest`. Use a base test like `WilcoxonTest` or"
+                " `TTest`."
             )
 
         vectorized = hasattr(test_statistic, "_test") or "axis" in signature(test_statistic).parameters
