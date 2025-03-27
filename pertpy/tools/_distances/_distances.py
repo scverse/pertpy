@@ -645,12 +645,12 @@ class Edistance(AbstractDistance):
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = True
-        self.cell_wise_metric = "sqeuclidean"
+        self.cell_wise_metric = "euclidean"
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        sigma_X = pairwise_distances(X, X, metric="sqeuclidean").mean()
-        sigma_Y = pairwise_distances(Y, Y, metric="sqeuclidean").mean()
-        delta = pairwise_distances(X, Y, metric="sqeuclidean").mean()
+        sigma_X = pairwise_distances(X, X, metric=self.cell_wise_metric, **kwargs).mean()
+        sigma_Y = pairwise_distances(Y, Y, metric=self.cell_wise_metric, **kwargs).mean()
+        delta = pairwise_distances(X, Y, metric=self.cell_wise_metric, **kwargs).mean()
         return 2 * delta - sigma_X - sigma_Y
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
