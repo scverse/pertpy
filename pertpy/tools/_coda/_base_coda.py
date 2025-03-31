@@ -1853,7 +1853,7 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            Depending on `show`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
+            Depending on `save`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`save = 'output.png'`) or plot the tree inline (`save = False`)
 
         Examples:
             >>> import pertpy as pt
@@ -1944,8 +1944,8 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            Depending on `show`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`show = False`)
-            or  plot the tree inline (`show = True`)
+            Depending on `save`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`save = 'output.png'`)
+            or  plot the tree inline (`save = False`)
 
         Examples:
             >>> import pertpy as pt
