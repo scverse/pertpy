@@ -98,6 +98,7 @@ intersphinx_mapping = {
     "pymde": ("https://pymde.org/", None),
     "flax": ("https://flax.readthedocs.io/en/latest/", None),
     "jax": ("https://jax.readthedocs.io/en/latest/", None),
+    "ete": ("https://etetoolkit.org/docs/latest/reference/index.html/", None),
 }
 
 language = "en"

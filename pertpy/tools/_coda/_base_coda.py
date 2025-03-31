@@ -1842,7 +1842,7 @@ class CompositionalModel2(ABC):
         Args:
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use.
-            tree: A ete4 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
+            tree: A ete4 tree object or a str to indicate the tree stored in `.uns`.
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
             show_scale: Include the scale legend in the tree image or not.
@@ -1896,7 +1896,7 @@ class CompositionalModel2(ABC):
         tree_style.show_leaf_name = False
         tree_style.layout_fn = my_layout
         tree_style.show_scale = show_scale
-        
+
         if save:
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if return_fig:
@@ -1929,8 +1929,6 @@ class CompositionalModel2(ABC):
             covariate: The covariate, whose effects should be plotted.
             modality_key: If data is a MuData object, specify which modality to use.
             tree: A ete4 tree object or a str to indicate the tree stored in `.uns`.
-                  Defaults to "tree".
-
             show_legend: If show legend of nodes significant effects or not.
                          Defaults to False if show_leaf_effects is True.
             show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects.
@@ -2510,7 +2508,6 @@ def import_tree(
             data_1.uns["dendrogram_cell_label"]["linkage"],
             labels=data_1.uns["dendrogram_cell_label"]["categories_ordered"],
         )
-        # tree = ete.Tree(newick, format=1)
         tree = ete.Tree(newick, parser=1)
         node_id = 0
         for n in tree.descendants():
@@ -2519,7 +2516,6 @@ def import_tree(
                 node_id += 1
     elif levels_orig is not None:
         newick = df2newick(data_1.obs.reset_index(), levels=levels_orig)
-        # tree = ete.Tree(newick, format=8)
         tree = ete.Tree(newick, parser=8)
 
         if add_level_name:
@@ -2529,7 +2525,6 @@ def import_tree(
                     n.name = f"{levels_orig[int(dist) - 1]}_{n.name}"
     elif levels_agg is not None:
         newick = df2newick(data_2.var.reset_index(), levels=levels_agg)
-        # tree = ete.Tree(newick, format=8)
         tree = ete.Tree(newick, parser=8)
         if add_level_name:
             for n in tree.descendants():
