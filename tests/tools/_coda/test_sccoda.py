@@ -8,7 +8,7 @@ import scanpy as sc
 from mudata import MuData
 
 try:
-    import ete3
+    import ete4
 except ImportError:
     pytest.skip("ete3 not available", allow_module_level=True)
 

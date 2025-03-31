@@ -1994,7 +1994,7 @@ class CompositionalModel2(ABC):
 
         Returns:
             Depending on `show`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`show = False`)
-            or  plot the tree inline (`show = False`)
+            or  plot the tree inline (`show = True`)
 
         Examples:
             >>> import pertpy as pt
