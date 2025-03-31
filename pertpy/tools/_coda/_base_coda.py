@@ -1896,8 +1896,8 @@ class CompositionalModel2(ABC):
         tree_style.show_leaf_name = False
         tree_style.layout_fn = my_layout
         tree_style.show_scale = show_scale
-
-        if save is not None:
+        
+        if save:
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if return_fig:
             return tree, tree_style
