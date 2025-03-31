@@ -137,6 +137,9 @@ dmypy.json
 # Jetbrains IDE
 .idea/
 
+# VSCode
+.vscode
+
 # Coala
 *.orig
 
@@ -155,3 +158,11 @@ lightning_logs/*
 */lightning_logs/*
 
 node_modules
+
+# lamindb
+test.ipynb
+test-perturbation
+test-bug
+
+# uv
+uv.lock

@@ -30,11 +30,10 @@ class Compound(MetaData):
 
         Args:
             adata: The data object to annotate.
-            query_id: The column of `.obs` with compound identifiers. Defaults to 'perturbation'.
-            query_id_type: The type of compound identifiers, 'name' or 'cid'. Defaults to 'name'.
+            query_id: The column of `.obs` with compound identifiers.
+            query_id_type: The type of compound identifiers, 'name' or 'cid'.
             verbosity: The number of unmatched identifiers to print, can be either non-negative values or "all".
-                       Defaults to 5.
-            copy: Determines whether a copy of the `adata` is returned. Defaults to False.
+            copy: Determines whether a copy of the `adata` is returned.
 
         Returns:
             Returns an AnnData object with compound annotation.
@@ -43,7 +42,7 @@ class Compound(MetaData):
             adata = adata.copy()
 
         if query_id not in adata.obs.columns:
-            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n" f"Please check again. ")
+            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n Please check again.")
 
         query_dict = {}
         not_matched_identifiers = []
@@ -85,7 +84,7 @@ class Compound(MetaData):
         query_df = pd.DataFrame.from_dict(query_dict, orient="index", columns=["pubchem_name", "pubchem_ID", "smiles"])
         # Merge and remove duplicate columns
         # Column is converted to float after merging due to unmatches
-        # Convert back to integers
+        # Convert back to integers afterwards
         if query_id_type == "cid":
             query_df.pubchem_ID = query_df.pubchem_ID.astype("Int64")
             adata.obs = (
@@ -120,8 +119,7 @@ class Compound(MetaData):
 
         The LookUp object provides an overview of the metadata to annotate.
         Each annotate_{metadata} function has a corresponding lookup function in the LookUp object,
-        where users can search the reference_id in the metadata and
-        compare with the query_id in their own data.
+        where users can search the reference_id in the metadata and compare with the query_id in their own data.
 
         Returns:
             Returns a LookUp object specific for compound annotation.

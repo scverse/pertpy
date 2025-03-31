@@ -18,9 +18,12 @@ from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors
 
+from pertpy._doc import _doc_params, doc_common_plot_args
+
 if TYPE_CHECKING:
     from anndata import AnnData
     from matplotlib.axes import Axes
+    from matplotlib.pyplot import Figure
     from statsmodels.tools.typing import ArrayLike
 
 
@@ -88,7 +91,7 @@ class Cinemaot:
             dim = self.get_dim(adata, use_rep=use_rep)
 
         transformer = FastICA(n_components=dim, random_state=0, whiten="arbitrary-variance")
-        X_transformed = transformer.fit_transform(adata.obsm[use_rep][:, :dim])
+        X_transformed = np.array(transformer.fit_transform(adata.obsm[use_rep][:, :dim]), dtype=np.float64)
         groupvec = (adata.obs[pert_key] == control * 1).values  # control
         xi = np.zeros(dim)
         j = 0
@@ -97,9 +100,9 @@ class Cinemaot:
             xi[j] = xi_obj.correlation
             j = j + 1
 
-        cf = X_transformed[:, xi < thres]
-        cf1 = cf[adata.obs[pert_key] == control, :]
-        cf2 = cf[adata.obs[pert_key] != control, :]
+        cf = np.array(X_transformed[:, xi < thres], np.float64)
+        cf1 = np.array(cf[adata.obs[pert_key] == control, :], np.float64)
+        cf2 = np.array(cf[adata.obs[pert_key] != control, :], np.float64)
         if sum(xi < thres) == 1:
             sklearn.metrics.pairwise_distances(cf1.reshape(-1, 1), cf2.reshape(-1, 1))
         elif sum(xi < thres) == 0:
@@ -167,7 +170,7 @@ class Cinemaot:
         else:
             _solver = sinkhorn.Sinkhorn(threshold=eps)
             ot_sink = _solver(ot_prob)
-            ot_matrix = ot_sink.matrix.T
+            ot_matrix = np.array(ot_sink.matrix.T, dtype=np.float64)
             embedding = X_transformed[adata.obs[pert_key] != control, :] - np.matmul(
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X_transformed[adata.obs[pert_key] == control, :]
             )
@@ -190,7 +193,7 @@ class Cinemaot:
         TE.obsm["X_embedding"] = embedding
 
         if return_matching:
-            TE.obsm["ot"] = ot_sink.matrix.T
+            TE.obsm["ot"] = np.asarray(ot_sink.matrix.T)
             return TE
         else:
             return TE
@@ -639,6 +642,7 @@ class Cinemaot:
         s_effect = (np.linalg.norm(e1, axis=0) + 1e-6) / (np.linalg.norm(e0, axis=0) + 1e-6)
         return c_effect, s_effect
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_vis_matching(
         self,
         adata: AnnData,
@@ -647,16 +651,16 @@ class Cinemaot:
         control: str,
         de_label: str,
         source_label: str,
+        *,
         matching_rep: str = "ot",
         resolution: float = 0.5,
         normalize: str = "col",
         title: str = "CINEMA-OT matching matrix",
         min_val: float = 0.01,
-        show: bool = True,
-        save: str | None = None,
         ax: Axes | None = None,
+        return_fig: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Figure | None:
         """Visualize the CINEMA-OT matching matrix.
 
         Args:
@@ -670,10 +674,11 @@ class Cinemaot:
             normalize: normalize the coarse-grained matching matrix by row / column.
             title: the title for the figure.
             min_val: The min value to truncate the matching matrix.
-            show: Show the plot, do not return axis.
-            save: If `True` or a `str`, save the figure. A string is appended to the default filename.
-                Infer the filetype if ending on {`'.pdf'`, `'.png'`, `'.svg'`}.
+            {common_plot_args}
             **kwargs: Other parameters to input for seaborn.heatmap.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -710,12 +715,11 @@ class Cinemaot:
 
         g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
-        _utils.savefig_or_show("matching_heatmap", show=show, save=save)
-        if not show:
-            if ax is not None:
-                return ax
-            else:
-                return g
+
+        if return_fig:
+            return g
+        plt.show()
+        return None
 
 
 class Xi:

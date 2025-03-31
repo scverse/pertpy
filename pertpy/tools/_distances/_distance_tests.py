@@ -23,16 +23,16 @@ class DistanceTest:
 
     Args:
         metric: Distance metric to use between groups of cells.
-        n_perms: Number of permutations to run. Defaults to 1000.
+        n_perms: Number of permutations to run.
         layer_key: Name of the counts layer containing raw counts to calculate distances for.
                    Mutually exclusive with 'obsm_key'.
-                   Defaults to None and is then not used.
+                   If equal to `None` the parameter is ignored.
         obsm_key: Name of embedding in adata.obsm to use.
                   Mutually exclusive with 'counts_layer_key'.
                   Defaults to None, but is set to "X_pca" if not set explicitly internally.
-        alpha: Significance level. Defaults to 0.05.
-        correction: Multiple testing correction method. Defaults to 'holm-sidak'.
-        cell_wise_metric: Metric to use between single cells. Defaults to "euclidean".
+        alpha: Significance level.
+        correction: Multiple testing correction method.
+        cell_wise_metric: Metric to use between single cells.
 
     Examples:
         >>> import pertpy as pt
@@ -66,11 +66,14 @@ class DistanceTest:
         self.alpha = alpha
         self.correction = correction
         self.cell_wise_metric = (
-            cell_wise_metric if cell_wise_metric else Distance(self.metric, self.obsm_key).cell_wise_metric
+            cell_wise_metric if cell_wise_metric else Distance(self.metric, obsm_key=self.obsm_key).cell_wise_metric
         )
 
         self.distance = Distance(
-            self.metric, layer_key=self.layer_key, obsm_key=self.obsm_key, cell_wise_metric=self.cell_wise_metric
+            self.metric,
+            layer_key=self.layer_key,
+            obsm_key=self.obsm_key,
+            cell_wise_metric=self.cell_wise_metric,
         )
 
     def __call__(
@@ -87,7 +90,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            show_progressbar: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -121,7 +124,7 @@ class DistanceTest:
             adata: Annotated data matrix.
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
-            show_progressbar: Whether to print progress. Defaults to True.
+            show_progressbar: Whether to print progress.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -176,7 +179,8 @@ class DistanceTest:
         # Evaluate the test
         # count times shuffling resulted in larger distance
         comparison_results = np.array(
-            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int
+            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0,
+            dtype=int,
         )
         n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms
@@ -213,7 +217,7 @@ class DistanceTest:
             groupby: Key in adata.obs for grouping cells.
             contrast: Name of the contrast group.
             cell_wise_metric: Metric to use for pairwise distances.
-            verbose: Whether to print progress. Defaults to True.
+            verbose: Whether to print progress.
 
         Returns:
             pandas.DataFrame: Results of the permutation test, with columns:
@@ -284,7 +288,8 @@ class DistanceTest:
         # Evaluate the test
         # count times shuffling resulted in larger distance
         comparison_results = np.array(
-            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0, dtype=int
+            pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0,
+            dtype=int,
         )
         n_failures = pd.Series(np.clip(np.sum(comparison_results, axis=1), 1, np.inf), index=df.index)
         pvalues = n_failures / self.n_perms

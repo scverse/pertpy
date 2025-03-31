@@ -13,7 +13,7 @@ In addition to the packages needed to _use_ this package, you need additional py
 the documentation_. It's easy to install them using `pip`:
 
 ```bash
-git clone https://github.com/theislab/pertpy.git
+git clone https://github.com/scverse/pertpy.git
 cd pertpy
 pip install -e ".[dev,test,doc]"
 ```
@@ -132,11 +132,11 @@ in the cookiecutter-scverse template.
 
 Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
 
--   the [myst][] extension allows to write documentation in markdown/Markedly Structured Text
--   Google-style docstrings
--   Jupyter notebooks as tutorials through [myst-nb][] (See [Tutorials with myst-nb](#tutorials-with-myst-nb-and-jupyter-notebooks))
--   [Sphinx autodoc typehints][], to automatically reference annotated input and output types
--   Citations (like {cite:p}`Virshup_2023`) can be included with [sphinxcontrib-bibtex](https://sphinxcontrib-bibtex.readthedocs.io/)
+- the [myst][] extension allows to write documentation in markdown/Markedly Structured Text
+- Google-style docstrings
+- Jupyter notebooks as tutorials through [myst-nb][] (See [Tutorials with myst-nb](#tutorials-with-myst-nb-and-jupyter-notebooks))
+- [Sphinx autodoc typehints][], to automatically reference annotated input and output types
+- Citations (like {cite:p}`Virshup_2023`) can be included with [sphinxcontrib-bibtex](https://sphinxcontrib-bibtex.readthedocs.io/)
 
 See the [scanpy developer docs](https://scanpy.readthedocs.io/en/latest/dev/documentation.html) for more information
 on how to write documentation.
@@ -146,14 +146,14 @@ on how to write documentation.
 The documentation is set-up to render jupyter notebooks stored in the `docs/tutorials` directory using [myst-nb][].
 Currently, only notebooks in `.ipynb` format are supported that will be included with both their input and output cells.
 
-These notebooks come from [pert-tutorials](https://github.com/theislab/pertpy-tutorials) which is a git submodule of pertpy.
+These notebooks come from [pert-tutorials](https://github.com/scverse/pertpy-tutorials) which is a git submodule of pertpy.
 
 #### Hints
 
--   If you refer to objects from other packages, please add an entry to `intersphinx_mapping` in `docs/conf.py`. Only
-    if you do so can sphinx automatically create a link to the external documentation.
--   If building the documentation fails because of a missing link that is outside your control, you can add an entry to
-    the `nitpick_ignore` list in `docs/conf.py`
+- If you refer to objects from other packages, please add an entry to `intersphinx_mapping` in `docs/conf.py`. Only
+  if you do so can sphinx automatically create a link to the external documentation.
+- If building the documentation fails because of a missing link that is outside your control, you can add an entry to
+  the `nitpick_ignore` list in `docs/conf.py`
 
 #### Building the docs locally
 

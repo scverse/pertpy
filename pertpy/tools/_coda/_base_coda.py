@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import arviz as az
 import jax.numpy as jnp
@@ -25,6 +25,8 @@ from rich import box, print
 from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
+
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -111,9 +113,9 @@ class CompositionalModel2(ABC):
                 Categorical covariates are handled automatically, with the covariate value of the first sample being used as the reference category.
                 To set a different level as the base category for a categorical covariate, use "C(<CovariateName>, Treatment('<ReferenceLevelName>'))"
             reference_cell_type: Column name that sets the reference cell type.
-                Reference the name of a column. If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen. Defaults to "automatic".
+                Reference the name of a column. If "automatic", the cell type with the lowest dispersion in relative abundance that is present in at least 90% of samlpes will be chosen.
             automatic_reference_absence_threshold: If using reference_cell_type = "automatic", determine the maximum fraction of zero entries for a cell type
-                to be considered as a possible reference cell type. Defaults to 0.05.
+                to be considered as a possible reference cell type.
 
         Returns:
             AnnData object that is ready for CODA models.
@@ -202,7 +204,7 @@ class CompositionalModel2(ABC):
             sample_adata: anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             kernel: A `numpyro.infer.mcmc.MCMCKernel` object
             rng_key: The rng state used. If None, a random state will be selected
-            copy: Return a copy instead of writing to adata. Defaults to False.
+            copy: Return a copy instead of writing to adata.
             args: Passed to `numpyro.infer.mcmc.MCMC`
             kwargs: Passed to `numpyro.infer.mcmc.MCMC`
 
@@ -287,11 +289,11 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            num_samples: Number of sampled values after burn-in. Defaults to 10000.
-            num_warmup: Number of burn-in (warmup) samples. Defaults to 1000.
-            rng_key: The rng state used. Defaults to 0.
-            copy: Return a copy instead of writing to adata. Defaults to False.
+            modality_key: If data is a MuData object, specify which modality to use.
+            num_samples: Number of sampled values after burn-in.
+            num_warmup: Number of burn-in (warmup) samples.
+            rng_key: The rng state used.
+            copy: Return a copy instead of writing to adata.
 
         Returns:
             Calls `self.__run_mcmc`
@@ -307,7 +309,7 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        rng_key_array = random.key(rng_key)
+        rng_key_array = random.key_data(random.key(rng_key))
         sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up NUTS kernel
@@ -340,11 +342,11 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            num_samples: Number of sampled values after burn-in. Defaults to 20000.
-            num_warmup: Number of burn-in (warmup) samples. Defaults to 5000.
-            rng_key: The rng state used. If None, a random state will be selected. Defaults to None.
-            copy: Return a copy instead of writing to adata. Defaults to False.
+            modality_key: If data is a MuData object, specify which modality to use.
+            num_samples: Number of sampled values after burn-in.
+            num_warmup: Number of burn-in (warmup) samples.
+            rng_key: The rng state used. If None, a random state will be selected.
+            copy: Return a copy instead of writing to adata.
 
         Examples:
             >>> import pertpy as pt
@@ -398,7 +400,7 @@ class CompositionalModel2(ABC):
 
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
-            est_fdr: Desired FDR value. Defaults to 0.05.
+            est_fdr: Desired FDR value.
             args: Passed to ``az.summary``
             kwargs: Passed to ``az.summary``
 
@@ -638,8 +640,8 @@ class CompositionalModel2(ABC):
             effect_df: Effect summary, see ``summary_prepare``
             model_type: String indicating the model type ("classic" or "tree_agg")
             select_type:  String indicating the type of spike_and_slab selection ("spikeslab" or "sslasso")
-            target_fdr: Desired FDR value. Defaults to 0.05.
-            node_df: If using tree aggregation, the node-level effect DataFrame must be passed. Defaults to None.
+            target_fdr: Desired FDR value.
+            node_df: If using tree aggregation, the node-level effect DataFrame must be passed.
 
         Returns:
             pd.DataFrame:  effect DataFrame with inclusion probability, final parameters, expected sample.
@@ -791,8 +793,8 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            extended: If True, return the extended summary with additional statistics. Defaults to False.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            extended: If True, return the extended summary with additional statistics.
+            modality_key: If data is a MuData object, specify which modality to use.
             args: Passed to az.summary
             kwargs: Passed to az.summary
 
@@ -848,7 +850,7 @@ class CompositionalModel2(ABC):
         table = Table(title="Compositional Analysis summary", box=box.SQUARE, expand=True, highlight=True)
         table.add_column("Name", justify="left", style="cyan")
         table.add_column("Value", justify="left")
-        table.add_row("Data", "Data: %d samples, %d cell types" % data_dims)
+        table.add_row("Data", f"Data: {data_dims[0]} samples, {data_dims[1]} cell types")
         table.add_row("Reference cell type", "{}".format(str(sample_adata.uns["scCODA_params"]["reference_cell_type"])))
         table.add_row("Formula", "{}".format(sample_adata.uns["scCODA_params"]["formula"]))
         if extended:
@@ -935,7 +937,7 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
             pd.DataFrame: Intercept data frame.
@@ -966,7 +968,7 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
             pd.DataFrame: Effect data frame.
@@ -1008,7 +1010,7 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
             pd.DataFrame: Node effect data frame.
@@ -1023,7 +1025,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi" : 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> node_effects = tasccoda.get_node_df(mdata)
@@ -1047,7 +1049,7 @@ class CompositionalModel2(ABC):
         Args:
             data: AnnData object or MuData object.
             est_fdr: Desired FDR value.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
             args: passed to self.summary_prepare
             kwargs: passed to self.summary_prepare
 
@@ -1081,8 +1083,8 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            est_fdr: Estimated false discovery rate. Must be between 0 and 1. Defaults to None.
+            modality_key: If data is a MuData object, specify which modality to use.
+            est_fdr: Estimated false discovery rate. Must be between 0 and 1.
 
         Returns:
             pd.Series: Credible effect decision series which includes boolean values indicate whether effects are credible under inc_prob_threshold.
@@ -1144,10 +1146,10 @@ class CompositionalModel2(ABC):
             type_names: The names of all cell types
             title: Plot title, usually the covariate's name
             level_names: Names of the covariate's levels
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            palette: The color map for the barplot. Defaults to cm.tab20.
-            show_legend: If True, adds a legend. Defaults to True.
+            figsize: Figure size (matplotlib).
+            dpi: Resolution in DPI (matplotlib).
+            palette: The color map for the barplot.
+            show_legend: If True, adds a legend.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
@@ -1185,36 +1187,35 @@ class CompositionalModel2(ABC):
 
         return ax
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_stacked_barplot(  # pragma: no cover
         self,
         data: AnnData | MuData,
         feature_name: str,
+        *,
         modality_key: str = "coda",
         palette: ListedColormap | None = cm.tab20,
         show_legend: bool | None = True,
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
-        ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-        **kwargs,
-    ) -> plt.Axes | plt.Figure | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plots a stacked barplot for all levels of a covariate or all samples (if feature_name=="samples").
 
         Args:
             data: AnnData object or MuData object.
             feature_name: The name of the covariate to plot. If feature_name=="samples", one bar for every sample will be plotted
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            palette: The matplotlib color map for the barplot. Defaults to cm.tab20.
-            show_legend: If True, adds a legend. Defaults to True.
-            level_order: Custom ordering of bars on the x-axis. Defaults to None.
+            modality_key: If data is a MuData object, specify which modality to use.
+            figsize: Figure size.
+            dpi: Dpi setting.
+            palette: The matplotlib color map for the barplot.
+            show_legend: If True, adds a legend.
+            level_order: Custom ordering of bars on the x-axis.
+            {common_plot_args}
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1239,7 +1240,7 @@ class CompositionalModel2(ABC):
             if level_order:
                 assert set(level_order) == set(data.obs.index), "level order is inconsistent with levels"
                 data = data[level_order]
-            ax = self._stackbar(
+            self._stackbar(
                 data.X,
                 type_names=data.var.index,
                 title="samples",
@@ -1265,7 +1266,7 @@ class CompositionalModel2(ABC):
                 l_indices = np.where(data.obs[feature_name] == levels[level])
                 feature_totals[level] = np.sum(data.X[l_indices], axis=0)
 
-            ax = self._stackbar(
+            self._stackbar(
                 feature_totals,
                 type_names=ct_names,
                 title=feature_name,
@@ -1276,19 +1277,16 @@ class CompositionalModel2(ABC):
                 show_legend=show_legend,
             )
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_effects_barplot(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         covariates: str | list | None = None,
         parameter: Literal["log2-fold change", "Final Parameter", "Expected Sample"] = "log2-fold change",
@@ -1300,11 +1298,8 @@ class CompositionalModel2(ABC):
         args_barplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
-        ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1312,24 +1307,21 @@ class CompositionalModel2(ABC):
 
         Args:
             data: AnnData object or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-            covariates: The name of the covariates in data.obs to plot. Defaults to None.
-            parameter: The parameter in effect summary to plot. Defaults to "log2-fold change".
+            modality_key: If data is a MuData object, specify which modality to use.
+            covariates: The name of the covariates in data.obs to plot.
+            parameter: The parameter in effect summary to plot.
             plot_facets: If False, plot cell types on the x-axis. If True, plot as facets.
-                         Defaults to True.
             plot_zero_covariate: If True, plot covariate that have all zero effects. If False, do not plot.
-                                 Defaults to True.
             plot_zero_cell_type: If True, plot cell type that have zero effect. If False, do not plot.
-                                 Defaults to False.
-            figsize: Figure size. Defaults to None.
-            dpi: Figure size. Defaults to 100.
-            palette: The seaborn color map for the barplot. Defaults to cm.tab20.
-            level_order: Custom ordering of bars on the x-axis. Defaults to None.
-            args_barplot: Arguments passed to sns.barplot. Defaults to None.
+            figsize: Figure size.
+            dpi: Figure size.
+            palette: The seaborn color map for the barplot.
+            level_order: Custom ordering of bars on the x-axis.
+            args_barplot: Arguments passed to sns.barplot.
+            {common_plot_args}
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
-            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1383,7 +1375,6 @@ class CompositionalModel2(ABC):
         if len(covariate_names_zero) != 0:
             if plot_facets:
                 if plot_zero_covariate and not plot_zero_cell_type:
-                    plot_df = plot_df[plot_df["value"] != 0]
                     for covariate_name_zero in covariate_names_zero:
                         new_row = {
                             "Covariate": covariate_name_zero,
@@ -1440,16 +1431,6 @@ class CompositionalModel2(ABC):
                         if ax.get_xticklabels()[0]._text == "zero":
                             ax.set_xticks([])
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return g
-            return None
-
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
@@ -1481,20 +1462,19 @@ class CompositionalModel2(ABC):
             cell_types = pd.unique(plot_df["Cell Type"])
             ax.set_xticklabels(cell_types, rotation=90)
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return ax
-            return None
+        if return_fig and plot_facets:
+            return g
+        if return_fig and not plot_facets:
+            return plt.gcf()
+        plt.show()
+        return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_boxplots(  # pragma: no cover
         self,
         data: AnnData | MuData,
         feature_name: str,
+        *,
         modality_key: str = "coda",
         y_scale: Literal["relative", "log", "log10", "count"] = "relative",
         plot_facets: bool = False,
@@ -1507,11 +1487,8 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
-        ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> plt.Axes | plt.Figure | sns.axisgrid.FacetGrid | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
@@ -1520,24 +1497,23 @@ class CompositionalModel2(ABC):
         Args:
             data: AnnData object or MuData object
             feature_name: The name of the feature in data.obs to plot
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
+            modality_key: If data is a MuData object, specify which modality to use.
             y_scale: Transformation to of cell counts. Options: "relative" - Relative abundance, "log" - log(count),
                      "log10" - log10(count), "count" - absolute abundance (cell counts).
-                     Defaults to "relative".
-            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets. Defaults to False.
-            add_dots: If True, overlay a scatterplot with one dot for each data point. Defaults to False.
-            cell_types: Subset of cell types that should be plotted. Defaults to None.
-            args_boxplot: Arguments passed to sns.boxplot. Defaults to {}.
-            args_swarmplot: Arguments passed to sns.swarmplot. Defaults to {}.
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            palette: The seaborn color map for the barplot. Defaults to "Blues".
-            show_legend: If True, adds a legend. Defaults to True.
-            level_order: Custom ordering of bars on the x-axis. Defaults to None.
+            plot_facets: If False, plot cell types on the x-axis. If True, plot as facets.
+            add_dots: If True, overlay a scatterplot with one dot for each data point.
+            cell_types: Subset of cell types that should be plotted.
+            args_boxplot: Arguments passed to sns.boxplot.
+            args_swarmplot: Arguments passed to sns.swarmplot.
+            figsize: Figure size.
+            dpi: Dpi setting.
+            palette: The seaborn color map for the barplot.
+            show_legend: If True, adds a legend.
+            level_order: Custom ordering of bars on the x-axis.
+            {common_plot_args}
 
         Returns:
-            Depending on `plot_facets`, returns a :class:`~matplotlib.axes.Axes` (`plot_facets = False`)
-            or :class:`~sns.axisgrid.FacetGrid` (`plot_facets = True`) object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1655,16 +1631,6 @@ class CompositionalModel2(ABC):
                         **args_swarmplot,
                     ).set_titles("{col_name}")
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return g
-            return None
-
         # If not plot as facets, call boxplot to plot cell types on the x-axis.
         else:
             if level_order:
@@ -1728,19 +1694,18 @@ class CompositionalModel2(ABC):
                     title=feature_name,
                 )
 
-            if save:
-                plt.savefig(save, bbox_inches="tight")
-            if show:
-                plt.show()
-            if return_fig:
-                return plt.gcf()
-            if not (show or save):
-                return ax
-            return None
+        if return_fig and plot_facets:
+            return g
+        if return_fig and not plot_facets:
+            return plt.gcf()
+        plt.show()
+        return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_rel_abundance_dispersion_plot(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         abundant_threshold: float | None = 0.9,
         default_color: str | None = "Grey",
@@ -1748,30 +1713,27 @@ class CompositionalModel2(ABC):
         label_cell_types: bool = True,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        return_fig: bool | None = None,
         ax: plt.Axes | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> plt.Axes | plt.Figure | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plots total variance of relative abundance versus minimum relative abundance of all cell types for determination of a reference cell type.
 
         If the count of the cell type is larger than 0 in more than abundant_threshold percent of all samples, the cell type will be marked in a different color.
 
         Args:
             data: AnnData or MuData object.
-            modality_key: If data is a MuData object, specify which modality to use. Defaults to "coda".
-                          Defaults to "coda".
-            abundant_threshold: Presence threshold for abundant cell types. Defaults to 0.9.
-            default_color: Bar color for all non-minimal cell types. Defaults to "Grey".
+            modality_key: If data is a MuData object, specify which modality to use.
+            abundant_threshold: Presence threshold for abundant cell types.
+            default_color: Bar color for all non-minimal cell types.
             abundant_color: Bar color for cell types with abundant percentage larger than abundant_threshold.
-                            Defaults to "Red".
-            label_cell_types: Label dots with cell type names. Defaults to True.
-            figsize: Figure size. Defaults to None.
-            dpi: Dpi setting. Defaults to 100.
-            ax: A matplotlib axes object. Only works if plotting a single component. Defaults to None.
+            label_cell_types: Label dots with cell type names.
+            figsize: Figure size.
+            dpi: Dpi setting.
+            ax: A matplotlib axes object. Only works if plotting a single component.
+            {common_plot_args}
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1855,19 +1817,16 @@ class CompositionalModel2(ABC):
 
         ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1, title="Is abundant")
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_draw_tree(  # pragma: no cover
         self,
         data: AnnData | MuData,
+        *,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete4.Tree. Omitted due to import errors
         tight_text: bool | None = False,
@@ -1875,30 +1834,23 @@ class CompositionalModel2(ABC):
         units: Literal["px", "mm", "in"] | None = "px",
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
-        show: bool | None = True,
-        save: str | bool | None = None,
+        save: str | bool = False,
+        return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree using input ete4 tree object.
 
         Args:
             data: AnnData object or MuData object.
             modality_key: If data is a MuData object, specify which modality to use.
-                          Defaults to "coda".
-            tree: A ete4 tree object or a str to indicate the tree stored in `.uns`.
-                  Defaults to "tree".
+            tree: A ete4 tree object or a str to indicate the tree stored in `.uns`. Defaults to "tree".
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
-                        Default to False.
             show_scale: Include the scale legend in the tree image or not.
-                        Defaults to False.
-            show: If True, plot the tree inline. If false, return tree and tree_style objects.
-                  Defaults to True.
-            file_name: Path to the output image file. Valid extensions are .SVG, .PDF, .PNG.
-                       Output image can be saved whether show is True or not.
-                       Defaults to None.
-            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
-            figsize: Figure size. Defaults to None.
-            dpi: Dots per inches. Defaults to 100.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
+            figsize: Figure size.
+            dpi: Dots per inches.
+            save: Save the tree plot to a file. You can specify the file name here.
+            {common_plot_args}
 
         Returns:
             Depending on `show`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`show = False`) or plot the tree inline (`show = False`)
@@ -1913,7 +1865,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args=dict(phi=0)
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_tree(mdata, tree="lineage")
@@ -1947,15 +1899,17 @@ class CompositionalModel2(ABC):
 
         if save is not None:
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
-        if show:
-            return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
-        else:
+        if return_fig:
             return tree, tree_style
+        return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
+        return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_draw_effects(  # pragma: no cover
         self,
         data: AnnData | MuData,
         covariate: str,
+        *,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete4.Tree. Omitted due to import errors
         show_legend: bool | None = None,
@@ -1965,8 +1919,8 @@ class CompositionalModel2(ABC):
         units: Literal["px", "mm", "in"] | None = "px",
         figsize: tuple[float, float] | None = (None, None),
         dpi: int | None = 100,
-        show: bool | None = True,
-        save: str | None = None,
+        save: str | bool = False,
+        return_fig: bool = False,
     ) -> Tree | None:
         """Plot a tree with colored circles on the nodes indicating significant effects with bar plots which indicate leave-level significant effects.
 
@@ -1974,23 +1928,20 @@ class CompositionalModel2(ABC):
             data: AnnData object or MuData object.
             covariate: The covariate, whose effects should be plotted.
             modality_key: If data is a MuData object, specify which modality to use.
-                          Defaults to "coda".
             tree: A ete4 tree object or a str to indicate the tree stored in `.uns`.
                   Defaults to "tree".
+
             show_legend: If show legend of nodes significant effects or not.
                          Defaults to False if show_leaf_effects is True.
             show_leaf_effects: If True, plot bar plots which indicate leave-level significant effects.
-                               Defaults to False.
             tight_text: When False, boundaries of the text are approximated according to general font metrics,
                         producing slightly worse aligned text faces but improving the performance of tree visualization in scenes with a lot of text faces.
-                        Defaults to False.
-            show_scale: Include the scale legend in the tree image or not. Defaults to False.
-            show: If True, plot the tree inline. If false, return tree and tree_style objects. Defaults to True.
-            file_name: Path to the output image file. valid extensions are .SVG, .PDF, .PNG. Output image can be saved whether show is True or not.
-                       Defaults to None.
-            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches. Defaults to "px".
-            figsize: Figure size. Defaults to None.
-            dpi: Dots per inches. Defaults to 100.
+            show_scale: Include the scale legend in the tree image or not.
+            units: Unit of image sizes. “px”: pixels, “mm”: millimeters, “in”: inches.
+            figsize: Figure size.
+            dpi: Dots per inches.
+            save: Save the tree plot to a file. You can specify the file name here.
+            {common_plot_args}
 
         Returns:
             Depending on `show`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`show = False`)
@@ -2006,7 +1957,7 @@ class CompositionalModel2(ABC):
             >>>     key_added="lineage", add_level_name=True
             >>> )
             >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args=dict(phi=0)
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.plot_draw_effects(mdata, covariate="Health[T.Inflamed]", tree="lineage")
@@ -2136,54 +2087,55 @@ class CompositionalModel2(ABC):
             plt.xlim(-leaf_eff_max, leaf_eff_max)
             plt.subplots_adjust(wspace=0)
 
-            if save is not None:
+            if save:
                 plt.savefig(save)
+            if return_fig:
+                return plt.gcf()
 
-        if save is not None and not show_leaf_effects:
-            tree2.render(save, tree_style=tree_style, units=units)
-        if show:
-            if not show_leaf_effects:
-                return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
         else:
-            if not show_leaf_effects:
+            if save:
+                tree2.render(save, tree_style=tree_style, units=units)
+            if return_fig:
                 return tree2, tree_style
+            return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
+
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_effects_umap(  # pragma: no cover
         self,
         mdata: MuData,
         effect_name: str | list | None,
         cluster_key: str,
+        *,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool = None,
-        save: str | bool | None = None,
+        return_fig: bool = False,
         **kwargs,
-    ) -> plt.Axes | plt.Figure | None:
+    ) -> Figure | None:
         """Plot a UMAP visualization colored by effect strength.
 
         Effect results in .varm of aggregated sample-level AnnData (default is data['coda']) are assigned to cell-level AnnData
         (default is data['rna']) depending on the cluster they were assigned to.
 
         Args:
-            mudata: MuData object.
+            mdata: MuData object.
             effect_name: The name of the effect results in .varm of aggregated sample-level AnnData to plot
             cluster_key: The cluster information in .obs of cell-level AnnData (default is data['rna']).
                          To assign cell types' effects to original cells.
-            modality_key_1: Key to the cell-level AnnData in the MuData object. Defaults to "rna".
+            modality_key_1: Key to the cell-level AnnData in the MuData object.
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
-                            Defaults to "coda".
-            show: Whether to display the figure or return axis. Defaults to None.
+            color_map: The color map to use for plotting.
+            palette: The color palette to use for plotting.
             ax: A matplotlib axes object. Only works if plotting a single component.
-                Defaults to None.
+            {common_plot_args}
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
 
         Returns:
-            If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -2203,7 +2155,7 @@ class CompositionalModel2(ABC):
             >>>     modality_key="coda",
             >>>     reference_cell_type="18",
             >>>     formula="condition",
-            >>>     pen_args={"phi": 0, "lambda_1": 3.5},
+            >>>     pen_args=dict(phi=0, lambda_1=3.5),
             >>>     tree_key="tree"
             >>> )
             >>> tasccoda_model.run_nuts(
@@ -2241,7 +2193,7 @@ class CompositionalModel2(ABC):
         else:
             vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
 
-        return sc.pl.umap(
+        fig = sc.pl.umap(
             data_rna,
             color=effect_name,
             vmax=vmax,
@@ -2250,14 +2202,18 @@ class CompositionalModel2(ABC):
             color_map=color_map,
             return_fig=return_fig,
             ax=ax,
-            show=show,
-            save=save,
+            show=False,
             **kwargs,
         )
 
+        if return_fig:
+            return fig
+        plt.show()
+        return None
+
 
 def get_a(
-    tree: tt.tree,
+    tree: tt.core.ToyTree,
 ) -> tuple[np.ndarray, int]:
     """Calculate ancestor matrix from a toytree tree
 
@@ -2296,7 +2252,7 @@ def get_a(
     return A, n_nodes - 1
 
 
-def collapse_singularities(tree: tt.tree) -> tt.tree:
+def collapse_singularities(tree: tt.core.ToyTree) -> tt.core.ToyTree:
     """Collapses (deletes) nodes in a toytree tree that are singularities (have only one child).
 
     Args:
@@ -2512,15 +2468,14 @@ def import_tree(
 
     Args:
         data: A tascCODA-compatible data object.
-        modality_1: If `data` is MuData, specify the modality name to the original cell level anndata object. Defaults to None.
-        modality_2: If `data` is MuData, specify the modality name to the aggregated level anndata object. Defaults to None.
-        dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object. Defaults to None.
-        levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
-        levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level. Defaults to None.
+        modality_1: If `data` is MuData, specify the modality name to the original cell level anndata object.
+        modality_2: If `data` is MuData, specify the modality name to the aggregated level anndata object.
+        dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object.
+        levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
+        levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
         add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}.
-                        Defaults to True.
         key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`.
-                   If `data` is MuData, save tree in data[modality_2]. Defaults to "tree".
+                   If `data` is MuData, save tree in data[modality_2].
 
     Returns:
         Updates data with the following:

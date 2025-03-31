@@ -15,7 +15,6 @@ import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
 from lamin_utils import logger
-from rich import print
 from rich.progress import track
 from scipy import sparse, stats
 from sklearn.base import is_classifier, is_regressor
@@ -26,16 +25,18 @@ from sklearn.metrics import (
     explained_variance_score,
     f1_score,
     make_scorer,
-    mean_squared_error,
     precision_score,
     r2_score,
     recall_score,
     roc_auc_score,
+    root_mean_squared_error,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
 from skmisc.loess import loess
 from statsmodels.stats.multitest import fdrcorrection
+
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -439,7 +440,7 @@ class Augur:
                 "augur_score": make_scorer(self.ccc_score),
                 "r2": make_scorer(r2_score),
                 "ccc": make_scorer(self.ccc_score),
-                "neg_mean_squared_error": make_scorer(mean_squared_error),
+                "neg_mean_squared_error": make_scorer(root_mean_squared_error),
                 "explained_variance": make_scorer(explained_variance_score),
             }
         )
@@ -609,7 +610,7 @@ class Augur:
             var_quantile: The quantile below which features will be filtered, based on their residuals in a loess model.
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
             span: Smoothing factor, as a fraction of the number of points to take into account.
-                  Should be in the range (0, 1]. Defaults to 0.75
+                  Should be in the range (0, 1].
 
         Return:
             AnnData object with additional select_variance column in var.
@@ -684,7 +685,7 @@ class Augur:
         span: float = 0.75,
         filter_negative_residuals: bool = False,
         n_threads: int = 4,
-        augur_mode: Literal["permute"] | Literal["default"] | Literal["velocity"] = "default",
+        augur_mode: Literal["default", "permute", "velocity"] = "default",
         select_variance_features: bool = True,
         key_added: str = "augurpy_results",
         random_state: int | None = None,
@@ -701,13 +702,11 @@ class Augur:
             feature_perc: proportion of genes that are randomly selected as features for input to the classifier in each
                           subsample using the random gene filter
             var_quantile: The quantile below which features will be filtered, based on their residuals in a loess model.
-                          Defaults to 0.5.
             span: Smoothing factor, as a fraction of the number of points to take into account. Should be in the range (0, 1].
-                  Defaults to 0.75.
             filter_negative_residuals: if `True`, filter residuals at a fixed threshold of zero, instead of `var_quantile`
             n_threads: number of threads to use for parallelization
             select_variance_features: Whether to select genes based on the original Augur implementation (True)
-                                      or using scanpy's highly_variable_genes (False). Defaults to True.
+                                      or using scanpy's highly_variable_genes (False).
             key_added: Key to add results to in .uns
             augur_mode: One of 'default', 'velocity' or 'permute'. Setting augur_mode = "velocity" disables feature selection,
                         assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,
@@ -851,7 +850,7 @@ class Augur:
             augur2: Augurpy results from condition 2, obtained from `predict()[1]`
             permuted1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
             permuted2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
-            n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation; Defaults to 50.
+            n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation.
             n_permutations: the total number of mean augur scores to calculate from a background distribution
 
         Returns:
@@ -909,41 +908,39 @@ class Augur:
             .mean()
         )
 
-        sampled_permuted_cv_augur1 = []
-        sampled_permuted_cv_augur2 = []
+        rng = np.random.default_rng()
+        sampled_data = []
 
         # draw mean aucs for permute1 and permute2
         for celltype in permuted_cv_augur1["cell_type"].unique():
             df1 = permuted_cv_augur1[permuted_cv_augur1["cell_type"] == celltype]
             df2 = permuted_cv_augur2[permuted_cv_augur2["cell_type"] == celltype]
-            for permutation_idx in range(n_permutations):
-                # subsample
-                sample1 = df1.sample(n=n_subsamples, random_state=permutation_idx, axis="index")
-                sampled_permuted_cv_augur1.append(
-                    pd.DataFrame(
-                        {
-                            "cell_type": [celltype],
-                            "permutation_idx": [permutation_idx],
-                            "mean": [sample1["augur_score"].mean(axis=0)],
-                            "std": [sample1["augur_score"].std(axis=0)],
-                        }
-                    )
-                )
 
-                sample2 = df2.sample(n=n_subsamples, random_state=permutation_idx, axis="index")
-                sampled_permuted_cv_augur2.append(
-                    pd.DataFrame(
-                        {
-                            "cell_type": [celltype],
-                            "permutation_idx": [permutation_idx],
-                            "mean": [sample2["augur_score"].mean(axis=0)],
-                            "std": [sample2["augur_score"].std(axis=0)],
-                        }
-                    )
-                )
+            indices1 = rng.choice(len(df1), size=(n_permutations, n_subsamples), replace=True)
+            indices2 = rng.choice(len(df2), size=(n_permutations, n_subsamples), replace=True)
 
-        permuted_samples1 = pd.concat(sampled_permuted_cv_augur1)
-        permuted_samples2 = pd.concat(sampled_permuted_cv_augur2)
+            scores1 = df1["augur_score"].values[indices1]
+            scores2 = df2["augur_score"].values[indices2]
+
+            means1 = scores1.mean(axis=1)
+            means2 = scores2.mean(axis=1)
+            stds1 = scores1.std(axis=1)
+            stds2 = scores2.std(axis=1)
+
+            sampled_data.append(
+                pd.DataFrame(
+                    {
+                        "cell_type": np.repeat(celltype, n_permutations),
+                        "permutation_idx": np.arange(n_permutations),
+                        "mean1": means1,
+                        "mean2": means2,
+                        "std1": stds1,
+                        "std2": stds2,
+                    }
+                )
+            )
+
+        sampled_df = pd.concat(sampled_data)
 
         # delta between augur scores
         delta = augur_score1.merge(augur_score2, on=["cell_type"], suffixes=("1", "2")).assign(
@@ -951,9 +948,7 @@ class Augur:
         )
 
         # delta between permutation scores
-        delta_rnd = permuted_samples1.merge(
-            permuted_samples2, on=["cell_type", "permutation_idx"], suffixes=("1", "2")
-        ).assign(delta_rnd=lambda x: x.mean2 - x.mean1)
+        delta_rnd = sampled_df.assign(delta_rnd=lambda x: x.mean2 - x.mean1)
 
         # number of values where permutations are larger than test statistic
         delta["b"] = (
@@ -968,7 +963,7 @@ class Augur:
         delta["z"] = (
             delta["delta_augur"] - delta_rnd.groupby("cell_type", as_index=False).mean()["delta_rnd"]
         ) / delta_rnd.groupby("cell_type", as_index=False).std()["delta_rnd"]
-        # calculate pvalues
+
         delta["pval"] = np.minimum(
             2 * (delta["b"] + 1) / (delta["m"] + 1), 2 * (delta["m"] - delta["b"] + 1) / (delta["m"] + 1)
         )
@@ -976,24 +971,25 @@ class Augur:
 
         return delta
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_dp_scatter(
         self,
         results: pd.DataFrame,
+        *,
         top_n: int = None,
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | Figure | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plot scatterplot of differential prioritization.
 
         Args:
             results: Results after running differential prioritization.
             top_n: optionally, the number of top prioritized cell types to label in the plot
             ax: optionally, axes used to draw plot
+            {common_plot_args}
 
         Returns:
-            Axes of the plot.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1040,37 +1036,32 @@ class Augur:
         legend1 = ax.legend(*scatter.legend_elements(), loc="center left", title="z-scores", bbox_to_anchor=(1, 0.5))
         ax.add_artist(legend1)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_important_features(
         self,
         data: dict[str, Any],
+        *,
         key: str = "augurpy_results",
         top_n: int = 10,
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plot a lollipop plot of the n features with largest feature importances.
 
         Args:
-            results: results after running `predict()` as dictionary or the AnnData object.
+            data: results after running `predict()` as dictionary or the AnnData object.
             key: Key in the AnnData object of the results
             top_n: n number feature importance values to plot. Default is 10.
             ax: optionally, axes used to draw plot
-            return_figure: if `True` returns figure of the plot, default is `False`
+            {common_plot_args}
 
         Returns:
-            Axes of the plot.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1111,35 +1102,30 @@ class Augur:
         plt.ylabel("Gene")
         plt.yticks(y_axes_range, n_features["genes"])
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_lollipop(
         self,
-        data: dict[str, Any],
+        data: dict[str, Any] | AnnData,
+        *,
         key: str = "augurpy_results",
-        return_fig: bool | None = None,
         ax: Axes = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | Figure | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plot a lollipop plot of the mean augur values.
 
         Args:
-            results: results after running `predict()` as dictionary or the AnnData object.
-            key: Key in the AnnData object of the results
-            ax: optionally, axes used to draw plot
-            return_figure: if `True` returns figure of the plot
+            data: results after running `predict()` as dictionary or the AnnData object.
+            key: .uns key in the results AnnData object.
+            ax: optionally, axes used to draw plot.
+            {common_plot_args}
 
         Returns:
-            Axes of the plot.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1177,32 +1163,27 @@ class Augur:
         plt.ylabel("Cell Type")
         plt.yticks(y_axes_range, results["summary_metrics"].sort_values("mean_augur_score", axis=1).columns)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_scatterplot(
         self,
         results1: dict[str, Any],
         results2: dict[str, Any],
+        *,
         top_n: int = None,
-        return_fig: bool | None = None,
-        show: bool | None = None,
-        save: str | bool | None = None,
-    ) -> Axes | Figure | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Create scatterplot with two augur results.
 
         Args:
             results1: results after running `predict()`
             results2: results after running `predict()`
             top_n: optionally, the number of top prioritized cell types to label in the plot
-            return_figure: if `True` returns figure of the plot
+            {common_plot_args}
 
         Returns:
             Axes of the plot.
@@ -1251,12 +1232,7 @@ class Augur:
         plt.xlabel("Augur scores 1")
         plt.ylabel("Augur scores 2")
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None

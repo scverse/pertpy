@@ -2,7 +2,7 @@
 
 __author__ = "Lukas Heumos"
 __email__ = "lukas.heumos@posteo.net"
-__version__ = "0.8.0"
+__version__ = "0.10.1"
 
 import warnings
 

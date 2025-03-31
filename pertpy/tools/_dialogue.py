@@ -25,6 +25,8 @@ from sklearn.linear_model import LinearRegression
 from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 from statsmodels.sandbox.stats.multicomp import multipletests
 
+from pertpy._doc import _doc_params, doc_common_plot_args
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
@@ -33,7 +35,7 @@ if TYPE_CHECKING:
 class Dialogue:
     """Python implementation of DIALOGUE"""
 
-    def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int):
+    def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int, feature_space_key: str = "X_pca", n_components: int = 50):
         """Constructor for Dialogue.
 
         Args:
@@ -41,6 +43,8 @@ class Dialogue:
             celltype_key: The key in AnnData.obs which contains the cell type column.
             n_counts_key: The key of the number of counts in Anndata.obs . Also commonly the size factor.
             n_mpcs: Number of PMD components which corresponds to the number of determined MCPs.
+            feature_space_key: The key in adata.obsm for the feature space (e.g., "X_pca", "X_umap").
+            n_components: The number of components of the feature space to use, e.g. PCA components.
         """
         self.sample_id = sample_id
         self.celltype_key = celltype_key
@@ -51,6 +55,8 @@ class Dialogue:
             )
         self.n_counts_key = n_counts_key
         self.n_mcps = n_mpcs
+        self.feature_space_key = feature_space_key
+        self.n_components = n_components
 
     def _get_pseudobulks(
         self, adata: AnnData, groupby: str, strategy: Literal["median", "mean"] = "median"
@@ -80,27 +86,25 @@ class Dialogue:
 
         return pseudobulk
 
-    def _pseudobulk_pca(self, adata: AnnData, groupby: str, n_components: int = 50) -> pd.DataFrame:
-        """Return cell-averaged PCA components.
+    def _pseudobulk_feature_space(
+        self, adata: AnnData, groupby: str,
+    ) -> pd.DataFrame:
+        """Return Cell-averaged components from a passed feature space.
 
         TODO: consider merging with `get_pseudobulks`
         TODO: DIALOGUE recommends running PCA on each cell type separately before running PMD - this should be implemented as an option here.
 
         Args:
-            groupby: The key to groupby for pseudobulks
-            n_components: The number of PCA components
+            groupby: The key to groupby for pseudobulks.
 
         Returns:
-            A pseudobulk of PCA components.
+            A pseudobulk DataFrame of the averaged components.
         """
         aggr = {}
-
         for category in adata.obs.loc[:, groupby].cat.categories:
             temp = adata.obs.loc[:, groupby] == category
-            aggr[category] = adata[temp].obsm["X_pca"][:, :n_components].mean(axis=0)
-
+            aggr[category] = adata[temp].obsm[self.feature_space_key][:, :self.n_components].mean(axis=0)
         aggr = pd.DataFrame(aggr)
-
         return aggr
 
     def _scale_data(self, pseudobulks: pd.DataFrame, normalize: bool = True) -> np.ndarray:
@@ -291,7 +295,7 @@ class Dialogue:
             mcp_name: Name of mcp which was used for calculation of column value.
             max_length: Value needed to later decide at what index the threshold value should be extracted from column.
             min_threshold: Minimal threshold to select final scores by if it is smaller than calculated threshold.
-            index: Column index to use eto calculate the significant genes. Defaults to `z_score`.
+            index: Column index to use eto calculate the significant genes.
 
         Returns:
             According to the values in a df column (default: zscore) the significant up and downregulated gene names
@@ -376,12 +380,6 @@ class Dialogue:
         Variables are notated according to:
 
             `argmin|Ax - y|`
-
-        Args:
-            A_orig:
-            y_orig:
-            feature_ranks:
-            n_iter: Passed to scipy.optimize.nnls. Defaults to 1000.
 
         Returns:
             Returns the aggregated coefficients from nnls.
@@ -527,7 +525,7 @@ class Dialogue:
 
             # This is basically DIALOGUE 3 now
             pre_r_scores = {
-                ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws_dict[ct]
+                ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws_dict[ct]
                 for i, ct in enumerate(ct_subs.keys())
                 # TODO This is a recalculation and not a new calculation
             }
@@ -562,7 +560,7 @@ class Dialogue:
         self,
         adata: AnnData,
         ct_order: list[str],
-        agg_pca: bool = True,
+        agg_feature: bool = True,
         normalize: bool = True,
     ) -> tuple[list, dict]:
         """Separates cell into AnnDatas by celltype_key and creates the multifactor PMD input.
@@ -572,14 +570,14 @@ class Dialogue:
         Args:
             adata: AnnData object generate celltype objects for
             ct_order: The order of cell types
-            agg_pca: Whether to aggregate pseudobulks with PCA or not. Defaults to True.
-            normalize: Whether to mimic DIALOGUE behavior or not. Defaults to True.
+            agg_feature: Whether to aggregate pseudobulks with some embeddings or not.
+            normalize: Whether to mimic DIALOGUE behavior or not.
 
         Returns:
             A celltype_label:array dictionary.
         """
         ct_subs = {ct: adata[adata.obs[self.celltype_key] == ct].copy() for ct in ct_order}
-        fn = self._pseudobulk_pca if agg_pca else self._get_pseudobulks
+        fn = self._pseudobulk_feature_space if agg_feature else self._get_pseudobulks
         ct_aggr = {ct: fn(ad, self.sample_id) for ct, ad in ct_subs.items()}  # type: ignore
 
         # TODO: implement check (as in https://github.com/livnatje/DIALOGUE/blob/55da9be0a9bf2fcd360d9e11f63e30d041ec4318/R/DIALOGUE.main.R#L114-L119)
@@ -597,7 +595,7 @@ class Dialogue:
         adata: AnnData,
         penalties: list[int] = None,
         ct_order: list[str] = None,
-        agg_pca: bool = True,
+        agg_feature: bool = True,
         solver: Literal["lp", "bs"] = "bs",
         normalize: bool = True,
     ) -> tuple[AnnData, dict[str, np.ndarray], dict[Any, Any], dict[Any, Any]]:
@@ -610,10 +608,9 @@ class Dialogue:
             sample_id: Key to use for pseudobulk determination.
             penalties: PMD penalties.
             ct_order: The order of cell types.
-            agg_pca: Whether to calculate cell-averaged PCA components.
+            agg_features: Whether to calculate cell-averaged principal components.
             solver: Which solver to use for PMD. Must be one of "lp" (linear programming) or "bs" (binary search).
                     For differences between these to please refer to https://github.com/theislab/sparsecca/blob/main/examples/linear_programming_multicca.ipynb
-                    Defaults to 'bs'.
             normalize: Whether to mimic DIALOGUE as close as possible
 
         Returns:
@@ -636,13 +633,19 @@ class Dialogue:
         else:
             ct_order = cell_types = adata.obs[self.celltype_key].astype("category").cat.categories
 
-        mcca_in, ct_subs = self._load(adata, ct_order=cell_types, agg_pca=agg_pca, normalize=normalize)
+        mcca_in, ct_subs = self._load(adata, ct_order=cell_types, agg_feature=agg_feature, normalize=normalize)
 
         n_samples = mcca_in[0].shape[1]
         if penalties is None:
-            penalties = multicca_permute(
-                mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
-            )["bestpenalties"]
+            try:
+                penalties = multicca_permute(
+                    mcca_in, penalties=np.sqrt(n_samples) / 2, nperms=10, niter=50, standardize=True
+                )["bestpenalties"]
+            except ValueError as e:
+                if "matmul: input operand 1 has a mismatch in its core dimension" in str(e):
+                    raise ValueError("Please ensure that every cell type is represented in every sample.") from e
+                else:
+                    raise
         else:
             penalties = penalties
 
@@ -655,8 +658,8 @@ class Dialogue:
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         pre_r_scores = {
-            ct: ct_subs[ct].obsm["X_pca"][:, :50] @ ws[i]
-            for i, ct in enumerate(cell_types)  # TODO change from 50
+            ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws[i]
+            for i, ct in enumerate(cell_types)
         }
 
         # TODO: output format needs some cleanup, even though each MCP score is matched to one cell, it's not at all
@@ -912,9 +915,7 @@ class Dialogue:
             results: dl.MultilevelModeling result object.
             MCP: MCP key of the result object.
             threshold: Number between [0,1]. The fraction of cell types compared against which must have the associated MCP gene.
-                        Defaults to 0.70.
             focal_celltypes: None (compare against all cell types) or a list of other cell types which you want to compare against.
-                             Defaults to None.
 
         Returns:
             Dict with keys 'up_genes' and 'down_genes' and values of lists of genes
@@ -993,10 +994,8 @@ class Dialogue:
         Args:
             ct_subs: Dialogue output ct_subs dictionary
             mcp: The name of the marker gene expression column.
-                 Defaults to "mcp_0".
             fraction: Fraction of extreme cells to consider for gene ranking.
                       Should be between 0 and 1.
-                      Defaults to 0.1.
 
         Returns:
             Dictionary where keys are subpopulation names and values are Anndata
@@ -1035,7 +1034,7 @@ class Dialogue:
         Args:
             ct_subs: Dialogue output ct_subs dictionary
             fraction: Fraction of extreme cells to consider for gene ranking.
-                      Should be between 0 and 1. Defaults to 0.1.
+                      Should be between 0 and 1.
 
         Returns:
             Nested dictionary where keys of the first level are MCPs (of the form "mcp_0" etc)
@@ -1064,18 +1063,17 @@ class Dialogue:
 
         return rank_dfs
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_split_violins(
         self,
         adata: AnnData,
         split_key: str,
         celltype_key: str,
+        *,
         split_which: tuple[str, str] = None,
         mcp: str = "mcp_0",
-        return_fig: bool | None = None,
-        ax: Axes | None = None,
-        save: bool | str | None = None,
-        show: bool | None = None,
-    ) -> Axes | Figure | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Plots split violin plots for a given MCP and split variable.
 
         Any cells with a value for split_key not in split_which are removed from the plot.
@@ -1085,10 +1083,11 @@ class Dialogue:
             split_key: Variable in adata.obs used to split the data.
             celltype_key: Key for cell type annotations.
             split_which: Which values of split_key to plot. Required if more than 2 values in split_key.
-            mcp: Key for MCP data. Defaults to "mcp_0".
+            mcp: Key for MCP data.
+            {common_plot_args}
 
         Returns:
-            A :class:`~matplotlib.axes.Axes` object
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1110,30 +1109,24 @@ class Dialogue:
         df[split_key] = df[split_key].cat.remove_unused_categories()
 
         ax = sns.violinplot(data=df, x=celltype_key, y=mcp, hue=split_key, split=True)
-
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_pairplot(
         self,
         adata: AnnData,
         celltype_key: str,
         color: str,
         sample_id: str,
+        *,
         mcp: str = "mcp_0",
-        return_fig: bool | None = None,
-        show: bool | None = None,
-        save: bool | str | None = None,
-    ) -> PairGrid | Figure | None:
+        return_fig: bool = False,
+    ) -> Figure | None:
         """Generate a pairplot visualization for multi-cell perturbation (MCP) data.
 
         Computes the mean of a specified MCP feature (mcp) for each combination of sample and cell type,
@@ -1144,10 +1137,11 @@ class Dialogue:
             celltype_key: Key in `adata.obs` containing cell type annotations.
             color: Key in `adata.obs` for color annotations. This parameter is used as the hue
             sample_id: Key in `adata.obs` for the sample annotations.
-            mcp: Key in `adata.obs` for MCP feature values. Defaults to `"mcp_0"`.
+            mcp: Key in `adata.obs` for MCP feature values.
+            {common_plot_args}
 
         Returns:
-            Seaborn Pairgrid object.
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1170,14 +1164,9 @@ class Dialogue:
         aggstats = aggstats.loc[list(mcp_pivot.index), :]
         aggstats[color] = aggstats["top"]
         mcp_pivot = pd.concat([mcp_pivot, aggstats[color]], axis=1)
-        ax = sns.pairplot(mcp_pivot, hue=color, corner=True)
+        sns.pairplot(mcp_pivot, hue=color, corner=True)
 
-        if save:
-            plt.savefig(save, bbox_inches="tight")
-        if show:
-            plt.show()
         if return_fig:
             return plt.gcf()
-        if not (show or save):
-            return ax
+        plt.show()
         return None

@@ -6,7 +6,6 @@ import pertpy as pt
 import pytest
 import scanpy as sc
 from pertpy.tools._augur import Params
-from sklearn.ensemble import RandomForestRegressor
 
 CWD = Path(__file__).parent.resolve()
 
@@ -145,7 +144,7 @@ def test_select_variance(adata):
     """Test select variance implementation."""
     adata = ag_rfc.load(adata)
     sc.pp.highly_variable_genes(adata)
-    adata_cell_type = adata[adata.obs["cell_type"] == "CellTypeA"]
+    adata_cell_type = adata[adata.obs["cell_type"] == "CellTypeA"].copy()
     ad = ag_rfc.select_variance(adata_cell_type, var_quantile=0.5, span=0.3, filter_negative_residuals=False)
 
     assert 3672 == len(ad.var.index[ad.var["highly_variable"]])
@@ -169,7 +168,7 @@ def test_differential_prioritization():
     # Requires the full dataset or it fails because of a lack of statistical power
     adata = pt.dt.sc_sim_augur()
     adata = sc.pp.subsample(adata, n_obs=500, copy=True, random_state=10)
-    ag = pt.tl.Augur("random_forest_classifier", Params(random_state=42))
+    ag = pt.tl.Augur("logistic_regression_classifier", Params(random_state=42))
     ag.load(adata)
 
     adata, results1 = ag.predict(adata, n_threads=4, n_subsamples=3, random_state=2)

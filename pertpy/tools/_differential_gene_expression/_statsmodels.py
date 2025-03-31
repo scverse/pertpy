@@ -6,14 +6,14 @@ import statsmodels.api as sm
 from tqdm.auto import tqdm
 
 from ._base import LinearModelBase
-from ._checks import check_is_integer_matrix
+from ._checks import check_is_numeric_matrix
 
 
 class Statsmodels(LinearModelBase):
     """Differential expression test using a statsmodels linear regression"""
 
     def _check_counts(self):
-        check_is_integer_matrix(self.data)
+        check_is_numeric_matrix(self.data)
 
     def fit(
         self,
@@ -23,13 +23,14 @@ class Statsmodels(LinearModelBase):
         """Fit the specified regression model.
 
         Args:
-            regression_model: A statsmodels regression model class, either OLS or GLM. Defaults to OLS.
+            regression_model: A statsmodels regression model class, either OLS or GLM.
             **kwargs: Additional arguments for fitting the specific method. In particular, this
                 is where you can specify the family for GLM.
 
         Examples:
             >>> import statsmodels.api as sm
-            >>> model = StatsmodelsDE(adata, design="~condition")
+            >>> import pertpy as pt
+            >>> model = pt.tl.Statsmodels(adata, design="~condition")
             >>> model.fit(sm.GLM, family=sm.families.NegativeBinomial(link=sm.families.links.Log()))
             >>> results = model.test_contrasts(np.array([0, 1]))
         """
@@ -54,18 +55,11 @@ class Statsmodels(LinearModelBase):
                     "t_value": t_test.tvalue.item(),
                     "sd": t_test.sd.item(),
                     "log_fc": t_test.effect.item(),
-                    "adj_p_value": statsmodels.stats.multitest.fdrcorrection(np.array([t_test.pvalue]))[1].item(),
                 }
             )
-        return pd.DataFrame(res).sort_values("p_value")
+        return (
+            pd.DataFrame(res)
+            .sort_values("p_value")
+            .assign(adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1])
+        )
 
-    def contrast(self, column: str, baseline: str, group_to_compare: str) -> np.ndarray:
-        """Build a simple contrast for pairwise comparisons.
-
-        This is equivalent to
-
-        ```
-        model.cond(<column> = baseline) - model.cond(<column> = group_to_compare)
-        ```
-        """
-        return self.cond(**{column: baseline}) - self.cond(**{column: group_to_compare})
