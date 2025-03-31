@@ -52,13 +52,13 @@ Please note that you require [poetry] to be installed.
 You can either clone the public repository:
 
 ```console
-$ git clone git://github.com/theislab/pertpy
+$ git clone git://github.com/scverse/pertpy
 ```
 
 Or download the [tarball]:
 
 ```console
-$ curl -OJL https://github.com/theislab/pertpy/tarball/master
+$ curl -OJL https://github.com/scverse/pertpy/tarball/master
 ```
 
 ## Apple Silicon
@@ -78,17 +78,17 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
     brew install --cask mambaforge
     ```
 
-3. Create a new environment using mamba (here with python 3.10) and activate it
+3. Create a new environment using mamba and activate it
 
     ```console
-    mamba create -n pertpy-env python=3.11
+    mamba create -n pertpy-env
     mamba activate pertpy-env
     ```
 
 4. Clone the GitHub Repository
 
     ```console
-    git clone https://github.com/theislab/pertpy.git
+    git clone https://github.com/scverse/pertpy.git
     ```
 
 5. Go inside the pertpy folder and install pertpy
@@ -100,10 +100,10 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
 
 Now you're ready to use pertpy as usual within the environment (`import pertpy`).
 
-[github repo]: https://github.com/theislab/pertpy
+[github repo]: https://github.com/scverse/pertpy
 [pip]: https://pip.pypa.io
 [poetry]: https://python-poetry.org/
 [python installation guide]: http://docs.python-guide.org/en/latest/starting/installation/
-[tarball]: https://github.com/theislab/pertpy/tarball/master
+[tarball]: https://github.com/scverse/pertpy/tarball/master
 [scvi-tools]: https://docs.scvi-tools.org/en/latest/installation.html
 [Homebrew]: https://brew.sh/

@@ -22,6 +22,8 @@ distances = [
     "classifier_proba",
     # "classifier_cp",
     # "nbll",
+    "mahalanobis",
+    "mean_var_distribution",
 ]
 
 count_distances = ["nb_ll"]

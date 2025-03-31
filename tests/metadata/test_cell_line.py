@@ -16,17 +16,14 @@ pt_metadata = pt.md.CellLine()
 
 @pytest.fixture
 def adata() -> AnnData:
-    rng = np.random.default_rng(seed=1)
-
-    X = rng.normal(0, 1, (NUM_CELLS, NUM_GENES))
-    X = np.where(X < 0, 0, X)
+    X = np.random.default_rng().normal(0, 1, (NUM_CELLS, NUM_GENES))
 
     obs = pd.DataFrame(
         {
             "DepMap_ID": ["ACH-000016", "ACH-000049", "ACH-001208", "ACH-000956"] * NUM_CELLS_PER_ID,
             "perturbation": ["Midostaurin"] * NUM_CELLS_PER_ID * 4,
         },
-        index=[str(i) for i in range(NUM_GENES)],
+        index=[str(i) for i in range(NUM_CELLS)],
     )
 
     var_data = {"gene_name": [f"gene{i}" for i in range(1, NUM_GENES + 1)]}
@@ -48,7 +45,24 @@ def test_cell_line_annotation(adata):
 def test_gdsc_annotation(adata):
     pt_metadata.annotate(adata)
     pt_metadata.annotate_from_gdsc(adata, query_id="StrippedCellLineName")
-    assert "ln_ic50" in adata.obs
+    assert "ln_ic50_gdsc" in adata.obs
+    assert "auc_gdsc" in adata.obs
+
+
+def test_prism_annotation(adata):
+    adata.obs = pd.DataFrame(
+        {
+            "DepMap_ID": ["ACH-000879", "ACH-000488", "ACH-000488", "ACH-000008"] * NUM_CELLS_PER_ID,
+            "perturbation": ["cytarabine", "cytarabine", "secnidazole", "flutamide"] * NUM_CELLS_PER_ID,
+        },
+        index=[str(i) for i in range(NUM_CELLS)],
+    )
+
+    pt_metadata.annotate(adata)
+    pt_metadata.annotate_from_prism(adata, query_id="DepMap_ID")
+    assert "ic50_prism" in adata.obs
+    assert "ec50_prism" in adata.obs
+    assert "auc_prism" in adata.obs
 
 
 def test_protein_expression_annotation(adata):

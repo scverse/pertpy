@@ -38,8 +38,10 @@ harmonized names and be loadable as MuData objects.
     data.datlinger_2017
     data.datlinger_2021
     data.dialogue_example
+    data.distance_example
     data.dixit_2016
     data.dixit_2016_raw
+    data.dong_2023
     data.frangieh_2021
     data.frangieh_2021_protein
     data.frangieh_2021_raw
@@ -49,6 +51,7 @@ harmonized names and be loadable as MuData objects.
     data.gasperini_2019_lowmoi
     data.gehring_2019
     data.haber_2017_regions
+    data.hagai_2018
     data.kang_2018
     data.mcfarland_2020
     data.norman_2019
@@ -62,6 +65,7 @@ harmonized names and be loadable as MuData objects.
     data.schiebinger_2019_18day
     data.schraivogel_2020_tap_screen_chr8
     data.schraivogel_2020_tap_screen_chr11
+    data.sciplex_gxe1
     data.sciplex3_raw
     data.shifrut_2018
     data.smillie_2019
@@ -69,6 +73,7 @@ harmonized names and be loadable as MuData objects.
     data.srivatsan_2020_sciplex3
     data.srivatsan_2020_sciplex4
     data.stephenson_2021_subsampled
+    data.tasccoda_example
     data.tian_2019_day7neuron
     data.tian_2019_ipsc
     data.tian_2021_crispra
@@ -76,6 +81,7 @@ harmonized names and be loadable as MuData objects.
     data.weinreb_2020
     data.xie_2017
     data.zhao_2021
+    data.zhang_2021
 ```
 
 ## Preprocessing
@@ -444,7 +450,7 @@ See [scGen predicts single-cell perturbation responses](https://www.nature.com/a
 .. autosummary::
     :toctree: tools
 
-    tools.SCGEN
+    tools.Scgen
 ```
 
 Example implementation:
@@ -557,9 +563,9 @@ including cell line annotation, bulk RNA and protein expression data.
 
 Available databases for cell line metadata:
 
--   [The Cancer Dependency Map Project at Broad](https://depmap.org/portal/)
--   [The Cancer Dependency Map Project at Sanger](https://depmap.sanger.ac.uk/)
--   [Genomics of Drug Sensitivity in Cancer (GDSC)](https://www.cancerrxgene.org/)
+- [The Cancer Dependency Map Project at Broad](https://depmap.org/portal/)
+- [The Cancer Dependency Map Project at Sanger](https://depmap.sanger.ac.uk/)
+- [Genomics of Drug Sensitivity in Cancer (GDSC)](https://www.cancerrxgene.org/)
 
 ### Compound
 
@@ -567,7 +573,7 @@ The Compound module enables the retrieval of various types of information relate
 
 Available databases for compound metadata:
 
--   [PubChem](https://pubchem.ncbi.nlm.nih.gov/)
+- [PubChem](https://pubchem.ncbi.nlm.nih.gov/)
 
 ### Mechanism of Action
 
@@ -575,7 +581,7 @@ This module aims to retrieve metadata of mechanism of action studies related to 
 
 Available databases for mechanism of action metadata:
 
--   [CLUE](https://clue.io/)
+- [CLUE](https://clue.io/)
 
 ### Drug
 
@@ -583,7 +589,7 @@ This module allows for the retrieval of Drug target information.
 
 Available databases for drug metadata:
 
--   [chembl](https://www.ebi.ac.uk/chembl/)
+- [chembl](https://www.ebi.ac.uk/chembl/)
 
 ```{eval-rst}
 .. autosummary::

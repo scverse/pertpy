@@ -24,10 +24,9 @@ class LookUp:
     ):
         """
         Args:
-            type: Metadata type for annotation. One of 'cell_line', 'compound', 'moa' or 'drug. Defaults to cell_line.
+            type: Metadata type for annotation. One of 'cell_line', 'compound', 'moa' or 'drug.
             transfer_metadata: DataFrames used to generate Lookup object.
                                This is currently set to None for CompoundMetaData which does not require any dataframes for transfer.
-                               Defaults to 'cell_line'.
         """
         self.type = type
         if type == "cell_line":
@@ -285,12 +284,11 @@ class LookUp:
         """A brief summary of cell line metadata.
 
         Args:
-            cell_line_source: the source of cell line annotation, DepMap or Cancerrxgene. Defaults to "DepMap".
+            cell_line_source: the source of cell line annotation, DepMap or Cancerrxgene.
             reference_id: The type of cell line identifier in the meta data, e.g. ModelID, CellLineName	or StrippedCellLineName.
-                If fetch cell line metadata from Cancerrxgene, it is recommended to choose
-                "stripped_cell_line_name". Defaults to "ModelID".
+                If fetch cell line metadata from Cancerrxgene, it is recommended to choose "stripped_cell_line_name".
             query_id_list: Unique cell line identifiers to test the number of matched ids present in the
-                metadata. If set to None, the query of metadata identifiers will be disabled. Defaults to None.
+                metadata. If set to None, the query of metadata identifiers will be disabled.
         """
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specifically for CellLineMetaData!")
@@ -324,9 +322,9 @@ class LookUp:
         """A brief summary of bulk RNA expression data.
 
         Args:
-            cell_line_source: the source of RNA-seq data, broad or sanger. Defaults to "sanger".
+            cell_line_source: the source of RNA-seq data, broad or sanger.
             query_id_list: Unique cell line identifiers to test the number of matched ids present in the
-                metadata. If set to None, the query of metadata identifiers will be disabled. Defaults to None.
+                metadata. If set to None, the query of metadata identifiers will be disabled.
         """
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
@@ -352,9 +350,8 @@ class LookUp:
 
         Args:
             reference_id: The type of cell line identifier in the meta data, model_name or model_id.
-                Defaults to "model_name".
             query_id_list: Unique cell line identifiers to test the number of matched ids present in the
-                metadata. If set to None, the query of metadata identifiers will be disabled. Defaults to None.
+                metadata. If set to None, the query of metadata identifiers will be disabled.
         """
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
@@ -381,20 +378,16 @@ class LookUp:
         """A brief summary of drug response data.
 
         Args:
-            gdsc_dataset: The GDSC dataset, 1 or 2. Defaults to 1.
+            gdsc_dataset: The GDSC dataset, 1 or 2.
                           The GDSC1 dataset updates previous releases with additional drug screening data from the Wellcome Sanger Institute and Massachusetts General Hospital.
                           It covers 970 Cell lines and 403 Compounds with 333292 IC50s.
                           GDSC2 is new and has 243,466 IC50 results from the latest screening at the Wellcome Sanger Institute using improved experimental procedures.
             reference_id: The type of cell line identifier in the meta data, cell_line_name, sanger_model_id or cosmic_id.
-                          Defaults to 'cell_line_name'.
             query_id_list: Unique cell line identifiers to test the number of matched ids present in the metadata.
                            If set to None, the query of metadata identifiers will be disabled.
-                           Defaults to None.
             reference_perturbation: The perturbation information in the meta data, drug_name or drug_id.
-                                    Defaults to 'drug_name'.
             query_perturbation_list: Unique perturbation types to test the number of matched ones present in the metadata.
                                      If set to None, the query of perturbation types will be disabled.
-                                     Defaults to None.
         """
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
@@ -432,9 +425,7 @@ class LookUp:
 
         Args:
             reference_id: The type of gene identifier in the meta data, gene_id, ensembl_gene_id, hgnc_id, hgnc_symbol.
-                          Defaults to "ensembl_gene_id".
             query_id_list: Unique gene identifiers to test the number of matched ids present in the metadata.
-                           Defaults to None.
         """
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
@@ -472,10 +463,8 @@ class LookUp:
         Args:
             query_id_list: Unique perturbagens to test the number of matched ones present in the metadata.
                            If set to None, the query of metadata perturbagens will be disabled.
-                           Defaults to None.
             target_list: Unique molecular targets to test the number of matched ones present in the metadata.
                          If set to None, the comparison of molecular targets in the query of metadata perturbagens will be disabled.
-                         Defaults to None.
         """
         if query_id_list is not None:
             if self.type != "moa":
@@ -503,8 +492,7 @@ class LookUp:
         Args:
             query_id_list: Unique compounds to test the number of matched ones present in the metadata.
                         If set to None, query of compound identifiers will be disabled.
-                        Defaults to None.
-            query_id_type: The type of compound identifiers, name or cid. Defaults to 'name'.
+            query_id_type: The type of compound identifiers, name or cid.
         """
         if self.type != "compound":
             raise ValueError("This is not a LookUp object specific for CompoundData!")
@@ -535,11 +523,10 @@ class LookUp:
         """A brief summary of drug annotation.
 
         Args:
-            drug_annotation_source: the source of drug annotation data, chembl, dgidb or pharmgkb. Defaults to "chembl".
+            drug_annotation_source: the source of drug annotation data, chembl, dgidb or pharmgkb.
             query_id_list: Unique target or compound names to test the number of matched ones present in the metadata.
                         If set to None, query of compound identifiers will be disabled.
-                        Defaults to None.
-            query_id_type: The type of identifiers, target, compound and disease(pharmgkb only). Defaults to 'target'.
+            query_id_type: The type of identifiers, target, compound and disease(pharmgkb only).
         """
         if self.type != "drug":
             raise ValueError("This is not a LookUp object specific for DrugMetaData!")

@@ -41,12 +41,12 @@ class LRClassifierSpace(PerturbationSpace):
 
         Args:
             adata: AnnData object of size cells x genes
-            target_col: .obs column that stores the perturbations. Defaults to "perturbations".
-            layer_key: Layer in adata to use. Defaults to None.
+            target_col: .obs column that stores the perturbations.
+            layer_key: Layer in adata to use.
             embedding_key: Key of the embedding in obsm to be used as data for the logistic regression classifier.
-                Can only be specified if layer_key is None. Defaults to None.
-            test_split_size: Fraction of data to put in the test set. Default to 0.2.
-            max_iter: Maximum number of iterations taken for the solvers to converge. Defaults to 1000.
+                Can only be specified if layer_key is None.
+            test_split_size: Fraction of data to put in the test set.
+            max_iter: Maximum number of iterations taken for the solvers to converge.
 
         Returns:
             AnnData object with the logistic regression coefficients as the embedding in X and the perturbations as .obs['perturbations'].
@@ -162,24 +162,23 @@ class MLPClassifierSpace(PerturbationSpace):
 
         Args:
             adata: AnnData object of size cells x genes
-            target_col: .obs column that stores the perturbations. Defaults to "perturbations".
-            layer_key: Layer in adata to use. Defaults to None.
+            target_col: .obs column that stores the perturbations.
+            layer_key: Layer in adata to use.
             hidden_dim: List of number of neurons in each hidden layers of the neural network. For instance, [512, 256]
                 will create a neural network with two hidden layers, the first with 512 neurons and the second with 256 neurons.
-                Defaults to [512].
-            dropout: Amount of dropout applied, constant for all layers. Defaults to 0.
-            batch_norm: Whether to apply batch normalization. Defaults to True.
-            batch_size: The batch size, i.e. the number of datapoints to use in one forward/backward pass. Defaults to 256.
+            dropout: Amount of dropout applied, constant for all layers.
+            batch_norm: Whether to apply batch normalization.
+            batch_size: The batch size, i.e. the number of datapoints to use in one forward/backward pass.
             test_split_size: Fraction of data to put in the test set. Default to 0.2.
             validation_split_size: Fraction of data to put in the validation set of the resultant train set.
                 E.g. a test_split_size of 0.2 and a validation_split_size of 0.25 means that 25% of 80% of the data
-                will be used for validation. Defaults to 0.25.
-            max_epochs: Maximum number of epochs for training. Defaults to 20.
+                will be used for validation.
+            max_epochs: Maximum number of epochs for training.
             val_epochs_check: Test performance on validation dataset after every val_epochs_check training epochs.
                 Note that this affects early stopping, as the model will be stopped if the validation performance does not
-                improve for patience epochs. Defaults to 2.
+                improve for patience epochs.
             patience: Number of validation performance checks without improvement, after which the early stopping flag
-                is activated and training is therefore stopped. Defaults to 2.
+                is activated and training is therefore stopped.
 
         Returns:
             AnnData whose `X` attribute is the perturbation embedding and whose .obs['perturbations'] are the names of the perturbations.
@@ -324,10 +323,10 @@ class MLP(torch.nn.Module):
         """
         Args:
             sizes: size of layers.
-            dropout: Dropout probability. Defaults to 0.0.
-            batch_norm: specifies if batch norm should be applied. Defaults to True.
-            layer_norm:  specifies if layer norm should be applied, as commonly used in Transformers. Defaults to False.
-            last_layer_act: activation function of last layer. Defaults to "linear".
+            dropout: Dropout probability.
+            batch_norm: specifies if batch norm should be applied.
+            layer_norm:  specifies if layer norm should be applied, as commonly used in Transformers.
+            last_layer_act: activation function of last layer.
         """
         super().__init__()
         layers = []
@@ -391,8 +390,8 @@ class PLDataset(Dataset):
         """
         Args:
             adata: AnnData object with observations and labels.
-            target_col: key with the perturbation labels numerically encoded. Defaults to 'perturbations'.
-            label_col: key with the perturbation labels. Defaults to 'perturbations'.
+            target_col: key with the perturbation labels numerically encoded.
+            label_col: key with the perturbation labels.
             layer_key: key of the layer to be used as data, otherwise .X
         """
 
@@ -409,7 +408,7 @@ class PLDataset(Dataset):
 
     def __getitem__(self, idx):
         """Returns a sample and corresponding perturbations applied (labels)"""
-        sample = self.data[idx].A.squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
+        sample = self.data[idx].toarray().squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
         num_label = self.labels.iloc[idx]
         str_label = self.pert_labels.iloc[idx]
 
