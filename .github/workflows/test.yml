@@ -21,10 +21,10 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    - os: ubuntu-22.04 # ubuntu-latest is currently broken for joblib
+                    - os: ubuntu-latest
                       python: "3.13"
                       run_mode: "slow"
-                    - os: ubuntu-22.04
+                    - os: ubuntu-latest
                       python: "3.13"
                       run_mode: "fast"
                     - os: ubuntu-latest

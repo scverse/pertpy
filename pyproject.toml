@@ -65,6 +65,7 @@ dependencies = [
     "pyarrow",
     "blitzgsea",
     "scikit-learn>=1.4",  # https://github.com/scverse/pertpy/issues/700
+    "fast-array-utils @ git+https://github.com/scverse/fast-array-utils",
     "lamin_utils",
 ]
 
@@ -112,6 +113,9 @@ test = [
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.coverage.run]
 source_pkgs = ["pertpy"]
