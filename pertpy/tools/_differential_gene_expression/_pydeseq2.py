@@ -42,7 +42,7 @@ class PyDESeq2(LinearModelBase):
             **kwargs: Keyword arguments specific to DeseqDataSet(), except for `n_cpus` which will use all available CPUs minus one if the argument is not passed.
         """
         try:
-            usable_cpus = len(os.sched_getaffinity(0))
+            usable_cpus = len(os.sched_getaffinity(0))  # type: ignore # os.sched_getaffinity is not available on Windows and macOS
         except AttributeError:
             usable_cpus = os.cpu_count()
 
