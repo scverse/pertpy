@@ -114,6 +114,9 @@ test = [
 [tool.hatch.version]
 source = "vcs"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.coverage.run]
 source_pkgs = ["pertpy"]
 omit = [
