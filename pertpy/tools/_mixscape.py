@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
+from fast_array_utils.stats import mean_var
 from scanpy import get
 from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
@@ -157,7 +158,6 @@ class Mixscape:
                         np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
                     )
                 else:
-                    is_sparse = issparse(X_control)
                     split_indices = np.where(split_mask)[0]
                     for i in range(0, n_split, batch_size):
                         size = min(i + batch_size, n_split)
@@ -168,10 +168,9 @@ class Mixscape:
 
                         size = size - i
 
-                        # sparse is very slow
                         means_batch = X_control[batch]
-                        means_batch = means_batch.toarray() if is_sparse else means_batch
-                        means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
+                        batch_reshaped = means_batch.reshape(size, n_neighbors, -1)
+                        means_batch, _ = mean_var(batch_reshaped, axis=1)
 
                         adata.layers["X_pert"][split_batch] = (
                             np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
@@ -310,7 +309,6 @@ class Mixscape:
                     de_genes_indices = self._get_column_indices(adata, list(de_genes))
 
                     dat = X[np.asarray(all_cells)][:, de_genes_indices]
-                    dat_cells = all_cells[all_cells].index
                     if scale:
                         dat = sc.pp.scale(dat)
 
@@ -331,7 +329,7 @@ class Mixscape:
 
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
-                            pvec = np.dot(dat.toarray(), vec) / np.dot(vec, vec)
+                            pvec = dat.dot(vec) / np.dot(vec, vec)
                         else:
                             pvec = np.dot(dat, vec) / np.dot(vec, vec)
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
@@ -351,7 +349,7 @@ class Mixscape:
                             n_components=2,
                             covariance_type="spherical",
                             means_init=means_init,
-                            precisions_init=1 / (std_init ** 2),
+                            precisions_init=1 / (std_init**2),
                             random_state=random_state,
                             max_iter=5000,
                             fixed_means=[pvec[nt_cells].mean(), None],
@@ -549,7 +547,9 @@ class Mixscape:
             )
             # get DE genes for each target gene
             for gene in gene_targets:
-                logfc_threshold_mask = np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
+                logfc_threshold_mask = (
+                    np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
+                )
                 de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
                 pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
                 de_genes = de_genes[pvals_adj < pval_cutoff]
@@ -1186,13 +1186,14 @@ class Mixscape:
         plt.show()
         return None
 
+
 class MixscapeGaussianMixture(GaussianMixture):
     def __init__(
         self,
         n_components: int,
-        fixed_means:  Sequence[float] | None = None,
+        fixed_means: Sequence[float] | None = None,
         fixed_covariances: Sequence[float] | None = None,
-        **kwargs
+        **kwargs,
     ):
         """Custom Gaussian Mixture Model where means and covariances can be fixed for specific components.
 
@@ -1221,4 +1222,3 @@ class MixscapeGaussianMixture(GaussianMixture):
                     self.covariances_[i] = self.fixed_covariances[i]
 
         return self
-
