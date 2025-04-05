@@ -35,7 +35,15 @@ if TYPE_CHECKING:
 class Dialogue:
     """Python implementation of DIALOGUE"""
 
-    def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int, feature_space_key: str = "X_pca", n_components: int = 50):
+    def __init__(
+        self,
+        sample_id: str,
+        celltype_key: str,
+        n_counts_key: str,
+        n_mpcs: int,
+        feature_space_key: str = "X_pca",
+        n_components: int = 50,
+    ):
         """Constructor for Dialogue.
 
         Args:
@@ -87,7 +95,9 @@ class Dialogue:
         return pseudobulk
 
     def _pseudobulk_feature_space(
-        self, adata: AnnData, groupby: str,
+        self,
+        adata: AnnData,
+        groupby: str,
     ) -> pd.DataFrame:
         """Return Cell-averaged components from a passed feature space.
 
@@ -103,7 +113,7 @@ class Dialogue:
         aggr = {}
         for category in adata.obs.loc[:, groupby].cat.categories:
             temp = adata.obs.loc[:, groupby] == category
-            aggr[category] = adata[temp].obsm[self.feature_space_key][:, :self.n_components].mean(axis=0)
+            aggr[category] = adata[temp].obsm[self.feature_space_key][:, : self.n_components].mean(axis=0)
         aggr = pd.DataFrame(aggr)
         return aggr
 
@@ -525,7 +535,7 @@ class Dialogue:
 
             # This is basically DIALOGUE 3 now
             pre_r_scores = {
-                ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws_dict[ct]
+                ct: ct_subs[ct].obsm[self.feature_space_key][:, : self.n_components] @ ws_dict[ct]
                 for i, ct in enumerate(ct_subs.keys())
                 # TODO This is a recalculation and not a new calculation
             }
@@ -658,7 +668,7 @@ class Dialogue:
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         pre_r_scores = {
-            ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws[i]
+            ct: ct_subs[ct].obsm[self.feature_space_key][:, : self.n_components] @ ws[i]
             for i, ct in enumerate(cell_types)
         }
 

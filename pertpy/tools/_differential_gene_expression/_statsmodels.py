@@ -62,4 +62,3 @@ class Statsmodels(LinearModelBase):
             .sort_values("p_value")
             .assign(adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1])
         )
-

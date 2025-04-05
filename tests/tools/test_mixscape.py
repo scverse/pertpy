@@ -5,9 +5,8 @@ import numpy as np
 import pandas as pd
 import pertpy as pt
 import pytest
-from scipy import sparse
-
 from pertpy.tools._mixscape import MixscapeGaussianMixture
+from scipy import sparse
 
 CWD = Path(__file__).parent.resolve()
 
@@ -51,7 +50,7 @@ def adata():
     # obs for random AnnData
     gene_target = {"gene_target": ["NT"] * num_cells_per_group + ["target_gene_a"] * num_cells_per_group * 2}
     gene_target = pd.DataFrame(gene_target)
-    label = {"label": ["control"] * num_cells_per_group + ["treatment"] * num_cells_per_group* 2 }
+    label = {"label": ["control"] * num_cells_per_group + ["treatment"] * num_cells_per_group * 2}
     label = pd.DataFrame(label)
     obs = pd.concat([gene_target, label], axis=1)
     obs = obs.set_index(np.arange(num_cells_per_group * 3))
@@ -162,9 +161,9 @@ def test_deterministic_perturbation_signature():
         adata.layers["X_pert"][obs["cell_class"] == "KO"], -np.concatenate([pert_effect] * len(groups), axis=0)
     )
 
-    
+
 def test_mixscape_gaussian_mixture():
-    X = np.random.rand(100)
+    X = np.random.default_rng().rand(100)
 
     fixed_means = [0.2, None]
     fixed_covariances = [None, 0.1]

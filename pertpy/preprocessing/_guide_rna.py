@@ -9,40 +9,44 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+from anndata import AnnData
 from rich.progress import track
+from scanpy.get import _get_obs_rep, _set_obs_rep
 from scipy.sparse import issparse
 
+from pertpy._compat import methdispatch
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.preprocessing._guide_rna_mixture import PoissonGaussMixture
+from pertpy.types import CSRBase
 
 if TYPE_CHECKING:
-    from anndata import AnnData
     from matplotlib.pyplot import Figure
 
 
 class GuideAssignment:
     """Assign cells to guide RNAs."""
 
+    @methdispatch
     def assign_by_threshold(
         self,
-        adata: AnnData,
+        data,
+        /,
+        *,
         assignment_threshold: float,
         layer: str | None = None,
         output_layer: str = "assigned_guides",
-        only_return_results: bool = False,
-    ) -> np.ndarray | None:
+    ):
         """Simple threshold based gRNA assignment function.
 
         Each cell is assigned to gRNA with at least `assignment_threshold` counts.
         This function expects unnormalized data as input.
 
         Args:
-            adata: AnnData object containing gRNA values.
+            data: AnnData object containing gRNA values.
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
             output_layer: Assigned guide will be saved on adata.layers[output_key].
-            only_return_results: Whether to input AnnData is not modified and the result is returned as an :class:`np.ndarray`.
 
         Examples:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell.
@@ -53,17 +57,30 @@ class GuideAssignment:
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
         """
-        counts = adata.X if layer is None else adata.layers[layer]
-        if scipy.sparse.issparse(counts):
-            counts = counts.toarray()
+        raise NotImplementedError(f"No implementation found for {type(data)}")
 
-        assigned_grnas = np.where(counts >= assignment_threshold, 1, 0)
-        assigned_grnas = scipy.sparse.csr_matrix(assigned_grnas)
-        if only_return_results:
-            return assigned_grnas
-        adata.layers[output_layer] = assigned_grnas
+    @assign_by_threshold.register(AnnData)
+    def _assign_by_threshold_anndata(
+        self,
+        adata: AnnData,
+        /,
+        *,
+        assignment_threshold: float,
+        layer: str | None = None,
+        output_layer: str = "assigned_guides",
+    ) -> None:
+        X = _get_obs_rep(adata, layer=layer)
+        guide_assignments = self.assign_by_threshold(X, assignment_threshold=assignment_threshold)
+        _set_obs_rep(adata, guide_assignments, layer=output_layer)
 
-        return None
+    @assign_by_threshold.register(CSRBase)
+    def _assign_by_threshold_sparse(self, X: CSRBase, /, *, assignment_threshold: float) -> CSRBase:
+        data = np.where(X.data >= assignment_threshold, 1, 0)
+        return scipy.sparse.csr_matrix((data, X.indices, X.indptr), shape=X.shape)
+
+    @assign_by_threshold.register(np.ndarray)
+    def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
+        return np.where(X >= assignment_threshold, 1, 0)
 
     def assign_to_max_guide(
         self,
