@@ -48,7 +48,7 @@ def tiny_sparse_adata():
     )
 
 
-@pytest.mark.parametrize("adata", ["tiny_dense_adata", "tiny_sparse_adata"])
+@pytest.mark.parametrize("adata_fixture", ["tiny_dense_adata", "tiny_sparse_adata"])
 def test_grna_threshold_assignment_parameterized(request, adata_fixture):
     adata = request.getfixturevalue(adata_fixture)
     threshold = 5

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from functools import singledispatchmethod
 from typing import TYPE_CHECKING, Literal
 from warnings import warn
 
@@ -14,7 +15,6 @@ from rich.progress import track
 from scanpy.get import _get_obs_rep, _set_obs_rep
 from scipy.sparse import issparse
 
-from pertpy._compat import methdispatch
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.preprocessing._guide_rna_mixture import PoissonGaussMixture
 from pertpy.types import CSRBase
@@ -26,10 +26,10 @@ if TYPE_CHECKING:
 class GuideAssignment:
     """Assign cells to guide RNAs."""
 
-    @methdispatch
+    @singledispatchmethod
     def assign_by_threshold(
         self,
-        data,
+        data: AnnData | np.ndarray | CSRBase,
         /,
         *,
         assignment_threshold: float,
@@ -42,7 +42,8 @@ class GuideAssignment:
         This function expects unnormalized data as input.
 
         Args:
-            data: AnnData object containing gRNA values.
+            data: The (annotated) data matrix of shape `n_obs` × `n_vars`.
+                  Rows correspond to cells and columns to genes.
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
