@@ -512,7 +512,7 @@ class Mixscape:
         logfc_threshold: float,
         test_method: str,
     ) -> dict[tuple, np.ndarray]:
-        """Determine gene sets across all splits/groups through differential gene expression
+        """Determine gene sets across all splits/groups through differential gene expression.
 
         Args:
             adata: :class:`~anndata.AnnData` object
@@ -571,7 +571,7 @@ class Mixscape:
         return indices
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_barplot(  # pragma: no cover
+    def plot_barplot(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         guide_rna_column: str,
@@ -678,7 +678,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_heatmap(  # pragma: no cover
+    def plot_heatmap(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         labels: str,
@@ -748,7 +748,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_perturbscore(  # pragma: no cover
+    def plot_perturbscore(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         labels: str,
@@ -914,7 +914,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_violin(  # pragma: no cover
+    def plot_violin(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         target_gene_idents: str | list[str],
@@ -1116,7 +1116,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_lda(  # pragma: no cover
+    def plot_lda(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         control: str,
@@ -1135,13 +1135,16 @@ class Mixscape:
         """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
-            adata: The annotated data object.
+            adata: The annotated data objectplot_heatmap.
             control: Control category from the `pert_key` column.
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
-            lda_key: If not specified, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
+            lda_key: If not specified, lda looks .uns["mixscape_lda"] for the LDA results.
+            color_map: Matplotlib color map.
+            palette: Matplotlib palette.
+            ax: Matplotlib axes.
             {common_plot_args}
             **kwds: Additional arguments to `scanpy.pl.umap`.
 

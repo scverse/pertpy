@@ -567,7 +567,7 @@ class Milo:
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
 
     def build_nhood_graph(self, mdata: MuData, basis: str = "X_umap", feature_key: str | None = "rna"):
-        """Build graph of neighbourhoods used for visualization of DA results
+        """Build graph of neighbourhoods used for visualization of DA results.
 
         Args:
             mdata: MuData object
@@ -652,7 +652,7 @@ class Milo:
     def _setup_rpy2(
         self,
     ):
-        """Set up rpy2 to run edgeR"""
+        """Set up rpy2 to run edgeR."""
         from rpy2.robjects import numpy2ri, pandas2ri
         from rpy2.robjects.packages import importr
 
@@ -715,7 +715,7 @@ class Milo:
         sample_adata.var.loc[keep_nhoods, "SpatialFDR"] = adjp
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_nhood_graph(
+    def plot_nhood_graph(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         *,
@@ -730,7 +730,7 @@ class Milo:
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
-        """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding)
+        """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding).
 
         Args:
             mdata: MuData object
@@ -808,7 +808,7 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_nhood(
+    def plot_nhood(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         ix: int,
@@ -869,7 +869,7 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_da_beeswarm(
+    def plot_da_beeswarm(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         *,
@@ -880,7 +880,7 @@ class Milo:
         palette: str | Sequence[str] | dict[str, str] | None = None,
         return_fig: bool = False,
     ) -> Figure | None:
-        """Plot beeswarm plot of logFC against nhood labels
+        """Plot beeswarm plot of logFC against nhood labels.
 
         Args:
             mdata: MuData object
@@ -995,7 +995,7 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_nhood_counts_by_cond(
+    def plot_nhood_counts_by_cond(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         test_var: str,

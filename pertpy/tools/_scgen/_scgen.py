@@ -343,6 +343,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                    AnnData object used to initialize the model.
             indices: Indices of cells in adata to use. If `None`, all cells are used.
             batch_size: Minibatch size for data loading into model. Defaults to `scvi.settings.batch_size`.
+            give_mean: Whether to return the mean
+            n_samples: The number of samples to use.
 
         Returns:
             Low-dimensional representation for each cell
@@ -375,7 +377,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
 
         return self.module.as_numpy_array(latent)
 
-    def plot_reg_mean_plot(
+    def plot_reg_mean_plot(  # pragma: no cover # noqa: D417
         self,
         adata,
         condition_key: str,
@@ -516,7 +518,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         else:
             return r_value**2
 
-    def plot_reg_var_plot(
+    def plot_reg_var_plot(  # pragma: no cover # noqa: D417
         self,
         adata,
         condition_key: str,
@@ -645,7 +647,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             return r_value**2
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_binary_classifier(
+    def plot_binary_classifier(  # pragma: no cover # noqa: D417
         self,
         scgen: Scgen,
         adata: AnnData | None,
@@ -665,7 +667,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         Args:
             scgen: ScGen object that was trained.
             adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
-                   AnnData object used to initialize the model. Must have been setup with `batch_key` and `labels_key`,
+                   AnnData object used to initialize the model. Must have been set up with `batch_key` and `labels_key`,
                    corresponding to batch and cell type metadata, respectively.
             delta: Difference between stimulated and control cells in latent space
             ctrl_key: Key for `control` part of the `data` found in `condition_key`.

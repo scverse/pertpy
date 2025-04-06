@@ -150,12 +150,13 @@ class GuideAssignment:
         Args:
             adata: AnnData object containing gRNA values.
             model: The model to use for the mixture model. Currently only `Poisson_Gauss_Mixture` is supported.
-            output_key: Assigned guide will be saved on adata.obs[output_key].
+            assigned_guides_key: Assigned guide will be saved on adata.obs[output_key].
             no_grna_assigned_key: The key to return if a cell is negative for all gRNAs.
             max_assignments_per_cell: The maximum number of gRNAs that can be assigned to a cell.
             multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
             multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
             only_return_results: Whether input AnnData is not modified and the result is returned as an np.ndarray.
+            uns_key: Key to store guide assignment parameters in.
             show_progress: Whether to shows progress bar.
             mixture_model_kwargs: Are passed to the mixture model.
 
@@ -218,7 +219,7 @@ class GuideAssignment:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_heatmap(
+    def plot_heatmap(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         *,

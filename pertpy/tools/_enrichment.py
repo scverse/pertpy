@@ -293,7 +293,7 @@ class Enrichment:
         return enrichment
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_dotplot(
+    def plot_dotplot(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         *,

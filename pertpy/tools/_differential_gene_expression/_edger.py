@@ -10,7 +10,7 @@ from ._checks import check_is_integer_matrix
 
 
 class EdgeR(LinearModelBase):
-    """Differential expression test using EdgeR"""
+    """Differential expression test using EdgeR."""
 
     def _check_counts(self):
         check_is_integer_matrix(self.data)
@@ -72,8 +72,8 @@ class EdgeR(LinearModelBase):
         ro.globalenv["fit"] = fit
         self.fit = fit
 
-    def _test_single_contrast(self, contrast: Sequence[float], **kwargs) -> pd.DataFrame:
-        """Conduct test for each contrast and return a data frame
+    def _test_single_contrast(self, contrast: Sequence[float], **kwargs) -> pd.DataFrame:  # noqa: D417
+        """Conduct test for each contrast and return a data frame.
 
         Args:
             contrast: numpy array of integars indicating contrast i.e. [-1, 0, 1, 0, 0]

@@ -83,8 +83,7 @@ class DistanceTest:
         contrast: str,
         show_progressbar: bool = True,
     ) -> pd.DataFrame:
-        """Run a permutation test using the specified distance metric, testing
-        all groups of cells against a specified contrast group ("control").
+        """Run a permutation test using the specified distance metric, testing all groups of cells against a specified contrast group ("control").
 
         Args:
             adata: Annotated data matrix.

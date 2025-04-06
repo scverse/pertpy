@@ -10,7 +10,7 @@ from ._checks import check_is_numeric_matrix
 
 
 class Statsmodels(LinearModelBase):
-    """Differential expression test using a statsmodels linear regression"""
+    """Differential expression test using a statsmodels linear regression."""
 
     def _check_counts(self):
         check_is_numeric_matrix(self.data)

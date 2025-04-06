@@ -201,6 +201,7 @@ class Distance:
         Args:
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
+            kwargs: Passed to the metric function.
 
         Returns:
             float: Distance between X and Y.
@@ -239,6 +240,7 @@ class Distance:
             Y: Second vector of shape (n_samples, n_features).
             n_bootstrap: Number of bootstrap samples.
             random_state: Random state for bootstrapping.
+            **kwargs: Passed to the metric function.
 
         Returns:
             MeanVar: Mean and variance of distance between X and Y.
@@ -618,6 +620,7 @@ class AbstractDistance(ABC):
         Args:
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
+            kwargs: Passed to the metrics function.
 
         Returns:
             float: Distance between X and Y.
@@ -630,8 +633,8 @@ class AbstractDistance(ABC):
 
         Args:
             P: Pairwise distance matrix of shape (n_samples, n_samples).
-            idx: Boolean array of shape (n_samples,) indicating which
-            samples belong to X (or Y, since each metric is symmetric).
+            idx: Boolean array of shape (n_samples,) indicating which samples belong to X (or Y, since each metric is symmetric).
+            kwargs: Passed to the metrics function.
 
         Returns:
             float: Distance between X and Y.
@@ -881,7 +884,7 @@ class R2ScoreDistance(AbstractDistance):
 
 
 class SymmetricKLDivergence(AbstractDistance):
-    """Average of symmetric KL divergence between gene distributions of two groups
+    """Average of symmetric KL divergence between gene distributions of two groups.
 
     Assuming a Gaussian distribution for each gene in each group, calculates
     the KL divergence between them and averages over all genes. Repeats this ABBA to get a symmetrized distance.
@@ -908,7 +911,7 @@ class SymmetricKLDivergence(AbstractDistance):
 
 
 class TTestDistance(AbstractDistance):
-    """Average of T test statistic between two groups assuming unequal variances"""
+    """Average of T test statistic between two groups assuming unequal variances."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -932,7 +935,7 @@ class TTestDistance(AbstractDistance):
 
 
 class KSTestDistance(AbstractDistance):
-    """Average of two-sided KS test statistic between two groups"""
+    """Average of two-sided KS test statistic between two groups."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -949,10 +952,7 @@ class KSTestDistance(AbstractDistance):
 
 
 class NBLL(AbstractDistance):
-    """
-    Average of Log likelihood (scalar) of group B cells
-    according to a NB distribution fitted over group A
-    """
+    """Average of Log likelihood (scalar) of group B cells according to a NB distribution fitted over group A."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -1163,9 +1163,11 @@ class MeanVarDistributionDistance(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         """Difference of mean-var distributions in 2 matrices.
+
         Args:
             X: Normalized and log transformed cells x genes count matrix.
             Y: Normalized and log transformed cells x genes count matrix.
+            kwargs: Passed to the metrics function.
         """
         mean_x, var_x = self._mean_var(X, log=True)
         mean_y, var_y = self._mean_var(Y, log=True)
