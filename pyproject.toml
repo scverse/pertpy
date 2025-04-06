@@ -73,7 +73,7 @@ dependencies = [
 coda = [
     "toytree",
     "arviz",
-    "ete3",
+    "ete4",
     "pyqt6"
 ]
 de = [
@@ -168,7 +168,7 @@ select = [
     "E",  # Error detected by Pycodestyle
     "W",  # Warning detected by Pycodestyle
     "I",  # isort
-    #"D",  # pydocstyle
+    "D",  # pydocstyle
     "B",  # flake8-bugbear
     "TID",  # flake8-tidy-imports
     "C4",  # flake8-comprehensions

@@ -1,4 +1,4 @@
-"""Simple tests such as t-test, wilcoxon"""
+"""Simple tests such as t-test, wilcoxon."""
 
 import warnings
 from abc import abstractmethod
@@ -152,7 +152,7 @@ class WilcoxonTest(SimpleComparisonBase):
 
 
 class TTest(SimpleComparisonBase):
-    """Perform a unpaired or paired T-test"""
+    """Perform a unpaired or paired T-test."""
 
     @staticmethod
     def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> float:

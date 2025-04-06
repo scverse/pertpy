@@ -23,8 +23,7 @@ from pertpy.tools._differential_gene_expression._checks import check_is_numeric_
 
 class MethodBase(ABC):
     def __init__(self, adata, *, mask=None, layer=None, **kwargs):
-        """
-        Initialize the method.
+        """Initialize the method.
 
         Args:
             adata: AnnData object, usually pseudobulked.
@@ -62,8 +61,7 @@ class MethodBase(ABC):
         fit_kwargs=MappingProxyType({}),
         test_kwargs=MappingProxyType({}),
     ):
-        """
-        Compare between groups in a specified column.
+        """Compare between groups in a specified column.
 
         Args:
             adata: AnnData object.
@@ -100,7 +98,7 @@ class MethodBase(ABC):
         ...
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_volcano(
+    def plot_volcano(  # pragma: no cover # noqa: D417
         self,
         data: pd.DataFrame | ad.AnnData,
         *,
@@ -188,8 +186,7 @@ class MethodBase(ABC):
             colors = ["gray", "#D62728", "#1F77B4"]
 
         def _pval_reciprocal(lfc: float) -> float:
-            """
-            Function for relating -log10(pvalue) and logfoldchange in a reciprocal.
+            """Function for relating -log10(pvalue) and logfoldchange in a reciprocal.
 
             Used for plotting the S-curve
             """
@@ -211,8 +208,7 @@ class MethodBase(ABC):
             pval_thresh: float = None,
             s_curve: bool = False,
         ) -> str:
-            """
-            Map genes to categorize based on log2fc and pvalue.
+            """Map genes to categorize based on log2fc and pvalue.
 
             These categories are used for coloring the dots.
             Used when no color_dict is passed, sets up/down/nonsignificant.
@@ -247,8 +243,7 @@ class MethodBase(ABC):
             s_curve: bool = False,
             symbol_col: str = None,
         ) -> str:
-            """
-            Map genes to categorize based on log2fc and pvalue.
+            """Map genes to categorize based on log2fc and pvalue.
 
             These categories are used for coloring the dots.
             Used when color_dict is passed, sets DE / not DE for background and user supplied highlight genes.
@@ -489,7 +484,7 @@ class MethodBase(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_paired(
+    def plot_paired(  # pragma: no cover # noqa: D417
         self,
         adata: ad.AnnData,
         results_df: pd.DataFrame,
@@ -682,7 +677,7 @@ class MethodBase(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_fold_change(
+    def plot_fold_change(  # pragma: no cover # noqa: D417
         self,
         results_df: pd.DataFrame,
         *,
@@ -763,7 +758,7 @@ class MethodBase(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_multicomparison_fc(
+    def plot_multicomparison_fc(  # pragma: no cover # noqa: D417
         self,
         results_df: pd.DataFrame,
         *,
@@ -1013,7 +1008,7 @@ class LinearModelBase(MethodBase):
             )
         return self.formulaic_contrasts.cond(**kwargs)
 
-    def contrast(self, *args, **kwargs):
+    def contrast(self, *args, **kwargs):  # noqa: D417
         """Build a simple contrast for pairwise comparisons.
 
         Args:

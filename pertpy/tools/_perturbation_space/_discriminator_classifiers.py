@@ -35,9 +35,7 @@ class LRClassifierSpace(PerturbationSpace):
         test_split_size: float = 0.2,
         max_iter: int = 1000,
     ):
-        """
-        Fits a logistic regression model to the data and takes the coefficients of the logistic regression
-        model as perturbation embedding.
+        """Fits a logistic regression model to the data and takes the coefficients of the logistic regression model as perturbation embedding.
 
         Args:
             adata: AnnData object of size cells x genes
@@ -308,9 +306,7 @@ class MLPClassifierSpace(PerturbationSpace):
 
 
 class MLP(torch.nn.Module):
-    """
-    A multilayer perceptron with ReLU activations, optional Dropout and optional BatchNorm.
-    """
+    """A multilayer perceptron with ReLU activations, optional Dropout and optional BatchNorm."""
 
     def __init__(
         self,
@@ -320,7 +316,8 @@ class MLP(torch.nn.Module):
         layer_norm: bool = False,
         last_layer_act: str = "linear",
     ) -> None:
-        """
+        """Multilayer perceptron with ReLU activations, optional Dropout and optional BatchNorm.
+
         Args:
             sizes: size of layers.
             dropout: Dropout probability.
@@ -375,8 +372,8 @@ def init_weights(m):
 
 
 class PLDataset(Dataset):
-    """
-    Dataset for perturbation classification.
+    """Dataset for perturbation classification.
+
     Needed for training a model that classifies the perturbed cells and takes as perturbation embedding the second to last layer.
     """
 
@@ -387,14 +384,14 @@ class PLDataset(Dataset):
         label_col: str = "perturbations",
         layer_key: str = None,
     ):
-        """
+        """PyTorch lightning Dataset for perturbation classification.
+
         Args:
             adata: AnnData object with observations and labels.
             target_col: key with the perturbation labels numerically encoded.
             label_col: key with the perturbation labels.
-            layer_key: key of the layer to be used as data, otherwise .X
+            layer_key: key of the layer to be used as data, otherwise .X.
         """
-
         if layer_key:
             self.data = adata.layers[layer_key]
         else:
@@ -407,7 +404,7 @@ class PLDataset(Dataset):
         return self.data.shape[0]
 
     def __getitem__(self, idx):
-        """Returns a sample and corresponding perturbations applied (labels)"""
+        """Returns a sample and corresponding perturbations applied (labels)."""
         sample = self.data[idx].toarray().squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
         num_label = self.labels.iloc[idx]
         str_label = self.pert_labels.iloc[idx]
@@ -428,7 +425,8 @@ class PerturbationClassifier(pl.LightningModule):
         lr=1e-4,
         seed=42,
     ):
-        """
+        """Perturbation Classifier.
+
         Args:
             model: model to be trained
             batch_size: batch size
@@ -438,7 +436,7 @@ class PerturbationClassifier(pl.LightningModule):
             layer_norm: whether to apply layer norm
             last_layer_act: activation function of last layer
             lr: learning rate
-            seed: random seed
+            seed: random seed.
         """
         super().__init__()
         self.batch_size = batch_size
@@ -457,16 +455,37 @@ class PerturbationClassifier(pl.LightningModule):
             last_layer_act=self.hparams.last_layer_act,
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through the network.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            Network output tensor
+        """
         x = self.net(x)
         return x
 
-    def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr, weight_decay=0.1)
+    def configure_optimizers(self) -> optim.Adam:
+        """Configure optimizer for the model.
 
+        Returns:
+            Adam optimizer with weight decay
+        """
+        optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr, weight_decay=0.1)
         return optimizer
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
+        """Perform a training step.
+
+        Args:
+            batch: Tuple of (input, target, metadata)
+            batch_idx: Index of the current batch
+
+        Returns:
+            Loss value
+        """
         x, y, _ = batch
         x = x.to(torch.float32)
 
@@ -480,7 +499,16 @@ class PerturbationClassifier(pl.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
+        """Perform a validation step.
+
+        Args:
+            batch: Tuple of (input, target, metadata)
+            batch_idx: Index of the current batch
+
+        Returns:
+            Loss value
+        """
         x, y, _ = batch
         x = x.to(torch.float32)
 
@@ -494,7 +522,16 @@ class PerturbationClassifier(pl.LightningModule):
 
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
+        """Perform a test step.
+
+        Args:
+            batch: Tuple of (input, target, metadata)
+            batch_idx: Index of the current batch
+
+        Returns:
+            Loss value
+        """
         x, y, _ = batch
         x = x.to(torch.float32)
 
@@ -508,15 +545,29 @@ class PerturbationClassifier(pl.LightningModule):
 
         return loss
 
-    def embedding(self, x):
-        """
-        Inputs:
-            x: Input features of shape [Batch, SeqLen, 1]
+    def embedding(self, x: torch.Tensor) -> torch.Tensor:
+        """Extract embeddings from input features.
+
+        Args:
+            x: Input tensor of shape [Batch, SeqLen, 1]
+
+        Returns:
+            Embedded representation of the input
         """
         x = self.net.embedding(x)
         return x
 
-    def get_embeddings(self, batch):
+    def get_embeddings(
+        self, batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Extract embeddings from a batch.
+
+        Args:
+            batch: Tuple of (input, target, metadata)
+
+        Returns:
+            Tuple of (embeddings, metadata)
+        """
         x, _, y = batch
         x = x.to(torch.float32)
 

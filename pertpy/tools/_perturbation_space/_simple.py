@@ -53,7 +53,6 @@ class CentroidSpace(PerturbationSpace):
             >>> cs = pt.tl.CentroidSpace()
             >>> cs_adata = cs.compute(mdata["rna"], target_col="gene_target")
         """
-
         X = None
         if layer_key is not None and embedding_key is not None:
             raise ValueError("Please, select just either layer or embedding for computation.")
@@ -176,7 +175,7 @@ class PseudobulkSpace(PerturbationSpace):
         return ps_adata
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_psbulk_samples(
+    def plot_psbulk_samples(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         groupby: str,
@@ -284,7 +283,7 @@ class KMeansSpace(ClusteringSpace):
 
 
 class DBSCANSpace(ClusteringSpace):
-    """Cluster the given data using DBSCAN"""
+    """Cluster the given data using DBSCAN."""
 
     def compute(  # type: ignore
         self,

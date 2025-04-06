@@ -16,7 +16,7 @@ from ._checks import check_is_integer_matrix
 
 
 class PyDESeq2(LinearModelBase):
-    """Differential expression test using a PyDESeq2"""
+    """Differential expression test using a PyDESeq2."""
 
     def __init__(
         self, adata: AnnData, design: str | ndarray, *, mask: str | None = None, layer: str | None = None, **kwargs

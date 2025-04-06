@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from functools import singledispatchmethod
 from typing import TYPE_CHECKING, Literal
 from warnings import warn
 
@@ -9,40 +10,44 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+from anndata import AnnData
 from rich.progress import track
+from scanpy.get import _get_obs_rep, _set_obs_rep
 from scipy.sparse import issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._types import CSRBase
 from pertpy.preprocessing._guide_rna_mixture import PoissonGaussMixture
 
 if TYPE_CHECKING:
-    from anndata import AnnData
     from matplotlib.pyplot import Figure
 
 
 class GuideAssignment:
     """Assign cells to guide RNAs."""
 
+    @singledispatchmethod
     def assign_by_threshold(
         self,
-        adata: AnnData,
+        data: AnnData | np.ndarray | CSRBase,
+        /,
+        *,
         assignment_threshold: float,
         layer: str | None = None,
         output_layer: str = "assigned_guides",
-        only_return_results: bool = False,
-    ) -> np.ndarray | None:
+    ):
         """Simple threshold based gRNA assignment function.
 
         Each cell is assigned to gRNA with at least `assignment_threshold` counts.
         This function expects unnormalized data as input.
 
         Args:
-            adata: AnnData object containing gRNA values.
+            data: The (annotated) data matrix of shape `n_obs` × `n_vars`.
+                  Rows correspond to cells and columns to genes.
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
             output_layer: Assigned guide will be saved on adata.layers[output_key].
-            only_return_results: Whether to input AnnData is not modified and the result is returned as an :class:`np.ndarray`.
 
         Examples:
             Each cell is assigned to gRNA that occurs at least 5 times in the respective cell.
@@ -53,17 +58,30 @@ class GuideAssignment:
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
         """
-        counts = adata.X if layer is None else adata.layers[layer]
-        if scipy.sparse.issparse(counts):
-            counts = counts.toarray()
+        raise NotImplementedError(f"No implementation found for {type(data)}")
 
-        assigned_grnas = np.where(counts >= assignment_threshold, 1, 0)
-        assigned_grnas = scipy.sparse.csr_matrix(assigned_grnas)
-        if only_return_results:
-            return assigned_grnas
-        adata.layers[output_layer] = assigned_grnas
+    @assign_by_threshold.register(AnnData)
+    def _assign_by_threshold_anndata(
+        self,
+        adata: AnnData,
+        /,
+        *,
+        assignment_threshold: float,
+        layer: str | None = None,
+        output_layer: str = "assigned_guides",
+    ) -> None:
+        X = _get_obs_rep(adata, layer=layer)
+        guide_assignments = self.assign_by_threshold(X, assignment_threshold=assignment_threshold)
+        _set_obs_rep(adata, guide_assignments, layer=output_layer)
 
-        return None
+    @assign_by_threshold.register(CSRBase)
+    def _assign_by_threshold_sparse(self, X: CSRBase, /, *, assignment_threshold: float) -> CSRBase:
+        data = np.where(X.data >= assignment_threshold, 1, 0)
+        return scipy.sparse.csr_matrix((data, X.indices, X.indptr), shape=X.shape)
+
+    @assign_by_threshold.register(np.ndarray)
+    def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
+        return np.where(X >= assignment_threshold, 1, 0)
 
     def assign_to_max_guide(
         self,
@@ -132,12 +150,13 @@ class GuideAssignment:
         Args:
             adata: AnnData object containing gRNA values.
             model: The model to use for the mixture model. Currently only `Poisson_Gauss_Mixture` is supported.
-            output_key: Assigned guide will be saved on adata.obs[output_key].
+            assigned_guides_key: Assigned guide will be saved on adata.obs[output_key].
             no_grna_assigned_key: The key to return if a cell is negative for all gRNAs.
             max_assignments_per_cell: The maximum number of gRNAs that can be assigned to a cell.
             multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
             multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
             only_return_results: Whether input AnnData is not modified and the result is returned as an np.ndarray.
+            uns_key: Key to store guide assignment parameters in.
             show_progress: Whether to shows progress bar.
             mixture_model_kwargs: Are passed to the mixture model.
 
@@ -200,7 +219,7 @@ class GuideAssignment:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_heatmap(
+    def plot_heatmap(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         *,

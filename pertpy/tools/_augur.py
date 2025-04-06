@@ -846,10 +846,10 @@ class Augur:
         between two conditions respectively compared to the control.
 
         Args:
-            augur1: Augurpy results from condition 1, obtained from `predict()[1]`
-            augur2: Augurpy results from condition 2, obtained from `predict()[1]`
-            permuted1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
-            permuted2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
+            augur_results1: Augurpy results from condition 1, obtained from `predict()[1]`
+            augur_results2: Augurpy results from condition 2, obtained from `predict()[1]`
+            permuted_results1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
+            permuted_results2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
             n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation.
             n_permutations: the total number of mean augur scores to calculate from a background distribution
 
@@ -972,7 +972,7 @@ class Augur:
         return delta
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_dp_scatter(
+    def plot_dp_scatter(  # pragma: no cover # noqa: D417
         self,
         results: pd.DataFrame,
         *,
@@ -1042,7 +1042,7 @@ class Augur:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_important_features(
+    def plot_important_features(  # pragma: no cover # noqa: D417
         self,
         data: dict[str, Any],
         *,
@@ -1108,7 +1108,7 @@ class Augur:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_lollipop(
+    def plot_lollipop(  # pragma: no cover # noqa: D417
         self,
         data: dict[str, Any] | AnnData,
         *,
@@ -1169,7 +1169,7 @@ class Augur:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_scatterplot(
+    def plot_scatterplot(  # pragma: no cover # noqa: D417
         self,
         results1: dict[str, Any],
         results2: dict[str, Any],

@@ -803,7 +803,7 @@ class CellLine(MetaData):
         return corr, pvals, new_corr, new_pvals
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_correlation(
+    def plot_correlation(  # noqa: D417
         self,
         adata: AnnData,
         corr: pd.DataFrame,

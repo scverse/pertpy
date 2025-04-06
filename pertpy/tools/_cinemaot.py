@@ -259,7 +259,9 @@ class Cinemaot:
 
         adata.obs_names_make_unique()
 
-        idx = self.get_weightidx(adata, pert_key=pert_key, control=control, k=k, use_rep=use_rep, resolution=resolution)
+        idx = self._get_weightidx(
+            adata, pert_key=pert_key, control=control, k=k, use_rep=use_rep, resolution=resolution
+        )
         adata_ = adata[idx].copy()
         TE = self.causaleffect(
             adata_,
@@ -388,9 +390,10 @@ class Cinemaot:
         dim = min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
         return dim
 
-    def get_weightidx(
+    def _get_weightidx(
         self,
         adata: AnnData,
+        *,
         pert_key: str,
         control: str,
         use_rep: str = "X_pca",
@@ -401,7 +404,8 @@ class Cinemaot:
 
         Args:
             adata: The annotated data object.
-            c: the parameter regarding the quadratic variance distribution. c=0 means Poisson count matrices.
+            pert_key: Key of the perturbation col.
+            control: Key of the control col.
             use_rep: the embedding used to give a upper bound for the estimated rank.
             k: the number of neighbors used in the k-NN matching phase.
             resolution: the clustering resolution used in the sampling phase.
@@ -413,7 +417,7 @@ class Cinemaot:
             >>> import pertpy as pt
             >>> adata = pt.dt.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
-            >>> idx = model.get_weightidx(adata, pert_key="perturbation", control="No stimulation")
+            >>> idx = model._get_weightidx(adata, pert_key="perturbation", control="No stimulation")
         """
         adata_ = adata.copy()
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]
@@ -643,7 +647,7 @@ class Cinemaot:
         return c_effect, s_effect
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_vis_matching(
+    def plot_vis_matching(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         de: AnnData,
@@ -671,9 +675,11 @@ class Cinemaot:
             de_label: the label for differential response. If none, use leiden cluster labels at resolution 1.0.
             source_label: the confounder / cell type label.
             matching_rep: the place that stores the matching matrix. default de.obsm['ot'].
+            resolution: Leiden resolution.
             normalize: normalize the coarse-grained matching matrix by row / column.
             title: the title for the figure.
             min_val: The min value to truncate the matching matrix.
+            ax: Matplotlib axes object.
             {common_plot_args}
             **kwargs: Other parameters to input for seaborn.heatmap.
 
@@ -723,10 +729,7 @@ class Cinemaot:
 
 
 class Xi:
-    """
-    A fast implementation of cross-rank dependence metric used in CINEMA-OT.
-
-    """
+    """A fast implementation of cross-rank dependence metric used in CINEMA-OT."""
 
     def __init__(self, x, y):
         self.x = x
@@ -803,7 +806,7 @@ class Xi:
 
     @property
     def correlation(self):
-        """xi correlation"""
+        """Xi correlation."""
         return 1 - self.mean_absolute / self.inverse_g_mean
 
     @classmethod
@@ -852,10 +855,7 @@ class Xi:
 
 
 class SinkhornKnopp:
-    """
-    An simple implementation of Sinkhorn iteration used in the biwhitening approach.
-
-    """
+    """An simple implementation of Sinkhorn iteration used in the biwhitening approach."""
 
     def __init__(self, max_iter: float = 1000, setr: int = 0, setc: float = 0, epsilon: float = 1e-3):
         if max_iter < 0:

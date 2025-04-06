@@ -22,11 +22,12 @@ class LookUp:
         type: Literal["cell_line", "moa", "compound", "drug"] = "cell_line",
         transfer_metadata: Sequence[pd.DataFrame] | None = None,
     ):
-        """
+        """Lookup object for different type of metadata.
+
         Args:
             type: Metadata type for annotation. One of 'cell_line', 'compound', 'moa' or 'drug.
             transfer_metadata: DataFrames used to generate Lookup object.
-                               This is currently set to None for CompoundMetaData which does not require any dataframes for transfer.
+                           This is currently set to None for CompoundMetaData which does not require any dataframes for transfer.
         """
         self.type = type
         if type == "cell_line":
@@ -421,7 +422,7 @@ class LookUp:
         reference_id: Literal["gene_id", "ensembl_gene_id", "hgnc_id", "hgnc_symbol"] = "ensembl_gene_id",
         query_id_list: Sequence[str] | None = None,
     ) -> None:
-        """A brief summary of gene annotation metadata
+        """A brief summary of gene annotation metadata.
 
         Args:
             reference_id: The type of gene identifier in the meta data, gene_id, ensembl_gene_id, hgnc_id, hgnc_symbol.

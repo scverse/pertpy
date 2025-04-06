@@ -198,7 +198,7 @@ class CompositionalModel2(ABC):
         *args,
         **kwargs,
     ):
-        """Background function that executes any numpyro MCMC algorithm and processes its results
+        """Background function that executes any numpyro MCMC algorithm and processes its results.
 
         Args:
             sample_adata: anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
@@ -294,6 +294,8 @@ class CompositionalModel2(ABC):
             num_warmup: Number of burn-in (warmup) samples.
             rng_key: The rng state used.
             copy: Return a copy instead of writing to adata.
+            *args: Additional args passed to numpyro NUTS
+            **kwargs: Additional kwargs passed to numpyro NUTS
 
         Returns:
             Calls `self.__run_mcmc`
@@ -347,6 +349,8 @@ class CompositionalModel2(ABC):
             num_warmup: Number of burn-in (warmup) samples.
             rng_key: The rng state used. If None, a random state will be selected.
             copy: Return a copy instead of writing to adata.
+            *args: Additional args passed to numpyro HMC
+            **kwargs: Additional kwargs passed to numpyro HMC
 
         Examples:
             >>> import pertpy as pt
@@ -396,7 +400,8 @@ class CompositionalModel2(ABC):
         self, sample_adata: AnnData, est_fdr: float = 0.05, *args, **kwargs
     ) -> tuple[pd.DataFrame, pd.DataFrame] | tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Generates summary dataframes for intercepts, effects and node-level effect (if using tree aggregation).
-            This function builds on and supports all functionalities from ``az.summary``.
+
+        This function builds on and supports all functionalities from ``az.summary``.
 
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
@@ -435,7 +440,7 @@ class CompositionalModel2(ABC):
                 - Delta: Decision boundary value - threshold of practical significance
                 - Is credible: Boolean indicator whether effect is credible
 
-         Examples:
+        Examples:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
@@ -737,7 +742,8 @@ class CompositionalModel2(ABC):
         node_df: pd.DataFrame,
     ) -> pd.DataFrame:
         """Evaluation of MCMC results for node-level effect parameters. This function is only used within self.summary_prepare.
-            This function determines whether node-level effects are credible or not
+
+        This function determines whether node-level effects are credible or not.
 
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
@@ -933,7 +939,7 @@ class CompositionalModel2(ABC):
                 console.print(table)
 
     def get_intercept_df(self, data: AnnData | MuData, modality_key: str = "coda"):
-        """Get intercept dataframe as printed in the extended summary
+        """Get intercept dataframe as printed in the extended summary.
 
         Args:
             data: AnnData object or MuData object.
@@ -964,7 +970,7 @@ class CompositionalModel2(ABC):
         return sample_adata.varm["intercept_df"]
 
     def get_effect_df(self, data: AnnData | MuData, modality_key: str = "coda"):
-        """Get effect dataframe as printed in the extended summary
+        """Get effect dataframe as printed in the extended summary.
 
         Args:
             data: AnnData object or MuData object.
@@ -1006,7 +1012,7 @@ class CompositionalModel2(ABC):
         return effect_df
 
     def get_node_df(self, data: AnnData | MuData, modality_key: str = "coda"):
-        """Get node effect dataframe as printed in the extended summary of a tascCODA model
+        """Get node effect dataframe as printed in the extended summary of a tascCODA model.
 
         Args:
             data: AnnData object or MuData object.
@@ -1030,7 +1036,6 @@ class CompositionalModel2(ABC):
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> node_effects = tasccoda.get_node_df(mdata)
         """
-
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]
@@ -1043,8 +1048,9 @@ class CompositionalModel2(ABC):
         return sample_adata.uns["scCODA_params"]["node_df"]
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
-        """Direct posterior probability approach to calculate credible effects while keeping the expected FDR at a certain level
-            Note: Does not work for spike-and-slab LASSO selection method
+        """Direct posterior probability approach to calculate credible effects while keeping the expected FDR at a certain level.
+
+        Note: Does not work for spike-and-slab LASSO selection method.
 
         Args:
             data: AnnData object or MuData object.
@@ -1079,7 +1085,8 @@ class CompositionalModel2(ABC):
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """Decides which effects of the scCODA model are credible based on an adjustable inclusion probability threshold.
-            Note: Parameter est_fdr has no effect for spike-and-slab LASSO selection method
+
+        Note: Parameter est_fdr has no effect for spike-and-slab LASSO selection method.
 
         Args:
             data: AnnData object or MuData object.
@@ -1188,7 +1195,7 @@ class CompositionalModel2(ABC):
         return ax
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_stacked_barplot(  # pragma: no cover
+    def plot_stacked_barplot(  # pragma: no cover # noqa: D417
         self,
         data: AnnData | MuData,
         feature_name: str,
@@ -1283,7 +1290,7 @@ class CompositionalModel2(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_effects_barplot(  # pragma: no cover
+    def plot_effects_barplot(  # pragma: no cover # noqa: D417
         self,
         data: AnnData | MuData,
         *,
@@ -1470,7 +1477,7 @@ class CompositionalModel2(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_boxplots(  # pragma: no cover
+    def plot_boxplots(  # pragma: no cover # noqa: D417
         self,
         data: AnnData | MuData,
         feature_name: str,
@@ -1702,7 +1709,7 @@ class CompositionalModel2(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_rel_abundance_dispersion_plot(  # pragma: no cover
+    def plot_rel_abundance_dispersion_plot(  # pragma: no cover # noqa: D417
         self,
         data: AnnData | MuData,
         *,
@@ -1823,13 +1830,13 @@ class CompositionalModel2(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_draw_tree(  # pragma: no cover
+    def plot_draw_tree(  # pragma: no cover # noqa: D417
         self,
         data: AnnData | MuData,
         *,
         modality_key: str = "coda",
         tree: str = "tree",  # Also type ete4.Tree. Omitted due to import errors
-        tight_text: bool | None = False,
+        tight_text: bool = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
         figsize: tuple[float, float] | None = (None, None),
@@ -1905,7 +1912,7 @@ class CompositionalModel2(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_draw_effects(  # pragma: no cover
+    def plot_draw_effects(  # pragma: no cover # noqa: D417
         self,
         data: AnnData | MuData,
         covariate: str,
@@ -2100,7 +2107,7 @@ class CompositionalModel2(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_effects_umap(  # pragma: no cover
+    def plot_effects_umap(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         effect_name: str | list | None,
@@ -2213,7 +2220,7 @@ class CompositionalModel2(ABC):
 def get_a(
     tree: tt.core.ToyTree,
 ) -> tuple[np.ndarray, int]:
-    """Calculate ancestor matrix from a toytree tree
+    """Calculate ancestor matrix from a toytree tree.
 
     Args:
         tree: A toytree tree object.
@@ -2291,10 +2298,10 @@ def collapse_singularities(tree: tt.core.ToyTree) -> tt.core.ToyTree:
     return tree_new
 
 
-def traverse(df_, a, i, innerl):
-    """
-    Helper function for df2newick
-    Adapted from https://stackoverflow.com/questions/15343338/how-to-convert-a-data-frame-to-tree-structure-object-such-as-dendrogram
+def traverse(df_: pd.DataFrame, a: str, i: int, innerl: bool) -> str:
+    """Helper function for df2newick.
+
+    Adapted from https://stackoverflow.com/questions/15343338/how-to-convert-a-data-frame-to-tree-structure-object-such-as-dendrogram.
     """
     if i + 1 < df_.shape[1]:
         a_inner = pd.unique(df_.loc[np.where(df_.iloc[:, i] == a)].iloc[:, i + 1])
