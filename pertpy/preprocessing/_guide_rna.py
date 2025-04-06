@@ -16,8 +16,8 @@ from scanpy.get import _get_obs_rep, _set_obs_rep
 from scipy.sparse import issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._types import CSRBase
 from pertpy.preprocessing._guide_rna_mixture import PoissonGaussMixture
-from pertpy.types import CSRBase
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Figure
