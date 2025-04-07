@@ -104,19 +104,19 @@ class SimpleComparisonBase(MethodBase):
         """Perform a comparison between groups.
 
         Args:
-            adata (AnnData): Data with observations to compare.
-            column (str): Column in `adata.obs` that contains the groups to compare.
-            baseline (str): Reference group.
-            groups_to_compare (str | Sequence[str]): Groups to compare against the baseline. If None, all other groups
+            adata: Data with observations to compare.
+            column: Column in `adata.obs` that contains the groups to compare.
+            baseline: Reference group.
+            groups_to_compare: Groups to compare against the baseline. If None, all other groups
                 are compared.
-            paired_by (str | None): Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
-            mask (str | None): Mask to apply to the data.
-            layer (str | None): Layer to use for the comparison.
-            n_permutations (int): Number of permutations to perform if a permutation test is used.
-            permutation_test_statistic (type[SimpleComparisonBase] | None): Test to use after permutation if a
-                permutation test is used.
-            fit_kwargs (Mapping): Not used for simple tests.
-            test_kwargs (Mapping): Additional kwargs passed to the test function.
+            paired_by: Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
+            mask: Mask to apply to the data.
+            layer: Layer to use for the comparison.
+            n_permutations: Number of permutations to perform if a permutation test is used.
+            permutation_test_statistic: The statistic to use if performing a permutation test. If None, the default
+                t-statistic from `TTest` is used.
+            fit_kwargs: Unused argument for compatibility with the `MethodBase` interface, do not specify.
+            test_kwargs: Additional kwargs passed to the test function.
         """
         if len(fit_kwargs):
             warnings.warn("fit_kwargs not used for simple tests.", UserWarning, stacklevel=2)
@@ -230,21 +230,6 @@ class PermutationTest(SimpleComparisonBase):
 
         This function relies on another test (e.g. WilcoxonTest) to generate a test statistic for each permutation.
 
-        .. code-block:: python
-            from pertpy.tools import PermutationTest, WilcoxonTest
-
-            # Using rank-sum statistic
-            p_value = PermutationTest._test(x0, x1, paired=True, test=WilcoxonTest, n_permutations=1000, rng=0)
-
-
-            # Using a custom test statistic
-            def compare_means(x0, x1, paired):
-                # paired logic not implemented here
-                return np.mean(x1) - np.mean(x0)
-
-
-            p_value = PermutationTest._test(x0, x1, paired=False, test=compare_means, n_permutations=1000, rng=0)
-
         Args:
             x0: Array with baseline values.
             x1: Array with values to compare.
@@ -254,11 +239,21 @@ class PermutationTest(SimpleComparisonBase):
                 parameter axis, vectorization will be used.
             n_permutations: Number of permutations to perform.
             **kwargs: kwargs passed to the permutation test function, not the test function after permutation.
+
+        Examples:
+            You can use the `PermutationTest` class to perform a permutation test with a custom test statistic or an
+            existing test statistic like `TTest`. The test statistic must be a class that implements the `_test` method
+            or a function that takes the arguments `x0`, `x1`, `paired` and `**kwargs`.
+
+            >>> from pertpy.tools import PermutationTest, TTest
+            >>> # Perform a permutation test with a t-statistic
+            >>> p_value = PermutationTest._test(x0, x1, paired=True, test=TTest, n_permutations=1000, rng=0)
+            >>> # Perform a permutation test with a custom test statistic
+            >>> p_value = PermutationTest._test(x0, x1, paired=False, test=your_custom_test_statistic)
         """
         if test_statistic is PermutationTest:
             raise ValueError(
-                "The `test_statistic` argument cannot be `PermutationTest`. Use a base test like `WilcoxonTest` or"
-                " `TTest`."
+                "The `test_statistic` argument cannot be `PermutationTest`. Use a base test like `TTest` or a custom test."
             )
 
         vectorized = hasattr(test_statistic, "_test") or "axis" in signature(test_statistic).parameters
