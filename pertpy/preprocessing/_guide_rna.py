@@ -11,6 +11,7 @@ import pandas as pd
 import scanpy as sc
 import scipy
 from anndata import AnnData
+from numba import njit, prange
 from rich.progress import track
 from scanpy.get import _get_obs_rep, _set_obs_rep
 from scipy.sparse import issparse
@@ -74,10 +75,19 @@ class GuideAssignment:
         guide_assignments = self.assign_by_threshold(X, assignment_threshold=assignment_threshold)
         _set_obs_rep(adata, guide_assignments, layer=output_layer)
 
+    @staticmethod
+    @njit(parallel=True)
+    def _threshold_sparse_numba(data: np.ndarray, threshold: float) -> np.ndarray:
+        out = np.zeros_like(data, dtype=np.int8)
+        for i in prange(data.shape[0]):
+            if data[i] >= threshold:
+                out[i] = 1
+        return out
+
     @assign_by_threshold.register(CSRBase)
     def _assign_by_threshold_sparse(self, X: CSRBase, /, *, assignment_threshold: float) -> CSRBase:
-        data = np.where(X.data >= assignment_threshold, 1, 0)
-        return scipy.sparse.csr_matrix((data, X.indices, X.indptr), shape=X.shape)
+        new_data = self._threshold_sparse_numba(X.data, assignment_threshold)
+        return scipy.sparse.csr_matrix((new_data, X.indices, X.indptr), shape=X.shape)
 
     @assign_by_threshold.register(np.ndarray)
     def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
