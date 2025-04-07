@@ -1467,6 +1467,7 @@ class CompositionalModel2(ABC):
                     ax=ax,
                 )
             cell_types = pd.unique(plot_df["Cell Type"])
+            ax.set_xticks(cell_types)
             ax.set_xticklabels(cell_types, rotation=90)
 
         if return_fig and plot_facets:
@@ -1682,6 +1683,7 @@ class CompositionalModel2(ABC):
                 )
 
             cell_types = pd.unique(plot_df["Cell type"])
+            ax.set_xticks(cell_types)
             ax.set_xticklabels(cell_types, rotation=90)
 
             if show_legend:
