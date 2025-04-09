@@ -72,6 +72,7 @@ Methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automethod:: {{ [objname, item] | join(".") }}
+
 {%- endif -%}
 {%- endfor %}
 
