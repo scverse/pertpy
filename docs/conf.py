@@ -23,7 +23,8 @@ github_repo = "pertpy"
 
 
 extensions = [
-    "myst_parser",
+    # "myst_parser",
+    "myst_nb",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
@@ -37,6 +38,7 @@ extensions = [
     "sphinx_gallery.load_style",
     "sphinx_remove_toctrees",
     "sphinx_design",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 # remove_from_toctrees = ["tutorials/notebooks/*", "api/reference/*"]
@@ -79,6 +81,7 @@ myst_enable_extensions = [
     "dollarmath",
     "amsmath",
 ]
+nb_execution_mode = "off"
 
 # The master toctree document.
 master_doc = "index"
@@ -86,19 +89,19 @@ master_doc = "index"
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
-    "matplotlib": ("https://matplotlib.org/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "python": ("https://docs.python.org/3", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
-    "torch": ("https://pytorch.org/docs/master/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "torch": ("https://pytorch.org/docs/main/", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
     "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
     "pyro": ("http://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),
     "flax": ("https://flax.readthedocs.io/en/latest/", None),
     "jax": ("https://jax.readthedocs.io/en/latest/", None),
-    "ete": ("https://etetoolkit.org/docs/latest/reference/index.html/", None),
+    "ete": ("https://etetoolkit.org/docs/latest/", None),
 }
 
 language = "en"
