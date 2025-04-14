@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
-from pynndescent import NNDescent
 from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
 from sklearn.base import ClassifierMixin
@@ -95,6 +94,7 @@ class PerturbationComparison:
             labels[-control.shape[0] :] = "ctrl"
             label_groups.append("ctrl")
 
+        from pynndescent import NNDescent
         index = NNDescent(
             index_data,
             n_neighbors=max(50, n_neighbors),
