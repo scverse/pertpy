@@ -9,12 +9,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import scipy
 from anndata import AnnData
 from numba import njit, prange
 from rich.progress import track
 from scanpy.get import _get_obs_rep, _set_obs_rep
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import CSRBase
@@ -87,7 +86,7 @@ class GuideAssignment:
     @assign_by_threshold.register(CSRBase)
     def _assign_by_threshold_sparse(self, X: CSRBase, /, *, assignment_threshold: float) -> CSRBase:
         new_data = self._threshold_sparse_numba(X.data, assignment_threshold)
-        return scipy.sparse.csr_matrix((new_data, X.indices, X.indptr), shape=X.shape)
+        return csr_matrix((new_data, X.indices, X.indptr), shape=X.shape)
 
     @assign_by_threshold.register(np.ndarray)
     def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
@@ -126,7 +125,7 @@ class GuideAssignment:
             >>> ga.assign_to_max_guide(gdo, assignment_threshold=5)
         """
         counts = adata.X if layer is None else adata.layers[layer]
-        if scipy.sparse.issparse(counts):
+        if issparse(counts):
             counts = counts.toarray()
 
         assigned_grna = np.where(
@@ -277,7 +276,7 @@ class GuideAssignment:
         data = adata.X if layer is None else adata.layers[layer]
 
         if order_by is None:
-            if scipy.sparse.issparse(data):
+            if issparse(data):
                 max_values = data.max(axis=1).toarray().squeeze()
                 data_argmax = data.argmax(axis=1).A.squeeze()
                 max_guide_index = np.where(max_values != data.min(axis=1).toarray().squeeze(), data_argmax, -1)

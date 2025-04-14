@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
 from lamin_utils import logger
@@ -34,6 +33,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
 from skmisc.loess import loess
+from statsmodels.api import OLS
 from statsmodels.stats.multitest import fdrcorrection
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -589,9 +589,9 @@ class Augur:
         sigma2_x = np.sum(np.power(loess1.outputs.fitted_residuals, 2)) / nobs
         sigma2_z = np.sum(np.power(loess2.outputs.fitted_residuals, 2)) / nobs
         yhat_x = loess1.outputs.fitted_values
-        res_dx = sm.OLS(yhat_x, z).fit()
+        res_dx = OLS(yhat_x, z).fit()
         err_zx = res_dx.resid
-        res_xzx = sm.OLS(err_zx, x).fit()
+        res_xzx = OLS(err_zx, x).fit()
         err_xzx = res_xzx.resid
 
         sigma2_zx = sigma2_x + np.dot(err_zx.T, err_zx) / nobs

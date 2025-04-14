@@ -7,12 +7,12 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy.stats as ss
-import seaborn as sns
 import sklearn.metrics
-from ott.geometry import pointcloud
+from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear import linear_problem
 from ott.solvers.linear import sinkhorn, sinkhorn_lr
 from scanpy.plotting import _utils
+from seaborn import heatmap
 from scipy.sparse import issparse
 from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
@@ -111,7 +111,7 @@ class Cinemaot:
             sklearn.metrics.pairwise_distances(cf1, cf2)
 
         e = smoothness * sum(xi < thres)
-        geom = pointcloud.PointCloud(cf1, cf2, epsilon=e, batch_size=batch_size)
+        geom = PointCloud(cf1, cf2, epsilon=e, batch_size=batch_size)
 
         if preweight_label is None:
             ot_prob = linear_problem.LinearProblem(geom, a=None, b=None)
@@ -719,7 +719,7 @@ class Cinemaot:
         else:
             df = (df.T / df.sum(axis=1)).T
 
-        g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
+        g = heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
 
         if return_fig:
