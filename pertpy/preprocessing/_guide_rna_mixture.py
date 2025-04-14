@@ -104,7 +104,7 @@ class MixtureModel(ABC):
 
         with plate("data", data.shape[0]):
             log_likelihoods = self.log_likelihood(data, params)
-            log_mixture_likelihood = scipy.special.logsumexp(log_likelihoods, axis=-1)
+            log_mixture_likelihood = logsumexp(log_likelihoods, axis=-1)
             sample("obs", Normal(log_mixture_likelihood, 1.0), obs=data)
 
     def assignment(self, samples: ParamsDict, data: ndarray) -> np.ndarray:
