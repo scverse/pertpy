@@ -4,9 +4,9 @@ import multiprocessing
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple
 
-import numba
 import numpy as np
 import pandas as pd
+from numba import jit
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
@@ -968,7 +968,7 @@ class NBLL(AbstractDistance):
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBLL distance only works for raw counts.")
 
-        @numba.jit(forceobj=True)
+        @jit(forceobj=True)
         def _compute_nll(y: np.ndarray, nb_params: tuple[float, float], epsilon: float) -> float:
             mu = np.exp(nb_params[0])
             theta = 1 / nb_params[1]

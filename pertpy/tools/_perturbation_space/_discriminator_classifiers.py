@@ -5,11 +5,11 @@ import warnings
 import anndata
 import numpy as np
 import pandas as pd
-import pytorch_lightning as pl
 import scipy
 import torch
 from anndata import AnnData
 from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning import Trainer, LightningModule
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
@@ -246,7 +246,7 @@ class MLPClassifierSpace(PerturbationSpace):
         # Save adata observations for embedding annotations in get_embeddings
         self.adata_obs = adata.obs.reset_index(drop=True)
 
-        self.trainer = pl.Trainer(
+        self.trainer = Trainer(
             min_epochs=1,
             max_epochs=max_epochs,
             check_val_every_n_epoch=val_epochs_check,
@@ -412,7 +412,7 @@ class PLDataset(Dataset):
         return sample, num_label, str_label
 
 
-class PerturbationClassifier(pl.LightningModule):
+class PerturbationClassifier(LightningModule):
     def __init__(
         self,
         model: torch.nn.Module,

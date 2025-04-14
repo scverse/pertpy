@@ -3,13 +3,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
-import jax
-import jax.numpy as jnp
 import numpy as np
-import numpyro
-import numpyro.distributions as dist
-from jax import random
+import jax.numpy as jnp
+from jax.random import PRNGKey
+from jax.scipy.special import logsumexp
+from numpyro import sample, plate, factor
 from numpyro.infer import MCMC, NUTS
+from numpyro.distributions import Normal, Exponential, Dirichlet, Poisson, HalfNormal
 
 ParamsDict = Mapping[str, jnp.ndarray]
 
@@ -76,7 +76,7 @@ class MixtureModel(ABC):
         """
         nuts_kernel = NUTS(self.mixture_model)
         mcmc = MCMC(nuts_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False)
-        mcmc.run(random.PRNGKey(seed), data=data)
+        mcmc.run(PRNGKey(seed), data=data)
         return mcmc
 
     def run_model(self, data: jnp.ndarray, seed: int = 0) -> np.ndarray:
@@ -102,10 +102,10 @@ class MixtureModel(ABC):
         """
         params = self.initialize_params()
 
-        with numpyro.plate("data", data.shape[0]):
+        with plate("data", data.shape[0]):
             log_likelihoods = self.log_likelihood(data, params)
-            log_mixture_likelihood = jax.scipy.special.logsumexp(log_likelihoods, axis=-1)
-            numpyro.sample("obs", dist.Normal(log_mixture_likelihood, 1.0), obs=data)
+            log_mixture_likelihood = logsumexp(log_likelihoods, axis=-1)
+            sample("obs", Normal(log_mixture_likelihood, 1.0), obs=data)
 
     def assignment(self, samples: ParamsDict, data: jnp.ndarray) -> np.ndarray:
         """Assign data points to mixture components.
@@ -148,14 +148,14 @@ class PoissonGaussMixture(MixtureModel):
         # We penalize the model for positioning the Poisson component to the right of the Gaussian component
         # by imposing a soft constraint to penalize the Poisson rate being larger than the Gaussian mean
         # Heuristic regularization term to prevent flipping of the components
-        numpyro.factor("separation_penalty", +10 * jnp.heaviside(-poisson_rate + gaussian_mean, 0))
+        factor("separation_penalty", +10 * jnp.heaviside(-poisson_rate + gaussian_mean, 0))
 
         log_likelihoods = jnp.stack(
             [
                 # Poisson component
-                jnp.log(mix_probs[0]) + dist.Poisson(poisson_rate).log_prob(data),
+                jnp.log(mix_probs[0]) + Poisson(poisson_rate).log_prob(data),
                 # Gaussian component
-                jnp.log(mix_probs[1]) + dist.Normal(gaussian_mean, gaussian_std).log_prob(data),
+                jnp.log(mix_probs[1]) + Normal(gaussian_mean, gaussian_std).log_prob(data),
             ],
             axis=-1,
         )
@@ -169,11 +169,11 @@ class PoissonGaussMixture(MixtureModel):
             Dictionary of sampled parameter values.
         """
         params = {}
-        params["poisson_rate"] = numpyro.sample("poisson_rate", dist.Exponential(self.poisson_rate_prior))
-        params["gaussian_mean"] = numpyro.sample("gaussian_mean", dist.Normal(*self.gaussian_mean_prior))
-        params["gaussian_std"] = numpyro.sample("gaussian_std", dist.HalfNormal(self.gaussian_std_prior))
-        params["mix_probs"] = numpyro.sample(
+        params["poisson_rate"] = sample("poisson_rate", Exponential(self.poisson_rate_prior))
+        params["gaussian_mean"] = sample("gaussian_mean", Normal(*self.gaussian_mean_prior))
+        params["gaussian_std"] = sample("gaussian_std", HalfNormal(self.gaussian_std_prior))
+        params["mix_probs"] = sample(
             "mix_probs",
-            dist.Dirichlet(jnp.array([1 - self.fraction_positive_expected, self.fraction_positive_expected])),
+            Dirichlet(jnp.array([1 - self.fraction_positive_expected, self.fraction_positive_expected])),
         )
         return params

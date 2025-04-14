@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import decoupler as dc
 import matplotlib.pyplot as plt
 import numpy as np
 from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
+from decoupler import (get_pseudobulk as dc_get_pseudobulk, plot_psbulk_samples as dc_plot_psbulk_samples)
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
@@ -168,7 +168,7 @@ class PseudobulkSpace(PerturbationSpace):
                 adata = adata_emb
 
         adata.obs[target_col] = adata.obs[target_col].astype("category")
-        ps_adata = dc.get_pseudobulk(adata, sample_col=target_col, layer=layer_key, groups_col=groups_col, **kwargs)  # type: ignore
+        ps_adata = dc_get_pseudobulk(adata, sample_col=target_col, layer=layer_key, groups_col=groups_col, **kwargs)  # type: ignore
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
@@ -208,7 +208,7 @@ class PseudobulkSpace(PerturbationSpace):
         Preview:
             .. image:: /_static/docstring_previews/pseudobulk_samples.png
         """
-        fig = dc.plot_psbulk_samples(adata, groupby, return_fig=True, **kwargs)
+        fig = dc_plot_psbulk_samples(adata, groupby, return_fig=True, **kwargs)
 
         if return_fig:
             return fig
