@@ -4,14 +4,14 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
 import numpy as np
-from jax.numpy import ndarray, heaviside, argmax, array, stack, log
+import jax.numpy as jnp
 from jax.random import PRNGKey
 from jax.scipy.special import logsumexp
 from numpyro import sample, plate, factor
 from numpyro.infer import MCMC, NUTS
-from numpyro.dist import Normal, Exponential, Dirichlet, Poisson, HalfNormal
+from numpyro.distributions import Normal, Exponential, Dirichlet, Poisson, HalfNormal
 
-ParamsDict = Mapping[str, ndarray]
+ParamsDict = Mapping[str, jnp.ndarray]
 
 
 class MixtureModel(ABC):
@@ -52,7 +52,7 @@ class MixtureModel(ABC):
         pass
 
     @abstractmethod
-    def log_likelihood(self, data: ndarray, params: ParamsDict) -> ndarray:
+    def log_likelihood(self, data: jnp.ndarray, params: ParamsDict) -> jnp.ndarray:
         """Calculate log likelihood of data under current parameters.
 
         Args:
@@ -64,7 +64,7 @@ class MixtureModel(ABC):
         """
         pass
 
-    def fit_model(self, data: ndarray, seed: int = 0) -> MCMC:
+    def fit_model(self, data: jnp.ndarray, seed: int = 0) -> MCMC:
         """Fit the mixture model using MCMC.
 
         Args:
@@ -79,7 +79,7 @@ class MixtureModel(ABC):
         mcmc.run(PRNGKey(seed), data=data)
         return mcmc
 
-    def run_model(self, data: ndarray, seed: int = 0) -> np.ndarray:
+    def run_model(self, data: jnp.ndarray, seed: int = 0) -> np.ndarray:
         """Run model fitting and assign components.
 
         Args:
@@ -94,7 +94,7 @@ class MixtureModel(ABC):
         self.assignments = self.assignment(self.samples, data)
         return self.assignments
 
-    def mixture_model(self, data: ndarray) -> None:
+    def mixture_model(self, data: jnp.ndarray) -> None:
         """Define mixture model structure for NumPyro.
 
         Args:
@@ -107,7 +107,7 @@ class MixtureModel(ABC):
             log_mixture_likelihood = logsumexp(log_likelihoods, axis=-1)
             sample("obs", Normal(log_mixture_likelihood, 1.0), obs=data)
 
-    def assignment(self, samples: ParamsDict, data: ndarray) -> np.ndarray:
+    def assignment(self, samples: ParamsDict, data: jnp.ndarray) -> np.ndarray:
         """Assign data points to mixture components.
 
         Args:
@@ -121,7 +121,7 @@ class MixtureModel(ABC):
         self.params = params
 
         log_likelihoods = self.log_likelihood(data, params)
-        guide_assignments = argmax(log_likelihoods, axis=-1)
+        guide_assignments = jnp.argmax(log_likelihoods, axis=-1)
 
         assignments = ["Negative" if assign == 0 else "Positive" for assign in guide_assignments]
         return np.array(assignments)
@@ -130,7 +130,7 @@ class MixtureModel(ABC):
 class PoissonGaussMixture(MixtureModel):
     """Mixture model combining Poisson and Gaussian distributions."""
 
-    def log_likelihood(self, data: np.ndarray, params: ParamsDict) -> ndarray:
+    def log_likelihood(self, data: np.ndarray, params: ParamsDict) -> jnp.ndarray:
         """Calculate component-wise log likelihoods.
 
         Args:
@@ -148,14 +148,14 @@ class PoissonGaussMixture(MixtureModel):
         # We penalize the model for positioning the Poisson component to the right of the Gaussian component
         # by imposing a soft constraint to penalize the Poisson rate being larger than the Gaussian mean
         # Heuristic regularization term to prevent flipping of the components
-        factor("separation_penalty", +10 * heaviside(-poisson_rate + gaussian_mean, 0))
+        factor("separation_penalty", +10 * jnp.heaviside(-poisson_rate + gaussian_mean, 0))
 
-        log_likelihoods = stack(
+        log_likelihoods = jnp.stack(
             [
                 # Poisson component
-                log(mix_probs[0]) + Poisson(poisson_rate).log_prob(data),
+                jnp.log(mix_probs[0]) + Poisson(poisson_rate).log_prob(data),
                 # Gaussian component
-                log(mix_probs[1]) + Normal(gaussian_mean, gaussian_std).log_prob(data),
+                jnp.log(mix_probs[1]) + Normal(gaussian_mean, gaussian_std).log_prob(data),
             ],
             axis=-1,
         )
@@ -174,6 +174,6 @@ class PoissonGaussMixture(MixtureModel):
         params["gaussian_std"] = sample("gaussian_std", HalfNormal(self.gaussian_std_prior))
         params["mix_probs"] = sample(
             "mix_probs",
-            Dirichlet(array([1 - self.fraction_positive_expected, self.fraction_positive_expected])),
+            Dirichlet(jnp.array([1 - self.fraction_positive_expected, self.fraction_positive_expected])),
         )
         return params
