@@ -12,8 +12,8 @@ from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear import linear_problem
 from ott.solvers.linear import sinkhorn, sinkhorn_lr
 from scanpy.plotting import _utils
-from seaborn import heatmap
 from scipy.sparse import issparse
+from seaborn import heatmap
 from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors

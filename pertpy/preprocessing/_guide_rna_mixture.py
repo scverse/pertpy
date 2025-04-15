@@ -3,13 +3,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 from jax.random import PRNGKey
 from jax.scipy.special import logsumexp
-from numpyro import sample, plate, factor
+from numpyro import factor, plate, sample
+from numpyro.distributions import Dirichlet, Exponential, HalfNormal, Normal, Poisson
 from numpyro.infer import MCMC, NUTS
-from numpyro.distributions import Normal, Exponential, Dirichlet, Poisson, HalfNormal
 
 ParamsDict = Mapping[str, jnp.ndarray]
 

@@ -8,8 +8,8 @@ import pandas as pd
 import scipy
 import torch
 from anndata import AnnData
+from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import EarlyStopping
-from pytorch_lightning import Trainer, LightningModule
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder

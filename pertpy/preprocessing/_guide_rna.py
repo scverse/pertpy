@@ -13,7 +13,7 @@ from anndata import AnnData
 from numba import njit, prange
 from rich.progress import track
 from scanpy.get import _get_obs_rep, _set_obs_rep
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import CSRBase

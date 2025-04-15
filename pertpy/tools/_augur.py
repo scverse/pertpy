@@ -90,6 +90,7 @@ class Augur:
     def load(
         self,
         input: AnnData | pd.DataFrame,
+        *,
         meta: pd.DataFrame | None = None,
         label_col: str = "label_col",
         cell_type_col: str = "cell_type_col",
@@ -99,8 +100,8 @@ class Augur:
         """Loads the input data.
 
         Args:
-            input: Anndata or matrix containing gene expression values (genes in rows, cells in columns) and optionally meta
-                data about each cell.
+            input: Anndata or matrix containing gene expression values (genes in rows, cells in columns)
+                and optionally meta data about each cell.
             meta: Optional Pandas DataFrame containing meta data about each cell.
             label_col: column of the meta DataFrame or the Anndata or matrix containing the condition labels for each cell
                 in the cell-by-gene expression matrix
@@ -110,8 +111,8 @@ class Augur:
             treatment_label: in the case of more than two labels, this label is used in the analysis
 
         Returns:
-            Anndata object containing gene expression values (cells in rows, genes in columns) and cell type, label and y
-            dummy variables as obs
+            Anndata object containing gene expression values (cells in rows, genes in columns)
+            and cell type, label and y dummy variables as obs
 
         Examples:
             >>> import pertpy as pt
@@ -162,6 +163,7 @@ class Augur:
             | Literal["random_forest_regressor"]
             | Literal["logistic_regression_classifier"]
         ),
+        *,
         params: Params | None = None,
     ) -> RandomForestClassifier | RandomForestRegressor | LogisticRegression:
         """Creates a model object of the provided type and populates it with desired parameters.
@@ -231,15 +233,16 @@ class Augur:
         if categorical:
             label_subsamples = []
             y_encodings = adata.obs["y_"].unique()
-            for code in y_encodings:
-                label_subsamples.append(
-                    sc.pp.subsample(
-                        adata[adata.obs["y_"] == code, features],
-                        n_obs=subsample_size,
-                        copy=True,
-                        random_state=random_state,
-                    )
+            label_subsamples = [
+                sc.pp.subsample(
+                    adata[adata.obs["y_"] == code, features],
+                    n_obs=subsample_size,
+                    copy=True,
+                    random_state=random_state,
                 )
+                for code in y_encodings
+            ]
+
             subsample = ad.concat([*label_subsamples], index_unique=None)
         else:
             subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
@@ -259,6 +262,7 @@ class Augur:
     def draw_subsample(
         self,
         adata: AnnData,
+        *,
         augur_mode: str,
         subsample_size: int,
         feature_perc: float,
@@ -319,6 +323,7 @@ class Augur:
     def cross_validate_subsample(
         self,
         adata: AnnData,
+        *,
         augur_mode: str,
         subsample_size: int,
         folds: int,
@@ -358,8 +363,8 @@ class Augur:
         """
         subsample = self.draw_subsample(
             adata,
-            augur_mode,
-            subsample_size,
+            augur_mode=augur_mode,
+            subsample_size=subsample_size,
             feature_perc=feature_perc,
             categorical=is_classifier(self.estimator),
             random_state=subsample_idx,
@@ -373,7 +378,7 @@ class Augur:
         )
         return results
 
-    def ccc_score(self, y_true, y_pred) -> float:
+    def ccc_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """Implementation of Lin's Concordance correlation coefficient, based on https://gitlab.com/-/snippets/1730605.
 
         Args:
@@ -405,7 +410,7 @@ class Augur:
         """Set scoring fuctions for cross-validation based on estimator.
 
         Args:
-            multiclass: `True` if there are more than two target classes
+            multiclass: Whether there are more than two target classes
             zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
                 set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
@@ -448,6 +453,7 @@ class Augur:
     def run_cross_validation(
         self,
         subsample: AnnData,
+        *,
         subsample_idx: int,
         folds: int,
         random_state: int | None,
@@ -602,7 +608,9 @@ class Augur:
 
         return q, pval
 
-    def select_variance(self, adata: AnnData, var_quantile: float, filter_negative_residuals: bool, span: float = 0.75):
+    def select_variance(
+        self, adata: AnnData, *, var_quantile: float, filter_negative_residuals: bool, span: float = 0.75
+    ):
         """Feature selection based on Augur implementation.
 
         Args:
@@ -656,7 +664,7 @@ class Augur:
             cox1 = self.cox_compare(fit1, fit2)
             cox2 = self.cox_compare(fit2, fit1)
 
-            #  compare pvalues
+            # compare p values
             if cox1[1] < cox2[1]:
                 model = fit1
             else:
@@ -676,6 +684,7 @@ class Augur:
     def predict(
         self,
         adata: AnnData,
+        *,
         n_subsamples: int = 50,
         subsample_size: int = 20,
         folds: int = 3,

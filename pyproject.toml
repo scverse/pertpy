@@ -176,7 +176,8 @@ select = [
     "RUF100",  # Report unused noqa directives
     "TCH",  # Typing imports
     "NPY",  # Numpy specific rules
-    "PTH"  # Use pathlib
+    "PTH",  # Use pathlib
+    "PERF"  # Performance
 ]
 ignore = [
     # line too long -> we accept long comment lines; black gets rid of long code lines

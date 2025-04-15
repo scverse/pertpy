@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 from anndata import AnnData
+from decoupler import get_pseudobulk as dc_get_pseudobulk
+from decoupler import plot_psbulk_samples as dc_plot_psbulk_samples
 from sklearn.cluster import DBSCAN, KMeans
-from decoupler import (get_pseudobulk as dc_get_pseudobulk, plot_psbulk_samples as dc_plot_psbulk_samples)
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace

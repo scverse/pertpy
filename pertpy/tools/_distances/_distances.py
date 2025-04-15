@@ -942,9 +942,7 @@ class KSTestDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        stats = []
-        for i in range(X.shape[1]):
-            stats.append(abs(kstest(X[:, i], Y[:, i])[0]))
+        stats = [abs(kstest(X[:, i], Y[:, i])[0]) for i in range(X.shape[1])]
         return sum(stats) / len(stats)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:

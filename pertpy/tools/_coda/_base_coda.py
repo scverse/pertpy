@@ -2275,9 +2275,7 @@ def collapse_singularities(tree: tt.core.ToyTree) -> tt.core.ToyTree:
     A_T = A.T
     unq, count = np.unique(A_T, axis=0, return_counts=True)
 
-    repeated_idx = []
-    for repeated_group in unq[count > 1]:
-        repeated_idx.append(np.argwhere(np.all(A_T == repeated_group, axis=1)).ravel())
+    repeated_idx = [np.argwhere(np.all(A_T == repeated_group, axis=1)).ravel() for repeated_group in unq[count > 1]]
 
     nodes_to_delete = [i for idx in repeated_idx for i in idx[1:]]
 
@@ -2308,9 +2306,7 @@ def traverse(df_: pd.DataFrame, a: str, i: int, innerl: bool) -> str:
     if i + 1 < df_.shape[1]:
         a_inner = pd.unique(df_.loc[np.where(df_.iloc[:, i] == a)].iloc[:, i + 1])
 
-        desc = []
-        for b in a_inner:
-            desc.append(traverse(df_, b, i + 1, innerl))
+        desc = [traverse(df_, b, i + 1, innerl) for b in a_inner]
         if innerl:
             il = a
         else:
@@ -2338,9 +2334,7 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
     df_tax = df.loc[:, [x for x in levels if x in df.columns]]
 
     alevel = pd.unique(df_tax.iloc[:, 0])
-    strs = []
-    for a in alevel:
-        strs.append(traverse(df_tax, a, 0, inner_label))
+    strs = [traverse(df_tax, a, 0, inner_label) for a in alevel]
 
     newick = f"({','.join(strs)});"
     return newick
