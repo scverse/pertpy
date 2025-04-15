@@ -13,7 +13,7 @@ from anndata import AnnData
 from numba import njit, prange
 from rich.progress import track
 from scanpy.get import _get_obs_rep, _set_obs_rep
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import CSRBase
@@ -58,7 +58,9 @@ class GuideAssignment:
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
         """
-        raise NotImplementedError(f"No implementation found for {type(data)}")
+        raise NotImplementedError(
+            f"No implementation found for {type(data)}. Must be numpy array, sparse matrix, or AnnData object."
+        )
 
     @assign_by_threshold.register(AnnData)
     def _assign_by_threshold_anndata(
@@ -74,6 +76,10 @@ class GuideAssignment:
         guide_assignments = self.assign_by_threshold(X, assignment_threshold=assignment_threshold)
         _set_obs_rep(adata, guide_assignments, layer=output_layer)
 
+    @assign_by_threshold.register(np.ndarray)
+    def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
+        return np.where(X >= assignment_threshold, 1, 0)
+
     @staticmethod
     @njit(parallel=True)
     def _threshold_sparse_numba(data: np.ndarray, threshold: float) -> np.ndarray:
@@ -88,18 +94,16 @@ class GuideAssignment:
         new_data = self._threshold_sparse_numba(X.data, assignment_threshold)
         return csr_matrix((new_data, X.indices, X.indptr), shape=X.shape)
 
-    @assign_by_threshold.register(np.ndarray)
-    def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
-        return np.where(X >= assignment_threshold, 1, 0)
-
+    @singledispatchmethod
     def assign_to_max_guide(
         self,
-        adata: AnnData,
+        data: AnnData | np.ndarray | CSRBase,
+        /,
+        *,
         assignment_threshold: float,
         layer: str | None = None,
-        output_key: str = "assigned_guide",
+        obs_key: str = "assigned_guide",
         no_grna_assigned_key: str = "Negative",
-        only_return_results: bool = False,
     ) -> np.ndarray | None:
         """Simple threshold based max gRNA assignment function.
 
@@ -107,13 +111,13 @@ class GuideAssignment:
         This function expects unnormalized data as input.
 
         Args:
-            adata: AnnData object containing gRNA values.
+            data: The (annotated) data matrix of shape `n_obs` × `n_vars`.
+                  Rows correspond to cells and columns to genes.
             assignment_threshold: The count threshold that is required for an assignment to be viable.
             layer: Key to the layer containing raw count values of the gRNAs.
                    adata.X is used if layer is None. Expects count data.
-            output_key: Assigned guide will be saved on adata.obs[output_key]. default value is `assigned_guide`.
+            obs_key: Assigned guide will be saved on adata.obs[output_key].
             no_grna_assigned_key: The key to return if no gRNA is expressed enough.
-            only_return_results: Whether to input AnnData is not modified and the result is returned as an np.ndarray.
 
         Examples:
             Each cell is assigned to the most expressed gRNA if it has at least 5 counts.
@@ -124,21 +128,66 @@ class GuideAssignment:
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_to_max_guide(gdo, assignment_threshold=5)
         """
-        counts = adata.X if layer is None else adata.layers[layer]
-        if issparse(counts):
-            counts = counts.toarray()
+        raise NotImplementedError(
+            f"No implementation found for {type(data)}. Must be numpy array, sparse matrix, or AnnData object."
+        )
 
+    @assign_to_max_guide.register(AnnData)
+    def assign_to_max_guide_anndata(
+        self,
+        adata: AnnData,
+        /,
+        *,
+        assignment_threshold: float,
+        layer: str | None = None,
+        obs_key: str = "assigned_guide",
+        no_grna_assigned_key: str = "Negative",
+    ) -> None:
+        X = _get_obs_rep(adata, layer=layer)
+        guide_assignments = self.assign_to_max_guide(
+            X, var=adata.var, assignment_threshold=assignment_threshold, no_grna_assigned_key=no_grna_assigned_key
+        )
+        adata.obs[obs_key] = guide_assignments
+
+    @assign_to_max_guide.register(np.ndarray)
+    def assign_to_max_guide_numpy(
+        self,
+        X: np.ndarray,
+        /,
+        *,
+        var: pd.DataFrame,
+        assignment_threshold: float,
+        no_grna_assigned_key: str = "Negative",
+    ) -> np.ndarray:
         assigned_grna = np.where(
-            counts.max(axis=1).squeeze() >= assignment_threshold,
-            adata.var.index[counts.argmax(axis=1).squeeze()],
+            X.max(axis=1).squeeze() >= assignment_threshold,
+            var.index[X.argmax(axis=1).squeeze()],
             no_grna_assigned_key,
         )
 
-        if only_return_results:
-            return assigned_grna
-        adata.obs[output_key] = assigned_grna
+        return assigned_grna
 
-        return None
+    @assign_to_max_guide.register(CSRBase)
+    def assign_to_max_guide_sparse(
+        self, X: CSRBase, /, *, var: pd.DataFrame, assignment_threshold: float, no_grna_assigned_key: str = "Negative"
+    ) -> np.ndarray:  # We return a Numpy Array because we store the result in obs
+        n_rows = X.shape[0]
+        assigned_grna = np.full(n_rows, no_grna_assigned_key, dtype=object)
+
+        for i in range(n_rows):
+            row_start = X.indptr[i]
+            row_end = X.indptr[i + 1]
+
+            if row_end > row_start:
+                data_row = X.data[row_start:row_end]
+                indices_row = X.indices[row_start:row_end]
+                max_pos = np.argmax(data_row)
+                max_val = data_row[max_pos]
+
+                if max_val >= assignment_threshold:
+                    assigned_grna[i] = var.index[indices_row[max_pos]]
+
+        return assigned_grna
 
     def assign_mixture_model(
         self,
