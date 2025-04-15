@@ -49,7 +49,7 @@ def tiny_sparse_adata():
 
 
 @pytest.mark.parametrize("adata_fixture", ["tiny_dense_adata", "tiny_sparse_adata"])
-def test_grna_threshold_assignment_parameterized(request, adata_fixture):
+def test_grna_threshold_assignment(request, adata_fixture):
     adata = request.getfixturevalue(adata_fixture)
     threshold = 5
     output_layer = "assigned_guides"
@@ -75,17 +75,17 @@ def test_grna_threshold_assignment_parameterized(request, adata_fixture):
     assert np.all(np.logical_xor(original_matrix < threshold, result_matrix == 1))
 
 
-def test_grna_max_assignment(adata_simple):
-    threshold = 5
-    output_key = "assigned_guide"
-    assert output_key not in adata_simple.obs
+@pytest.mark.parametrize("adata_fixture", ["tiny_dense_adata", "tiny_sparse_adata"])
+def test_grna_max_assignment(request, adata_fixture):
+    adata = request.getfixturevalue(adata_fixture)
+    threshold = 6
+    obs_key = "assigned_guide"
+    assert obs_key not in adata.obs
 
     ga = pt.pp.GuideAssignment()
-    ga.assign_to_max_guide(adata_simple, assignment_threshold=threshold, output_key=output_key)
-    assert output_key in adata_simple.obs
-    assert tuple(adata_simple.obs[output_key]) == tuple(
-        [f"guide_{i}" if i > 0 else "Negative" for i in [1, 4, 6, 0, 6, 1, 7, 1]]
-    )
+    ga.assign_to_max_guide(adata, assignment_threshold=threshold, obs_key=obs_key)
+    assert obs_key in adata.obs
+    assert tuple(adata.obs[obs_key]) == ("guide_1", "Negative", "guide_3")
 
 
 def test_grna_mixture_model(adata_simple):
