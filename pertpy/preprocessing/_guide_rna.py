@@ -167,25 +167,38 @@ class GuideAssignment:
 
         return assigned_grna
 
+    @staticmethod
+    @njit(parallel=True)
+    def _assign_max_guide_sparse(indptr, data, indices, assignment_threshold, assigned_grna):
+        n_rows = len(indptr) - 1
+        for i in range(n_rows):
+            row_start = indptr[i]
+            row_end = indptr[i + 1]
+
+            if row_end > row_start:
+                data_row = data[row_start:row_end]
+                indices_row = indices[row_start:row_end]
+                max_pos = np.argmax(data_row)
+                if data_row[max_pos] >= assignment_threshold:
+                    assigned_grna[i] = indices_row[max_pos]
+        return assigned_grna
+
     @assign_to_max_guide.register(CSRBase)
     def assign_to_max_guide_sparse(
         self, X: CSRBase, /, *, var: pd.DataFrame, assignment_threshold: float, no_grna_assigned_key: str = "Negative"
-    ) -> np.ndarray:  # We return a Numpy Array because we store the result in obs
+    ) -> np.ndarray:
         n_rows = X.shape[0]
+
+        assigned_positions = np.zeros(n_rows, dtype=np.int32) - 1  # -1 means not assigned
+        assigned_positions = self._assign_max_guide_sparse(
+            X.indptr, X.data, X.indices, assignment_threshold, assigned_positions
+        )
+
         assigned_grna = np.full(n_rows, no_grna_assigned_key, dtype=object)
-
-        for i in range(n_rows):
-            row_start = X.indptr[i]
-            row_end = X.indptr[i + 1]
-
-            if row_end > row_start:
-                data_row = X.data[row_start:row_end]
-                indices_row = X.indices[row_start:row_end]
-                max_pos = np.argmax(data_row)
-                max_val = data_row[max_pos]
-
-                if max_val >= assignment_threshold:
-                    assigned_grna[i] = var.index[indices_row[max_pos]]
+        mask = assigned_positions >= 0
+        var_index_array = np.array(var.index)
+        if np.any(mask):
+            assigned_grna[mask] = var_index_array[assigned_positions[mask]]
 
         return assigned_grna
 
