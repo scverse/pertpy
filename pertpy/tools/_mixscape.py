@@ -17,6 +17,7 @@ from scanpy.plotting import _utils
 from scanpy.tools._utils import _choose_representation
 from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
+import time
 
 import pertpy as pt
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -137,8 +138,12 @@ class Mixscape:
                 from pynndescent import NNDescent
 
                 eps = kwargs.pop("epsilon", 0.1)
+                start_time = time.time()
                 nn_index = NNDescent(R_control, **kwargs)
+                print(f"NNDescent build time: {time.time() - start_time} seconds (R_control.shape: {R_control.shape})")
+                start_time = time.time()
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
+                print(f"NNDescent query time: {time.time() - start_time} seconds (R_split.shape: {R_split.shape})")
 
                 X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
 
@@ -154,8 +159,8 @@ class Mixscape:
                         shape=(n_split, n_control),
                     )
                     neigh_matrix /= n_neighbors
-                    adata.layers["X_pert"][split_mask] = (
-                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                    adata.layers["X_pert"][np.asarray(split_mask)] = (
+                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][np.asarray(split_mask)]
                     )
                 else:
                     split_indices = np.where(split_mask)[0]
@@ -403,6 +408,7 @@ class Mixscape:
         pval_cutoff: float | None = 5e-2,
         perturbation_type: str | None = "KO",
         copy: bool | None = False,
+        n_jobs: int | None = None,
     ):
         """Linear Discriminant Analysis on pooled CRISPR screen data. Requires `pt.tl.mixscape()` to be run first.
 
@@ -421,7 +427,7 @@ class Mixscape:
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
             copy: Determines whether a copy of the `adata` is returned.
-
+            n_jobs: Number of jobs to run in parallel.
         Returns:
             If `copy=True`, returns the copy of `adata` with the LDA result in `.uns`.
             Otherwise, writes the results directly to `.uns` of the provided `adata`.
@@ -485,11 +491,7 @@ class Mixscape:
                 sc.tl.ingest(adata=adata_subset, adata_ref=gene_subset, embedding_method="pca")
                 projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
         # concatenate all pcs into a single matrix.
-        for index, (_, value) in enumerate(projected_pcs.items()):
-            if index == 0:
-                projected_pcs_array = value
-            else:
-                projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
+        projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
         clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
         clf.fit(projected_pcs_array, adata_subset.obs[labels])
