@@ -154,8 +154,8 @@ class Mixscape:
                         shape=(n_split, n_control),
                     )
                     neigh_matrix /= n_neighbors
-                    adata.layers["X_pert"][split_mask] = (
-                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                    adata.layers["X_pert"][np.asarray(split_mask)] = (
+                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][np.asarray(split_mask)]
                     )
                 else:
                     split_indices = np.where(split_mask)[0]
@@ -485,11 +485,7 @@ class Mixscape:
                 sc.tl.ingest(adata=adata_subset, adata_ref=gene_subset, embedding_method="pca")
                 projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
         # concatenate all pcs into a single matrix.
-        for index, (_, value) in enumerate(projected_pcs.items()):
-            if index == 0:
-                projected_pcs_array = value
-            else:
-                projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
+        projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
         clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
         clf.fit(projected_pcs_array, adata_subset.obs[labels])
