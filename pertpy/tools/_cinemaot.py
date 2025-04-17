@@ -92,7 +92,7 @@ class Cinemaot:
 
         transformer = FastICA(n_components=dim, random_state=0, whiten="arbitrary-variance")
         X_transformed = np.array(transformer.fit_transform(adata.obsm[use_rep][:, :dim]), dtype=np.float64)
-        groupvec = (adata.obs[pert_key] == control).values
+        groupvec = (adata.obs[pert_key] == control * 1).values  # control
         xi = np.zeros(dim)
         j = 0
         for source_row in X_transformed.T:
@@ -122,17 +122,17 @@ class Cinemaot:
             a = np.zeros(cf1.shape[0])
             b = np.zeros(cf2.shape[0])
 
-            adata1 = adata[adata.obs[pert_key] == control, :].copy()
-            adata2 = adata[adata.obs[pert_key] != control, :].copy()
+            adata1 = adata[adata.obs[pert_key] == control]
+            adata2 = adata[adata.obs[pert_key] != control]
 
             for label in adata1.obs[pert_key].unique():
+                mask_label = adata1.obs[pert_key] == label
                 for ct in adata1.obs[preweight_label].unique():
-                    a[((adata1.obs[preweight_label] == ct) & (adata1.obs[pert_key] == label)).values] = np.sum(
-                        (adata2.obs[preweight_label] == ct).values
-                    ) / np.sum((adata1.obs[preweight_label] == ct).values)
-                a[(adata1.obs[pert_key] == label).values] = a[(adata1.obs[pert_key] == label).values] / np.sum(
-                    a[(adata1.obs[pert_key] == label).values]
-                )
+                    mask_ct = adata1.obs[preweight_label] == ct
+                    a[mask_ct & mask_label] = np.sum(
+                        adata2.obs[preweight_label] == ct
+                    ) / np.sum(mask_ct)
+                a[mask_label] /= np.sum(a[mask_label])
 
             a = a / np.sum(a)
             b[:] = 1 / cf2.shape[0]
@@ -148,18 +148,18 @@ class Cinemaot:
                 - ot_sink.apply(X_transformed[adata.obs[pert_key] == control, :].T).T
                 / ot_sink.apply(np.ones_like(X_transformed[adata.obs[pert_key] == control, :].T)).T
             )
+
             if issparse(adata.X):
-                te2 = (
-                    adata.X.toarray()[adata.obs[pert_key] != control, :]
-                    - ot_sink.apply(adata.X.toarray()[adata.obs[pert_key] == control, :].T).T
-                    / ot_sink.apply(np.ones_like(adata.X.toarray()[adata.obs[pert_key] == control, :].T)).T
-                )
+                X = adata.X.toarray()
             else:
-                te2 = (
-                    adata.X[adata.obs[pert_key] != control, :]
-                    - ot_sink.apply(adata.X[adata.obs[pert_key] == control, :].T).T
-                    / ot_sink.apply(np.ones_like(adata.X[adata.obs[pert_key] == control, :].T)).T
-                )
+                X = adata.X
+            te2 = (
+                X[adata.obs[pert_key] != control, :]
+                - ot_sink.apply(X[adata.obs[pert_key] == control, :].T).T
+                / ot_sink.apply(np.ones_like(X[adata.obs[pert_key] == control, :].T)).T
+            )
+            if issparse(X):
+                del X
 
             adata.obsm[cf_rep] = cf
             adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = (
@@ -176,13 +176,15 @@ class Cinemaot:
             )
 
             if issparse(adata.X):
-                te2 = adata.X.toarray()[adata.obs[pert_key] != control, :] - np.matmul(
-                    ot_matrix / np.sum(ot_matrix, axis=1)[:, None], adata.X.toarray()[adata.obs[pert_key] == control, :]
-                )
+                X = adata.X.toarray()
             else:
-                te2 = adata.X[adata.obs[pert_key] != control, :] - np.matmul(
-                    ot_matrix / np.sum(ot_matrix, axis=1)[:, None], adata.X[adata.obs[pert_key] == control, :]
-                )
+                X = adata.X
+
+            te2 = X[adata.obs[pert_key] != control, :] - np.matmul(
+                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X[adata.obs[pert_key] == control, :]
+            )
+            if issparse(X):
+                del X
 
             adata.obsm[cf_rep] = cf
             adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = np.matmul(
