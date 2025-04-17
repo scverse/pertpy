@@ -138,7 +138,6 @@ class Mixscape:
 
                 eps = kwargs.pop("epsilon", 0.1)
                 nn_index = NNDescent(R_control, **kwargs)
-
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
 
                 X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
@@ -422,7 +421,7 @@ class Mixscape:
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
             copy: Determines whether a copy of the `adata` is returned.
-            n_jobs: Number of jobs to run in parallel.
+
         Returns:
             If `copy=True`, returns the copy of `adata` with the LDA result in `.uns`.
             Otherwise, writes the results directly to `.uns` of the provided `adata`.
