@@ -17,7 +17,6 @@ from scanpy.plotting import _utils
 from scanpy.tools._utils import _choose_representation
 from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
-import time
 
 import pertpy as pt
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -138,12 +137,9 @@ class Mixscape:
                 from pynndescent import NNDescent
 
                 eps = kwargs.pop("epsilon", 0.1)
-                start_time = time.time()
                 nn_index = NNDescent(R_control, **kwargs)
-                print(f"NNDescent build time: {time.time() - start_time} seconds (R_control.shape: {R_control.shape})")
-                start_time = time.time()
+
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
-                print(f"NNDescent query time: {time.time() - start_time} seconds (R_split.shape: {R_split.shape})")
 
                 X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
 
@@ -408,7 +404,6 @@ class Mixscape:
         pval_cutoff: float | None = 5e-2,
         perturbation_type: str | None = "KO",
         copy: bool | None = False,
-        n_jobs: int | None = None,
     ):
         """Linear Discriminant Analysis on pooled CRISPR screen data. Requires `pt.tl.mixscape()` to be run first.
 
