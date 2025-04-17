@@ -92,7 +92,7 @@ class Cinemaot:
 
         transformer = FastICA(n_components=dim, random_state=0, whiten="arbitrary-variance")
         X_transformed = np.array(transformer.fit_transform(adata.obsm[use_rep][:, :dim]), dtype=np.float64)
-        groupvec = (adata.obs[pert_key] == control * 1).values  # control
+        groupvec = (adata.obs[pert_key] == control).values
         xi = np.zeros(dim)
         j = 0
         for source_row in X_transformed.T:
@@ -742,18 +742,16 @@ class Xi:
     @property
     def x_ordered_rank(self):
         # PI is the rank vector for x, with ties broken at random
-        # Not mine: source (https://stackoverflow.com/a/47430384/1628971)
-        # random shuffling of the data - reason to use random.choice is that
-        # pd.sample(frac=1) uses the same randomizing algorithm
         len_x = len(self.x)
         rng = np.random.default_rng()
-        randomized_indices = rng.choice(np.arange(len_x), len_x, replace=False)
-        randomized = [self.x[idx] for idx in randomized_indices]
-        # same as pandas rank method 'first'
-        rankdata = ss.rankdata(randomized, method="ordinal")
-        # Reindexing based on pairs of indices before and after
-        unrandomized = [rankdata[j] for i, j in sorted(zip(randomized_indices, range(len_x), strict=False))]
-        return unrandomized
+        perm = rng.permutation(len_x)
+        x_shuffled = self.x[perm]
+
+        ranks = np.empty(len_x, dtype=int)
+        ranks[perm[np.argsort(x_shuffled, stable=True)]] = np.arange(1, len_x + 1)
+
+        return ranks
+
 
     @property
     def y_rank_max(self):
@@ -763,7 +761,7 @@ class Xi:
     @property
     def g(self):
         # g[i] is number of j s.t. y[j] >= y[i], divided by n.
-        return ss.rankdata([-i for i in self.y], method="max") / self.sample_size
+        return ss.rankdata(-self.y, method="max") / self.sample_size
 
     @property
     def x_ordered(self):
@@ -772,10 +770,7 @@ class Xi:
 
     @property
     def x_rank_max_ordered(self):
-        x_ordered_result = self.x_ordered
-        y_rank_max_result = self.y_rank_max
-        # Rearrange f according to ord.
-        return [y_rank_max_result[i] for i in x_ordered_result]
+        return self.y_rank_max[self.x_ordered]
 
     @property
     def mean_absolute(self):
@@ -783,20 +778,7 @@ class Xi:
         x2 = self.x_rank_max_ordered[1 : self.sample_size]
 
         return (
-            np.mean(
-                np.abs(
-                    [
-                        x - y
-                        for x, y in zip(
-                            x1,
-                            x2,
-                            strict=False,
-                        )
-                    ]
-                )
-            )
-            * (self.sample_size - 1)
-            / (2 * self.sample_size)
+            np.mean(np.abs(x1 - x2)) * (self.sample_size - 1) / (2 * self.sample_size)
         )
 
     @property
