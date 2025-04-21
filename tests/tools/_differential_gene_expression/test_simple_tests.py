@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.core.api import DataFrame as DataFrame
-from pertpy.tools._differential_gene_expression import SimpleComparisonBase, TTest, WilcoxonTest
+from pertpy.tools._differential_gene_expression import PermutationTest, SimpleComparisonBase, TTest, WilcoxonTest
 
 
 @pytest.mark.parametrize(
@@ -59,6 +59,45 @@ def test_t(test_adata_minimal, paired_by, expected):
     actual = res_df.loc[:, ["variable", "p_value", "log_fc"]].set_index("variable").to_dict(orient="index")
     for gene in expected:
         assert actual[gene] == pytest.approx(expected[gene], abs=0.02)
+
+
+@pytest.mark.parametrize(
+    "paired_by,expected",
+    [
+        pytest.param(
+            None,
+            {"gene1": {"p_value": 2.13e-26, "log_fc": -5.14}, "gene2": {"p_value": 0.96, "log_fc": -0.016}},
+            id="unpaired",
+        ),
+        pytest.param(
+            "pairing",
+            {"gene1": {"p_value": 1.63e-26, "log_fc": -5.14}, "gene2": {"p_value": 0.85, "log_fc": -0.016}},
+            id="paired",
+        ),
+    ],
+)
+def test_permutation(test_adata_minimal, paired_by, expected):
+    """Test that permutation test gives the correct values.
+
+    Reference values have been computed in R using wilcox.test
+    """
+    for statistic in [TTest, WilcoxonTest]:
+        res_df = PermutationTest.compare_groups(
+            adata=test_adata_minimal,
+            column="condition",
+            baseline="A",
+            groups_to_compare="B",
+            paired_by=paired_by,
+            n_permutations=1000,
+            permutation_test_statistic=statistic,
+            test_kwargs={"rng": 0},
+        )
+        assert isinstance(res_df, DataFrame), "PermutationTest.compare_groups should return a DataFrame"
+        actual = res_df.loc[:, ["variable", "p_value", "log_fc"]].set_index("variable").to_dict(orient="index")
+        for gene in expected:
+            assert (actual[gene]["p_value"] < 0.05) == (expected[gene]["p_value"] < 0.05)
+            if actual[gene]["p_value"] < 0.05:
+                assert actual[gene] == pytest.approx(expected[gene], abs=0.02)
 
 
 @pytest.mark.parametrize("seed", range(10))
