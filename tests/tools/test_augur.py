@@ -152,8 +152,10 @@ def test_select_variance(adata):
 
 def test_params():
     """Test parameters."""
-    rf_estimator = ag_rfr.create_estimator("random_forest_classifier", Params(n_estimators=9, max_depth=10, penalty=13))
-    lr_estimator = ag_rfr.create_estimator("logistic_regression_classifier", Params(penalty="elasticnet"))
+    rf_estimator = ag_rfr.create_estimator(
+        "random_forest_classifier", params=Params(n_estimators=9, max_depth=10, penalty=13)
+    )
+    lr_estimator = ag_rfr.create_estimator("logistic_regression_classifier", params=Params(penalty="elasticnet"))
     assert rf_estimator.get_params()["n_estimators"] == 9
     assert rf_estimator.get_params()["max_depth"] == 10
     assert lr_estimator.get_params()["penalty"] == "elasticnet"
