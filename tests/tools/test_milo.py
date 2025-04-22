@@ -166,9 +166,9 @@ def test_da_nhoods_fdr(da_nhoods_mdata):
     mdata = da_nhoods_mdata.copy()
     milo.da_nhoods(mdata, design="~condition")
     sample_adata = mdata["milo"].copy()
-    assert np.all(
-        np.round(sample_adata.var["PValue"], 10) <= np.round(sample_adata.var["SpatialFDR"], 10)
-    ), "FDR is higher than uncorrected P-values"
+    assert np.all(np.round(sample_adata.var["PValue"], 10) <= np.round(sample_adata.var["SpatialFDR"], 10)), (
+        "FDR is higher than uncorrected P-values"
+    )
 
 
 @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")

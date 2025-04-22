@@ -61,7 +61,7 @@ class Moa(MetaData):
             adata = adata.copy()
 
         if query_id not in adata.obs.columns:
-            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n" "Please check again.")
+            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\nPlease check again.")
 
         if self.clue is None:
             self._download_clue()
