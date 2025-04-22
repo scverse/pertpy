@@ -1,3 +1,4 @@
+import contextlib
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
@@ -194,7 +195,7 @@ class MethodBase(ABC):
 
         def _map_shape(symbol: str) -> str:
             if shape_dict is not None:
-                for k in shape_dict.keys():
+                for k in shape_dict:
                     if shape_dict[k] is not None and symbol in shape_dict[k]:
                         return k
             return "other"
@@ -225,14 +226,13 @@ class MethodBase(ABC):
                     return "Down"
                 else:
                     return "not DE"
+            # Standard condition for Up or Down categorization
+            elif log2fc > log2fc_thresh and nlog10 > pval_thresh:
+                return "Up"
+            elif log2fc < -log2fc_thresh and nlog10 > pval_thresh:
+                return "Down"
             else:
-                # Standard condition for Up or Down categorization
-                if log2fc > log2fc_thresh and nlog10 > pval_thresh:
-                    return "Up"
-                elif log2fc < -log2fc_thresh and nlog10 > pval_thresh:
-                    return "Down"
-                else:
-                    return "not DE"
+                return "not DE"
 
         def _map_genes_categories_highlight(
             row: pd.Series,
@@ -253,7 +253,7 @@ class MethodBase(ABC):
             symbol = row[symbol_col]
 
             if color_dict is not None:
-                for k in color_dict.keys():
+                for k in color_dict:
                     if symbol in color_dict[k]:
                         return k
 
@@ -576,14 +576,9 @@ class MethodBase(ABC):
                 adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum", min_cells=1, min_counts=1
             )
 
-        if layer is not None:
-            X = adata.layers[layer]
-        else:
-            X = adata.X
-        try:
+        X = adata.layers[layer] if layer is not None else adata.X
+        with contextlib.suppress(AttributeError):
             X = X.toarray()
-        except AttributeError:
-            pass
 
         groupby_cols = [pairedby, groupby]
         df = adata.obs.loc[:, groupby_cols].join(pd.DataFrame(X, index=adata.obs_names, columns=var_names))

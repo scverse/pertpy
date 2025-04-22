@@ -25,10 +25,7 @@ def _prepare_targets(
     categories: str | Sequence[str] = None,
 ) -> ChainMap | dict:
     if categories is not None:
-        if isinstance(categories, str):
-            categories = [categories]
-        else:
-            categories = list(categories)
+        categories = [categories] if isinstance(categories, str) else list(categories)
 
     if targets is None:
         pt_drug = Drug()
@@ -97,10 +94,7 @@ class Enrichment:
         Returns:
             An AnnData object with scores.
         """
-        if layer is not None:
-            mtx = adata.layers[layer]
-        else:
-            mtx = adata.X
+        mtx = adata.layers[layer] if layer is not None else adata.X
 
         targets = _prepare_targets(targets=targets, nested=nested, categories=categories)  # type: ignore
         full_targets = targets.copy()
@@ -114,10 +108,7 @@ class Enrichment:
         weights = pd.DataFrame(targets, index=adata.var_names)
         weights = weights.loc[:, weights.sum() > 0]
         weights = weights / weights.sum()
-        if issparse(mtx):
-            scores = mtx.dot(weights)
-        else:
-            scores = np.dot(mtx, weights)
+        scores = mtx.dot(weights) if issparse(mtx) else np.dot(mtx, weights)
 
         if method == "seurat":
             obs_avg = _mean(mtx, names=adata.var_names, axis=0)
@@ -136,10 +127,7 @@ class Enrichment:
             control_gene_weights = pd.DataFrame(control_groups, index=adata.var_names)
             control_gene_weights = control_gene_weights / control_gene_weights.sum()
 
-            if issparse(mtx):
-                control_profiles = mtx.dot(control_gene_weights)
-            else:
-                control_profiles = np.dot(mtx, control_gene_weights)
+            control_profiles = mtx.dot(control_gene_weights) if issparse(mtx) else np.dot(mtx, control_gene_weights)
             drug_bins = {}
             for drug in weights.columns:
                 bins = np.unique(obs_cut[targets[drug]])
@@ -341,10 +329,7 @@ class Enrichment:
             .. image:: /_static/docstring_previews/enrichment_dotplot.png
         """
         if categories is not None:
-            if isinstance(categories, str):
-                categories = [categories]
-            else:
-                categories = list(categories)
+            categories = [categories] if isinstance(categories, str) else list(categories)
 
         if targets is None:
             pt_drug = Drug()

@@ -49,7 +49,6 @@ class MixtureModel(ABC):
         Returns:
             Dictionary of sampled parameter values.
         """
-        pass
 
     @abstractmethod
     def log_likelihood(self, data: jnp.ndarray, params: ParamsDict) -> jnp.ndarray:
@@ -62,7 +61,6 @@ class MixtureModel(ABC):
         Returns:
             Log likelihood values for each datapoint.
         """
-        pass
 
     def fit_model(self, data: jnp.ndarray, seed: int = 0) -> MCMC:
         """Fit the mixture model using MCMC.
@@ -117,7 +115,7 @@ class MixtureModel(ABC):
         Returns:
             Array of component assignments.
         """
-        params = {key: samples[key].mean(axis=0) for key in samples.keys()}
+        params = {key: samples[key].mean(axis=0) for key in samples}
         self.params = params
 
         log_likelihoods = self.log_likelihood(data, params)

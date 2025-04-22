@@ -58,7 +58,7 @@ class LRClassifierSpace(PerturbationSpace):
         if layer_key is not None and layer_key not in adata.obs.columns:
             raise ValueError(f"Layer key {layer_key} not found in adata.")
 
-        if embedding_key is not None and embedding_key not in adata.obsm.keys():
+        if embedding_key is not None and embedding_key not in adata.obsm:
             raise ValueError(f"Embedding key {embedding_key} not found in adata.obsm.")
 
         if layer_key is not None and embedding_key is not None:
@@ -205,7 +205,7 @@ class MLPClassifierSpace(PerturbationSpace):
         adata.obs["encoded_perturbations"] = [np.float32(label) for label in encoded_labels]
 
         # Split the data in train, test and validation
-        X = list(range(0, adata.n_obs))
+        X = list(range(adata.n_obs))
         y = adata.obs[target_col]
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split_size, stratify=y)
@@ -271,7 +271,7 @@ class MLPClassifierSpace(PerturbationSpace):
                 if dataset_count == 0:
                     pert_adata = batch_adata
                 else:
-                    pert_adata = anndata.concat([pert_adata, batch_adata])
+                    pert_adata = batch_adata if dataset_count == 0 else anndata.concat([pert_adata, batch_adata])
 
         # Add .obs annotations to the pert_adata. Because shuffle=False and num_workers=0, the order of the data is stable
         # and we can just add the annotations from the original AnnData object

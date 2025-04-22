@@ -135,9 +135,7 @@ class Distance:
         self.aggregation_func = agg_fct
         if metric == "edistance":
             metric_fct = Edistance()
-        elif metric == "euclidean":
-            metric_fct = EuclideanDistance(self.aggregation_func)
-        elif metric == "root_mean_squared_error":
+        elif metric in ("euclidean", "root_mean_squared_error"):
             metric_fct = EuclideanDistance(self.aggregation_func)
         elif metric == "mse":
             metric_fct = MeanSquaredDistance(self.aggregation_func)
@@ -181,7 +179,7 @@ class Distance:
 
         if layer_key and obsm_key:
             raise ValueError(
-                "Cannot use 'layer_key' and 'obsm_key' at the same time.\n" "Please provide only one of the two keys."
+                "Cannot use 'layer_key' and 'obsm_key' at the same time.\nPlease provide only one of the two keys."
             )
         if not layer_key and not obsm_key:
             obsm_key = "X_pca"
@@ -311,7 +309,7 @@ class Distance:
         # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
@@ -341,10 +339,7 @@ class Distance:
                         df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
                         df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
         else:
-            if self.layer_key:
-                embedding = adata.layers[self.layer_key]
-            else:
-                embedding = adata.obsm[self.obsm_key].copy()
+            embedding = adata.layers[self.layer_key] if self.layer_key else adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 for group_y in groups[index_x:]:  # type: ignore
@@ -448,7 +443,7 @@ class Distance:
         # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for group_x in fct(groups):
@@ -475,10 +470,7 @@ class Distance:
                         df.loc[group_x] = bootstrap_output.mean
                         df_var.loc[group_x] = bootstrap_output.variance
         else:
-            if self.layer_key:
-                embedding = adata.layers[self.layer_key]
-            else:
-                embedding = adata.obsm[self.obsm_key].copy()
+            embedding = adata.layers[self.layer_key] if self.layer_key else adata.obsm[self.obsm_key].copy()
             for group_x in fct(groups):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 group_y = selected_group
@@ -526,10 +518,7 @@ class Distance:
             >>> distance = pt.tools.Distance(metric="edistance")
             >>> distance.precompute_distances(adata)
         """
-        if self.layer_key:
-            cells = adata.layers[self.layer_key]
-        else:
-            cells = adata.obsm[self.obsm_key].copy()
+        cells = adata.layers[self.layer_key] if self.layer_key else adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
 
@@ -958,10 +947,7 @@ class NBLL(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
         def _is_count_matrix(matrix, tolerance=1e-6):
-            if matrix.dtype.kind == "i" or np.all(np.abs(matrix - np.round(matrix)) < tolerance):
-                return True
-            else:
-                return False
+            return bool(matrix.dtype.kind == "i" or np.all(np.abs(matrix - np.round(matrix)) < tolerance))
 
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBLL distance only works for raw counts.")

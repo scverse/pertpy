@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pertpy as pt
 import pytest
-import scipy.sparse as sparse
+from scipy import sparse
 
 
 @pytest.fixture
@@ -67,10 +67,7 @@ def test_grna_threshold_assignment_parameterized(request, adata_fixture):
         result_matrix = adata.layers[output_layer]
 
     # Convert original data to dense for comparison if needed
-    if sparse.issparse(adata.X):
-        original_matrix = adata.X.toarray()
-    else:
-        original_matrix = adata.X
+    original_matrix = adata.X.toarray() if sparse.issparse(adata.X) else adata.X
 
     assert np.all(np.logical_xor(original_matrix < threshold, result_matrix == 1))
 

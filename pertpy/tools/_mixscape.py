@@ -339,7 +339,7 @@ class Mixscape:
                             gv["pvec"] = pvec
                             gv[labels] = control
                             gv.loc[guide_cells, labels] = gene
-                            if gene not in gv_list.keys():
+                            if gene not in gv_list:
                                 gv_list[gene] = {}
                             gv_list[gene][category] = gv
 
@@ -486,10 +486,11 @@ class Mixscape:
                 projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
         # concatenate all pcs into a single matrix.
         for index, (_, value) in enumerate(projected_pcs.items()):
-            if index == 0:
+            if index == 0:  # noqa: SIM108
                 projected_pcs_array = value
             else:
                 projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
+            # projected_pcs_array = value if index == 0 else np.concatenate((projected_pcs_array, value), axis=1)
 
         clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
         clf.fit(projected_pcs_array, adata_subset.obs[labels])
@@ -801,7 +802,7 @@ class Mixscape:
         if "mixscape" not in adata.uns:
             raise ValueError("Please run the `mixscape` function first.")
         perturbation_score = None
-        for key in adata.uns["mixscape"][target_gene].keys():
+        for key in adata.uns["mixscape"][target_gene]:
             perturbation_score_temp = adata.uns["mixscape"][target_gene][key]
             perturbation_score_temp["name"] = key
             if perturbation_score is None:
@@ -994,7 +995,7 @@ class Mixscape:
             if len(ylabel) != 1:
                 raise ValueError(f"Expected number of y-labels to be `1`, found `{len(ylabel)}`.")
         elif len(ylabel) != len(keys):
-            raise ValueError(f"Expected number of y-labels to be `{len(keys)}`, " f"found `{len(ylabel)}`.")
+            raise ValueError(f"Expected number of y-labels to be `{len(keys)}`, found `{len(ylabel)}`.")
 
         if groupby is not None:
             if hue is not None:
@@ -1047,7 +1048,7 @@ class Mixscape:
                 g.set(yscale="log")
             g.set_titles(col_template="{col_name}").set_xlabels("")
             if rotation is not None:
-                for ax in g.axes[0]:
+                for ax in g.axes[0]:  # noqa: PLR1704
                     ax.tick_params(axis="x", labelrotation=rotation)
         else:
             # set by default the violin plot cut=0 to limit the extend
@@ -1065,7 +1066,7 @@ class Mixscape:
             else:
                 axs = [ax]
             for ax, y, ylab in zip(axs, ys, ylabel, strict=False):
-                ax = sns.violinplot(
+                ax = sns.violinplot(  # noqa: PLW2901
                     x=x,
                     y=y,
                     data=obs_tidy,
@@ -1079,7 +1080,7 @@ class Mixscape:
                 # Get the handles and labels.
                 handles, labels = ax.get_legend_handles_labels()
                 if stripplot:
-                    ax = sns.stripplot(
+                    ax = sns.stripplot(  # noqa: PLW2901
                         x=x,
                         y=y,
                         data=obs_tidy,

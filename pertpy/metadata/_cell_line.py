@@ -360,20 +360,16 @@ class CellLine(MetaData):
 
         # Make sure that the specified `cell_line_type` can be found in the bulk rna expression data,
         # then we can compare these keys and fetch the corresponding metadata.
-        if query_id not in adata.obs.columns:
-            if query_id is not None:
-                raise ValueError(
-                    f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                    "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation."
-                    "If the desired query ID is not available, you can fetch the cell line metadata "
-                    "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
-                    "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
-                )
+        if query_id not in adata.obs.columns and query_id is not None:
+            raise ValueError(
+                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
+                "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation."
+                "If the desired query ID is not available, you can fetch the cell line metadata "
+                "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
+                "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
+            )
         if query_id is None:
-            if cell_line_source == "sanger":
-                query_id = "cell_line_name"
-            else:
-                query_id = "DepMap_ID"
+            query_id = "cell_line_name" if cell_line_source == "sanger" else "DepMap_ID"
         identifier_num_all = len(adata.obs[query_id].unique())
 
         # Lazily download the bulk rna expression data
@@ -773,12 +769,14 @@ class CellLine(MetaData):
             raise ValueError(
                 "Dimensions of adata.X do not match those of metadata. Ensure that they have the same gene list."
             )
-        if isinstance(adata.obsm[metadata_key], pd.DataFrame):
-            # Raise error if the genes are not the same
-            if sum(adata.obsm[metadata_key].columns != adata.var.index.values) > 0:
-                raise ValueError(
-                    "Column name of metadata is not the same as the index of adata.var. Ensure that the genes are in the same order."
-                )
+        # Raise error if the genes are not the same
+        if (
+            isinstance(adata.obsm[metadata_key], pd.DataFrame)
+            and sum(adata.obsm[metadata_key].columns != adata.var.index.values) > 0
+        ):
+            raise ValueError(
+                "Column name of metadata is not the same as the index of adata.var. Ensure that the genes are in the same order."
+            )
 
         # Divide cell lines into those are present and not present in the metadata
         overlapped_cl = adata[~adata.obsm[metadata_key].isna().all(axis=1), :]

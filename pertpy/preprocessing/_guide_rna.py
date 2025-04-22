@@ -90,7 +90,7 @@ class GuideAssignment:
 
     @assign_by_threshold.register(np.ndarray)
     def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
-        return np.where(X >= assignment_threshold, 1, 0)
+        return np.where(assignment_threshold <= X, 1, 0)
 
     def assign_to_max_guide(
         self,

@@ -1,4 +1,4 @@
-import scipy.sparse as sparse
+from scipy import sparse
 
 CSBase = sparse.csr_matrix | sparse.csc_matrix
 CSRBase = sparse.csr_matrix

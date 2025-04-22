@@ -45,7 +45,7 @@ def test_random_forest_classifier(adata):
     assert results["CellTypeA"][2]["subsample_idx"] == 2
     assert "augur_score" in h_adata.obs.columns
     assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.634920, 0.933484, 0.902494])
-    assert "feature_importances" in results.keys()
+    assert "feature_importances" in results
     assert len(set(results["summary_metrics"]["CellTypeA"])) == len(results["summary_metrics"]["CellTypeA"]) - 1
 
 
@@ -59,7 +59,7 @@ def test_logistic_regression_classifier(adata):
 
     assert "augur_score" in h_adata.obs.columns
     assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.691232, 0.955404, 0.972789])
-    assert "feature_importances" in results.keys()
+    assert "feature_importances" in results
 
 
 def test_random_forest_regressor(adata):
@@ -147,7 +147,7 @@ def test_select_variance(adata):
     adata_cell_type = adata[adata.obs["cell_type"] == "CellTypeA"].copy()
     ad = ag_rfc.select_variance(adata_cell_type, var_quantile=0.5, span=0.3, filter_negative_residuals=False)
 
-    assert 3672 == len(ad.var.index[ad.var["highly_variable"]])
+    assert len(ad.var.index[ad.var["highly_variable"]]) == 3672
 
 
 def test_params():

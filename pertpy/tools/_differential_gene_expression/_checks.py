@@ -16,9 +16,8 @@ def check_is_numeric_matrix(array: np.ndarray | spmatrix) -> None:
     if issparse(array):
         if np.any(~np.isfinite(array.data)):
             raise ValueError("Counts cannot contain negative, NaN or Inf values.")
-    else:
-        if np.any(~np.isfinite(array)):
-            raise ValueError("Counts cannot contain negative, NaN or Inf values.")
+    elif np.any(~np.isfinite(array)):
+        raise ValueError("Counts cannot contain negative, NaN or Inf values.")
 
 
 def check_is_integer_matrix(array: np.ndarray | spmatrix, tolerance: float = 1e-6) -> None:
@@ -34,8 +33,7 @@ def check_is_integer_matrix(array: np.ndarray | spmatrix, tolerance: float = 1e-
     if issparse(array):
         if not array.data.dtype.kind == "i" and not np.all(np.abs(array.data - np.round(array.data)) < tolerance):
             raise ValueError("Non-zero elements of the matrix must be close to integer values.")
-    else:
-        if not array.dtype.kind == "i" and not np.all(np.abs(array - np.round(array)) < tolerance):
-            raise ValueError("Matrix must be a count matrix.")
+    elif array.dtype.kind != "i" and not np.all(np.abs(array - np.round(array)) < tolerance):
+        raise ValueError("Matrix must be a count matrix.")
     if (array < 0).sum() > 0:
         raise ValueError("Non-zero elements of the matrix must be positive.")

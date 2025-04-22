@@ -59,7 +59,7 @@ def adata(request):
 
     adata.layers["lognorm"] = adata.X.copy()
     adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
-    if "X_pca" not in adata.obsm.keys():
+    if "X_pca" not in adata.obsm:
         sc.pp.pca(adata, n_comps=5)
     if distance in lognorm_counts_distances:
         groups = np.unique(adata.obs["perturbation"])
