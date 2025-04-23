@@ -49,7 +49,6 @@ installation
 usage/usage
 tutorials/index
 contributing
-code_of_conduct
 Discussions <https://github.com/scverse/pertpy/discussions>
 references
 ```

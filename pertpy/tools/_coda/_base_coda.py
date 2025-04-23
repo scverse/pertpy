@@ -689,7 +689,7 @@ class CompositionalModel2(ABC):
 
                     if fdr < alpha:
                         # ceiling with 3 decimals precision
-                        c = np.floor(c * 10**3) / 10**3
+                        c = np.floor(c * 10**3) / 10**3  # noqa: PLW2901
                         return c, fdr
                 return 1.0, 0
 
@@ -1116,16 +1116,15 @@ class CompositionalModel2(ABC):
             else:
                 _, eff_df = self.summary_prepare(sample_adata, est_fdr=est_fdr)  # type: ignore
         # otherwise, get pre-calculated DataFrames. Effect DataFrame is stitched together from varm
+        elif model_type == "tree_agg" and select_type == "sslasso":
+            eff_df = sample_adata.uns["scCODA_params"]["node_df"]
         else:
-            if model_type == "tree_agg" and select_type == "sslasso":
-                eff_df = sample_adata.uns["scCODA_params"]["node_df"]
-            else:
-                covariates = sample_adata.uns["scCODA_params"]["covariate_names"]
-                effect_dfs = [sample_adata.varm[f"effect_df_{cov}"] for cov in covariates]
-                eff_df = pd.concat(effect_dfs)
-                eff_df.index = pd.MultiIndex.from_product(
-                    (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
-                )
+            covariates = sample_adata.uns["scCODA_params"]["covariate_names"]
+            effect_dfs = [sample_adata.varm[f"effect_df_{cov}"] for cov in covariates]
+            eff_df = pd.concat(effect_dfs)
+            eff_df.index = pd.MultiIndex.from_product(
+                (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
+            )
 
         out = eff_df["Final Parameter"] != 0
         out.rename("credible change")
@@ -1237,8 +1236,6 @@ class CompositionalModel2(ABC):
         """
         if isinstance(data, MuData):
             data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
 
         ct_names = data.var.index
 
@@ -1347,8 +1344,7 @@ class CompositionalModel2(ABC):
             args_barplot = {}
         if isinstance(data, MuData):
             data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
+
         # Get covariate names from adata, partition into those with nonzero effects for min. one cell type/no cell types
         covariate_names = data.uns["scCODA_params"]["covariate_names"]
         if covariates is not None:
@@ -1379,18 +1375,16 @@ class CompositionalModel2(ABC):
 
         plot_df = plot_df.reset_index()
 
-        if len(covariate_names_zero) != 0:
-            if plot_facets:
-                if plot_zero_covariate and not plot_zero_cell_type:
-                    for covariate_name_zero in covariate_names_zero:
-                        new_row = {
-                            "Covariate": covariate_name_zero,
-                            "Cell Type": "zero",
-                            "value": 0,
-                        }
-                        plot_df = pd.concat([plot_df, pd.DataFrame([new_row])], ignore_index=True)
-                    plot_df["covariate_"] = pd.Categorical(plot_df["Covariate"], covariate_names)
-                    plot_df = plot_df.sort_values(["covariate_"])
+        if len(covariate_names_zero) != 0 and plot_facets and plot_zero_covariate and not plot_zero_cell_type:
+            for covariate_name_zero in covariate_names_zero:
+                new_row = {
+                    "Covariate": covariate_name_zero,
+                    "Cell Type": "zero",
+                    "value": 0,
+                }
+                plot_df = pd.concat([plot_df, pd.DataFrame([new_row])], ignore_index=True)
+            plot_df["covariate_"] = pd.Categorical(plot_df["Covariate"], covariate_names)
+            plot_df = plot_df.sort_values(["covariate_"])
         if not plot_zero_cell_type:
             cell_type_names_zero = [
                 name
@@ -1434,9 +1428,8 @@ class CompositionalModel2(ABC):
                 ax.set_title(covariate_names[i])
                 if len(ax.get_xticklabels()) < 5:
                     ax.set_aspect(10 / len(ax.get_xticklabels()))
-                    if len(ax.get_xticklabels()) == 1:
-                        if ax.get_xticklabels()[0]._text == "zero":
-                            ax.set_xticks([])
+                    if len(ax.get_xticklabels()) == 1 and ax.get_xticklabels()[0]._text == "zero":
+                        ax.set_xticks([])
 
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
@@ -1540,8 +1533,7 @@ class CompositionalModel2(ABC):
             args_swarmplot = {}
         if isinstance(data, MuData):
             data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
+
         # y scale transformations
         if y_scale == "relative":
             sample_sums = np.sum(data.X, axis=1, keepdims=True)
@@ -1615,10 +1607,7 @@ class CompositionalModel2(ABC):
             )
 
             if add_dots:
-                if "hue" in args_swarmplot:
-                    hue = args_swarmplot.pop("hue")
-                else:
-                    hue = None
+                hue = args_swarmplot.pop("hue") if "hue" in args_swarmplot else None
 
                 if hue is None:
                     g.map(
@@ -1759,8 +1748,7 @@ class CompositionalModel2(ABC):
         """
         if isinstance(data, MuData):
             data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
+
         if ax is None:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
 
@@ -1892,8 +1880,6 @@ class CompositionalModel2(ABC):
 
         if isinstance(data, MuData):
             data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
         if isinstance(tree, str):
             tree = data.uns[tree]
 
@@ -1982,8 +1968,6 @@ class CompositionalModel2(ABC):
 
         if isinstance(data, MuData):
             data = data[modality_key]
-        if isinstance(data, AnnData):
-            data = data
         if show_legend is None:
             show_legend = not show_leaf_effects
         elif show_legend:
@@ -2275,9 +2259,7 @@ def collapse_singularities(tree: tt.core.ToyTree) -> tt.core.ToyTree:
     A_T = A.T
     unq, count = np.unique(A_T, axis=0, return_counts=True)
 
-    repeated_idx = []
-    for repeated_group in unq[count > 1]:
-        repeated_idx.append(np.argwhere(np.all(A_T == repeated_group, axis=1)).ravel())
+    repeated_idx = [np.argwhere(np.all(repeated_group == A_T, axis=1)).ravel() for repeated_group in unq[count > 1]]
 
     nodes_to_delete = [i for idx in repeated_idx for i in idx[1:]]
 
@@ -2308,13 +2290,8 @@ def traverse(df_: pd.DataFrame, a: str, i: int, innerl: bool) -> str:
     if i + 1 < df_.shape[1]:
         a_inner = pd.unique(df_.loc[np.where(df_.iloc[:, i] == a)].iloc[:, i + 1])
 
-        desc = []
-        for b in a_inner:
-            desc.append(traverse(df_, b, i + 1, innerl))
-        if innerl:
-            il = a
-        else:
-            il = ""
+        desc = [traverse(df_, b, i + 1, innerl) for b in a_inner]
+        il = a if innerl else ""
         out = f"({','.join(desc)}){il}"
     else:
         out = a
@@ -2338,9 +2315,7 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
     df_tax = df.loc[:, [x for x in levels if x in df.columns]]
 
     alevel = pd.unique(df_tax.iloc[:, 0])
-    strs = []
-    for a in alevel:
-        strs.append(traverse(df_tax, a, 0, inner_label))
+    strs = [traverse(df_tax, a, 0, inner_label) for a in alevel]
 
     newick = f"({','.join(strs)});"
     return newick
@@ -2441,10 +2416,7 @@ def linkage_to_newick(
         if node.is_leaf:
             return f"{leaf_names[node.id]}:{(parentdist - node.dist) / 2}{newick}"
         else:
-            if len(newick) > 0:
-                newick = f"):{(parentdist - node.dist) / 2}{newick}"
-            else:
-                newick = ");"
+            newick = f"):{(parentdist - node.dist) / 2}{newick}" if len(newick) > 0 else ");"
             newick = build_newick(node.get_left(), newick, node.dist, leaf_names)
             newick = build_newick(node.get_right(), f",{newick}", node.dist, leaf_names)
             newick = f"({newick}"

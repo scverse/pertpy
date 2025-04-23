@@ -36,16 +36,15 @@ class DGEEVAL:
             if not de_key1 or not de_key2:
                 raise ValueError("Both `de_key1` and `de_key2` must be provided together if using `adata`.")
 
-        else:  # use dfs
-            if de_df1 is None or de_df2 is None:
-                raise ValueError("Both `de_df1` and `de_df2` must be provided together if using DataFrames.")
+        elif de_df1 is None or de_df2 is None:
+            raise ValueError("Both `de_df1` and `de_df2` must be provided together if using DataFrames.")
 
         if de_key1:
             if not adata:
                 raise ValueError("`adata` should be provided with `de_key1` and `de_key2`. ")
-            assert all(
-                k in adata.uns for k in [de_key1, de_key2]
-            ), "Provided `de_key1` and `de_key2` must exist in `adata.uns`."
+            assert all(k in adata.uns for k in [de_key1, de_key2]), (
+                "Provided `de_key1` and `de_key2` must exist in `adata.uns`."
+            )
             vars = adata.var_names
 
         if de_df1 is not None:

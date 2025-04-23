@@ -330,10 +330,7 @@ class LookUp:
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
 
-        if cell_line_source == "broad":
-            bulk_rna = self.bulk_rna_broad
-        else:
-            bulk_rna = self.bulk_rna_sanger
+        bulk_rna = self.bulk_rna_broad if cell_line_source == "broad" else self.bulk_rna_sanger
 
         if query_id_list is not None:
             identifier_num_all = len(query_id_list)
@@ -392,10 +389,7 @@ class LookUp:
         """
         if self.type != "cell_line":
             raise ValueError("This is not a LookUp object specific for CellLineMetaData!")
-        if gdsc_dataset == 1:
-            gdsc_data = self.drug_response_gdsc1
-        else:
-            gdsc_data = self.drug_response_gdsc2
+        gdsc_data = self.drug_response_gdsc1 if gdsc_dataset == 1 else self.drug_response_gdsc2
 
         if query_id_list is not None:
             if reference_id not in gdsc_data.columns:
@@ -556,15 +550,14 @@ class LookUp:
                     raise ValueError(
                         "Gene-disease association is not available in dgidb dataset, please try with pharmgkb."
                     )
+            elif query_id_type == "target":
+                not_matched_identifiers = list(set(query_id_list) - set(self.pharmgkb["Gene"]))
+            elif query_id_type == "compound":
+                compounds = self.pharmgkb[self.pharmgkb["Type"] == "Chemical"]
+                not_matched_identifiers = list(set(query_id_list) - set(compounds["Compound|Disease"]))
             else:
-                if query_id_type == "target":
-                    not_matched_identifiers = list(set(query_id_list) - set(self.pharmgkb["Gene"]))
-                elif query_id_type == "compound":
-                    compounds = self.pharmgkb[self.pharmgkb["Type"] == "Chemical"]
-                    not_matched_identifiers = list(set(query_id_list) - set(compounds["Compound|Disease"]))
-                else:
-                    diseases = self.pharmgkb[self.pharmgkb["Type"] == "Disease"]
-                    not_matched_identifiers = list(set(query_id_list) - set(diseases["Compound|Disease"]))
+                diseases = self.pharmgkb[self.pharmgkb["Type"] == "Disease"]
+                not_matched_identifiers = list(set(query_id_list) - set(diseases["Compound|Disease"]))
 
             logger.info(f"{len(not_matched_identifiers)} {query_id_type}s are not found in the metadata.")
             logger.info(f"{identifier_num_all - len(not_matched_identifiers)} {query_id_type}s are found! ")

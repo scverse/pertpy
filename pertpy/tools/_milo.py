@@ -177,10 +177,7 @@ class Milo:
         adata.obs["nhood_ixs_random"] = adata.obs["nhood_ixs_random"].astype("int")
         adata.uns["nhood_neighbors_key"] = neighbors_key
         # Store distance to K-th nearest neighbor (used for spatial FDR correction)
-        if neighbors_key is None:
-            knn_dists = adata.obsp["distances"]
-        else:
-            knn_dists = adata.obsp[neighbors_key + "_distances"]
+        knn_dists = adata.obsp["distances"] if neighbors_key is None else adata.obsp[neighbors_key + "_distances"]
 
         nhood_ixs = adata.obs["nhood_ixs_refined"] == 1
         dist_mat = knn_dists[np.asarray(nhood_ixs), :]

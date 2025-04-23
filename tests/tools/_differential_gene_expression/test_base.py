@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 import pytest
-from pandas.core.api import DataFrame as DataFrame
+from pandas.core.api import DataFrame
 from pertpy.tools._differential_gene_expression import LinearModelBase
 
 

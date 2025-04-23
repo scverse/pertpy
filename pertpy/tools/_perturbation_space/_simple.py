@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 from anndata import AnnData
+from decoupler import get_pseudobulk as dc_get_pseudobulk
+from decoupler import plot_psbulk_samples as dc_plot_psbulk_samples
 from sklearn.cluster import DBSCAN, KMeans
-from decoupler import (get_pseudobulk as dc_get_pseudobulk, plot_psbulk_samples as dc_plot_psbulk_samples)
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
@@ -64,7 +65,7 @@ class CentroidSpace(PerturbationSpace):
                 X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
 
         if layer_key is not None:
-            if layer_key not in adata.layers.keys():
+            if layer_key not in adata.layers:
                 raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
             else:
                 X = np.empty((len(adata.obs[target_col].unique()), adata.layers[layer_key].shape[1]))
@@ -78,8 +79,7 @@ class CentroidSpace(PerturbationSpace):
             X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
 
         index = []
-        pert_index = 0
-        for group_name, group_data in grouped:
+        for pert_index, (group_name, group_data) in enumerate(grouped):
             indices = group_data.index
             if layer_key is not None:
                 points = adata[indices].layers[layer_key]
@@ -93,7 +93,6 @@ class CentroidSpace(PerturbationSpace):
                 points, key=lambda point: np.linalg.norm(point - centroid)
             )  # Find the point in the array closest to the centroid
             X[pert_index, :] = closest_point
-            pert_index += 1
 
         ps_adata = AnnData(X=X)
         ps_adata.obs_names = index
@@ -152,7 +151,7 @@ class PseudobulkSpace(PerturbationSpace):
         if layer_key is not None and embedding_key is not None:
             raise ValueError("Please, select just either layer or embedding for computation.")
 
-        if layer_key is not None and layer_key not in adata.layers.keys():
+        if layer_key is not None and layer_key not in adata.layers:
             raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
 
         if target_col not in adata.obs:
@@ -264,7 +263,7 @@ class KMeansSpace(ClusteringSpace):
                 self.X = adata.obsm[embedding_key]
 
         elif layer_key is not None:
-            if layer_key not in adata.layers.keys():
+            if layer_key not in adata.layers:
                 raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
             else:
                 self.X = adata.layers[layer_key]
@@ -327,7 +326,7 @@ class DBSCANSpace(ClusteringSpace):
                 self.X = adata.obsm[embedding_key]
 
         elif layer_key is not None:
-            if layer_key not in adata.layers.keys():
+            if layer_key not in adata.layers:
                 raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
             else:
                 self.X = adata.layers[layer_key]
