@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import jax
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,8 +13,8 @@ from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear import linear_problem
 from ott.solvers.linear import sinkhorn, sinkhorn_lr
 from scanpy.plotting import _utils
-from seaborn import heatmap
 from scipy.sparse import issparse
+from seaborn import heatmap
 from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors
@@ -141,7 +142,8 @@ class Cinemaot:
         if solver == "LRSinkhorn":
             if rank is None:
                 rank = int(min(cf1.shape[0], cf2.shape[0]) / 2)
-            _solver = sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps)
+            _solver = jax.jit(sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps))
+            # _solver = sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps)
             ot_sink = _solver(ot_prob)
             embedding = (
                 X_transformed[adata.obs[pert_key] != control, :]
@@ -168,7 +170,8 @@ class Cinemaot:
             )
 
         else:
-            _solver = sinkhorn.Sinkhorn(threshold=eps)
+            _solver = jax.jit(sinkhorn.Sinkhorn(threshold=eps))
+            # _solver = sinkhorn.Sinkhorn(threshold=eps)
             ot_sink = _solver(ot_prob)
             ot_matrix = np.array(ot_sink.matrix.T, dtype=np.float64)
             embedding = X_transformed[adata.obs[pert_key] != control, :] - np.matmul(
