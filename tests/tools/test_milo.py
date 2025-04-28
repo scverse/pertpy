@@ -12,8 +12,7 @@ try:
 except Exception:  # noqa: BLE001
     r_dependency = None
 
-
-milo = pt.tl.Milo()
+pytestmark = pytest.mark.skipif(r_dependency is None, reason="Required R package 'edgeR' not available")
 
 
 @pytest.fixture
@@ -22,20 +21,26 @@ def adata():
     return adata
 
 
-def test_load(adata):
+@pytest.fixture
+def milo():
+    milo = pt.tl.Milo()
+    return milo
+
+
+def test_load(adata, milo):
     mdata = milo.load(adata)
     assert isinstance(mdata, MuData)
     assert "rna" in mdata.mod
 
 
-def test_make_nhoods_number(adata):
+def test_make_nhoods_number(adata, milo):
     adata = adata.copy()
     p = 0.1
     adata = milo.make_nhoods(adata, prop=p, copy=True)
     assert adata.obsm["nhoods"].shape[1] <= int(np.round(adata.n_obs * p))
 
 
-def test_make_nhoods_missing_connectivities(adata):
+def test_make_nhoods_missing_connectivities(adata, milo):
     adata = adata.copy()
     p = 0.1
     del adata.obsp["connectivities"]
@@ -43,7 +48,7 @@ def test_make_nhoods_missing_connectivities(adata):
         adata = milo.make_nhoods(adata, prop=p)
 
 
-def test_make_nhoods_sizes(adata):
+def test_make_nhoods_sizes(adata, milo):
     adata = adata.copy()
     milo.make_nhoods(adata)
     knn_graph = adata.obsp["connectivities"]
@@ -51,7 +56,7 @@ def test_make_nhoods_sizes(adata):
     assert knn_graph.sum(0).min() <= adata.obsm["nhoods"].sum(0).min()
 
 
-def test_make_nhoods_neighbors_key(adata):
+def test_make_nhoods_neighbors_key(adata, milo):
     adata = adata.copy()
     k = adata.uns["neighbors"]["params"]["n_neighbors"]
     test_k = 5
@@ -62,7 +67,7 @@ def test_make_nhoods_neighbors_key(adata):
     assert smallest_size < k
 
 
-def test_count_nhoods_sample_values(adata):
+def test_count_nhoods_sample_values(adata, milo):
     adata = adata.copy()
     milo.make_nhoods(adata)
     # Extract cells of one nhood
@@ -82,7 +87,7 @@ def test_count_nhoods_sample_values(adata):
     assert all((top_b - top_a) == 0), 'The counts for samples in milo_mdata["milo"] does not match'
 
 
-def test_count_nhoods_missing_nhoods(adata):
+def test_count_nhoods_missing_nhoods(adata, milo):
     adata = adata.copy()
     milo.make_nhoods(adata)
     sample_col = "phase"
@@ -91,7 +96,7 @@ def test_count_nhoods_missing_nhoods(adata):
         _ = milo.count_nhoods(adata, sample_col=sample_col)
 
 
-def test_count_nhoods_sample_order(adata):
+def test_count_nhoods_sample_order(adata, milo):
     adata = adata.copy()
     milo.make_nhoods(adata)
     # Extract cells of one nhood
@@ -112,9 +117,8 @@ def test_count_nhoods_sample_order(adata):
     assert top_a == top_b, 'The order of samples in milo_mdata["milo"] does not match'
 
 
-# @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
 @pytest.fixture
-def da_nhoods_mdata(adata):
+def da_nhoods_mdata(adata, milo):
     adata = adata.copy()
     milo.make_nhoods(adata)
 
@@ -132,28 +136,24 @@ def da_nhoods_mdata(adata):
     return milo_mdata
 
 
-# @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
-def test_da_nhoods_missing_samples(adata):
+def test_da_nhoods_missing_samples(adata, milo):
     with pytest.raises(KeyError):
         milo.da_nhoods(adata, design="~condition")
 
 
-# @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
-def test_da_nhoods_missing_covariate(da_nhoods_mdata):
+def test_da_nhoods_missing_covariate(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     with pytest.raises(KeyError):
         milo.da_nhoods(mdata, design="~ciaone")
 
 
-# @pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
-def test_da_nhoods_non_unique_covariate(da_nhoods_mdata):
+def test_da_nhoods_non_unique_covariate(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     with pytest.raises(AssertionError):
         milo.da_nhoods(mdata, design="~phase")
 
 
-@pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
-def test_da_nhoods_pvalues(da_nhoods_mdata):
+def test_da_nhoods_pvalues(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     milo.da_nhoods(mdata, design="~condition")
     sample_adata = mdata["milo"].copy()
@@ -161,8 +161,7 @@ def test_da_nhoods_pvalues(da_nhoods_mdata):
     assert (min_p >= 0) & (max_p <= 1), "P-values are not between 0 and 1"
 
 
-@pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
-def test_da_nhoods_fdr(da_nhoods_mdata):
+def test_da_nhoods_fdr(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     milo.da_nhoods(mdata, design="~condition")
     sample_adata = mdata["milo"].copy()
@@ -171,8 +170,7 @@ def test_da_nhoods_fdr(da_nhoods_mdata):
     )
 
 
-@pytest.mark.skipif(r_dependency is None, reason="Require R dependecy")
-def test_da_nhoods_default_contrast(da_nhoods_mdata):
+def test_da_nhoods_default_contrast(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     adata = mdata["rna"].copy()
     adata.obs["condition"] = (
@@ -188,7 +186,7 @@ def test_da_nhoods_default_contrast(da_nhoods_mdata):
 
 
 @pytest.fixture
-def annotate_nhoods_mdata(adata):
+def annotate_nhoods_mdata(adata, milo):
     adata = adata.copy()
     milo.make_nhoods(adata)
 
@@ -206,21 +204,21 @@ def annotate_nhoods_mdata(adata):
     return milo_mdata
 
 
-def test_annotate_nhoods_missing_samples(annotate_nhoods_mdata):
+def test_annotate_nhoods_missing_samples(annotate_nhoods_mdata, milo):
     mdata = annotate_nhoods_mdata.copy()
     del mdata.mod["milo"]
     with pytest.raises(ValueError):
         milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
 
 
-def test_annotate_nhoods_continuous_mean_range(annotate_nhoods_mdata):
+def test_annotate_nhoods_continuous_mean_range(annotate_nhoods_mdata, milo):
     mdata = annotate_nhoods_mdata.copy()
     milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
     assert mdata["milo"].var["nhood_S_score"].max() < mdata["rna"].obs["S_score"].max()
     assert mdata["milo"].var["nhood_S_score"].min() > mdata["rna"].obs["S_score"].min()
 
 
-def test_annotate_nhoods_continuous_correct_mean(annotate_nhoods_mdata):
+def test_annotate_nhoods_continuous_correct_mean(annotate_nhoods_mdata, milo):
     mdata = annotate_nhoods_mdata.copy()
     milo.annotate_nhoods_continuous(mdata, anno_col="S_score")
     rng = np.random.default_rng(seed=42)
@@ -229,21 +227,21 @@ def test_annotate_nhoods_continuous_correct_mean(annotate_nhoods_mdata):
     assert mdata["milo"].var["nhood_S_score"].iloc[i] == pytest.approx(mean_val_nhood, 0.0001)
 
 
-def test_annotate_nhoods_annotation_frac_range(annotate_nhoods_mdata):
+def test_annotate_nhoods_annotation_frac_range(annotate_nhoods_mdata, milo):
     mdata = annotate_nhoods_mdata.copy()
     milo.annotate_nhoods(mdata, anno_col="louvain")
     assert mdata["milo"].var["nhood_annotation_frac"].max() <= 1.0
     assert mdata["milo"].var["nhood_annotation_frac"].min() >= 0.0
 
 
-def test_annotate_nhoods_cont_gives_error(annotate_nhoods_mdata):
+def test_annotate_nhoods_cont_gives_error(annotate_nhoods_mdata, milo):
     mdata = annotate_nhoods_mdata.copy()
     with pytest.raises(ValueError):
         milo.annotate_nhoods(mdata, anno_col="S_score")
 
 
 @pytest.fixture
-def add_nhood_expression_mdata():
+def add_nhood_expression_mdata(milo):
     adata = sc.datasets.pbmc3k()
     sc.pp.normalize_per_cell(adata)
     sc.pp.log1p(adata)
@@ -268,7 +266,7 @@ def add_nhood_expression_mdata():
     return milo_mdata
 
 
-def test_add_nhood_expression_nhood_mean_range(add_nhood_expression_mdata):
+def test_add_nhood_expression_nhood_mean_range(add_nhood_expression_mdata, milo):
     mdata = add_nhood_expression_mdata.copy()
     milo.add_nhood_expression(mdata)
 
