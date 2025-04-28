@@ -6,18 +6,18 @@ default_stages:
     - pre-push
 minimum_pre_commit_version: 2.16.0
 repos:
-    - repo: https://github.com/pre-commit/mirrors-prettier
-      rev: v4.0.0-alpha.8
+    - repo: https://github.com/biomejs/pre-commit
+      rev: v1.9.4
       hooks:
-          - id: prettier
+          - id: biome-format
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.8.6
+      rev: v0.11.5
       hooks:
           - id: ruff
             args: [--fix, --exit-non-zero-on-fix, --unsafe-fixes]
           - id: ruff-format
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.6.0
+      rev: v5.0.0
       hooks:
           - id: detect-private-key
           - id: check-ast
@@ -26,6 +26,12 @@ repos:
             args: [--fix=lf]
           - id: trailing-whitespace
           - id: check-case-conflict
+          - id: check-added-large-files
+          - id: check-toml
+          - id: check-yaml
+          - id: check-merge-conflict
+          - id: no-commit-to-branch
+            args: ["--branch=main"]
     - repo: https://github.com/pre-commit/mirrors-mypy
       rev: v1.14.1
       hooks:

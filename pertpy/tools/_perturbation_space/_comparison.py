@@ -95,6 +95,7 @@ class PerturbationComparison:
             label_groups.append("ctrl")
 
         from pynndescent import NNDescent
+
         index = NNDescent(
             index_data,
             n_neighbors=max(50, n_neighbors),
@@ -106,7 +107,6 @@ class PerturbationComparison:
         uq, uq_counts = np.unique(labels[indices], return_counts=True)
         uq_counts_norm = uq_counts / uq_counts.sum()
         counts = dict(zip(label_groups, [0.0] * len(label_groups), strict=False))
-        for group, count_norm in zip(uq, uq_counts_norm, strict=False):
-            counts[group] = count_norm
+        counts = dict(zip(uq, uq_counts_norm, strict=False))
 
         return counts

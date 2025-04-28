@@ -28,7 +28,7 @@ def adata():
         KO = np.where(KO < 0, 0, KO)
         gene_i = np.concatenate((NT, NP, KO))
         gene_i = np.expand_dims(gene_i, axis=1)
-        if i == 0:
+        if i == 0:  # noqa: SIM108
             X = gene_i
         else:
             X = np.concatenate((X, gene_i), axis=1)

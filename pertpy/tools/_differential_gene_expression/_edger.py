@@ -39,17 +39,13 @@ class EdgeR(LinearModelBase):
             edger = importr("edgeR")
         except ImportError as e:
             raise ImportError(
-                "edgeR requires a valid R installation with the following packages:\n"
-                "edgeR, BiocParallel, RhpcBLASctl"
+                "edgeR requires a valid R installation with the following packages:\nedgeR, BiocParallel, RhpcBLASctl"
             ) from e
 
         # Convert dataframe
         with localconverter(get_conversion() + numpy2ri.converter):
             expr = self.adata.X if self.layer is None else self.adata.layers[self.layer]
-            if issparse(expr):
-                expr = expr.T.toarray()
-            else:
-                expr = expr.T
+            expr = expr.T.toarray() if issparse(expr) else expr.T
 
         with localconverter(get_conversion() + pandas2ri.converter):
             expr_r = ro.conversion.py2rpy(pd.DataFrame(expr, index=self.adata.var_names, columns=self.adata.obs_names))
@@ -100,7 +96,7 @@ class EdgeR(LinearModelBase):
             importr("edgeR")
         except ImportError:
             raise ImportError(
-                "edgeR requires a valid R installation with the following packages: " "edgeR, BiocParallel, RhpcBLASctl"
+                "edgeR requires a valid R installation with the following packages: edgeR, BiocParallel, RhpcBLASctl"
             ) from None
 
         # Convert vector to R, which drops a category like `self.design_matrix` to use the intercept for the left out.

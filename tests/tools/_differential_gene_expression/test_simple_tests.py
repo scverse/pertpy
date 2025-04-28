@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.core.api import DataFrame as DataFrame
+from pandas.core.api import DataFrame
 from pertpy.tools._differential_gene_expression import SimpleComparisonBase, TTest, WilcoxonTest
 
 

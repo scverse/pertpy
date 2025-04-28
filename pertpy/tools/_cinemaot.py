@@ -86,7 +86,7 @@ class Cinemaot:
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         if solver not in available_solvers:
-            raise ValueError(f"solver = {solver} is not one of the supported solvers:" f" {available_solvers}")
+            raise ValueError(f"solver = {solver} is not one of the supported solvers: {available_solvers}")
 
         if dim is None:
             dim = self.get_dim(adata, use_rep=use_rep)
@@ -256,7 +256,7 @@ class Cinemaot:
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         assert solver in available_solvers, (
-            f"solver = {solver} is not one of the supported solvers:" f" {available_solvers}"
+            f"solver = {solver} is not one of the supported solvers: {available_solvers}"
         )
 
         if dim is None:
@@ -336,11 +336,10 @@ class Cinemaot:
                 df = pd.DataFrame(adata.raw.X.toarray(), columns=adata.raw.var_names, index=adata.raw.obs_names)
             else:
                 df = pd.DataFrame(adata.raw.X, columns=adata.raw.var_names, index=adata.raw.obs_names)
+        elif issparse(adata.X):
+            df = pd.DataFrame(adata.X.toarray(), columns=adata.var_names, index=adata.obs_names)
         else:
-            if issparse(adata.X):
-                df = pd.DataFrame(adata.X.toarray(), columns=adata.var_names, index=adata.obs_names)
-            else:
-                df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
+            df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
 
         if label_list is None:
             label_list = ["ct"]
@@ -384,10 +383,7 @@ class Cinemaot:
             >>> dim = model.get_dim(adata)
         """
         sk = SinkhornKnopp()
-        if issparse(adata.raw.X):
-            data = adata.raw.X.toarray()
-        else:
-            data = adata.raw.X
+        data = adata.raw.X.toarray() if issparse(adata.raw.X) else adata.raw.X
         vm = (1e-3 + data + c * data * data) / (1 + c)
         sk.fit(vm)
         wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
@@ -630,13 +626,12 @@ class Cinemaot:
             else:
                 Y0 = adata.raw.X[adata.obs[pert_key] == control, :]
                 Y1 = adata.raw.X[adata.obs[pert_key] != control, :]
+        elif issparse(adata.X):
+            Y0 = adata.X.toarray()[adata.obs[pert_key] == control, :]
+            Y1 = adata.X.toarray()[adata.obs[pert_key] != control, :]
         else:
-            if issparse(adata.X):
-                Y0 = adata.X.toarray()[adata.obs[pert_key] == control, :]
-                Y1 = adata.X.toarray()[adata.obs[pert_key] != control, :]
-            else:
-                Y0 = adata.X[adata.obs[pert_key] == control, :]
-                Y1 = adata.X[adata.obs[pert_key] != control, :]
+            Y0 = adata.X[adata.obs[pert_key] == control, :]
+            Y1 = adata.X[adata.obs[pert_key] != control, :]
         X0 = cf[adata.obs[pert_key] == control, :]
         X1 = cf[adata.obs[pert_key] != control, :]
         ols0 = LinearRegression()
@@ -714,15 +709,9 @@ class Cinemaot:
         df["source_label"] = adata_.obs[source_label].astype(str).values
         df = df.groupby("source_label").sum()
 
-        if normalize == "col":
-            df = df / df.sum(axis=0)
-        else:
-            df = (df.T / df.sum(axis=1)).T
+        df = df / df.sum(axis=0) if normalize == "col" else (df.T / df.sum(axis=1)).T
         df = df.clip(lower=min_val) - min_val
-        if normalize == "col":
-            df = df / df.sum(axis=0)
-        else:
-            df = (df.T / df.sum(axis=1)).T
+        df = df / df.sum(axis=0) if normalize == "col" else (df.T / df.sum(axis=1)).T
 
         g = heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
@@ -876,14 +865,8 @@ class SinkhornKnopp:
         assert P.ndim == 2
 
         N = P.shape[0]
-        if np.sum(abs(self._setr)) == 0:
-            rsum = P.shape[1]
-        else:
-            rsum = self._setr
-        if np.sum(abs(self._setc)) == 0:
-            csum = P.shape[0]
-        else:
-            csum = self._setc
+        rsum = P.shape[1] if np.sum(abs(self._setr)) == 0 else self._setr
+        csum = P.shape[0] if np.sum(abs(self._setc)) == 0 else self._setc
         max_threshr = rsum + self._epsilon
         min_threshr = rsum - self._epsilon
         max_threshc = csum + self._epsilon
