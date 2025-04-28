@@ -412,7 +412,6 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
-            control: Control category from the `pert_key` column.
             n_comps: Number of principal components to use.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
@@ -468,7 +467,8 @@ class Mixscape:
         )
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
-        ].copy()
+        ]
+        X = adata_subset.X - adata_subset.X.mean(0)
         projected_pcs: dict[str, np.ndarray] = {}
         # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
         for _, (key, value) in enumerate(perturbation_markers.items()):
@@ -480,10 +480,8 @@ class Mixscape:
                 ].copy()
                 sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
-                sc.pp.neighbors(gene_subset)
-                # projects each subspace onto all cells in the data.
-                sc.tl.ingest(adata=adata_subset, adata_ref=gene_subset, embedding_method="pca")
-                projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
+                # project cells into PCA space of gene_subset
+                projected_pcs[key[1]] = np.dot(X, gene_subset.varm["PCs"])
         # concatenate all pcs into a single matrix.
         projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
