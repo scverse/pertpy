@@ -118,7 +118,7 @@ def test_count_nhoods_sample_order(adata, milo):
 
 
 @pytest.fixture
-def da_nhoods_mdata(adata):
+def da_nhoods_mdata(adata, milo):
     adata = adata.copy()
     milo.make_nhoods(adata)
 
@@ -136,24 +136,24 @@ def da_nhoods_mdata(adata):
     return milo_mdata
 
 
-def test_da_nhoods_missing_samples(adata):
+def test_da_nhoods_missing_samples(adata, milo):
     with pytest.raises(KeyError):
         milo.da_nhoods(adata, design="~condition")
 
 
-def test_da_nhoods_missing_covariate(da_nhoods_mdata):
+def test_da_nhoods_missing_covariate(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     with pytest.raises(KeyError):
         milo.da_nhoods(mdata, design="~ciaone")
 
 
-def test_da_nhoods_non_unique_covariate(da_nhoods_mdata):
+def test_da_nhoods_non_unique_covariate(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     with pytest.raises(AssertionError):
         milo.da_nhoods(mdata, design="~phase")
 
 
-def test_da_nhoods_pvalues(da_nhoods_mdata):
+def test_da_nhoods_pvalues(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     milo.da_nhoods(mdata, design="~condition")
     sample_adata = mdata["milo"].copy()
@@ -161,7 +161,7 @@ def test_da_nhoods_pvalues(da_nhoods_mdata):
     assert (min_p >= 0) & (max_p <= 1), "P-values are not between 0 and 1"
 
 
-def test_da_nhoods_fdr(da_nhoods_mdata):
+def test_da_nhoods_fdr(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     milo.da_nhoods(mdata, design="~condition")
     sample_adata = mdata["milo"].copy()
@@ -170,7 +170,7 @@ def test_da_nhoods_fdr(da_nhoods_mdata):
     )
 
 
-def test_da_nhoods_default_contrast(da_nhoods_mdata):
+def test_da_nhoods_default_contrast(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     adata = mdata["rna"].copy()
     adata.obs["condition"] = (
