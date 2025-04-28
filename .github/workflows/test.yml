@@ -42,10 +42,10 @@ jobs:
             - name: Cache .pertpy_cache
               uses: actions/cache@v4
               with:
-                path: .pertpy_cache
+                path: cache
                 key: ${{ runner.os }}-pertpy-cache-${{ hashFiles('pertpy/metadata/**') }}
                 restore-keys: |
-                  ${{ runner.os }}-pertpy-cache-
+                  ${{ runner.os }}-pertpy-cache
 
             - name: Set up Python ${{ matrix.python }}
               uses: actions/setup-python@v5
