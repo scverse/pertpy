@@ -481,7 +481,7 @@ class Mixscape:
                 sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
                 # project cells into PCA space of gene_subset
-                projected_pcs[key[1]] = np.dot(X, gene_subset.varm["PCs"])
+                projected_pcs[key[1]] = np.asarray(np.dot(X, gene_subset.varm["PCs"]))
         # concatenate all pcs into a single matrix.
         projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
