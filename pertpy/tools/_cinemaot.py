@@ -145,7 +145,6 @@ class Cinemaot:
             if rank is None:
                 rank = int(min(cf1.shape[0], cf2.shape[0]) / 2)
             _solver = jax.jit(sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps))
-            # _solver = sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps)
             ot_sink = _solver(ot_prob)
             embedding = (
                 X_transformed[adata.obs[pert_key] != control, :]
@@ -173,7 +172,6 @@ class Cinemaot:
 
         else:
             _solver = jax.jit(sinkhorn.Sinkhorn(threshold=eps))
-            # _solver = sinkhorn.Sinkhorn(threshold=eps)
             ot_sink = _solver(ot_prob)
             ot_matrix = np.array(ot_sink.matrix.T, dtype=np.float64)
             embedding = X_transformed[adata.obs[pert_key] != control, :] - np.matmul(
