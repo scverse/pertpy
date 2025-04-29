@@ -50,6 +50,7 @@ class Cinemaot:
         eps: float = 1e-3,
         solver: str = "Sinkhorn",
         preweight_label: str | None = None,
+        random_state: int | None = 0,
     ):
         """Calculate the confounding variation, optimal transport counterfactual pairs, and single-cell level treatment effects.
 
@@ -70,6 +71,7 @@ class Cinemaot:
             solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             preweight_label: The annotated label (e.g. cell type) that is used to assign weights for treated
                              and control cells to balance across the label. Helps overcome the differential abundance issue.
+            random_state: The random seed for the shuffling.
 
         Returns:
             Returns an AnnData object that contains the single-cell level treatment effect as de.X and the
@@ -97,7 +99,7 @@ class Cinemaot:
         xi = np.zeros(dim)
         j = 0
         for source_row in X_transformed.T:
-            xi_obj = Xi(source_row, groupvec * 1)
+            xi_obj = Xi(source_row, groupvec * 1, random_state=random_state)
             xi[j] = xi_obj.correlation
             j = j + 1
 
@@ -725,9 +727,10 @@ class Cinemaot:
 class Xi:
     """A fast implementation of cross-rank dependence metric used in CINEMA-OT."""
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, random_state: int | None = 0):
         self.x = x
         self.y = y
+        self.random_state = random_state
 
     @property
     def sample_size(self):
@@ -737,7 +740,7 @@ class Xi:
     def x_ordered_rank(self):
         # PI is the rank vector for x, with ties broken at random
         len_x = len(self.x)
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(self.random_state)
         perm = rng.permutation(len_x)
         x_shuffled = self.x[perm]
 
