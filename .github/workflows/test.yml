@@ -72,7 +72,7 @@ jobs:
                   PLATFORM: ${{ matrix.os }}
                   DISPLAY: :42
               run: |
-                  pytest_args="-m pytest -v --color=yes"
+                  pytest_args="-m pytest -v --color=yes --durations-min=0"
                   if [ "${{ matrix.run_mode }}" = "slow" ]; then
                     pytest_args="$pytest_args --runslow"
                   fi
