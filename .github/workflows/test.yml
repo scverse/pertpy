@@ -70,7 +70,7 @@ jobs:
               run: Rscript --vanilla -e "install.packages(c('BiocManager', 'statmod'), repos='https://cran.r-project.org'); library('BiocManager'); BiocManager::install('edgeR')"
 
             - name: Install uv
-              uses: astral-sh/setup-uv@v5
+              uses: astral-sh/setup-uv@v6
               with:
                 enable-cache: true
                 cache-dependency-glob: pyproject.toml
