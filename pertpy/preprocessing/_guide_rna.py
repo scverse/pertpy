@@ -267,7 +267,7 @@ class GuideAssignment:
             assignments = mixture_model.run_model(data)
             res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
             if write_to_var:
-                for params_name, param in model.params.items():
+                for params_name, param in mixture_model.params.items():
                     adata.var[params_name][gene] = param    
 
         # Assign guides to cells
