@@ -154,8 +154,8 @@ class Mixscape:
                         shape=(n_split, n_control),
                     )
                     neigh_matrix /= n_neighbors
-                    adata.layers["X_pert"][split_mask] = (
-                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                    adata.layers["X_pert"][np.asarray(split_mask)] = (
+                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][np.asarray(split_mask)]
                     )
                 else:
                     split_indices = np.where(split_mask)[0]
@@ -339,7 +339,7 @@ class Mixscape:
                             gv["pvec"] = pvec
                             gv[labels] = control
                             gv.loc[guide_cells, labels] = gene
-                            if gene not in gv_list.keys():
+                            if gene not in gv_list:
                                 gv_list[gene] = {}
                             gv_list[gene][category] = gv
 
@@ -412,7 +412,6 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
-            control: Control category from the `pert_key` column.
             n_comps: Number of principal components to use.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
@@ -468,7 +467,8 @@ class Mixscape:
         )
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
-        ].copy()
+        ]
+        X = adata_subset.X - adata_subset.X.mean(0)
         projected_pcs: dict[str, np.ndarray] = {}
         # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
         for _, (key, value) in enumerate(perturbation_markers.items()):
@@ -480,16 +480,10 @@ class Mixscape:
                 ].copy()
                 sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
-                sc.pp.neighbors(gene_subset)
-                # projects each subspace onto all cells in the data.
-                sc.tl.ingest(adata=adata_subset, adata_ref=gene_subset, embedding_method="pca")
-                projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
+                # project cells into PCA space of gene_subset
+                projected_pcs[key[1]] = np.asarray(np.dot(X, gene_subset.varm["PCs"]))
         # concatenate all pcs into a single matrix.
-        for index, (_, value) in enumerate(projected_pcs.items()):
-            if index == 0:
-                projected_pcs_array = value
-            else:
-                projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
+        projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
         clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
         clf.fit(projected_pcs_array, adata_subset.obs[labels])
@@ -796,7 +790,7 @@ class Mixscape:
         if "mixscape" not in adata.uns:
             raise ValueError("Please run the `mixscape` function first.")
         perturbation_score = None
-        for key in adata.uns["mixscape"][target_gene].keys():
+        for key in adata.uns["mixscape"][target_gene]:
             perturbation_score_temp = adata.uns["mixscape"][target_gene][key]
             perturbation_score_temp["name"] = key
             if perturbation_score is None:
@@ -989,7 +983,7 @@ class Mixscape:
             if len(ylabel) != 1:
                 raise ValueError(f"Expected number of y-labels to be `1`, found `{len(ylabel)}`.")
         elif len(ylabel) != len(keys):
-            raise ValueError(f"Expected number of y-labels to be `{len(keys)}`, " f"found `{len(ylabel)}`.")
+            raise ValueError(f"Expected number of y-labels to be `{len(keys)}`, found `{len(ylabel)}`.")
 
         if groupby is not None:
             if hue is not None:
@@ -1042,7 +1036,7 @@ class Mixscape:
                 g.set(yscale="log")
             g.set_titles(col_template="{col_name}").set_xlabels("")
             if rotation is not None:
-                for ax in g.axes[0]:
+                for ax in g.axes[0]:  # noqa: PLR1704
                     ax.tick_params(axis="x", labelrotation=rotation)
         else:
             # set by default the violin plot cut=0 to limit the extend
@@ -1060,7 +1054,7 @@ class Mixscape:
             else:
                 axs = [ax]
             for ax, y, ylab in zip(axs, ys, ylabel, strict=False):
-                ax = sns.violinplot(
+                ax = sns.violinplot(  # noqa: PLW2901
                     x=x,
                     y=y,
                     data=obs_tidy,
@@ -1074,7 +1068,7 @@ class Mixscape:
                 # Get the handles and labels.
                 handles, labels = ax.get_legend_handles_labels()
                 if stripplot:
-                    ax = sns.stripplot(
+                    ax = sns.stripplot(  # noqa: PLW2901
                         x=x,
                         y=y,
                         data=obs_tidy,

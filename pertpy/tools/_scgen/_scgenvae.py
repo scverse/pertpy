@@ -24,8 +24,8 @@ class JaxSCGENVAE(JaxBaseModuleClass):
     training: bool = True
 
     def setup(self):
-        use_batch_norm_encoder = self.use_batch_norm == "encoder" or self.use_batch_norm == "both"
-        use_layer_norm_encoder = self.use_layer_norm == "encoder" or self.use_layer_norm == "both"
+        use_batch_norm_encoder = self.use_batch_norm in ("encoder", "both")
+        use_layer_norm_encoder = self.use_layer_norm in ("encoder", "both")
 
         self.encoder = FlaxEncoder(
             n_latent=self.n_latent,

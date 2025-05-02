@@ -3,13 +3,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 from jax.random import PRNGKey
 from jax.scipy.special import logsumexp
-from numpyro import sample, plate, factor
+from numpyro import factor, plate, sample
+from numpyro.distributions import Dirichlet, Exponential, HalfNormal, Normal, Poisson
 from numpyro.infer import MCMC, NUTS
-from numpyro.distributions import Normal, Exponential, Dirichlet, Poisson, HalfNormal
 
 ParamsDict = Mapping[str, jnp.ndarray]
 
@@ -49,7 +49,6 @@ class MixtureModel(ABC):
         Returns:
             Dictionary of sampled parameter values.
         """
-        pass
 
     @abstractmethod
     def log_likelihood(self, data: jnp.ndarray, params: ParamsDict) -> jnp.ndarray:
@@ -62,7 +61,6 @@ class MixtureModel(ABC):
         Returns:
             Log likelihood values for each datapoint.
         """
-        pass
 
     def fit_model(self, data: jnp.ndarray, seed: int = 0) -> MCMC:
         """Fit the mixture model using MCMC.
@@ -117,7 +115,7 @@ class MixtureModel(ABC):
         Returns:
             Array of component assignments.
         """
-        params = {key: samples[key].mean(axis=0) for key in samples.keys()}
+        params = {key: samples[key].mean(axis=0) for key in samples}
         self.params = params
 
         log_likelihoods = self.log_likelihood(data, params)

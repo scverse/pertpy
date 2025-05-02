@@ -367,10 +367,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         latent = []
         for array_dict in scdl:
             out = jit_inference_fn(self.module.rngs, array_dict)
-            if give_mean:
-                z = out["qz"].mean
-            else:
-                z = out["z"]
+            z = out["qz"].mean if give_mean else out["z"]
             latent.append(z)
         concat_axis = 0 if ((n_samples == 1) or give_mean) else 1
         latent = jnp.concatenate(latent, axis=concat_axis)  # type: ignore
@@ -497,14 +494,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax.text(
             max(x) - max(x) * x_coeff,
             max(y) - y_coeff * max(y),
-            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value ** 2:.2f}",
+            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value**2:.2f}",
             fontsize=kwargs.get("textsize", fontsize),
         )
         if diff_genes is not None:
             ax.text(
                 max(x) - max(x) * x_coeff,
                 max(y) - (y_coeff + 0.15) * max(y),
-                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff ** 2:.2f}",
+                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff**2:.2f}",
                 fontsize=kwargs.get("textsize", fontsize),
             )
 
@@ -578,7 +575,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
                 logger.info("Top 100 DEGs var: ", r_value_diff**2)
-        if "y1" in axis_keys.keys():
+        if "y1" in axis_keys:
             real_stim = adata[adata.obs[condition_key] == axis_keys["y1"]]
         x = np.asarray(np.var(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.var(stim.X, axis=0)).ravel()
@@ -596,7 +593,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         # plt.plot(x, m * x + b, "-", color="green")
         ax.set_xlabel(labels["x"], fontsize=fontsize)
         ax.set_ylabel(labels["y"], fontsize=fontsize)
-        if "y1" in axis_keys.keys():
+        if "y1" in axis_keys:
             y1 = np.asarray(np.var(real_stim.X, axis=0)).ravel()
             _ = plt.scatter(
                 x,
@@ -613,7 +610,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 y_bar = y[j]
                 plt.text(x_bar, y_bar, i, fontsize=11, color="black")
                 plt.plot(x_bar, y_bar, "o", color="red", markersize=5)
-                if "y1" in axis_keys.keys():
+                if "y1" in axis_keys:
                     y1_bar = y1[j]
                     plt.text(x_bar, y1_bar, "*", color="black", alpha=0.5)
         if legend:
@@ -625,14 +622,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax.text(
             max(x) - max(x) * x_coeff,
             max(y) - y_coeff * max(y),
-            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value ** 2:.2f}",
+            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value**2:.2f}",
             fontsize=kwargs.get("textsize", fontsize),
         )
         if diff_genes is not None:
             ax.text(
                 max(x) - max(x) * x_coeff,
                 max(y) - (y_coeff + 0.15) * max(y),
-                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff ** 2:.2f}",
+                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff**2:.2f}",
                 fontsize=kwargs.get("textsize", fontsize),
             )
 

@@ -1,9 +1,12 @@
+import time
+
 import anndata
 import numpy as np
 import pandas as pd
 import pertpy as pt
 import pytest
 from anndata import AnnData
+from pubchempy import PubChemHTTPError
 from scipy import sparse
 
 NUM_CELLS = 100
@@ -38,7 +41,17 @@ def adata() -> AnnData:
 
 
 def test_compound_annotation(adata):
-    pt_compound.annotate_compounds(adata=adata, query_id="perturbation")
-    assert len(adata.obs.columns) == 5
-    pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
-    assert pubchemid == list(adata.obs["pubchem_ID"])
+    retries = 3
+    attempt = 0
+    while attempt < retries:
+        try:
+            pt_compound.annotate_compounds(adata=adata, query_id="perturbation")
+            assert len(adata.obs.columns) == 5
+            pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
+            assert pubchemid == list(adata.obs["pubchem_ID"])
+            return
+        except PubChemHTTPError:
+            if attempt == retries - 1:
+                pytest.fail("Max retries reached, PubChemHTTPError occurred")
+            time.sleep(10)
+            attempt += 1

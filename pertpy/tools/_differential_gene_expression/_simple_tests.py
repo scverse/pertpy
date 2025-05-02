@@ -10,7 +10,7 @@ import pandas as pd
 import scipy.stats
 import statsmodels
 from anndata import AnnData
-from pandas.core.api import DataFrame as DataFrame
+from pandas.core.api import DataFrame
 from scipy.sparse import diags, issparse
 from tqdm.auto import tqdm
 

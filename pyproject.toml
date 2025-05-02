@@ -64,7 +64,7 @@ dependencies = [
     "pyarrow",
     "blitzgsea",
     "scikit-learn>=1.4",  # https://github.com/scverse/pertpy/issues/700
-    "fast-array-utils @ git+https://github.com/scverse/fast-array-utils",
+    "fast-array-utils",
     "lamin_utils",
 ]
 
@@ -163,20 +163,26 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = [
-    "F",  # Errors detected by Pyflakes
-    "E",  # Error detected by Pycodestyle
-    "W",  # Warning detected by Pycodestyle
-    "I",  # isort
-    "D",  # pydocstyle
-    "B",  # flake8-bugbear
-    "TID",  # flake8-tidy-imports
-    "C4",  # flake8-comprehensions
-    "BLE",  # flake8-blind-except
-    "UP",  # pyupgrade
-    "RUF100",  # Report unused noqa directives
-    "TCH",  # Typing imports
-    "NPY",  # Numpy specific rules
-    "PTH"  # Use pathlib
+    "F",      # Errors detected by Pyflakes
+    "E",      # Error detected by Pycodestyle
+    "W",      # Warning detected by Pycodestyle
+    "I",      # isort
+    "D",      # pydocstyle
+    "B",      # flake8-bugbear
+    "TID",    # flake8-tidy-imports
+    "C4",     # flake8-comprehensions
+    "BLE",    # flake8-blind-except
+    "UP",     # pyupgrade
+    "RUF100", # Report unused noqa directives
+    "TCH",    # Typing imports
+    "NPY",    # Numpy specific rules
+    "PTH",    # Use pathlib
+    "PERF",   # Performance
+    "PIE",    # Syntax simplification
+    "SIM",    # Code simplifications
+    "TID",    # banned imports
+    "TC",     # type checking sections
+    "PL"      # pylint
 ]
 ignore = [
     # line too long -> we accept long comment lines; black gets rid of long code lines
@@ -210,6 +216,16 @@ ignore = [
     "N813",
     # module import not at top level of file
     "E402",
+    # Too many arguments in function definition
+    "PLR0913",
+    # Too many branches
+    "PLR0912",
+    # magic value used in comparison
+    "PLR2004",
+    # Too many statements
+    "PLR0915",
+    # Extracting value from dictionary without calling `.items()` - clashes with sim
+    "PLC0206"
 ]
 
 [tool.ruff.lint.pydocstyle]

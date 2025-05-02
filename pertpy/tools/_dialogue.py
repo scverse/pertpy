@@ -475,7 +475,7 @@ class Dialogue:
         # TODO: something is slightly slow here
         cca_sig_results: dict[Any, dict[str, Any]] = {}
         new_mcp_scores: dict[Any, list[Any]] = {}
-        for ct in ct_subs.keys():
+        for ct in ct_subs:
             ct_adata = ct_subs[ct]
             conf_m = ct_adata.obs[n_counts_key].values
 
@@ -517,7 +517,7 @@ class Dialogue:
                 return np.array(correlations), np.array(pvals)  # pvals_adjusted
 
             C1, P1 = _pcor_mat(ct_adata[:, top_cor_genes_flattened].X.toarray().T, mcp_scores[ct].T, conf_m)
-            C1[P1 > (0.05 / ct_adata.shape[1])] = 0  # why?
+            C1[(0.05 / ct_adata.shape[1]) < P1] = 0  # why?
 
             cca_sig_unformatted = self._get_top_elements(  # 3 up, 3 dn, for each mcp
                 pd.DataFrame(C1.T, index=top_cor_genes_flattened), max_length=max_genes, min_threshold=0.05
@@ -525,7 +525,7 @@ class Dialogue:
 
             # TODO: probably format the up and down within get_top_elements
             cca_sig: dict[str, Any] = defaultdict(dict)
-            for i in range(0, int(len(cca_sig_unformatted) / 2)):
+            for i in range(int(len(cca_sig_unformatted) / 2)):
                 cca_sig[f"MCP{i}"]["up"] = cca_sig_unformatted[i * 2]
                 cca_sig[f"MCP{i}"]["down"] = cca_sig_unformatted[i * 2 + 1]
 
@@ -602,8 +602,8 @@ class Dialogue:
     def calculate_multifactor_PMD(
         self,
         adata: AnnData,
-        penalties: list[int] = None,
-        ct_order: list[str] = None,
+        penalties: list[int] | None = None,
+        ct_order: list[str] | None = None,
         agg_feature: bool = True,
         solver: Literal["lp", "bs"] = "bs",
         normalize: bool = True,
@@ -654,8 +654,6 @@ class Dialogue:
                     raise ValueError("Please ensure that every cell type is represented in every sample.") from e
                 else:
                     raise
-        else:
-            penalties = penalties
 
         if solver == "bs":
             ws, _ = multicca_pmd(mcca_in, penalties, K=self.n_mcps, standardize=True, niter=100, mimic_R=normalize)
@@ -886,15 +884,15 @@ class Dialogue:
             if len(conditions_compare) != 2:
                 raise ValueError("Please specify conditions to compare or supply an object with only 2 conditions")
 
-        pvals = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
-        tstats = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
-        pvals_adj = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
+        pvals = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
+        tstats = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
+        pvals_adj = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
 
         response = adata.obs.groupby(sample_label)[condition_label].agg(pd.Series.mode)
         for celltype in adata.obs[celltype_label].unique():
             df = adata.obs[adata.obs[celltype_label] == celltype]
 
-            for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
+            for mcpnum in ["mcp_" + str(n) for n in range(n_mcps)]:
                 mns = df.groupby(sample_label)[mcpnum].mean()
                 mns = pd.concat([mns, response], axis=1)
                 res = stats.ttest_ind(
@@ -904,7 +902,7 @@ class Dialogue:
                 pvals.loc[celltype, mcpnum] = res[1]
                 tstats.loc[celltype, mcpnum] = res[0]
 
-        for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
+        for mcpnum in ["mcp_" + str(n) for n in range(n_mcps)]:
             pvals_adj[mcpnum] = multipletests(pvals[mcpnum], method="fdr_bh")[1]
 
         return {"pvals": pvals, "tstats": tstats, "pvals_adj": pvals_adj}
@@ -967,7 +965,7 @@ class Dialogue:
 
         genes_dict_up = {}  # type: ignore
         genes_dict_down = {}  # type: ignore
-        for celltype2 in mcp_dict.keys():
+        for celltype2 in mcp_dict:
             for gene in mcp_dict[celltype2][MCP + ".up"]:
                 if gene in genes_dict_up:
                     genes_dict_up[gene] += 1
@@ -1019,7 +1017,7 @@ class Dialogue:
             >>> genes_results = _get_extrema_MCP_genes_single(ct_subs, mcp="mcp_4", fraction=0.2)
         """
         genes = {}
-        for ct in ct_subs.keys():
+        for ct in ct_subs:
             mini = ct_subs[ct]
             mini.obs["extrema"] = pd.qcut(
                 mini.obs[mcp],
@@ -1067,7 +1065,7 @@ class Dialogue:
         for mcp in mcps:
             rank_dfs[mcp] = {}
             ct_ranked = self._get_extrema_MCP_genes_single(ct_subs, mcp=mcp, fraction=fraction)
-            for celltype in ct_ranked.keys():
+            for celltype in ct_ranked:
                 rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype], group=None)
 
         return rank_dfs
