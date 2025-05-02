@@ -67,7 +67,9 @@ jobs:
 
             - name: Install edgeR
               if: steps.cache.outputs.cache-hit != 'true'
-              run: Rscript --vanilla -e "install.packages(c('BiocManager', 'statmod'), repos='https://cran.r-project.org'); library('BiocManager'); BiocManager::install('edgeR')"
+              run: |
+                  mkdir -p ${{ env.R_LIBS_USER }}
+                  Rscript --vanilla -e "install.packages(c('BiocManager', 'statmod'), repos='https://cran.r-project.org'); library('BiocManager'); BiocManager::install('edgeR')"
 
             - name: Install uv
               uses: astral-sh/setup-uv@v6
