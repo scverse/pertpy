@@ -198,6 +198,7 @@ class Mixscape:
         perturbation_type: str | None = "KO",
         random_state: int | None = 0,
         copy: bool | None = False,
+        **gmmkwargs,
     ):
         """Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
 
@@ -220,6 +221,7 @@ class Mixscape:
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications.
             random_state: Random seed for the GaussianMixture model.
             copy: Determines whether a copy of the `adata` is returned.
+            **gmmkwargs: Passed to custom implementation of scikit-learn Gaussian Mixture Model.
 
         Returns:
             If `copy=True`, returns the copy of `adata` with the classification result in `.obs`.
@@ -357,6 +359,7 @@ class Mixscape:
                             max_iter=100,
                             fixed_means=[pvec[nt_cells].mean(), None],
                             fixed_covariances=[pvec[nt_cells].std() ** 2, None],
+                            kwargs=gmmkwargs,
                         ).fit(np.asarray(pvec).reshape(-1, 1))
                         probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
