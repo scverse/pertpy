@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import jax
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -49,6 +50,7 @@ class Cinemaot:
         eps: float = 1e-3,
         solver: str = "Sinkhorn",
         preweight_label: str | None = None,
+        random_state: int | None = 0,
     ):
         """Calculate the confounding variation, optimal transport counterfactual pairs, and single-cell level treatment effects.
 
@@ -69,6 +71,7 @@ class Cinemaot:
             solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             preweight_label: The annotated label (e.g. cell type) that is used to assign weights for treated
                              and control cells to balance across the label. Helps overcome the differential abundance issue.
+            random_state: The random seed for the shuffling.
 
         Returns:
             Returns an AnnData object that contains the single-cell level treatment effect as de.X and the
@@ -96,7 +99,7 @@ class Cinemaot:
         xi = np.zeros(dim)
         j = 0
         for source_row in X_transformed.T:
-            xi_obj = Xi(source_row, groupvec * 1)
+            xi_obj = Xi(source_row, groupvec * 1, random_state=random_state)
             xi[j] = xi_obj.correlation
             j = j + 1
 
@@ -122,17 +125,17 @@ class Cinemaot:
             a = np.zeros(cf1.shape[0])
             b = np.zeros(cf2.shape[0])
 
-            adata1 = adata[adata.obs[pert_key] == control, :].copy()
-            adata2 = adata[adata.obs[pert_key] != control, :].copy()
+            adata1 = adata[adata.obs[pert_key] == control]
+            adata2 = adata[adata.obs[pert_key] != control]
 
             for label in adata1.obs[pert_key].unique():
+                mask_label = adata1.obs[pert_key] == label
                 for ct in adata1.obs[preweight_label].unique():
-                    a[((adata1.obs[preweight_label] == ct) & (adata1.obs[pert_key] == label)).values] = np.sum(
-                        (adata2.obs[preweight_label] == ct).values
-                    ) / np.sum((adata1.obs[preweight_label] == ct).values)
-                a[(adata1.obs[pert_key] == label).values] = a[(adata1.obs[pert_key] == label).values] / np.sum(
-                    a[(adata1.obs[pert_key] == label).values]
-                )
+                    mask_ct = adata1.obs[preweight_label] == ct
+                    a[mask_ct & mask_label] = np.sum(
+                        adata2.obs[preweight_label] == ct
+                    ) / np.sum(mask_ct)
+                a[mask_label] /= np.sum(a[mask_label])
 
             a = a / np.sum(a)
             b[:] = 1 / cf2.shape[0]
@@ -141,25 +144,25 @@ class Cinemaot:
         if solver == "LRSinkhorn":
             if rank is None:
                 rank = int(min(cf1.shape[0], cf2.shape[0]) / 2)
-            _solver = sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps)
+            _solver = jax.jit(sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps))
             ot_sink = _solver(ot_prob)
             embedding = (
                 X_transformed[adata.obs[pert_key] != control, :]
                 - ot_sink.apply(X_transformed[adata.obs[pert_key] == control, :].T).T
                 / ot_sink.apply(np.ones_like(X_transformed[adata.obs[pert_key] == control, :].T)).T
             )
+
             if issparse(adata.X):
-                te2 = (
-                    adata.X.toarray()[adata.obs[pert_key] != control, :]
-                    - ot_sink.apply(adata.X.toarray()[adata.obs[pert_key] == control, :].T).T
-                    / ot_sink.apply(np.ones_like(adata.X.toarray()[adata.obs[pert_key] == control, :].T)).T
-                )
+                X = adata.X.toarray()
             else:
-                te2 = (
-                    adata.X[adata.obs[pert_key] != control, :]
-                    - ot_sink.apply(adata.X[adata.obs[pert_key] == control, :].T).T
-                    / ot_sink.apply(np.ones_like(adata.X[adata.obs[pert_key] == control, :].T)).T
-                )
+                X = adata.X
+            te2 = (
+                X[adata.obs[pert_key] != control, :]
+                - ot_sink.apply(X[adata.obs[pert_key] == control, :].T).T
+                / ot_sink.apply(np.ones_like(X[adata.obs[pert_key] == control, :].T)).T
+            )
+            if issparse(X):
+                del X
 
             adata.obsm[cf_rep] = cf
             adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = (
@@ -168,7 +171,7 @@ class Cinemaot:
             )
 
         else:
-            _solver = sinkhorn.Sinkhorn(threshold=eps)
+            _solver = jax.jit(sinkhorn.Sinkhorn(threshold=eps))
             ot_sink = _solver(ot_prob)
             ot_matrix = np.array(ot_sink.matrix.T, dtype=np.float64)
             embedding = X_transformed[adata.obs[pert_key] != control, :] - np.matmul(
@@ -176,13 +179,15 @@ class Cinemaot:
             )
 
             if issparse(adata.X):
-                te2 = adata.X.toarray()[adata.obs[pert_key] != control, :] - np.matmul(
-                    ot_matrix / np.sum(ot_matrix, axis=1)[:, None], adata.X.toarray()[adata.obs[pert_key] == control, :]
-                )
+                X = adata.X.toarray()
             else:
-                te2 = adata.X[adata.obs[pert_key] != control, :] - np.matmul(
-                    ot_matrix / np.sum(ot_matrix, axis=1)[:, None], adata.X[adata.obs[pert_key] == control, :]
-                )
+                X = adata.X
+
+            te2 = X[adata.obs[pert_key] != control, :] - np.matmul(
+                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X[adata.obs[pert_key] == control, :]
+            )
+            if issparse(X):
+                del X
 
             adata.obsm[cf_rep] = cf
             adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = np.matmul(
@@ -720,9 +725,10 @@ class Cinemaot:
 class Xi:
     """A fast implementation of cross-rank dependence metric used in CINEMA-OT."""
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, random_state: int | None = 0):
         self.x = x
         self.y = y
+        self.random_state = random_state
 
     @property
     def sample_size(self):
@@ -731,18 +737,16 @@ class Xi:
     @property
     def x_ordered_rank(self):
         # PI is the rank vector for x, with ties broken at random
-        # Not mine: source (https://stackoverflow.com/a/47430384/1628971)
-        # random shuffling of the data - reason to use random.choice is that
-        # pd.sample(frac=1) uses the same randomizing algorithm
         len_x = len(self.x)
-        rng = np.random.default_rng()
-        randomized_indices = rng.choice(np.arange(len_x), len_x, replace=False)
-        randomized = [self.x[idx] for idx in randomized_indices]
-        # same as pandas rank method 'first'
-        rankdata = ss.rankdata(randomized, method="ordinal")
-        # Reindexing based on pairs of indices before and after
-        unrandomized = [rankdata[j] for i, j in sorted(zip(randomized_indices, range(len_x), strict=False))]
-        return unrandomized
+        rng = np.random.default_rng(self.random_state)
+        perm = rng.permutation(len_x)
+        x_shuffled = self.x[perm]
+
+        ranks = np.empty(len_x, dtype=int)
+        ranks[perm[np.argsort(x_shuffled, stable=True)]] = np.arange(1, len_x + 1)
+
+        return ranks
+
 
     @property
     def y_rank_max(self):
@@ -752,7 +756,7 @@ class Xi:
     @property
     def g(self):
         # g[i] is number of j s.t. y[j] >= y[i], divided by n.
-        return ss.rankdata([-i for i in self.y], method="max") / self.sample_size
+        return ss.rankdata(-self.y, method="max") / self.sample_size
 
     @property
     def x_ordered(self):
@@ -761,10 +765,7 @@ class Xi:
 
     @property
     def x_rank_max_ordered(self):
-        x_ordered_result = self.x_ordered
-        y_rank_max_result = self.y_rank_max
-        # Rearrange f according to ord.
-        return [y_rank_max_result[i] for i in x_ordered_result]
+        return self.y_rank_max[self.x_ordered]
 
     @property
     def mean_absolute(self):
@@ -772,20 +773,7 @@ class Xi:
         x2 = self.x_rank_max_ordered[1 : self.sample_size]
 
         return (
-            np.mean(
-                np.abs(
-                    [
-                        x - y
-                        for x, y in zip(
-                            x1,
-                            x2,
-                            strict=False,
-                        )
-                    ]
-                )
-            )
-            * (self.sample_size - 1)
-            / (2 * self.sample_size)
+            np.mean(np.abs(x1 - x2)) * (self.sample_size - 1) / (2 * self.sample_size)
         )
 
     @property
