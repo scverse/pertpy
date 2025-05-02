@@ -359,7 +359,7 @@ class Mixscape:
                             max_iter=100,
                             fixed_means=[pvec[nt_cells].mean(), None],
                             fixed_covariances=[pvec[nt_cells].std() ** 2, None],
-                            kwargs=gmmkwargs,
+                            **gmmkwargs,
                         ).fit(np.asarray(pvec).reshape(-1, 1))
                         probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
