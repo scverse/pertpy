@@ -37,7 +37,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
     Returns:
         :class:`~mudata.MuData` object of the ECCITE-seq dataset
     """
-    import muon as mu
+    import mudata as md
 
     output_file_name = "papalexi_2021.h5mu"
     output_file_path = settings.datasetdir / output_file_name
@@ -48,9 +48,9 @@ def papalexi_2021() -> MuData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    mudata = mu.read(output_file_path)
+    mdata = md.read_h5mu(output_file_path)
 
-    return mudata
+    return mdata
 
 
 def sc_sim_augur() -> AnnData:  # pragma: no cover
