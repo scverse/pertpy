@@ -316,6 +316,9 @@ class Mixscape:
                     n_iter = 0
                     old_classes = adata.obs[new_class_name][all_cells]
 
+                    nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
+                    nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)
+
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
                         guide_cells = (adata.obs[new_class_name] == gene) & split_mask
@@ -324,8 +327,8 @@ class Mixscape:
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
                         guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
-                        nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
-                        vec = np.mean(dat[guide_cells_dat_idx], axis=0) - np.mean(dat[nt_cells_dat_idx], axis=0)
+                        guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)
+                        vec = guide_cells_mean - nt_cells_mean
 
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
