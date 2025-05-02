@@ -354,7 +354,7 @@ class Mixscape:
                             means_init=means_init,
                             precisions_init=1 / (std_init**2),
                             random_state=random_state,
-                            max_iter=5000,
+                            max_iter=100,
                             fixed_means=[pvec[nt_cells].mean(), None],
                             fixed_covariances=[pvec[nt_cells].std() ** 2, None],
                         ).fit(np.asarray(pvec).reshape(-1, 1))
@@ -1194,18 +1194,28 @@ class MixscapeGaussianMixture(GaussianMixture):
         self.fixed_means = fixed_means
         self.fixed_covariances = fixed_covariances
 
+        self.fixed_mean_indices = []
+        self.fixed_mean_values = []
+        if fixed_means is not None:
+            self.fixed_mean_indices = [i for i, m in enumerate(fixed_means) if m is not None]
+            if self.fixed_mean_indices:
+                self.fixed_mean_values = np.array([fixed_means[i] for i in self.fixed_mean_indices])
+
+        self.fixed_cov_indices = []
+        self.fixed_cov_values = []
+        if fixed_covariances is not None:
+            self.fixed_cov_indices = [i for i, c in enumerate(fixed_covariances) if c is not None]
+            if self.fixed_cov_indices:
+                self.fixed_cov_values = np.array([fixed_covariances[i] for i in self.fixed_cov_indices])
+
     def _m_step(self, X: np.ndarray, log_resp: np.ndarray):
         """Modified M-step to respect fixed means and covariances."""
         super()._m_step(X, log_resp)
 
-        if self.fixed_means is not None:
-            for i in range(self.n_components):
-                if self.fixed_means[i] is not None:
-                    self.means_[i] = self.fixed_means[i]
+        if self.fixed_mean_indices:
+            self.means_[self.fixed_mean_indices] = self.fixed_mean_values
 
-        if self.fixed_covariances is not None:
-            for i in range(self.n_components):
-                if self.fixed_covariances[i] is not None:
-                    self.covariances_[i] = self.fixed_covariances[i]
+        if self.fixed_cov_indices:
+            self.covariances_[self.fixed_cov_indices] = self.fixed_cov_values
 
         return self
