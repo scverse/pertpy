@@ -370,10 +370,11 @@ class Mixscape:
                         if sum(adata.obs[new_class_name][split_mask] == gene) < min_de_genes:
                             adata.obs.loc[guide_cells, new_class_name] = "NP"
                             converged = True
-                        if adata.obs[new_class_name][all_cells].equals(old_classes):
+                        current_classes = adata.obs[new_class_name][all_cells]
+                        if (current_classes == old_classes).all():
                             converged = True
+                        old_classes = current_classes
 
-                        old_classes = adata.obs[new_class_name][all_cells]
                         n_iter += 1
 
                     adata.obs.loc[(adata.obs[new_class_name] == gene) & split_mask, new_class_name] = (
