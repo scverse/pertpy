@@ -559,16 +559,11 @@ class Mixscape:
 
         return perturbation_markers
 
-    def _get_column_indices(self, adata, col_names):
-        if isinstance(col_names, str):  # pragma: no cover
+    def _get_column_indices(self, adata: AnnData, col_names: str | list[str]) -> np.ndarray:
+        if isinstance(col_names, str):
             col_names = [col_names]
 
-        indices = []
-        for idx, col in enumerate(adata.var_names):
-            if col in col_names:
-                indices.append(idx)
-
-        return indices
+        return np.where(np.isin(adata.var_names, col_names))[0]
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_barplot(  # pragma: no cover # noqa: D417
