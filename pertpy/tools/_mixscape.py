@@ -306,7 +306,7 @@ class Mixscape:
 
                 else:
                     de_genes = perturbation_markers[(category, gene)]
-                    de_genes_indices = self._get_column_indices(adata, list(de_genes))
+                    de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
                     dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     if scale:
@@ -316,6 +316,9 @@ class Mixscape:
                     n_iter = 0
                     old_classes = adata.obs[new_class_name][all_cells]
 
+                    nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
+                    nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)
+
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
                         guide_cells = (adata.obs[new_class_name] == gene) & split_mask
@@ -324,8 +327,8 @@ class Mixscape:
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
                         guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
-                        nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
-                        vec = np.mean(dat[guide_cells_dat_idx], axis=0) - np.mean(dat[nt_cells_dat_idx], axis=0)
+                        guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)
+                        vec = guide_cells_mean - nt_cells_mean
 
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
@@ -360,20 +363,18 @@ class Mixscape:
                         post_prob = 1 / (1 + lik_ratio)
 
                         # based on the posterior probability, assign cells to the two classes
-                        adata.obs.loc[
-                            [orig_guide_cells_index[cell] for cell in np.where(post_prob > 0.5)[0]], new_class_name
-                        ] = gene
-                        adata.obs.loc[
-                            [orig_guide_cells_index[cell] for cell in np.where(post_prob <= 0.5)[0]], new_class_name
-                        ] = f"{gene} NP"
+                        ko_mask = post_prob > 0.5
+                        adata.obs.loc[np.array(orig_guide_cells_index)[ko_mask], new_class_name] = gene
+                        adata.obs.loc[np.array(orig_guide_cells_index)[~ko_mask], new_class_name] = f"{gene} NP"
 
                         if sum(adata.obs[new_class_name][split_mask] == gene) < min_de_genes:
                             adata.obs.loc[guide_cells, new_class_name] = "NP"
                             converged = True
-                        if adata.obs[new_class_name][all_cells].equals(old_classes):
+                        current_classes = adata.obs[new_class_name][all_cells]
+                        if (current_classes == old_classes).all():
                             converged = True
+                        old_classes = current_classes
 
-                        old_classes = adata.obs[new_class_name][all_cells]
                         n_iter += 1
 
                     adata.obs.loc[(adata.obs[new_class_name] == gene) & split_mask, new_class_name] = (
@@ -552,17 +553,6 @@ class Mixscape:
                 perturbation_markers[(category, gene)] = de_genes
 
         return perturbation_markers
-
-    def _get_column_indices(self, adata, col_names):
-        if isinstance(col_names, str):  # pragma: no cover
-            col_names = [col_names]
-
-        indices = []
-        for idx, col in enumerate(adata.var_names):
-            if col in col_names:
-                indices.append(idx)
-
-        return indices
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_barplot(  # pragma: no cover # noqa: D417
