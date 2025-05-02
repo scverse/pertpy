@@ -306,7 +306,7 @@ class Mixscape:
 
                 else:
                     de_genes = perturbation_markers[(category, gene)]
-                    de_genes_indices = self._get_column_indices(adata, list(de_genes))
+                    de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
                     dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     if scale:
@@ -552,12 +552,6 @@ class Mixscape:
                 perturbation_markers[(category, gene)] = de_genes
 
         return perturbation_markers
-
-    def _get_column_indices(self, adata: AnnData, col_names: str | list[str]) -> np.ndarray:
-        if isinstance(col_names, str):
-            col_names = [col_names]
-
-        return np.where(np.isin(adata.var_names, col_names))[0]
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_barplot(  # pragma: no cover # noqa: D417
