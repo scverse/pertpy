@@ -363,12 +363,9 @@ class Mixscape:
                         post_prob = 1 / (1 + lik_ratio)
 
                         # based on the posterior probability, assign cells to the two classes
-                        adata.obs.loc[
-                            [orig_guide_cells_index[cell] for cell in np.where(post_prob > 0.5)[0]], new_class_name
-                        ] = gene
-                        adata.obs.loc[
-                            [orig_guide_cells_index[cell] for cell in np.where(post_prob <= 0.5)[0]], new_class_name
-                        ] = f"{gene} NP"
+                        ko_mask = post_prob > 0.5
+                        adata.obs.loc[np.array(orig_guide_cells_index)[ko_mask], new_class_name] = gene
+                        adata.obs.loc[np.array(orig_guide_cells_index)[~ko_mask], new_class_name] = f"{gene} NP"
 
                         if sum(adata.obs[new_class_name][split_mask] == gene) < min_de_genes:
                             adata.obs.loc[guide_cells, new_class_name] = "NP"
