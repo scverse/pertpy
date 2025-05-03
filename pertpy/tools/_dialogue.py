@@ -689,7 +689,7 @@ class Dialogue:
         ws_dict: dict,
         confounder: str | None,
         formula: str = None,
-    ):
+    ) -> pd.DataFrame:
         """Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.
 
         Args:
@@ -700,7 +700,6 @@ class Dialogue:
             formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.
 
         Returns:
-            A Pandas DataFrame containing:
             - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
 

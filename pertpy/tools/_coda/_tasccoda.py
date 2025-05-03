@@ -98,7 +98,7 @@ class Tasccoda(CompositionalModel2):
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
-            MuData: MuData object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
+            :class:`mudata.MuData` object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
 
         Examples:
             >>> import pertpy as pt
@@ -479,7 +479,7 @@ class Tasccoda(CompositionalModel2):
             use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
-            arviz.InferenceData: arviz_data
+            :class:`arviz.InferenceData`: arviz_data
 
         Examples:
             >>> import pertpy as pt

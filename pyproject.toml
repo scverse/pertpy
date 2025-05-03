@@ -11,17 +11,16 @@ requires-python = ">=3.11,<3.14"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
-    {name = "Yuge Ji"},
     {name = "Lilly May"},
-    {name = "Alejandro Tejada"},
-    {name = "Johannes Köster"},
+    {name = "Stefan Peidli"},
+    {name = "Johannes Ostner"},
+    {name = "Gregor Sturm"},
     {name = "Emma Dann"},
+    {name = "Yuge Ji"},
     {name = "Xinyue Zhang"},
     {name = "Xichen Wu"},
     {name = "Tessa Green"},
-    {name = "Stefan Peidli"},
     {name = "Antonia Schumacher"},
-    {name = "Gregor Sturm"},
 ]
 maintainers = [
     {name = "Lukas Heumos", email = "lukas.heumos@posteo.net"},
@@ -32,7 +31,7 @@ urls.Home-page = "https://github.com/scverse/pertpy"
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Stable",
     "Environment :: Console",
     "Framework :: Jupyter",
     "Intended Audience :: Developers",
@@ -84,12 +83,13 @@ dev = [
     "pre-commit",
 ]
 doc = [
-    "docutils>=0.8,!=0.18.*,!=0.19.*",
-    "sphinx>=4",
-    "furo",
+    "docutils>=0.8",
+    "sphinx>=6",
+    "scanpydoc",
+    "sphinx-book-theme",
     "myst-nb",
-    "myst-parser",
     "sphinxcontrib-bibtex>=1.0.0",
+    "sphinx-issues",
     "sphinx-gallery",
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",

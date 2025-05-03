@@ -21,9 +21,7 @@ repository_url = urls["Source"]
 release = info["Version"]
 github_repo = "pertpy"
 
-
 extensions = [
-    # "myst_parser",
     "myst_nb",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
@@ -38,10 +36,9 @@ extensions = [
     "sphinx_gallery.load_style",
     "sphinx_remove_toctrees",
     "sphinx_design",
+    "sphinx_issues",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
-
-# remove_from_toctrees = ["tutorials/notebooks/*", "api/reference/*"]
 
 # for sharing urls with nice info
 ogp_site_url = "https://pertpy.readthedocs.io/en/latest/"
@@ -58,6 +55,7 @@ exclude_patterns = [
     "**.ipynb_checkpoints",
 ]
 nbsphinx_execute = "never"
+pygments_style = "sphinx"
 
 templates_path = ["_templates"]
 bibtex_bibfiles = ["references.bib"]
@@ -84,13 +82,27 @@ nb_execution_mode = "off"
 
 # The master toctree document.
 master_doc = "index"
+language = "en"
+typehints_defaults = "comma"
 
+# html_show_sourcelink = True
+html_theme = "scanpydoc"
+html_title = "pertpy"
+html_logo = "_static/pertpy_logo.png"
+
+html_static_path = ["_static"]
+html_css_files = ["css/override.css", "css/sphinx_gallery.css"]
+html_show_sphinx = False
+
+autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
+    "mudata": ("https://mudata.readthedocs.io/en/stable/", None),
+    "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "torch": ("https://pytorch.org/docs/main/", None),
@@ -101,85 +113,15 @@ intersphinx_mapping = {
     "flax": ("https://flax.readthedocs.io/en/latest/", None),
     "jax": ("https://jax.readthedocs.io/en/latest/", None),
     "ete": ("https://etetoolkit.org/docs/latest/", None),
+    "arviz": ("https://python.arviz.org/en/stable/", None),
 }
-
-language = "en"
-
-typehints_defaults = "comma"
-
-pygments_style = "default"
-pygments_dark_style = "native"
-
-
-# -- Options for HTML output -------------------------------------------
-
-# html_show_sourcelink = True
-html_theme = "furo"
-
-# Set link name generated in the top bar.
-html_title = "pertpy"
-html_logo = "_static/pertpy_logo.png"
-
-html_theme_options = {
-    "sidebar_hide_name": True,
-    "light_css_variables": {
-        "color-brand-primary": "#003262",
-        "color-brand-content": "#003262per",
-        "admonition-font-size": "var(--font-size-normal)",
-        "admonition-title-font-size": "var(--font-size-normal)",
-        "code-font-size": "var(--font-size--small)",
-    },
-}
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
-html_css_files = ["css/override.css", "css/sphinx_gallery.css"]
-html_show_sphinx = False
+nitpick_ignore = [
+    ("py:class", "ete4.core.tree.Tree"),
+    ("py:class", "ete4.treeview.TreeStyle"),
+    ("py:class", "MuData"),
+]
 
 sphinx_gallery_conf = {"nested_sections=": False}
-
-
-nbsphinx_prolog = r"""
-.. raw:: html
-
-{{% set docname = env.doc2path(env.docname, base=None).split("/")[-1] %}}
-
-.. raw:: html
-
-    <style>
-        p {{
-            margin-bottom: 0.5rem;
-        }}
-        /* Main index page overview cards */
-        /* https://github.com/spatialaudio/nbsphinx/pull/635/files */
-        .jp-RenderedHTMLCommon table,
-        div.rendered_html table {{
-        border: none;
-        border-collapse: collapse;
-        border-spacing: 0;
-        font-size: 12px;
-        table-layout: fixed;
-        color: inherit;
-        }}
-
-        body:not([data-theme=light]) .jp-RenderedHTMLCommon tbody tr:nth-child(odd),
-        body:not([data-theme=light]) div.rendered_html tbody tr:nth-child(odd) {{
-        background: rgba(255, 255, 255, .1);
-        }}
-    </style>
-
-.. raw:: html
-
-    <div class="admonition note">
-        <p class="admonition-title">Note</p>
-        <p>
-        This page was generated from
-        <a class="reference external" href="https://github.com/scverse/pertpy/tree/{version}/">{docname}</a>.
-        Some tutorial content may look better in light mode.
-        </p>
-    </div>
-""".format(version=version, docname="{{ docname|e }}")
 nbsphinx_thumbnails = {
     "tutorials/notebooks/guide_rna_assignment": "_static/tutorials/guide_rna_assignment.png",
     "tutorials/notebooks/mixscape": "_static/tutorials/mixscape.png",

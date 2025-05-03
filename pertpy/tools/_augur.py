@@ -717,7 +717,7 @@ class Augur:
                            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
         Returns:
-            A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs:
+            A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs.
 
                 * summary_metrics: Pandas Dataframe containing mean metrics for each cell type
                 * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs

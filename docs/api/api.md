@@ -1,4 +1,4 @@
-# Usage
+# API
 
 Import the pertpy API as follows:
 
@@ -19,8 +19,7 @@ pt.tl.cool_fancy_tool()
 ## Datasets
 
 pertpy provides access to several curated single-cell datasets spanning several types of perturbations.
-Many of the datasets originate from [scperturb](http://projects.sanderlab.org/scperturb/) and were further curated to have
-harmonized names and be loadable as MuData objects.
+Many of the datasets originate from [scperturb](http://projects.sanderlab.org/scperturb/).
 
 ```{eval-rst}
 .. autosummary::
@@ -337,7 +336,7 @@ Enrichment tests for single-cell data assess whether specific biological pathway
 aiding in the identification of functional characteristics and cellular states.
 While pathway enrichment is a well-studied and commonly applied approach in single-cell RNA-seq, other data sources such as genes targeted by drugs can also be enriched.
 
-This implementation of enrichment is designed to interoperate with [MetaData](##MetaData) and uses a simple hypergeometric test.
+This implementation of enrichment is designed to interoperate with [MetaData](#metadata) and uses a simple hypergeometric test.
 
 ```{eval-rst}
 .. autosummary::
@@ -405,14 +404,11 @@ Such approaches can also order perturbations by their effect on groups of cells.
 
 #### Rank perturbations - Augur
 
-[Augur](https://doi.org/10.1038/s41587-020-0605-1) aims to rank or prioritize cell types according to their response to experimental perturbations given high dimensional single-cell sequencing data.
-The basic idea is that in the space of molecular measurements cells reacting heavily to induced perturbations are
-more easily separated into perturbed and unperturbed than cell types with little or no response.
-This separability is quantified by measuring how well experimental labels (eg. treatment and control) can be predicted within each cell type.
-Augur trains a machine learning model predicting experimental labels for each cell type in multiple cross validation runs and
-then prioritizes cell type response according to metric scores measuring the accuracy of the model.
-For categorical data the area under the curve is the default metric and for numerical data the concordance correlation coefficient
-is used as a proxy for how accurate the model is which in turn approximates perturbation response.
+[Augur](https://doi.org/10.1038/s41587-020-0605-1) aims to rank or prioritize cell types according to their response to experimental perturbations.
+Cells that respond strongly to perturbations are more easily distinguishable as treated or control in molecular space.
+Augur quantifies this by training a classifier to predict experimental labels within each cell type across cross-validation runs.
+Cell types are ranked by model accuracy—using AUC for categorical labels and concordance correlation for continuous ones—as a proxy for perturbation response.
+
 
 For more details we refer to [Cell type prioritization in single-cell data](https://doi.org/10.1038/s41587-020-0605-1).
 
@@ -604,4 +600,3 @@ Available databases for drug metadata:
 ## Plots
 
 Every tool has a set of plotting functions that start with `plot_`.
-However, we are considering to offer more general plots at a later point.

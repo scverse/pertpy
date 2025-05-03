@@ -46,7 +46,7 @@ bioRxiv 2024.08.04.606516; doi: https://doi.org/10.1101/2024.08.04.606516](https
 
 [pip]: https://pip.pypa.io/
 [pypi]: https://pypi.org/
-[usage]: https://pertpy.readthedocs.io/en/latest/usage/usage.html
+[api]: https://pertpy.readthedocs.io/en/latest/api/api.html
 [//]: # "numfocus-fiscal-sponsor-attribution"
 
 pertpy is part of the scverse® project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
