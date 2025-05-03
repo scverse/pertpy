@@ -31,7 +31,7 @@ urls.Home-page = "https://github.com/scverse/pertpy"
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
-    "Development Status :: 5 - Stable",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Framework :: Jupyter",
     "Intended Audience :: Developers",
