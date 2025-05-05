@@ -590,11 +590,13 @@ Available databases for drug metadata:
 ```{eval-rst}
 .. autosummary::
     :toctree: metadata
+    :recursive:
 
     metadata.CellLine
     metadata.Compound
     metadata.Moa
     metadata.Drug
+    metadata.LookUp
 ```
 
 ## Plots

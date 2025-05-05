@@ -37,12 +37,13 @@ extensions = [
     "sphinx_remove_toctrees",
     "sphinx_design",
     "sphinx_issues",
+    "sphinxcontrib.bibtex",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 # for sharing urls with nice info
 ogp_site_url = "https://pertpy.readthedocs.io/en/latest/"
-ogp_image = "https://pertpy.readthedocs.io/en/latest/_static/logo.png"
+ogp_image = "https://pertpy.readthedocs.io/en/latest/_static/pertpy_logo.png"
 
 # nbsphinx specific settings
 exclude_patterns = [
@@ -64,6 +65,7 @@ nitpicky = True  # Warn about broken links
 
 # Generate the API documentation when building
 autosummary_generate = True
+autosummary_imported_members = True
 autodoc_member_order = "bysource"
 napoleon_google_docstring = True
 napoleon_include_init_with_doc = False
@@ -88,12 +90,13 @@ typehints_defaults = "comma"
 # html_show_sourcelink = True
 html_theme = "scanpydoc"
 html_title = "pertpy"
-html_logo = "_static/pertpy_logo.png"
+html_logo = "_static/pertpy_logo.svg"
 
 html_static_path = ["_static"]
 html_css_files = ["css/override.css", "css/sphinx_gallery.css"]
 html_show_sphinx = False
 
+add_module_names = False
 autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
@@ -107,13 +110,15 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "torch": ("https://pytorch.org/docs/main/", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
-    "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
-    "pyro": ("http://docs.pyro.ai/en/stable/", None),
+    "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
+    "pyro": ("https://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),
     "flax": ("https://flax.readthedocs.io/en/latest/", None),
-    "jax": ("https://jax.readthedocs.io/en/latest/", None),
+    "jax": ("https://docs.jax.dev/en/latest/", None),
     "ete": ("https://etetoolkit.org/docs/latest/", None),
     "arviz": ("https://python.arviz.org/en/stable/", None),
+    "sklearn": ("http://scikit-learn.org/stable", None),
+    "statsmodels": ("https://www.statsmodels.org/stable", None),
 }
 nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
