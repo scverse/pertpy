@@ -63,6 +63,8 @@ bibtex_bibfiles = ["references.bib"]
 nitpicky = True  # Warn about broken links
 # source_suffix = ".md"
 
+suppress_warnings = ["toc.not_included"]
+
 # Generate the API documentation when building
 autosummary_generate = True
 autosummary_imported_members = True
@@ -120,11 +122,7 @@ intersphinx_mapping = {
     "sklearn": ("http://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
 }
-nitpick_ignore = [
-    ("py:class", "ete4.core.tree.Tree"),
-    ("py:class", "ete4.treeview.TreeStyle"),
-    ("py:class", "MuData"),
-]
+nitpick_ignore = [("py:class", "ete4.core.tree.Tree"), ("py:class", "ete4.treeview.TreeStyle")]
 
 sphinx_gallery_conf = {"nested_sections=": False}
 nbsphinx_thumbnails = {
