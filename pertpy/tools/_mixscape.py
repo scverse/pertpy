@@ -128,13 +128,13 @@ class Mixscape:
             if n_dims is not None and n_dims < representation.shape[1]:
                 representation = representation[:, :n_dims]
 
+            from pynndescent import NNDescent
+            
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
 
                 R_split = representation[split_mask]
                 R_control = representation[np.asarray(control_mask_split)]
-
-                from pynndescent import NNDescent
 
                 eps = kwargs.pop("epsilon", 0.1)
                 nn_index = NNDescent(R_control, **kwargs)
