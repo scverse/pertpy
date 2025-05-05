@@ -45,7 +45,7 @@ extensions = [
 
 # for sharing urls with nice info
 ogp_site_url = "https://pertpy.readthedocs.io/en/latest/"
-ogp_image = "https://pertpy.readthedocs.io/en/latest//_static/logo.png"
+ogp_image = "https://pertpy.readthedocs.io/en/latest/_static/logo.png"
 
 # nbsphinx specific settings
 exclude_patterns = [
@@ -67,15 +67,14 @@ nitpicky = True  # Warn about broken links
 # Generate the API documentation when building
 autosummary_generate = True
 autodoc_member_order = "bysource"
-napoleon_google_docstring = True  # for pytorch lightning
-napoleon_numpy_docstring = True
+napoleon_google_docstring = True
 napoleon_include_init_with_doc = False
-napoleon_use_rtype = True  # having a separate entry generally helps readability
+napoleon_use_rtype = True
 napoleon_use_param = True
 napoleon_custom_sections = [("Params", "Parameters")]
 todo_include_todos = False
 numpydoc_show_class_members = False
-annotate_defaults = True  # scanpydoc option, look into why we need this
+annotate_defaults = True
 myst_enable_extensions = [
     "colon_fence",
     "dollarmath",
@@ -119,7 +118,7 @@ html_theme = "furo"
 
 # Set link name generated in the top bar.
 html_title = "pertpy"
-html_logo = "_static/pertpy_logos/pertpy_pure.png"
+html_logo = "_static/pertpy_logo.png"
 
 html_theme_options = {
     "sidebar_hide_name": True,

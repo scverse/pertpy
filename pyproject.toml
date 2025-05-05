@@ -51,7 +51,7 @@ classifiers = [
 dependencies = [
     "rich",
     "scanpy",
-    "muon",
+    "mudata",
     "requests",
     "scikit-misc",
     "scvi-tools",
