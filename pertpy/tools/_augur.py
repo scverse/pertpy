@@ -77,6 +77,11 @@ class Augur:
         """
         self.estimator = self.create_estimator(
             classifier=estimator,
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            penalty=penalty,
+            random_state=random_state
         )
 
     def load(
