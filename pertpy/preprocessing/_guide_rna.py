@@ -212,7 +212,6 @@ class GuideAssignment:
         multiple_grna_assigned_key: str = "multiple",
         multiple_grna_assignment_string: str = "+",
         only_return_results: bool = False,
-        write_to_var: bool = True,
         show_progress: bool = False,
         **mixture_model_kwargs,
     ) -> np.ndarray | None:
@@ -227,7 +226,6 @@ class GuideAssignment:
             multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
             multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
             only_return_results: Whether input AnnData is not modified and the result is returned as an np.ndarray.
-            write_results: Whether to write the gene-wise model fits to adata.var.
             show_progress: Whether to shows progress bar.
             mixture_model_kwargs: Are passed to the mixture model.
 
@@ -266,9 +264,8 @@ class GuideAssignment:
             data = np.log2(data)
             assignments = mixture_model.run_model(data)
             res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
-            if write_to_var:
-                for params_name, param in model.params.items():
-                    adata.var[params_name][gene] = param    
+            for params_name, param in model.params.items():
+                adata.var[params_name][gene] = param    
 
         # Assign guides to cells
         # Some cells might have multiple guides assigned
