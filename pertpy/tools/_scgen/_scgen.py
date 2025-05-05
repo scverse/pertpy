@@ -77,7 +77,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             restrict_arithmetic_to: Dictionary of celltypes you want to be observed for prediction.
 
         Returns:
-            `np nd-array` of predicted cells in primary space.
+            :class:`numpy.ndarray` of predicted cells in primary space.
         delta: float
             Difference between stimulated and control cells in latent space
 
@@ -198,7 +198,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                    corresponding to batch and cell type metadata, respectively.
 
         Returns:
-            corrected: `~anndata.AnnData`
+            A corrected `~anndata.AnnData` object.
             AnnData of corrected gene expression in adata.X and corrected latent space in adata.obsm["latent"].
             A reference to the original AnnData is in `corrected.raw` if the input adata had no `raw` attribute.
 

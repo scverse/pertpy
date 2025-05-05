@@ -51,8 +51,9 @@ class Milo:
         Args:
             input: AnnData
             feature_key: Key to store the cell-level AnnData object in the MuData object
+
         Returns:
-            MuData: MuData object with original AnnData.
+            :class:`mudata.MuData` object with original AnnData.
 
         Examples:
             >>> import pertpy as pt

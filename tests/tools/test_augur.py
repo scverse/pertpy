@@ -5,14 +5,13 @@ import numpy as np
 import pertpy as pt
 import pytest
 import scanpy as sc
-from pertpy.tools._augur import Params
 
 CWD = Path(__file__).parent.resolve()
 
 
-ag_rfc = pt.tl.Augur("random_forest_classifier", Params(random_state=42))
-ag_lrc = pt.tl.Augur("logistic_regression_classifier", Params(random_state=42))
-ag_rfr = pt.tl.Augur("random_forest_regressor", Params(random_state=42))
+ag_rfc = pt.tl.Augur("random_forest_classifier", random_state=42)
+ag_lrc = pt.tl.Augur("logistic_regression_classifier", random_state=42)
+ag_rfr = pt.tl.Augur("random_forest_regressor", random_state=42)
 
 
 @pytest.fixture
@@ -150,27 +149,13 @@ def test_select_variance(adata):
     assert len(ad.var.index[ad.var["highly_variable"]]) == 3672
 
 
-def test_params():
-    """Test parameters."""
-    rf_estimator = ag_rfr.create_estimator(
-        "random_forest_classifier", params=Params(n_estimators=9, max_depth=10, penalty=13)
-    )
-    lr_estimator = ag_rfr.create_estimator("logistic_regression_classifier", params=Params(penalty="elasticnet"))
-    assert rf_estimator.get_params()["n_estimators"] == 9
-    assert rf_estimator.get_params()["max_depth"] == 10
-    assert lr_estimator.get_params()["penalty"] == "elasticnet"
-
-    with pytest.raises(TypeError):
-        ag_rfr.create_estimator("random_forest_regressor", Params(unvalid=10))
-
-
 @pytest.mark.slow
 def test_differential_prioritization():
     """Test differential prioritization run."""
     # Requires the full dataset or it fails because of a lack of statistical power
     adata = pt.dt.sc_sim_augur()
     adata = sc.pp.subsample(adata, n_obs=500, copy=True, random_state=10)
-    ag = pt.tl.Augur("logistic_regression_classifier", Params(random_state=42))
+    ag = pt.tl.Augur("logistic_regression_classifier", random_state=42)
     ag.load(adata)
 
     adata, results1 = ag.predict(adata, n_threads=4, n_subsamples=3, random_state=2)

@@ -20,6 +20,8 @@ urls = dict(pu.split(", ") for pu in info.get_all("Project-URL"))
 repository_url = urls["Source"]
 release = info["Version"]
 github_repo = "pertpy"
+master_doc = "index"
+language = "en"
 
 extensions = [
     "myst_nb",
@@ -41,7 +43,6 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-# for sharing urls with nice info
 ogp_site_url = "https://pertpy.readthedocs.io/en/latest/"
 ogp_image = "https://pertpy.readthedocs.io/en/latest/_static/pertpy_logo.png"
 
@@ -83,10 +84,8 @@ myst_enable_extensions = [
     "amsmath",
 ]
 nb_execution_mode = "off"
+warn_as_error = True
 
-# The master toctree document.
-master_doc = "index"
-language = "en"
 typehints_defaults = "comma"
 
 # html_show_sourcelink = True
@@ -122,7 +121,14 @@ intersphinx_mapping = {
     "sklearn": ("http://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
 }
-nitpick_ignore = [("py:class", "ete4.core.tree.Tree"), ("py:class", "ete4.treeview.TreeStyle")]
+nitpick_ignore = [
+    ("py:class", "ete4.core.tree.Tree"),
+    ("py:class", "ete4.treeview.TreeStyle"),
+    ("py:class", "pertpy.tools._distances._distances.MeanVar"),
+    ("py:class", "The requested data as a NumPy array. [ref.class]"),
+    ("py:class", "The full registry saved with the model [ref.class]"),
+    ("py:class", "Model with loaded state dictionaries. [ref.class]"),
+]
 
 sphinx_gallery_conf = {"nested_sections=": False}
 nbsphinx_thumbnails = {
