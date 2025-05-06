@@ -267,7 +267,7 @@ class GuideAssignment:
             for params_name, param in mixture_model.params.items():
                 if params_name not in adata.var:
                     adata.var[params_name] = np.nan
-                adata.var[params_name][gene] = param    
+                adata.var[params_name][gene] = param
 
         # Assign guides to cells
         # Some cells might have multiple guides assigned
