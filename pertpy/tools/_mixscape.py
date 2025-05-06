@@ -127,7 +127,7 @@ class Mixscape:
                 representation = representation[:, :n_dims]
 
             from pynndescent import NNDescent
-            
+
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
 
