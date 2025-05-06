@@ -77,6 +77,11 @@ class Augur:
         """
         self.estimator = self.create_estimator(
             classifier=estimator,
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            penalty=penalty,
+            random_state=random_state
         )
 
     def load(
@@ -164,8 +169,6 @@ class Augur:
             classifier: classifier to use in calculating the area under the curve.
                         Either random forest classifier or logistic regression for categorical data
                         or random forest regressor for continous data
-            params: parameters used to populate the model object. Default values are `n_estimators` =
-                    100, `max_depth` = None, `max_features` = 2, `penalty` = `l2`, `random_state` = None.
             n_estimators: Number of trees in the forest.
             max_depth: Maximal depth of each tree.
             max_features: Maximal number of features considered when looking at best split.
