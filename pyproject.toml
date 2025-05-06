@@ -65,12 +65,12 @@ dependencies = [
     "scikit-learn>=1.4",  # https://github.com/scverse/pertpy/issues/700
     "fast-array-utils",
     "lamin_utils",
+    "arviz",
 ]
 
 [project.optional-dependencies]
-coda = [
+tcoda = [
     "toytree",
-    "arviz",
     "ete4",
     "pyqt6"
 ]

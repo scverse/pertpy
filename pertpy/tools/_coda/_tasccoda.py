@@ -196,7 +196,6 @@ class Tasccoda(CompositionalModel2):
         if tree_key is None:
             raise ValueError("Please specify the key in .uns that contains the tree structure!")
 
-        # Scoped import due to installation issues
         try:
             import ete4 as ete
         except ImportError:

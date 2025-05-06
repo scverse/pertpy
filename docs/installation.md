@@ -20,10 +20,10 @@ If you don't have [pip] installed, this [Python installation guide] can guide yo
 
 ### scCODA and tascCODA
 
-scCODA and TascCODA requires an additional set of dependencies (ete4 and pyqt6) that can be installed by running:
+TascCODA requires an additional set of dependencies (ete4, pyqt6, and toytree) that can be installed by running:
 
 ```console
-pip install pertpy[coda]
+pip install pertpy[tcoda]
 ```
 
 ## Differential gene expression interface
