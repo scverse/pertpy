@@ -1,5 +1,10 @@
 # pertpy
 
+Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
+It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic modifications, drug treatments, and environmental changes.
+
+![overview](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
+
 ```{eval-rst}
 .. card:: Installation :octicon:`plug;1em;`
     :link: installation
@@ -10,7 +15,7 @@
 
 ```{eval-rst}
 .. card:: API reference :octicon:`book;1em;`
-    :link: usage/usage
+    :link: api/api
     :link-type: doc
 
     The API reference contains a detailed description of the pertpy API.
@@ -36,7 +41,7 @@
 .. card:: GitHub :octicon:`mark-github;1em;`
     :link: https://github.com/scverse/pertpy
 
-    Find a bug? Interested in improving pertpy? Checkout our GitHub for the latest developments.
+    Found a bug? Interested in improving pertpy? Checkout our GitHub for the latest developments.
 
 ```
 
@@ -46,10 +51,9 @@
 :maxdepth: 3
 
 installation
-usage/usage
+api/api
 tutorials/index
 contributing
-Discussions <https://github.com/scverse/pertpy/discussions>
 references
 ```
 
@@ -57,8 +61,6 @@ references
 
 [Lukas Heumos, Yuge Ji, Lilly May, Tessa Green, Xinyue Zhang, Xichen Wu, Johannes Ostner, Stefan Peidli, Antonia Schumacher, Karin Hrovatin, Michaela Mueller, Faye Chong, Gregor Sturm, Alejandro Tejada, Emma Dann, Mingze Dong, Mojtaba Bahrami, Ilan Gold, Sergei Rybakov, Altana Namsaraeva, Amir Ali Moinfar, Zihe Zheng, Eljas Roellin, Isra Mekki, Chris Sander, Mohammad Lotfollahi, Herbert B. Schiller, Fabian J. Theis
 bioRxiv 2024.08.04.606516; doi: https://doi.org/10.1101/2024.08.04.606516](https://www.biorxiv.org/content/10.1101/2024.08.04.606516v1)
-
-Consider citing [scanpy Genome Biology (2018)] along with the original {doc}`references <references>`.
 
 ## NumFOCUS
 
@@ -75,5 +77,3 @@ If you like scverse® and want to support our mission, please consider making a 
   >
 </a>
 </div>
-
-[scanpy genome biology (2018)]: https://doi.org/10.1186/s13059-017-1382-0

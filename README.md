@@ -27,10 +27,10 @@ You can install _pertpy_ in less than a minute via [pip] from [PyPI]:
 pip install pertpy
 ```
 
-if you want to use scCODA or tascCODA, please install pertpy as follows:
+if you want to use tascCODA, please install pertpy as follows:
 
 ```console
-pip install 'pertpy[coda]'
+pip install 'pertpy[tcoda]'
 ```
 
 If you want to use the differential gene expression interface, please install pertpy by running:
@@ -46,7 +46,7 @@ bioRxiv 2024.08.04.606516; doi: https://doi.org/10.1101/2024.08.04.606516](https
 
 [pip]: https://pip.pypa.io/
 [pypi]: https://pypi.org/
-[usage]: https://pertpy.readthedocs.io/en/latest/usage/usage.html
+[api]: https://pertpy.readthedocs.io/en/latest/api/api.html
 [//]: # "numfocus-fiscal-sponsor-attribution"
 
 pertpy is part of the scverse® project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).

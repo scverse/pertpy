@@ -14,6 +14,10 @@ warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 warnings.filterwarnings("ignore", category=UserWarning, module="scvi._settings")
 
+import mudata
+
+mudata.set_options(pull_on_update=False)
+
 from . import data as dt
 from . import metadata as md
 from . import plot as pl

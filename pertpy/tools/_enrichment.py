@@ -166,7 +166,7 @@ class Enrichment:
                      Accepts two forms:
                      - A dictionary with the names of the groups as keys, and the entries being the corresponding gene lists.
                      - A dictionary of dictionaries defined like above, with names of gene group categories as keys.
-                       If passing one of those, specify `nested=True`.
+                     If passing one of those, specify `nested=True`.
             nested: Whether `targets` is a dictionary of dictionaries with group categories as keys.
             categories: If `targets=None` or `nested=True`, this argument can be used to subset the gene groups to one or more categories (keys of the original dictionary).
                         In case of the ChEMBL drug targets, these are ATC level 1/level 2 category codes.

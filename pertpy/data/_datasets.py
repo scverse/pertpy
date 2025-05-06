@@ -49,6 +49,8 @@ def papalexi_2021() -> MuData:  # pragma: no cover
             is_zip=False,
         )
     mdata = md.read_h5mu(output_file_path)
+    mdata.pull_obs()
+    mdata.pull_var()
 
     return mdata
 
@@ -453,7 +455,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://figshare.com/ndownloader/files/38169900",
+            url="https://figshare.com/ndownloader/files/54169301",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,

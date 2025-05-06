@@ -51,14 +51,16 @@ class Milo:
         Args:
             input: AnnData
             feature_key: Key to store the cell-level AnnData object in the MuData object
+
         Returns:
-            MuData: MuData object with original AnnData.
+            :class:`mudata.MuData` object with original AnnData.
 
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
+
         """
         mdata = MuData({feature_key: input, "milo": AnnData()})
 
@@ -113,6 +115,7 @@ class Milo:
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
+
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
@@ -220,6 +223,7 @@ class Milo:
             >>> sc.pp.neighbors(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
@@ -294,6 +298,7 @@ class Milo:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.da_nhoods(mdata, design="~label")
+
         """
         try:
             sample_adata = mdata["milo"]
@@ -425,7 +430,7 @@ class Milo:
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
-            None. Adds in place:
+            Adds in place.
             - `milo_mdata['milo'].var["nhood_annotation"]`: assigning a label to each nhood
             - `milo_mdata['milo'].var["nhood_annotation_frac"]` stores the fraciton of cells in the neighbourhood with the assigned label
             - `milo_mdata['milo'].varm['frac_annotation']`: stores the fraction of cells from each label in each nhood
@@ -441,6 +446,7 @@ class Milo:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.annotate_nhoods(mdata, anno_col="cell_type")
+
         """
         try:
             sample_adata = mdata["milo"]
@@ -479,7 +485,7 @@ class Milo:
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
-            None. Adds in place:
+            Adds in place.
             - `milo_mdata['milo'].var["nhood_{anno_col}"]`: assigning a continuous value to each nhood
 
         Examples:
@@ -622,6 +628,7 @@ class Milo:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.add_nhood_expression(mdata)
+
         """
         try:
             sample_adata = mdata["milo"]

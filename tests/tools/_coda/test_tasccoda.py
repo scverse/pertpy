@@ -8,7 +8,7 @@ from mudata import MuData
 try:
     import ete4
 except ImportError:
-    pytest.skip("ete3 not available", allow_module_level=True)
+    pytest.skip("ete4 not available", allow_module_level=True)
 
 import pertpy as pt
 

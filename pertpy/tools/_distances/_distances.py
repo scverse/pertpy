@@ -241,7 +241,7 @@ class Distance:
             **kwargs: Passed to the metric function.
 
         Returns:
-            MeanVar: Mean and variance of distance between X and Y.
+            Mean and variance of distance between X and Y.
 
         Examples:
             >>> import pertpy as pt
@@ -286,8 +286,8 @@ class Distance:
             kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
-            pd.DataFrame: Dataframe with pairwise distances.
-            tuple[pd.DataFrame, pd.DataFrame]: Two Dataframes, one for the mean and one for the variance of pairwise distances.
+            :class:`pandas.DataFrame`: Dataframe with pairwise distances.
+            tuple[:class:`pandas.DataFrame`, :class:`pandas.DataFrame`]: Two Dataframes, one for the mean and one for the variance of pairwise distances.
 
         Examples:
             >>> import pertpy as pt
@@ -406,8 +406,8 @@ class Distance:
             kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
-            pd.DataFrame: Dataframe with distances of groups to selected_group.
-            tuple[pd.DataFrame, pd.DataFrame]: Two Dataframes, one for the mean and one for the variance of distances of groups to selected_group.
+            :class:`pandas.DataFrame`: Dataframe with distances of groups to selected_group.
+            tuple[:class:`pandas.DataFrame`, :class:`pandas.DataFrame`]: Two Dataframes, one for the mean and one for the variance of distances of groups to selected_group.
 
 
         Examples:
