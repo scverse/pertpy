@@ -66,7 +66,6 @@ nitpicky = True  # Warn about broken links
 
 suppress_warnings = ["toc.not_included"]
 
-# Generate the API documentation when building
 autosummary_generate = True
 autosummary_imported_members = True
 autodoc_member_order = "bysource"
@@ -109,7 +108,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "torch": ("https://pytorch.org/docs/main/", None),
+    "torch": ("https://docs.pytorch.org/docs/main", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
     "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
     "pyro": ("https://docs.pyro.ai/en/stable/", None),
@@ -118,7 +117,7 @@ intersphinx_mapping = {
     "jax": ("https://docs.jax.dev/en/latest/", None),
     "ete": ("https://etetoolkit.org/docs/latest/", None),
     "arviz": ("https://python.arviz.org/en/stable/", None),
-    "sklearn": ("http://scikit-learn.org/stable", None),
+    "sklearn": ("https://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
 }
 nitpick_ignore = [
