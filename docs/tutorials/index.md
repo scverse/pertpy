@@ -11,8 +11,6 @@ Many are also designed to work seamlessly in Google colab.
 For questions about the usage of pertpy use the [scverse discourse](https://discourse.scverse.org/).
 :::
 
-## Quick start: Tool specific tutorials
-
 ### Data transformation
 
 ```{eval-rst}
