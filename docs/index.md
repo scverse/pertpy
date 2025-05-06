@@ -1,6 +1,9 @@
 # pertpy
 
-pertpy in {cite}`Virshup_2023`.
+Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
+It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic modifications, drug treatments, and environmental changes.
+
+![overview](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
 
 ```{eval-rst}
 .. card:: Installation :octicon:`plug;1em;`
