@@ -16,15 +16,15 @@ This is the preferred method to install pertpy, as it will always install the mo
 
 If you don't have [pip] installed, this [Python installation guide] can guide you through the process.
 
-## Google Colab and TascCODA support
+## Additional dependency groups
 
-TascCODA requires an additional set of dependencies (ete3 and pyqt5) that can be installed by running:
+### scCODA and tascCODA
+
+TascCODA requires an additional set of dependencies (ete4, pyqt6, and toytree) that can be installed by running:
 
 ```console
-pip install pertpy[coda]
+pip install pertpy[tcoda]
 ```
-
-this also solves any "AttributeError: module 'pertpy.plot' has no attribute 'coda'" issues.
 
 ## Differential gene expression interface
 

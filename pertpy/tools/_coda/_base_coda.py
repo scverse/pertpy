@@ -410,7 +410,7 @@ class CompositionalModel2(ABC):
             kwargs: Passed to ``az.summary``
 
         Returns:
-            Tuple[pd.DataFrame, pd.DataFrame] or Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Intercept, effect and node-level DataFrames
+            Tuple[:class:pandas.DataFrame, :class:pandas.DataFrame] or Tuple[:class:pandas.DataFrame, :class:pandas.DataFrame, :class:pandas.DataFrame]: Intercept, effect and node-level DataFrames
 
             intercept_df
                 Summary of intercept parameters. Contains one row per cell type.
@@ -938,7 +938,7 @@ class CompositionalModel2(ABC):
                     )
                 console.print(table)
 
-    def get_intercept_df(self, data: AnnData | MuData, modality_key: str = "coda"):
+    def get_intercept_df(self, data: AnnData | MuData, modality_key: str = "coda") -> pd.DataFrame:
         """Get intercept dataframe as printed in the extended summary.
 
         Args:
@@ -946,7 +946,7 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
-            pd.DataFrame: Intercept data frame.
+            Intercept data frame.
 
         Examples:
             >>> import pertpy as pt
@@ -969,7 +969,7 @@ class CompositionalModel2(ABC):
 
         return sample_adata.varm["intercept_df"]
 
-    def get_effect_df(self, data: AnnData | MuData, modality_key: str = "coda"):
+    def get_effect_df(self, data: AnnData | MuData, modality_key: str = "coda") -> pd.DataFrame:
         """Get effect dataframe as printed in the extended summary.
 
         Args:
@@ -977,7 +977,7 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
-            pd.DataFrame: Effect data frame.
+            Effect data frame.
 
         Examples:
             >>> import pertpy as pt
@@ -1011,7 +1011,7 @@ class CompositionalModel2(ABC):
 
         return effect_df
 
-    def get_node_df(self, data: AnnData | MuData, modality_key: str = "coda"):
+    def get_node_df(self, data: AnnData | MuData, modality_key: str = "coda") -> pd.DataFrame:
         """Get node effect dataframe as printed in the extended summary of a tascCODA model.
 
         Args:
@@ -1019,7 +1019,7 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use.
 
         Returns:
-            pd.DataFrame: Node effect data frame.
+            Node effect data frame.
 
         Examples:
             >>> import pertpy as pt
@@ -1094,7 +1094,7 @@ class CompositionalModel2(ABC):
             est_fdr: Estimated false discovery rate. Must be between 0 and 1.
 
         Returns:
-            pd.Series: Credible effect decision series which includes boolean values indicate whether effects are credible under inc_prob_threshold.
+            Credible effect decision series which includes boolean values indicate whether effects are credible under inc_prob_threshold.
         """
         if isinstance(data, MuData):
             try:
@@ -1221,7 +1221,7 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            If `return_fig` is `True`, returns the figure, otherwise `None`.
+            If `return_fig` is `True`, returns the Figure, otherwise `None`.
 
         Examples:
             >>> import pertpy as pt
@@ -1850,7 +1850,7 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            Depending on `save`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`save = 'output.png'`) or plot the tree inline (`save = False`)
+            Depending on `save`, returns :class:`ete4.core.tree.Tree` and :class:`ete4.treeview.TreeStyle` (`save = 'output.png'`) or plot the tree inline (`save = False`)
 
         Examples:
             >>> import pertpy as pt
@@ -1937,8 +1937,8 @@ class CompositionalModel2(ABC):
             {common_plot_args}
 
         Returns:
-            Depending on `save`, returns :class:`ete4.TreeNode` and :class:`ete4.TreeStyle` (`save = 'output.png'`)
-            or  plot the tree inline (`save = False`)
+            Depending on `save`, returns :class:`ete4.core.tree.Tree` and :class:`ete4.treeview.TreeStyle` (`save = 'output.png'`)
+            or  plot the tree inline (`save = False`).
 
         Examples:
             >>> import pertpy as pt

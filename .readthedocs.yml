@@ -8,7 +8,7 @@ build:
         - asdf install uv latest
         - asdf global uv latest
         - uv venv
-        - uv pip install .[doc,coda,de]
+        - uv pip install .[doc,tcoda,de]
         - .venv/bin/python -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
 sphinx:
     configuration: docs/conf.py

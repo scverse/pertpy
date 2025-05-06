@@ -43,14 +43,24 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 
-@dataclass
-class Params:
-    """Type signature for random forest and logistic regression parameters.
+class Augur:
+    """Python implementation of Augur."""
 
-    Parameters:
-        n_estimators: defines the number of trees in the forest;
-        max_depth: specifies the maximal depth of each tree;
-        max_features: specifies the maximal number of features considered when looking at best split.
+    def __init__(
+        self,
+        estimator: Literal["random_forest_classifier", "random_forest_regressor", "logistic_regression_classifier"],
+        n_estimators: int = 100,
+        max_depth: int | None = None,
+        max_features: Literal["auto", "log2", "sqrt"] | int | float = 2,
+        penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
+        random_state: int | None = None,
+    ):
+        """Defines the Augur estimator model and parameters.
+
+        estimator: The scikit-learn estimator model that classifies.
+        n_estimators: Number of trees in the forest.
+        max_depth: Maximal depth of each tree.
+        max_features: Maximal number of features considered when looking at best split.
 
             * if int then consider max_features for each split
             * if float consider round(max_features*n_features)
@@ -58,32 +68,21 @@ class Params:
             * if `log2` then max_features=log2(n_features)
             * if `sqrt` then max_featuers=sqrt(n_features)
 
-        penalty: defines the norm of the penalty used in logistic regression
+        penalty: Norm of the penalty used in logistic regression
 
             * if `l1` then L1 penalty is added
             * if `l2` then L2 penalty is added (default)
             * if `elasticnet` both L1 and L2 penalties are added
             * if `none` no penalty is added
-
-        random_state: sets random model seed
-    """
-
-    n_estimators: int = 100
-    max_depth: int | None = None
-    max_features: Literal["auto", "log2", "sqrt"] | int | float = 2
-    penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2"
-    random_state: int | None = None
-
-
-class Augur:
-    """Python implementation of Augur."""
-
-    def __init__(
-        self,
-        estimator: Literal["random_forest_classifier", "random_forest_regressor", "logistic_regression_classifier"],
-        params: Params | None = None,
-    ):
-        self.estimator = self.create_estimator(classifier=estimator, params=params)
+        """
+        self.estimator = self.create_estimator(
+            classifier=estimator,
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            penalty=penalty,
+            random_state=random_state,
+        )
 
     def load(
         self,
@@ -158,7 +157,11 @@ class Augur:
         self,
         classifier: (Literal["random_forest_classifier", "random_forest_regressor", "logistic_regression_classifier"]),
         *,
-        params: Params | None = None,
+        n_estimators: int = 100,
+        max_depth: int | None = None,
+        max_features: Literal["auto", "log2", "sqrt"] | int | float = 2,
+        penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
+        random_state: int | None = None,
     ) -> RandomForestClassifier | RandomForestRegressor | LogisticRegression:
         """Creates a model object of the provided type and populates it with desired parameters.
 
@@ -166,35 +169,46 @@ class Augur:
             classifier: classifier to use in calculating the area under the curve.
                         Either random forest classifier or logistic regression for categorical data
                         or random forest regressor for continous data
-            params: parameters used to populate the model object. Default values are `n_estimators` =
-                    100, `max_depth` = None, `max_features` = 2, `penalty` = `l2`, `random_state` = None.
+            n_estimators: Number of trees in the forest.
+            max_depth: Maximal depth of each tree.
+            max_features: Maximal number of features considered when looking at best split.
 
-        Returns:
-            Estimator object.
+                * if int then consider max_features for each split
+                * if float consider round(max_features*n_features)
+                * if `auto` then max_features=n_features (default)
+                * if `log2` then max_features=log2(n_features)
+                * if `sqrt` then max_featuers=sqrt(n_features)
+
+            penalty: Norm of the penalty used in logistic regression
+
+                * if `l1` then L1 penalty is added
+                * if `l2` then L2 penalty is added (default)
+                * if `elasticnet` both L1 and L2 penalties are added
+                * if `none` no penalty is added
+
+            random_state: Random model seed.
 
         Examples:
             >>> import pertpy as pt
             >>> augur = pt.tl.Augur("random_forest_classifier")
             >>> estimator = augur.create_estimator("logistic_regression_classifier")
         """
-        if params is None:
-            params = Params()
         if classifier == "random_forest_classifier":
             return RandomForestClassifier(
-                n_estimators=params.n_estimators,
-                max_depth=params.max_depth,
-                max_features=params.max_features,
-                random_state=params.random_state,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                max_features=max_features,
+                random_state=random_state,
             )
         elif classifier == "random_forest_regressor":
             return RandomForestRegressor(
-                n_estimators=params.n_estimators,
-                max_depth=params.max_depth,
-                max_features=params.max_features,
-                random_state=params.random_state,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                max_features=max_features,
+                random_state=random_state,
             )
         elif classifier == "logistic_regression_classifier":
-            return LogisticRegression(penalty=params.penalty, random_state=params.random_state)
+            return LogisticRegression(penalty=penalty, random_state=random_state)
         else:
             raise ValueError("Invalid classifier")
 
@@ -717,7 +731,7 @@ class Augur:
                            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
         Returns:
-            A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs:
+            A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs.
 
                 * summary_metrics: Pandas Dataframe containing mean metrics for each cell type
                 * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs

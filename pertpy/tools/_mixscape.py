@@ -9,16 +9,14 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-from fast_array_utils.stats import mean_var
+from fast_array_utils.stats import mean, mean_var
 from scanpy import get
-from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
 from scanpy.tools._utils import _choose_representation
-from scipy.sparse import csr_matrix, issparse, spmatrix
+from scipy.sparse import csr_matrix, spmatrix
 from sklearn.mixture import GaussianMixture
 
-import pertpy as pt
 from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
@@ -112,7 +110,7 @@ class Mixscape:
             for split in adata.obs[split_by].unique():
                 split_mask = adata.obs[split_by] == split
                 control_mask_group = control_mask & split_mask
-                control_mean_expr = adata.X[control_mask_group].mean(0)
+                control_mean_expr = mean(adata.X[control_mask_group], axis=0)
                 adata.layers["X_pert"][split_mask] = (
                     np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0)
                     - adata.layers["X_pert"][split_mask]
@@ -129,7 +127,7 @@ class Mixscape:
                 representation = representation[:, :n_dims]
 
             from pynndescent import NNDescent
-            
+
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
 
@@ -155,7 +153,7 @@ class Mixscape:
                     )
                     neigh_matrix /= n_neighbors
                     adata.layers["X_pert"][np.asarray(split_mask)] = (
-                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][np.asarray(split_mask)]
+                        sc.pp.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][np.asarray(split_mask)]
                     )
                 else:
                     split_indices = np.where(split_mask)[0]
