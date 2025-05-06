@@ -132,9 +132,7 @@ class Cinemaot:
                 mask_label = adata1.obs[pert_key] == label
                 for ct in adata1.obs[preweight_label].unique():
                     mask_ct = adata1.obs[preweight_label] == ct
-                    a[mask_ct & mask_label] = np.sum(
-                        adata2.obs[preweight_label] == ct
-                    ) / np.sum(mask_ct)
+                    a[mask_ct & mask_label] = np.sum(adata2.obs[preweight_label] == ct) / np.sum(mask_ct)
                 a[mask_label] /= np.sum(a[mask_label])
 
             a = a / np.sum(a)
@@ -152,10 +150,7 @@ class Cinemaot:
                 / ot_sink.apply(np.ones_like(X_transformed[adata.obs[pert_key] == control, :].T)).T
             )
 
-            if issparse(adata.X):
-                X = adata.X.toarray()
-            else:
-                X = adata.X
+            X = adata.X.toarray() if issparse(adata.X) else adata.X
             te2 = (
                 X[adata.obs[pert_key] != control, :]
                 - ot_sink.apply(X[adata.obs[pert_key] == control, :].T).T
@@ -178,10 +173,7 @@ class Cinemaot:
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X_transformed[adata.obs[pert_key] == control, :]
             )
 
-            if issparse(adata.X):
-                X = adata.X.toarray()
-            else:
-                X = adata.X
+            X = adata.X.toarray() if issparse(adata.X) else adata.X
 
             te2 = X[adata.obs[pert_key] != control, :] - np.matmul(
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X[adata.obs[pert_key] == control, :]
@@ -747,7 +739,6 @@ class Xi:
 
         return ranks
 
-
     @property
     def y_rank_max(self):
         # f[i] is number of j s.t. y[j] <= y[i], divided by n.
@@ -772,9 +763,7 @@ class Xi:
         x1 = self.x_rank_max_ordered[0 : (self.sample_size - 1)]
         x2 = self.x_rank_max_ordered[1 : self.sample_size]
 
-        return (
-            np.mean(np.abs(x1 - x2)) * (self.sample_size - 1) / (2 * self.sample_size)
-        )
+        return np.mean(np.abs(x1 - x2)) * (self.sample_size - 1) / (2 * self.sample_size)
 
     @property
     def inverse_g_mean(self):
