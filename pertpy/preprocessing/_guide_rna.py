@@ -264,10 +264,18 @@ class GuideAssignment:
             data = np.log2(data)
             assignments = mixture_model.run_model(data)
             res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
+            
+            # Add the parameters to the adata.var DataFrame
             for params_name, param in mixture_model.params.items():
-                if params_name not in adata.var:
-                    adata.var[params_name] = np.nan
-                adata.var[params_name][gene] = param
+                if param.ndim == 0:
+                    if params_name not in adata.var.columns:
+                        adata.var[params_name] = np.nan
+                    adata.var.loc[gene, params_name] = param.item()
+                else:
+                    for i, p in enumerate(param):
+                        if f"{params_name}_{i}" not in adata.var.columns:
+                            adata.var[f"{params_name}_{i}"] = np.nan
+                        adata.var.loc[gene, f"{params_name}_{i}"] = p
 
         # Assign guides to cells
         # Some cells might have multiple guides assigned
