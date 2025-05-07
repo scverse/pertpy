@@ -264,7 +264,7 @@ class GuideAssignment:
             data = np.log2(data)
             assignments = mixture_model.run_model(data)
             res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
-            
+
             # Add the parameters to the adata.var DataFrame
             for params_name, param in mixture_model.params.items():
                 if param.ndim == 0:
