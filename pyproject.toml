@@ -77,14 +77,14 @@ tcoda = [
 de = [
     "formulaic-contrasts>=0.2.0",
     "formulaic",
-    "pydeseq2>=v0.5.0pre1",
+    "pydeseq2>=v0.5.0",
 ]
 dev = [
     "pre-commit",
 ]
 doc = [
     "docutils>=0.8",
-    "sphinx>=6",
+    "sphinx>=8.1",
     "scanpydoc",
     "sphinx-book-theme",
     "myst-nb",

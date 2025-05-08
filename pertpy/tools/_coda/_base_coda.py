@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
-import arviz as az
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -460,6 +459,8 @@ class CompositionalModel2(ABC):
             var_names = ["alpha", "beta"]
         else:
             raise ValueError("No valid model type!")
+
+        import arviz as az
 
         summ = az.summary(
             data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False),
