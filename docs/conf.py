@@ -126,9 +126,10 @@ nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
     ("py:class", "ete4.treeview.TreeStyle"),
     ("py:class", "pertpy.tools._distances._distances.MeanVar"),
-    ("py:class", "The requested data as a NumPy array. [ref.class]"),
-    ("py:class", "The full registry saved with the model [ref.class]"),
-    ("py:class", "Model with loaded state dictionaries. [ref.class]"),
+    ("py:class", "The requested data as a NumPy array."),
+    ("py:class", "The full registry saved with the model"),
+    ("py:class", "Model with loaded state dictionaries."),
+    ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
 ]
 
 sphinx_gallery_conf = {"nested_sections=": False}
