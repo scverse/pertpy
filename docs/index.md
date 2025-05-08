@@ -23,7 +23,7 @@ It provides tools for harmonizing perturbation datasets, automating metadata ann
 
 ```{eval-rst}
 .. card:: Tutorials :octicon:`play;1em;`
-    :link: tutorials/index
+    :link: tutorials
     :link-type: doc
 
     The tutorials walk you through real-world applications of pertpy.
