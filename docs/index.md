@@ -62,8 +62,8 @@ references
 :hidden: true
 :maxdepth: 1
 
-tutorials/index
-tutorials/usecases
+tutorials
+usecases
 ```
 
 ## Citation

@@ -7,7 +7,7 @@ The use cases featured here are those we present in the [pertpy preprint](https:
 ```{eval-rst}
 .. nbgallery::
 
-   notebooks/norman_use_case
-   notebooks/mcfarland_use_case
-   notebooks/zhang_use_case
+   tutorials/notebooks/norman_use_case
+   tutorials/notebooks/mcfarland_use_case
+   tutorials/notebooks/zhang_use_case
 ```
