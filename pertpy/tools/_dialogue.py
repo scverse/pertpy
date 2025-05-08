@@ -20,7 +20,6 @@ from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 from scipy import stats
 from scipy.optimize import nnls
-from seaborn import PairGrid
 from sklearn.linear_model import LinearRegression
 from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 from statsmodels.sandbox.stats.multicomp import multipletests

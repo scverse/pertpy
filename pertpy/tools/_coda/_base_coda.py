@@ -8,7 +8,6 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import patsy as pt
 import scanpy as sc
 import seaborn as sns
 from adjustText import adjust_text
@@ -125,7 +124,9 @@ class CompositionalModel2(ABC):
         sample_adata.X = sample_adata.X.astype(dtype)
 
         # Build covariate matrix from R-like formula, save in obsm
-        covariate_matrix = pt.dmatrix(formula, sample_adata.obs)
+        import patsy
+
+        covariate_matrix = patsy.dmatrix(formula, sample_adata.obs)
         covariate_names = covariate_matrix.design_info.column_names[1:]
         sample_adata.obsm["covariate_matrix"] = np.array(covariate_matrix[:, 1:]).astype(dtype)
 
