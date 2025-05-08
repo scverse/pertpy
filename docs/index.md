@@ -15,7 +15,7 @@ It provides tools for harmonizing perturbation datasets, automating metadata ann
 
 ```{eval-rst}
 .. card:: API reference :octicon:`book;1em;`
-    :link: api/api
+    :link: api
     :link-type: doc
 
     The API reference contains a detailed description of the pertpy API.
@@ -48,10 +48,10 @@ It provides tools for harmonizing perturbation datasets, automating metadata ann
 ```{toctree}
 :caption: 'General:'
 :hidden: true
-:maxdepth: 3
+:maxdepth: 1
 
 installation
-api/api
+api
 contributing
 changelog
 references
@@ -60,7 +60,7 @@ references
 ```{toctree}
 :caption: 'Gallery:'
 :hidden: true
-:maxdepth: 3
+:maxdepth: 1
 
 tutorials/index
 tutorials/usecases
