@@ -1,125 +1,10 @@
-# API
-
-Import the pertpy API as follows:
-
-```python
-import pertpy as pt
-```
-
-You can then access the respective modules like:
-
-```python
-pt.tl.cool_fancy_tool()
-```
-
 ```{eval-rst}
 .. currentmodule:: pertpy
 ```
 
-## Datasets
+# Tools
 
-pertpy provides access to several curated single-cell datasets spanning several types of perturbations.
-Many of the datasets originate from [scperturb](http://projects.sanderlab.org/scperturb/) {cite}`Peidli2024`.
-
-```{eval-rst}
-.. autosummary::
-    :toctree: data
-
-    data.adamson_2016_pilot
-    data.adamson_2016_upr_epistasis
-    data.adamson_2016_upr_perturb_seq
-    data.aissa_2021
-    data.bhattacherjee
-    data.burczynski_crohn
-    data.chang_2021
-    data.combosciplex
-    data.cinemaot_example
-    data.datlinger_2017
-    data.datlinger_2021
-    data.dialogue_example
-    data.distance_example
-    data.dixit_2016
-    data.dixit_2016_raw
-    data.dong_2023
-    data.frangieh_2021
-    data.frangieh_2021_protein
-    data.frangieh_2021_raw
-    data.frangieh_2021_rna
-    data.gasperini_2019_atscale
-    data.gasperini_2019_highmoi
-    data.gasperini_2019_lowmoi
-    data.gehring_2019
-    data.haber_2017_regions
-    data.hagai_2018
-    data.kang_2018
-    data.mcfarland_2020
-    data.norman_2019
-    data.norman_2019_raw
-    data.papalexi_2021
-    data.replogle_2022_k562_essential
-    data.replogle_2022_k562_gwps
-    data.replogle_2022_rpe1
-    data.sc_sim_augur
-    data.schiebinger_2019_16day
-    data.schiebinger_2019_18day
-    data.schraivogel_2020_tap_screen_chr8
-    data.schraivogel_2020_tap_screen_chr11
-    data.sciplex_gxe1
-    data.sciplex3_raw
-    data.shifrut_2018
-    data.smillie_2019
-    data.srivatsan_2020_sciplex2
-    data.srivatsan_2020_sciplex3
-    data.srivatsan_2020_sciplex4
-    data.stephenson_2021_subsampled
-    data.tasccoda_example
-    data.tian_2019_day7neuron
-    data.tian_2019_ipsc
-    data.tian_2021_crispra
-    data.tian_2021_crispri
-    data.weinreb_2020
-    data.xie_2017
-    data.zhao_2021
-    data.zhang_2021
-```
-
-## Preprocessing
-
-### Guide Assignment
-
-Guide assignment is essential for quality control in single-cell Perturb-seq data, ensuring accurate mapping of guide RNAs to cells for reliable interpretation of gene perturbation effects.
-pertpy provides a simple function to assign guides based on thresholds and a Gaussian mixture model {cite}`Replogle2022`.
-
-```{eval-rst}
-.. autosummary::
-    :toctree: preprocessing
-    :nosignatures:
-
-    preprocessing.GuideAssignment
-```
-
-Example implementation:
-
-```python
-import pertpy as pt
-import scanpy as sc
-
-mdata = pt.dt.papalexi_2021()
-gdo = mdata.mod["gdo"]
-gdo.layers["counts"] = gdo.X.copy()
-sc.pp.log1p(gdo)
-
-ga = pt.pp.GuideAssignment()
-ga.assign_by_threshold(gdo, 5, layer="counts", output_layer="assigned_guides")
-
-ga.plot_heatmap(gdo, layer="assigned_guides")
-```
-
-See [guide assignment tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/guide_rna_assignment.html).
-
-## Tools
-
-### Differential gene expression
+## Differential gene expression
 
 Differential gene expression involves the quantitative comparison of gene expression levels between two or more groups,
 such as different cell types, tissues, or conditions to discern genes that are significantly up- or downregulated in response to specific biological contexts or stimuli.
@@ -137,9 +22,9 @@ Pertpy enables differential gene expression tests through a common interface tha
     tools.Statsmodels
 ```
 
-### Pooled CRISPR screens
+## Pooled CRISPR screens
 
-#### Perturbation assignment - Mixscape
+### Perturbation assignment - Mixscape
 
 CRISPR based screens can suffer from off-target effects but also limited efficacy of the guide RNAs.
 When analyzing CRISPR screen data, it is vital to know which perturbations were successful and which ones were not
@@ -174,7 +59,7 @@ ms.plot_lda(adata=mdata["rna"], control="NT")
 
 See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html).
 
-### Compositional analysis
+## Compositional analysis
 
 Compositional data analysis focuses on identifying and quantifying variations in cell type composition across
 different conditions or samples to uncover biological differences driven by changes in cellular makeup.
@@ -186,7 +71,7 @@ Generally, there's two ways of approaching this question:
 
 For a more in-depth explanation we refer to the corresponding [sc-best-practices compositional chapter](https://www.sc-best-practices.org/conditions/compositional.html).
 
-#### Without labeled groups - Milo
+### Without labeled groups - Milo
 
 [Milo](https://www.nature.com/articles/s41587-021-01033-z) enables the exploration of differential abundance of cell types across different biological conditions or spatial locations {cite}`Dann2022`.
 It employs a neighborhood-testing approach to statistically assess variations in cell type compositions, providing insights into the microenvironmental and functional heterogeneity within and across samples.
@@ -224,7 +109,7 @@ milo.da_nhoods(mdata, design="~Status")
 
 See [milo tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milo.html).
 
-#### With labeled groups - scCODA and tascCODA
+### With labeled groups - scCODA and tascCODA
 
 [scCODA](https://www.nature.com/articles/s41467-021-27150-6) is designed to identify differences in cell type compositions from single-cell sequencing data across conditions for labeled groups {cite}`Büttner2021`.
 It employs a Bayesian hierarchical model and Dirichlet-multinomial distribution, using Markov chain Monte Carlo (MCMC) for inference, to detect significant shifts in cell type composition across conditions.
@@ -276,14 +161,14 @@ sccoda.plot_effects_barplot(
 
 See [sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda.html), [extended sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda_extended.html) and [tasccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/tasccoda.html).
 
-### Multicellular and gene programs
+## Multicellular and gene programs
 
 Multicellular programs are organized interactions and coordinated activities among different cell types within a tissue,
 forming complex functional units that drive tissue-specific functions, responses to environmental changes, and pathological states.
 These programs enable a higher level of biological organization by integrating signaling pathways, gene expression,
 and cellular behaviors across the cellular community to maintain homeostasis and execute collective responses.
 
-#### Multicellular programs - DIALOGUE
+### Multicellular programs - DIALOGUE
 
 [DIALOGUE](https://www.nature.com/articles/s41587-022-01288-0) identifies latent multicellular programs by mapping the data into
 a feature space where the cell type specific representations are correlated across different samples and environments {cite}`JerbyArnon2022`.
@@ -329,14 +214,12 @@ all_results, new_mcps = dl.multilevel_modeling(
 
 See [DIALOGUE tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html).
 
-#### Enrichment
+### Enrichment
 
 Enrichment tests for single-cell data assess whether specific biological pathways or gene sets are overrepresented in the expression profiles of individual cells,
 aiding in the identification of functional characteristics and cellular states.
 While pathway enrichment is a well-studied and commonly applied approach in single-cell RNA-seq, other data sources such as genes targeted by drugs can also be enriched.
 Drug2cell performs such enrichment tests and is available in pertpy {cite}`Kanemaru2023`.
-
-This implementation of enrichment is designed to interoperate with [MetaData](#metadata) and uses a simple hypergeometric test.
 
 ```{eval-rst}
 .. autosummary::
@@ -359,7 +242,7 @@ pt_enricher.score(adata)
 
 See [enrichment tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/enrichment.html).
 
-### Distances and Permutation Tests
+## Distances and permutation tests
 
 In settings where many perturbations are applied, it is often times unclear which perturbations had a strong effect and should be investigated further.
 Differential gene expression poses one option to get candidate genes and p-values.
@@ -396,13 +279,13 @@ tab = etest(adata, groupby="perturbation", contrast="control")
 See [distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
 and [distance tests tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html).
 
-### Response prediction
+## Response prediction
 
 Response prediction describes computational models that predict how individual cells or cell populations will respond to
 specific treatments, conditions, or stimuli based on their gene expression profiles, enabling insights into cellular behaviors and potential therapeutic strategies.
 Such approaches can also order perturbations by their effect on groups of cells.
 
-#### Rank perturbations - Augur
+### Rank perturbations - Augur
 
 [Augur](https://doi.org/10.1038/s41587-020-0605-1) aims to rank or prioritize cell types according to their response to experimental perturbations {cite}`Skinnider2021`.
 Cells that respond strongly to perturbations are more easily distinguishable as treated or control in molecular space.
@@ -435,7 +318,7 @@ See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks
     tools.Augur
 ```
 
-#### Gene expression prediction with scGen
+### Gene expression prediction with scGen
 
 scGen is a deep generative model that leverages autoencoders and adversarial training to integrate single-cell RNA sequencing data from different conditions or tissues,
 enabling the generation of synthetic single-cell data for cross-condition analysis and predicting cell-type-specific responses to perturbations {cite}`Lotfollahi2019`.
@@ -472,7 +355,7 @@ pred.obs["condition"] = "pred"
 
 See [scgen tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html).
 
-#### Causal perturbation analysis with CINEMA-OT
+### Causal perturbation analysis with CINEMA-OT
 
 CINEMA-OT is a causal framework for perturbation effect analysis to identify individual treatment effects and synergy at the single cell level {cite}`Dong2023`.
 CINEMA-OT separates confounding sources of variation from perturbation effects to obtain an optimal transport matching that reflects counterfactual cell pairs.
@@ -510,7 +393,7 @@ de = model.causaleffect(
 
 See [CINEMA-OT tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/cinemaot.html).
 
-### Perturbation space
+## Perturbation space
 
 Perturbation spaces depart from the individualistic perspective of cells and instead organizes cells into cohesive ensembles.
 This specialized space enables comprehending the collective impact of perturbations on cells.
@@ -546,59 +429,3 @@ ps_adata = ps.compute(
 ```
 
 See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html).
-
-## MetaData
-
-MetaData provides tooling to annotate perturbations by querying databases.
-Such metadata can aid with the development of biologically informed models and can be used for enrichment tests.
-
-### Cell line
-
-This module allows for the retrieval of various types of information related to cell lines,
-including cell line annotation, bulk RNA and protein expression data.
-
-Available databases for cell line metadata:
-
--   [The Cancer Dependency Map Project at Broad](https://depmap.org/portal/)
--   [The Cancer Dependency Map Project at Sanger](https://depmap.sanger.ac.uk/)
--   [Genomics of Drug Sensitivity in Cancer (GDSC)](https://www.cancerrxgene.org/)
-
-### Compound
-
-The Compound module enables the retrieval of various types of information related to compounds of interest, including the most common synonym, pubchemID and canonical SMILES.
-
-Available databases for compound metadata:
-
--   [PubChem](https://pubchem.ncbi.nlm.nih.gov/)
-
-### Mechanism of Action
-
-This module aims to retrieve metadata of mechanism of action studies related to perturbagens of interest, depending on the molecular targets.
-
-Available databases for mechanism of action metadata:
-
--   [CLUE](https://clue.io/)
-
-### Drug
-
-This module allows for the retrieval of Drug target information.
-
-Available databases for drug metadata:
-
--   [chembl](https://www.ebi.ac.uk/chembl/)
-
-```{eval-rst}
-.. autosummary::
-    :toctree: metadata
-    :recursive:
-
-    metadata.CellLine
-    metadata.Compound
-    metadata.Moa
-    metadata.Drug
-    metadata.LookUp
-```
-
-## Plots
-
-Every tool has a set of plotting functions that start with `plot_`.

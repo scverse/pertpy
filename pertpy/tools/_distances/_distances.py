@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import multiprocessing
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple
 

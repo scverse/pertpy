@@ -1,7 +1,7 @@
 from importlib import import_module
 
 
-def lazy_import(module_path, class_name, extras):
+def lazy_import(module_path: str, class_name: str, extras: list[str]):
     try:
         for extra in extras:
             import_module(extra)
@@ -21,6 +21,7 @@ def lazy_import(module_path, class_name, extras):
 
 from pertpy.tools._augur import Augur
 from pertpy.tools._cinemaot import Cinemaot
+from pertpy.tools._coda._sccoda import Sccoda
 from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
@@ -41,8 +42,7 @@ from pertpy.tools._perturbation_space._simple import (
 )
 from pertpy.tools._scgen import Scgen
 
-CODA_EXTRAS = ["toytree", "arviz", "ete4"]  # also pyqt6 technically
-Sccoda = lazy_import("pertpy.tools._coda._sccoda", "Sccoda", CODA_EXTRAS)
+CODA_EXTRAS = ["toytree", "ete4"]  # also "pyqt6" but it cannot be imported
 Tasccoda = lazy_import("pertpy.tools._coda._tasccoda", "Tasccoda", CODA_EXTRAS)
 
 DE_EXTRAS = ["formulaic", "pydeseq2"]
@@ -69,6 +69,7 @@ __all__ = [
     "Milo",
     "Mixscape",
     "ClusteringSpace",
+    "PerturbationComparison",
     "LRClassifierSpace",
     "MLPClassifierSpace",
     "CentroidSpace",
