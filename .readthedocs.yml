@@ -12,7 +12,7 @@ build:
         - .venv/bin/python -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
 sphinx:
     configuration: docs/conf.py
-    fail_on_warning: false
+    fail_on_warning: true
 
 submodules:
     include: all
