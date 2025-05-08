@@ -57,7 +57,7 @@ references
 ```
 
 ```{toctree}
-:caption: 'General:'
+:caption: 'Gallery:'
 :hidden: true
 :maxdepth: 3
 
