@@ -53,6 +53,7 @@ It provides tools for harmonizing perturbation datasets, automating metadata ann
 installation
 api/api
 contributing
+changelog
 references
 ```
 
