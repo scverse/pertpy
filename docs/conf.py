@@ -92,8 +92,12 @@ html_theme = "scanpydoc"
 html_title = "pertpy"
 html_logo = "_static/pertpy_logo.svg"
 
+html_theme_options = {
+    "version_selector": True,
+}
+
 html_static_path = ["_static"]
-html_css_files = ["css/override.css", "css/sphinx_gallery.css"]
+html_css_files = ["css/overwrite.css", "css/sphinx_gallery.css"]
 html_show_sphinx = False
 
 add_module_names = False

@@ -46,15 +46,23 @@ It provides tools for harmonizing perturbation datasets, automating metadata ann
 ```
 
 ```{toctree}
-:caption: 'Contents:'
+:caption: 'General:'
 :hidden: true
 :maxdepth: 3
 
 installation
 api/api
-tutorials/index
 contributing
 references
+```
+
+```{toctree}
+:caption: 'General:'
+:hidden: true
+:maxdepth: 3
+
+tutorials/index
+tutorials/usecases
 ```
 
 ## Citation
