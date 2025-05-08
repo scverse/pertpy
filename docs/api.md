@@ -15,8 +15,8 @@ pt.tl.cool_fancy_tool()
 ```{toctree}
 :maxdepth: 1
 
-api/datasets.md
-api/preprocessing.md
-api/tools.md
-api/metadata.md
+api/datasets
+api/preprocessing
+api/tools
+api/metadata
 ```
