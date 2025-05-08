@@ -5,7 +5,6 @@ orphan: true
 # Tutorials
 
 The easiest way to get familiar with pertpy is to follow along with our tutorials.
-Many are also designed to work seamlessly in Google colab.
 
 :::{note}
 For questions about the usage of pertpy use the [scverse discourse](https://discourse.scverse.org/).

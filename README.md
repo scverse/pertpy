@@ -7,13 +7,16 @@
 [![Test](https://github.com/scverse/pertpy/actions/workflows/test.yml/badge.svg)](https://github.com/scverse/pertpy/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-# pertpy
+# pertpy - Perturbation Analysis in Python
+
+Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
+It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic modifications, drug treatments, and environmental changes.
 
 ![fig1](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
 
 ## Documentation
 
-Please read the [documentation](https://pertpy.readthedocs.io/en/latest).
+Please read the [documentation](https://pertpy.readthedocs.io/en/latest) for installation, tutorials, use cases, and more.
 
 ## Installation
 
