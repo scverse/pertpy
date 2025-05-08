@@ -21,6 +21,7 @@ def lazy_import(module_path: str, class_name: str, extras: list[str]):
 
 from pertpy.tools._augur import Augur
 from pertpy.tools._cinemaot import Cinemaot
+from pertpy.tools._coda._sccoda import Sccoda
 from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
