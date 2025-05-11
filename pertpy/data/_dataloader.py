@@ -15,8 +15,8 @@ from rich.progress import Progress
 
 def _download(  # pragma: no cover
     url: str,
-    output_file_name: str = None,
-    output_path: str | Path = None,
+    output_file_name: str | None = None,
+    output_path: str | Path | None = None,
     block_size: int = 1024,
     overwrite: bool = False,
     is_zip: bool = False,

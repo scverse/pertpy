@@ -24,13 +24,8 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       python: "3.13"
-                      run_mode: "slow"
                     - os: ubuntu-latest
                       python: "3.13"
-                      run_mode: "fast"
-                    - os: ubuntu-latest
-                      python: "3.13"
-                      run_mode: slow
                       pip-flags: "--pre"
 
         env:
@@ -91,9 +86,6 @@ jobs:
                   DISPLAY: :42
               run: |
                   pytest_args="-m pytest -v --color=yes"
-                  if [ "${{ matrix.run_mode }}" = "slow" ]; then
-                    pytest_args="$pytest_args --runslow"
-                  fi
                   coverage run $pytest_args
 
             - name: Show coverage report
