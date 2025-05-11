@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
-import pubchempy as pcp
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -43,6 +42,8 @@ class Compound(MetaData):
 
         if query_id not in adata.obs.columns:
             raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n Please check again.")
+
+        import pubchempy as pcp
 
         query_dict = {}
         not_matched_identifiers = []

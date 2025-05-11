@@ -149,7 +149,6 @@ def test_select_variance(adata):
     assert len(ad.var.index[ad.var["highly_variable"]]) == 3672
 
 
-@pytest.mark.slow
 def test_differential_prioritization():
     """Test differential prioritization run."""
     # Requires the full dataset or it fails because of a lack of statistical power

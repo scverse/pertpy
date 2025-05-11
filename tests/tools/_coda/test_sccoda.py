@@ -90,7 +90,6 @@ def test_credible_effects(adata):
     assert sccoda.credible_effects(mdata)["condition[T.Salmonella]"]["Enterocyte"]
 
 
-@pytest.mark.slow
 def test_make_arviz(adata):
     adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
     mdata = sccoda.load(

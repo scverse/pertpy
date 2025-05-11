@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
-from dataclasses import dataclass
 from math import floor, nan
 from typing import TYPE_CHECKING, Any, Literal
 

@@ -26,11 +26,10 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
     from matplotlib.pyplot import Figure
-    from scipy import sparse
 
 
 class Mixscape:
-    """Python implementation of Mixscape."""
+    """identify perturbation effects in CRISPR screens by separating cells into perturbation groups."""
 
     def __init__(self):
         pass
@@ -71,7 +70,7 @@ class Mixscape:
             use_rep: Use the indicated representation. `'X'` or any key for `.obsm` is valid.
                 If `None`, the representation is chosen automatically:
                 For `.n_vars` < 50, `.X` is used, otherwise 'X_pca' is used.
-                If 'X_pca' is not present, it’s computed with default parameters.
+                If 'X_pca' is not present, it's computed with default parameters.
             n_dims: Number of dimensions to use from the representation to calculate the perturbation signature.
                 If `None`, use all dimensions.
             n_pcs: If PCA representation is used, the number of principal components to compute.
@@ -1189,7 +1188,7 @@ class MixscapeGaussianMixture(GaussianMixture):
             n_components: Number of Gaussian components
             fixed_means: Means to fix (use None for those that should be estimated)
             fixed_covariances: Covariances to fix (use None for those that should be estimated)
-            kwargs: Additional arguments passed to scikit-learn's GaussianMixture
+            **kwargs: Additional arguments passed to scikit-learn's GaussianMixture
         """
         super().__init__(n_components=n_components, **kwargs)
         self.fixed_means = fixed_means

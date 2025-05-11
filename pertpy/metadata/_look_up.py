@@ -27,7 +27,7 @@ class LookUp:
         Args:
             type: Metadata type for annotation. One of 'cell_line', 'compound', 'moa' or 'drug.
             transfer_metadata: DataFrames used to generate Lookup object.
-                           This is currently set to None for CompoundMetaData which does not require any dataframes for transfer.
+                Currently set to None for CompoundMetaData which does not require any DataFrames for transfer.
         """
         self.type = type
         if type == "cell_line":

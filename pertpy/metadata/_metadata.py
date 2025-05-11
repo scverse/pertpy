@@ -49,11 +49,8 @@ class MetaData:
             if metadata_type in ["protein expression", "bulk RNA", "drug response"]:
                 hint = "Additionally, call the `CellLineMetaData.annotate()` function to acquire more possible query IDs that can be used for cell line annotation purposes."
             raise ValueError(
-                f"Attempting to match the query id {query_id} in 'adata.obs' to the reference id {reference_id} in the metadata.\n"
-                "However, none of the query IDs could be found in the {metadata_type} annotation data.\n"
-                "To resolve this issue, call the `lookup()` function to create a LookUp object.\n"
-                "This enables obtaining the count of matched identifiers in the AnnData object for different types of reference and query IDs.\n"
-                f"{hint}"
+                f"No matches between `{query_id}` in adata.obs and `{reference_id}` in {metadata_type} data. "
+                f"Use `lookup()` to check compatible identifier types. {hint}"
             )
         if len(unmatched_identifiers) == 0:
             return
@@ -61,10 +58,8 @@ class MetaData:
             verbosity = min(verbosity, len(unmatched_identifiers))
             if verbosity > 0:
                 logger.info(
-                    f"There are {total_identifiers} identifiers in `adata.obs`."
-                    f"However, {len(unmatched_identifiers)} identifiers can't be found in the {metadata_type} annotation, "
-                    "leading to the presence of NA values for their respective metadata.\n"
-                    f"Please check again: *unmatched_identifiers[:verbosity]..."
+                    f"{total_identifiers} identifiers in `adata.obs`, {len(unmatched_identifiers)} not found in {metadata_type} data. "
+                    f"NA values present. Unmatched: {unmatched_identifiers[:verbosity]}"
                 )
         else:
             raise ValueError("Only 'all' or a non-negative value is accepted.")
