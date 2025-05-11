@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🚀 Features
 
-* Simplify Metadata errors ([#763](https://github.com/scverse/pertpy/pull/763)) @Zethson
+* Simplify Metadata errors ([#765](https://github.com/scverse/pertpy/pull/765)) @Zethson
 
 ## v0.11.1
 
