@@ -46,7 +46,7 @@ It provides tools for harmonizing perturbation datasets, automating metadata ann
 ```
 
 ```{toctree}
-:caption: 'General:'
+:caption: 'General'
 :hidden: true
 :maxdepth: 1
 
@@ -58,7 +58,7 @@ references
 ```
 
 ```{toctree}
-:caption: 'Gallery:'
+:caption: 'Gallery'
 :hidden: true
 :maxdepth: 1
 
