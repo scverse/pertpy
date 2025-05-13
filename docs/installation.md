@@ -16,17 +16,9 @@ This is the preferred method to install pertpy, as it will always install the mo
 
 If you don't have [pip] installed, this [Python installation guide] can guide you through the process.
 
-## Additional dependency groups
+### Additional dependency groups
 
-### scCODA and tascCODA
-
-TascCODA requires an additional set of dependencies (ete4, pyqt6, and toytree) that can be installed by running:
-
-```console
-pip install pertpy[tcoda]
-```
-
-## Differential gene expression interface
+#### Differential gene expression interface
 
 The DGE interface of pertpy requires additional dependencies that can be installed by running:
 
@@ -44,21 +36,12 @@ BiocManager::install("edgeR")
 pip install rpy2
 ```
 
-## From sources
+#### tascCODA
 
-The sources for pertpy can be downloaded from the [Github repo].
-Please note that you require [poetry] to be installed.
-
-You can either clone the public repository:
+TascCODA requires an additional set of dependencies (ete4, pyqt6, and toytree) that can be installed by running:
 
 ```console
-$ git clone git://github.com/scverse/pertpy
-```
-
-Or download the [tarball]:
-
-```console
-$ curl -OJL https://github.com/scverse/pertpy/tarball/master
+pip install pertpy[tcoda]
 ```
 
 ## Apple Silicon
@@ -99,6 +82,22 @@ Follow these steps to install pertpy on an Apple Silicon machine (tested on a Ma
     ```
 
 Now you're ready to use pertpy as usual within the environment (`import pertpy`).
+
+## From sources
+
+The sources for pertpy can be downloaded from the [Github repo].
+
+You can either clone the public repository:
+
+```console
+$ git clone git://github.com/scverse/pertpy
+```
+
+Or download the [tarball]:
+
+```console
+$ curl -OJL https://github.com/scverse/pertpy/tarball/master
+```
 
 [github repo]: https://github.com/scverse/pertpy
 [pip]: https://pip.pypa.io
