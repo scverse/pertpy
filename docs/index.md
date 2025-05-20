@@ -79,8 +79,19 @@ Discourse <https://discourse.scverse.org/c/ecosystem/pertpy/46>
 
 ## Citation
 
-[Lukas Heumos, Yuge Ji, Lilly May, Tessa Green, Xinyue Zhang, Xichen Wu, Johannes Ostner, Stefan Peidli, Antonia Schumacher, Karin Hrovatin, Michaela Mueller, Faye Chong, Gregor Sturm, Alejandro Tejada, Emma Dann, Mingze Dong, Mojtaba Bahrami, Ilan Gold, Sergei Rybakov, Altana Namsaraeva, Amir Ali Moinfar, Zihe Zheng, Eljas Roellin, Isra Mekki, Chris Sander, Mohammad Lotfollahi, Herbert B. Schiller, Fabian J. Theis
-bioRxiv 2024.08.04.606516; doi: https://doi.org/10.1101/2024.08.04.606516](https://www.biorxiv.org/content/10.1101/2024.08.04.606516v1)
+```bibtex
+@article {Heumos2024.08.04.606516,
+    author = {Heumos, Lukas and Ji, Yuge and May, Lilly and Green, Tessa and Zhang, Xinyue and Wu, Xichen and Ostner, Johannes and Peidli, Stefan and Schumacher, Antonia and Hrovatin, Karin and Müller, Michaela and Chong, Faye and Sturm, Gregor and Tejada, Alejandro and Dann, Emma and Dong, Mingze and Bahrami, Mojtaba and Gold, Ilan and Rybakov, Sergei and Namsaraeva, Altana and Moinfar, Amir and Zheng, Zihe and Roellin, Eljas and Mekki, Isra and Sander, Chris and Lotfollahi, Mohammad and Schiller, Herbert B. and Theis, Fabian J.},
+    title = {Pertpy: an end-to-end framework for perturbation analysis},
+    elocation-id = {2024.08.04.606516},
+    year = {2024},
+    doi = {10.1101/2024.08.04.606516},
+    publisher = {Cold Spring Harbor Laboratory},
+    URL = {https://www.biorxiv.org/content/early/2024/08/07/2024.08.04.606516},
+    eprint = {https://www.biorxiv.org/content/early/2024/08/07/2024.08.04.606516.full.pdf},
+    journal = {bioRxiv}
+}
+```
 
 ## NumFOCUS
 
