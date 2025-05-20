@@ -66,6 +66,17 @@ tutorials
 usecases
 ```
 
+```{toctree}
+:caption: 'About'
+:hidden: true
+:maxdepth: 1
+
+about/background
+about/cite
+GitHub <https://github.com/scverse/pertpy>
+Discourse <https://discourse.scverse.org/c/ecosystem/pertpy/46>
+```
+
 ## Citation
 
 [Lukas Heumos, Yuge Ji, Lilly May, Tessa Green, Xinyue Zhang, Xichen Wu, Johannes Ostner, Stefan Peidli, Antonia Schumacher, Karin Hrovatin, Michaela Mueller, Faye Chong, Gregor Sturm, Alejandro Tejada, Emma Dann, Mingze Dong, Mojtaba Bahrami, Ilan Gold, Sergei Rybakov, Altana Namsaraeva, Amir Ali Moinfar, Zihe Zheng, Eljas Roellin, Isra Mekki, Chris Sander, Mohammad Lotfollahi, Herbert B. Schiller, Fabian J. Theis
