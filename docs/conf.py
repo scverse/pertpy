@@ -128,7 +128,7 @@ nitpick_ignore = [
     ("py:class", "pertpy.tools._distances._distances.MeanVar"),
     ("py:class", "The requested data as a NumPy array."),
     ("py:class", "The full registry saved with the model"),
-    ("py:class", "The requested data"),
+    ("py:class", "The requested data."),
     ("py:class", "Model with loaded state dictionaries."),
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
 ]
