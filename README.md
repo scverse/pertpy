@@ -29,16 +29,33 @@ You can install _pertpy_ in less than a minute via [pip] from [PyPI]:
 pip install pertpy
 ```
 
+### Differential gene expression
+
+If you want to use the differential gene expression interface, please install pertpy by running:
+
+```console
+pip install 'pertpy[de]'
+```
+
+### tascCODA
+
 if you want to use tascCODA, please install pertpy as follows:
 
 ```console
 pip install 'pertpy[tcoda]'
 ```
 
-If you want to use the differential gene expression interface, please install pertpy by running:
+### milo
+
+milo further requires edger, statmod, and rpy2 to be installed:
+
+```R
+BiocManager::install("edgeR")
+BiocManager::install("statmod")
+```
 
 ```console
-pip install 'pertpy[de]'
+pip install rpy2
 ```
 
 ## Citation

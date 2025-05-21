@@ -36,6 +36,19 @@ BiocManager::install("edgeR")
 pip install rpy2
 ```
 
+#### milo
+
+milo further requires edger, statmod, and rpy2 to be installed:
+
+```R
+BiocManager::install("edgeR")
+BiocManager::install("statmod")
+```
+
+```console
+pip install rpy2
+```
+
 #### tascCODA
 
 TascCODA requires an additional set of dependencies (ete4, pyqt6, and toytree) that can be installed by running:
