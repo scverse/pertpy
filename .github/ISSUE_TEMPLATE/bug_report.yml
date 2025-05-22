@@ -1,9 +1,9 @@
 name: Bug report
-description: pertpy doesn’t do what it should? Please help us fix it!
+description: pertpy doesn't do what it should? Please help us fix it!
 #title: ...
 labels:
-  - Bug
-  - Triage
+  - bug
+  - triage
 #assignees: []
 body:
   - type: checkboxes
