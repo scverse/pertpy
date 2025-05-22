@@ -2158,9 +2158,6 @@ class CompositionalModel2(ABC):
             >>> tasccoda_model.run_nuts(
             ...     tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000
             ... )
-            >>> tasccoda_model.run_nuts(
-            ...     tasccoda_data, modality_key="coda", rng_key=1234, num_samples=10000, num_warmup=1000
-            ... )
             >>> sc.tl.umap(tasccoda_data["rna"])
             >>> tasccoda_model.plot_effects_umap(tasccoda_data,
             >>>                         effect_name=["effect_df_condition[T.Salmonella]",
