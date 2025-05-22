@@ -16,7 +16,7 @@ from jax import config, random
 from lamin_utils import logger
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import Colormap
 from mudata import MuData
 from numpyro.infer import HMC, MCMC, NUTS, initialization
 from rich import box, print
@@ -34,7 +34,6 @@ if TYPE_CHECKING:
     from ete4 import Tree
     from jax._src.typing import Array
     from matplotlib.axes import Axes
-    from matplotlib.colors import Colormap
     from matplotlib.figure import Figure
 
 config.update("jax_enable_x64", True)
@@ -1141,7 +1140,7 @@ class CompositionalModel2(ABC):
         level_names: list[str],
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
-        palette: ListedColormap | None = cm.tab20,
+        palette: str | Colormap | None = cm.tab20,
         show_legend: bool | None = True,
     ) -> plt.Axes:
         """Plots a stacked barplot for one (discrete) covariate.
@@ -1156,12 +1155,15 @@ class CompositionalModel2(ABC):
             level_names: Names of the covariate's levels
             figsize: Figure size (matplotlib).
             dpi: Resolution in DPI (matplotlib).
-            palette: The color map for the barplot.
+            palette: The color map (name) for the barplot.
             show_legend: If True, adds a legend.
 
         Returns:
             A :class:`~matplotlib.axes.Axes` object
         """
+        if isinstance(palette, str):
+            palette = getattr(cm, palette)
+
         n_bars, n_types = y.shape
 
         figsize = rcParams["figure.figsize"] if figsize is None else figsize
@@ -1202,7 +1204,7 @@ class CompositionalModel2(ABC):
         feature_name: str,
         *,
         modality_key: str = "coda",
-        palette: ListedColormap | None = cm.tab20,
+        palette: str | Colormap | None = cm.tab20,
         show_legend: bool | None = True,
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
@@ -1217,7 +1219,7 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use.
             figsize: Figure size.
             dpi: Dpi setting.
-            palette: The matplotlib color map for the barplot.
+            palette: The matplotlib color map (name) for the barplot.
             show_legend: If True, adds a legend.
             level_order: Custom ordering of bars on the x-axis.
             {common_plot_args}
@@ -1299,7 +1301,7 @@ class CompositionalModel2(ABC):
         plot_facets: bool = True,
         plot_zero_covariate: bool = True,
         plot_zero_cell_type: bool = False,
-        palette: str | ListedColormap | None = cm.tab20,
+        palette: str | Colormap | None = cm.tab20,
         level_order: list[str] = None,
         args_barplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
@@ -1321,7 +1323,7 @@ class CompositionalModel2(ABC):
             plot_zero_cell_type: If True, plot cell type that have zero effect. If False, do not plot.
             figsize: Figure size.
             dpi: Figure size.
-            palette: The seaborn color map for the barplot.
+            palette: The seaborn color map (name) for the barplot.
             level_order: Custom ordering of bars on the x-axis.
             args_barplot: Arguments passed to sns.barplot.
             {common_plot_args}
@@ -1397,7 +1399,7 @@ class CompositionalModel2(ABC):
 
         # If plot as facets, create a FacetGrid and map barplot to it.
         if plot_facets:
-            if isinstance(palette, ListedColormap):
+            if isinstance(palette, Colormap):
                 palette = np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]).tolist()
             if figsize is not None:
                 height = figsize[0]
@@ -1437,7 +1439,7 @@ class CompositionalModel2(ABC):
         else:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
             if len(covariate_names) == 1:
-                if isinstance(palette, ListedColormap):
+                if isinstance(palette, Colormap):
                     palette = np.array(
                         [palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]
                     ).tolist()
@@ -1451,7 +1453,7 @@ class CompositionalModel2(ABC):
                 )
                 ax.set_title(covariate_names[0])
             else:
-                if isinstance(palette, ListedColormap):
+                if isinstance(palette, Colormap):
                     palette = np.array([palette(i % palette.N) for i in range(len(covariate_names))]).tolist()
                 sns.barplot(
                     data=plot_df,
@@ -1485,7 +1487,7 @@ class CompositionalModel2(ABC):
         cell_types: list | None = None,
         args_boxplot: dict | None = None,
         args_swarmplot: dict | None = None,
-        palette: str | None = "Blues",
+        palette: str | Colormap | None = "Blues",
         show_legend: bool | None = True,
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
@@ -1510,7 +1512,7 @@ class CompositionalModel2(ABC):
             args_swarmplot: Arguments passed to sns.swarmplot.
             figsize: Figure size.
             dpi: Dpi setting.
-            palette: The seaborn color map for the barplot.
+            palette: The seaborn color map (name) for the barplot.
             show_legend: If True, adds a legend.
             level_order: Custom ordering of bars on the x-axis.
             {common_plot_args}
@@ -1535,6 +1537,8 @@ class CompositionalModel2(ABC):
             args_swarmplot = {}
         if isinstance(data, MuData):
             data = data[modality_key]
+        if isinstance(palette, Colormap):
+            palette = palette(range(2))
 
         # y scale transformations
         if y_scale == "relative":
@@ -2104,7 +2108,7 @@ class CompositionalModel2(ABC):
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
-        palette: str | Sequence[str] | None = None,
+        palette: str | Sequence[str] | Colormap | None = None,
         ax: Axes = None,
         return_fig: bool = False,
         **kwargs,
@@ -2122,7 +2126,7 @@ class CompositionalModel2(ABC):
             modality_key_1: Key to the cell-level AnnData in the MuData object.
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
             color_map: The color map to use for plotting.
-            palette: The color palette to use for plotting.
+            palette: The color palette (name) to use for plotting.
             ax: A matplotlib axes object. Only works if plotting a single component.
             {common_plot_args}
             **kwargs: All other keyword arguments are passed to `scanpy.plot.umap()`
@@ -2173,6 +2177,10 @@ class CompositionalModel2(ABC):
         data_coda = mdata[modality_key_2]
         if isinstance(effect_name, str):
             effect_name = [effect_name]
+        if isinstance(palette, Colormap):
+            palette = {
+                cluster: palette(i % palette.N) for i, cluster in enumerate(data_rna.obs[cluster_key].unique().tolist())
+            }
         for _, effect in enumerate(effect_name):
             data_rna.obs[effect] = [data_coda.varm[effect].loc[f"{c}", "Effect"] for c in data_rna.obs[cluster_key]]
         if kwargs.get("vmin"):
