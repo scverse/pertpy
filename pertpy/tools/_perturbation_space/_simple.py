@@ -1,19 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import matplotlib.pyplot as plt
 import numpy as np
 import scanpy as sc
 from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
 
-from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
-
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Figure
 
 
 class CentroidSpace(PerturbationSpace):
