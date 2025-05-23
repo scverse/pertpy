@@ -55,7 +55,6 @@ dependencies = [
     "scikit-misc",
     "scvi-tools",
     "adjusttext",
-    "decoupler",
     "ott-jax",
     "sparsecca",
     "openpyxl",
