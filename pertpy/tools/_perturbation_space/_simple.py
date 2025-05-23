@@ -125,9 +125,8 @@ class PseudobulkSpace(PerturbationSpace):
         groups_col: str = None,
         layer_key: str = None,
         embedding_key: str = None,
-        **kwargs,
     ) -> AnnData:  # type: ignore
-        """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
+        """Determines pseudobulks of an AnnData object.
 
         Args:
             adata: Anndata object of size cells x genes
@@ -136,7 +135,6 @@ class PseudobulkSpace(PerturbationSpace):
                 The summarized expression per perturbation (target_col) and group (groups_col) is computed.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            **kwargs: Are passed to decoupler's get_pseuobulk.
 
         Returns:
              AnnData object with one observation per perturbation.
@@ -166,7 +164,9 @@ class PseudobulkSpace(PerturbationSpace):
                 adata = adata_emb
 
         adata.obs[target_col] = adata.obs[target_col].astype("category")
-        ps_adata = sc.get.aggregate(adata, by=[target_col, groups_col], func="sum", layer=layer_key)
+        ps_adata = sc.get.aggregate(
+            adata, by=[target_col] if groups_col is None else [target_col, groups_col], func="sum", layer=layer_key
+        )
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
