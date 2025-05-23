@@ -572,9 +572,7 @@ class MethodBase(ABC):
         if any(adata.obs[[groupby, pairedby]].value_counts() > 1):
             logger.info("Performing pseudobulk for paired samples")
             ps = PseudobulkSpace()
-            adata = ps.compute(
-                adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum", min_cells=1, min_counts=1
-            )
+            adata = ps.compute(adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum")
 
         X = adata.layers[layer] if layer is not None else adata.X
         with contextlib.suppress(AttributeError):

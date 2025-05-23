@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 import scanpy as sc
 from anndata import AnnData
@@ -118,6 +120,7 @@ class PseudobulkSpace(PerturbationSpace):
         groups_col: str = None,
         layer_key: str = None,
         embedding_key: str = None,
+        mode: Literal["count_nonzero", "mean", "sum", "var", "median"] = "sum",
     ) -> AnnData:  # type: ignore
         """Determines pseudobulks of an AnnData object.
 
@@ -128,6 +131,7 @@ class PseudobulkSpace(PerturbationSpace):
                 The summarized expression per perturbation (target_col) and group (groups_col) is computed.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
+            mode: Pseudobulk aggregation function
 
         Returns:
              AnnData object with one observation per perturbation.
@@ -158,7 +162,7 @@ class PseudobulkSpace(PerturbationSpace):
 
         adata.obs[target_col] = adata.obs[target_col].astype("category")
         ps_adata = sc.get.aggregate(
-            adata, by=[target_col] if groups_col is None else [target_col, groups_col], func="sum", layer=layer_key
+            adata, by=[target_col] if groups_col is None else [target_col, groups_col], func=mode, layer=layer_key
         )
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
