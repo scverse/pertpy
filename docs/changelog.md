@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.11.3
 
+### 🧰 Maintenance
+
+* Remove decoupler [#783]((https://github.com/scverse/pertpy/pull/783)) @Zethson
+
+## v0.11.3
+
 ## 🚀 Features
 
-* add about page (#770) @Zethson
-* Simplify Metadata errors (#765) @Zethson
-* Standardize scCODA plot palette interface (#773) @mschilli87
+* add about page [#770]((https://github.com/scverse/pertpy/pull/770)) @Zethson
+* Simplify Metadata errors [#765]((https://github.com/scverse/pertpy/pull/765)) @Zethson
+* Standardize scCODA plot palette interface [#773]((https://github.com/scverse/pertpy/pull/773)) @mschilli87
 
 ## v0.11.2
 
