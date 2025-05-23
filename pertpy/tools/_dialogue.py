@@ -80,7 +80,7 @@ class Dialogue:
         Returns:
             A Pandas DataFrame of pseudobulk counts
         """
-        # TODO: Replace with decoupler's implementation
+        # TODO: Replace with scanpy get implementation
         pseudobulk = {"Genes": adata.var_names.values}
 
         for category in adata.obs.loc[:, groupby].cat.categories:

@@ -1,20 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Literal
 
-import matplotlib.pyplot as plt
 import numpy as np
+import scanpy as sc
 from anndata import AnnData
-from decoupler import get_pseudobulk as dc_get_pseudobulk
-from decoupler import plot_psbulk_samples as dc_plot_psbulk_samples
 from sklearn.cluster import DBSCAN, KMeans
 
-from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
-
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Figure
 
 
 class CentroidSpace(PerturbationSpace):
@@ -126,9 +120,9 @@ class PseudobulkSpace(PerturbationSpace):
         groups_col: str = None,
         layer_key: str = None,
         embedding_key: str = None,
-        **kwargs,
+        mode: Literal["count_nonzero", "mean", "sum", "var", "median"] = "sum",
     ) -> AnnData:  # type: ignore
-        """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
+        """Determines pseudobulks of an AnnData object.
 
         Args:
             adata: Anndata object of size cells x genes
@@ -137,7 +131,7 @@ class PseudobulkSpace(PerturbationSpace):
                 The summarized expression per perturbation (target_col) and group (groups_col) is computed.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            **kwargs: Are passed to decoupler's get_pseuobulk.
+            mode: Pseudobulk aggregation function
 
         Returns:
              AnnData object with one observation per perturbation.
@@ -167,52 +161,15 @@ class PseudobulkSpace(PerturbationSpace):
                 adata = adata_emb
 
         adata.obs[target_col] = adata.obs[target_col].astype("category")
-        ps_adata = dc_get_pseudobulk(adata, sample_col=target_col, layer=layer_key, groups_col=groups_col, **kwargs)  # type: ignore
+        ps_adata = sc.get.aggregate(
+            adata, by=[target_col] if groups_col is None else [target_col, groups_col], func=mode, layer=layer_key
+        )
+        if mode in ps_adata.layers:
+            ps_adata.X = ps_adata.layers[mode]
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
         return ps_adata
-
-    @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_psbulk_samples(  # pragma: no cover # noqa: D417
-        self,
-        adata: AnnData,
-        groupby: str,
-        *,
-        return_fig: bool = False,
-        **kwargs,
-    ) -> Figure | None:
-        """Plot the pseudobulk samples of an AnnData object.
-
-        Plot the count number vs. the number of cells per pseudobulk sample.
-
-        Args:
-            adata: Anndata containing pseudobulk samples.
-            groupby: `.obs` column to color the samples by.
-            {common_plot_args}
-            **kwargs: Are passed to decoupler's plot_psbulk_samples.
-
-        Returns:
-            If `return_fig` is `True`, returns the figure, otherwise `None`.
-
-        Examples:
-            >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
-            >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata, target_col="Patient", groups_col="Cluster", mode="sum", min_cells=10, min_counts=1000
-            ... )
-            >>> ps.plot_psbulk_samples(pdata, groupby=["Patient", "Major celltype"], figsize=(12, 4))
-
-        Preview:
-            .. image:: /_static/docstring_previews/pseudobulk_samples.png
-        """
-        fig = dc_plot_psbulk_samples(adata, groupby, return_fig=True, **kwargs)
-
-        if return_fig:
-            return fig
-        plt.show()
-        return None
 
 
 class KMeansSpace(ClusteringSpace):
