@@ -29,6 +29,12 @@ You can install _pertpy_ in less than a minute via [pip] from [PyPI]:
 pip install pertpy
 ```
 
+or [conda-forge]:
+
+```console
+conda install -c conda-forge pertpy
+```
+
 ### Differential gene expression
 
 If you want to use the differential gene expression interface, please install pertpy by running:
@@ -77,6 +83,7 @@ pip install rpy2
 [pip]: https://pip.pypa.io/
 [pypi]: https://pypi.org/
 [api]: https://pertpy.readthedocs.io/en/latest/api.html
+[conda-forge]: https://anaconda.org/conda-forge/pertpy
 [//]: # "numfocus-fiscal-sponsor-attribution"
 
 pertpy is part of the scverse® project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
