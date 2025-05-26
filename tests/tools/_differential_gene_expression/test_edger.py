@@ -1,5 +1,15 @@
 import numpy.testing as npt
+import pytest
 from pertpy.tools._differential_gene_expression import EdgeR, PyDESeq2
+
+try:
+    from rpy2.robjects.packages import importr
+
+    r_dependency = importr("edgeR")
+except Exception:  # noqa: BLE001
+    r_dependency = None
+
+pytestmark = pytest.mark.skipif(r_dependency is None, reason="Required R package 'edgeR' not available")
 
 
 def test_edger_simple(test_adata):
