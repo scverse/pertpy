@@ -226,7 +226,7 @@ class MLPClassifierSpace(PerturbationSpace):
         # Fix class unbalance (likely to happen in perturbation datasets)
         # Usually control cells are overrepresented such that predicting control all time would give good results
         # Cells with rare perturbations are sampled more
-        train_weights = 1 / (1 + torch.sum(torch.tensor(train_dataset.labels), dim=1))
+        train_weights = 1 / (1 + torch.sum(torch.tensor(train_dataset.labels.to_list()), dim=1))
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
         self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=4)

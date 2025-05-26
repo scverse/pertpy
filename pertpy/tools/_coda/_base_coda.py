@@ -1538,7 +1538,7 @@ class CompositionalModel2(ABC):
         if isinstance(data, MuData):
             data = data[modality_key]
         if isinstance(palette, Colormap):
-            palette = palette(range(len(data.obs[feature_name].unique())))
+            palette = list(palette(range(len(data.obs[feature_name].unique()))))
 
         # y scale transformations
         if y_scale == "relative":

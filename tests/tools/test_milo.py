@@ -243,7 +243,7 @@ def test_annotate_nhoods_cont_gives_error(annotate_nhoods_mdata, milo):
 @pytest.fixture
 def add_nhood_expression_mdata(milo):
     adata = sc.datasets.pbmc3k()
-    sc.pp.normalize_per_cell(adata)
+    sc.pp.normalize_total(adata)
     sc.pp.log1p(adata)
     sc.pp.highly_variable_genes(adata)
     sc.pp.pca(adata)

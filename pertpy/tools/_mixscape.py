@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Literal
 
@@ -10,11 +11,12 @@ import pandas as pd
 import scanpy as sc
 import seaborn as sns
 from fast_array_utils.stats import mean, mean_var
+from pandas.errors import PerformanceWarning
 from scanpy import get
 from scanpy._utils import _check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
 from scanpy.tools._utils import _choose_representation
-from scipy.sparse import csr_matrix, spmatrix
+from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -102,6 +104,9 @@ class Mixscape:
             adata = adata.copy()
 
         adata.layers["X_pert"] = adata.X.copy()
+        # convert to LIL which is efficient for the many indexing and masking operations
+        if issparse(adata.layers["X_pert"]):
+            adata.layers["X_pert"] = adata.layers["X_pert"].tolil()
 
         control_mask = adata.obs[pert_key] == control
 
@@ -172,6 +177,9 @@ class Mixscape:
                         adata.layers["X_pert"][split_batch] = (
                             np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
                         )
+
+        if issparse(adata.layers["X_pert"]):
+            adata.layers["X_pert"] = adata.layers["X_pert"].tocsr()
 
         if copy:
             return adata
@@ -531,26 +539,29 @@ class Mixscape:
             gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
             adata_split = adata[split_mask].copy()
             # find top DE genes between cells with targeting and non-targeting gRNAs
-            sc.tl.rank_genes_groups(
-                adata_split,
-                layer=layer,
-                groupby=labels,
-                groups=gene_targets,
-                reference=control,
-                method=test_method,
-                use_raw=False,
-            )
-            # get DE genes for each target gene
-            for gene in gene_targets:
-                logfc_threshold_mask = (
-                    np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                warnings.simplefilter("ignore", PerformanceWarning)
+                sc.tl.rank_genes_groups(
+                    adata_split,
+                    layer=layer,
+                    groupby=labels,
+                    groups=gene_targets,
+                    reference=control,
+                    method=test_method,
+                    use_raw=False,
                 )
-                de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
-                pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
-                de_genes = de_genes[pvals_adj < pval_cutoff]
-                if len(de_genes) < min_de_genes:
-                    de_genes = np.array([])
-                perturbation_markers[(category, gene)] = de_genes
+                # get DE genes for each target gene
+                for gene in gene_targets:
+                    logfc_threshold_mask = (
+                        np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
+                    )
+                    de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
+                    pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
+                    de_genes = de_genes[pvals_adj < pval_cutoff]
+                    if len(de_genes) < min_de_genes:
+                        de_genes = np.array([])
+                    perturbation_markers[(category, gene)] = de_genes
 
         return perturbation_markers
 
@@ -711,7 +722,10 @@ class Mixscape:
         if "mixscape_class" not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
         adata_subset = adata[(adata.obs[labels] == target_gene) | (adata.obs[labels] == control)].copy()
-        sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            warnings.simplefilter("ignore", PerformanceWarning)
+            sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
         sc.pp.scale(adata_subset, max_value=vmax)
         sc.pp.subsample(adata_subset, n_obs=subsample_number)
 
@@ -998,8 +1012,7 @@ class Mixscape:
             ys = keys
 
         if multi_panel and groupby is None and len(ys) == 1:
-            # This is a quick and dirty way for adapting scales across several
-            # keys if groupby is None.
+            # This is a quick and dirty way for adapting scales across several keys if groupby is None.
             y = ys[0]
 
             g = sns.catplot(

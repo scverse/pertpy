@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple
 
+import jax
 import numpy as np
 import pandas as pd
 from numba import jit
@@ -685,6 +686,7 @@ class WassersteinDistance(AbstractDistance):
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
+        self.solver = jax.jit(Sinkhorn())
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         X = np.asarray(X, dtype=np.float64)
@@ -699,8 +701,7 @@ class WassersteinDistance(AbstractDistance):
 
     def solve_ot_problem(self, geom: Geometry, **kwargs):
         ot_prob = LinearProblem(geom)
-        solver = Sinkhorn()
-        ot = solver(ot_prob, **kwargs)
+        ot = self.solver(ot_prob, **kwargs)
         cost = float(ot.reg_ot_cost)
 
         # Check for NaN or invalid cost

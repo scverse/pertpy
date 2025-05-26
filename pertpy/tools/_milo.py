@@ -1007,6 +1007,8 @@ class Milo:
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
         return_fig: bool = False,
+        ax=None,
+        show: bool = True,
     ) -> Figure | None:
         """Plot boxplot of cell numbers vs condition of interest.
 
@@ -1036,18 +1038,36 @@ class Milo:
         pl_df = pd.merge(pl_df, nhood_adata.var)
         pl_df["log_n_cells"] = np.log1p(pl_df["n_cells"])
         if not log_counts:
-            sns.boxplot(data=pl_df, x=test_var, y="n_cells", color="lightblue")
-            sns.stripplot(data=pl_df, x=test_var, y="n_cells", color="black", s=3)
-            plt.ylabel("# cells")
+            sns.boxplot(data=pl_df, x=test_var, y="n_cells", color="lightblue", ax=ax)
+            sns.stripplot(data=pl_df, x=test_var, y="n_cells", color="black", s=3, ax=ax)
+            if ax:
+                ax.set_ylabel("# cells")
+            else:
+                plt.ylabel("# cells")
         else:
-            sns.boxplot(data=pl_df, x=test_var, y="log_n_cells", color="lightblue")
-            sns.stripplot(data=pl_df, x=test_var, y="log_n_cells", color="black", s=3)
-            plt.ylabel("log(# cells + 1)")
+            sns.boxplot(data=pl_df, x=test_var, y="log_n_cells", color="lightblue", ax=ax)
+            sns.stripplot(data=pl_df, x=test_var, y="log_n_cells", color="black", s=3, ax=ax)
+            if ax:
+                ax.set_ylabel("log(# cells + 1)")
+            else:
+                plt.ylabel("log(# cells + 1)")
 
-        plt.xticks(rotation=90)
-        plt.xlabel(test_var)
+        if ax:
+            ax.tick_params(axis="x", rotation=90)
+            ax.set_xlabel(test_var)
+        else:
+            plt.xticks(rotation=90)
+            plt.xlabel(test_var)
 
         if return_fig:
             return plt.gcf()
-        plt.show()
+
+        if ax is None:
+            plt.show()
+
+        if return_fig:
+            return plt.gcf()
+        if show:
+            plt.show()
+
         return None

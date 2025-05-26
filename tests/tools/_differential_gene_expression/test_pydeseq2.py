@@ -1,5 +1,11 @@
+from importlib.util import find_spec
+
 import numpy.testing as npt
+import pytest
 from pertpy.tools._differential_gene_expression import PyDESeq2
+
+if find_spec("pydeseq2") is None:
+    pytestmark = pytest.mark.skip(reason="pydeseq2 not available")
 
 
 def test_pydeseq2_simple(test_adata):
