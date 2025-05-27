@@ -62,32 +62,40 @@ pygments_style = "sphinx"
 templates_path = ["_templates"]
 bibtex_bibfiles = ["references.bib"]
 nitpicky = True  # Warn about broken links
-# source_suffix = ".md"
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".ipynb": "myst-nb",
+    ".myst": "myst-nb",
+}
 
 suppress_warnings = ["toc.not_included"]
 
 autosummary_generate = True
 autosummary_imported_members = True
-autodoc_member_order = "bysource"
+autodoc_member_order = "groupwise"
 napoleon_google_docstring = True
 napoleon_include_init_with_doc = False
 napoleon_use_rtype = True
 napoleon_use_param = True
+myst_heading_anchors = 6
 napoleon_custom_sections = [("Params", "Parameters")]
 todo_include_todos = False
-numpydoc_show_class_members = False
 annotate_defaults = True
 myst_enable_extensions = [
-    "colon_fence",
-    "dollarmath",
     "amsmath",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_image",
+    "html_admonition",
 ]
+myst_url_schemes = ("http", "https", "mailto")
 nb_execution_mode = "off"
+nb_merge_streams = True
 warn_as_error = True
 
 typehints_defaults = "comma"
 
-# html_show_sourcelink = True
 html_theme = "scanpydoc"
 html_title = "pertpy"
 html_logo = "_static/pertpy_logo.svg"

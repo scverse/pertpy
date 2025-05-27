@@ -152,6 +152,19 @@ filterwarnings = [
     "ignore:Failed to correctly find n_neighbors for some samples:UserWarning"
 ]
 
+[tool.hatch.envs.default]
+installer = "uv"
+features = [ "dev" ]
+
+[tool.hatch.envs.docs]
+features = [ "doc" ]
+scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
+scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
+scripts.clean = "git clean -fdX -- {args:docs}"
+
+[tool.hatch.envs.hatch-test]
+features = [ "test" ]
+
 [tool.ruff]
 src = ["src"]
 line-length = 120
