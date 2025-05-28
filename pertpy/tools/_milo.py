@@ -379,7 +379,7 @@ class Milo:
             for var in variables:
                 if var in design_df.columns:
                     if pd.api.types.is_object_dtype(design_df[var]) or not pd.api.types.is_numeric_dtype(design_df[var]):
-                        design_df[var] = design_df[var].astype("category")
+                        design_df.loc[:, var] = design_df[var].astype("category")
 
             with localconverter(ro.default_converter + pandas2ri.converter):
                 design_r = pandas2ri.py2rpy(design_df)
