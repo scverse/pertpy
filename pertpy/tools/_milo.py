@@ -364,19 +364,32 @@ class Milo:
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 
+            import rpy2.robjects as ro
+            from rpy2.robjects import numpy2ri, pandas2ri
+            from rpy2.robjects.conversion import localconverter
+            from rpy2.robjects.vectors import FloatVector
+
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
-            model = stats.model_matrix(object=stats.formula(design), data=design_df)
+            design_df = design_df.astype(dict.fromkeys(design_df.select_dtypes(exclude=["number"]).columns, "category"))
+            with localconverter(ro.default_converter + pandas2ri.converter):
+                design_r = pandas2ri.py2rpy(design_df)
+            formula_r = stats.formula(design)
+            model = stats.model_matrix(object=formula_r, data=design_r)
 
             # Fit NB-GLM
-            dge = edgeR.DGEList(counts=count_mat[keep_nhoods, :][:, keep_smp], lib_size=lib_size[keep_smp])
+            counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
+            lib_size_filtered = lib_size[keep_smp]
+            count_mat_r = numpy2ri.py2rpy(counts_filtered)
+            lib_size_r = FloatVector(lib_size_filtered)
+            dge = edgeR.DGEList(counts=count_mat_r, lib_size=lib_size_r)
             dge = edgeR.calcNormFactors(dge, method="TMM")
             dge = edgeR.estimateDisp(dge, model)
             fit = edgeR.glmQLFit(dge, model, robust=True)
-
             # Test
-            n_coef = model.shape[1]
+            model_np = np.array(model)
+            n_coef = model_np.shape[1]
             if model_contrasts is not None:
                 r_str = """
                 get_model_cols <- function(design_df, design){
@@ -387,32 +400,36 @@ class Milo:
                 from rpy2.robjects.packages import STAP
 
                 get_model_cols = STAP(r_str, "get_model_cols")
-                model_mat_cols = get_model_cols.get_model_cols(design_df, design)
-                model_df = pd.DataFrame(model)
+                with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
+                    model_mat_cols = get_model_cols.get_model_cols(design_df, design)
+                with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
+                    model_df = pandas2ri.rpy2py(model)
+                model_df = pd.DataFrame(model_df)
                 model_df.columns = model_mat_cols
                 try:
-                    mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
+                    with localconverter(ro.default_converter + pandas2ri.converter):
+                        mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
                 except ValueError:
                     logger.error("Model contrasts must be in the form 'A-B' or 'A+B'")
                     raise
-                res = base.as_data_frame(
-                    edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
-                )
+                with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
+                    res = base.as_data_frame(
+                        edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
+                    )
             else:
-                res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
-
-            from rpy2.robjects import conversion
-
-            res = conversion.rpy2py(res)
+                with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
+                    res = base.as_data_frame(
+                        edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf)
+                    )
             if not isinstance(res, pd.DataFrame):
                 res = pd.DataFrame(res)
-
+            # The columns of res looks like e.g. table.A, table.B, so remove the prefix
+            res.columns = [col.replace("table.", "") for col in res.columns]
         # Save outputs
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
         if any(col in sample_adata.var.columns for col in res.columns):
             sample_adata.var = sample_adata.var.drop(res.columns, axis=1)
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
-
         # Run Graph spatial FDR correction
         self._graph_spatial_fdr(sample_adata, neighbors_key=adata.uns["nhood_neighbors_key"])
 
@@ -657,11 +674,8 @@ class Milo:
         self,
     ):
         """Set up rpy2 to run edgeR."""
-        from rpy2.robjects import numpy2ri, pandas2ri
         from rpy2.robjects.packages import importr
 
-        numpy2ri.activate()
-        pandas2ri.activate()
         edgeR = self._try_import_bioc_library("edgeR")
         limma = self._try_import_bioc_library("limma")
         stats = importr("stats")
