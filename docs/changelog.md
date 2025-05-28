@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.11.3
+## v0.11.5
+
+### 🚀 Features
+
+* Move to trusted publishing ([#790](https://github.com/scverse/pertpy/pull/790)) @Zethson
+* Add conda-forge to installation instructions ([#789](https://github.com/scverse/pertpy/pull/789)) @Zethson
+* Fix seaborn 0.14 compat & testing dependencies & speed up tests ([#787](https://github.com/scverse/pertpy/pull/787)) @Zethson
+* Support > 2 colors in `pt.tl.Sccoda.plot_boxplots` ([#784](https://github.com/scverse/pertpy/pull/784)) @mschilli87
+
+### 🐛 Bug Fixes
+
+* Fix LIL support for AnnData 0.12 ([#792](https://github.com/scverse/pertpy/pull/792)) @Zethson
+* Fix compatibility with rpy 3.6.0 in milo ([#791](https://github.com/scverse/pertpy/pull/791)) @seohyonkim
+
+## v0.11.4
 
 ### 🧰 Maintenance
 
@@ -13,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.11.3
 
-## 🚀 Features
+### 🚀 Features
 
 * add about page ([#770](https://github.com/scverse/pertpy/pull/770)) @Zethson
 * Simplify Metadata errors ([#765](https://github.com/scverse/pertpy/pull/765)) @Zethson
