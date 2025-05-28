@@ -104,9 +104,9 @@ class Mixscape:
             adata = adata.copy()
 
         adata.layers["X_pert"] = adata.X.copy()
-        # convert to LIL which is efficient for the many indexing and masking operations
-        if issparse(adata.layers["X_pert"]):
-            adata.layers["X_pert"] = adata.layers["X_pert"].tolil()
+
+        # Work with LIL for efficient indexing but don't store it in AnnData as LIL is not supported anymore
+        X_pert_lil = adata.layers["X_pert"].tolil() if issparse(adata.layers["X_pert"]) else adata.layers["X_pert"]
 
         control_mask = adata.obs[pert_key] == control
 
@@ -115,9 +115,8 @@ class Mixscape:
                 split_mask = adata.obs[split_by] == split
                 control_mask_group = control_mask & split_mask
                 control_mean_expr = mean(adata.X[control_mask_group], axis=0)
-                adata.layers["X_pert"][split_mask] = (
-                    np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0)
-                    - adata.layers["X_pert"][split_mask]
+                X_pert_lil[split_mask] = (
+                    np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0) - X_pert_lil[split_mask]
                 )
         else:
             if split_by is None:
@@ -134,52 +133,43 @@ class Mixscape:
 
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
-
                 R_split = representation[split_mask]
                 R_control = representation[np.asarray(control_mask_split)]
-
                 eps = kwargs.pop("epsilon", 0.1)
                 nn_index = NNDescent(R_control, **kwargs)
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
-
                 X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
-
                 n_split = split_mask.sum()
                 n_control = X_control.shape[0]
 
                 if batch_size is None:
                     col_indices = np.ravel(indices)
                     row_indices = np.repeat(np.arange(n_split), n_neighbors)
-
                     neigh_matrix = csr_matrix(
                         (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
                         shape=(n_split, n_control),
                     )
                     neigh_matrix /= n_neighbors
-                    adata.layers["X_pert"][np.asarray(split_mask)] = (
-                        sc.pp.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][np.asarray(split_mask)]
+                    X_pert_lil[np.asarray(split_mask)] = (
+                        sc.pp.log1p(neigh_matrix @ X_control) - X_pert_lil[np.asarray(split_mask)]
                     )
                 else:
                     split_indices = np.where(split_mask)[0]
                     for i in range(0, n_split, batch_size):
                         size = min(i + batch_size, n_split)
                         select = slice(i, size)
-
                         batch = np.ravel(indices[select])
                         split_batch = split_indices[select]
-
                         size = size - i
-
                         means_batch = X_control[batch]
                         batch_reshaped = means_batch.reshape(size, n_neighbors, -1)
                         means_batch, _ = mean_var(batch_reshaped, axis=1)
+                        X_pert_lil[split_batch] = np.log1p(means_batch) - X_pert_lil[split_batch]
 
-                        adata.layers["X_pert"][split_batch] = (
-                            np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
-                        )
-
-        if issparse(adata.layers["X_pert"]):
-            adata.layers["X_pert"] = adata.layers["X_pert"].tocsr()
+        if issparse(X_pert_lil):
+            adata.layers["X_pert"] = X_pert_lil.tocsr()
+        else:
+            adata.layers["X_pert"] = X_pert_lil
 
         if copy:
             return adata

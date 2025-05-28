@@ -6,6 +6,7 @@ from scvi.data import synthetic_iid
 
 def test_scgen():
     adata = synthetic_iid()
+    adata.obs_names_make_unique()
     pt.tl.Scgen.setup_anndata(
         adata,
         batch_key="batch",
