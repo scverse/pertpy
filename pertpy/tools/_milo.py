@@ -7,13 +7,12 @@ from typing import TYPE_CHECKING, Literal
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import patsy
 import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
-import patsy
-
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 
@@ -379,7 +378,9 @@ class Milo:
             variables = [term.name() for term in desc.rhs_termlist]
             for var in variables:
                 if var in design_df.columns:
-                    if pd.api.types.is_object_dtype(design_df[var]) or not pd.api.types.is_numeric_dtype(design_df[var]):
+                    if pd.api.types.is_object_dtype(design_df[var]) or not pd.api.types.is_numeric_dtype(
+                        design_df[var]
+                    ):
                         design_df.loc[:, var] = design_df[var].astype("category")
 
             with localconverter(ro.default_converter + pandas2ri.converter):
