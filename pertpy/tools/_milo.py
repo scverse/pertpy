@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import rpy2.robjects as ro
 import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
@@ -374,7 +375,7 @@ class Milo:
                 design = design + " + 0"
             design_df["condition"] = design_df["condition"].astype("category")
             with localconverter(ro.default_converter + pandas2ri.converter):
-                design_r = pandas2ri.py2rpy(design_df)     
+                design_r = pandas2ri.py2rpy(design_df)
             formula_r = stats.formula(design)
             model = stats.model_matrix(object=formula_r, data=design_r)
 
