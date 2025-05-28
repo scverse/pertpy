@@ -372,7 +372,15 @@ class Milo:
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
-            design_df["condition"] = design_df["condition"].astype("category")
+
+            import patsy
+            desc = patsy.ModelDesc.from_formula(design)
+            variables = [term.name() for term in desc.rhs_termlist]
+            for var in variables:
+                if var in design_df.columns:
+                    if pd.api.types.is_object_dtype(design_df[var]) or not pd.api.types.is_numeric_dtype(design_df[var]):
+                        design_df[var] = design_df[var].astype("category")
+
             with localconverter(ro.default_converter + pandas2ri.converter):
                 design_r = pandas2ri.py2rpy(design_df)
             formula_r = stats.formula(design)
