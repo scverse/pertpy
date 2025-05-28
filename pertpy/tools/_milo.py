@@ -372,15 +372,13 @@ class Milo:
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
-            # model = stats.model_matrix(object=stats.formula(design), data=design_df) # TODO desing_df is pandas, model is a NumPy array, SHOULD I convert it with model_np = np.array(model)?
-            design_df["condition"] = design_df["condition"].astype("category") # TODO is it safe to do this? R can't deal with "object" dtype
+            design_df["condition"] = design_df["condition"].astype("category")
             with localconverter(ro.default_converter + pandas2ri.converter):
                 design_r = pandas2ri.py2rpy(design_df)     
             formula_r = stats.formula(design)
             model = stats.model_matrix(object=formula_r, data=design_r)
 
             # Fit NB-GLM
-            # dge = edgeR.DGEList(counts=count_mat[keep_nhoods, :][:, keep_smp], lib_size=lib_size[keep_smp]) # TODO counts and lib_size are numpy, dge an R object
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
             lib_size_filtered = lib_size[keep_smp]
             count_mat_r = numpy2ri.py2rpy(counts_filtered)
@@ -389,7 +387,6 @@ class Milo:
             dge = edgeR.calcNormFactors(dge, method="TMM")
             dge = edgeR.estimateDisp(dge, model)
             fit = edgeR.glmQLFit(dge, model, robust=True)
-            # TODO upto here we need model to be an R object
             # Test
             print("before n_coef")
             model_np = np.array(model)
@@ -405,18 +402,16 @@ class Milo:
                 from rpy2.robjects.packages import STAP
 
                 get_model_cols = STAP(r_str, "get_model_cols")
-                # model_mat_cols = get_model_cols.get_model_cols(design_df, design) # TODO design_df is pandas
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
-                    model_mat_cols = get_model_cols.get_model_cols(design_df, design) # TODO model_mat_cols is now NumPy array
-                # model_df = pd.DataFrame(model) # TODO
+                    model_mat_cols = get_model_cols.get_model_cols(design_df, design)
                 print("#412")
                 with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
                     model_df = pandas2ri.rpy2py(model)
+                model_df = pd.DataFrame(model_df)
                 print("#415")
                 model_df.columns = model_mat_cols
                 print("434")
                 try:
-                    # mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df) # TODO model_df should be pandas 
                     print("437")
                     with localconverter(ro.default_converter + pandas2ri.converter):
                         mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
@@ -424,34 +419,23 @@ class Milo:
                 except ValueError:
                     logger.error("Model contrasts must be in the form 'A-B' or 'A+B'")
                     raise
-                # res = base.as_data_frame(
-                #     edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
-                # ) # TODO res is an R data frame object
                 print("#421: mod_contrast:", type(mod_contrast))
-                with localconverter(ro.default_converter + pandas2ri.converter):
+                with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
                     res = base.as_data_frame(
                         edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
                     )
                     print("#426: mod_contrast:", type(mod_contrast))
             else:
-                # res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf)) # TODO
-                print("#429: n_coef:", type(n_coef))
-                print("FIT:", type(fit))
-                print("N_COEF:", type(n_coef))
-                print("NP.INF:", type(np.inf))
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
                     res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
                     print("#432: n_coef:", type(n_coef))
-            # from rpy2.robjects import conversion # TODO don't think i need this
-
-            # res = conversion.rpy2py(res) # TODO
             print("RES:", type(res))
             if not isinstance(res, pd.DataFrame):
                 print("before res")
                 res = pd.DataFrame(res)
             print("after res")
             print("Columns in res:", res.columns.tolist())
-            res.columns = [col.replace("table.", "") for col in res.columns] # TODO need to do this because the columns now start with table.
+            res.columns = [col.replace("table.", "") for col in res.columns]
         # Save outputs
         print("#469")
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
