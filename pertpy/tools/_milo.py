@@ -423,6 +423,7 @@ class Milo:
                     )
             if not isinstance(res, pd.DataFrame):
                 res = pd.DataFrame(res)
+            # The columns of res looks like e.g. table.A, table.B, so remove the prefix
             res.columns = [col.replace("table.", "") for col in res.columns]
         # Save outputs
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
