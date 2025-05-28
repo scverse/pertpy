@@ -12,10 +12,6 @@ import seaborn as sns
 from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
-from rpy2.robjects import numpy2ri, pandas2ri
-from rpy2.robjects.conversion import localconverter
-import rpy2.robjects as ro
-from rpy2.robjects.vectors import FloatVector
 
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -369,6 +365,10 @@ class Milo:
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 
+            from rpy2.robjects import numpy2ri, pandas2ri
+            from rpy2.robjects.conversion import localconverter
+            import rpy2.robjects as ro
+            from rpy2.robjects.vectors import FloatVector
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
@@ -388,10 +388,8 @@ class Milo:
             dge = edgeR.estimateDisp(dge, model)
             fit = edgeR.glmQLFit(dge, model, robust=True)
             # Test
-            print("before n_coef")
             model_np = np.array(model)
             n_coef = model_np.shape[1]
-            print("after n_coef")
             if model_contrasts is not None:
                 r_str = """
                 get_model_cols <- function(design_df, design){
@@ -404,46 +402,31 @@ class Milo:
                 get_model_cols = STAP(r_str, "get_model_cols")
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
                     model_mat_cols = get_model_cols.get_model_cols(design_df, design)
-                print("#412")
                 with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
                     model_df = pandas2ri.rpy2py(model)
                 model_df = pd.DataFrame(model_df)
-                print("#415")
                 model_df.columns = model_mat_cols
-                print("434")
                 try:
-                    print("437")
                     with localconverter(ro.default_converter + pandas2ri.converter):
                         mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
-                    print("440")
                 except ValueError:
                     logger.error("Model contrasts must be in the form 'A-B' or 'A+B'")
                     raise
-                print("#421: mod_contrast:", type(mod_contrast))
                 with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
                     res = base.as_data_frame(
                         edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
                     )
-                    print("#426: mod_contrast:", type(mod_contrast))
             else:
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
                     res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
-                    print("#432: n_coef:", type(n_coef))
-            print("RES:", type(res))
             if not isinstance(res, pd.DataFrame):
-                print("before res")
                 res = pd.DataFrame(res)
-            print("after res")
-            print("Columns in res:", res.columns.tolist())
             res.columns = [col.replace("table.", "") for col in res.columns]
         # Save outputs
-        print("#469")
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
-        print("#470")
         if any(col in sample_adata.var.columns for col in res.columns):
             sample_adata.var = sample_adata.var.drop(res.columns, axis=1)
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
-        print("#474")
         # Run Graph spatial FDR correction
         self._graph_spatial_fdr(sample_adata, neighbors_key=adata.uns["nhood_neighbors_key"])
 
