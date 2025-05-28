@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Literal
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import rpy2.robjects as ro
 import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
