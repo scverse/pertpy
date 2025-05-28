@@ -13,7 +13,6 @@ from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
 
-
 from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
@@ -365,10 +364,11 @@ class Milo:
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 
+            import rpy2.robjects as ro
             from rpy2.robjects import numpy2ri, pandas2ri
             from rpy2.robjects.conversion import localconverter
-            import rpy2.robjects as ro
             from rpy2.robjects.vectors import FloatVector
+
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
@@ -418,7 +418,9 @@ class Milo:
                     )
             else:
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
-                    res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
+                    res = base.as_data_frame(
+                        edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf)
+                    )
             if not isinstance(res, pd.DataFrame):
                 res = pd.DataFrame(res)
             res.columns = [col.replace("table.", "") for col in res.columns]
