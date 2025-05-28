@@ -12,6 +12,8 @@ import seaborn as sns
 from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
+import patsy
+
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 
@@ -373,7 +375,6 @@ class Milo:
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
 
-            import patsy
             desc = patsy.ModelDesc.from_formula(design)
             variables = [term.name() for term in desc.rhs_termlist]
             for var in variables:
