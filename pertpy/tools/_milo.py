@@ -372,7 +372,7 @@ class Milo:
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
-            design_df = design_df.astype({col: "category" for col in design_df.select_dtypes(exclude=['number']).columns})  
+            design_df = design_df.astype(dict.fromkeys(design_df.select_dtypes(exclude=["number"]).columns, "category"))
             with localconverter(ro.default_converter + pandas2ri.converter):
                 design_r = pandas2ri.py2rpy(design_df)
             formula_r = stats.formula(design)
