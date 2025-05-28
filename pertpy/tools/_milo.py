@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import rpy2.robjects as ro
 import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
@@ -14,9 +15,7 @@ from lamin_utils import logger
 from mudata import MuData
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.conversion import localconverter
-import rpy2.robjects as ro
 from rpy2.robjects.vectors import FloatVector
-
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 
@@ -374,7 +373,7 @@ class Milo:
                 design = design + " + 0"
             design_df["condition"] = design_df["condition"].astype("category")
             with localconverter(ro.default_converter + pandas2ri.converter):
-                design_r = pandas2ri.py2rpy(design_df)     
+                design_r = pandas2ri.py2rpy(design_df)
             formula_r = stats.formula(design)
             model = stats.model_matrix(object=formula_r, data=design_r)
 
@@ -427,7 +426,9 @@ class Milo:
                     print("#426: mod_contrast:", type(mod_contrast))
             else:
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
-                    res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
+                    res = base.as_data_frame(
+                        edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf)
+                    )
                     print("#432: n_coef:", type(n_coef))
             print("RES:", type(res))
             if not isinstance(res, pd.DataFrame):
