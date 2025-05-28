@@ -7,13 +7,12 @@ from typing import TYPE_CHECKING, Literal
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import patsy
 import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
 from lamin_utils import logger
 from mudata import MuData
-import patsy
-
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 
