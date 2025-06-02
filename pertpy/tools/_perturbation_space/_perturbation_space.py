@@ -80,7 +80,7 @@ class PerturbationSpace:
         group_masks = (
             [(adata.obs[group_col] == sample) for sample in adata.obs[group_col].unique()]
             if group_col
-            else [[True] * adata.n_obs]
+            else [pd.Series([True] * adata.n_obs)]
         )
 
         if layer_key:
