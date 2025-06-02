@@ -270,7 +270,7 @@ class Milo:
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
             solver: The solver to fit the model to.
                 The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
-                  The "pydeseq2" requires pydeseq2 to be installed. It is still very comparable to the "edger" solver but might be a bit slower.
+                The "pydeseq2" requires pydeseq2 to be installed. It is still very comparable to the "edger" solver but might be a bit slower.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
