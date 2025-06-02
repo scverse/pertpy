@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.0
+
+### 🚀 Features
+
+* Simplify guide assignment tutorial ([#796](https://github.com/scverse/pertpy/pull/796)) @Zethson
+* Add milo pydeseq2 solver ([#795](https://github.com/scverse/pertpy/pull/795)) @Zethson
+
 ## v0.11.5
 
 ### 🚀 Features

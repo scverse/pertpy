@@ -289,7 +289,6 @@ class Milo:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.da_nhoods(mdata, design="~label")
-
         """
         try:
             sample_adata = mdata["milo"]
