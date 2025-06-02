@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 import re
+from importlib.util import find_spec
 from typing import TYPE_CHECKING, Literal
 
 import matplotlib.pyplot as plt
@@ -28,18 +29,6 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 class Milo:
     """Python implementation of Milo."""
-
-    def __init__(self):
-        try:
-            from rpy2.robjects import conversion, numpy2ri, pandas2ri
-            from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
-        except ModuleNotFoundError:
-            raise ImportError("milo requires rpy2 to be installed.") from None
-
-        try:
-            importr("edgeR")
-        except ImportError as e:
-            raise ImportError("milo requires a valid R installation with edger installed:\n") from e
 
     def load(
         self,
@@ -266,7 +255,7 @@ class Milo:
         subset_samples: list[str] | None = None,
         add_intercept: bool = True,
         feature_key: str | None = "rna",
-        solver: Literal["edger", "batchglm"] = "edger",
+        solver: Literal["edger", "pydeseq2"] = "edger",
     ):
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
 
@@ -279,7 +268,9 @@ class Milo:
             subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test.
             add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default.
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
-            solver: The solver to fit the model to. One of "edger" (requires R, rpy2 and edgeR to be installed) or "batchglm"
+            solver: The solver to fit the model to.
+                The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
+                The "pydeseq2" requires pydeseq2 to be installed. It is still very comparable to the "edger" solver but might be a bit slower.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
@@ -425,13 +416,65 @@ class Milo:
                 res = pd.DataFrame(res)
             # The columns of res looks like e.g. table.A, table.B, so remove the prefix
             res.columns = [col.replace("table.", "") for col in res.columns]
-        # Save outputs
+        elif solver == "pydeseq2":
+            if find_spec("pydeseq2") is None:
+                raise ImportError("pydeseq2 is required but not installed. Install with: pip install pydeseq2")
+
+            from pydeseq2.dds import DeseqDataSet
+            from pydeseq2.ds import DeseqStats
+
+            counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
+            design_df_filtered = design_df.iloc[keep_smp].copy()
+
+            design_df_filtered = design_df_filtered.astype(
+                dict.fromkeys(design_df_filtered.select_dtypes(exclude=["number"]).columns, "category")
+            )
+
+            design_clean = design if design.startswith("~") else f"~{design}"
+
+            dds = DeseqDataSet(
+                counts=pd.DataFrame(counts_filtered.T, index=design_df_filtered.index),
+                metadata=design_df_filtered,
+                design=design_clean,
+                refit_cooks=True,
+            )
+
+            dds.deseq2()
+
+            if model_contrasts is not None and "-" in model_contrasts:
+                if "(" in model_contrasts or "+" in model_contrasts.split("-")[1]:
+                    raise ValueError(
+                        f"Complex contrasts like '{model_contrasts}' are not supported by pydeseq2. "
+                        "Use simple pairwise contrasts (e.g., 'GroupA-GroupB') or switch to solver='edger'."
+                    )
+
+                parts = model_contrasts.split("-")
+                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
+                group1 = parts[0].replace(factor_name, "").strip()
+                group2 = parts[1].replace(factor_name, "").strip()
+                stat_res = DeseqStats(dds, contrast=[factor_name, group1, group2])
+            else:
+                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
+                if not isinstance(design_df_filtered[factor_name], pd.CategoricalDtype):
+                    design_df_filtered[factor_name] = design_df_filtered[factor_name].astype("category")
+                categories = design_df_filtered[factor_name].cat.categories
+                stat_res = DeseqStats(dds, contrast=[factor_name, categories[-1], categories[0]])
+
+            stat_res.summary()
+            res = stat_res.results_df
+
+            res = res.rename(
+                columns={"baseMean": "logCPM", "log2FoldChange": "logFC", "pvalue": "PValue", "padj": "FDR"}
+            )
+
+            res = res[["logCPM", "logFC", "PValue", "FDR"]]
+
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
         if any(col in sample_adata.var.columns for col in res.columns):
             sample_adata.var = sample_adata.var.drop(res.columns, axis=1)
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
-        # Run Graph spatial FDR correction
-        self._graph_spatial_fdr(sample_adata, neighbors_key=adata.uns["nhood_neighbors_key"])
+
+        self._graph_spatial_fdr(sample_adata)
 
     def annotate_nhoods(
         self,
@@ -674,6 +717,17 @@ class Milo:
         self,
     ):
         """Set up rpy2 to run edgeR."""
+        try:
+            from rpy2.robjects import conversion, numpy2ri, pandas2ri
+            from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
+        except ModuleNotFoundError:
+            raise ImportError("milo requires rpy2 to be installed.") from None
+
+        try:
+            importr("edgeR")
+        except ImportError as e:
+            raise ImportError("milo requires a valid R installation with edger installed.") from e
+
         from rpy2.robjects.packages import importr
 
         edgeR = self._try_import_bioc_library("edgeR")
@@ -685,26 +739,27 @@ class Milo:
 
     def _try_import_bioc_library(
         self,
-        name: str,
+        r_package: str,
     ):
         """Import R packages.
 
         Args:
-            name (str): R packages name
+            r_package: R packages name
         """
         from rpy2.robjects.packages import PackageNotInstalledError, importr
 
         try:
-            _r_lib = importr(name)
+            _r_lib = importr(r_package)
             return _r_lib
         except PackageNotInstalledError:
-            logger.error(f"Install Bioconductor library `{name!r}` first as `BiocManager::install({name!r}).`")
+            logger.error(
+                f"Install Bioconductor library `{r_package!r}` first as `BiocManager::install({r_package!r}).`"
+            )
             raise
 
     def _graph_spatial_fdr(
         self,
         sample_adata: AnnData,
-        neighbors_key: str | None = None,
     ):
         """FDR correction weighted on inverse of connectivity of neighbourhoods.
 
@@ -712,7 +767,6 @@ class Milo:
 
         Args:
             sample_adata: Sample-level AnnData.
-            neighbors_key: The key in `adata.obsp` to use as KNN graph.
         """
         # use 1/connectivity as the weighting for the weighted BH adjustment from Cydar
         w = 1 / sample_adata.var["kth_distance"]

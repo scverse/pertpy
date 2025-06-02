@@ -61,7 +61,7 @@ dependencies = [
     "pubchempy",
     "pyarrow",
     "blitzgsea",
-    "scikit-learn>=1.4",  # https://github.com/scverse/pertpy/issues/700
+    "scikit-learn>=1.4",
     "fast-array-utils",
     "lamin_utils",
     "arviz",

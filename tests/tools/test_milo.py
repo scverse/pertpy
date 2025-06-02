@@ -1,3 +1,5 @@
+from importlib.util import find_spec
+
 import numpy as np
 import pandas as pd
 import pertpy as pt
@@ -5,14 +7,23 @@ import pytest
 import scanpy as sc
 from mudata import MuData
 
-try:
-    from rpy2.robjects.packages import importr
 
-    r_dependency = importr("edgeR")
-except Exception:  # noqa: BLE001
-    r_dependency = None
+@pytest.fixture(params=["edger", "pydeseq2"])
+def solver(request):
+    solver_name = request.param
 
-pytestmark = pytest.mark.skipif(r_dependency is None, reason="Required R package 'edgeR' not available")
+    if solver_name == "edger":
+        try:
+            from rpy2.robjects.packages import importr
+
+            importr("edgeR")
+        except Exception:  # noqa: BLE001
+            pytest.skip("Required R package 'edgeR' not available")
+
+    elif solver_name == "pydeseq2" and find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+
+    return solver_name
 
 
 @pytest.fixture
@@ -134,6 +145,23 @@ def da_nhoods_mdata(adata, milo):
     adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
     milo_mdata = milo.count_nhoods(adata, sample_col="sample")
     return milo_mdata
+
+
+def test_da_nhoods_pvalues_both_solvers(da_nhoods_mdata, milo, solver):
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~condition", solver=solver)
+    sample_adata = mdata["milo"].copy()
+    min_p, max_p = sample_adata.var["PValue"].min(), sample_adata.var["PValue"].max()
+    assert (min_p >= 0) & (max_p <= 1), "P-values are not between 0 and 1"
+
+
+def test_da_nhoods_fdr_both_solvers(da_nhoods_mdata, milo, solver):
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~condition", solver=solver)
+    sample_adata = mdata["milo"].copy()
+    assert np.all(np.round(sample_adata.var["PValue"], 10) <= np.round(sample_adata.var["SpatialFDR"], 10)), (
+        "FDR is higher than uncorrected P-values"
+    )
 
 
 def test_da_nhoods_missing_samples(adata, milo):

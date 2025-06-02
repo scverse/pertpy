@@ -53,7 +53,13 @@ pip install 'pertpy[tcoda]'
 
 ### milo
 
-milo further requires edger, statmod, and rpy2 to be installed:
+milo requires either the "de" extra for the "pydeseq2" solver:
+
+```console
+pip install 'pertpy[de]'
+```
+
+or, edger, statmod, and rpy2 for the "edger" solver:
 
 ```R
 BiocManager::install("edgeR")
