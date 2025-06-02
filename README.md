@@ -53,13 +53,13 @@ pip install 'pertpy[tcoda]'
 
 ### milo
 
-milo further requires either the differential gene expression extra to use the "pydeseq2" solver:
+milo requires either the "de" extra for the "pydeseq2" solver:
 
 ```console
 pip install 'pertpy[de]'
 ```
 
-or, edger, statmod, and rpy2 to use the "edger" solver:
+or, edger, statmod, and rpy2 for the "edger" solver:
 
 ```R
 BiocManager::install("edgeR")
