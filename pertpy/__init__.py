@@ -6,6 +6,7 @@ __version__ = "0.11.5"
 
 import warnings
 
+from anndata._core.aligned_df import ImplicitModificationWarning
 from matplotlib import MatplotlibDeprecationWarning
 from numba import NumbaDeprecationWarning
 
@@ -13,6 +14,8 @@ warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 warnings.filterwarnings("ignore", category=UserWarning, module="scvi._settings")
+warnings.filterwarnings("ignore", message="Environment variable.*redefined by R")
+warnings.filterwarnings("ignore", message="Transforming to str index.", category=ImplicitModificationWarning)
 
 import mudata
 
