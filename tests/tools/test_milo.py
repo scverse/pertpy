@@ -7,6 +7,10 @@ import pytest
 import scanpy as sc
 from mudata import MuData
 
+### NEW IMPORTS
+from pertpy.utils._lazy_r_namespace import lazy_import_r_env
+###
+
 
 @pytest.fixture(params=["edger", "pydeseq2"])
 def solver(request):
@@ -307,3 +311,251 @@ def test_add_nhood_expression_nhood_mean_range(add_nhood_expression_mdata, milo)
     nhood_cells = mdata["rna"].obs_names[mdata["rna"].obsm["nhoods"][:, nhood_ix].toarray().ravel() == 1]
     mean_gex = np.array(mdata["rna"][nhood_cells].X.mean(axis=0)).ravel()
     assert nhood_gex == pytest.approx(mean_gex, 0.0001)
+
+
+### NEW TESTS
+
+
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
+
+import pytest
+
+from anndata import AnnData
+
+r, _py_to_r, _r_to_py = lazy_import_r_env()
+
+r_string = """
+.group_nhoods_from_adjacency_pycomp <- function(nhs, nhood.adj, da.res, is.da,
+                                         merge.discord=FALSE,
+                                         max.lfc.delta=NULL,
+                                         overlap=1,
+                                         subset.nhoods=NULL
+                                         ){
+  # Force everything into a plain base‐R matrix
+  nhood.adj <- as.matrix(nhood.adj)
+
+  if(is.null(colnames(nhs))){
+    warning("No names attributed to nhoods. Converting indices to names")
+    colnames(nhs) <- as.character(seq_len(ncol(nhs)))
+  }
+
+  # Subsetting logic (exactly as in miloR)
+  if(!is.null(subset.nhoods)){
+    if(mode(subset.nhoods) %in% c("character", "logical", "numeric")){
+      if(mode(subset.nhoods) %in% c("character")){
+        sub.log <- colnames(nhs) %in% subset.nhoods
+      } else if (mode(subset.nhoods) %in% c("numeric")) {
+        sub.log <- colnames(nhs) %in% colnames(nhs)[subset.nhoods]
+      } else{
+        sub.log <- subset.nhoods
+      }
+      nhood.adj <- nhood.adj[sub.log, sub.log]
+      if(length(is.da) == ncol(nhs)){
+        nhs <- nhs[sub.log]
+        is.da <- is.da[sub.log]
+        da.res <- da.res[sub.log, ]
+      } else{
+        stop("Subsetting `is.da` vector length does not equal nhoods length")
+      }
+    } else{
+      stop("Incorrect subsetting vector provided:", class(subset.nhoods))
+    }
+  } else{
+    if(length(is.da) != ncol(nhood.adj)){
+      stop("Subsetting `is.da` vector length is not the same dimension as adjacency")
+    }
+  }
+
+  # Discord‐filter
+  if(isFALSE(merge.discord)){
+    discord.sign <- sign(da.res[is.da, 'logFC'] %*% t(da.res[is.da, 'logFC'])) < 0
+    nhood.adj[is.da, is.da][discord.sign] <- 0
+  }
+
+  # Overlap‐filter
+  if(overlap > 1){
+    nhood.adj[nhood.adj < overlap] <- 0
+  }
+
+  # max.lfc.delta‐filter
+  if(!is.null(max.lfc.delta)){
+    lfc.diff <- sapply(da.res[,"logFC"], "-", da.res[,"logFC"])
+    nhood.adj[abs(lfc.diff) > max.lfc.delta] <- 0
+  }
+
+  # Binarize
+  nhood.adj <- as.matrix((nhood.adj > 0) + 0)
+
+  # Sanity checks
+  if(!isSymmetric(nhood.adj)){
+    stop("Overlap matrix is not symmetric")
+  }
+  if(nrow(nhood.adj) != ncol(nhood.adj)){
+    stop("Non-square distance matrix - check nhood subsetting")
+  }
+
+  return(nhood.adj)
+}
+"""
+
+r_pkg = r.STAP(r_string, "r_pkg")
+
+
+def _group_nhoods_from_adjacency_rcomp(
+    adjacency: sp.spmatrix,
+    da_res: pd.DataFrame,
+    is_da: np.ndarray,
+    merge_discord: bool = False,
+    overlap: int = 1,
+    max_lfc_delta: float | None = None,
+    subset_nhoods=None,
+) -> np.ndarray:
+    """
+    Mirror of the R code above, returning the final binary adjacency
+    (dense array) after applying Discord, Overlap, and ΔlogFC filters.
+    """
+
+    # 1) Subset if needed
+    if subset_nhoods is not None:
+        if isinstance(subset_nhoods, (list, np.ndarray)):
+            arr = np.asarray(subset_nhoods)
+            if np.issubdtype(arr.dtype, np.integer):
+                mask = np.zeros(adjacency.shape[0], dtype=bool)
+                mask[arr.astype(int)] = True
+            else:
+                names = np.array(da_res.index, dtype=str)
+                mask = np.isin(names, arr.astype(str))
+        elif isinstance(subset_nhoods, (pd.Series, np.ndarray)) and subset_nhoods.dtype == bool:
+            if len(subset_nhoods) != adjacency.shape[0]:
+                raise ValueError("Boolean subset_nhoods length must match nhood count")
+            mask = np.asarray(subset_nhoods, dtype=bool)
+        else:
+            raise ValueError("subset_nhoods must be bool mask, index list, or name list")
+
+        adjacency = adjacency[mask, :][:, mask]
+        da_res     = da_res.loc[mask].copy()
+        is_da      = is_da[mask]
+    else:
+        mask = np.ones(adjacency.shape[0], dtype=bool)
+
+    M = adjacency.shape[0]
+    if da_res.shape[0] != M or is_da.shape[0] != M:
+        raise ValueError("da_res and is_da must match adjacency dimension after subsetting")
+
+    # 2) Ensure CSR → COO
+    if not sp.issparse(adjacency):
+        adjacency = sp.csr_matrix(adjacency)
+    adjacency = adjacency.tocsr()
+    Acoo = adjacency.tocoo()
+    rows, cols, data = (np.asarray(Acoo.row, int),
+                        np.asarray(Acoo.col, int),
+                        np.asarray(Acoo.data, float))
+
+    # 3) Precompute logFC and signs
+    lfc_vals = da_res["logFC"].values
+    signs    = np.sign(lfc_vals)
+
+    # 4.1) Discord filter
+    if merge_discord:
+        keep_discord = np.ones_like(data, dtype=bool)
+    else:
+        is_da_rows = is_da[rows]
+        is_da_cols = is_da[cols]
+        sign_rows  = signs[rows]
+        sign_cols  = signs[cols]
+        discord_pair = (is_da_rows & is_da_cols) & (sign_rows * sign_cols < 0)
+        keep_discord = ~discord_pair
+
+    # 4.2) Overlap filter
+    if overlap <= 1:
+        keep_overlap = np.ones_like(data, dtype=bool)
+    else:
+        keep_overlap = (data >= overlap)
+
+    # 4.3) ΔlogFC filter
+    if max_lfc_delta is None:
+        keep_lfc = np.ones_like(data, dtype=bool)
+    else:
+        diffs = np.abs(lfc_vals[rows] - lfc_vals[cols])
+        keep_lfc = (diffs <= max_lfc_delta)
+
+    # 5) Combine masks
+    keep_mask = keep_discord & keep_overlap & keep_lfc
+
+    # 6) Reconstruct pruned adjacency, then binarize
+    new_rows = rows[keep_mask]
+    new_cols = cols[keep_mask]
+    new_data = data[keep_mask]
+    pruned = sp.coo_matrix((new_data, (new_rows, new_cols)), shape=(M, M)).tocsr()
+    pruned_bin = (pruned > 0).astype(int).toarray()
+
+    return pruned_bin
+
+
+
+@pytest.mark.parametrize("merge_discord_flag, overlap_val, max_lfc_val", [
+    (False, 1, None),
+    (True,  1, None),
+    (False, 2, None),
+    (False, 3, None),
+    (False, 5, None),
+    (False, 15, None),
+    (False, 100, None),
+    (False, 1, 0.5),
+    (False, 1, 1.0),
+    (False, 1, 2.0),
+    (False, 1, 3.0),
+    (False, 1, 4.0),
+    (False, 1, 5.0),
+])
+@pytest.fixture
+def test_sparse_adjacency_filters_match_R(annotate_nhoods_mdata, merge_discord_flag, overlap_val, max_lfc_val):
+    """
+    Compare the output of the R version (via r_pkg) versus the Python version
+    for various combinations of merge_discord, overlap, and max_lfc_delta.
+    """
+    # 4.1) Extract inputs from mdata
+
+    mdata = annotate_nhoods_mdata.copy()
+
+    nhs        = mdata["rna"].obsm["nhoods"].copy()
+    nhood_adj  = mdata["milo"].varp["nhood_connectivities"].copy()  # sparse
+    da_res     = mdata["milo"].var.copy()
+    is_da      = (da_res["SpatialFDR"].values < 0.1) & (da_res["logFC"].values > 0)
+
+    # 4.2) Run R version (returns a dense matrix)
+    r_out = r_pkg._group_nhoods_from_adjacency_pycomp(
+        _py_to_r(nhs),
+        _py_to_r(nhood_adj),
+        _py_to_r(da_res),
+        _py_to_r(is_da),
+        _py_to_r(merge_discord_flag),
+        _py_to_r(max_lfc_val),
+        _py_to_r(overlap_val),
+        subset_nhoods = r.ro.NULL
+    )
+    adj_R = _r_to_py(r_out)
+    # adj_R is a dense NumPy matrix of shape (N, N)
+
+    # 4.3) Run Python version
+    adj_py = _group_nhoods_from_adjacency_rcomp(
+        nhood_adj,
+        da_res,
+        is_da,
+        merge_discord = merge_discord_flag,
+        overlap       = overlap_val,
+        max_lfc_delta = max_lfc_val,
+        subset_nhoods = None
+    )
+    # adj_py is also a dense NumPy matrix of shape (N, N)
+
+    # 4.4) Compare element‐by‐element
+    # We convert adj_R (which may be a pandas object) explicitly to NumPy
+    if not isinstance(adj_R, np.ndarray):
+        adj_R = np.asarray(adj_R)
+    assert adj_R.shape == adj_py.shape
+    # Use a strict equality test (all entries must match)
+    assert np.array_equal(adj_R, adj_py), \
+        f"Difference detected (merge_discord={merge_discord_flag}, overlap={overlap_val}, max_lfc={max_lfc_val})"

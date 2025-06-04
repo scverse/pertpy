@@ -1138,3 +1138,257 @@ class Milo:
             plt.show()
 
         return None
+
+
+
+### Neighborhood clustering as in miloR
+
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
+import scanpy as sc
+from igraph import Graph
+from anndata import AnnData
+
+def _group_nhoods_from_adjacency(
+    adjacency: sp.spmatrix,
+    da_res: pd.DataFrame,
+    is_da: np.ndarray,
+    merge_discord: bool = False,
+    overlap: int = 1,
+    max_lfc_delta: float | None = None,
+    subset_nhoods=None,
+) -> np.ndarray:
+    """
+    Core neighborhood‐grouping logic (vectorized, no Python loops).
+    Inputs:
+      - adjacency: scipy.sparse square matrix of shape (N, N), 
+                   storing neighborhood adjacency (overlap counts).
+      - da_res:     pandas.DataFrame, length N, with columns 'SpatialFDR' and 'logFC'.
+      - is_da:      1‐D boolean array of length N, True where da_res.SpatialFDR < cutoff.
+      - merge_discord: if False, zero edges between DA‐pairs with opposite logFC sign.
+      - overlap:    integer threshold; zero edges with weight < overlap.
+      - max_lfc_delta: if not None, zero edges whose |logFC[i] - logFC[j]| > max_lfc_delta.
+      - subset_nhoods:    None or one of:
+            • boolean mask (length N),
+            • list/array of integer indices,
+            • list/array of string names (matching da_res.index).
+    Returns:
+      - labels: NumPy array of dtype string, length = (# of neighborhoods after subsetting),
+                giving a Louvain cluster label for each neighborhood (in the same order as da_res).
+    """
+
+    # 1) Optional subsetting of neighborhoods ---------------------------------------------------
+    #    We allow subset_nhoods to be a boolean mask, a list of integer indices, or a list of names.
+    if subset_nhoods is not None:
+        if isinstance(subset_nhoods, (list, np.ndarray)):
+            # could be integer indices or names
+            if all(isinstance(x, (int, np.integer)) for x in subset_nhoods):
+                # direct integer indices
+                mask = np.zeros(adjacency.shape[0], dtype=bool)
+                mask[np.array(subset_nhoods, dtype=int)] = True
+            else:
+                # assume list of names
+                names = np.array(da_res.index, dtype=str)
+                mask = np.isin(names, subset_nhoods)
+        elif isinstance(subset_nhoods, (pd.Series, np.ndarray)) and subset_nhoods.dtype == bool:
+            # boolean mask
+            if len(subset_nhoods) != adjacency.shape[0]:
+                raise ValueError("Boolean subset_nhoods must have length = number of neighborhoods.")
+            mask = np.asarray(subset_nhoods, dtype=bool)
+        else:
+            raise ValueError("subset_nhoods must be a boolean mask, a list of indices, or a list of names.")
+
+        # Apply subsetting to adjacency, da_res, and is_da
+        adjacency = adjacency[mask, :][:, mask]
+        da_res    = da_res.loc[mask].copy()
+        is_da     = is_da[mask]
+    else:
+        mask = np.ones(adjacency.shape[0], dtype=bool)
+
+    M = adjacency.shape[0]
+    if da_res.shape[0] != M or is_da.shape[0] != M:
+        raise ValueError("Length of da_res and is_da must match adjacency dimension after subsetting.")
+
+    # 2) Convert adjacency to CSR (if not already) and then to COO for a flat edge list ----------------
+    if not sp.issparse(adjacency):
+        adjacency = sp.csr_matrix(adjacency)
+    else:
+        adjacency = adjacency.tocsr()
+
+    Acoo = adjacency.tocoo()
+    rows = Acoo.row      # array of length E = number of nonzero edges
+    cols = Acoo.col
+    data = Acoo.data     # the actual overlap counts
+
+    # 3) Precompute logFC and sign arrays -------------------------------------------------------------------
+    lfc_vals = da_res["logFC"].values            # shape = (M,)
+    signs    = np.sign(lfc_vals)                 # sign(lfc_i), shape = (M,)
+
+    # 4) Build Boolean masks (length E) for each filter ------------------------------------------------------
+
+    # 4.1) “Discord” filter: if merge_discord=False, drop any edge (i,j) where both i,j are DA 
+    #      AND sign(lfc_i) * sign(lfc_j) < 0 (opposite signs).  
+    if merge_discord:
+        keep_discord = np.ones_like(data, dtype=bool)
+    else:
+        # For each edge k at (i=rows[k], j=cols[k]), check if both are DA AND signs differ
+        is_da_rows = is_da[rows]   # True if endpoint‐i is DA
+        is_da_cols = is_da[cols]   # True if endpoint‐j is DA
+        sign_rows  = signs[rows]
+        sign_cols  = signs[cols]
+
+        # discord_pair[k] = True if both DA and (signs multiply < 0)
+        discord_pair = (is_da_rows & is_da_cols) & ((sign_rows * sign_cols) < 0)
+        keep_discord = ~discord_pair
+
+    # 4.2) “Overlap” filter: drop any edge whose current weight < overlap
+    if overlap <= 1:
+        keep_overlap = np.ones_like(data, dtype=bool)
+    else:
+        keep_overlap = (data >= overlap)
+
+    # 4.3) “Δ logFC” filter: drop any edge where |lfc_i - lfc_j| > max_lfc_delta
+    if max_lfc_delta is None:
+        keep_lfc = np.ones_like(data, dtype=bool)
+    else:
+        # Compute |lfc_vals[rows] - lfc_vals[cols]| vectorized
+        lfc_edge_diffs = np.abs(lfc_vals[rows] - lfc_vals[cols])
+        keep_lfc = (lfc_edge_diffs <= max_lfc_delta)
+
+    # 5) Combine all masks into a single “keep” mask ----------------------------------------------------------------
+    keep_mask = keep_discord & keep_overlap & keep_lfc
+
+    # 6) Rebuild a new, pruned adjacency in COO form (only edges where keep_mask=True) --------------------------
+    new_rows = rows[keep_mask]
+    new_cols = cols[keep_mask]
+    new_data = data[keep_mask]
+
+    # If you want an unweighted graph (just connectivity), you could do `new_data = np.ones_like(new_rows)`.
+    # But to mirror MiloR exactly, we preserve the original overlap counts until the final binarization.
+    pruned_adj = sp.coo_matrix((new_data, (new_rows, new_cols)), shape=(M, M)).tocsr()
+
+    # 7) Binarize: every surviving edge → 1, then convert to CSR ----------------------------------------------------------------
+    pruned_adj = (pruned_adj > 0).astype(int).tocsr()
+
+    # 8) Build an igraph from the final adjacency --------------------------------------------------------------------------------
+    #    We can use scanpy’s utility to convert a sparse (0/1) matrix to igraph.
+    g = sc._utils.get_igraph_from_adjacency(pruned_adj, directed=False)
+
+    # 9) Run Louvain (multilevel) clustering on the unweighted graph ----------------------------------------------------------------
+    #    By not providing a “weights” argument, igraph treats every edge as weight=1.
+    clustering = g.community_multilevel(weights=None)
+    labels = np.array(clustering.membership, dtype=str)   # length = M, dtype = 'str'
+
+    # 10) Return the cluster labels array (strings), in the same order as da_res.index ---------------------------------------
+    #     If subset_nhoods was not None, these labels correspond to rows where mask=True.
+    return labels
+
+def group_nhoods(
+    adata: AnnData,
+    da_res: pd.DataFrame | None = None,
+    da_fdr: float = 0.1,
+    overlap: int = 1,
+    max_lfc_delta: float | None = None,
+    merge_discord: bool = False,
+    subset_nhoods=None,
+) -> pd.DataFrame:
+    """
+    Python equivalent of MiloR’s groupNhoods(), using AnnData and its `varp["nhood_connectivities"]`.
+
+    Parameters
+    ----------
+    adata : AnnData
+        Must contain:
+          - `adata.var` with columns "SpatialFDR" (float) and "logFC" (float)
+          - `adata.varp["nhood_connectivities"]` as an (N×N) sparse adjacency matrix
+    da_res : pd.DataFrame, optional
+        If provided, must match `adata.var`. Otherwise, `adata.var` is used directly.
+    da_fdr : float, default=0.1
+        Neighborhoods with `SpatialFDR < da_fdr` are called “DA.”
+    overlap : int, default=1
+        Drop any adjacency entry (edge) with weight < overlap.
+    max_lfc_delta : float or None, default=None
+        If not None, drop edges where |lfc_i - lfc_j| > max_lfc_delta.
+    merge_discord : bool, default=False
+        If False, drop edges between DA neighborhoods whose logFC signs disagree.
+    subset_nhoods : None or boolean mask / list of indices / list of names
+        If provided, only cluster that subset of neighborhoods.
+
+    Returns
+    -------
+    pd.DataFrame
+        A copy of `adata.var`, with a new column "NhoodGroup" of dtype string giving each
+        neighborhood’s cluster label (or `pd.NA` if it wasn’t in `subset_nhoods`).
+    """
+
+    # 1) Validate input ---------------------------------------------------------------------------------------------
+    if not isinstance(adata, AnnData):
+        raise ValueError("`adata` must be an AnnData object.")
+
+    # 2) Get or check `da_res` --------------------------------------------------------------------------------------
+    if da_res is None:
+        da_res = adata.var
+    else:
+        # If user passed their own da_res, ensure indexes match
+        if not da_res.index.equals(adata.var.index):
+            raise ValueError("`da_res` index must match `adata.var.index`.")
+
+    # Ensure required columns exist
+    if "SpatialFDR" not in da_res.columns or "logFC" not in da_res.columns:
+        raise ValueError("`da_res` (adata.var) must contain columns 'SpatialFDR' and 'logFC'.")
+
+    # 3) Identify “DA” neighborhoods by FDR cutoff -------------------------------------------------------------------
+    fdr_values = da_res["SpatialFDR"].values
+    if np.all(pd.isna(fdr_values)):
+        raise ValueError("All `SpatialFDR` values are NA; cannot determine DA neighborhoods.")
+    is_da = (fdr_values < da_fdr)
+
+    n_da = int(is_da.sum())
+    if n_da == 0:
+        raise ValueError(f"No DA neighborhoods found at FDR < {da_fdr}.")
+
+    # 4) Extract adjacency ------------------------------------------------------------------------------------------
+    if "nhood_connectivities" not in adata.varp:
+        raise KeyError("`adata.varp` does not contain 'nhood_connectivities'. Did you run buildNhoodGraph?")
+    adjacency = adata.varp["nhood_connectivities"]
+
+    # 5) Call core worker to get string labels ----------------------------------------------------------------------
+    labels = _group_nhoods_from_adjacency(
+        adjacency       = adjacency,
+        da_res          = da_res,
+        is_da           = is_da,
+        merge_discord   = merge_discord,
+        overlap         = overlap,
+        max_lfc_delta   = max_lfc_delta,
+        subset_nhoods   = subset_nhoods,
+    )
+
+    # 6) Write results back into `adata.var["NhoodGroup"]` -----------------------------------------------------------
+    N_full = adata.var.shape[0]
+    out = np.array([""] * N_full, dtype=object)
+    out[:] = pd.NA
+
+    if subset_nhoods is None:
+        # Every neighborhood was labeled
+        out[:] = labels
+    else:
+        # Reconstruct the same mask logic to place `labels` in the correct positions
+        if isinstance(subset_nhoods, (list, np.ndarray)):
+            arr = np.asarray(subset_nhoods)
+            if np.issubdtype(arr.dtype, np.integer):
+                mask_idx = np.zeros(N_full, dtype=bool)
+                mask_idx[arr.astype(int)] = True
+            else:
+                names = np.array(adata.var.index, dtype=str)
+                mask_idx = np.isin(names, arr.astype(str))
+        elif isinstance(subset_nhoods, (pd.Series, np.ndarray)) and subset_nhoods.dtype == bool:
+            if len(subset_nhoods) != N_full:
+                raise ValueError("Boolean subset_nhoods must have length = number of neighborhoods.")
+            mask_idx = np.asarray(subset_nhoods, dtype=bool)
+        else:
+            raise ValueError("`subset_nhoods` must be a boolean mask, a list of indices, or a list of names.")
+
+        out[mask_idx] = labels
+
+    adata.var["nhood_groups"] = out
