@@ -69,7 +69,7 @@ dependencies = [
 
 [project.optional-dependencies]
 tcoda = [
-    "toytree",
+    "toytree>=3.0",
     "ete4",
     "pyqt6"
 ]
