@@ -52,7 +52,6 @@ Statsmodels = lazy_import("pertpy.tools._differential_gene_expression", "Statsmo
 TTest = lazy_import("pertpy.tools._differential_gene_expression", "TTest", DE_EXTRAS)
 WilcoxonTest = lazy_import("pertpy.tools._differential_gene_expression", "WilcoxonTest", DE_EXTRAS)
 
-from ._milo import group_nhoods
 
 __all__ = [
     "Augur",
@@ -79,5 +78,4 @@ __all__ = [
     "KMeansSpace",
     "PseudobulkSpace",
     "Scgen",
-    "group_nhoods",
 ]
