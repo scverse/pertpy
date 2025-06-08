@@ -2256,7 +2256,7 @@ class Milo:
         n_top_genes: int = 7500,
         filter_method: str | None = "scanpy",
         var_names: Collection[str] | None = None,
-        de_method: Literal["pydeseq2", "statsmodels", "edgeR", "limma"] = "pydeseq2",
+        de_method: Literal["pydeseq2", "statsmodels", "edger", "limma"] = "pydeseq2",
         quiet: bool = True,
         alpha: float = 0.05,
         use_eb: bool = False,
@@ -2445,7 +2445,7 @@ class Milo:
             )
         if de_method == "statsmodels":
             raise NotImplementedError(
-                "statsmodels is not yet implemented for neighborhood group markers; use pydeseq2 or edgeR instead."
+                "statsmodels is not yet implemented for neighborhood group markers; use pydeseq2 or edgeR with counts, or limma with normalized counts."
             )
             logger.warning(
                 "Using log‐normalized data is not recommended; consider using counts with pydeseq2 or edgeR instead."
@@ -2462,7 +2462,7 @@ class Milo:
                 use_eb=use_eb,
                 **kwargs,
             )
-        if de_method == "edgeR":
+        if de_method == "edger":
             if not _is_counts(pdata.X):
                 raise ValueError("`pdata.X` appears to be raw counts, but this function expects raw counts.")
             return self._run_edger_contrasts(
@@ -2487,7 +2487,7 @@ class Milo:
             )
         else:
             raise ValueError(
-                f"de_method must be one of 'pydeseq2', 'statsmodels', 'edgeR', or 'limma', not '{de_method}'"
+                f"de_method must be one of 'pydeseq2', 'statsmodels', 'edger', or 'limma', not '{de_method}'"
             )
 
     def plot_heatmap_with_dot_and_colorbar(
