@@ -1586,6 +1586,12 @@ class Milo:
         nhood_mat = mdata["rna"].obsm["nhoods"]
 
         da_res = mdata["milo"].var.copy()
+        ### update for categorical nhood_group_obs to control order of levels
+        # This turns the nhood_group_obs into a CategoricalDtype if it isn't already
+        col = nhood_group_obs
+        # if it isn’t already a CategoricalDtype, cast it
+        if not isinstance(da_res[col].dtype, pd.api.types.CategoricalDtype):
+            da_res[col] = da_res[col].astype("category")
 
         nhood_mat = AnnData(X=nhood_mat)
         nhood_mat.obs_names = mdata["rna"].obs_names
@@ -1594,7 +1600,9 @@ class Milo:
         nhs_da_gr = da_res[nhood_group_obs].copy()
         nhs_da_gr.index = da_res.index.to_numpy()
 
-        nhood_gr = da_res.dropna()[nhood_group_obs].unique()
+        # We want to drop NAs from the nhood_group_obs column, not the whole DataFrame
+        # nhood_gr = da_res.dropna()[nhood_group_obs].unique()
+        nhood_gr = da_res[nhood_group_obs].cat.categories
 
         nhs = nhood_mat.copy()
 
@@ -1786,8 +1794,6 @@ class Milo:
         from rpy2.robjects import IntVector, StrVector, baseenv, numpy2ri, pandas2ri
         from rpy2.robjects.conversion import localconverter
 
-        print(pdata)
-
         # 2) Build a pandas DataFrame for sample‐level covariates
 
         # 6) Single‐contrast vs one‐vs‐rest
@@ -1822,13 +1828,10 @@ class Milo:
                 sample_obs[nhood_group_obs] = pd.Categorical(
                     sample_obs[nhood_group_obs].values, categories=[baseline, group_to_compare]
                 )
-            print(sample_obs.shape)
-            print(count_mat.shape)
 
             with localconverter(ro.default_converter + pandas2ri.converter):
                 robs = pandas2ri.py2rpy(sample_obs)
             design_r = rstats.model_matrix(rstats.as_formula(formula), robs)
-            print(design_r.nrow)
 
             # Fit the quasi‐likelihood model
             dge = edger.calcNormFactors(dge, method="TMM")
