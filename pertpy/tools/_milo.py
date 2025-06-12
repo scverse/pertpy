@@ -382,7 +382,8 @@ class Milo:
             # Fit NB-GLM
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
             lib_size_filtered = lib_size[keep_smp]
-            count_mat_r = numpy2ri.py2rpy(counts_filtered)
+            with localconverter(ro.default_converter + numpy2ri.converter):
+                count_mat_r = numpy2ri.py2rpy(counts_filtered)
             lib_size_r = FloatVector(lib_size_filtered)
             dge = edgeR.DGEList(counts=count_mat_r, lib_size=lib_size_r)
             dge = edgeR.calcNormFactors(dge, method="TMM")
@@ -1349,30 +1350,30 @@ class Milo:
         # 1) Optional subsetting of neighborhoods ---------------------------------------------------
         #    We allow subset_nhoods to be a boolean mask, a list of integer indices, or a list of names.
         if subset_nhoods is not None:
-            if isinstance(subset_nhoods, list | np.ndarray):
-                # could be integer indices or names
-                if all(isinstance(x, int | np.integer) for x in subset_nhoods):
-                    # direct integer indices
-                    mask = np.zeros(adjacency.shape[0], dtype=bool)
-                    mask[np.array(subset_nhoods, dtype=int)] = True
-                else:
-                    # assume list of names
-                    names = np.array(da_res.index, dtype=str)
-                    mask = np.isin(names, subset_nhoods)
-            elif isinstance(subset_nhoods, pd.Series | np.ndarray) and subset_nhoods.dtype == bool:
-                # boolean mask
+            # 1) boolean‐mask case first
+            if isinstance(subset_nhoods, pd.Series | np.ndarray) and subset_nhoods.dtype == bool:
                 if len(subset_nhoods) != adjacency.shape[0]:
                     raise ValueError("Boolean subset_nhoods must have length = number of neighborhoods.")
                 mask = np.asarray(subset_nhoods, dtype=bool)
+
+            # 2) integer‐index or name list next
+            elif isinstance(subset_nhoods, list | np.ndarray):
+                arr = np.asarray(subset_nhoods)
+                # integer indices?
+                if np.issubdtype(arr.dtype, np.integer):
+                    mask = np.zeros(adjacency.shape[0], dtype=bool)
+                    mask[arr.astype(int)] = True
+                # name list?
+                else:
+                    names = da_res.index.to_numpy(dtype=str)
+                    mask = np.isin(names, arr.astype(str))
+
             else:
                 raise ValueError("subset_nhoods must be a boolean mask, a list of indices, or a list of names.")
 
-            # Apply subsetting to adjacency, da_res, and is_da
             adjacency = adjacency[mask, :][:, mask]
             da_res = da_res.loc[mask].copy()
             is_da = is_da[mask]
-        else:
-            mask = np.ones(adjacency.shape[0], dtype=bool)
 
         M = adjacency.shape[0]
         if da_res.shape[0] != M or is_da.shape[0] != M:
@@ -1435,6 +1436,9 @@ class Milo:
 
         # 8) Build an igraph from the final adjacency --------------------------------------------------------------------------------
         #    We can use scanpy’s utility to convert a sparse (0/1) matrix to igraph.
+        # Issue with dematrix after subsetting adjacency matrix:
+        #     dematrix in sc._utils.get_igraph_from_adjacency does not convert to dense numpy matrix.
+        #     Trying direct conversion to igraph:
         g = sc._utils.get_igraph_from_adjacency(pruned_adj, directed=False)
 
         # 9) Run Louvain (multilevel) clustering on the unweighted graph ----------------------------------------------------------------
@@ -1548,29 +1552,32 @@ class Milo:
 
         # 6) Write results back into `adata.var["NhoodGroup"]` -----------------------------------------------------------
         N_full = adata.var.shape[0]
-        out = np.array([""] * N_full, dtype=object)
-        out[:] = pd.NA
+        out = np.array([pd.NA] * N_full, dtype=object)
 
         if subset_nhoods is None:
-            # Every neighborhood was labeled
+            # no subsetting: every label goes into the full array
             out[:] = labels
         else:
-            # Reconstruct the same mask logic to place `labels` in the correct positions
-            if isinstance(subset_nhoods, list | np.ndarray):
+            # 1) Boolean‐mask case first
+            if isinstance(subset_nhoods, pd.Series | np.ndarray) and getattr(subset_nhoods, "dtype", None).kind == "b":
+                if len(subset_nhoods) != N_full:
+                    raise ValueError("Boolean subset_nhoods must have length = number of neighborhoods.")
+                mask_idx = np.asarray(subset_nhoods, dtype=bool)
+
+            # 2) Integer‐index or name‐list next
+            elif isinstance(subset_nhoods, list | np.ndarray):
                 arr = np.asarray(subset_nhoods)
                 if np.issubdtype(arr.dtype, np.integer):
                     mask_idx = np.zeros(N_full, dtype=bool)
                     mask_idx[arr.astype(int)] = True
                 else:
-                    names = np.array(adata.var.index, dtype=str)
+                    names = adata.var.index.to_numpy(dtype=str)
                     mask_idx = np.isin(names, arr.astype(str))
-            elif isinstance(subset_nhoods, pd.Series | np.ndarray) and subset_nhoods.dtype == bool:
-                if len(subset_nhoods) != N_full:
-                    raise ValueError("Boolean subset_nhoods must have length = number of neighborhoods.")
-                mask_idx = np.asarray(subset_nhoods, dtype=bool)
+
             else:
                 raise ValueError("`subset_nhoods` must be a boolean mask, a list of indices, or a list of names.")
 
+            # 3) Place the M labels back into the N-length output
             out[mask_idx] = labels
 
         adata.var["nhood_groups"] = out
@@ -1604,7 +1611,8 @@ class Milo:
         fake_meta = pd.DataFrame(
             {
                 "CellID": nhs.obs_names[(np.asarray(nhs.X.sum(1).flatten()).ravel() != 0)],
-                "Nhood_Group": [np.nan for _ in range((np.asarray(nhs.X.sum(1).flatten()).ravel() != 0).sum())],
+                # "Nhood_Group": [np.nan for _ in range((np.asarray(nhs.X.sum(1).flatten()).ravel() != 0).sum())],
+                "Nhood_Group": [pd.NA for _ in range((np.asarray(nhs.X.sum(1).flatten()).ravel() != 0).sum())],
             }
         )
         fake_meta.index = fake_meta["CellID"].copy()
@@ -1622,19 +1630,13 @@ class Milo:
             mask = np.asarray(nhs[:, nhood_x].X.sum(1)).ravel() > 0
             nhood_gr_cells = nhs.obs_names[mask]
 
-            # fake_meta.loc[nhood_gr_cells, "Nhood_Group"] = cur_nh_group#fake_meta.loc[nhood_gr_cells, "Nhood_Group"].apply(lambda x: cur_nh_group if np.isnan(x) else np.nan)
-            # fake_meta.loc[nhood_gr_cells, "Nhood_Group"] = [cur_nh_group if np.isnan(x) else np.nan for x in fake_meta.loc[nhood_gr_cells, "Nhood_Group"]]
-            # fake_meta.loc[nhood_gr_cells, "Nhood_Group"] = fake_meta.loc[nhood_gr_cells, "Nhood_Group"].apply(lambda x: cur_nh_group if np.isnan(x) else np.nan)
-            # for i in range(len(nhood_gr)):  # Assuming you want to iterate over nhood.gr
-
             fake_meta.loc[nhood_gr_cells, "Nhood_Group"] = np.where(
                 (fake_meta.loc[nhood_gr_cells, "Nhood_Group"]).isna(),
                 nhood_gr[i],
                 pd.NA,
-                # np.nan
             )
-        # fake_meta.loc[fake_meta.Nhood_Group.]
-        mdata["rna"].obs["nhood_groups"] = np.nan
+
+        mdata["rna"].obs["nhood_groups"] = pd.NA
         mdata["rna"].obs.loc[fake_meta.CellID.to_list(), "nhood_groups"] = fake_meta.Nhood_Group.to_numpy()
 
     def _get_cells_in_nhoods(self, adata, nhood_ids):
@@ -1758,146 +1760,6 @@ class Milo:
         mean_df = pd.DataFrame(mean_mat, index=var_names, columns=groups.columns)
         return mean_df
 
-    def _run_limma_trend_contrasts(
-        self,
-        pdata: AnnData,
-        nhood_group_obs: str,
-        *,
-        formula: str,
-        group_to_compare: str | None = None,
-        baseline: str | None = None,
-        subset_samples: list[str] | None = None,
-    ) -> pd.DataFrame:
-        """Run limma (with trend) on a pseudobulk AnnData whose .X is continuous (e.g. log‐CPM).
-
-        If `group_to_compare` and `baseline` are both provided, performs exactly that two‐level contrast.
-        Otherwise, loops one‐vs‐rest over all levels of pdata.obs[nhood_group_obs].
-
-        Returns a pandas DataFrame with columns:
-        ["variable", "logFC", "PValue", "adj_PValue"]   (plus "group" if one‐vs‐rest).
-        """
-        if _is_counts(pdata.X):
-            raise ValueError("`pdata.X` appears to be raw counts, but this function expects continuous expression.")
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 0) Imports and R‐setup
-        # ────────────────────────────────────────────────────────────────────────────────
-        edger, limma, rstats, rbase = self._setup_rpy2()
-        import rpy2.robjects as ro
-        from formulaic_contrasts import FormulaicContrasts
-        from rpy2.robjects import IntVector, StrVector, baseenv, numpy2ri, pandas2ri
-        from rpy2.robjects.conversion import localconverter
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 1) Pull out (n_cells × n_genes) continuous expression matrix and transpose
-        #    so we get (n_genes × n_cells), as required by limma.
-        # ────────────────────────────────────────────────────────────────────────────────
-        expr_mat = pdata.X.toarray().T if hasattr(pdata.X, "toarray") else np.asarray(pdata.X).T
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 2) Build sample_obs (optionally subset to a given list of sample‐IDs)
-        # ────────────────────────────────────────────────────────────────────────────────
-        sample_obs = pdata.obs.copy()
-        if subset_samples is not None:
-            sample_obs = sample_obs.loc[subset_samples]
-            expr_mat = expr_mat[:, np.isin(pdata.obs_names, subset_samples)]
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 3) Build FormulaicContrasts on the full sample_obs to get “baseline” design
-        # ────────────────────────────────────────────────────────────────────────────────
-        fc_full = FormulaicContrasts(sample_obs, formula)
-        design_df = pd.DataFrame(fc_full.design_matrix)  # ○ shape = (n_samples × K)
-        with localconverter(ro.default_converter + pandas2ri.converter):
-            design_r = pandas2ri.py2rpy(design_df)
-        design_r = rbase.as_matrix(design_r)  # R matrix (n_samples × K)
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 4) Convert expr_mat → an R matrix with rownames & colnames
-        # ────────────────────────────────────────────────────────────────────────────────
-        r_mat = numpy2ri.py2rpy(expr_mat)  # now an R “matrix” of shape (n_genes × n_cells)
-        r_colnames = StrVector(np.asarray(sample_obs.index))
-        r_rownames = StrVector(np.asarray(pdata.var_names))
-        dim_list = ro.r.list(r_rownames, r_colnames)
-        assign_dim = baseenv["dimnames<-"]
-        r_mat = assign_dim(r_mat, dim_list)
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 5) Fit the linear model (lmFit) once on the “baseline” design
-        #    We skip voom because pdata.X is already log‐normalized. Then call eBayes(..., trend=TRUE).
-        # ────────────────────────────────────────────────────────────────────────────────
-        fit = limma.lmFit(r_mat, design_r)
-        # fit = limma.eBayes(fit, trend=True,)
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 6) SINGLE‐CONTRAST branch
-        # ────────────────────────────────────────────────────────────────────────────────
-        if group_to_compare is not None and baseline is not None:
-            # (a) Build contrast vector from fc_full:
-            cont = fc_full.contrast(nhood_group_obs, baseline, group_to_compare)
-            r_contrast = IntVector(np.asarray(cont))
-
-            # (b) Fit contrasts & re‐run eBayes (with trend) on that single contrast:
-            fit2 = limma.contrasts_fit(fit, contrasts=r_contrast)
-            fit2 = limma.eBayes(fit2, trend=True, robust=True)
-
-            # (c) Extract topTable for coefficient 1 (the single contrast)
-            top = limma.topTable(fit2, coef=1, sort_by="none", number=np.inf)
-            with localconverter(ro.default_converter + pandas2ri.converter):
-                top_df = pandas2ri.rpy2py(top)
-
-            # (d) Rename columns: “adj.P.Val”→“adj_PValue”, “P.Value”→“PValue”
-            top_df = top_df.rename(columns={"adj.P.Val": "adj_PValue", "P.Value": "PValue"})
-            top_df = top_df.reset_index().rename(columns={"index": "variable"})
-            return top_df[["variable", "logFC", "t", "B", "PValue", "adj_PValue"]]
-
-        # ────────────────────────────────────────────────────────────────────────────────
-        # 7) ONE‐VS‐REST branch (group_to_compare == baseline == None)
-        # ────────────────────────────────────────────────────────────────────────────────
-        col = sample_obs[nhood_group_obs]
-        unique_groups = col.cat.categories.tolist() if pd.api.types.is_categorical_dtype(col) else col.unique().tolist()
-
-        results_list: list[Any] = []
-
-        for grp in unique_groups:
-            # (a) Recode sample_obs so that non‐grp → "rest"
-            tmp_obs = sample_obs.copy()
-            tmp_obs[nhood_group_obs] = tmp_obs[nhood_group_obs].cat.add_categories("rest")
-            tmp_obs[nhood_group_obs] = tmp_obs[nhood_group_obs].apply(lambda x, grp=grp: x if x == grp else "rest")
-
-            # (b) Build FormulaicContrasts on tmp_obs with same formula
-            fc_sub = FormulaicContrasts(tmp_obs, formula)
-            design_df = pd.DataFrame(fc_sub.design_matrix)
-
-            with localconverter(ro.default_converter + pandas2ri.converter):
-                design_r_sub = pandas2ri.py2rpy(design_df)
-            design_r_sub = rbase.as_matrix(design_r_sub)
-
-            # (c) Re‐fit lmFit + eBayes(trend=True) on exactly the same r_mat but new design
-            fit_sub = limma.lmFit(r_mat, design_r_sub)
-            fit_sub = limma.eBayes(fit_sub, trend=True, robust=True)
-
-            # (d) Contrast “rest vs grp”
-            cont_sub = fc_sub.contrast(nhood_group_obs, "rest", grp)
-            r_cont_sub = IntVector(np.asarray(cont_sub))
-
-            fit_sub2 = limma.contrasts_fit(fit_sub, contrasts=r_cont_sub)
-            fit_sub2 = limma.eBayes(fit_sub2, trend=True, robust=True)
-
-            # (e) topTable on that contrast
-            top_sub = limma.topTable(fit_sub2, coef=1, sort_by="none", number=np.inf)
-            with localconverter(ro.default_converter + pandas2ri.converter):
-                top_df_sub = pandas2ri.rpy2py(top_sub)
-
-            top_df_sub = top_df_sub.rename(columns={"adj.P.Val": "adj_PValue", "P.Value": "PValue"})
-            top_df_sub = top_df_sub.reset_index().rename(columns={"index": "variable"})
-            top_df_sub["group"] = grp
-
-            results_list.append(top_df_sub[["variable", "logFC", "t", "B", "PValue", "adj_PValue", "group"]])
-
-        # (f) Concatenate results and return
-        final_df = pd.concat(results_list, ignore_index=True)
-        return final_df
-
     def _run_edger_contrasts(
         self,
         pdata: AnnData,
@@ -1921,71 +1783,90 @@ class Milo:
 
         edger, limma, rstats, rbase = self._setup_rpy2()
         import rpy2.robjects as ro
-        from formulaic_contrasts import FormulaicContrasts
         from rpy2.robjects import IntVector, StrVector, baseenv, numpy2ri, pandas2ri
         from rpy2.robjects.conversion import localconverter
 
-        count_mat = pdata.X.toarray().T if hasattr(pdata.X, "toarray") else np.asarray(pdata.X).T
+        print(pdata)
 
         # 2) Build a pandas DataFrame for sample‐level covariates
-        sample_obs = pdata.obs.copy()
-
-        fc = FormulaicContrasts(sample_obs, formula)
-        design_df = pd.DataFrame(fc.design_matrix)
-        with localconverter(ro.default_converter + pandas2ri.converter):
-            design_r = pandas2ri.py2rpy(design_df)
-        design_r = rbase.as_matrix(design_r)
-
-        # Wrap the numpy count_mat into an R integer matrix
-        # with localconverter(ro.default_converter + numpy2ri.converter):
-        #     rmat = numpy2ri
-        rmat = numpy2ri.py2rpy(count_mat)
-
-        r_colnames = StrVector(np.asarray(pdata.obs_names))
-        r_rownames = StrVector(np.asarray(pdata.var_names))
-        dim_list = ro.r.list(r_rownames, r_colnames)
-
-        assign_dim = baseenv["dimnames<-"]
-        rmat = assign_dim(rmat, dim_list)
-
-        # Build the DGEList
-        dge = edger.DGEList(counts=rmat)
-
-        # Calculate TMM normalization factors
-        dge = edger.calcNormFactors(dge, method="TMM")
-
-        # Estimate dispersion
-        # not needed in edgeR 4.x, automatically calculated in the Cpp implementation
-        # dge = edger.estimateDisp(dge, r_model_mat)
-
-        # Fit the quasi‐likelihood model
-        fit = edger.glmQLFit(dge, design_r, robust=True)
 
         # 6) Single‐contrast vs one‐vs‐rest
         results_list: list[Any] = []
 
         # If a specific two‐level contrast was given:
         if group_to_compare is not None and baseline is not None:
-            contrast_vec = fc.contrast(nhood_group_obs, baseline, group_to_compare)
+            # subset pdata to only those two groups
+            pdata = pdata[pdata.obs[nhood_group_obs].isin([baseline, group_to_compare])].copy()
+            if pdata.shape[0] == 0:
+                raise ValueError(f"No samples found with {nhood_group_obs} in [{baseline}, {group_to_compare}].")
 
-            r_contrast = IntVector(np.asarray(contrast_vec))
+            ### build R count matrix
+            count_mat = pdata.X.toarray().T if hasattr(pdata.X, "toarray") else np.asarray(pdata.X).T
+            with localconverter(ro.default_converter + numpy2ri.converter):
+                rmat = numpy2ri.py2rpy(count_mat)
+
+            r_colnames = StrVector(np.asarray(pdata.obs_names))
+            r_rownames = StrVector(np.asarray(pdata.var_names))
+            dim_list = ro.r.list(r_rownames, r_colnames)
+
+            assign_dim = baseenv["dimnames<-"]
+            rmat = assign_dim(rmat, dim_list)
+
+            # Build the DGEList
+            dge = edger.DGEList(counts=rmat)
+
+            # build R model matrix from sample_obs, setting levels of nhood_group_obs to baseline and group_to_compare
+            sample_obs = pdata.obs.copy()
+            if group_to_compare is not None and baseline is not None:
+                # If a specific two‐level contrast was given, subset to those samples only
+                sample_obs[nhood_group_obs] = pd.Categorical(
+                    sample_obs[nhood_group_obs].values, categories=[baseline, group_to_compare]
+                )
+            print(sample_obs.shape)
+            print(count_mat.shape)
+
+            with localconverter(ro.default_converter + pandas2ri.converter):
+                robs = pandas2ri.py2rpy(sample_obs)
+            design_r = rstats.model_matrix(rstats.as_formula(formula), robs)
+            print(design_r.nrow)
+
+            # Fit the quasi‐likelihood model
+            dge = edger.calcNormFactors(dge, method="TMM")
+
+            fit = edger.glmQLFit(dge, design_r, robust=True)
 
             # Now run QLF test with that contrast
-            qlf = edger.glmQLFTest(fit, contrast=r_contrast)
+            qlf = edger.glmQLFTest(fit, coef=nhood_group_obs + group_to_compare)
             top = edger.topTags(qlf, sort_by="none", n=np.inf)[0]
             # Convert top (an R data.frame) to pandas
             with localconverter(ro.default_converter + pandas2ri.converter):
                 top_df = pandas2ri.rpy2py(top)
 
             # Clean up column names (they come as “logFC”, “PValue”, “FDR”)
-            top_df = top_df.rename(columns={"FDR": "adj_PValue"})
+            top_df = top_df.rename(columns={"FDR": "adj_p_value", "PValue": "p_value", "logFC": "log_fc"})
             top_df = top_df.reset_index().rename(columns={"index": "variable"})
             return top_df
             # results_list.append(top_df[["variable", "logFC", "PValue", "adj_PValue"]])
 
         else:
+            ### build R count matrix
+            count_mat = pdata.X.toarray().T if hasattr(pdata.X, "toarray") else np.asarray(pdata.X).T
+            with localconverter(ro.default_converter + numpy2ri.converter):
+                rmat = numpy2ri.py2rpy(count_mat)
+
+            r_colnames = StrVector(np.asarray(pdata.obs_names))
+            r_rownames = StrVector(np.asarray(pdata.var_names))
+            dim_list = ro.r.list(r_rownames, r_colnames)
+
+            assign_dim = baseenv["dimnames<-"]
+            rmat = assign_dim(rmat, dim_list)
+
+            # Build the DGEList
+            dge = edger.DGEList(counts=rmat)
+            sample_obs = pdata.obs.copy()
+
             col = sample_obs[nhood_group_obs]
-            if pd.api.types.is_categorical_dtype(col):
+            if isinstance(col, pd.api.types.CategoricalDtype):
                 unique_groups = col.cat.categories.tolist()
             else:
                 unique_groups = col.unique().tolist()
@@ -1993,49 +1874,31 @@ class Milo:
             results_list = []
 
             for grp in unique_groups:
+                # build group‐specific design matrix
                 tmp_obs = pdata.obs.copy()
 
                 tmp_obs[nhood_group_obs] = [x if x == grp else "rest" for x in tmp_obs[nhood_group_obs]]
                 tmp_obs[nhood_group_obs] = pd.Categorical(tmp_obs[nhood_group_obs].values, categories=["rest", grp])
-
-                # 2) Build a new FormulaicContrasts on tmp_obs
-                fc = FormulaicContrasts(tmp_obs, formula)
-                design_df = pd.DataFrame(fc.design_matrix)
-
                 with localconverter(ro.default_converter + pandas2ri.converter):
-                    design_r = pandas2ri.py2rpy(design_df)
-                design_r = rbase.as_matrix(design_r)
-
-                # # 3) Convert design_df_sub to an R matrix
-                # rmat = numpy2ri.py2rpy(count_mat)
-
-                # r_colnames = StrVector(np.asarray(pdata.obs_names))
-                # r_rownames = StrVector(np.asarray(pdata.var_names))
-                # dim_list   = ro.r.list(r_rownames, r_colnames)
-
-                # assign_dim = baseenv["dimnames<-"]
-                # rmat = assign_dim(rmat, dim_list)
+                    robs = pandas2ri.py2rpy(tmp_obs)
+                design_r = rstats.model_matrix(rstats.as_formula(formula), robs)
 
                 # 6) Build a DGEList for this subset (or reuse dge_full but safer to make a fresh one)
                 dge = edger.calcNormFactors(dge, method="TMM")
                 fit_sub = edger.glmQLFit(dge, design_r, robust=True)
 
-                # 7) Build contrast vector: “rest” vs “grp”
-                contrast_vec = fc.contrast(nhood_group_obs, "rest", grp)
-                contrast_r = IntVector(np.asarray(contrast_vec))
-
                 # 8) QLF test on that contrast
-                qlf_sub = edger.glmQLFTest(fit_sub, contrast=contrast_r)
+                qlf_sub = edger.glmQLFTest(fit_sub, coef=nhood_group_obs + grp)
                 top_sub = edger.topTags(qlf_sub, sort_by="none", n=np.inf)[0]
 
                 with localconverter(ro.default_converter + pandas2ri.converter):
                     top_df_sub = pandas2ri.rpy2py(top_sub)
 
-                top_df_sub = top_df_sub.rename(columns={"FDR": "adj_PValue"})
+                top_df_sub = top_df_sub.rename(columns={"FDR": "adj_p_value", "PValue": "p_value", "logFC": "log_fc"})
                 top_df_sub = top_df_sub.reset_index().rename(columns={"index": "variable"})
                 top_df_sub["group"] = grp
 
-                results_list.append(top_df_sub[["variable", "logFC", "PValue", "adj_PValue", "group"]])
+                results_list.append(top_df_sub[["variable", "log_fc", "p_value", "adj_p_value", "group"]])
 
             # 9) Concatenate and return
             final_df = pd.concat(results_list, ignore_index=True)
@@ -2127,13 +1990,15 @@ class Milo:
                     }
                 )
                 .sort_values("p_value")
-                .reset_index(drop=True)
+                .reset_index(names=["variable"])
             )
             return df
 
         # 2) One‐vs‐rest: get all levels of nhood_group_obs
         col = pdata.obs[nhood_group_obs]
-        unique_groups = col.cat.categories.tolist() if pd.api.types.is_categorical_dtype(col) else col.unique().tolist()
+        unique_groups = (
+            col.cat.categories.tolist() if isinstance(col, pd.api.types.CategoricalDtype) else col.unique().tolist()
+        )
 
         all_results = []
         for grp in unique_groups:
@@ -2172,7 +2037,6 @@ class Milo:
                 .reset_index(names=["variable"])
                 .assign(group=grp)
                 .sort_values("p_value")
-                .reset_index(drop=True)
             )
 
             all_results.append(df)
@@ -2190,7 +2054,8 @@ class Milo:
 
         counts = pdata.X
         counts = counts.toarray().T if hasattr(counts, "toarray") else np.asarray(counts).T
-        rcounts = numpy2ri.py2rpy(counts)
+        with localconverter(ro.default_converter + numpy2ri.converter):
+            rcounts = numpy2ri.py2rpy(counts)
         obs = pdata.obs
         with localconverter(ro.default_converter + pandas2ri.converter):
             robs = pandas2ri.py2rpy(obs)
@@ -2224,7 +2089,8 @@ class Milo:
         from rpy2.robjects.conversion import localconverter
 
         counts = pdata.X
-        rcounts = numpy2ri.py2rpy(counts.T)
+        with localconverter(ro.default_converter + numpy2ri.converter):
+            rcounts = numpy2ri.py2rpy(counts.T)
         obs = pdata.obs
         var = pdata.var
 
@@ -2248,7 +2114,7 @@ class Milo:
 
     def find_nhood_group_markers(
         self,
-        mdata: MuData,
+        data: AnnData | MuData,
         group_to_compare: str | None = None,
         baseline: str | None = None,
         nhood_group_obs: str = "nhood_groups",
@@ -2261,7 +2127,7 @@ class Milo:
         n_top_genes: int = 7500,
         filter_method: str | None = "scanpy",
         var_names: Collection[str] | None = None,
-        de_method: Literal["pydeseq2", "statsmodels", "edger", "limma"] = "pydeseq2",
+        de_method: Literal["pydeseq2", "edger"] = "pydeseq2",
         quiet: bool = True,
         alpha: float = 0.05,
         use_eb: bool = False,
@@ -2335,13 +2201,22 @@ class Milo:
         func = pseudobulk_function
 
         # 1) Subset to cells that have a non‐NA group label
-        if key not in mdata.mod_names:
-            raise KeyError(f"Modality '{key}' not found in mdata; available keys: {list(mdata.keys())}")
-        adata = mdata[key]
+        if isinstance(data, AnnData):
+            adata = data
+        elif isinstance(data, MuData):
+            mdata = data
+            if key not in mdata.mod_names:
+                raise KeyError(f"Modality '{key}' not found in mdata; available keys: {list(mdata.keys())}")
+            adata = mdata[key]
+        else:
+            raise TypeError("data must be an AnnData or MuData object.")
 
         if nhood_group_obs not in adata.obs.columns:
             raise KeyError(f"Column '{nhood_group_obs}' not found in adata.obs")
-        if not pd.api.types.is_categorical_dtype(adata.obs[nhood_group_obs]):
+
+        from pandas.api.types import CategoricalDtype
+
+        if not isinstance(adata.obs[nhood_group_obs].dtype, CategoricalDtype):
             adata.obs[nhood_group_obs] = adata.obs[nhood_group_obs].astype("category")
 
         n_non_na = adata.obs[nhood_group_obs].notna().sum()
@@ -2384,9 +2259,6 @@ class Milo:
             all_variables = [sample_col, nhood_group_obs] + covariates
 
         # 3) Pseudobulk aggregation
-        # counts_per_sample_group = adata.obs.groupby([sample_col, nhood_group_obs]).size()
-        # if (counts_per_sample_group == 0).any():
-        #     raise ValueError("Some (sample, Nhood_Group) combinations have zero cells; pseudobulk would be empty.")
         pdata = sc.get.aggregate(tmp_data, by=all_variables, func=func, axis=0, layer=layer)
         pdata.X = pdata.layers[func].copy()
 
@@ -2448,25 +2320,7 @@ class Milo:
                 alpha=alpha,
                 quiet=quiet,
             )
-        if de_method == "statsmodels":
-            raise NotImplementedError(
-                "statsmodels is not yet implemented for neighborhood group markers; use pydeseq2 or edgeR with counts, or limma with normalized counts."
-            )
-            logger.warning(
-                "Using log‐normalized data is not recommended; consider using counts with pydeseq2 or edgeR instead."
-            )
-            if _is_counts(pdata.X):
-                raise ValueError("`pdata.X` appears to be raw counts, but this function expects continuous expression.")
 
-            return self._run_statsmodels_contrasts(
-                pdata,
-                nhood_group_obs=nhood_group_obs,
-                formula=base_formula,
-                group_to_compare=group_to_compare,
-                baseline=baseline,
-                use_eb=use_eb,
-                **kwargs,
-            )
         if de_method == "edger":
             if not _is_counts(pdata.X):
                 raise ValueError("`pdata.X` appears to be raw counts, but this function expects raw counts.")
@@ -2477,23 +2331,8 @@ class Milo:
                 group_to_compare=group_to_compare,
                 baseline=baseline,
             )
-        if de_method == "limma":
-            logger.warning(
-                "Using log‐normalized data is not recommended; consider using counts with pydeseq2 or edgeR instead."
-            )
-            if _is_counts(pdata.X):
-                raise ValueError("`pdata.X` appears to be raw counts, but this function expects continuous expression.")
-            return self._run_limma_trend_contrasts(
-                pdata,
-                nhood_group_obs=nhood_group_obs,
-                formula=base_formula,
-                group_to_compare=group_to_compare,
-                baseline=baseline,
-            )
         else:
-            raise ValueError(
-                f"de_method must be one of 'pydeseq2', 'statsmodels', 'edger', or 'limma', not '{de_method}'"
-            )
+            raise ValueError(f"de_method must be one of 'pydeseq2' or 'edger', not '{de_method}'")
 
     def plot_heatmap_with_dot_and_colorbar(
         self,

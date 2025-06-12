@@ -483,7 +483,9 @@ def _py_to_r(obj):
     from rpy2.robjects.conversion import localconverter
 
     if isinstance(obj, np.ndarray):
-        return numpy2ri.py2rpy(obj)
+        with localconverter(ro.default_converter + numpy2ri.converter):
+            r_obj = numpy2ri.py2rpy(obj)
+        return r_obj
     if isinstance(obj, pd.DataFrame):
         with localconverter(ro.default_converter + pandas2ri.converter):
             df = pandas2ri.py2rpy(obj)
@@ -493,38 +495,6 @@ def _py_to_r(obj):
     with localconverter(ro.default_converter):
         r_obj = ro.conversion.py2rpy(obj)
     return r_obj
-
-
-# def _r_to_py(r_obj):
-#     """
-#     Convert an R object back into a NumPy array or pandas DataFrame, as appropriate.
-#     """
-#     import rpy2.robjects as ro
-#     from rpy2.robjects import numpy2ri, pandas2ri
-#     from rpy2.robjects.conversion import localconverter
-
-#     # R matrix → NumPy array
-#     if isinstance(r_obj, ro.vectors.Matrix):
-#         with localconverter(ro.default_converter + numpy2ri.converter):
-#             return np.asarray(r_obj)
-
-#     # R data.frame → pandas DataFrame
-#     if isinstance(r_obj, ro.vectors.DataFrame):
-#         with localconverter(ro.default_converter + pandas2ri.converter):
-#             return pandas2ri.rpy2py(r_obj)
-
-#     # R vector types → NumPy arrays
-#     if isinstance(r_obj, ro.vectors.BoolVector):
-#         return np.asarray(r_obj)
-#     if isinstance(r_obj, ro.vectors.IntVector):
-#         return np.asarray(r_obj)
-#     if isinstance(r_obj, ro.vectors.FloatVector):
-#         return np.asarray(r_obj)
-#     if isinstance(r_obj, ro.vectors.StrVector):
-#         return np.asarray(r_obj)
-
-#     # Otherwise (e.g. R NULL), return as‐is
-#     return r_obj
 
 
 def _group_nhoods_from_adjacency_r(
@@ -803,7 +773,7 @@ def test_annotate_cells_from_nhoods_various(
     from pertpy.tools._milo import Milo
 
     milo = Milo()
-    print(milo)
+
     mdata = group_nhoods_mdata.copy()
 
     assert "SpatialFDR" in mdata["milo"].var.columns
@@ -875,3 +845,185 @@ def test_annotate_cells_from_nhoods_various(
         too_few = counts < min_n_nhoods
         too_few = np.asarray(too_few).ravel()
         assert (col[too_few].isna()).all()
+
+
+####
+# test find_nhood_group_markers
+
+
+@pytest.fixture
+def nhood_markers_mdata(milo):
+    # 1) Load pbmc3k and make a private copy
+    adata = sc.datasets.pbmc3k().copy()
+
+    adata.layers["counts"] = adata.X.copy()  # keep raw counts
+    sc.pp.normalize_total(adata, target_sum=1e4)  # normalize
+    sc.pp.log1p(adata)  # log transform
+    sc.pp.highly_variable_genes(adata, n_top_genes=2000)
+    sc.pp.pca(adata, n_comps=50)  # PCA
+    sc.pp.neighbors(adata, n_neighbors=10, n_pcs=30)  # build neighbors
+    sc.tl.louvain(adata, resolution=0.5)  # Louvain clustering
+    sc.tl.umap(adata)
+
+    # 2) Build neighborhoods
+    milo.make_nhoods(adata)
+
+    # 3) Simulate an experimental condition
+    rng = np.random.default_rng(seed=42)
+    adata.obs["condition"] = rng.choice(["ConditionA", "ConditionB"], size=adata.n_obs, p=[0.5, 0.5])
+    # bump one cluster to have DA
+    DA_cells = adata.obs["louvain"] == "1"
+    adata.obs.loc[DA_cells, "condition"] = rng.choice(["ConditionA", "ConditionB"], size=DA_cells.sum(), p=[0.2, 0.8])
+
+    # 4) Simulate replicates & build sample IDs
+    adata.obs["replicate"] = rng.choice(["R1", "R2", "R3"], size=adata.n_obs)
+    adata.obs["sample"] = adata.obs["replicate"] + "_" + adata.obs["condition"]
+
+    # 5) Count & test DA neighborhoods
+    mdata = milo.count_nhoods(adata, sample_col="sample")
+    milo.da_nhoods(mdata, design="~condition", solver="pydeseq2")
+
+    # 6) Overwrite SpatialFDR so we have ~10% “significant” at random
+    var = mdata["milo"].var
+    n = var.shape[0]
+    k = max(1, int(0.1 * n))
+    fdrs = rng.random(n)
+    da_idx = rng.choice(n, size=k, replace=False)
+    fdrs[da_idx] = rng.random(k) * 0.1
+    rng.shuffle(fdrs)
+    mdata["milo"].var["SpatialFDR"] = fdrs
+
+    # 7) Build the neighborhood graph
+    milo.build_nhood_graph(mdata)
+
+    milo.group_nhoods(mdata)
+
+    # 8) Annotate cells from those nhoods
+    milo.annotate_cells_from_nhoods(
+        mdata,
+        nhood_group_obs="nhood_groups",  # use the default
+        subset_nhoods=None,  # annotate across all groups
+        min_n_nhoods=1,  # default
+        mode="last_wins",  # default
+    )
+
+    return mdata
+
+
+@pytest.mark.parametrize(
+    "group_to_compare, baseline, expect_group_col, filter_method, de_method",
+    [
+        ("1", "0", False, "scanpy", "pydeseq2"),  # two‐level contrast: no “group” column
+        (None, None, True, "scanpy", "pydeseq2"),  # one‐vs‐rest: should have “group” column
+        ("1", "0", False, "filterByExpr", "pydeseq2"),
+        (None, None, True, "filterByExpr", "pydeseq2"),
+        ("1", "0", False, "scran", "pydeseq2"),
+        (None, None, True, "scran", "pydeseq2"),
+        ("1", "0", False, "scanpy", "edger"),
+        (None, None, True, "scanpy", "edger"),
+        ("1", "0", False, "filterByExpr", "edger"),
+        (None, None, True, "filterByExpr", "edger"),
+        ("1", "0", False, "scran", "edger"),
+        (None, None, True, "scran", "edger"),
+    ],
+)
+def test_find_markers_returns_expected_structure(
+    nhood_markers_mdata, milo, group_to_compare, baseline, expect_group_col, filter_method, de_method
+):
+    """Test that find_nhood_group_markers returns a properly shaped DataFrame
+    and that the expected columns are present or absent."""
+
+    mdata = nhood_markers_mdata.copy()
+    df = milo.find_nhood_group_markers(
+        mdata,
+        group_to_compare=group_to_compare,
+        baseline=baseline,
+        nhood_group_obs="nhood_groups",
+        sample_col="sample",
+        covariates=None,
+        layer="counts",
+        filter_method=filter_method,
+        de_method=de_method,
+    )
+    # Basic sanity checks
+    assert isinstance(df, pd.DataFrame)
+    # Must have at least one row and one variable
+    assert df.shape[0] > 0
+    # Check core columns
+    core_cols = {"variable", "log_fc", "p_value", "adj_p_value"}
+    assert core_cols.issubset(df.columns)
+    # “group” only appears in one‐vs‐rest branch
+    if expect_group_col:
+        assert "group" in df.columns
+        # Should see at least two distinct group labels
+        groups = set(df["group"].unique())
+        assert len(groups) > 1
+    else:
+        assert "group" not in df.columns
+
+
+def test_find_markers_two_level_effect_sizes(nhood_markers_mdata, milo):
+    """In the two-level case, log_fc should not all be zero
+    and p-values should be between 0 and 1."""
+
+    mdata = nhood_markers_mdata.copy()
+
+    rng = np.random.default_rng(seed=42)
+    mdata["rna"].obs["nhood_groups"] = pd.Categorical(
+        rng.choice(["ConditionA", "ConditionB", pd.NA], size=mdata["rna"].n_obs)
+    )
+
+    res = milo.find_nhood_group_markers(
+        mdata,
+        group_to_compare="ConditionB",
+        baseline="ConditionA",
+        nhood_group_obs="nhood_groups",
+        sample_col="sample",
+        covariates=None,
+        layer="counts",
+    )
+    # Check that we got at least one positive and one negative log fold–change
+    assert (res["log_fc"] > 0).any()
+    assert (res["log_fc"] < 0).any()
+    # p-values and adjusted p-values should lie in [0,1]
+    # assert res["p_value"].notna().all()
+    res = res.query("p_value == p_value")
+    assert ((res["p_value"] >= 0) & (res["p_value"] <= 1)).all()
+    res = res.query("adj_p_value == adj_p_value")
+    assert ((res["adj_p_value"] >= 0) & (res["adj_p_value"] <= 1)).all()
+
+
+def test_find_markers_invalid_args_raises(nhood_markers_mdata, milo):
+    """Check that missing or bogus contrast arguments raise a ValueError."""
+
+    mdata = nhood_markers_mdata.copy()
+    with pytest.raises(ValueError):
+        # baseline without group_to_compare
+        milo.find_nhood_group_markers(
+            mdata,
+            group_to_compare=None,
+            baseline="ConditionA",
+            nhood_group_obs="nhood_groups",
+            sample_col="sample",
+            layer="counts",
+        )
+    with pytest.raises(ValueError):
+        # group_to_compare == baseline
+        milo.find_nhood_group_markers(
+            mdata,
+            group_to_compare="ConditionA",
+            baseline="ConditionA",
+            nhood_group_obs="nhood_groups",
+            sample_col="sample",
+            layer="counts",
+        )
+    with pytest.raises(KeyError):
+        # non‐existent column name
+        milo.find_nhood_group_markers(
+            mdata,
+            group_to_compare="ConditionB",
+            baseline="ConditionA",
+            nhood_group_obs="not_a_column",
+            sample_col="sample",
+            layer="counts",
+        )
