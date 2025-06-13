@@ -181,32 +181,32 @@ def test_da_nhoods_non_unique_covariate(da_nhoods_mdata, milo):
         milo.da_nhoods(mdata, design="~phase")
 
 
-def test_da_nhoods_pvalues(da_nhoods_mdata, milo):
+def test_da_nhoods_pvalues(da_nhoods_mdata, milo, solver):
     mdata = da_nhoods_mdata.copy()
-    milo.da_nhoods(mdata, design="~condition")
+    milo.da_nhoods(mdata, design="~condition", solver=solver)
     sample_adata = mdata["milo"].copy()
     min_p, max_p = sample_adata.var["PValue"].min(), sample_adata.var["PValue"].max()
     assert (min_p >= 0) & (max_p <= 1), "P-values are not between 0 and 1"
 
 
-def test_da_nhoods_fdr(da_nhoods_mdata, milo):
+def test_da_nhoods_fdr(da_nhoods_mdata, milo, solver):
     mdata = da_nhoods_mdata.copy()
-    milo.da_nhoods(mdata, design="~condition")
+    milo.da_nhoods(mdata, design="~condition", solver=solver)
     sample_adata = mdata["milo"].copy()
     assert np.all(np.round(sample_adata.var["PValue"], 10) <= np.round(sample_adata.var["SpatialFDR"], 10)), (
         "FDR is higher than uncorrected P-values"
     )
 
 
-def test_da_nhoods_default_contrast(da_nhoods_mdata, milo):
+def test_da_nhoods_default_contrast(da_nhoods_mdata, milo, solver):
     mdata = da_nhoods_mdata.copy()
     adata = mdata["rna"].copy()
     adata.obs["condition"] = (
         adata.obs["condition"].astype("category").cat.reorder_categories(["ConditionA", "ConditionB"])
     )
-    milo.da_nhoods(mdata, design="~condition")
+    milo.da_nhoods(mdata, design="~condition", solver=solver)
     default_results = mdata["milo"].var.copy()
-    milo.da_nhoods(mdata, design="~condition", model_contrasts="conditionConditionB-conditionConditionA")
+    milo.da_nhoods(mdata, design="~condition", model_contrasts="conditionConditionB-conditionConditionA", solver=solver)
     contr_results = mdata["milo"].var.copy()
 
     assert np.corrcoef(contr_results["SpatialFDR"], default_results["SpatialFDR"])[0, 1] > 0.99
