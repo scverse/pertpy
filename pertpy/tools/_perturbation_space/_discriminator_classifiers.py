@@ -278,7 +278,7 @@ class MLPClassifierSpace(PerturbationSpace):
         pert_adata.obs = pert_adata.obs.reset_index(drop=True)
         if "perturbations" in self.adata_obs.columns:
             self.adata_obs = self.adata_obs.drop("perturbations", axis=1)
-        pert_adata.obs = pd.concat([pert_adata.obs, self.adata_obs], axis=1)
+        pert_adata.obs = pert_adata.obs.assign(**self.adata_obs.iloc[:len(pert_adata.obs)])
 
         # Drop the 'encoded_perturbations' colums, since this stores the one-hot encoded labels as numpy arrays,
         # which would cause errors in the downstream processing of the AnnData object (e.g. when plotting)
