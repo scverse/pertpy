@@ -23,9 +23,6 @@ class EdgeR(LinearModelBase):
         Args:
             **kwargs: Keyword arguments specific to glmQLFit()
         """
-        # For running in notebook
-        # pandas2ri.activate()
-        # rpy2.robjects.numpy2ri.activate()
         try:
             from rpy2 import robjects as ro
             from rpy2.robjects import numpy2ri, pandas2ri
@@ -47,17 +44,17 @@ class EdgeR(LinearModelBase):
             expr = self.adata.X if self.layer is None else self.adata.layers[self.layer]
             expr = expr.T.toarray() if issparse(expr) else expr.T
 
-        with localconverter(get_conversion() + pandas2ri.converter):
-            expr_r = ro.conversion.py2rpy(pd.DataFrame(expr, index=self.adata.var_names, columns=self.adata.obs_names))
-            samples_r = ro.conversion.py2rpy(self.adata.obs)
+        with localconverter(get_conversion() + pandas2ri.converter) as cv:
+            expr_r = cv.py2rpy(pd.DataFrame(expr, index=self.adata.var_names, columns=self.adata.obs_names))
+            samples_r = cv.py2rpy(self.adata.obs)
 
         dge = edger.DGEList(counts=expr_r, samples=samples_r)
 
         logger.info("Calculating NormFactors")
         dge = edger.calcNormFactors(dge)
 
-        with localconverter(get_conversion() + numpy2ri.converter):
-            design_r = ro.conversion.py2rpy(self.design.values)
+        with localconverter(get_conversion() + numpy2ri.converter) as cv:
+            design_r = cv.py2rpy(self.design.values)
 
         logger.info("Estimating Dispersions")
         dge = edger.estimateDisp(dge, design=design_r)
@@ -100,8 +97,8 @@ class EdgeR(LinearModelBase):
             ) from None
 
         # Convert vector to R, which drops a category like `self.design_matrix` to use the intercept for the left out.
-        with localconverter(get_conversion() + numpy2ri.converter):
-            contrast_vec_r = ro.conversion.py2rpy(np.asarray(contrast))
+        with localconverter(get_conversion() + numpy2ri.converter) as cv:
+            contrast_vec_r = cv.py2rpy(np.asarray(contrast))
         ro.globalenv["contrast_vec"] = contrast_vec_r
 
         # Test contrast with R
@@ -121,8 +118,8 @@ class EdgeR(LinearModelBase):
             return de_res.reset_index().rename(columns={"PValue": "p_value", "logFC": "log_fc", "FDR": "adj_p_value"})
 
         # Convert to Pandas DataFrame if still an R object
-        with localconverter(get_conversion() + pandas2ri.converter):
-            de_res = ro.conversion.rpy2py(de_res)
+        with localconverter(get_conversion() + pandas2ri.converter) as cv:
+            de_res = cv.rpy2py(de_res)
 
         de_res.index.name = "variable"
         de_res = de_res.reset_index()

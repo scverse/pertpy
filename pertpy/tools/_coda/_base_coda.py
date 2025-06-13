@@ -2562,6 +2562,7 @@ def from_scanpy(
     covariate_obs = list(set(covariate_obs or []) | set(sample_identifier))
 
     if isinstance(sample_identifier, list):
+        adata.obs = adata.obs.copy()
         adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
 

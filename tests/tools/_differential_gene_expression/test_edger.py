@@ -1,6 +1,6 @@
 import numpy.testing as npt
 import pytest
-from pertpy.tools._differential_gene_expression import EdgeR, PyDESeq2
+from pertpy.tools._differential_gene_expression import EdgeR
 
 try:
     from rpy2.robjects.packages import importr
@@ -65,6 +65,8 @@ def test_edger_complex(test_adata):
     down_gene = res_df.set_index("variable").loc["gene3", "log_fc"]
     up_gene = res_df.set_index("variable").loc["gene1", "log_fc"]
     assert down_gene < up_gene
+
+    from pertpy.tools._differential_gene_expression import PyDESeq2
 
     method = PyDESeq2(adata=test_adata, design="~condition1+group")
     method.fit()

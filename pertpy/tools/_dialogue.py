@@ -882,9 +882,9 @@ class Dialogue:
             if len(conditions_compare) != 2:
                 raise ValueError("Please specify conditions to compare or supply an object with only 2 conditions")
 
-        pvals = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
-        tstats = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
-        pvals_adj = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
+        pvals = pd.DataFrame(1.0, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
+        tstats = pd.DataFrame(1.0, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
+        pvals_adj = pd.DataFrame(1.0, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
 
         response = adata.obs.groupby(sample_label)[condition_label].agg(pd.Series.mode)
         for celltype in adata.obs[celltype_label].unique():
