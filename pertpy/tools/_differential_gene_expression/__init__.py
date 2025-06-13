@@ -1,39 +1,49 @@
+import contextlib
+from importlib import import_module
+from importlib.util import find_spec
+
 from ._base import LinearModelBase, MethodBase
 from ._dge_comparison import DGEEVAL
 from ._edger import EdgeR
 from ._simple_tests import SimpleComparisonBase, TTest, WilcoxonTest
-from ._statsmodels import Statsmodels
 
 
-def __getattr__(name):
-    if name == "PyDESeq2":
-        from importlib.util import find_spec
+def __getattr__(name: str):
+    deps = {
+        "PyDESeq2": ["pydeseq2", "formulaic_contrasts", "formulaic"],
+        "EdgeR": ["rpy2", "formulaic_contrasts", "formulaic"],
+        "Statsmodels": ["formulaic_contrasts", "formulaic"],
+    }
 
-        if find_spec("pydeseq2") is None:
-            raise ImportError("pydeseq2 is required but not installed")
-        from ._pydeseq2 import PyDESeq2
+    if name in deps:
+        for dep in deps[name]:
+            if find_spec(dep) is None:
+                raise ImportError(f"{dep} is required but not installed")
 
-        return PyDESeq2
-    elif name == "EdgeR":
-        from importlib.util import find_spec
+        module_map = {
+            "PyDESeq2": "pertpy.tools._differential_gene_expression._pydeseq2",
+            "EdgeR": "pertpy.tools._differential_gene_expression._edger",
+            "Statsmodels": "pertpy.tools._differential_gene_expression._statsmodels",
+        }
 
-        if find_spec("rpy2") is None:
-            raise ImportError("rpy2 is required but not installed")
-        from ._edger import EdgeR
+        module = import_module(module_map[name])
+        return getattr(module, name)
 
-        return EdgeR
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _get_available_methods():
-    methods = [Statsmodels, WilcoxonTest, TTest]
+    methods = [WilcoxonTest, TTest]
     from importlib.util import find_spec
 
-    if find_spec("pydeseq2") is not None:
-        methods.append(__getattr__("PyDESeq2"))
-    if find_spec("rpy2") is not None:
-        methods.append(__getattr__("EdgeR"))
+    for name in ["Statsmodels", "PyDESeq2", "EdgeR"]:
+        with contextlib.suppress(ImportError):
+            methods.append(__getattr__(name))
+
     return methods
+
+
+AVAILABLE_METHODS = _get_available_methods()
 
 
 AVAILABLE_METHODS = _get_available_methods()

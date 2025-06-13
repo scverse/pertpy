@@ -6,6 +6,9 @@ import pytest
 if find_spec("pydeseq2") is None:
     pytestmark = pytest.mark.skip(reason="pydeseq2 not available")
 
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
+
 
 def test_pydeseq2_simple(test_adata):
     """Check that the pyDESeq2 method can be

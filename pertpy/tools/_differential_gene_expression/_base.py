@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from formulaic_contrasts import FormulaicContrasts
 from lamin_utils import logger
 from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
@@ -880,6 +879,8 @@ class LinearModelBase(MethodBase):
         """
         super().__init__(adata, mask=mask, layer=layer)
         self._check_counts()
+
+        from formulaic_contrasts import FormulaicContrasts
 
         self.formulaic_contrasts = None
         if isinstance(design, str):

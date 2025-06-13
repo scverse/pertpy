@@ -11,6 +11,11 @@ except Exception:  # noqa: BLE001
 
 pytestmark = pytest.mark.skipif(r_dependency is None, reason="Required R package 'edgeR' not available")
 
+from importlib.util import find_spec
+
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
+
 
 def test_edger_simple(test_adata):
     """Check that the EdgeR method can be
