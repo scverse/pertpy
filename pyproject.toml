@@ -62,7 +62,7 @@ dependencies = [
     "pyarrow",
     "blitzgsea",
     "scikit-learn>=1.4",
-    "fast-array-utils",
+    "fast-array-utils[accel,sparse]",
     "lamin_utils",
     "arviz",
 ]

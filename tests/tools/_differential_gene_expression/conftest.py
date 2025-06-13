@@ -1,13 +1,21 @@
+from importlib.util import find_spec
+
 import anndata as ad
 import numpy as np
 import pandas as pd
 import pytest
 import scipy.sparse as sp
-from pydeseq2.utils import load_example_data
+
+PYDESEQ2_AVAILABLE = find_spec("pydeseq2") is not None
 
 
 @pytest.fixture
 def test_counts():
+    if not PYDESEQ2_AVAILABLE:
+        pytest.skip("pydeseq2 not available")
+
+    from pydeseq2.utils import load_example_data
+
     return load_example_data(
         modality="raw_counts",
         dataset="synthetic",
@@ -17,6 +25,11 @@ def test_counts():
 
 @pytest.fixture
 def test_metadata():
+    if not PYDESEQ2_AVAILABLE:
+        pytest.skip("pydeseq2 not available")
+
+    from pydeseq2.utils import load_example_data
+
     return load_example_data(
         modality="metadata",
         dataset="synthetic",
