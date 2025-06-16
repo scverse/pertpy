@@ -893,60 +893,80 @@ class Milo:
     from collections.abc import Sequence
     from typing import Union
 
-    def plot_nhood_annotation(  # pragma: no cover
+    # In plot_nhood_annotation color_map, palette, and ax are not documented, and not part of common_plot_args
+    # Should I add them or will they be part of common_plot_args in the future?
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_nhood_annotation(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         *,
-        # -------------------------------------------------------------------
-        # Styling / filtering parameters for logFC‐based coloring:
+        adata_key: str = "milo",
+        annotation_key: str | None = "nhood_annotation",
         alpha: float = 0.1,
         min_logFC: float = 0.0,
         min_size: int = 10,
         plot_edges: bool = False,
-        title: str = "DA log‐Fold Change",
+        title: str = "DA log-Fold Change",
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
         return_fig: bool = False,
-        # -------------------------------------------------------------------
-        # New arguments:
-        adata_key: str = "milo",
-        annotation_key: str | None = "nhood_annotation",
-        # -------------------------------------------------------------------
         **kwargs,
     ) -> Figure | None:
-        """Visualize Milo differential‐abundance results on the abstracted neighborhood graph.
+        """Visualize Milo differential-abundance results on the neighborhood graph.
 
-        By default (annotation_key=None), nodes are colored by filtered logFC (SpatialFDR ≤ alpha,
-        |logFC| ≥ min_logFC).  If annotation_key is provided, instead draw node colors from
-        mdata[adata_key].obs[annotation_key].
+        By default, neighborhoods are colored by filtered logFC (|logFC| ≥ `min_logFC`
+        and SpatialFDR ≤ `alpha`). If `annotation_key` is provided, this column from
+        `mdata[adata_key].obs` will be used instead for coloring.
 
         Args:
-            mdata: MuData object containing at least:
-                • mdata["milo"] (the Milo‐neighborhood AnnData, transposed)
-                • mdata[adata_key] (the AnnData where your annotation lives)
-            alpha: Significance threshold for SpatialFDR (only used if annotation_key is None).
-            min_logFC: Minimum absolute logFC to display (only used if annotation_key is None).
-            min_size:  Scaling factor: actual marker size = Nhood_size × min_size.
-            plot_edges: If True, draw edges of the neighborhood overlap graph.
-            title: Plot title (ignored if annotation_key is not None; you can override if you like).
-            color_map: Passed through to sc.pl.embedding for discrete palettes (optional).
-            palette:   Passed through to sc.pl.embedding (optional).
-            ax:        Matplotlib Axes to plot on (optional).
-            return_fig: If True, return the Figure object instead of calling plt.show().
-
-            adata_key: Key in mdata corresponding to the AnnData whose `.obs` has the annotation.
-                    Default = "rna".
-
-            annotation_key: If not None, the name of a column in mdata[adata_key].obs whose values
-                            should be used to color the Milo neighborhood graph.  If provided,
-                            we ignore all logFC / FDR logic and simply color by that  annotation.
-                            Example: "nhood_annotation".  If None, revert to the original logFC‐based coloring.
-
-            **kwargs: Additional keyword arguments passed to sc.pl.embedding.
+            mdata: A MuData object with:
+                - mdata["milo"]: Milo-neighborhood AnnData (transposed).
+                - mdata[adata_key]: AnnData containing annotation in `.obs`.
+            adata_key: Key for the AnnData within `mdata` that contains `.obs[annotation_key]`.
+                Defaults to "milo".
+            annotation_key: Name of the `.obs` column to use for coloring. If not None,
+                disables logFC-based coloring. Defaults to "nhood_annotation".
+            alpha: Significance threshold for SpatialFDR. Used only if `annotation_key` is None.
+                Defaults to 0.1.
+            min_logFC: Minimum absolute logFC to show. Used only if `annotation_key` is None.
+                Defaults to 0.0.
+            min_size: Scaling factor for node size. Actual size = `Nhood_size × min_size`.
+                Defaults to 10.
+            plot_edges: Whether to plot edges in the neighborhood overlap graph.
+                Defaults to False.
+            title: Title for the plot. Ignored if `annotation_key` is provided.
+                Defaults to "DA log-Fold Change".
+            color_map: Colormap to use for coloring.
+            palette: Name of Seaborn color palette for violinplots.
+                Defaults to pre-defined category colors for violinplots.
+            ax: Axes to plot on.
+            {common_plot_args}
+            **kwargs: Additional keyword arguments to pass directly to `scanpy.pl.embedding`.
 
         Returns:
-            If return_fig == True → returns the matplotlib Figure.  Otherwise, shows the plot and returns None.
+            matplotlib.figure.Figure or None: The matplotlib Figure, if `return_fig` is True;
+            otherwise, displays the plot and returns None.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> sc.tl.umap(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.da_nhoods(mdata,
+            >>>            design='~label',
+            >>>            model_contrasts='labelwithdraw_15d_Cocaine-labelwithdraw_48h_Cocaine')
+            >>> milo.build_nhood_graph(mdata)
+            >>> milo.group_nhoods(mdata)
+            >>> milo.plot_nhood_annotation(mdata, annotation_key="nhood_groups")
+
+        Preview:
+            .. image:: /_static/docstring_previews/milo_nhood_annotation.png
         """
         # -------------------------------------------------------------------
         # 1) Extract and copy the Milo neighborhood AnnData:
@@ -1326,26 +1346,30 @@ class Milo:
         merge_discord: bool = False,
         overlap: int = 1,
         max_lfc_delta: float | None = None,
-        subset_nhoods=None,
+        subset_nhoods: list | np.ndarray | None = None,
     ) -> np.ndarray:
-        """Core neighborhood‐grouping logic (vectorized, no Python loops).
+        """Group neighborhoods using filtered adjacency and Louvain clustering.
 
-        Inputs:
-        - adjacency: scipy.sparse square matrix of shape (N, N),
-                    storing neighborhood adjacency (overlap counts).
-        - da_res:     pandas.DataFrame, length N, with columns 'SpatialFDR' and 'logFC'.
-        - is_da:      1‐D boolean array of length N, True where da_res.SpatialFDR < cutoff.
-        - merge_discord: if False, zero edges between DA‐pairs with opposite logFC sign.
-        - overlap:    integer threshold; zero edges with weight < overlap.
-        - max_lfc_delta: if not None, zero edges whose |logFC[i] - logFC[j]| > max_lfc_delta.
-        - subset_nhoods:    None or one of:
-                • boolean mask (length N),
-                • list/array of integer indices,
-                • list/array of string names (matching da_res.index).
+        Filters the neighborhood adjacency matrix based on overlap, DA agreement,
+        and logFC similarity, then performs Louvain clustering on the resulting graph.
+
+        Args:
+            adjacency: Sparse square matrix (shape: N × N) containing overlap counts between neighborhoods.
+            da_res: DataFrame of shape (N,), containing columns "SpatialFDR" and "logFC".
+            is_da: Boolean array of length N; True where a neighborhood is differentially abundant.
+            merge_discord: If False, remove edges between DA neighborhoods with opposite logFC signs.
+                Defaults to False.
+            overlap: Minimum overlap count required to retain an edge. Defaults to 1.
+            max_lfc_delta: If set, removes edges where the absolute difference in logFC exceeds this threshold.
+                Defaults to None (no filtering).
+            subset_nhoods: Optional subsetting of neighborhoods. Can be one of:
+                - Boolean mask of length N
+                - List/array of integer indices
+                - List/array of neighborhood names matching `da_res.index`
 
         Returns:
-        - labels: NumPy array of dtype string, length = (# of neighborhoods after subsetting),
-                    giving a Louvain cluster label for each neighborhood (in the same order as da_res).
+            np.ndarray: Array of string cluster labels, of length equal to the number of selected neighborhoods.
+                These correspond to rows of `da_res` after subsetting.
         """
         # 1) Optional subsetting of neighborhoods ---------------------------------------------------
         #    We allow subset_nhoods to be a boolean mask, a list of integer indices, or a list of names.
@@ -1459,38 +1483,39 @@ class Milo:
         overlap: int = 1,
         max_lfc_delta: float | None = None,
         merge_discord: bool = False,
-        subset_nhoods=None,
-    ) -> pd.DataFrame:
-        """Python equivalent of MiloR’s groupNhoods(), using AnnData and its `varp["nhood_connectivities"]`.
+        subset_nhoods: (pd.Series | np.ndarray | list[int] | list[str] | None) = None,
+    ) -> None:
+        """Cluster Milo neighborhoods into groups (Louvain) and annotate `adata.var`.
 
-        Parameters
-        ----------
-        adata : AnnData
-            Must contain:
-            - `adata.var` with columns "SpatialFDR" (float) and "logFC" (float)
-            - `adata.varp["nhood_connectivities"]` as an (N×N) sparse adjacency matrix
-        da_res : pd.DataFrame, optional
-            If provided, must match `adata.var`. Otherwise, `adata.var` is used directly.
-        da_fdr : float, default=0.1
-            Neighborhoods with `SpatialFDR < da_fdr` are called “DA.”
-        overlap : int, default=1
-            Drop any adjacency entry (edge) with weight < overlap.
-        max_lfc_delta : float or None, default=None
-            If not None, drop edges where |lfc_i - lfc_j| > max_lfc_delta.
-        merge_discord : bool, default=False
-            If False, drop edges between DA neighborhoods whose logFC signs disagree.
-        subset_nhoods : None or boolean mask / list of indices / list of names
-            If provided, only cluster that subset of neighborhoods.
+        A Python re-implementation of MiloR’s `groupNhoods()`. Given an AnnData (or a modality
+        within a MuData) containing precomputed neighborhood connectivity and differential
+        abundance results, compute connected components of DA neighborhoods (with optional
+        filters) and write back a categorical `"nhood_groups"` column in `adata.var`.
+
+        Args:
+            data: AnnData or MuData object. If MuData, `key` selects the modality to use.
+            key: Modality name within `data` when using a MuData. Defaults to "milo".
+            da_res: DataFrame of neighborhood‐level results with index matching
+                `adata.var.index` and columns "SpatialFDR" and "logFC". If None, uses `adata.var`.
+            da_fdr: Threshold for SpatialFDR below which neighborhoods are considered
+                differentially abundant and included in the clustering. Defaults to 0.1.
+            overlap: Minimum adjacency weight to retain an edge; edges with weight below
+                this value are dropped. Defaults to 1.
+            max_lfc_delta: Maximum allowed absolute difference in logFC between two
+                neighborhoods; edges exceeding this value are dropped. Defaults to None.
+            merge_discord: If False, edges between two DA neighborhoods whose logFC
+                signs disagree are dropped. Defaults to False.
+            subset_nhoods: Boolean mask, list/array of integer indices, or list of
+                neighborhood ID strings to restrict clustering. Defaults to None.
 
         Returns:
-        -------
-        pd.DataFrame
-            A copy of `adata.var`, with a new column "nhood_groups" of dtype string giving each
-            neighborhood’s cluster label (or `pd.NA` if it wasn’t in `subset_nhoods`).
-
+            Updates `adata.var["nhood_groups"]` in place with each neighborhood’s
+            Louvain group label. Neighborhoods not included in `subset_nhoods`
+            will have `pd.NA` in that column.
 
         Examples:
-            >>> import pertpy as pt
+            >>> import perturbpy as pt
+            >>> import scanpy as sc
             >>> adata = pt.dt.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
@@ -1582,7 +1607,33 @@ class Milo:
 
         adata.var["nhood_groups"] = out
 
-    def _nhood_labels_to_cells_last_wins(self, mdata, nhood_group_obs: str = "nhood_groups", subset_nhoods=None):
+    def _nhood_labels_to_cells_last_wins(
+        self,
+        mdata: MuData,
+        nhood_group_obs: str = "nhood_groups",
+        subset_nhoods: list | np.ndarray | None = None,
+    ) -> None:
+        """Map neighborhood group labels back to single cells (last group wins).
+
+        Assigns a neighborhood group label to each cell based on the neighborhoods
+        it belongs to. If a cell belongs to multiple neighborhoods with different
+        labels, the first non-missing label (by category order) is used. Operates
+        in-place on `mdata["rna"].obs["nhood_groups"]`.
+
+        Args:
+            mdata: MuData object with:
+                - mdata["milo"]: contains `.var[nhood_group_obs]` and neighborhood indices.
+                - mdata["rna"]: must have `.obsm["nhoods"]` sparse binary matrix of shape (cells × neighborhoods).
+            nhood_group_obs: Column name in `mdata["milo"].var` holding the neighborhood group labels.
+                Must be categorical or convertible to categorical. Defaults to "nhood_groups".
+            subset_nhoods: Optional subset of neighborhood indices to consider. Can be:
+                - A boolean mask,
+                - A list/array of integer indices,
+                - A list/array of string IDs matching `mdata["milo"].var.index`.
+
+        Returns:
+            None: The results are written to `mdata["rna"].obs["nhood_groups"]` in place.
+        """
         nhood_mat = mdata["rna"].obsm["nhoods"]
 
         da_res = mdata["milo"].var.copy()
@@ -1647,17 +1698,52 @@ class Milo:
         mdata["rna"].obs["nhood_groups"] = pd.NA
         mdata["rna"].obs.loc[fake_meta.CellID.to_list(), "nhood_groups"] = fake_meta.Nhood_Group.to_numpy()
 
-    def _get_cells_in_nhoods(self, adata, nhood_ids):
-        """Get cells in neighbourhoods of interest, store the number of neighbourhoods for each cell in adata.obs['in_nhoods']."""
-        in_nhoods = np.array(adata.obsm["nhoods"][:, nhood_ids.astype("int")].sum(1))
+    def _get_cells_in_nhoods(
+        self,
+        adata: AnnData,
+        nhood_ids: np.ndarray | list,
+    ) -> None:
+        """Compute number of neighborhood memberships per cell and store in `.obs`.
+
+        For the selected neighborhoods, calculates how many of them each cell belongs to.
+        Stores the result in `adata.obs["in_nhoods"]`.
+
+        Args:
+            adata: AnnData object with `.obsm["nhoods"]`, a binary matrix of shape (cells × neighborhoods).
+            nhood_ids: List or array of neighborhood indices to include in the count.
+
+        Returns:
+            None: The result is stored in-place in `adata.obs["in_nhoods"]`.
+        """
+        if not isinstance(nhood_ids, np.ndarray):
+            nhood_ids = np.asarray(nhood_ids, dtype=int)
+        in_nhoods = np.array(adata.obsm["nhoods"][:, nhood_ids].sum(1))
         adata.obs["in_nhoods"] = in_nhoods
 
     def _nhood_labels_to_cells_exclude_overlaps(
         self,
-        mdata,
+        mdata: MuData,
         nhood_group_obs: str = "nhood_groups",
         min_n_nhoods: int = 3,
-    ):
+    ) -> None:
+        """Assign cells to a dominant neighborhood group, excluding ambiguous overlaps.
+
+        For each neighborhood group, compute how many neighborhoods each cell belongs to.
+        Then, assign each cell to the group with the most memberships, if that count exceeds
+        `min_n_nhoods`. All other cells are left unassigned (NaN).
+
+        Args:
+            mdata: MuData object with:
+                - `mdata["milo"].var[nhood_group_obs]`: categorical group labels for neighborhoods.
+                - `mdata["rna"].obsm["nhoods"]`: binary matrix (cells × neighborhoods) indicating memberships.
+            nhood_group_obs: Name of the column in `mdata["milo"].var` containing group labels.
+                Defaults to "nhood_groups".
+            min_n_nhoods: Minimum number of neighborhoods from the same group a cell must belong to
+                in order to be assigned. Defaults to 3.
+
+        Returns:
+            None: Results are written in-place to `mdata["rna"].obs["nhood_groups"]`.
+        """
         groups = mdata["milo"].var[nhood_group_obs].dropna().unique()
         for g in groups:
             nhoods_oi = mdata["milo"].var_names[mdata["milo"].var[nhood_group_obs] == g]
@@ -1685,21 +1771,28 @@ class Milo:
         min_n_nhoods: int = 3,
         mode: Literal["last_wins", "exclude_overlaps"] = "last_wins",
     ) -> None:
-        """Annotate cells with neighborhood group labels.
+        """Assign neighborhood group labels to cells based on neighborhood membership.
 
-        Parameters:
-        -----------
-        mdata: MuData object with 'milo' modality.
-        nhood_group_obs: Column in `mdata["milo"].var` to use for neighborhood group labels.
-        subset_nhoods: List of neighborhood IDs to consider. If None, all neighborhoods are used.
-        min_n_nhoods: Minimum number of neighborhoods a cell must belong to in order to be annotated. Used for mode "exclude_overlaps".
-        mode: Mode for annotation. Options are:
-            - "last_wins": Last neighborhood label wins, adapted from miloR.
-            - "exclude_overlaps": Exclude overlaps, keeping only the most representative cells within groups.
+        This function annotates cells in `mdata["rna"].obs` using group labels from
+        `mdata["milo"].var[nhood_group_obs]`. Supports two modes for resolving overlaps:
+        - "last_wins": Assign the last matching group label (default; mimics MiloR behavior).
+        - "exclude_overlaps": Assign only if the cell belongs to a minimum number of neighborhoods
+        from a single group.
+
+        Args:
+            mdata: MuData object with:
+                - `mdata["milo"].var[nhood_group_obs]`: categorical group labels.
+                - `mdata["rna"].obsm["nhoods"]`: binary matrix of cell–neighborhood memberships.
+            nhood_group_obs: Column name in `mdata["milo"].var` with group labels. Defaults to "nhood_groups".
+            subset_nhoods: Optional list of neighborhood IDs to restrict annotation. If None, all neighborhoods are used.
+            min_n_nhoods: Minimum number of neighborhoods from the same group a cell must belong to in order to be assigned
+                (only used in mode `"exclude_overlaps"`). Defaults to 3.
+            mode: Strategy for resolving overlapping group assignments. One of:
+                - `"last_wins"`: Assign label from last matching neighborhood.
+                - `"exclude_overlaps"`: Assign only if group dominates cell’s memberships.
 
         Returns:
-        --------
-        None: Modifies `mdata["rna"].obs` in place, adding a column `nhood_groups` with the assigned labels.
+            Updates `mdata["rna"].obs["nhood_groups"]` with the assigned labels in place.
 
         Examples:
             >>> import pertpy as pt
@@ -1721,24 +1814,24 @@ class Milo:
         else:
             raise ValueError(f"Unknown mode '{mode}'. Use 'last_wins' or 'exclude_overlaps'.")
 
-    def get_mean_expression(self, adata, groupby: str, var_names: list[str]) -> pd.DataFrame:
-        """Compute the *mean* expression (counts) of each gene in `var_names`, stratified by a categorical column `groupby` in adata.obs.
+    def get_mean_expression(
+        self,
+        adata: AnnData,
+        groupby: str,
+        var_names: list[str],
+    ) -> pd.DataFrame:
+        """Compute the mean expression of selected genes stratified by a categorical grouping.
 
-        Parameters
-        ----------
-        adata : AnnData
-            AnnData object containing the expression matrix in `.X` and categorical metadata in `.obs`.
-        groupby : str
-            Column name in `adata.obs` that contains the categorical variable to group by.
-        var_names : list of str
-            List of gene names (or variable names) for which to compute the mean expression.
+        Args:
+            adata: AnnData object containing the expression matrix in `X` and categorical metadata in `obs`.
+            groupby: Name of the column in `adata.obs` to group cells by.
+            var_names: List of variable (gene) names for which to compute the mean expression.
 
         Returns:
-        -------
-        mean_df : pandas.DataFrame (n_genes × n_groups)
-            Rows are `var_names`, columns are the unique categories of `adata.obs[groupby]`.
-            Each entry mean_df.loc[g, grp] = (sum of adata[:, g].X over all cells in `grp`)
-                                    / (number of cells in that `grp`).
+            mean_df: A pandas DataFrame of shape (len(var_names), n_groups) where
+                - rows are the genes in `var_names`
+                - columns are the unique categories in `adata.obs[groupby]`
+                - each entry is the average count of that gene over all cells in the corresponding group.
         """
         # 1) Subset the matrix to just the columns (genes) in var_names:
         subX = adata[:, var_names].X.copy()  # shape: (n_cells, n_genes)
@@ -1778,13 +1871,37 @@ class Milo:
         baseline: str | None = None,
         subset_samples: list[str] | None = None,
     ) -> pd.DataFrame:
-        """Run edgeR QLF tests on a pseudobulk AnnData.
+        """Run edgeR QLF tests on pseudobulk data using specified contrasts.
 
-        If `group_to_compare` and `baseline` are both provided, performs exactly that two‐level contrast.
-        Otherwise, loops one‐vs‐rest over all levels of pdata.obs[nhood_group_obs].
+        Performs differential expression analysis using edgeR's quasi-likelihood
+        F-tests on pseudobulked expression data. Supports either a user-specified
+        two-level contrast (`baseline` vs `group_to_compare`), or one-vs-rest testing
+        across all groups in `pdata.obs[nhood_group_obs]`.
 
-        Returns a pandas DataFrame with columns:
-        ["variable", "logFC", "PValue", "adj_PValue"]   (plus "group" if one‐vs‐rest).
+        Args:
+            pdata: AnnData object with pseudobulked expression data in `.X` and
+                sample-level annotations in `.obs`.
+            nhood_group_obs: Name of the `.obs` column used to define group membership for contrast.
+            formula: R-style design formula (e.g., `"~ group"`). Used to generate design matrices in edgeR.
+            group_to_compare: Name of the group to compare (e.g., `"treated"`).
+                If provided along with `baseline`, a two-group test is run.
+            baseline: Reference group (e.g., `"control"`) for the two-group contrast.
+            subset_samples: Optional list of sample names to subset `pdata` before analysis.
+
+        Returns:
+            pd.DataFrame: Differential expression results with columns:
+                - `"variable"`: gene/feature name
+                - `"log_fc"`: log-fold change estimate
+                - `"p_value"`: raw p-value
+                - `"adj_p_value"`: multiple-testing corrected p-value
+                - `"group"` (optional): group name (only present in one-vs-rest mode)
+
+        Raises:
+            ValueError: If contrast groups are not present in the data or input is malformed.
+
+        Example:
+            >>> de_df = milo._run_edger_contrasts(pdata, "condition", formula="~ condition",
+            >>>                                   group_to_compare="treated", baseline="control")
         """
         if not _is_counts(pdata.X):
             raise ValueError("`pdata.X` appears to be raw counts, but this function expects continuous expression.")
@@ -1918,45 +2035,47 @@ class Milo:
         alpha: float = 0.05,
         quiet: bool = True,
     ) -> pd.DataFrame:
-        """Run PyDESeq2 on a pseudobulk AnnData (`pdata`) with a given neighborhood grouping, using exactly the design `formula` you supply.
+        """Run PyDESeq2 differential testing on pseudobulked AnnData using a design formula.
 
-        Parameters
-        ----------
-        pdata : AnnData
-            Pseudobulk AnnData, where .obs[nhood_group_obs] is a categorical allowing
-            you to compare levels.
+        Supports either a two-level contrast (`group_to_compare` vs `baseline`) or one-vs-rest
+        comparisons for all levels of a categorical column in `.obs`. Results are returned
+        as a tidy `DataFrame` compatible with downstream analysis.
 
-        nhood_group_obs : str
-            The column name in pdata.obs that holds the neighborhood groups.
-
-        formula : str
-            An R‐style design formula, e.g. "~ batch + Nhood_Group".  Must include
-            `nhood_group_obs` as one of the terms.  This is used verbatim for both the
-            single‐contrast and one‐vs‐rest calls.
-
-        group_to_compare : Optional[str]
-            If non‐None (and `baseline` is also non‐None), run only the single contrast
-            [nhood_group_obs, group_to_compare, baseline] with design = `formula`.
-
-        baseline : Optional[str]
-            If non‐None (and `group_to_compare` is non‐None), run only that one contrast.
-            If either is None, the function does a one‐vs‐rest loop over all levels of
-            pdata.obs[nhood_group_obs].
-
-        alpha : float, default=0.05
-            Significance threshold passed to PyrDESeq2’s `DeseqStats`.
-
-        quiet : bool, default=True
-            Whether to suppress PyDESeq2’s “DESeq2()” progress messages.
+        Args:
+            pdata: Pseudobulk `AnnData` object with expression matrix in `.X` and
+                covariates in `.obs`, including `nhood_group_obs`.
+            nhood_group_obs: Name of the `.obs` column to use for contrast groups.
+            formula: R-style design formula (e.g., `"~ batch + group"`), passed directly to PyDESeq2.
+            group_to_compare: Name of the group to test against `baseline`. If None,
+                one-vs-rest mode is triggered.
+            baseline: Name of the baseline group for contrast. Must be specified if `group_to_compare` is given.
+            alpha: FDR threshold passed to PyDESeq2's `DeseqStats`. Defaults to 0.05.
+            quiet: If True, suppresses progress messages from PyDESeq2. Defaults to True.
 
         Returns:
-        -------
-        pd.DataFrame
-            If `group_to_compare` and `baseline` are provided: a DataFrame with columns
-            ["variable","log_fc","p_value","adj_p_value"], sorted by p_value.
+            pd.DataFrame: If `group_to_compare` and `baseline` are specified, returns a
+            single contrast result with columns:
+                - `"variable"`: feature name
+                - `"log_fc"`: log2 fold change
+                - `"p_value"`: raw p-value
+                - `"adj_p_value"`: FDR-corrected p-value
 
-            Otherwise (one‐vs‐rest): a concatenated DataFrame with those columns plus
-            a “group” column indicating which level was tested vs “rest.”
+            If no contrast is specified, performs one-vs-rest for each group and returns
+            a concatenated DataFrame with the same columns plus:
+                - `"group"`: the group tested against all others
+
+        Raises:
+            ImportError: If `pydeseq2` is not installed.
+            ValueError: If only one of `group_to_compare` or `baseline` is provided.
+
+        Example:
+            >>> de_df = milo._run_pydeseq2_contrasts(
+            ...     pdata,
+            ...     nhood_group_obs="condition",
+            ...     formula="~ condition",
+            ...     group_to_compare="treated",
+            ...     baseline="control",
+            ... )
         """
         if find_spec("pydeseq2") is None:
             raise ImportError("pydeseq2 is required but not installed. Install with: pip install pydeseq2")
@@ -2048,8 +2167,32 @@ class Milo:
         final_df = pd.concat(all_results, ignore_index=True)
         return final_df
 
-    def _filter_by_expr_edger(self, pdata, formula, **kwargs):
-        """Filter genes in `pdata` based on expression criteria using edgeR."""
+    def _filter_by_expr_edger(
+        self,
+        pdata: AnnData,
+        formula: str,
+        **kwargs,
+    ) -> None:
+        """Filter low-expressed genes from a pseudobulk AnnData object using edgeR.
+
+        This function uses `edgeR::filterByExpr()` via rpy2 to identify and retain
+        genes with sufficient expression for differential testing, based on the
+        provided design formula and expression thresholds.
+
+        The filtering is performed in-place by subsetting `pdata.var`.
+
+        Args:
+            pdata: Pseudobulk `AnnData` object with raw counts in `.X` and
+                covariates in `.obs`.
+            formula: R-style design formula (e.g., `"~ condition + batch"`), used to
+                compute the design matrix in edgeR.
+            **kwargs: Additional keyword arguments passed to `edgeR::filterByExpr()`.
+                Examples include `min.count`, `min.total.count`, etc.
+
+        Returns:
+            None: The function modifies `pdata` in place by subsetting `pdata.var`
+            to include only retained genes.
+        """
         edger, _, rstats, rbase = self._setup_rpy2()
         import rpy2.robjects as ro
         from rpy2.robjects import numpy2ri, pandas2ri
@@ -2068,7 +2211,31 @@ class Milo:
 
         pdata._inplace_subset_var(keep)
 
-    def _filter_highly_variable_scanpy(self, pdata, n_top_genes=7500, target_sum=1e6, **kwargs):
+    def _filter_highly_variable_scanpy(
+        self,
+        pdata: AnnData,
+        n_top_genes: int = 7500,
+        target_sum: float = 1e6,
+        **kwargs,
+    ) -> None:
+        """Filter highly variable genes from a pseudobulk AnnData using Scanpy.
+
+        Normalizes and log-transforms raw count data if needed, then selects the
+        top `n_top_genes` most variable genes using `scanpy.pp.highly_variable_genes`.
+        Results are stored in-place by subsetting `pdata.var`.
+
+        Args:
+            pdata: AnnData object with raw or normalized pseudobulk expression in `.X`.
+            n_top_genes: Number of top variable genes to retain. Defaults to 7500.
+            target_sum: Target total count for normalization (used only if `.X` is raw counts).
+                Defaults to 1e6.
+            **kwargs: Additional keyword arguments passed to `scanpy.pp.highly_variable_genes()`.
+
+        Returns:
+            None: The function modifies `pdata` in place:
+                - Adds normalized expression to `pdata.layers["normalized"]`
+                - Filters `.var` to include only the top `n_top_genes` genes
+        """
         if _is_counts(pdata.X):
             pdata.layers["normalized"] = pdata.X.copy()
             sc.pp.normalize_total(
@@ -2082,7 +2249,29 @@ class Milo:
 
         sc.pp.highly_variable_genes(pdata, layer="normalized", n_top_genes=n_top_genes, subset=True, **kwargs)
 
-    def _filter_highly_variable_scran(self, pdata, n_top_genes):
+    def _filter_highly_variable_scran(
+        self,
+        pdata: AnnData,
+        n_top_genes: int,
+    ) -> None:
+        """Filter highly variable genes using R's scran and scuttle packages.
+
+        If `pdata.X` contains raw counts, normalization is performed using
+        `logNormCounts()` from `scuttle`. Otherwise, the matrix is assumed
+        to be already log-normalized.
+
+        The top `n_top_genes` most variable genes are selected using
+        `scran.modelGeneVar()` and `scran.getTopHVGs()` and used to subset
+        `pdata.var` in place.
+
+        Args:
+            pdata: AnnData object containing pseudobulk expression matrix.
+            n_top_genes: Number of top highly variable genes to retain.
+
+        Returns:
+            None: The function modifies `pdata` in place by subsetting `.var`
+            to contain only the selected HVGs.
+        """
         scran = self._try_import_bioc_library("scran")
         scuttle = self._try_import_bioc_library("scuttle")
         singlecellexperiment = self._try_import_bioc_library("SingleCellExperiment")
@@ -2135,57 +2324,49 @@ class Milo:
         alpha: float = 0.05,
         use_eb: bool = False,
         **kwargs,
-    ):
-        """Perform differential expression analysis on neighborhood groups in a MuData object.
+    ) -> pd.DataFrame:
+        """Perform differential expression analysis on neighborhood groups in a MuData or AnnData object.
 
-        The MuData object must contain a modality with the name `key`, which is used for pseudobulk aggregation.
-        The column `nhood_group_obs` in `mdata[key]` must contain the neighborhood group labels, and `sample_col` must contain the sample labels.
-        Neighborhood group labels can be assigned to the single-cell data using ´milo.group_nhoods(...)`, or manually set in `mdata[key].obs[nhood_group_obs]`.
-        Neighborhood group labels must be strings or categorical values and are used for pseudobulk aggregation.
-        If both `group_to_compare` and `baseline` are given, runs exactly that contrast. Otherwise, runs one‐vs‐rest for every level of `nhood_group_obs`.
-        All NAs in mdata[key].obs[nhood_group_obs] are filtered out before running the analysis.
-        Therefore, if annotating nhood_group_obs manually, introducing NAs before Milo().group_nhoods(...) is can exclude unwanted neighborhoods from the analysis.
+        This function performs pseudobulk aggregation over neighborhood groupings and tests for differential
+        expression (DE) between groups using either `pydeseq2` or `edgeR`.
 
-        Parameters
-        ----------
-        mdata : MuData
-            A MuData object containing the data. Must have a modality with the name `key`.
-        group_to_compare : Optional[str]
-            If provided, runs a single contrast comparing this group to `baseline`.
-        baseline : Optional[str]
-            The reference group for the contrast. Must be provided if `group_to_compare` is provided.
-        nhood_group_obs : str, default="nhood_groups"
-            The name of the column in `adata.obs` that contains the neighborhood group labels.
-        sample_col : str, default="sample"
-            The name of the column in `adata.obs` that contains the sample labels.
-        covariates : Collection[str] | None, default=None
-            A collection of additional covariates to include in the design formula.
-            If None, no additional covariates are used.
-        key : str, default="rna"
-            The key in `mdata` that corresponds to the modality to be used for pseudobulk aggregation.
-        pseudobulk_function : str, default="sum"
-            The function to use for pseudobulk aggregation. Can be "sum" or "mean".
-        layer : str | None, default=None
-            If provided, the layer to use for pseudobulk aggregation. If None, uses the default layer.
-        target_sum : float, default=1e6
-            The target sum for normalization when using the "scanpy" filter method.
-        n_top_genes : int, default=7500
-            The number of top variable genes to retain after filtering. Only used if `filter_method` is `scanpy` `scran`.
-        filter_method : str | None, default="scanpy"
-            The method to use for filtering highly variable genes. Can be "scanpy", "scran", or "filterByExpr".
-            If None, no filtering is applied.
-        var_names : Collection[str] | None, default=None
-            A collection of variable names to restrict the analysis to. If None, all variables are used.
-        de_method : Literal["pydeseq2", "statsmodels", "edgeR", "limma"], default="pydeseq2"
-            The method to use for differential expression analysis. Can be "pydeseq2", "statsmodels", "edgeR", or "limma".
-        quiet : bool, default=True
-            If True, suppresses output messages from pydeseq2.
-        alpha : float, default=0.05
-            The significance threshold for differential expression analysis in pydeseq2.
-        use_eb : bool, default=False
-            If True, applies empirical Bayes moderation to the results in statsmodels. Not for serious use, but a starting point for limma-like differential testing in pure Python.
-        **kwargs : dict
-            Additional keyword arguments passed to the filtering methods or differential expression methods.
+        The MuData must contain a modality (default `"rna"`) used for pseudobulk aggregation.
+        Group labels must be stored in `nhood_group_obs`, and sample labels in `sample_col`.
+
+        If both `group_to_compare` and `baseline` are provided, a specific two-group contrast is tested.
+        Otherwise, one-vs-rest DE is performed for each level in `nhood_group_obs`.
+
+        Notes:
+            - All NAs in `nhood_group_obs` are removed before pseudobulk aggregation.
+            - If annotating neighborhood groups manually, you can introduce NAs beforehand to exclude neighborhoods.
+
+        Args:
+            data: A `MuData` or `AnnData` object.
+            group_to_compare: The group to compare (e.g. case) in a specific contrast. Must be in `nhood_group_obs`.
+            baseline: The baseline group (e.g. control). Must be in `nhood_group_obs` if `group_to_compare` is given.
+            nhood_group_obs: Column in `.obs` with neighborhood group labels. Must be categorical or string-typed.
+            sample_col: Column in `.obs` specifying sample identifiers.
+            covariates: Optional list of covariates to include in the DE model formula.
+            key: Name of modality in `MuData` used for pseudobulk aggregation (default `"rna"`).
+            pseudobulk_function: Aggregation function used for pseudobulk (either `"sum"` or `"mean"`).
+            layer: Optional layer to use for aggregation. Defaults to `X` if not provided.
+            target_sum: Used for Scanpy-based normalization when filtering (default: `1e6`).
+            n_top_genes: Number of highly variable genes to retain (if filtering is applied).
+            filter_method: How to filter genes before DE analysis. One of `"scanpy"`, `"scran"`, or `"filterByExpr"`.
+            var_names: Optional list of variable (gene) names to restrict analysis to. Overrides filtering if provided.
+            de_method: Differential expression method: `"pydeseq2"` (default) or `"edger"`.
+            quiet: Whether to suppress console output from PyDESeq2 (default: True).
+            alpha: Significance threshold passed to DE test (used in PyDESeq2).
+            use_eb: If `True`, applies empirical Bayes shrinkage (not implemented yet, reserved for future limma-style methods).
+            **kwargs: Additional arguments passed to filtering or DE methods (e.g., `min_expr`, `min_total` for edgeR filtering).
+
+        Returns:
+            pd.DataFrame: DE results with columns:
+                - "variable": Gene/feature name
+                - "log_fc": log2 fold change
+                - "p_value": Unadjusted p-value
+                - "adj_p_value": Multiple testing-corrected p-value
+                - "group": (only for one-vs-rest) the group being compared vs rest
 
         Examples:
             >>> import pertpy as pt
