@@ -890,9 +890,6 @@ class Milo:
         plt.show()
         return None
 
-    from collections.abc import Sequence
-    from typing import Union
-
     # In plot_nhood_annotation color_map, palette, and ax are not documented, and not part of common_plot_args
     # Should I add them or will they be part of common_plot_args in the future?
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -915,7 +912,7 @@ class Milo:
     ) -> Figure | None:
         """Visualize Milo differential-abundance results on the neighborhood graph.
 
-        By default, neighborhoods are colored by filtered logFC (|logFC| ≥ `min_logFC`
+        By default, neighborhoods are colored by filtered logFC (``|logFC|`` ≥ `min_logFC`
         and SpatialFDR ≤ `alpha`). If `annotation_key` is provided, this column from
         `mdata[adata_key].obs` will be used instead for coloring.
 
@@ -1814,52 +1811,52 @@ class Milo:
         else:
             raise ValueError(f"Unknown mode '{mode}'. Use 'last_wins' or 'exclude_overlaps'.")
 
-    def get_mean_expression(
-        self,
-        adata: AnnData,
-        groupby: str,
-        var_names: list[str],
-    ) -> pd.DataFrame:
-        """Compute the mean expression of selected genes stratified by a categorical grouping.
+    # def get_mean_expression(
+    #     self,
+    #     adata: AnnData,
+    #     groupby: str,
+    #     var_names: list[str],
+    # ) -> pd.DataFrame:
+    #     """Compute the mean expression of selected genes stratified by a categorical grouping.
 
-        Args:
-            adata: AnnData object containing the expression matrix in `X` and categorical metadata in `obs`.
-            groupby: Name of the column in `adata.obs` to group cells by.
-            var_names: List of variable (gene) names for which to compute the mean expression.
+    #     Args:
+    #         adata: AnnData object containing the expression matrix in `X` and categorical metadata in `obs`.
+    #         groupby: Name of the column in `adata.obs` to group cells by.
+    #         var_names: List of variable (gene) names for which to compute the mean expression.
 
-        Returns:
-            mean_df: A pandas DataFrame of shape (len(var_names), n_groups) where
-                - rows are the genes in `var_names`
-                - columns are the unique categories in `adata.obs[groupby]`
-                - each entry is the average count of that gene over all cells in the corresponding group.
-        """
-        # 1) Subset the matrix to just the columns (genes) in var_names:
-        subX = adata[:, var_names].X.copy()  # shape: (n_cells, n_genes)
+    #     Returns:
+    #         mean_df: A pandas DataFrame of shape (len(var_names), n_groups) where
+    #             - rows are the genes in `var_names`
+    #             - columns are the unique categories in `adata.obs[groupby]`
+    #             - each entry is the average count of that gene over all cells in the corresponding group.
+    #     """
+    #     # 1) Subset the matrix to just the columns (genes) in var_names:
+    #     subX = adata[:, var_names].X.copy()  # shape: (n_cells, n_genes)
 
-        # 2) Build a one‐hot (dummy) matrix of shape (n_cells, n_groups):
-        groups = pd.get_dummies(adata.obs[groupby], drop_first=False)
-        # groups.values is (n_cells, n_groups).  groups.sum() is a Series: number of cells per group.
-        n_per_group = groups.sum().astype(float)  # length = n_groups
+    #     # 2) Build a one‐hot (dummy) matrix of shape (n_cells, n_groups):
+    #     groups = pd.get_dummies(adata.obs[groupby], drop_first=False)
+    #     # groups.values is (n_cells, n_groups).  groups.sum() is a Series: number of cells per group.
+    #     n_per_group = groups.sum().astype(float)  # length = n_groups
 
-        # 3) Compute Σ_counts_{gene i, group j} by matrix‐multiplication:
-        #    - If subX is sparse, convert to a CSR; otherwise treat as dense.
-        if issparse(subX):
-            subX = csr_matrix(subX)
-            sum_counts = subX.T.dot(csr_matrix(groups.values))  # shape (n_genes, n_groups), sparse
-            sum_counts = sum_counts.toarray()  # convert to dense (n_genes, n_groups)
-        else:
-            # dense case: subX is (n_cells, n_genes), so subX.T is (n_genes, n_cells),
-            # dot with (n_cells, n_groups) → (n_genes, n_groups)
-            sum_counts = subX.T.dot(groups.values)
+    #     # 3) Compute Σ_counts_{gene i, group j} by matrix‐multiplication:
+    #     #    - If subX is sparse, convert to a CSR; otherwise treat as dense.
+    #     if issparse(subX):
+    #         subX = csr_matrix(subX)
+    #         sum_counts = subX.T.dot(csr_matrix(groups.values))  # shape (n_genes, n_groups), sparse
+    #         sum_counts = sum_counts.toarray()  # convert to dense (n_genes, n_groups)
+    #     else:
+    #         # dense case: subX is (n_cells, n_genes), so subX.T is (n_genes, n_cells),
+    #         # dot with (n_cells, n_groups) → (n_genes, n_groups)
+    #         sum_counts = subX.T.dot(groups.values)
 
-        # 4) Divide each column (group) by its total cell count to get means:
-        #    We want mean_counts[i, j] = sum_counts[i, j] / n_per_group[j].
-        #    n_per_group.values is shape (n_groups,), so broadcasting works.
-        mean_mat = sum_counts / n_per_group.values[np.newaxis, :]
+    #     # 4) Divide each column (group) by its total cell count to get means:
+    #     #    We want mean_counts[i, j] = sum_counts[i, j] / n_per_group[j].
+    #     #    n_per_group.values is shape (n_groups,), so broadcasting works.
+    #     mean_mat = sum_counts / n_per_group.values[np.newaxis, :]
 
-        # 5) Build a DataFrame, indexed by var_names, columns = groups.columns
-        mean_df = pd.DataFrame(mean_mat, index=var_names, columns=groups.columns)
-        return mean_df
+    #     # 5) Build a DataFrame, indexed by var_names, columns = groups.columns
+    #     mean_df = pd.DataFrame(mean_mat, index=var_names, columns=groups.columns)
+    #     return mean_df
 
     def _run_edger_contrasts(
         self,
@@ -1889,7 +1886,7 @@ class Milo:
             subset_samples: Optional list of sample names to subset `pdata` before analysis.
 
         Returns:
-            pd.DataFrame: Differential expression results with columns:
+            :class:`pandas.DataFrame`: Differential expression results with columns:
                 - `"variable"`: gene/feature name
                 - `"log_fc"`: log-fold change estimate
                 - `"p_value"`: raw p-value
@@ -2053,7 +2050,7 @@ class Milo:
             quiet: If True, suppresses progress messages from PyDESeq2. Defaults to True.
 
         Returns:
-            pd.DataFrame: If `group_to_compare` and `baseline` are specified, returns a
+            :class:`pandas.DataFrame`: If `group_to_compare` and `baseline` are specified, returns a
             single contrast result with columns:
                 - `"variable"`: feature name
                 - `"log_fc"`: log2 fold change
@@ -2361,7 +2358,7 @@ class Milo:
             **kwargs: Additional arguments passed to filtering or DE methods (e.g., `min_expr`, `min_total` for edgeR filtering).
 
         Returns:
-            pd.DataFrame: DE results with columns:
+            :class:`pandas.DataFrame`: DE results with columns:
                 - "variable": Gene/feature name
                 - "log_fc": log2 fold change
                 - "p_value": Unadjusted p-value
@@ -2518,229 +2515,229 @@ class Milo:
         else:
             raise ValueError(f"de_method must be one of 'pydeseq2' or 'edger', not '{de_method}'")
 
-    def plot_heatmap_with_dot_and_colorbar(
-        self,
-        mean_df: pd.DataFrame,
-        logfc_ser: pd.Series | None = None,
-        cmap: str = "YlGnBu",
-        dot_scale: float = 200.0,
-        figsize: tuple[float, float] = (6, 10),
-        panel_ratios: tuple[float, float, float] = (5, 0.6, 0.3),
-        cbar_tick_count: int = 5,
-        show_dot: bool = True,
-        legend_on_right: bool = False,
-    ) -> plt.Figure:
-        """Marker heatmap of mean expression across groups, with optional logFC dots and a colorbar.
+    # def plot_heatmap_with_dot_and_colorbar(
+    #     self,
+    #     mean_df: pd.DataFrame,
+    #     logfc_ser: pd.Series | None = None,
+    #     cmap: str = "YlGnBu",
+    #     dot_scale: float = 200.0,
+    #     figsize: tuple[float, float] = (6, 10),
+    #     panel_ratios: tuple[float, float, float] = (5, 0.6, 0.3),
+    #     cbar_tick_count: int = 5,
+    #     show_dot: bool = True,
+    #     legend_on_right: bool = False,
+    # ) -> plt.Figure:
+    #     """Marker heatmap of mean expression across groups, with optional logFC dots and a colorbar.
 
-        Plot a figure with:
-        • Left: heatmap of mean_df (genes × groups), WITHOUT its default colorbar.
-        • (Optional) Middle: a single column of dots (size ∝ |logFC|), one per gene.
-        • Right: a slim vertical colorbar (ggplot2 style) that applies to the heatmap.
-        • (Optional) A size legend for logFC dots, either just to the right of the colorbar
-            (legend_on_right=False, the default) or further to the right (legend_on_right=True).
+    #     Plot a figure with:
+    #     • Left: heatmap of mean_df (genes × groups), WITHOUT its default colorbar.
+    #     • (Optional) Middle: a single column of dots (size ∝ |logFC|), one per gene.
+    #     • Right: a slim vertical colorbar (ggplot2 style) that applies to the heatmap.
+    #     • (Optional) A size legend for logFC dots, either just to the right of the colorbar
+    #         (legend_on_right=False, the default) or further to the right (legend_on_right=True).
 
-        If show_dot=False, `logfc_ser` may be omitted (and is ignored). If show_dot=True,
-        then `logfc_ser` must be provided and must match `mean_df.index`.
+    #     If show_dot=False, `logfc_ser` may be omitted (and is ignored). If show_dot=True,
+    #     then `logfc_ser` must be provided and must match `mean_df.index`.
 
-        Parameters
-        ----------
-        mean_df : pandas.DataFrame, shape (n_genes, n_groups)
-            Rows = gene names; columns = group labels; values = mean expression.
+    #     Parameters
+    #     ----------
+    #     mean_df : pandas.DataFrame, shape (n_genes, n_groups)
+    #         Rows = gene names; columns = group labels; values = mean expression.
 
-        logfc_ser : pandas.Series or None, default=None
-            If show_dot=True, this Series of length n_genes (indexed by gene names) gives
-            the logFC for each gene. If show_dot=False, you may leave this as None.
+    #     logfc_ser : pandas.Series or None, default=None
+    #         If show_dot=True, this Series of length n_genes (indexed by gene names) gives
+    #         the logFC for each gene. If show_dot=False, you may leave this as None.
 
-        cmap : str, default="YlGnBu"
-            Colormap for the heatmap and its colorbar.
+    #     cmap : str, default="YlGnBu"
+    #         Colormap for the heatmap and its colorbar.
 
-        dot_scale : float, default=200.0
-            Controls the maximum dot area for the largest |logFC| (only used if show_dot=True).
+    #     dot_scale : float, default=200.0
+    #         Controls the maximum dot area for the largest |logFC| (only used if show_dot=True).
 
-        figsize : tuple (W, H), default=(6, 10)
-            Total figure size in inches. Width W is split among panels according to ratios.
+    #     figsize : tuple (W, H), default=(6, 10)
+    #         Total figure size in inches. Width W is split among panels according to ratios.
 
-        panel_ratios : tuple (r1, r2, r3), default=(5, 0.6, 0.3)
-            Relative widths for [heatmap, dot‐column, colorbar] when show_dot=True.
-            If show_dot=False, only r1 and r3 are used to split the width.
+    #     panel_ratios : tuple (r1, r2, r3), default=(5, 0.6, 0.3)
+    #         Relative widths for [heatmap, dot‐column, colorbar] when show_dot=True.
+    #         If show_dot=False, only r1 and r3 are used to split the width.
 
-        cbar_tick_count : int, default=5
-            Number of ticks on the vertical colorbar.
+    #     cbar_tick_count : int, default=5
+    #         Number of ticks on the vertical colorbar.
 
-        show_dot : bool, default=True
-            If True, draw the dot column (requires `logfc_ser`). If False, omit dots and
-            only draw [heatmap | colorbar].
+    #     show_dot : bool, default=True
+    #         If True, draw the dot column (requires `logfc_ser`). If False, omit dots and
+    #         only draw [heatmap | colorbar].
 
-        legend_on_right : bool, default=False
-            If True, move the “size legend” further to the right of the figure,
-            to avoid overlap when the figure is narrow. If False, place it just
-            to the right of the colorbar (may overlap if figure is very narrow).
+    #     legend_on_right : bool, default=False
+    #         If True, move the “size legend” further to the right of the figure,
+    #         to avoid overlap when the figure is narrow. If False, place it just
+    #         to the right of the colorbar (may overlap if figure is very narrow).
 
-        Returns:
-        -------
-        fig : matplotlib.figure.Figure
+    #     Returns:
+    #     -------
+    #     fig : matplotlib.figure.Figure
 
-        Examples:
-            >>> varnames = (
-            >>>     nhood_group_markers_results
-            >>>         .query('logFC >= 0.5')
-            >>>         .query('adj_PValue <= 0.01')
-            >>>         .sort_values("logFC", ascending = False)
-            >>>         .variable.to_list()
-            >>> )
-            >>> mean_df = milo.get_mean_expression(mdata["rna"], "nhood_groups", var_names=varnames)
-            >>> logfc_ser = (
-            >>>     nhood_group_markers_results
-            >>>         .query('logFC >= 0.5')
-            >>>         .query('adj_PValue <= 0.01')
-            >>>         .set_index("variable")
-            >>>         .logFC
-            >>> )
-            >>> fig = milo.plot_heatmap_with_dot_and_colorbar(
-            >>>     mean_df,
-            >>>     logfc_ser=logfc_ser,
-            >>>     cmap="YlGnBu",
-            >>>     dot_scale=200.0,
-            >>>     figsize=(2, (1.5, len(logfc_ser)*0.15)),
-            >>>     panel_ratios=(5, 0.6, 0.3),
-            >>>     cbar_tick_count=5,
-            >>>     show_dot=True,
-            >>>     legend_on_right=1.3,
-            >>> )
+    #     Examples:
+    #         >>> varnames = (
+    #         >>>     nhood_group_markers_results
+    #         >>>         .query('logFC >= 0.5')
+    #         >>>         .query('adj_PValue <= 0.01')
+    #         >>>         .sort_values("logFC", ascending = False)
+    #         >>>         .variable.to_list()
+    #         >>> )
+    #         >>> mean_df = milo.get_mean_expression(mdata["rna"], "nhood_groups", var_names=varnames)
+    #         >>> logfc_ser = (
+    #         >>>     nhood_group_markers_results
+    #         >>>         .query('logFC >= 0.5')
+    #         >>>         .query('adj_PValue <= 0.01')
+    #         >>>         .set_index("variable")
+    #         >>>         .logFC
+    #         >>> )
+    #         >>> fig = milo.plot_heatmap_with_dot_and_colorbar(
+    #         >>>     mean_df,
+    #         >>>     logfc_ser=logfc_ser,
+    #         >>>     cmap="YlGnBu",
+    #         >>>     dot_scale=200.0,
+    #         >>>     figsize=(2, (1.5, len(logfc_ser)*0.15)),
+    #         >>>     panel_ratios=(5, 0.6, 0.3),
+    #         >>>     cbar_tick_count=5,
+    #         >>>     show_dot=True,
+    #         >>>     legend_on_right=1.3,
+    #         >>> )
 
-        """
-        # ────────────────────────────────
-        # 1) Validate / align logFC
-        # ────────────────────────────────
-        if show_dot:
-            if logfc_ser is None:
-                raise ValueError("`logfc_ser` must be provided when `show_dot=True`.")
-            genes = list(mean_df.index)
-            lfc_vals = logfc_ser.reindex(index=genes).fillna(0.0).values
-            n_genes = len(genes)
-        else:
-            genes = list(mean_df.index)
-            n_genes = len(genes)
-            lfc_vals = None
+    #     """
+    #     # ────────────────────────────────
+    #     # 1) Validate / align logFC
+    #     # ────────────────────────────────
+    #     if show_dot:
+    #         if logfc_ser is None:
+    #             raise ValueError("`logfc_ser` must be provided when `show_dot=True`.")
+    #         genes = list(mean_df.index)
+    #         lfc_vals = logfc_ser.reindex(index=genes).fillna(0.0).values
+    #         n_genes = len(genes)
+    #     else:
+    #         genes = list(mean_df.index)
+    #         n_genes = len(genes)
+    #         lfc_vals = None
 
-        groups = list(mean_df.columns)
+    #     groups = list(mean_df.columns)
 
-        # ────────────────────────────────
-        # 2) Dot‐size scaling (if needed)
-        # ────────────────────────────────
-        if show_dot:
-            max_abs_lfc = np.nanmax(np.abs(lfc_vals))
-            if max_abs_lfc == 0 or np.isnan(max_abs_lfc):
-                max_abs_lfc = 1.0
+    #     # ────────────────────────────────
+    #     # 2) Dot‐size scaling (if needed)
+    #     # ────────────────────────────────
+    #     if show_dot:
+    #         max_abs_lfc = np.nanmax(np.abs(lfc_vals))
+    #         if max_abs_lfc == 0 or np.isnan(max_abs_lfc):
+    #             max_abs_lfc = 1.0
 
-        # ────────────────────────────────
-        # 3) Heatmap normalization
-        # ────────────────────────────────
-        vmin = mean_df.values.min()
-        vmax = mean_df.values.max()
-        norm = Normalize(vmin=vmin, vmax=vmax)
-        cmap_obj = plt.get_cmap(cmap)
+    #     # ────────────────────────────────
+    #     # 3) Heatmap normalization
+    #     # ────────────────────────────────
+    #     vmin = mean_df.values.min()
+    #     vmax = mean_df.values.max()
+    #     norm = Normalize(vmin=vmin, vmax=vmax)
+    #     cmap_obj = plt.get_cmap(cmap)
 
-        # ────────────────────────────────
-        # 4) Build a GridSpec
-        # ────────────────────────────────
-        W, H = figsize
-        r1, r2, r3 = panel_ratios
+    #     # ────────────────────────────────
+    #     # 4) Build a GridSpec
+    #     # ────────────────────────────────
+    #     W, H = figsize
+    #     r1, r2, r3 = panel_ratios
 
-        if show_dot:
-            # three panels: [heatmap | dots | colorbar]
-            total_ratio = r1 + r2 + r3
-            width_ratios = [r1 / total_ratio, r2 / total_ratio, r3 / total_ratio]
-            fig = plt.figure(figsize=(W, H))
-            gs = fig.add_gridspec(nrows=1, ncols=3, width_ratios=width_ratios, wspace=0.02)
-            ax_heat = fig.add_subplot(gs[0, 0])
-        else:
-            # two panels: [heatmap | colorbar]
-            total_ratio = r1 + r3
-            width_ratios = [r1 / total_ratio, r3 / total_ratio]
-            fig = plt.figure(figsize=(W, H))
-            gs = fig.add_gridspec(nrows=1, ncols=2, width_ratios=width_ratios, wspace=0.02)
-            ax_heat = fig.add_subplot(gs[0, 0])
+    #     if show_dot:
+    #         # three panels: [heatmap | dots | colorbar]
+    #         total_ratio = r1 + r2 + r3
+    #         width_ratios = [r1 / total_ratio, r2 / total_ratio, r3 / total_ratio]
+    #         fig = plt.figure(figsize=(W, H))
+    #         gs = fig.add_gridspec(nrows=1, ncols=3, width_ratios=width_ratios, wspace=0.02)
+    #         ax_heat = fig.add_subplot(gs[0, 0])
+    #     else:
+    #         # two panels: [heatmap | colorbar]
+    #         total_ratio = r1 + r3
+    #         width_ratios = [r1 / total_ratio, r3 / total_ratio]
+    #         fig = plt.figure(figsize=(W, H))
+    #         gs = fig.add_gridspec(nrows=1, ncols=2, width_ratios=width_ratios, wspace=0.02)
+    #         ax_heat = fig.add_subplot(gs[0, 0])
 
-        # ────────────────────────────────
-        # 5) Plot heatmap (no default colorbar)
-        # ────────────────────────────────
-        sns.heatmap(
-            mean_df,
-            ax=ax_heat,
-            cmap=cmap,
-            norm=norm,
-            cbar=False,
-            yticklabels=genes,
-            xticklabels=groups,
-            linewidths=0.5,
-            linecolor="gray",
-        )
-        ax_heat.set_ylabel("Gene", fontsize=10)
-        ax_heat.set_xlabel("Group", fontsize=10)
-        plt.setp(ax_heat.get_xticklabels(), rotation=45, ha="right", fontsize=8)
-        plt.setp(ax_heat.get_yticklabels(), rotation=0, fontsize=6)
+    #     # ────────────────────────────────
+    #     # 5) Plot heatmap (no default colorbar)
+    #     # ────────────────────────────────
+    #     sns.heatmap(
+    #         mean_df,
+    #         ax=ax_heat,
+    #         cmap=cmap,
+    #         norm=norm,
+    #         cbar=False,
+    #         yticklabels=genes,
+    #         xticklabels=groups,
+    #         linewidths=0.5,
+    #         linecolor="gray",
+    #     )
+    #     ax_heat.set_ylabel("Gene", fontsize=10)
+    #     ax_heat.set_xlabel("Group", fontsize=10)
+    #     plt.setp(ax_heat.get_xticklabels(), rotation=45, ha="right", fontsize=8)
+    #     plt.setp(ax_heat.get_yticklabels(), rotation=0, fontsize=6)
 
-        # ────────────────────────────────
-        # 6) Dot panel (if requested)
-        # ────────────────────────────────
-        if show_dot:
-            ax_dot = fig.add_subplot(gs[0, 1])
-            for i, val in enumerate(lfc_vals):
-                if not np.isnan(val) and val != 0.0:
-                    area = (abs(val) / max_abs_lfc) * dot_scale
-                    ax_dot.scatter(0, i, s=area, color="black", alpha=0.8, edgecolors="none")
-            ax_dot.set_xlim(-0.5, 0.5)
-            ax_dot.set_ylim(n_genes - 0.5, -0.5)
-            ax_dot.set_xticks([])
-            ax_dot.set_yticks([])
-            ax_dot.set_title("logFC", pad=10, fontdict={"fontsize": 7})
-            ax_cbar = fig.add_subplot(gs[0, 2])
-        else:
-            ax_cbar = fig.add_subplot(gs[0, 1])
+    #     # ────────────────────────────────
+    #     # 6) Dot panel (if requested)
+    #     # ────────────────────────────────
+    #     if show_dot:
+    #         ax_dot = fig.add_subplot(gs[0, 1])
+    #         for i, val in enumerate(lfc_vals):
+    #             if not np.isnan(val) and val != 0.0:
+    #                 area = (abs(val) / max_abs_lfc) * dot_scale
+    #                 ax_dot.scatter(0, i, s=area, color="black", alpha=0.8, edgecolors="none")
+    #         ax_dot.set_xlim(-0.5, 0.5)
+    #         ax_dot.set_ylim(n_genes - 0.5, -0.5)
+    #         ax_dot.set_xticks([])
+    #         ax_dot.set_yticks([])
+    #         ax_dot.set_title("logFC", pad=10, fontdict={"fontsize": 7})
+    #         ax_cbar = fig.add_subplot(gs[0, 2])
+    #     else:
+    #         ax_cbar = fig.add_subplot(gs[0, 1])
 
-        # ────────────────────────────────
-        # 7) Draw vertical colorbar for heatmap
-        # ────────────────────────────────
-        smap = ScalarMappable(norm=norm, cmap=cmap_obj)
-        smap.set_array([])
+    #     # ────────────────────────────────
+    #     # 7) Draw vertical colorbar for heatmap
+    #     # ────────────────────────────────
+    #     smap = ScalarMappable(norm=norm, cmap=cmap_obj)
+    #     smap.set_array([])
 
-        cbar = fig.colorbar(
-            smap, cax=ax_cbar, orientation="vertical", ticks=np.linspace(vmin, vmax, num=cbar_tick_count)
-        )
-        cbar.ax.tick_params(labelsize=8, length=4, width=1)
-        cbar.ax.set_title("Mean\nExpr.", fontsize=8, pad=6)
-        cbar.outline.set_linewidth(0.5)
+    #     cbar = fig.colorbar(
+    #         smap, cax=ax_cbar, orientation="vertical", ticks=np.linspace(vmin, vmax, num=cbar_tick_count)
+    #     )
+    #     cbar.ax.tick_params(labelsize=8, length=4, width=1)
+    #     cbar.ax.set_title("Mean\nExpr.", fontsize=8, pad=6)
+    #     cbar.outline.set_linewidth(0.5)
 
-        # ────────────────────────────────
-        # 8) Add a size‐legend for the dot‐column (optional)
-        # ────────────────────────────────
-        if show_dot:
-            # Choose three reference |logFC| values: max, ½ max, ¼ max
-            ref_vals = np.array([max_abs_lfc, 0.5 * max_abs_lfc, 0.25 * max_abs_lfc])
-            legend_handles = []
-            legend_labels = []
-            for rv in ref_vals:
-                sz = (rv / max_abs_lfc) * dot_scale
-                handle = ax_dot.scatter(0, 0, s=sz, color="black", alpha=0.8, edgecolors="none")
-                legend_handles.append(handle)
-                legend_labels.append(f"|logFC| = {rv:.2f}")
+    #     # ────────────────────────────────
+    #     # 8) Add a size‐legend for the dot‐column (optional)
+    #     # ────────────────────────────────
+    #     if show_dot:
+    #         # Choose three reference |logFC| values: max, ½ max, ¼ max
+    #         ref_vals = np.array([max_abs_lfc, 0.5 * max_abs_lfc, 0.25 * max_abs_lfc])
+    #         legend_handles = []
+    #         legend_labels = []
+    #         for rv in ref_vals:
+    #             sz = (rv / max_abs_lfc) * dot_scale
+    #             handle = ax_dot.scatter(0, 0, s=sz, color="black", alpha=0.8, edgecolors="none")
+    #             legend_handles.append(handle)
+    #             legend_labels.append(f"|logFC| = {rv:.2f}")
 
-            # Determine bounding box based on legend_on_right flag
-            bbox_x = (1.2 if isinstance(legend_on_right, bool) else legend_on_right) if legend_on_right else 1.02
+    #         # Determine bounding box based on legend_on_right flag
+    #         bbox_x = (1.2 if isinstance(legend_on_right, bool) else legend_on_right) if legend_on_right else 1.02
 
-            fig.legend(
-                legend_handles,
-                legend_labels,
-                title="Dot size legend",
-                loc="center left",
-                bbox_to_anchor=(bbox_x, 0.5),
-                frameon=False,
-                fontsize=7,
-                title_fontsize=8,
-                handletextpad=0.5,
-                labelspacing=0.6,
-            )
+    #         fig.legend(
+    #             legend_handles,
+    #             legend_labels,
+    #             title="Dot size legend",
+    #             loc="center left",
+    #             bbox_to_anchor=(bbox_x, 0.5),
+    #             frameon=False,
+    #             fontsize=7,
+    #             title_fontsize=8,
+    #             handletextpad=0.5,
+    #             labelspacing=0.6,
+    #         )
 
-        plt.tight_layout()
-        return fig
+    #     plt.tight_layout()
+    #     return fig
