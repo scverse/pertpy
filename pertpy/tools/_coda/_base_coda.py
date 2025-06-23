@@ -1181,7 +1181,7 @@ class CompositionalModel2(ABC):
                 r,
                 bars,
                 bottom=cum_bars,
-                color=palette(n % palette.N),
+                color=palette(n % palette.N),  # type: ignore
                 width=barwidth,
                 label=type_names[n],
                 linewidth=0,

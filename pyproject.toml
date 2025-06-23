@@ -236,7 +236,9 @@ ignore = [
     # Too many statements
     "PLR0915",
     # Extracting value from dictionary without calling `.items()` - clashes with sim
-    "PLC0206"
+    "PLC0206",
+    # import should be at top of file
+    "PLC0415"
 ]
 
 [tool.ruff.lint.pydocstyle]
