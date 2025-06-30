@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import warnings
-
 import anndata
 import numpy as np
-import pandas as pd
 import scipy
 import torch
 from anndata import AnnData
+from fast_array_utils.conv import to_dense
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import EarlyStopping
 from sklearn.linear_model import LogisticRegression
@@ -112,18 +110,6 @@ class LRClassifierSpace(PerturbationSpace):
         return pert_adata
 
 
-# Ensure backward compatibility with DiscriminatorClassifierSpace
-def DiscriminatorClassifierSpace():
-    warnings.warn(
-        "The DiscriminatorClassifierSpace class is deprecated and will be removed in the future."
-        "Please use the MLPClassifierSpace or the LRClassifierSpace class instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    return MLPClassifierSpace()
-
-
 class MLPClassifierSpace(PerturbationSpace):
     """Fits an ANN classifier to the data and takes the feature space (weights in the last layer) as embedding.
 
@@ -202,7 +188,7 @@ class MLPClassifierSpace(PerturbationSpace):
         labels = adata.obs[target_col].values.reshape(-1, 1)
         encoder = OneHotEncoder()
         encoded_labels = encoder.fit_transform(labels).toarray()
-        adata.obs["encoded_perturbations"] = [np.float32(label) for label in encoded_labels]
+        adata.obsm["encoded_perturbations"] = encoded_labels.astype(np.float32)
 
         # Split the data in train, test and validation
         X = list(range(adata.n_obs))
@@ -226,7 +212,7 @@ class MLPClassifierSpace(PerturbationSpace):
         # Fix class unbalance (likely to happen in perturbation datasets)
         # Usually control cells are overrepresented such that predicting control all time would give good results
         # Cells with rare perturbations are sampled more
-        train_weights = 1 / (1 + torch.sum(torch.tensor(train_dataset.labels.to_list()), dim=1))
+        train_weights = 1 / (1 + torch.sum(torch.tensor(train_dataset.labels), dim=1))
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
         self.train_dataloader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=4)
@@ -278,11 +264,10 @@ class MLPClassifierSpace(PerturbationSpace):
         pert_adata.obs = pert_adata.obs.reset_index(drop=True)
         if "perturbations" in self.adata_obs.columns:
             self.adata_obs = self.adata_obs.drop("perturbations", axis=1)
-        pert_adata.obs = pert_adata.obs.assign(**self.adata_obs.iloc[: len(pert_adata.obs)])
-
-        # Drop the 'encoded_perturbations' colums, since this stores the one-hot encoded labels as numpy arrays,
-        # which would cause errors in the downstream processing of the AnnData object (e.g. when plotting)
-        pert_adata.obs = pert_adata.obs.drop("encoded_perturbations", axis=1)
+        obs_subset = self.adata_obs.iloc[: len(pert_adata.obs)].copy()
+        for col in obs_subset.columns:
+            if col not in ["perturbations", "encoded_perturbations"]:
+                pert_adata.obs[col] = obs_subset[col].values
 
         return pert_adata
 
@@ -397,7 +382,13 @@ class PLDataset(Dataset):
         else:
             self.data = adata.X
 
-        self.labels = adata.obs[target_col]
+        if target_col in adata.obs.columns:
+            self.labels = adata.obs[target_col]
+        elif target_col in adata.obsm:
+            self.labels = adata.obsm[target_col]
+        else:
+            raise ValueError(f"Target column {target_col} not found in obs or obsm")
+
         self.pert_labels = adata.obs[label_col]
 
     def __len__(self):
@@ -405,8 +396,8 @@ class PLDataset(Dataset):
 
     def __getitem__(self, idx):
         """Returns a sample and corresponding perturbations applied (labels)."""
-        sample = self.data[idx].toarray().squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
-        num_label = self.labels.iloc[idx]
+        sample = to_dense(self.data[idx]).squeeze() if scipy.sparse.issparse(self.data) else self.data[idx]
+        num_label = self.labels.iloc[idx] if hasattr(self.labels, "iloc") else self.labels[idx]
         str_label = self.pert_labels.iloc[idx]
 
         return sample, num_label, str_label
