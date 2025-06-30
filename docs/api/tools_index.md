@@ -423,8 +423,6 @@ ps_adata = ps.compute(
     target_col="gene_target",
     groups_col="gene_target",
     mode="mean",
-    min_cells=0,
-    min_counts=0,
 )
 ```
 

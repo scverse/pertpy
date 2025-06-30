@@ -65,6 +65,7 @@ dependencies = [
     "fast-array-utils[accel,sparse]",
     "lamin_utils",
     "arviz",
+    "scipy<1.16.0"
 ]
 
 [project.optional-dependencies]

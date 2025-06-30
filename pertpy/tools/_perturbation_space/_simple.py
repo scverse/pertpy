@@ -161,11 +161,18 @@ class PseudobulkSpace(PerturbationSpace):
                 adata = adata_emb
 
         adata.obs[target_col] = adata.obs[target_col].astype("category")
+        grouping_cols = [target_col] if groups_col is None else [target_col, groups_col]
+        original_obs = adata.obs.copy()
         ps_adata = sc.get.aggregate(
             adata, by=[target_col] if groups_col is None else [target_col, groups_col], func=mode, layer=layer_key
         )
+
         if mode in ps_adata.layers:
             ps_adata.X = ps_adata.layers[mode]
+        for col in original_obs.columns:
+            if col not in ps_adata.obs.columns:
+                grouped_values = original_obs.groupby(grouping_cols)[col].first()
+                ps_adata.obs[col] = grouped_values.values
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
