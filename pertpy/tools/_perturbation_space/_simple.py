@@ -169,10 +169,11 @@ class PseudobulkSpace(PerturbationSpace):
 
         if mode in ps_adata.layers:
             ps_adata.X = ps_adata.layers[mode]
+
         for col in original_obs.columns:
             if col not in ps_adata.obs.columns:
                 grouped_values = original_obs.groupby(grouping_cols)[col].first()
-                ps_adata.obs[col] = grouped_values.values
+                ps_adata.obs[col] = grouped_values.reindex(ps_adata.obs.index).values
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
