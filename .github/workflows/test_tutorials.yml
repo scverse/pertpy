@@ -76,7 +76,7 @@ jobs:
             - name: Install system dependencies (requireed for QT6)
               run: |
                 sudo apt-get update
-                sudo apt-get install -y libegl1-mesa libgl1-mesa-glx
+                sudo apt-get install -y libegl1 libgl1-mesa-dri libglib2.0-0
 
             - name: Install R dependencies
               if: steps.r-cache.outputs.cache-hit != 'true'
