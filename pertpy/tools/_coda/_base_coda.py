@@ -1881,10 +1881,8 @@ class CompositionalModel2(ABC):
         try:
             from ete4 import Tree
             from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
-        except ImportError:
-            raise ImportError(
-                "To use tasccoda please install additional dependencies: `pip install pertpy[coda]`"
-            ) from None
+        except ImportError as e:
+            print(e)
 
         if isinstance(data, MuData):
             data = data[modality_key]
