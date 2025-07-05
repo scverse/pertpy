@@ -73,6 +73,11 @@ jobs:
                 key: ${{ runner.os }}-r-${{ hashFiles('**/pertpy/tools/_milo.py') }}
                 restore-keys: ${{ runner.os }}-r-
 
+            - name: Install system dependencies (requireed for QT6)
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y libegl1-mesa libgl1-mesa-glx
+
             - name: Install R dependencies
               if: steps.r-cache.outputs.cache-hit != 'true'
               run: |
