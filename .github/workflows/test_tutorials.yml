@@ -31,11 +31,11 @@ jobs:
                         "distances.ipynb",
                         "distance_tests.ipynb",
                         "enrichment.ipynb",
-                        "guide_assignment.ipynb",
+                        "guide_rna_assignment.ipynb",
                         "milo.ipynb",
                         "mixscape.ipynb",
                         "perturbation_space.ipynb",
-                        "sccoda.ipynb",
+                        "sccoda.ipynb",sccoda
                         "tasccoda.ipynb",
                         # "dialogue.ipynb"
                         # also no use cases yet
@@ -86,7 +86,7 @@ jobs:
                 cache-dependency-glob: pyproject.toml
             - name: Install dependencies
               run: |
-                  uv pip install --system rpy2
+                  uv pip install --system rpy2 decoupler muon
                   uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,tcoda,de]"
                   uv pip install --system nbconvert ipykernel
 

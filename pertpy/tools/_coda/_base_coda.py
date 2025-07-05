@@ -1881,7 +1881,7 @@ class CompositionalModel2(ABC):
             from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
         except ImportError:
             raise ImportError(
-                "To use tasccoda please install additional dependencies with `pip install pertpy[coda]`"
+                "To use tasccoda please install additional dependencies: `pip install pertpy[coda]`"
             ) from None
 
         if isinstance(data, MuData):
@@ -1969,7 +1969,7 @@ class CompositionalModel2(ABC):
             from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
         except ImportError:
             raise ImportError(
-                "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+                "To use tasccoda please install additional dependencies: `pip install pertpy[coda]`"
             ) from None
 
         if isinstance(data, MuData):
