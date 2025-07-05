@@ -1878,11 +1878,8 @@ class CompositionalModel2(ABC):
         Preview:
             .. image:: /_static/docstring_previews/tasccoda_draw_tree.png
         """
-        try:
-            from ete4 import Tree
-            from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
-        except ImportError as e:
-            print(e)
+        from ete4 import Tree
+        from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
 
         if isinstance(data, MuData):
             data = data[modality_key]
