@@ -71,6 +71,7 @@ jobs:
               run: |
                   uv pip install --system rpy2
                   uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,tcoda,de]"
+                  uv pip install nbconvert ipykernel
 
             - name: Run ${{ matrix.notebook }} Notebook
               run: jupyter nbconvert --to notebook --execute ${{ matrix.notebook }}
