@@ -36,8 +36,8 @@ jobs:
                         "mixscape.ipynb",
                         "perturbation_space.ipynb",
                         "sccoda.ipynb",
+                        "dialogue.ipynb",
                         # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
-                        # "dialogue.ipynb"
                         # also no use cases yet
                     ]
 
