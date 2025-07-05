@@ -1878,8 +1878,13 @@ class CompositionalModel2(ABC):
         Preview:
             .. image:: /_static/docstring_previews/tasccoda_draw_tree.png
         """
-        from ete4 import Tree
-        from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
+        try:
+            from ete4 import Tree
+            from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
+        except ImportError:
+            raise ImportError(
+                "To use tasccoda please install additional dependencies: `pip install pertpy[coda]`"
+            ) from None
 
         if isinstance(data, MuData):
             data = data[modality_key]

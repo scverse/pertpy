@@ -36,7 +36,7 @@ jobs:
                         "mixscape.ipynb",
                         "perturbation_space.ipynb",
                         "sccoda.ipynb",
-                        "tasccoda.ipynb",
+                        # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
                         # "dialogue.ipynb"
                         # also no use cases yet
                     ]
@@ -72,9 +72,6 @@ jobs:
                 path: ${{ env.R_LIBS_USER }}
                 key: ${{ runner.os }}-r-${{ hashFiles('**/pertpy/tools/_milo.py') }}
                 restore-keys: ${{ runner.os }}-r-
-
-            - name: Install Qt
-              uses: jurplel/install-qt-action@v4
 
             - name: Install R dependencies
               if: steps.r-cache.outputs.cache-hit != 'true'
