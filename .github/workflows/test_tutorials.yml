@@ -35,7 +35,7 @@ jobs:
                         "milo.ipynb",
                         "mixscape.ipynb",
                         "perturbation_space.ipynb",
-                        "sccoda.ipynb",sccoda
+                        "sccoda.ipynb",
                         "tasccoda.ipynb",
                         # "dialogue.ipynb"
                         # also no use cases yet
