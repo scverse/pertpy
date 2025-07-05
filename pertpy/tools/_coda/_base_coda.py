@@ -1472,6 +1472,7 @@ class CompositionalModel2(ABC):
         if return_fig and not plot_facets:
             return plt.gcf()
         plt.show()
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1823,6 +1824,7 @@ class CompositionalModel2(ABC):
         if return_fig:
             return plt.gcf()
         plt.show()
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1876,13 +1878,8 @@ class CompositionalModel2(ABC):
         Preview:
             .. image:: /_static/docstring_previews/tasccoda_draw_tree.png
         """
-        try:
-            from ete4 import Tree
-            from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
-        except ImportError:
-            raise ImportError(
-                "To use tasccoda please install additional dependencies with `pip install pertpy[coda]`"
-            ) from None
+        from ete4 import Tree
+        from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
 
         if isinstance(data, MuData):
             data = data[modality_key]
@@ -1902,8 +1899,8 @@ class CompositionalModel2(ABC):
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if return_fig:
             return tree, tree_style
+
         return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
-        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_draw_effects(  # pragma: no cover # noqa: D417
@@ -1969,7 +1966,7 @@ class CompositionalModel2(ABC):
             from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
         except ImportError:
             raise ImportError(
-                "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+                "To use tasccoda please install additional dependencies: `pip install pertpy[coda]`"
             ) from None
 
         if isinstance(data, MuData):
@@ -2207,6 +2204,7 @@ class CompositionalModel2(ABC):
         if return_fig:
             return fig
         plt.show()
+
         return None
 
 
@@ -2325,6 +2323,7 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
     strs = [traverse(df_tax, a, 0, inner_label) for a in alevel]
 
     newick = f"({','.join(strs)});"
+
     return newick
 
 
