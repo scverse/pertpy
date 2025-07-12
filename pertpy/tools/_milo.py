@@ -411,6 +411,8 @@ class Milo:
                     res = base.as_data_frame(
                         edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf)
                     )
+            if res is None:
+                raise ValueError("Unable to generate results with edgeR. Is your installation correct?")
             if not isinstance(res, pd.DataFrame):
                 res = pd.DataFrame(res)
             # The columns of res looks like e.g. table.A, table.B, so remove the prefix
@@ -530,7 +532,7 @@ class Milo:
 
         anno_frac_dataframe = pd.DataFrame(anno_frac, columns=anno_dummies.columns, index=sample_adata.var_names)
         sample_adata.varm["frac_annotation"] = anno_frac_dataframe.values
-        sample_adata.uns["annotation_labels"] = anno_frac_dataframe.columns
+        sample_adata.uns["annotation_labels"] = anno_frac_dataframe.columns.to_list()
         sample_adata.uns["annotation_obs"] = anno_col
         sample_adata.var["nhood_annotation"] = anno_frac_dataframe.idxmax(1)
         sample_adata.var["nhood_annotation_frac"] = anno_frac_dataframe.max(1)
