@@ -34,6 +34,31 @@ class MeanVar(NamedTuple):
     variance: float
 
 
+Metric = Literal[
+    "edistance",
+    "euclidean",
+    "root_mean_squared_error",
+    "mse",
+    "mean_absolute_error",
+    "pearson_distance",
+    "spearman_distance",
+    "kendalltau_distance",
+    "cosine_distance",
+    "r2_distance",
+    "mean_pairwise",
+    "mmd",
+    "wasserstein",
+    "sym_kldiv",
+    "t_test",
+    "ks_test",
+    "nb_ll",
+    "classifier_proba",
+    "classifier_cp",
+    "mean_var_distribution",
+    "mahalanobis",
+]
+
+
 class Distance:
     """Distance class, used to compute distances between groups of cells.
 
@@ -112,7 +137,7 @@ class Distance:
 
     def __init__(
         self,
-        metric: str = "edistance",
+        metric: Metric = "edistance",
         agg_fct: Callable = np.mean,
         layer_key: str = None,
         obsm_key: str = None,
@@ -660,19 +685,19 @@ class MMD(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, kernel="linear", **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, *, kernel="linear", gamma=1.0, degree=2, **kwargs) -> float:
         if kernel == "linear":
             XX = np.dot(X, X.T)
             YY = np.dot(Y, Y.T)
             XY = np.dot(X, Y.T)
         elif kernel == "rbf":
-            XX = rbf_kernel(X, X, gamma=1.0)
-            YY = rbf_kernel(Y, Y, gamma=1.0)
-            XY = rbf_kernel(X, Y, gamma=1.0)
+            XX = rbf_kernel(X, X, gamma=gamma)
+            YY = rbf_kernel(Y, Y, gamma=gamma)
+            XY = rbf_kernel(X, Y, gamma=gamma)
         elif kernel == "poly":
-            XX = polynomial_kernel(X, X, degree=2, gamma=1.0, coef0=0)
-            YY = polynomial_kernel(Y, Y, degree=2, gamma=1.0, coef0=0)
-            XY = polynomial_kernel(X, Y, degree=2, gamma=1.0, coef0=0)
+            XX = polynomial_kernel(X, X, degree=degree, gamma=gamma, coef0=0)
+            YY = polynomial_kernel(Y, Y, degree=degree, gamma=gamma, coef0=0)
+            XY = polynomial_kernel(X, Y, degree=degree, gamma=gamma, coef0=0)
         else:
             raise ValueError(f"Kernel {kernel} not recognized.")
 
