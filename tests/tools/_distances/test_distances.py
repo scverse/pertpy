@@ -127,8 +127,8 @@ def test_distance_layers(pairwise_distance, distance):
 @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
 def test_distance_counts(adata, distance):
     if distance != "mahalanobis":  # skip, doesn't work because covariance matrix is a singular matrix, not invertible
-        Distance = pt.tl.Distance(distance, layer_key="counts")
-        df = Distance.pairwise(adata, groupby="perturbation")
+        distance = pt.tl.Distance(distance, layer_key="counts")
+        df = distance.pairwise(adata, groupby="perturbation")
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0
