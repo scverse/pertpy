@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.1
+
+
+### 🚀 Features
+
+* Add support for gamma parameter in MMD distance ([#825](https://github.com/scverse/pertpy/pull/825)) @Zethson
+* Run notebooks in CI ([#815](https://github.com/scverse/pertpy/pull/815)) @Zethson
+
+## 🐛 Bug Fixes
+
+* Fix milo output writing ([#821](https://github.com/scverse/pertpy/pull/821)) @Zethson
+
 ## v1.0.0
 
 ### 🚀 Features
