@@ -1377,6 +1377,7 @@ class CompositionalModel2(ABC):
         plot_df.columns = covariate_names
         plot_df = pd.melt(plot_df, ignore_index=False, var_name="Covariate")
 
+        plot_df.index.name = "Cell Type"
         plot_df = plot_df.reset_index()
 
         if len(covariate_names_zero) != 0 and plot_facets and plot_zero_covariate and not plot_zero_cell_type:
