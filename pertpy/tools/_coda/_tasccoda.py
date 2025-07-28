@@ -592,83 +592,79 @@ class Tasccoda(CompositionalModel2):
         *args,
         **kwargs,
     ):
-        """
-        Examples:
-            >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
-            >>> tasccoda = pt.tl.Tasccoda()
-            >>> mdata = tasccoda.load(
-            >>>     adata, type="sample_level",
-            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-            >>>     key_added="lineage", add_level_name=True
-            >>> )
-            >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-            >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42).
+        """Examples:
+        >>> import pertpy as pt
+        >>> adata = pt.dt.tasccoda_example()
+        >>> tasccoda = pt.tl.Tasccoda()
+        >>> mdata = tasccoda.load(
+        >>>     adata, type="sample_level",
+        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+        >>>     key_added="lineage", add_level_name=True
+        >>> )
+        >>> mdata = tasccoda.prepare(
+        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+        >>> )
+        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42).
         """  # noqa: D205
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
     run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
-        """
-        Examples:
-            >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
-            >>> tasccoda = pt.tl.Tasccoda()
-            >>> mdata = tasccoda.load(
-            >>>     adata, type="sample_level",
-            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-            >>>     key_added="lineage", add_level_name=True
-            >>> )
-            >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-            >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> tasccoda.summary(mdata).
+        """Examples:
+        >>> import pertpy as pt
+        >>> adata = pt.dt.tasccoda_example()
+        >>> tasccoda = pt.tl.Tasccoda()
+        >>> mdata = tasccoda.load(
+        >>>     adata, type="sample_level",
+        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+        >>>     key_added="lineage", add_level_name=True
+        >>> )
+        >>> mdata = tasccoda.prepare(
+        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+        >>> )
+        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+        >>> tasccoda.summary(mdata).
         """  # noqa: D205
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
     summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
-        """
-        Examples:
-            >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
-            >>> tasccoda = pt.tl.Tasccoda()
-            >>> mdata = tasccoda.load(
-            >>>     adata, type="sample_level",
-            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-            >>>     key_added="lineage", add_level_name=True
-            >>> )
-            >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-            >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> tasccoda.credible_effects(mdata).
+        """Examples:
+        >>> import pertpy as pt
+        >>> adata = pt.dt.tasccoda_example()
+        >>> tasccoda = pt.tl.Tasccoda()
+        >>> mdata = tasccoda.load(
+        >>>     adata, type="sample_level",
+        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+        >>>     key_added="lineage", add_level_name=True
+        >>> )
+        >>> mdata = tasccoda.prepare(
+        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+        >>> )
+        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+        >>> tasccoda.credible_effects(mdata).
         """  # noqa: D205
         return super().credible_effects(data, modality_key, est_fdr)
 
     credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
-        """
-        Examples:
-            >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
-            >>> tasccoda = pt.tl.Tasccoda()
-            >>> mdata = tasccoda.load(
-            >>>     adata, type="sample_level",
-            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-            >>>     key_added="lineage", add_level_name=True
-            >>> )
-            >>> mdata = tasccoda.prepare(
-            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-            >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> tasccoda.set_fdr(mdata, est_fdr=0.4).
+        """Examples:
+        >>> import pertpy as pt
+        >>> adata = pt.dt.tasccoda_example()
+        >>> tasccoda = pt.tl.Tasccoda()
+        >>> mdata = tasccoda.load(
+        >>>     adata, type="sample_level",
+        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+        >>>     key_added="lineage", add_level_name=True
+        >>> )
+        >>> mdata = tasccoda.prepare(
+        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+        >>> )
+        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+        >>> tasccoda.set_fdr(mdata, est_fdr=0.4).
         """  # noqa: D205
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
