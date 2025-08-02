@@ -303,7 +303,7 @@ class Sccoda(CompositionalModel2):
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
-        rng_key=None,
+        rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
     ) -> az.InferenceData:
@@ -381,6 +381,8 @@ class Sccoda(CompositionalModel2):
         if rng_key is None:
             rng = np.random.default_rng()
             rng_key = random.key(rng.integers(0, 10000))
+        else:
+            rng_key = random.key(rng_key)
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
