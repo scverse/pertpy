@@ -471,17 +471,17 @@ class Sccoda(CompositionalModel2):
         **kwargs,
     ):
         """Examples:
-        >>> import pertpy as pt
-        >>> haber_cells = pt.dt.haber_2017_regions()
-        >>> sccoda = pt.tl.Sccoda()
-        >>> mdata = sccoda.load(haber_cells,
-        >>>                     type="cell_level",
-        >>>                     generate_sample_level=True,
-        >>>                     cell_type_identifier="cell_label",
-        >>>                     sample_identifier="batch",
-        >>>                     covariate_obs=["condition"])
-        >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
-        >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42).
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells,
+            >>>                     type="cell_level",
+            >>>                     generate_sample_level=True,
+            >>>                     cell_type_identifier="cell_label",
+            >>>                     sample_identifier="batch",
+            >>>                     covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42).
         """  # noqa: D205
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
@@ -489,18 +489,18 @@ class Sccoda(CompositionalModel2):
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """Examples:
-        >>> import pertpy as pt
-        >>> haber_cells = pt.dt.haber_2017_regions()
-        >>> sccoda = pt.tl.Sccoda()
-        >>> mdata = sccoda.load(haber_cells,
-        >>>                     type="cell_level",
-        >>>                     generate_sample_level=True,
-        >>>                     cell_type_identifier="cell_label",
-        >>>                     sample_identifier="batch",
-        >>>                     covariate_obs=["condition"])
-        >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
-        >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-        >>> credible_effects = sccoda.credible_effects(mdata).
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells,
+            >>>                     type="cell_level",
+            >>>                     generate_sample_level=True,
+            >>>                     cell_type_identifier="cell_label",
+            >>>                     sample_identifier="batch",
+            >>>                     covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> credible_effects = sccoda.credible_effects(mdata).
         """  # noqa: D205
         return super().credible_effects(data, modality_key, est_fdr)
 
@@ -508,18 +508,18 @@ class Sccoda(CompositionalModel2):
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """Examples:
-        >>> import pertpy as pt
-        >>> haber_cells = pt.dt.haber_2017_regions()
-        >>> sccoda = pt.tl.Sccoda()
-        >>> mdata = sccoda.load(haber_cells,
-        >>>                     type="cell_level",
-        >>>                     generate_sample_level=True,
-        >>>                     cell_type_identifier="cell_label",
-        >>>                     sample_identifier="batch",
-        >>>                     covariate_obs=["condition"])
-        >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
-        >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-        >>> sccoda.summary(mdata).
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells,
+            >>>                     type="cell_level",
+            >>>                     generate_sample_level=True,
+            >>>                     cell_type_identifier="cell_label",
+            >>>                     sample_identifier="batch",
+            >>>                     covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> sccoda.summary(mdata).
         """  # noqa: D205
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
@@ -527,18 +527,18 @@ class Sccoda(CompositionalModel2):
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """Examples:
-        >>> import pertpy as pt
-        >>> haber_cells = pt.dt.haber_2017_regions()
-        >>> sccoda = pt.tl.Sccoda()
-        >>> mdata = sccoda.load(haber_cells,
-        >>>                     type="cell_level",
-        >>>                     generate_sample_level=True,
-        >>>                     cell_type_identifier="cell_label",
-        >>>                     sample_identifier="batch",
-        >>>                     covariate_obs=["condition"])
-        >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
-        >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-        >>> sccoda.set_fdr(mdata, est_fdr=0.4).
+            >>> import pertpy as pt
+            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> sccoda = pt.tl.Sccoda()
+            >>> mdata = sccoda.load(haber_cells,
+            >>>                     type="cell_level",
+            >>>                     generate_sample_level=True,
+            >>>                     cell_type_identifier="cell_label",
+            >>>                     sample_identifier="batch",
+            >>>                     covariate_obs=["condition"])
+            >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
+            >>> sccoda.set_fdr(mdata, est_fdr=0.4).
         """  # noqa: D205
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
