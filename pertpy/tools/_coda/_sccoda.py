@@ -484,7 +484,7 @@ class Sccoda(CompositionalModel2):
             >>>                     covariate_obs=["condition"])
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42).
-        """  # noqa: D201,D205,D207,D208,D212,D213
+        """  # noqa: D205, D212
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
     run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
@@ -505,7 +505,7 @@ class Sccoda(CompositionalModel2):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> credible_effects = sccoda.credible_effects(mdata).
-        """  # noqa: D201,D205,D207,D208,D212,D213
+        """  # noqa: D205, D212
         return super().credible_effects(data, modality_key, est_fdr)
 
     credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
@@ -526,7 +526,7 @@ class Sccoda(CompositionalModel2):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> sccoda.summary(mdata).
-        """  # noqa: D201,D205,D207,D208,D212,D213
+        """  # noqa: D205, D212
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
     summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
@@ -547,7 +547,7 @@ class Sccoda(CompositionalModel2):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
             >>> sccoda.set_fdr(mdata, est_fdr=0.4).
-        """  # noqa: D201,D205,D207,D208,D212,D213
+        """  # noqa: D205, D212
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
     set_fdr.__doc__ = CompositionalModel2.set_fdr.__doc__ + set_fdr.__doc__
