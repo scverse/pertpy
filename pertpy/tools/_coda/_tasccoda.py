@@ -464,7 +464,7 @@ class Tasccoda(CompositionalModel2):
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
-        rng_key=None,
+        rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
     ) -> az.InferenceData:
@@ -547,6 +547,8 @@ class Tasccoda(CompositionalModel2):
         if rng_key is None:
             rng = np.random.default_rng()
             rng_key = random.key(rng.integers(0, 10000))
+        else:
+            rng_key = random.key(rng_key)
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
@@ -593,6 +595,7 @@ class Tasccoda(CompositionalModel2):
         **kwargs,
     ):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -606,13 +609,14 @@ class Tasccoda(CompositionalModel2):
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42).
-        """  # noqa: D205
+        """  # noqa: D205, D212
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
     run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -627,13 +631,14 @@ class Tasccoda(CompositionalModel2):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.summary(mdata).
-        """  # noqa: D205
+        """  # noqa: D205, D212
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
     summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -648,13 +653,14 @@ class Tasccoda(CompositionalModel2):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.credible_effects(mdata).
-        """  # noqa: D205
+        """  # noqa: D205, D212
         return super().credible_effects(data, modality_key, est_fdr)
 
     credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -669,7 +675,7 @@ class Tasccoda(CompositionalModel2):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
             >>> tasccoda.set_fdr(mdata, est_fdr=0.4).
-        """  # noqa: D205
+        """  # noqa: D205, D212
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
     set_fdr.__doc__ = CompositionalModel2.set_fdr.__doc__ + set_fdr.__doc__
