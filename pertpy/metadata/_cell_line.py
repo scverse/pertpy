@@ -195,7 +195,7 @@ class CellLine(MetaData):
                 block_size=4096,
                 is_zip=False,
             )
-        df = pd.read_csv(drug_response_prism_file_path, index_col=0)[["depmap_id", "name", "ic50", "ec50", "auc"]]
+        df = pd.read_csv(drug_response_prism_file_path, index_col=0, usecols=["broad_id", "depmap_id", "name", "ic50", "ec50", "auc"])
         df = df.dropna(subset=["depmap_id", "name"])
         df = df.groupby(["depmap_id", "name"]).mean().reset_index()
         self.drug_response_prism = df
@@ -568,7 +568,9 @@ class CellLine(MetaData):
             verbosity=verbosity,
         )
 
-        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
+        if adata.obs.index.name is None:
+            adata.obs.index.name = "original_index"
+        old_index_name = adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, query_perturbation])
@@ -635,7 +637,9 @@ class CellLine(MetaData):
             verbosity=verbosity,
         )
 
-        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
+        if adata.obs.index.name is None:
+            adata.obs.index.name = "original_index"
+        old_index_name = adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, "perturbation_lower"])
