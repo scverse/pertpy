@@ -195,7 +195,9 @@ class CellLine(MetaData):
                 block_size=4096,
                 is_zip=False,
             )
-        df = pd.read_csv(drug_response_prism_file_path, index_col=0, usecols=["broad_id", "depmap_id", "name", "ic50", "ec50", "auc"])
+        df = pd.read_csv(
+            drug_response_prism_file_path, index_col=0, usecols=["broad_id", "depmap_id", "name", "ic50", "ec50", "auc"]
+        )
         df = df.dropna(subset=["depmap_id", "name"])
         df = df.groupby(["depmap_id", "name"]).mean().reset_index()
         self.drug_response_prism = df
