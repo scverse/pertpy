@@ -559,6 +559,15 @@ class Tasccoda(CompositionalModel2):
                 ref_index=ref_index,
                 sample_adata=sample_adata,
             )
+            # Remove problematic posterior predictive arrays with wrong dimensions
+            if posterior_predictive and "counts" in posterior_predictive:
+                counts_shape = posterior_predictive["counts"].shape
+                expected_dims = 2  # ['sample', 'cell_type']
+                if len(counts_shape) != expected_dims:
+                    posterior_predictive = {k: v for k, v in posterior_predictive.items() if k != "counts"}
+                    logger.warning(
+                        f"Removed 'counts' from posterior_predictive due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
+                    )
         else:
             posterior_predictive = None
 
@@ -571,6 +580,15 @@ class Tasccoda(CompositionalModel2):
                 ref_index=ref_index,
                 sample_adata=sample_adata,
             )
+            # Remove problematic prior arrays with wrong dimensions
+            if prior and "counts" in prior:
+                counts_shape = prior["counts"].shape
+                expected_dims = 2  # ['sample', 'cell_type']
+                if len(counts_shape) != expected_dims:
+                    prior = {k: v for k, v in prior.items() if k != "counts"}
+                    logger.warning(
+                        f"Removed 'counts' from prior due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
+                    )
         else:
             prior = None
 

@@ -393,33 +393,6 @@ class Sccoda(CompositionalModel2):
                 ref_index=ref_index,
                 sample_adata=sample_adata,
             )
-        else:
-            posterior_predictive = None
-
-        if num_prior_samples > 0:
-            prior = Predictive(self.model, num_samples=num_prior_samples)(
-                rng_key,
-                counts=None,
-                covariates=numpyro_covariates,
-                n_total=numpyro_n_total,
-                ref_index=ref_index,
-                sample_adata=sample_adata,
-            )
-        else:
-            prior = None
-
-        import arviz as az
-
-        # Create arviz object
-        if use_posterior_predictive:
-            posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
-                rng_key,
-                counts=None,
-                covariates=numpyro_covariates,
-                n_total=numpyro_n_total,
-                ref_index=ref_index,
-                sample_adata=sample_adata,
-            )
             # Remove problematic posterior predictive arrays with wrong dimensions
             if posterior_predictive and "counts" in posterior_predictive:
                 counts_shape = posterior_predictive["counts"].shape
@@ -453,6 +426,9 @@ class Sccoda(CompositionalModel2):
         else:
             prior = None
 
+        import arviz as az
+
+        # Create arviz object
         arviz_data = az.from_numpyro(
             self.mcmc, prior=prior, posterior_predictive=posterior_predictive, dims=dims, coords=coords
         )
