@@ -163,7 +163,7 @@ scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 scripts.clean = "git clean -fdX -- {args:docs}"
 
 [tool.hatch.envs.hatch-test]
-features = [ "test" ]
+features = [ "test", "tcoda" ]
 
 [tool.ruff]
 src = ["src"]
