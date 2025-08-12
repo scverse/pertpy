@@ -120,8 +120,10 @@ class Tasccoda(CompositionalModel2):
                 covariate_df=covariate_df,
             )
             mdata = MuData({modality_key_1: adata, modality_key_2: adata_coda})
-        else:
+        elif type == "sample_level":
             mdata = MuData({modality_key_1: AnnData(), modality_key_2: adata})
+        else:
+            raise ValueError(f'{type} is not a supported type, please refer to "cell_level" or "sample_level" type')
         import_tree(
             data=mdata,
             modality_1=modality_key_1,
