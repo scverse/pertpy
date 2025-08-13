@@ -123,7 +123,7 @@ class Tasccoda(CompositionalModel2):
         elif type == "sample_level":
             mdata = MuData({modality_key_1: AnnData(), modality_key_2: adata})
         else:
-            raise ValueError(f'{type} is not a supported type, expected "cell_level" or "sample_level"')
+            raise ValueError(f'{type} is not a supported type, expected "cell_level" or "sample_level".')
         import_tree(
             data=mdata,
             modality_1=modality_key_1,
