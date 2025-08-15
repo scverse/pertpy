@@ -59,9 +59,8 @@ def test_prepare(smillie_adata):
 
 
 def test_load_invalid_type_raises_error(smillie_adata):
-    """Check that pt.tl.Tasccoda().load() raises a ValueError for an invalid type, i.e, not 'sample_level' nor 'cell_level'"""
     invalid_type = "an_invalid_string"
-    with pytest.raises(ValueError, match=f'"{invalid_type}" is not a supported type'):
+    with pytest.raises(ValueError, match=f"{invalid_type} is not a supported type"):
         tasccoda.load(smillie_adata, type=invalid_type)
 
 
