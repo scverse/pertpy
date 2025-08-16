@@ -58,6 +58,12 @@ def test_prepare(smillie_adata):
     assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 8
 
 
+def test_load_invalid_type_raises_error(smillie_adata):
+    invalid_type = "an_invalid_string"
+    with pytest.raises(ValueError, match=f"{invalid_type} is not a supported type"):
+        tasccoda.load(smillie_adata, type=invalid_type)
+
+
 def test_run_nuts(smillie_adata):
     mdata = tasccoda.load(
         smillie_adata,
