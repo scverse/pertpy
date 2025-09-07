@@ -1,12 +1,20 @@
+import pytest
+
+try:
+    import scvi
+except Exception:  # noqa: BLE001
+    pytest.skip("Required R package 'edgeR' not available", allow_module_level=True)
+
 import warnings
 
 import anndata as ad
 import pertpy as pt
 import scanpy as sc
-from scvi.data import synthetic_iid
 
 
 def test_scgen():
+    from scvi.data import synthetic_iid
+
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Observation names are not unique")
         adata = synthetic_iid()
