@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from lamin_utils import logger
-from rich import print
 from scipy.stats import entropy
 
 if TYPE_CHECKING:

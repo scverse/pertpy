@@ -169,3 +169,6 @@ test-bug
 
 # uv
 uv.lock
+
+# Ruff
+.ruff_cache

@@ -22,7 +22,7 @@ class PerturbationComparison:
     ) -> float:
         """Compare classification accuracy between real and simulated perturbations.
 
-        Trains a classifier on the real perturbation data + the control data and reports a normalized
+        Trains a classifier on the real perturbation data & the control data and reports a normalized
         classification accuracy on the simulated perturbation.
 
         Args:
@@ -64,8 +64,8 @@ class PerturbationComparison:
             real: Real perturbed data.
             simulated: Simulated perturbed data.
             control: Control data
-            use_simulated_for_knn: Include simulted perturbed data (`simulated`) into the knn graph. Only valid when
-                control (`control`) is provided.
+            use_simulated_for_knn: Include simulted perturbed data (`simulated`) into the knn graph.
+                Only valid when control (`control`) is provided.
             n_neighbors: Number of neighbors to use in k-neighbor graph.
             random_state: Random state used for k-neighbor graph construction.
             n_jobs: Number of cores to use. Defaults to -1 (all).

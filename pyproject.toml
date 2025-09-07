@@ -48,14 +48,15 @@ classifiers = [
 ]
 
 dependencies = [
+    "requests",
     "rich",
     "scanpy",
     "mudata",
-    "requests",
     "scikit-misc",
-    "scvi-tools",
     "adjusttext",
     "ott-jax",
+    "numpyro",
+    "flax",
     "sparsecca",
     "openpyxl",
     "pubchempy",
@@ -77,6 +78,10 @@ de = [
     "formulaic-contrasts>=0.2.0",
     "formulaic",
     "pydeseq2>=v0.5.0",
+]
+scgen = ["scvi-tools"]
+all = [
+    "pertpy[tcoda,de,scgen]"
 ]
 dev = [
     "pre-commit",

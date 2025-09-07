@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal
 
 import numpy as np
+import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
@@ -29,8 +30,8 @@ class CentroidSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            keep_obs: Whether .obs columns in the input AnnData should be kept in the output pseudobulk AnnData. Only .obs columns with the same value for
-                each cell of one perturbation are kept.
+            keep_obs: Whether .obs columns in the input AnnData should be kept in the output pseudobulk AnnData.
+                Only .obs columns with the same value for each cell of one perturbation are kept.
 
         Returns:
             AnnData object with one observation per perturbation, storing the embedding data of the
@@ -170,10 +171,15 @@ class PseudobulkSpace(PerturbationSpace):
         if mode in ps_adata.layers:
             ps_adata.X = ps_adata.layers[mode]
 
-        for col in original_obs.columns:
-            if col not in ps_adata.obs.columns:
-                grouped_values = original_obs.groupby(grouping_cols)[col].first()
-                ps_adata.obs[col] = grouped_values.reindex(ps_adata.obs.index).values
+        missing_cols = [col for col in original_obs.columns if col not in ps_adata.obs.columns]
+        new_cols_data = {}
+
+        for col in missing_cols:
+            grouped_values = original_obs.groupby(grouping_cols, observed=False)[col].first()
+            new_cols_data[col] = grouped_values.reindex(ps_adata.obs.index).values
+
+        if new_cols_data:
+            ps_adata.obs = pd.concat([ps_adata.obs, pd.DataFrame(new_cols_data, index=ps_adata.obs.index)], axis=1)
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
