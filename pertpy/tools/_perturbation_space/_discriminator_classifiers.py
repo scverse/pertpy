@@ -295,7 +295,7 @@ class MLPClassifierSpace(PerturbationSpace):
         hidden_dim: list[int] = None,
         dropout: float = 0.0,
         batch_norm: bool = True,
-        batch_size: int = 64,
+        batch_size: int = 128,
         test_split_size: float = 0.2,
         validation_split_size: float = 0.25,
         max_epochs: int = 20,
@@ -317,19 +317,17 @@ class MLPClassifierSpace(PerturbationSpace):
             adata: AnnData object of size cells x genes
             target_col: .obs column that stores the perturbations.
             layer_key: Layer in adata to use.
-            hidden_dim: List of number of neurons in each hidden layers of the neural network. For instance, [512, 256]
-                will create a neural network with two hidden layers, the first with 512 neurons and the second with 256 neurons.
+            hidden_dim: List of number of neurons in each hidden layers of the neural network.
+                For instance, [512, 256] will create a neural network with two hidden layers, the first with 512 neurons and the second with 256 neurons.
             dropout: Amount of dropout applied, constant for all layers.
             batch_norm: Whether to apply batch normalization.
             batch_size: The batch size, i.e. the number of datapoints to use in one forward/backward pass.
             test_split_size: Fraction of data to put in the test set. Default to 0.2.
             validation_split_size: Fraction of data to put in the validation set of the resultant train set.
-                E.g. a test_split_size of 0.2 and a validation_split_size of 0.25 means that 25% of 80% of the data
-                will be used for validation.
+                E.g. a test_split_size of 0.2 and a validation_split_size of 0.25 means that 25% of 80% of the data will be used for validation.
             max_epochs: Maximum number of epochs for training.
             val_epochs_check: Test performance on validation dataset after every val_epochs_check training epochs.
-                Note that this affects early stopping, as the model will be stopped if the validation performance does not
-                improve for patience epochs.
+                Note that this affects early stopping, as the model will be stopped if the validation performance does not improve for patience epochs.
             patience: Number of validation performance checks without improvement, after which the early stopping flag
                 is activated and training is therefore stopped.
             lr: Learning rate for training.

@@ -20,6 +20,10 @@ jobs:
 
         env:
             NOTEBOOK_PATH: docs/tutorials/notebooks
+            XLA_PYTHON_CLIENT_PREALLOCATE: false
+            XLA_PYTHON_CLIENT_MEM_FRACTION: "0.25"
+            XLA_PYTHON_CLIENT_ALLOCATOR: platform
+            JAX_PLATFORM_NAME: cpu
 
         strategy:
             fail-fast: false
@@ -35,7 +39,7 @@ jobs:
                         "milo.ipynb",
                         "mixscape.ipynb",
                         "sccoda.ipynb",
-                        "perturbation_space.ipynb", # seems to run OOM as of Jax implementation
+                        "perturbation_space.ipynb",  # seems to run OOM as of Jax implementation
                         # "dialogue.ipynb", takes too long
                         # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
                         # also no use cases yet
