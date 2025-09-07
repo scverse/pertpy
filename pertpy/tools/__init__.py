@@ -35,10 +35,17 @@ def __getattr__(name: str):
             raise ImportError(
                 "Extra dependencies required: toytree, ete4. Please install with: pip install toytree ete4"
             ) from None
-
     elif name in ["EdgeR", "PyDESeq2", "Statsmodels", "TTest", "WilcoxonTest"]:
         module = import_module("pertpy.tools._differential_gene_expression")
         return getattr(module, name)
+    elif name == "Scgen":
+        try:
+            module = import_module("pertpy.tools._scgen.Scgen")
+            return module.Scgen
+        except ImportError:
+            raise ImportError(
+                "Scgen requires scvi-tools to be installed. Please install with: pip install scvi-tools"
+            ) from None
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

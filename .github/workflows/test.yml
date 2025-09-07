@@ -77,7 +77,7 @@ jobs:
             - name: Install dependencies
               run: |
                   uv pip install --system rpy2
-                  uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,tcoda,de]"
+                  uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,all]"
 
             - name: Test
               env:
