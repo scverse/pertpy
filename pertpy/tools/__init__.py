@@ -21,7 +21,6 @@ from pertpy.tools._perturbation_space._simple import (
     KMeansSpace,
     PseudobulkSpace,
 )
-from pertpy.tools._scgen import Scgen
 
 
 def __getattr__(name: str):
