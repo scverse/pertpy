@@ -34,8 +34,8 @@ jobs:
                         "guide_rna_assignment.ipynb",
                         "milo.ipynb",
                         "mixscape.ipynb",
-                        "perturbation_space.ipynb",
                         "sccoda.ipynb",
+                        "perturbation_space.ipynb", # seems to run OOM as of Jax implementation
                         # "dialogue.ipynb", takes too long
                         # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
                         # also no use cases yet

@@ -295,7 +295,7 @@ class MLPClassifierSpace(PerturbationSpace):
         hidden_dim: list[int] = None,
         dropout: float = 0.0,
         batch_norm: bool = True,
-        batch_size: int = 256,
+        batch_size: int = 64,
         test_split_size: float = 0.2,
         validation_split_size: float = 0.25,
         max_epochs: int = 20,
@@ -354,6 +354,7 @@ class MLPClassifierSpace(PerturbationSpace):
         if hidden_dim is None:
             hidden_dim = [512]
 
+        # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
         labels = adata.obs[target_col].values.reshape(-1, 1)
         encoder = OneHotEncoder()
