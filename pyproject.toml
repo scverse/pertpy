@@ -48,13 +48,14 @@ classifiers = [
 ]
 
 dependencies = [
+    "requests",
     "rich",
     "scanpy",
     "mudata",
-    "requests",
     "scikit-misc",
     "adjusttext",
     "ott-jax",
+    "numpyro",
     "sparsecca",
     "openpyxl",
     "pubchempy",
