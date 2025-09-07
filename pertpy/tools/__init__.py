@@ -39,7 +39,7 @@ def __getattr__(name: str):
         return getattr(module, name)
     elif name == "Scgen":
         try:
-            module = import_module("pertpy.tools._scgen.Scgen")
+            module = import_module("pertpy.tools._scgen")
             return module.Scgen
         except ImportError:
             raise ImportError(
@@ -47,6 +47,10 @@ def __getattr__(name: str):
             ) from None
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return __all__
 
 
 __all__ = [
