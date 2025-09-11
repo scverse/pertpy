@@ -3,7 +3,6 @@
 import warnings
 from abc import abstractmethod
 from collections.abc import Callable, Mapping, Sequence
-from inspect import signature
 from types import MappingProxyType
 
 import numpy as np
@@ -11,7 +10,6 @@ import pandas as pd
 import scipy.stats
 import statsmodels
 from anndata import AnnData
-from lamin_utils import logger
 from pandas.core.api import DataFrame
 from scipy.sparse import diags, issparse
 from tqdm.auto import tqdm
@@ -46,6 +44,10 @@ class SimpleComparisonBase(MethodBase):
             x1: Array with values to compare.
             paired: Indicates whether to perform a paired test
             **kwargs: kwargs passed to the test function
+
+        Returns:
+            A dictionary metric -> value.
+            This allows to return values for different metrics (e.g. p-value + test statistic).
         """
         ...
 
@@ -73,7 +75,7 @@ class SimpleComparisonBase(MethodBase):
             x0 = x0.tocsc()
             x1 = x1.tocsc()
 
-        res: list[dict[str, float | np.ndarray]] = []
+        res: list[dict[str, float]] = []
         for var in tqdm(self.adata.var_names):
             tmp_x0 = x0[:, self.adata.var_names == var]
             tmp_x0 = np.asarray(tmp_x0.todense()).flatten() if issparse(tmp_x0) else tmp_x0.flatten()
@@ -96,8 +98,6 @@ class SimpleComparisonBase(MethodBase):
         paired_by: str | None = None,
         mask: str | None = None,
         layer: str | None = None,
-        n_permutations: int = 1000,
-        permutation_test_statistic: type["SimpleComparisonBase"] | None = None,
         fit_kwargs: Mapping = MappingProxyType({}),
         test_kwargs: Mapping = MappingProxyType({}),
     ) -> DataFrame:
@@ -112,9 +112,6 @@ class SimpleComparisonBase(MethodBase):
             paired_by: Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
             mask: Mask to apply to the data.
             layer: Layer to use for the comparison.
-            n_permutations: Number of permutations to perform if a permutation test is used.
-            permutation_test_statistic: The statistic to use if performing a permutation test. If None, the default
-                t-statistic from `TTest` is used.
             fit_kwargs: Unused argument for compatibility with the `MethodBase` interface, do not specify.
             test_kwargs: Additional kwargs passed to the test function.
         """
@@ -145,12 +142,6 @@ class SimpleComparisonBase(MethodBase):
                 return ind_mat.row[np.argsort(ind_mat.col)]
             else:
                 return np.where(mask)[0]
-
-        if permutation_test_statistic:
-            test_kwargs = dict(test_kwargs)
-            test_kwargs.update({"test_statistic": permutation_test_statistic, "n_permutations": n_permutations})
-        elif permutation_test_statistic is None and cls.__name__ == "PermutationTest":
-            logger.warning("No permutation test statistic specified. Using TTest statistic as default.")
 
         res_dfs = []
         baseline_idx = _get_idx(column, baseline)
@@ -210,68 +201,107 @@ class PermutationTest(SimpleComparisonBase):
     same underlying distribution and that their assignment to a sample is random.
     """
 
+    @classmethod
+    def compare_groups(
+        cls,
+        adata: AnnData,
+        column: str,
+        baseline: str,
+        groups_to_compare: str | Sequence[str],
+        *,
+        paired_by: str | None = None,
+        mask: str | None = None,
+        layer: str | None = None,
+        n_permutations: int = 1000,
+        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: np.log2(np.mean(y) + 1e-8)
+        - np.log2(np.mean(x) + 1e-8),
+        fit_kwargs: Mapping = MappingProxyType({}),
+        test_kwargs: Mapping = MappingProxyType({}),
+    ) -> DataFrame:
+        """Perform a permutation test comparison between groups.
+
+        Args:
+            adata: Data with observations to compare.
+            column: Column in `adata.obs` that contains the groups to compare.
+            baseline: Reference group.
+            groups_to_compare: Groups to compare against the baseline. If None, all other groups
+                are compared.
+            paired_by: Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
+            mask: Mask to apply to the data.
+            layer: Layer to use for the comparison.
+            n_permutations: Number of permutations to perform.
+            test_statistic: A callable that takes two arrays (x0, x1) and returns a float statistic.
+                Defaults to log2 fold change with pseudocount: log2(mean(x1) + 1e-8) - log2(mean(x0) + 1e-8).
+                The callable should have signature: test_statistic(x0, x1) -> float.
+            fit_kwargs: Unused argument for compatibility with the `MethodBase` interface, do not specify.
+            test_kwargs: Additional kwargs passed to the permutation test function (not the test statistic). The
+                permutation test function is `scipy.stats.permutation_test`, so please refer to its documentation for
+                available options. Note that `test_statistic` and `n_permutations` are set by this function and should
+                not be provided here.
+
+        Examples:
+            >>> # Difference in means (log fold change)
+            >>> PermutationTest.compare_groups(
+            ...     adata,
+            ...     column="condition",
+            ...     baseline="A",
+            ...     groups_to_compare="B",
+            ...     test_statistic=lambda x, y: np.log2(np.mean(y)) - np.log2(np.mean(x)),
+            ...     n_permutations=1000,
+            ...     test_kwargs={"rng": 0},
+            ... )
+        """
+        enhanced_test_kwargs = dict(test_kwargs)
+        enhanced_test_kwargs.update({"test_statistic": test_statistic, "n_permutations": n_permutations})
+
+        return super().compare_groups(
+            adata=adata,
+            column=column,
+            baseline=baseline,
+            groups_to_compare=groups_to_compare,
+            paired_by=paired_by,
+            mask=mask,
+            layer=layer,
+            fit_kwargs=fit_kwargs,
+            test_kwargs=enhanced_test_kwargs,
+        )
+
     @staticmethod
     def _test(
         x0: np.ndarray,
         x1: np.ndarray,
         paired: bool,
-        test_statistic: type["SimpleComparisonBase"] | Callable = WilcoxonTest,
+        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: np.log2(np.mean(y) + 1e-8)
+        - np.log2(np.mean(x) + 1e-8),
         n_permutations: int = 1000,
         **kwargs,
     ) -> dict[str, float]:
         """Perform a permutation test.
 
-        This function relies on another test (e.g. WilcoxonTest) to generate a test statistic for each permutation.
+        This function uses a simple test statistic function to compute p-values through permutations.
 
         Args:
             x0: Array with baseline values.
             x1: Array with values to compare.
-            paired: Whether to perform a paired test
-            test_statistic: The class or function to generate the test statistic from permuted data. If a function is
-                passed, it must have the signature `test_statistic(x0, x1, paired[, axis], **kwargs)`. If it accepts the
-                parameter axis, vectorization will be used.
+            paired: Whether to perform a paired test.
+            test_statistic: A callable that takes two arrays (x0, x1) and returns a float statistic. Please refer to
+                the examples below for usage. The callable should have signature: test_statistic(x0, x1) -> float.
             n_permutations: Number of permutations to perform.
-            **kwargs: kwargs passed to the permutation test function, not the test function after permutation.
+            **kwargs: Additional kwargs passed to scipy.stats.permutation_test.
 
         Examples:
-            You can use the `PermutationTest` class to perform a permutation test with a custom test statistic or an
-            existing test statistic like `TTest`. The test statistic must be a class that implements the `_test` method
-            or a function that takes the arguments `x0`, `x1`, `paired` and `**kwargs`.
-
-            >>> from pertpy.tools import PermutationTest, TTest
-            >>> # Perform a permutation test with a t-statistic
-            >>> p_value = PermutationTest._test(x0, x1, paired=True, test=TTest, n_permutations=1000, rng=0)
-            >>> # Perform a permutation test with a custom test statistic
-            >>> p_value = PermutationTest._test(x0, x1, paired=False, test=your_custom_test_statistic)
+            >>> # Difference in means (log fold change)
+            >>> PermutationTest._test(x0, x1, paired=False)
+            >>>
+            >>> # Difference in medians
+            >>> median_diff = lambda x, y: np.median(y) - np.median(x)
+            >>> PermutationTest._test(x0, x1, paired=False, test_statistic=median_diff)
         """
-        if test_statistic is PermutationTest:
-            raise ValueError(
-                "The `test_statistic` argument cannot be `PermutationTest`. Use a base test like `TTest` or a custom test."
-            )
-
-        vectorized = hasattr(test_statistic, "_test") or "axis" in signature(test_statistic).parameters
-
-        def call_test(data_baseline, data_comparison, axis: int | None = None, **kwargs):
-            """Perform the actual test."""
-            if not hasattr(test_statistic, "_test"):
-                if vectorized:
-                    return test_statistic(data_baseline, data_comparison, paired=paired, axis=axis, **kwargs)[
-                        "statistic"
-                    ]
-
-                return test_statistic(data_baseline, data_comparison, paired=paired, **kwargs)["statistic"]
-
-            if vectorized:
-                kwargs.update({"axis": axis})
-
-            return test_statistic._test(data_baseline, data_comparison, paired, **kwargs)["statistic"]
-
         test_result = scipy.stats.permutation_test(
             [x0, x1],
-            statistic=call_test,
+            statistic=lambda x0_perm, x1_perm: test_statistic(x0_perm, x1_perm),
             n_resamples=n_permutations,
             permutation_type=("samples" if paired else "independent"),
-            vectorized=vectorized,
             **kwargs,
         )
 

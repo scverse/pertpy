@@ -87,15 +87,22 @@ def test_permutation(test_adata_minimal, paired_by, expected):
 
     Reference values have been computed in R using wilcox.test
     """
-    for statistic in [TTest, WilcoxonTest]:
+    # Test with different simple test statistics
+    test_statistics = [
+        lambda x, y: np.log2(np.mean(y)) - np.log2(np.mean(x)),  # log fold change between means (default)
+        lambda x, y: np.mean(y) - np.mean(x),  # mean difference
+        lambda x, y: np.max(y) - np.max(x),  # max difference
+    ]
+
+    for test_stat in test_statistics:
         res_df = PermutationTest.compare_groups(
             adata=test_adata_minimal,
             column="condition",
             baseline="A",
             groups_to_compare="B",
+            test_statistic=test_stat,
             paired_by=paired_by,
             n_permutations=1000,
-            permutation_test_statistic=statistic,
             test_kwargs={"rng": 0},
         )
         assert isinstance(res_df, DataFrame), "PermutationTest.compare_groups should return a DataFrame"
