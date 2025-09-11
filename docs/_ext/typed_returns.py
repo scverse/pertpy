@@ -10,7 +10,7 @@ def _process_return(lines: Iterable[str]) -> Iterator[str]:
         m = re.fullmatch(r"(?P<param>\w+)\s+:\s+(?P<type>[\w.]+)", line)
         if m:
             # Once this is in scanpydoc, we can use the fancy hover stuff
-            yield f'**{m["param"]}** : :class:`~{m["type"]}`'
+            yield f"**{m['param']}** : :class:`~{m['type']}`"
         else:
             yield line
 
@@ -23,5 +23,5 @@ def _parse_returns_section(self: NumpyDocstring, section: str) -> list[str]:
     return lines
 
 
-def setup(app: Sphinx) -> None:
+def setup(app: Sphinx) -> None:  # noqa: D103
     NumpyDocstring._parse_returns_section = _parse_returns_section

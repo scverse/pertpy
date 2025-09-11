@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 import re
+from importlib.util import find_spec
 from typing import TYPE_CHECKING, Literal
 
 import matplotlib.pyplot as plt
@@ -29,18 +30,6 @@ from sklearn.metrics.pairwise import euclidean_distances
 class Milo:
     """Python implementation of Milo."""
 
-    def __init__(self):
-        try:
-            from rpy2.robjects import conversion, numpy2ri, pandas2ri
-            from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
-        except ModuleNotFoundError:
-            raise ImportError("milo requires rpy2 to be installed.") from None
-
-        try:
-            importr("edgeR")
-        except ImportError as e:
-            raise ImportError("milo requires a valid R installation with edger installed:\n") from e
-
     def load(
         self,
         input: AnnData,
@@ -51,14 +40,16 @@ class Milo:
         Args:
             input: AnnData
             feature_key: Key to store the cell-level AnnData object in the MuData object
+
         Returns:
-            MuData: MuData object with original AnnData.
+            :class:`mudata.MuData` object with original AnnData.
 
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
+
         """
         mdata = MuData({feature_key: input, "milo": AnnData()})
 
@@ -113,6 +104,7 @@ class Milo:
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
+
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
@@ -177,10 +169,7 @@ class Milo:
         adata.obs["nhood_ixs_random"] = adata.obs["nhood_ixs_random"].astype("int")
         adata.uns["nhood_neighbors_key"] = neighbors_key
         # Store distance to K-th nearest neighbor (used for spatial FDR correction)
-        if neighbors_key is None:
-            knn_dists = adata.obsp["distances"]
-        else:
-            knn_dists = adata.obsp[neighbors_key + "_distances"]
+        knn_dists = adata.obsp["distances"] if neighbors_key is None else adata.obsp[neighbors_key + "_distances"]
 
         nhood_ixs = adata.obs["nhood_ixs_refined"] == 1
         dist_mat = knn_dists[np.asarray(nhood_ixs), :]
@@ -223,6 +212,7 @@ class Milo:
             >>> sc.pp.neighbors(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
@@ -265,7 +255,7 @@ class Milo:
         subset_samples: list[str] | None = None,
         add_intercept: bool = True,
         feature_key: str | None = "rna",
-        solver: Literal["edger", "batchglm"] = "edger",
+        solver: Literal["edger", "pydeseq2"] = "edger",
     ):
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
 
@@ -278,7 +268,9 @@ class Milo:
             subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test.
             add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default.
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
-            solver: The solver to fit the model to. One of "edger" (requires R, rpy2 and edgeR to be installed) or "batchglm"
+            solver: The solver to fit the model to.
+                The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
+                The "pydeseq2" requires pydeseq2 to be installed. It is still very comparable to the "edger" solver but might be a bit slower.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
@@ -362,19 +354,32 @@ class Milo:
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 
+            import rpy2.robjects as ro
+            from rpy2.robjects import numpy2ri, pandas2ri
+            from rpy2.robjects.conversion import localconverter
+            from rpy2.robjects.vectors import FloatVector
+
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
                 design = design + " + 0"
-            model = stats.model_matrix(object=stats.formula(design), data=design_df)
+            design_df = design_df.astype(dict.fromkeys(design_df.select_dtypes(exclude=["number"]).columns, "category"))
+            with localconverter(ro.default_converter + pandas2ri.converter):
+                design_r = pandas2ri.py2rpy(design_df)
+            formula_r = stats.formula(design)
+            model = stats.model_matrix(object=formula_r, data=design_r)
 
             # Fit NB-GLM
-            dge = edgeR.DGEList(counts=count_mat[keep_nhoods, :][:, keep_smp], lib_size=lib_size[keep_smp])
+            counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
+            lib_size_filtered = lib_size[keep_smp]
+            count_mat_r = numpy2ri.py2rpy(counts_filtered)
+            lib_size_r = FloatVector(lib_size_filtered)
+            dge = edgeR.DGEList(counts=count_mat_r, lib_size=lib_size_r)
             dge = edgeR.calcNormFactors(dge, method="TMM")
             dge = edgeR.estimateDisp(dge, model)
             fit = edgeR.glmQLFit(dge, model, robust=True)
-
             # Test
-            n_coef = model.shape[1]
+            model_np = np.array(model)
+            n_coef = model_np.shape[1]
             if model_contrasts is not None:
                 r_str = """
                 get_model_cols <- function(design_df, design){
@@ -385,34 +390,92 @@ class Milo:
                 from rpy2.robjects.packages import STAP
 
                 get_model_cols = STAP(r_str, "get_model_cols")
-                model_mat_cols = get_model_cols.get_model_cols(design_df, design)
-                model_df = pd.DataFrame(model)
+                with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
+                    model_mat_cols = get_model_cols.get_model_cols(design_df, design)
+                with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
+                    model_df = pandas2ri.rpy2py(model)
+                model_df = pd.DataFrame(model_df)
                 model_df.columns = model_mat_cols
                 try:
-                    mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
+                    with localconverter(ro.default_converter + pandas2ri.converter):
+                        mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
                 except ValueError:
                     logger.error("Model contrasts must be in the form 'A-B' or 'A+B'")
                     raise
-                res = base.as_data_frame(
-                    edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
-                )
+                with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
+                    res = base.as_data_frame(
+                        edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
+                    )
             else:
-                res = base.as_data_frame(edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf))
-
-            from rpy2.robjects import conversion
-
-            res = conversion.rpy2py(res)
+                with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
+                    res = base.as_data_frame(
+                        edgeR.topTags(edgeR.glmQLFTest(fit, coef=n_coef), sort_by="none", n=np.inf)
+                    )
+            if res is None:
+                raise ValueError("Unable to generate results with edgeR. Is your installation correct?")
             if not isinstance(res, pd.DataFrame):
                 res = pd.DataFrame(res)
+            # The columns of res looks like e.g. table.A, table.B, so remove the prefix
+            res.columns = [col.replace("table.", "") for col in res.columns]
+        elif solver == "pydeseq2":
+            if find_spec("pydeseq2") is None:
+                raise ImportError("pydeseq2 is required but not installed. Install with: pip install pydeseq2")
 
-        # Save outputs
+            from pydeseq2.dds import DeseqDataSet
+            from pydeseq2.ds import DeseqStats
+
+            counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
+            design_df_filtered = design_df.iloc[keep_smp].copy()
+
+            design_df_filtered = design_df_filtered.astype(
+                dict.fromkeys(design_df_filtered.select_dtypes(exclude=["number"]).columns, "category")
+            )
+
+            design_clean = design if design.startswith("~") else f"~{design}"
+
+            dds = DeseqDataSet(
+                counts=pd.DataFrame(counts_filtered.T, index=design_df_filtered.index),
+                metadata=design_df_filtered,
+                design=design_clean,
+                refit_cooks=True,
+            )
+
+            dds.deseq2()
+
+            if model_contrasts is not None and "-" in model_contrasts:
+                if "(" in model_contrasts or "+" in model_contrasts.split("-")[1]:
+                    raise ValueError(
+                        f"Complex contrasts like '{model_contrasts}' are not supported by pydeseq2. "
+                        "Use simple pairwise contrasts (e.g., 'GroupA-GroupB') or switch to solver='edger'."
+                    )
+
+                parts = model_contrasts.split("-")
+                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
+                group1 = parts[0].replace(factor_name, "").strip()
+                group2 = parts[1].replace(factor_name, "").strip()
+                stat_res = DeseqStats(dds, contrast=[factor_name, group1, group2])
+            else:
+                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
+                if not isinstance(design_df_filtered[factor_name], pd.CategoricalDtype):
+                    design_df_filtered[factor_name] = design_df_filtered[factor_name].astype("category")
+                categories = design_df_filtered[factor_name].cat.categories
+                stat_res = DeseqStats(dds, contrast=[factor_name, categories[-1], categories[0]])
+
+            stat_res.summary()
+            res = stat_res.results_df
+
+            res = res.rename(
+                columns={"baseMean": "logCPM", "log2FoldChange": "logFC", "pvalue": "PValue", "padj": "FDR"}
+            )
+
+            res = res[["logCPM", "logFC", "PValue", "FDR"]]
+
         res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
         if any(col in sample_adata.var.columns for col in res.columns):
             sample_adata.var = sample_adata.var.drop(res.columns, axis=1)
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
 
-        # Run Graph spatial FDR correction
-        self._graph_spatial_fdr(sample_adata, neighbors_key=adata.uns["nhood_neighbors_key"])
+        self._graph_spatial_fdr(sample_adata)
 
     def annotate_nhoods(
         self,
@@ -428,7 +491,7 @@ class Milo:
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
-            None. Adds in place:
+            Adds in place.
             - `milo_mdata['milo'].var["nhood_annotation"]`: assigning a label to each nhood
             - `milo_mdata['milo'].var["nhood_annotation_frac"]` stores the fraciton of cells in the neighbourhood with the assigned label
             - `milo_mdata['milo'].varm['frac_annotation']`: stores the fraction of cells from each label in each nhood
@@ -444,6 +507,7 @@ class Milo:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.annotate_nhoods(mdata, anno_col="cell_type")
+
         """
         try:
             sample_adata = mdata["milo"]
@@ -468,7 +532,7 @@ class Milo:
 
         anno_frac_dataframe = pd.DataFrame(anno_frac, columns=anno_dummies.columns, index=sample_adata.var_names)
         sample_adata.varm["frac_annotation"] = anno_frac_dataframe.values
-        sample_adata.uns["annotation_labels"] = anno_frac_dataframe.columns
+        sample_adata.uns["annotation_labels"] = anno_frac_dataframe.columns.to_list()
         sample_adata.uns["annotation_obs"] = anno_col
         sample_adata.var["nhood_annotation"] = anno_frac_dataframe.idxmax(1)
         sample_adata.var["nhood_annotation_frac"] = anno_frac_dataframe.max(1)
@@ -482,7 +546,7 @@ class Milo:
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
 
         Returns:
-            None. Adds in place:
+            Adds in place.
             - `milo_mdata['milo'].var["nhood_{anno_col}"]`: assigning a continuous value to each nhood
 
         Examples:
@@ -567,7 +631,7 @@ class Milo:
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
 
     def build_nhood_graph(self, mdata: MuData, basis: str = "X_umap", feature_key: str | None = "rna"):
-        """Build graph of neighbourhoods used for visualization of DA results
+        """Build graph of neighbourhoods used for visualization of DA results.
 
         Args:
             mdata: MuData object
@@ -625,6 +689,7 @@ class Milo:
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
             >>> milo.add_nhood_expression(mdata)
+
         """
         try:
             sample_adata = mdata["milo"]
@@ -652,12 +717,20 @@ class Milo:
     def _setup_rpy2(
         self,
     ):
-        """Set up rpy2 to run edgeR"""
-        from rpy2.robjects import numpy2ri, pandas2ri
+        """Set up rpy2 to run edgeR."""
+        try:
+            from rpy2.robjects import conversion, numpy2ri, pandas2ri
+            from rpy2.robjects.packages import STAP, PackageNotInstalledError, importr
+        except ModuleNotFoundError:
+            raise ImportError("milo requires rpy2 to be installed.") from None
+
+        try:
+            importr("edgeR")
+        except ImportError as e:
+            raise ImportError("milo requires a valid R installation with edger installed.") from e
+
         from rpy2.robjects.packages import importr
 
-        numpy2ri.activate()
-        pandas2ri.activate()
         edgeR = self._try_import_bioc_library("edgeR")
         limma = self._try_import_bioc_library("limma")
         stats = importr("stats")
@@ -667,26 +740,27 @@ class Milo:
 
     def _try_import_bioc_library(
         self,
-        name: str,
+        r_package: str,
     ):
         """Import R packages.
 
         Args:
-            name (str): R packages name
+            r_package: R packages name
         """
         from rpy2.robjects.packages import PackageNotInstalledError, importr
 
         try:
-            _r_lib = importr(name)
+            _r_lib = importr(r_package)
             return _r_lib
         except PackageNotInstalledError:
-            logger.error(f"Install Bioconductor library `{name!r}` first as `BiocManager::install({name!r}).`")
+            logger.error(
+                f"Install Bioconductor library `{r_package!r}` first as `BiocManager::install({r_package!r}).`"
+            )
             raise
 
     def _graph_spatial_fdr(
         self,
         sample_adata: AnnData,
-        neighbors_key: str | None = None,
     ):
         """FDR correction weighted on inverse of connectivity of neighbourhoods.
 
@@ -694,7 +768,6 @@ class Milo:
 
         Args:
             sample_adata: Sample-level AnnData.
-            neighbors_key: The key in `adata.obsp` to use as KNN graph.
         """
         # use 1/connectivity as the weighting for the weighted BH adjustment from Cydar
         w = 1 / sample_adata.var["kth_distance"]
@@ -715,7 +788,7 @@ class Milo:
         sample_adata.var.loc[keep_nhoods, "SpatialFDR"] = adjp
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_nhood_graph(
+    def plot_nhood_graph(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         *,
@@ -730,7 +803,7 @@ class Milo:
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
-        """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding)
+        """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding).
 
         Args:
             mdata: MuData object
@@ -808,7 +881,7 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_nhood(
+    def plot_nhood(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         ix: int,
@@ -869,7 +942,7 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_da_beeswarm(
+    def plot_da_beeswarm(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         *,
@@ -880,7 +953,7 @@ class Milo:
         palette: str | Sequence[str] | dict[str, str] | None = None,
         return_fig: bool = False,
     ) -> Figure | None:
-        """Plot beeswarm plot of logFC against nhood labels
+        """Plot beeswarm plot of logFC against nhood labels.
 
         Args:
             mdata: MuData object
@@ -995,7 +1068,7 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_nhood_counts_by_cond(
+    def plot_nhood_counts_by_cond(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         test_var: str,
@@ -1003,6 +1076,8 @@ class Milo:
         subset_nhoods: list[str] = None,
         log_counts: bool = False,
         return_fig: bool = False,
+        ax=None,
+        show: bool = True,
     ) -> Figure | None:
         """Plot boxplot of cell numbers vs condition of interest.
 
@@ -1032,18 +1107,36 @@ class Milo:
         pl_df = pd.merge(pl_df, nhood_adata.var)
         pl_df["log_n_cells"] = np.log1p(pl_df["n_cells"])
         if not log_counts:
-            sns.boxplot(data=pl_df, x=test_var, y="n_cells", color="lightblue")
-            sns.stripplot(data=pl_df, x=test_var, y="n_cells", color="black", s=3)
-            plt.ylabel("# cells")
+            sns.boxplot(data=pl_df, x=test_var, y="n_cells", color="lightblue", ax=ax)
+            sns.stripplot(data=pl_df, x=test_var, y="n_cells", color="black", s=3, ax=ax)
+            if ax:
+                ax.set_ylabel("# cells")
+            else:
+                plt.ylabel("# cells")
         else:
-            sns.boxplot(data=pl_df, x=test_var, y="log_n_cells", color="lightblue")
-            sns.stripplot(data=pl_df, x=test_var, y="log_n_cells", color="black", s=3)
-            plt.ylabel("log(# cells + 1)")
+            sns.boxplot(data=pl_df, x=test_var, y="log_n_cells", color="lightblue", ax=ax)
+            sns.stripplot(data=pl_df, x=test_var, y="log_n_cells", color="black", s=3, ax=ax)
+            if ax:
+                ax.set_ylabel("log(# cells + 1)")
+            else:
+                plt.ylabel("log(# cells + 1)")
 
-        plt.xticks(rotation=90)
-        plt.xlabel(test_var)
+        if ax:
+            ax.tick_params(axis="x", rotation=90)
+            ax.set_xlabel(test_var)
+        else:
+            plt.xticks(rotation=90)
+            plt.xlabel(test_var)
 
         if return_fig:
             return plt.gcf()
-        plt.show()
+
+        if ax is None:
+            plt.show()
+
+        if return_fig:
+            return plt.gcf()
+        if show:
+            plt.show()
+
         return None

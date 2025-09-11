@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
-from dataclasses import dataclass
 from math import floor, nan
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -11,7 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import statsmodels.api as sm
 from anndata import AnnData
 from joblib import Parallel, delayed
 from lamin_utils import logger
@@ -34,6 +32,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
 from skmisc.loess import loess
+from statsmodels.api import OLS
 from statsmodels.stats.multitest import fdrcorrection
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -43,14 +42,24 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 
-@dataclass
-class Params:
-    """Type signature for random forest and logistic regression parameters.
+class Augur:
+    """Python implementation of Augur."""
 
-    Parameters:
-        n_estimators: defines the number of trees in the forest;
-        max_depth: specifies the maximal depth of each tree;
-        max_features: specifies the maximal number of features considered when looking at best split.
+    def __init__(
+        self,
+        estimator: Literal["random_forest_classifier", "random_forest_regressor", "logistic_regression_classifier"],
+        n_estimators: int = 100,
+        max_depth: int | None = None,
+        max_features: Literal["auto", "log2", "sqrt"] | int | float = 2,
+        penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
+        random_state: int | None = None,
+    ):
+        """Defines the Augur estimator model and parameters.
+
+        estimator: The scikit-learn estimator model that classifies.
+        n_estimators: Number of trees in the forest.
+        max_depth: Maximal depth of each tree.
+        max_features: Maximal number of features considered when looking at best split.
 
             * if int then consider max_features for each split
             * if float consider round(max_features*n_features)
@@ -58,38 +67,26 @@ class Params:
             * if `log2` then max_features=log2(n_features)
             * if `sqrt` then max_featuers=sqrt(n_features)
 
-        penalty: defines the norm of the penalty used in logistic regression
+        penalty: Norm of the penalty used in logistic regression
 
             * if `l1` then L1 penalty is added
             * if `l2` then L2 penalty is added (default)
             * if `elasticnet` both L1 and L2 penalties are added
             * if `none` no penalty is added
-
-        random_state: sets random model seed
-    """
-
-    n_estimators: int = 100
-    max_depth: int | None = None
-    max_features: Literal["auto"] | Literal["log2"] | Literal["sqrt"] | int | float = 2
-    penalty: Literal["l1"] | Literal["l2"] | Literal["elasticnet"] | Literal["none"] = "l2"
-    random_state: int | None = None
-
-
-class Augur:
-    """Python implementation of Augur."""
-
-    def __init__(
-        self,
-        estimator: Literal["random_forest_classifier"]
-        | Literal["random_forest_regressor"]
-        | Literal["logistic_regression_classifier"],
-        params: Params | None = None,
-    ):
-        self.estimator = self.create_estimator(classifier=estimator, params=params)
+        """
+        self.estimator = self.create_estimator(
+            classifier=estimator,
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            penalty=penalty,
+            random_state=random_state,
+        )
 
     def load(
         self,
         input: AnnData | pd.DataFrame,
+        *,
         meta: pd.DataFrame | None = None,
         label_col: str = "label_col",
         cell_type_col: str = "cell_type_col",
@@ -99,8 +96,8 @@ class Augur:
         """Loads the input data.
 
         Args:
-            input: Anndata or matrix containing gene expression values (genes in rows, cells in columns) and optionally meta
-                data about each cell.
+            input: Anndata or matrix containing gene expression values (genes in rows, cells in columns)
+                and optionally meta data about each cell.
             meta: Optional Pandas DataFrame containing meta data about each cell.
             label_col: column of the meta DataFrame or the Anndata or matrix containing the condition labels for each cell
                 in the cell-by-gene expression matrix
@@ -110,8 +107,8 @@ class Augur:
             treatment_label: in the case of more than two labels, this label is used in the analysis
 
         Returns:
-            Anndata object containing gene expression values (cells in rows, genes in columns) and cell type, label and y
-            dummy variables as obs
+            Anndata object containing gene expression values (cells in rows, genes in columns)
+            and cell type, label and y dummy variables as obs
 
         Examples:
             >>> import pertpy as pt
@@ -157,12 +154,13 @@ class Augur:
 
     def create_estimator(
         self,
-        classifier: (
-            Literal["random_forest_classifier"]
-            | Literal["random_forest_regressor"]
-            | Literal["logistic_regression_classifier"]
-        ),
-        params: Params | None = None,
+        classifier: (Literal["random_forest_classifier", "random_forest_regressor", "logistic_regression_classifier"]),
+        *,
+        n_estimators: int = 100,
+        max_depth: int | None = None,
+        max_features: Literal["auto", "log2", "sqrt"] | int | float = 2,
+        penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
+        random_state: int | None = None,
     ) -> RandomForestClassifier | RandomForestRegressor | LogisticRegression:
         """Creates a model object of the provided type and populates it with desired parameters.
 
@@ -170,35 +168,46 @@ class Augur:
             classifier: classifier to use in calculating the area under the curve.
                         Either random forest classifier or logistic regression for categorical data
                         or random forest regressor for continous data
-            params: parameters used to populate the model object. Default values are `n_estimators` =
-                    100, `max_depth` = None, `max_features` = 2, `penalty` = `l2`, `random_state` = None.
+            n_estimators: Number of trees in the forest.
+            max_depth: Maximal depth of each tree.
+            max_features: Maximal number of features considered when looking at best split.
 
-        Returns:
-            Estimator object.
+                * if int then consider max_features for each split
+                * if float consider round(max_features*n_features)
+                * if `auto` then max_features=n_features (default)
+                * if `log2` then max_features=log2(n_features)
+                * if `sqrt` then max_featuers=sqrt(n_features)
+
+            penalty: Norm of the penalty used in logistic regression
+
+                * if `l1` then L1 penalty is added
+                * if `l2` then L2 penalty is added (default)
+                * if `elasticnet` both L1 and L2 penalties are added
+                * if `none` no penalty is added
+
+            random_state: Random model seed.
 
         Examples:
             >>> import pertpy as pt
             >>> augur = pt.tl.Augur("random_forest_classifier")
             >>> estimator = augur.create_estimator("logistic_regression_classifier")
         """
-        if params is None:
-            params = Params()
         if classifier == "random_forest_classifier":
             return RandomForestClassifier(
-                n_estimators=params.n_estimators,
-                max_depth=params.max_depth,
-                max_features=params.max_features,
-                random_state=params.random_state,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                max_features=max_features,
+                random_state=random_state,
             )
         elif classifier == "random_forest_regressor":
             return RandomForestRegressor(
-                n_estimators=params.n_estimators,
-                max_depth=params.max_depth,
-                max_features=params.max_features,
-                random_state=params.random_state,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                max_features=max_features,
+                random_state=random_state,
             )
         elif classifier == "logistic_regression_classifier":
-            return LogisticRegression(penalty=params.penalty, random_state=params.random_state)
+            return LogisticRegression(penalty=penalty, random_state=random_state)
         else:
             raise ValueError("Invalid classifier")
 
@@ -231,15 +240,16 @@ class Augur:
         if categorical:
             label_subsamples = []
             y_encodings = adata.obs["y_"].unique()
-            for code in y_encodings:
-                label_subsamples.append(
-                    sc.pp.subsample(
-                        adata[adata.obs["y_"] == code, features],
-                        n_obs=subsample_size,
-                        copy=True,
-                        random_state=random_state,
-                    )
+            label_subsamples = [
+                sc.pp.subsample(
+                    adata[adata.obs["y_"] == code, features],
+                    n_obs=subsample_size,
+                    copy=True,
+                    random_state=random_state,
                 )
+                for code in y_encodings
+            ]
+
             subsample = ad.concat([*label_subsamples], index_unique=None)
         else:
             subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
@@ -259,6 +269,7 @@ class Augur:
     def draw_subsample(
         self,
         adata: AnnData,
+        *,
         augur_mode: str,
         subsample_size: int,
         feature_perc: float,
@@ -319,6 +330,7 @@ class Augur:
     def cross_validate_subsample(
         self,
         adata: AnnData,
+        *,
         augur_mode: str,
         subsample_size: int,
         folds: int,
@@ -358,8 +370,8 @@ class Augur:
         """
         subsample = self.draw_subsample(
             adata,
-            augur_mode,
-            subsample_size,
+            augur_mode=augur_mode,
+            subsample_size=subsample_size,
             feature_perc=feature_perc,
             categorical=is_classifier(self.estimator),
             random_state=subsample_idx,
@@ -373,7 +385,7 @@ class Augur:
         )
         return results
 
-    def ccc_score(self, y_true, y_pred) -> float:
+    def ccc_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """Implementation of Lin's Concordance correlation coefficient, based on https://gitlab.com/-/snippets/1730605.
 
         Args:
@@ -405,7 +417,7 @@ class Augur:
         """Set scoring fuctions for cross-validation based on estimator.
 
         Args:
-            multiclass: `True` if there are more than two target classes
+            multiclass: Whether there are more than two target classes
             zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
                 set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
@@ -435,7 +447,7 @@ class Augur:
                 "f1": make_scorer(f1_score, average="binary"),
                 "recall": make_scorer(recall_score, average="binary"),
             }
-            if isinstance(self.estimator, RandomForestClassifier) or isinstance(self.estimator, LogisticRegression)
+            if isinstance(self.estimator, RandomForestClassifier | LogisticRegression)
             else {
                 "augur_score": make_scorer(self.ccc_score),
                 "r2": make_scorer(r2_score),
@@ -448,6 +460,7 @@ class Augur:
     def run_cross_validation(
         self,
         subsample: AnnData,
+        *,
         subsample_idx: int,
         folds: int,
         random_state: int | None,
@@ -479,7 +492,7 @@ class Augur:
         """
         x = subsample.to_df()
         y = subsample.obs["y_"]
-        scorer = self.set_scorer(multiclass=True if len(y.unique()) > 2 else False, zero_division=zero_division)
+        scorer = self.set_scorer(multiclass=len(y.unique()) > 2, zero_division=zero_division)
         folds = StratifiedKFold(n_splits=folds, random_state=random_state, shuffle=True)
 
         results = cross_validate(
@@ -492,12 +505,12 @@ class Augur:
         )
 
         results["subsample_idx"] = subsample_idx
-        for score in scorer.keys():
+        for score in scorer:
             results[f"mean_{score}"] = results[f"test_{score}"].mean()
 
         # feature importances
         feature_importances = defaultdict(list)
-        if isinstance(self.estimator, RandomForestClassifier) or isinstance(self.estimator, RandomForestRegressor):
+        if isinstance(self.estimator, RandomForestClassifier | RandomForestRegressor):
             for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
                 feature_importances["genes"].extend(x.columns.tolist())
                 feature_importances["feature_importances"].extend(estimator.feature_importances_.tolist())
@@ -589,9 +602,9 @@ class Augur:
         sigma2_x = np.sum(np.power(loess1.outputs.fitted_residuals, 2)) / nobs
         sigma2_z = np.sum(np.power(loess2.outputs.fitted_residuals, 2)) / nobs
         yhat_x = loess1.outputs.fitted_values
-        res_dx = sm.OLS(yhat_x, z).fit()
+        res_dx = OLS(yhat_x, z).fit()
         err_zx = res_dx.resid
-        res_xzx = sm.OLS(err_zx, x).fit()
+        res_xzx = OLS(err_zx, x).fit()
         err_xzx = res_xzx.resid
 
         sigma2_zx = sigma2_x + np.dot(err_zx.T, err_zx) / nobs
@@ -602,7 +615,9 @@ class Augur:
 
         return q, pval
 
-    def select_variance(self, adata: AnnData, var_quantile: float, filter_negative_residuals: bool, span: float = 0.75):
+    def select_variance(
+        self, adata: AnnData, *, var_quantile: float, filter_negative_residuals: bool, span: float = 0.75
+    ):
         """Feature selection based on Augur implementation.
 
         Args:
@@ -656,11 +671,8 @@ class Augur:
             cox1 = self.cox_compare(fit1, fit2)
             cox2 = self.cox_compare(fit2, fit1)
 
-            #  compare pvalues
-            if cox1[1] < cox2[1]:
-                model = fit1
-            else:
-                model = fit2
+            # compare p values
+            model = fit1 if cox1[1] < cox2[1] else fit2
 
         residuals = model.outputs.fitted_residuals
 
@@ -676,6 +688,7 @@ class Augur:
     def predict(
         self,
         adata: AnnData,
+        *,
         n_subsamples: int = 50,
         subsample_size: int = 20,
         folds: int = 3,
@@ -717,7 +730,7 @@ class Augur:
                            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
         Returns:
-            A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs:
+            A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs.
 
                 * summary_metrics: Pandas Dataframe containing mean metrics for each cell type
                 * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs
@@ -756,7 +769,7 @@ class Augur:
         adata.obs["augur_score"] = nan
         for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data..."):
             cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
-            if augur_mode == "default" or augur_mode == "permute":
+            if augur_mode in ("default", "permute"):
                 cell_type_subsample = (
                     self.select_highly_variable(cell_type_subsample)
                     if not select_variance_features
@@ -846,10 +859,10 @@ class Augur:
         between two conditions respectively compared to the control.
 
         Args:
-            augur1: Augurpy results from condition 1, obtained from `predict()[1]`
-            augur2: Augurpy results from condition 2, obtained from `predict()[1]`
-            permuted1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
-            permuted2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
+            augur_results1: Augurpy results from condition 1, obtained from `predict()[1]`
+            augur_results2: Augurpy results from condition 2, obtained from `predict()[1]`
+            permuted_results1: permuted Augurpy results from condition 1, obtained from `predict()` with argument `augur_mode=permute`
+            permuted_results2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
             n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation.
             n_permutations: the total number of mean augur scores to calculate from a background distribution
 
@@ -972,7 +985,7 @@ class Augur:
         return delta
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_dp_scatter(
+    def plot_dp_scatter(  # pragma: no cover # noqa: D417
         self,
         results: pd.DataFrame,
         *,
@@ -1042,7 +1055,7 @@ class Augur:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_important_features(
+    def plot_important_features(  # pragma: no cover # noqa: D417
         self,
         data: dict[str, Any],
         *,
@@ -1076,10 +1089,7 @@ class Augur:
         Preview:
             .. image:: /_static/docstring_previews/augur_important_features.png
         """
-        if isinstance(data, AnnData):
-            results = data.uns[key]
-        else:
-            results = data
+        results = data.uns[key] if isinstance(data, AnnData) else data
         n_features = (
             results["feature_importances"]
             .groupby("genes", as_index=False)
@@ -1108,7 +1118,7 @@ class Augur:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_lollipop(
+    def plot_lollipop(  # pragma: no cover # noqa: D417
         self,
         data: dict[str, Any] | AnnData,
         *,
@@ -1140,10 +1150,7 @@ class Augur:
         Preview:
             .. image:: /_static/docstring_previews/augur_lollipop.png
         """
-        if isinstance(data, AnnData):
-            results = data.uns[key]
-        else:
-            results = data
+        results = data.uns[key] if isinstance(data, AnnData) else data
         if ax is None:
             fig, ax = plt.subplots()
         y_axes_range = range(1, len(results["summary_metrics"].columns) + 1)
@@ -1169,7 +1176,7 @@ class Augur:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_scatterplot(
+    def plot_scatterplot(  # pragma: no cover # noqa: D417
         self,
         results1: dict[str, Any],
         results2: dict[str, Any],

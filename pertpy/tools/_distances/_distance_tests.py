@@ -8,7 +8,7 @@ from rich.progress import track
 from sklearn.metrics import pairwise_distances
 from statsmodels.stats.multitest import multipletests
 
-from ._distances import Distance
+from ._distances import Distance, Metric
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -43,7 +43,7 @@ class DistanceTest:
 
     def __init__(
         self,
-        metric: str,
+        metric: Metric,
         n_perms: int = 1000,
         layer_key: str = None,
         obsm_key: str = None,
@@ -83,8 +83,7 @@ class DistanceTest:
         contrast: str,
         show_progressbar: bool = True,
     ) -> pd.DataFrame:
-        """Run a permutation test using the specified distance metric, testing
-        all groups of cells against a specified contrast group ("control").
+        """Run a permutation test using the specified distance metric, testing all groups of cells against a specified contrast group ("control").
 
         Args:
             adata: Annotated data matrix.

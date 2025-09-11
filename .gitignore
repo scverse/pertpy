@@ -72,8 +72,11 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-docs/usage/*
-!docs/usage/usage.md
+docs/api/data
+docs/api/metadata
+docs/api/tools
+docs/api/preprocessing
+!docs/api/api.md
 
 # PyBuilder
 target/
@@ -166,3 +169,6 @@ test-bug
 
 # uv
 uv.lock
+
+# Ruff
+.ruff_cache

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-import arviz as az
 import jax.numpy as jnp
 import numpy as np
 import numpyro as npy
@@ -17,14 +16,15 @@ from rich import print
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 if TYPE_CHECKING:
+    import arviz as az
     import pandas as pd
 
 config.update("jax_enable_x64", True)
 
 
 class Sccoda(CompositionalModel2):
-    """
-    Statistical model for single-cell differential composition analysis with specification of a reference cell type.
+    r"""Statistical model for single-cell differential composition analysis with specification of a reference cell type.
+
     This is the standard scCODA model and recommended for all uses.
 
     The hierarchical formulation of the model for one sample is:
@@ -45,7 +45,6 @@ class Sccoda(CompositionalModel2):
 
     For further information, see `scCODA is a Bayesian model for compositional single-cell data analysis`
     (Büttner, Ostner et al., NatComms, 2021)
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -83,7 +82,7 @@ class Sccoda(CompositionalModel2):
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
-            MuData: MuData object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
+            :class:`mudata.MuData` object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
 
         Examples:
             >>> import pertpy as pt
@@ -108,8 +107,12 @@ class Sccoda(CompositionalModel2):
             else:
                 adata_coda = AnnData()
             mdata = MuData({modality_key_1: adata, modality_key_2: adata_coda})
+            mdata.pull_obs()
+            mdata.pull_var()
         else:
             mdata = MuData({modality_key_1: AnnData(), modality_key_2: adata})
+            mdata.pull_obs()
+            mdata.pull_var()
         return mdata
 
     def prepare(
@@ -184,8 +187,7 @@ class Sccoda(CompositionalModel2):
             return adata
 
     def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:  # type: ignore
-        """
-        Sets initial MCMC state values for scCODA model
+        """Sets initial MCMC state values for scCODA model.
 
         Args:
             rng_key: RNG value to be set
@@ -237,8 +239,7 @@ class Sccoda(CompositionalModel2):
         ref_index,
         sample_adata: AnnData,
     ):
-        """
-        Implements scCODA model in numpyro
+        """Implements scCODA model in numpyro.
 
         Args:
             counts: Count data array
@@ -302,11 +303,11 @@ class Sccoda(CompositionalModel2):
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
-        rng_key=None,
+        rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
     ) -> az.InferenceData:
-        """Creates arviz object from model results for MCMC diagnosis
+        """Creates arviz object from model results for MCMC diagnosis.
 
         Args:
             data: AnnData object or MuData object.
@@ -316,7 +317,7 @@ class Sccoda(CompositionalModel2):
             use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
-            az.InferenceData: arviz_data with all MCMC information
+            :class:`arviz.InferenceData`: arviz_data with all MCMC information
 
         Examples:
             >>> import pertpy as pt
@@ -380,6 +381,8 @@ class Sccoda(CompositionalModel2):
         if rng_key is None:
             rng = np.random.default_rng()
             rng_key = random.key(rng.integers(0, 10000))
+        else:
+            rng_key = random.key(rng_key)
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
@@ -390,6 +393,15 @@ class Sccoda(CompositionalModel2):
                 ref_index=ref_index,
                 sample_adata=sample_adata,
             )
+            # Remove problematic posterior predictive arrays with wrong dimensions
+            if posterior_predictive and "counts" in posterior_predictive:
+                counts_shape = posterior_predictive["counts"].shape
+                expected_dims = 2  # ['sample', 'cell_type']
+                if len(counts_shape) != expected_dims:
+                    posterior_predictive = {k: v for k, v in posterior_predictive.items() if k != "counts"}
+                    logger.warning(
+                        f"Removed 'counts' from posterior_predictive due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
+                    )
         else:
             posterior_predictive = None
 
@@ -402,8 +414,19 @@ class Sccoda(CompositionalModel2):
                 ref_index=ref_index,
                 sample_adata=sample_adata,
             )
+            # Remove problematic prior arrays with wrong dimensions
+            if prior and "counts" in prior:
+                counts_shape = prior["counts"].shape
+                expected_dims = 2  # ['sample', 'cell_type']
+                if len(counts_shape) != expected_dims:
+                    prior = {k: v for k, v in prior.items() if k != "counts"}
+                    logger.warning(
+                        f"Removed 'counts' from prior due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
+                    )
         else:
             prior = None
+
+        import arviz as az
 
         # Create arviz object
         arviz_data = az.from_numpyro(
@@ -424,6 +447,7 @@ class Sccoda(CompositionalModel2):
         **kwargs,
     ):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
@@ -435,14 +459,15 @@ class Sccoda(CompositionalModel2):
             >>>                     sample_identifier="batch",
             >>>                     covariate_obs=["condition"])
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
-            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-        """
+            >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42).
+        """  # noqa: D205, D212
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
     run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """
+
         Examples:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
@@ -455,14 +480,15 @@ class Sccoda(CompositionalModel2):
             >>>                     covariate_obs=["condition"])
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-            >>> credible_effects = sccoda.credible_effects(mdata)
-        """
+            >>> credible_effects = sccoda.credible_effects(mdata).
+        """  # noqa: D205, D212
         return super().credible_effects(data, modality_key, est_fdr)
 
     credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
@@ -475,14 +501,15 @@ class Sccoda(CompositionalModel2):
             >>>                     covariate_obs=["condition"])
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-            >>> sccoda.summary(mdata)
-        """
+            >>> sccoda.summary(mdata).
+        """  # noqa: D205, D212
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
     summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> haber_cells = pt.dt.haber_2017_regions()
@@ -495,8 +522,8 @@ class Sccoda(CompositionalModel2):
             >>>                     covariate_obs=["condition"])
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_nuts(mdata, num_warmup=100, num_samples=1000, rng_key=42)
-            >>> sccoda.set_fdr(mdata, est_fdr=0.4)
-        """
+            >>> sccoda.set_fdr(mdata, est_fdr=0.4).
+        """  # noqa: D205, D212
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
     set_fdr.__doc__ = CompositionalModel2.set_fdr.__doc__ + set_fdr.__doc__

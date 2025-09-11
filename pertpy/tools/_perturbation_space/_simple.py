@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Literal
 
-import decoupler as dc
-import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import scanpy as sc
 from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
 
-from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
-
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Figure
 
 
 class CentroidSpace(PerturbationSpace):
@@ -34,8 +30,8 @@ class CentroidSpace(PerturbationSpace):
             target_col: .obs column that stores the label of the perturbation applied to each cell.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            keep_obs: Whether .obs columns in the input AnnData should be kept in the output pseudobulk AnnData. Only .obs columns with the same value for
-                each cell of one perturbation are kept.
+            keep_obs: Whether .obs columns in the input AnnData should be kept in the output pseudobulk AnnData.
+                Only .obs columns with the same value for each cell of one perturbation are kept.
 
         Returns:
             AnnData object with one observation per perturbation, storing the embedding data of the
@@ -53,7 +49,6 @@ class CentroidSpace(PerturbationSpace):
             >>> cs = pt.tl.CentroidSpace()
             >>> cs_adata = cs.compute(mdata["rna"], target_col="gene_target")
         """
-
         X = None
         if layer_key is not None and embedding_key is not None:
             raise ValueError("Please, select just either layer or embedding for computation.")
@@ -65,7 +60,7 @@ class CentroidSpace(PerturbationSpace):
                 X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
 
         if layer_key is not None:
-            if layer_key not in adata.layers.keys():
+            if layer_key not in adata.layers:
                 raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
             else:
                 X = np.empty((len(adata.obs[target_col].unique()), adata.layers[layer_key].shape[1]))
@@ -79,8 +74,7 @@ class CentroidSpace(PerturbationSpace):
             X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
 
         index = []
-        pert_index = 0
-        for group_name, group_data in grouped:
+        for pert_index, (group_name, group_data) in enumerate(grouped):
             indices = group_data.index
             if layer_key is not None:
                 points = adata[indices].layers[layer_key]
@@ -94,7 +88,6 @@ class CentroidSpace(PerturbationSpace):
                 points, key=lambda point: np.linalg.norm(point - centroid)
             )  # Find the point in the array closest to the centroid
             X[pert_index, :] = closest_point
-            pert_index += 1
 
         ps_adata = AnnData(X=X)
         ps_adata.obs_names = index
@@ -128,9 +121,9 @@ class PseudobulkSpace(PerturbationSpace):
         groups_col: str = None,
         layer_key: str = None,
         embedding_key: str = None,
-        **kwargs,
+        mode: Literal["count_nonzero", "mean", "sum", "var", "median"] = "sum",
     ) -> AnnData:  # type: ignore
-        """Determines pseudobulks of an AnnData object. It uses Decoupler implementation.
+        """Determines pseudobulks of an AnnData object.
 
         Args:
             adata: Anndata object of size cells x genes
@@ -139,7 +132,7 @@ class PseudobulkSpace(PerturbationSpace):
                 The summarized expression per perturbation (target_col) and group (groups_col) is computed.
             layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
-            **kwargs: Are passed to decoupler's get_pseuobulk.
+            mode: Pseudobulk aggregation function
 
         Returns:
              AnnData object with one observation per perturbation.
@@ -153,7 +146,7 @@ class PseudobulkSpace(PerturbationSpace):
         if layer_key is not None and embedding_key is not None:
             raise ValueError("Please, select just either layer or embedding for computation.")
 
-        if layer_key is not None and layer_key not in adata.layers.keys():
+        if layer_key is not None and layer_key not in adata.layers:
             raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
 
         if target_col not in adata.obs:
@@ -169,52 +162,28 @@ class PseudobulkSpace(PerturbationSpace):
                 adata = adata_emb
 
         adata.obs[target_col] = adata.obs[target_col].astype("category")
-        ps_adata = dc.get_pseudobulk(adata, sample_col=target_col, layer=layer_key, groups_col=groups_col, **kwargs)  # type: ignore
+        grouping_cols = [target_col] if groups_col is None else [target_col, groups_col]
+        original_obs = adata.obs.copy()
+        ps_adata = sc.get.aggregate(
+            adata, by=[target_col] if groups_col is None else [target_col, groups_col], func=mode, layer=layer_key
+        )
+
+        if mode in ps_adata.layers:
+            ps_adata.X = ps_adata.layers[mode]
+
+        missing_cols = [col for col in original_obs.columns if col not in ps_adata.obs.columns]
+        new_cols_data = {}
+
+        for col in missing_cols:
+            grouped_values = original_obs.groupby(grouping_cols, observed=False)[col].first()
+            new_cols_data[col] = grouped_values.reindex(ps_adata.obs.index).values
+
+        if new_cols_data:
+            ps_adata.obs = pd.concat([ps_adata.obs, pd.DataFrame(new_cols_data, index=ps_adata.obs.index)], axis=1)
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
         return ps_adata
-
-    @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_psbulk_samples(
-        self,
-        adata: AnnData,
-        groupby: str,
-        *,
-        return_fig: bool = False,
-        **kwargs,
-    ) -> Figure | None:
-        """Plot the pseudobulk samples of an AnnData object.
-
-        Plot the count number vs. the number of cells per pseudobulk sample.
-
-        Args:
-            adata: Anndata containing pseudobulk samples.
-            groupby: `.obs` column to color the samples by.
-            {common_plot_args}
-            **kwargs: Are passed to decoupler's plot_psbulk_samples.
-
-        Returns:
-            If `return_fig` is `True`, returns the figure, otherwise `None`.
-
-        Examples:
-            >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
-            >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata, target_col="Patient", groups_col="Cluster", mode="sum", min_cells=10, min_counts=1000
-            ... )
-            >>> ps.plot_psbulk_samples(pdata, groupby=["Patient", "Major celltype"], figsize=(12, 4))
-
-        Preview:
-            .. image:: /_static/docstring_previews/pseudobulk_samples.png
-        """
-        fig = dc.plot_psbulk_samples(adata, groupby, return_fig=True, **kwargs)
-
-        if return_fig:
-            return fig
-        plt.show()
-        return None
 
 
 class KMeansSpace(ClusteringSpace):
@@ -244,7 +213,7 @@ class KMeansSpace(ClusteringSpace):
         Returns:
             If return_object is True, the adata and the clustering object is returned.
             Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
-             that stores the cluster labels.
+            that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt
@@ -265,7 +234,7 @@ class KMeansSpace(ClusteringSpace):
                 self.X = adata.obsm[embedding_key]
 
         elif layer_key is not None:
-            if layer_key not in adata.layers.keys():
+            if layer_key not in adata.layers:
                 raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
             else:
                 self.X = adata.layers[layer_key]
@@ -284,7 +253,7 @@ class KMeansSpace(ClusteringSpace):
 
 
 class DBSCANSpace(ClusteringSpace):
-    """Cluster the given data using DBSCAN"""
+    """Cluster the given data using DBSCAN."""
 
     def compute(  # type: ignore
         self,
@@ -328,7 +297,7 @@ class DBSCANSpace(ClusteringSpace):
                 self.X = adata.obsm[embedding_key]
 
         elif layer_key is not None:
-            if layer_key not in adata.layers.keys():
+            if layer_key not in adata.layers:
                 raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
             else:
                 self.X = adata.layers[layer_key]

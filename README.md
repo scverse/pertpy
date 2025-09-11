@@ -1,4 +1,3 @@
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Build](https://github.com/scverse/pertpy/actions/workflows/build.yml/badge.svg)](https://github.com/scverse/pertpy/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/scverse/pertpy/graph/badge.svg?token=1dTpIPBShv)](https://codecov.io/gh/scverse/pertpy)
 [![License](https://img.shields.io/github/license/scverse/pertpy)](https://opensource.org/licenses/Apache2.0)
@@ -8,13 +7,16 @@
 [![Test](https://github.com/scverse/pertpy/actions/workflows/test.yml/badge.svg)](https://github.com/scverse/pertpy/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-# pertpy
+# pertpy - Perturbation Analysis in Python
+
+Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
+It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic modifications, drug treatments, and environmental changes.
 
 ![fig1](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
 
 ## Documentation
 
-Please read the [documentation](https://pertpy.readthedocs.io/en/latest).
+Please read the [documentation](https://pertpy.readthedocs.io/en/latest) for installation, tutorials, use cases, and more.
 
 ## Installation
 
@@ -27,11 +29,13 @@ You can install _pertpy_ in less than a minute via [pip] from [PyPI]:
 pip install pertpy
 ```
 
-if you want to use scCODA or tascCODA, please install pertpy as follows:
+or [conda-forge]:
 
 ```console
-pip install 'pertpy[coda]'
+conda install -c conda-forge pertpy
 ```
+
+### Differential gene expression
 
 If you want to use the differential gene expression interface, please install pertpy by running:
 
@@ -39,16 +43,54 @@ If you want to use the differential gene expression interface, please install pe
 pip install 'pertpy[de]'
 ```
 
+### tascCODA
+
+if you want to use tascCODA, please install pertpy as follows:
+
+```console
+pip install 'pertpy[tcoda]'
+```
+
+### milo
+
+milo requires either the "de" extra for the "pydeseq2" solver:
+
+```console
+pip install 'pertpy[de]'
+```
+
+or, edger, statmod, and rpy2 for the "edger" solver:
+
+```R
+BiocManager::install("edgeR")
+BiocManager::install("statmod")
+```
+
+```console
+pip install rpy2
+```
+
 ## Citation
 
-[Lukas Heumos, Yuge Ji, Lilly May, Tessa Green, Xinyue Zhang, Xichen Wu, Johannes Ostner, Stefan Peidli, Antonia Schumacher, Karin Hrovatin, Michaela Mueller, Faye Chong, Gregor Sturm, Alejandro Tejada, Emma Dann, Mingze Dong, Mojtaba Bahrami, Ilan Gold, Sergei Rybakov, Altana Namsaraeva, Amir Ali Moinfar, Zihe Zheng, Eljas Roellin, Isra Mekki, Chris Sander, Mohammad Lotfollahi, Herbert B. Schiller, Fabian J. Theis
-bioRxiv 2024.08.04.606516; doi: https://doi.org/10.1101/2024.08.04.606516](https://www.biorxiv.org/content/10.1101/2024.08.04.606516v1)
+```bibtex
+@article {Heumos2024.08.04.606516,
+    author = {Heumos, Lukas and Ji, Yuge and May, Lilly and Green, Tessa and Zhang, Xinyue and Wu, Xichen and Ostner, Johannes and Peidli, Stefan and Schumacher, Antonia and Hrovatin, Karin and Müller, Michaela and Chong, Faye and Sturm, Gregor and Tejada, Alejandro and Dann, Emma and Dong, Mingze and Bahrami, Mojtaba and Gold, Ilan and Rybakov, Sergei and Namsaraeva, Altana and Moinfar, Amir and Zheng, Zihe and Roellin, Eljas and Mekki, Isra and Sander, Chris and Lotfollahi, Mohammad and Schiller, Herbert B. and Theis, Fabian J.},
+    title = {Pertpy: an end-to-end framework for perturbation analysis},
+    elocation-id = {2024.08.04.606516},
+    year = {2024},
+    doi = {10.1101/2024.08.04.606516},
+    publisher = {Cold Spring Harbor Laboratory},
+    URL = {https://www.biorxiv.org/content/early/2024/08/07/2024.08.04.606516},
+    eprint = {https://www.biorxiv.org/content/early/2024/08/07/2024.08.04.606516.full.pdf},
+    journal = {bioRxiv}
+}
+```
 
 [pip]: https://pip.pypa.io/
 [pypi]: https://pypi.org/
-[usage]: https://pertpy.readthedocs.io/en/latest/usage/usage.html
-
-[//]: # (numfocus-fiscal-sponsor-attribution)
+[api]: https://pertpy.readthedocs.io/en/latest/api.html
+[conda-forge]: https://anaconda.org/conda-forge/pertpy
+[//]: # "numfocus-fiscal-sponsor-attribution"
 
 pertpy is part of the scverse® project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
 If you like scverse® and want to support our mission, please consider making a tax-deductible [donation](https://numfocus.org/donate-to-scverse) to help the project pay for developer time, professional services, travel, workshops, and a variety of other needs.

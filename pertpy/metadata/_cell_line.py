@@ -195,7 +195,9 @@ class CellLine(MetaData):
                 block_size=4096,
                 is_zip=False,
             )
-        df = pd.read_csv(drug_response_prism_file_path, index_col=0)[["depmap_id", "name", "ic50", "ec50", "auc"]]
+        df = pd.read_csv(
+            drug_response_prism_file_path, index_col=0, usecols=["broad_id", "depmap_id", "name", "ic50", "ec50", "auc"]
+        )
         df = df.dropna(subset=["depmap_id", "name"])
         df = df.groupby(["depmap_id", "name"]).mean().reset_index()
         self.drug_response_prism = df
@@ -215,7 +217,7 @@ class CellLine(MetaData):
         For each cell, we fetch cell line annotation from either the Dependency Map (DepMap) or The Genomics of Drug Sensitivity in Cancer Project (Cancerxgene).
 
         Args:
-            adata: The data object to annotate.
+            adata: The AnnData object to annotate.
             query_id: The column of ``.obs`` with cell line information.
             reference_id: The type of cell line identifier in the metadata, e.g. ModelID, CellLineName	or StrippedCellLineName.
                           If fetching cell line metadata from Cancerrxgene, it is recommended to choose "stripped_cell_line_name".
@@ -311,11 +313,9 @@ class CellLine(MetaData):
 
         else:
             raise ValueError(
-                f"The requested cell line type {reference_id} is currently unavailable in the database.\n"
-                "Refer to the available reference identifier in the chosen database.\n"
-                "DepMap_ID is compared by default.\n"
-                "Alternatively, create a `CellLineMetaData.lookup()` object to "
-                "obtain the available reference identifiers in the metadata."
+                f"The requested cell line type {reference_id} is unavailable."
+                "Refer to the available reference identifier in the chosen database."
+                "Alternatively, create a `CellLineMetaData.lookup()` object to obtain the available reference identifiers in the metadata."
             )
 
         return adata
@@ -360,29 +360,22 @@ class CellLine(MetaData):
 
         # Make sure that the specified `cell_line_type` can be found in the bulk rna expression data,
         # then we can compare these keys and fetch the corresponding metadata.
-        if query_id not in adata.obs.columns:
-            if query_id is not None:
-                raise ValueError(
-                    f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                    "Ensure that you are using one of the available query IDs present in the adata.obs for the annotation."
-                    "If the desired query ID is not available, you can fetch the cell line metadata "
-                    "using the `annotate()` function before calling 'annotate_bulk_rna()'. "
-                    "This ensures that the required query ID is included in your data, e.g. stripped_cell_line_name, DepMap ID."
-                )
+        if query_id not in adata.obs.columns and query_id is not None:
+            raise ValueError(
+                f"Specified `query_id` {query_id} can't be found in `adata.obs`. \n"
+                "If the desired query ID is not available, fetch the cell line metadata "
+                "using the `annotate()` function before calling 'annotate_bulk_rna()'."
+            )
         if query_id is None:
-            if cell_line_source == "sanger":
-                query_id = "cell_line_name"
-            else:
-                query_id = "DepMap_ID"
+            query_id = "cell_line_name" if cell_line_source == "sanger" else "DepMap_ID"
         identifier_num_all = len(adata.obs[query_id].unique())
 
         # Lazily download the bulk rna expression data
         if cell_line_source == "sanger":
             if query_id not in adata.obs.columns:
                 raise ValueError(
-                    "To annotate bulk RNA data from Wellcome Sanger Institute, `cell_line_name` is used as default reference and query identifier if no `query_id` is given."
-                    "Ensure that you have column `cell_line_name` in `adata.obs` or specify column name in which cell line name is stored."
-                    "If cell line name isn't available in 'adata.obs', use `annotate()` to annotate the cell line first."
+                    f"Missing '{query_id}' in `adata.obs`. For Sanger, need `cell_line_name` column "
+                    f"or specify column with cell line names via `query_id` parameter."
                 )
             if self.bulk_rna_sanger is None:
                 self._download_bulk_rna(cell_line_source="sanger")
@@ -391,9 +384,8 @@ class CellLine(MetaData):
         else:
             if query_id not in adata.obs.columns:
                 raise ValueError(
-                    "To annotate bulk RNA data from Broad Institue, `DepMap_ID` is used as default reference and query identifier if no `query_id` is given."
-                    "Ensure that you have column `DepMap_ID` in `adata.obs` or specify column name in which DepMap ID is stored."
-                    "If DepMap ID isn't available in 'adata.obs', use `annotate()` to annotate the cell line first."
+                    f"Missing '{query_id}' in `adata.obs`. For Broad Institute data, need `DepMap_ID` column "
+                    f"or specify column with DepMap IDs via `query_id` parameter."
                 )
             reference_id = "DepMap_ID"
 
@@ -476,19 +468,16 @@ class CellLine(MetaData):
         # then we can compare these keys and fetch the corresponding metadata.
         if query_id not in adata.obs.columns:
             raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in `adata.obs`. \n"
-                "If the desired query ID is not available, you can fetch the cell line metadata \n"
-                "using the `annotate()` function before calling annotate_protein_expression(). \n"
-                "This ensures that the required query ID is included in your data."
+                f"The specified `query_id` `{query_id}` not found in `adata.obs`. "
+                "Fetch cell line metadata with `annotate()` before calling `annotate_protein_expression()`."
             )
         # Lazily download the proteomics data
         if self.proteomics is None:
             self._download_proteomics()
         if reference_id not in self.proteomics.columns:
             raise ValueError(
-                f"The specified `reference_id`{reference_id} can't be found in the protein expression data. \n"
-                "To solve the issue, please use the reference identifier available in the metadata.  \n"
-                "Alternatively, create a `CellLineMetaData.lookup()` object to obtain the available reference identifiers in the metadata."
+                f"Specified `reference_id` `{reference_id}` not found in protein expression data. "
+                f"Use available reference identifiers in metadata or create `CellLineMetaData.lookup()` object."
             )
 
         identifier_num_all = len(adata.obs[query_id].unique())
@@ -555,11 +544,8 @@ class CellLine(MetaData):
             adata = adata.copy()
         if query_id not in adata.obs.columns:
             raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Ensure that you are using one of the available query IDs present in 'adata.obs' for the annotation.\n"
-                "If the desired query ID is not available, you can fetch the cell line metadata "
-                "using the `annotate()` function before calling `annotate_from_gdsc()`. "
-                "This ensures that the required query ID is included in your data."
+                f"Specified `query_id` `{query_id}` not found in `adata.obs`. "
+                "Use an available ID or fetch cell line metadata with `annotate()` before calling `annotate_from_gdsc()`."
             )
         # Lazily download the GDSC data
         if gdsc_dataset == "gdsc_1":
@@ -584,7 +570,9 @@ class CellLine(MetaData):
             verbosity=verbosity,
         )
 
-        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
+        if adata.obs.index.name is None:
+            adata.obs.index.name = "original_index"
+        old_index_name = adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, query_perturbation])
@@ -630,11 +618,8 @@ class CellLine(MetaData):
             adata = adata.copy()
         if query_id not in adata.obs.columns:
             raise ValueError(
-                f"The specified `query_id` {query_id} can't be found in the `adata.obs`. \n"
-                "Ensure that you are using one of the available query IDs present in 'adata.obs' for the annotation.\n"
-                "If the desired query ID is not available, you can fetch the cell line metadata "
-                "using the `annotate()` function before calling `annotate_from_prism()`. "
-                "This ensures that the required query ID is included in your data."
+                f"Specified `query_id` `{query_id}` not found in `adata.obs`. "
+                "Use an available ID or fetch cell line metadata with `annotate()` before calling `annotate_from_prism()`."
             )
         if self.drug_response_prism is None:
             self._download_prism()
@@ -654,7 +639,9 @@ class CellLine(MetaData):
             verbosity=verbosity,
         )
 
-        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
+        if adata.obs.index.name is None:
+            adata.obs.index.name = "original_index"
+        old_index_name = adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, "perturbation_lower"])
@@ -704,7 +691,6 @@ class CellLine(MetaData):
         if self.drug_response_prism is None:
             self._download_prism()
 
-        # Transfer the data
         return LookUp(
             type="cell_line",
             transfer_metadata=[
@@ -773,12 +759,14 @@ class CellLine(MetaData):
             raise ValueError(
                 "Dimensions of adata.X do not match those of metadata. Ensure that they have the same gene list."
             )
-        if isinstance(adata.obsm[metadata_key], pd.DataFrame):
-            # Raise error if the genes are not the same
-            if sum(adata.obsm[metadata_key].columns != adata.var.index.values) > 0:
-                raise ValueError(
-                    "Column name of metadata is not the same as the index of adata.var. Ensure that the genes are in the same order."
-                )
+        # Raise error if the genes are not the same
+        if (
+            isinstance(adata.obsm[metadata_key], pd.DataFrame)
+            and sum(adata.obsm[metadata_key].columns != adata.var.index.values) > 0
+        ):
+            raise ValueError(
+                "Column name of metadata is not the same as the index of `adata.var`. Ensure that the genes are in the same order."
+            )
 
         # Divide cell lines into those are present and not present in the metadata
         overlapped_cl = adata[~adata.obsm[metadata_key].isna().all(axis=1), :]
@@ -803,7 +791,7 @@ class CellLine(MetaData):
         return corr, pvals, new_corr, new_pvals
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_correlation(
+    def plot_correlation(  # noqa: D417
         self,
         adata: AnnData,
         corr: pd.DataFrame,
@@ -834,7 +822,7 @@ class CellLine(MetaData):
         """
         if corr is None or pval is None:
             raise ValueError(
-                "Missing required input parameter: 'corr' or 'pval'. Please call the function `pt.md.CellLine.correlate()` to generate these outputs before proceeding."
+                "Missing required input parameter: 'corr' or 'pval'. Call `pt.md.CellLine.correlate()` before proceeding."
             )
 
         if category == "cell line":

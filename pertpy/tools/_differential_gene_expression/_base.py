@@ -1,3 +1,4 @@
+import contextlib
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
@@ -11,7 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from formulaic_contrasts import FormulaicContrasts
 from lamin_utils import logger
 from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
@@ -23,8 +23,7 @@ from pertpy.tools._differential_gene_expression._checks import check_is_numeric_
 
 class MethodBase(ABC):
     def __init__(self, adata, *, mask=None, layer=None, **kwargs):
-        """
-        Initialize the method.
+        """Initialize the method.
 
         Args:
             adata: AnnData object, usually pseudobulked.
@@ -62,8 +61,7 @@ class MethodBase(ABC):
         fit_kwargs=MappingProxyType({}),
         test_kwargs=MappingProxyType({}),
     ):
-        """
-        Compare between groups in a specified column.
+        """Compare between groups in a specified column.
 
         Args:
             adata: AnnData object.
@@ -100,7 +98,7 @@ class MethodBase(ABC):
         ...
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_volcano(
+    def plot_volcano(  # pragma: no cover # noqa: D417
         self,
         data: pd.DataFrame | ad.AnnData,
         *,
@@ -188,8 +186,7 @@ class MethodBase(ABC):
             colors = ["gray", "#D62728", "#1F77B4"]
 
         def _pval_reciprocal(lfc: float) -> float:
-            """
-            Function for relating -log10(pvalue) and logfoldchange in a reciprocal.
+            """Function for relating -log10(pvalue) and logfoldchange in a reciprocal.
 
             Used for plotting the S-curve
             """
@@ -197,7 +194,7 @@ class MethodBase(ABC):
 
         def _map_shape(symbol: str) -> str:
             if shape_dict is not None:
-                for k in shape_dict.keys():
+                for k in shape_dict:
                     if shape_dict[k] is not None and symbol in shape_dict[k]:
                         return k
             return "other"
@@ -211,8 +208,7 @@ class MethodBase(ABC):
             pval_thresh: float = None,
             s_curve: bool = False,
         ) -> str:
-            """
-            Map genes to categorize based on log2fc and pvalue.
+            """Map genes to categorize based on log2fc and pvalue.
 
             These categories are used for coloring the dots.
             Used when no color_dict is passed, sets up/down/nonsignificant.
@@ -229,14 +225,13 @@ class MethodBase(ABC):
                     return "Down"
                 else:
                     return "not DE"
+            # Standard condition for Up or Down categorization
+            elif log2fc > log2fc_thresh and nlog10 > pval_thresh:
+                return "Up"
+            elif log2fc < -log2fc_thresh and nlog10 > pval_thresh:
+                return "Down"
             else:
-                # Standard condition for Up or Down categorization
-                if log2fc > log2fc_thresh and nlog10 > pval_thresh:
-                    return "Up"
-                elif log2fc < -log2fc_thresh and nlog10 > pval_thresh:
-                    return "Down"
-                else:
-                    return "not DE"
+                return "not DE"
 
         def _map_genes_categories_highlight(
             row: pd.Series,
@@ -247,8 +242,7 @@ class MethodBase(ABC):
             s_curve: bool = False,
             symbol_col: str = None,
         ) -> str:
-            """
-            Map genes to categorize based on log2fc and pvalue.
+            """Map genes to categorize based on log2fc and pvalue.
 
             These categories are used for coloring the dots.
             Used when color_dict is passed, sets DE / not DE for background and user supplied highlight genes.
@@ -258,7 +252,7 @@ class MethodBase(ABC):
             symbol = row[symbol_col]
 
             if color_dict is not None:
-                for k in color_dict.keys():
+                for k in color_dict:
                     if symbol in color_dict[k]:
                         return k
 
@@ -489,7 +483,7 @@ class MethodBase(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_paired(
+    def plot_paired(  # pragma: no cover # noqa: D417
         self,
         adata: ad.AnnData,
         results_df: pd.DataFrame,
@@ -577,18 +571,11 @@ class MethodBase(ABC):
         if any(adata.obs[[groupby, pairedby]].value_counts() > 1):
             logger.info("Performing pseudobulk for paired samples")
             ps = PseudobulkSpace()
-            adata = ps.compute(
-                adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum", min_cells=1, min_counts=1
-            )
+            adata = ps.compute(adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum")
 
-        if layer is not None:
-            X = adata.layers[layer]
-        else:
-            X = adata.X
-        try:
+        X = adata.layers[layer] if layer is not None else adata.X
+        with contextlib.suppress(AttributeError):
             X = X.toarray()
-        except AttributeError:
-            pass
 
         groupby_cols = [pairedby, groupby]
         df = adata.obs.loc[:, groupby_cols].join(pd.DataFrame(X, index=adata.obs_names, columns=var_names))
@@ -682,7 +669,7 @@ class MethodBase(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_fold_change(
+    def plot_fold_change(  # pragma: no cover # noqa: D417
         self,
         results_df: pd.DataFrame,
         *,
@@ -763,7 +750,7 @@ class MethodBase(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_multicomparison_fc(
+    def plot_multicomparison_fc(  # pragma: no cover # noqa: D417
         self,
         results_df: pd.DataFrame,
         *,
@@ -893,6 +880,8 @@ class LinearModelBase(MethodBase):
         super().__init__(adata, mask=mask, layer=layer)
         self._check_counts()
 
+        from formulaic_contrasts import FormulaicContrasts
+
         self.formulaic_contrasts = None
         if isinstance(design, str):
             self.formulaic_contrasts = FormulaicContrasts(adata.obs, design)
@@ -1013,7 +1002,7 @@ class LinearModelBase(MethodBase):
             )
         return self.formulaic_contrasts.cond(**kwargs)
 
-    def contrast(self, *args, **kwargs):
+    def contrast(self, *args, **kwargs):  # noqa: D417
         """Build a simple contrast for pairwise comparisons.
 
         Args:

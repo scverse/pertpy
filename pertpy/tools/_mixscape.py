@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Literal
 
@@ -9,15 +10,15 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
+from fast_array_utils.stats import mean, mean_var
+from pandas.errors import PerformanceWarning
 from scanpy import get
-from scanpy._settings import settings
 from scanpy._utils import _check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
 from scanpy.tools._utils import _choose_representation
 from scipy.sparse import csr_matrix, issparse, spmatrix
 from sklearn.mixture import GaussianMixture
 
-import pertpy as pt
 from pertpy._doc import _doc_params, doc_common_plot_args
 
 if TYPE_CHECKING:
@@ -27,11 +28,10 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
     from matplotlib.pyplot import Figure
-    from scipy import sparse
 
 
 class Mixscape:
-    """Python implementation of Mixscape."""
+    """identify perturbation effects in CRISPR screens by separating cells into perturbation groups."""
 
     def __init__(self):
         pass
@@ -72,7 +72,7 @@ class Mixscape:
             use_rep: Use the indicated representation. `'X'` or any key for `.obsm` is valid.
                 If `None`, the representation is chosen automatically:
                 For `.n_vars` < 50, `.X` is used, otherwise 'X_pca' is used.
-                If 'X_pca' is not present, it’s computed with default parameters.
+                If 'X_pca' is not present, it's computed with default parameters.
             n_dims: Number of dimensions to use from the representation to calculate the perturbation signature.
                 If `None`, use all dimensions.
             n_pcs: If PCA representation is used, the number of principal components to compute.
@@ -105,16 +105,18 @@ class Mixscape:
 
         adata.layers["X_pert"] = adata.X.copy()
 
+        # Work with LIL for efficient indexing but don't store it in AnnData as LIL is not supported anymore
+        X_pert_lil = adata.layers["X_pert"].tolil() if issparse(adata.layers["X_pert"]) else adata.layers["X_pert"]
+
         control_mask = adata.obs[pert_key] == control
 
         if ref_selection_mode == "split_by":
             for split in adata.obs[split_by].unique():
                 split_mask = adata.obs[split_by] == split
                 control_mask_group = control_mask & split_mask
-                control_mean_expr = adata.X[control_mask_group].mean(0)
-                adata.layers["X_pert"][split_mask] = (
-                    np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0)
-                    - adata.layers["X_pert"][split_mask]
+                control_mean_expr = mean(adata.X[control_mask_group], axis=0)
+                X_pert_lil[split_mask] = (
+                    np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0) - X_pert_lil[split_mask]
                 )
         else:
             if split_by is None:
@@ -127,55 +129,47 @@ class Mixscape:
             if n_dims is not None and n_dims < representation.shape[1]:
                 representation = representation[:, :n_dims]
 
+            from pynndescent import NNDescent
+
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
-
                 R_split = representation[split_mask]
                 R_control = representation[np.asarray(control_mask_split)]
-
-                from pynndescent import NNDescent
-
                 eps = kwargs.pop("epsilon", 0.1)
                 nn_index = NNDescent(R_control, **kwargs)
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
-
                 X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
-
                 n_split = split_mask.sum()
                 n_control = X_control.shape[0]
 
                 if batch_size is None:
                     col_indices = np.ravel(indices)
                     row_indices = np.repeat(np.arange(n_split), n_neighbors)
-
                     neigh_matrix = csr_matrix(
                         (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
                         shape=(n_split, n_control),
                     )
                     neigh_matrix /= n_neighbors
-                    adata.layers["X_pert"][split_mask] = (
-                        np.log1p(neigh_matrix @ X_control) - adata.layers["X_pert"][split_mask]
+                    X_pert_lil[np.asarray(split_mask)] = (
+                        sc.pp.log1p(neigh_matrix @ X_control) - X_pert_lil[np.asarray(split_mask)]
                     )
                 else:
-                    is_sparse = issparse(X_control)
                     split_indices = np.where(split_mask)[0]
                     for i in range(0, n_split, batch_size):
                         size = min(i + batch_size, n_split)
                         select = slice(i, size)
-
                         batch = np.ravel(indices[select])
                         split_batch = split_indices[select]
-
                         size = size - i
-
-                        # sparse is very slow
                         means_batch = X_control[batch]
-                        means_batch = means_batch.toarray() if is_sparse else means_batch
-                        means_batch = means_batch.reshape(size, n_neighbors, -1).mean(1)
+                        batch_reshaped = means_batch.reshape(size, n_neighbors, -1)
+                        means_batch, _ = mean_var(batch_reshaped, axis=1)
+                        X_pert_lil[split_batch] = np.log1p(means_batch) - X_pert_lil[split_batch]
 
-                        adata.layers["X_pert"][split_batch] = (
-                            np.log1p(means_batch) - adata.layers["X_pert"][split_batch]
-                        )
+        if issparse(X_pert_lil):
+            adata.layers["X_pert"] = X_pert_lil.tocsr()
+        else:
+            adata.layers["X_pert"] = X_pert_lil
 
         if copy:
             return adata
@@ -199,6 +193,7 @@ class Mixscape:
         perturbation_type: str | None = "KO",
         random_state: int | None = 0,
         copy: bool | None = False,
+        **gmmkwargs,
     ):
         """Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
 
@@ -221,6 +216,7 @@ class Mixscape:
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications.
             random_state: Random seed for the GaussianMixture model.
             copy: Determines whether a copy of the `adata` is returned.
+            **gmmkwargs: Passed to custom implementation of scikit-learn Gaussian Mixture Model.
 
         Returns:
             If `copy=True`, returns the copy of `adata` with the classification result in `.obs`.
@@ -307,16 +303,18 @@ class Mixscape:
 
                 else:
                     de_genes = perturbation_markers[(category, gene)]
-                    de_genes_indices = self._get_column_indices(adata, list(de_genes))
+                    de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
                     dat = X[np.asarray(all_cells)][:, de_genes_indices]
-                    dat_cells = all_cells[all_cells].index
                     if scale:
                         dat = sc.pp.scale(dat)
 
                     converged = False
                     n_iter = 0
                     old_classes = adata.obs[new_class_name][all_cells]
+
+                    nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
+                    nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)
 
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
@@ -326,12 +324,12 @@ class Mixscape:
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
                         guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
-                        nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
-                        vec = np.mean(dat[guide_cells_dat_idx], axis=0) - np.mean(dat[nt_cells_dat_idx], axis=0)
+                        guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)
+                        vec = guide_cells_mean - nt_cells_mean
 
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
-                            pvec = np.dot(dat.toarray(), vec) / np.dot(vec, vec)
+                            pvec = dat.dot(vec) / np.dot(vec, vec)
                         else:
                             pvec = np.dot(dat, vec) / np.dot(vec, vec)
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
@@ -341,7 +339,7 @@ class Mixscape:
                             gv["pvec"] = pvec
                             gv[labels] = control
                             gv.loc[guide_cells, labels] = gene
-                            if gene not in gv_list.keys():
+                            if gene not in gv_list:
                                 gv_list[gene] = {}
                             gv_list[gene][category] = gv
 
@@ -351,31 +349,30 @@ class Mixscape:
                             n_components=2,
                             covariance_type="spherical",
                             means_init=means_init,
-                            precisions_init=1 / (std_init ** 2),
+                            precisions_init=1 / (std_init**2),
                             random_state=random_state,
-                            max_iter=5000,
+                            max_iter=100,
                             fixed_means=[pvec[nt_cells].mean(), None],
                             fixed_covariances=[pvec[nt_cells].std() ** 2, None],
+                            **gmmkwargs,
                         ).fit(np.asarray(pvec).reshape(-1, 1))
                         probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
                         post_prob = 1 / (1 + lik_ratio)
 
                         # based on the posterior probability, assign cells to the two classes
-                        adata.obs.loc[
-                            [orig_guide_cells_index[cell] for cell in np.where(post_prob > 0.5)[0]], new_class_name
-                        ] = gene
-                        adata.obs.loc[
-                            [orig_guide_cells_index[cell] for cell in np.where(post_prob <= 0.5)[0]], new_class_name
-                        ] = f"{gene} NP"
+                        ko_mask = post_prob > 0.5
+                        adata.obs.loc[np.array(orig_guide_cells_index)[ko_mask], new_class_name] = gene
+                        adata.obs.loc[np.array(orig_guide_cells_index)[~ko_mask], new_class_name] = f"{gene} NP"
 
                         if sum(adata.obs[new_class_name][split_mask] == gene) < min_de_genes:
                             adata.obs.loc[guide_cells, new_class_name] = "NP"
                             converged = True
-                        if adata.obs[new_class_name][all_cells].equals(old_classes):
+                        current_classes = adata.obs[new_class_name][all_cells]
+                        if (current_classes == old_classes).all():
                             converged = True
+                        old_classes = current_classes
 
-                        old_classes = adata.obs[new_class_name][all_cells]
                         n_iter += 1
 
                     adata.obs.loc[(adata.obs[new_class_name] == gene) & split_mask, new_class_name] = (
@@ -414,7 +411,6 @@ class Mixscape:
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
-            control: Control category from the `pert_key` column.
             n_comps: Number of principal components to use.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
@@ -470,7 +466,8 @@ class Mixscape:
         )
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
-        ].copy()
+        ]
+        X = adata_subset.X - adata_subset.X.mean(0)
         projected_pcs: dict[str, np.ndarray] = {}
         # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
         for _, (key, value) in enumerate(perturbation_markers.items()):
@@ -482,16 +479,10 @@ class Mixscape:
                 ].copy()
                 sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
-                sc.pp.neighbors(gene_subset)
-                # projects each subspace onto all cells in the data.
-                sc.tl.ingest(adata=adata_subset, adata_ref=gene_subset, embedding_method="pca")
-                projected_pcs[key[1]] = adata_subset.obsm["X_pca"]
+                # project cells into PCA space of gene_subset
+                projected_pcs[key[1]] = np.asarray(np.dot(X, gene_subset.varm["PCs"]))
         # concatenate all pcs into a single matrix.
-        for index, (_, value) in enumerate(projected_pcs.items()):
-            if index == 0:
-                projected_pcs_array = value
-            else:
-                projected_pcs_array = np.concatenate((projected_pcs_array, value), axis=1)
+        projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
         clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
         clf.fit(projected_pcs_array, adata_subset.obs[labels])
@@ -514,7 +505,7 @@ class Mixscape:
         logfc_threshold: float,
         test_method: str,
     ) -> dict[tuple, np.ndarray]:
-        """Determine gene sets across all splits/groups through differential gene expression
+        """Determine gene sets across all splits/groups through differential gene expression.
 
         Args:
             adata: :class:`~anndata.AnnData` object
@@ -538,40 +529,34 @@ class Mixscape:
             gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
             adata_split = adata[split_mask].copy()
             # find top DE genes between cells with targeting and non-targeting gRNAs
-            sc.tl.rank_genes_groups(
-                adata_split,
-                layer=layer,
-                groupby=labels,
-                groups=gene_targets,
-                reference=control,
-                method=test_method,
-                use_raw=False,
-            )
-            # get DE genes for each target gene
-            for gene in gene_targets:
-                logfc_threshold_mask = np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
-                de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
-                pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
-                de_genes = de_genes[pvals_adj < pval_cutoff]
-                if len(de_genes) < min_de_genes:
-                    de_genes = np.array([])
-                perturbation_markers[(category, gene)] = de_genes
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                warnings.simplefilter("ignore", PerformanceWarning)
+                sc.tl.rank_genes_groups(
+                    adata_split,
+                    layer=layer,
+                    groupby=labels,
+                    groups=gene_targets,
+                    reference=control,
+                    method=test_method,
+                    use_raw=False,
+                )
+                # get DE genes for each target gene
+                for gene in gene_targets:
+                    logfc_threshold_mask = (
+                        np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
+                    )
+                    de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
+                    pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
+                    de_genes = de_genes[pvals_adj < pval_cutoff]
+                    if len(de_genes) < min_de_genes:
+                        de_genes = np.array([])
+                    perturbation_markers[(category, gene)] = de_genes
 
         return perturbation_markers
 
-    def _get_column_indices(self, adata, col_names):
-        if isinstance(col_names, str):  # pragma: no cover
-            col_names = [col_names]
-
-        indices = []
-        for idx, col in enumerate(adata.var_names):
-            if col in col_names:
-                indices.append(idx)
-
-        return indices
-
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_barplot(  # pragma: no cover
+    def plot_barplot(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         guide_rna_column: str,
@@ -678,7 +663,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_heatmap(  # pragma: no cover
+    def plot_heatmap(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         labels: str,
@@ -727,7 +712,10 @@ class Mixscape:
         if "mixscape_class" not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
         adata_subset = adata[(adata.obs[labels] == target_gene) | (adata.obs[labels] == control)].copy()
-        sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            warnings.simplefilter("ignore", PerformanceWarning)
+            sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
         sc.pp.scale(adata_subset, max_value=vmax)
         sc.pp.subsample(adata_subset, n_obs=subsample_number)
 
@@ -748,7 +736,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_perturbscore(  # pragma: no cover
+    def plot_perturbscore(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         labels: str,
@@ -801,7 +789,7 @@ class Mixscape:
         if "mixscape" not in adata.uns:
             raise ValueError("Please run the `mixscape` function first.")
         perturbation_score = None
-        for key in adata.uns["mixscape"][target_gene].keys():
+        for key in adata.uns["mixscape"][target_gene]:
             perturbation_score_temp = adata.uns["mixscape"][target_gene][key]
             perturbation_score_temp["name"] = key
             if perturbation_score is None:
@@ -914,7 +902,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_violin(  # pragma: no cover
+    def plot_violin(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         target_gene_idents: str | list[str],
@@ -994,7 +982,7 @@ class Mixscape:
             if len(ylabel) != 1:
                 raise ValueError(f"Expected number of y-labels to be `1`, found `{len(ylabel)}`.")
         elif len(ylabel) != len(keys):
-            raise ValueError(f"Expected number of y-labels to be `{len(keys)}`, " f"found `{len(ylabel)}`.")
+            raise ValueError(f"Expected number of y-labels to be `{len(keys)}`, found `{len(ylabel)}`.")
 
         if groupby is not None:
             if hue is not None:
@@ -1014,8 +1002,7 @@ class Mixscape:
             ys = keys
 
         if multi_panel and groupby is None and len(ys) == 1:
-            # This is a quick and dirty way for adapting scales across several
-            # keys if groupby is None.
+            # This is a quick and dirty way for adapting scales across several keys if groupby is None.
             y = ys[0]
 
             g = sns.catplot(
@@ -1047,7 +1034,7 @@ class Mixscape:
                 g.set(yscale="log")
             g.set_titles(col_template="{col_name}").set_xlabels("")
             if rotation is not None:
-                for ax in g.axes[0]:
+                for ax in g.axes[0]:  # noqa: PLR1704
                     ax.tick_params(axis="x", labelrotation=rotation)
         else:
             # set by default the violin plot cut=0 to limit the extend
@@ -1065,7 +1052,7 @@ class Mixscape:
             else:
                 axs = [ax]
             for ax, y, ylab in zip(axs, ys, ylabel, strict=False):
-                ax = sns.violinplot(
+                ax = sns.violinplot(  # noqa: PLW2901
                     x=x,
                     y=y,
                     data=obs_tidy,
@@ -1079,7 +1066,7 @@ class Mixscape:
                 # Get the handles and labels.
                 handles, labels = ax.get_legend_handles_labels()
                 if stripplot:
-                    ax = sns.stripplot(
+                    ax = sns.stripplot(  # noqa: PLW2901
                         x=x,
                         y=y,
                         data=obs_tidy,
@@ -1116,7 +1103,7 @@ class Mixscape:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_lda(  # pragma: no cover
+    def plot_lda(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         control: str,
@@ -1135,13 +1122,16 @@ class Mixscape:
         """Visualizing perturbation responses with Linear Discriminant Analysis. Requires `pt.tl.mixscape()` to be run first.
 
         Args:
-            adata: The annotated data object.
+            adata: The annotated data objectplot_heatmap.
             control: Control category from the `pert_key` column.
             mixscape_class: The column of `.obs` with the mixscape classification result.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
-            lda_key: If not specified, lda looks .uns["mixscape_lda"] for the LDA results.
             n_components: The number of dimensions of the embedding.
+            lda_key: If not specified, lda looks .uns["mixscape_lda"] for the LDA results.
+            color_map: Matplotlib color map.
+            palette: Matplotlib palette.
+            ax: Matplotlib axes.
             {common_plot_args}
             **kwds: Additional arguments to `scanpy.pl.umap`.
 
@@ -1186,13 +1176,14 @@ class Mixscape:
         plt.show()
         return None
 
+
 class MixscapeGaussianMixture(GaussianMixture):
     def __init__(
         self,
         n_components: int,
-        fixed_means:  Sequence[float] | None = None,
+        fixed_means: Sequence[float] | None = None,
         fixed_covariances: Sequence[float] | None = None,
-        **kwargs
+        **kwargs,
     ):
         """Custom Gaussian Mixture Model where means and covariances can be fixed for specific components.
 
@@ -1200,25 +1191,34 @@ class MixscapeGaussianMixture(GaussianMixture):
             n_components: Number of Gaussian components
             fixed_means: Means to fix (use None for those that should be estimated)
             fixed_covariances: Covariances to fix (use None for those that should be estimated)
-            kwargs: Additional arguments passed to scikit-learn's GaussianMixture
+            **kwargs: Additional arguments passed to scikit-learn's GaussianMixture
         """
         super().__init__(n_components=n_components, **kwargs)
         self.fixed_means = fixed_means
         self.fixed_covariances = fixed_covariances
 
+        self.fixed_mean_indices = []
+        self.fixed_mean_values = []
+        if fixed_means is not None:
+            self.fixed_mean_indices = [i for i, m in enumerate(fixed_means) if m is not None]
+            if self.fixed_mean_indices:
+                self.fixed_mean_values = np.array([fixed_means[i] for i in self.fixed_mean_indices])
+
+        self.fixed_cov_indices = []
+        self.fixed_cov_values = []
+        if fixed_covariances is not None:
+            self.fixed_cov_indices = [i for i, c in enumerate(fixed_covariances) if c is not None]
+            if self.fixed_cov_indices:
+                self.fixed_cov_values = np.array([fixed_covariances[i] for i in self.fixed_cov_indices])
+
     def _m_step(self, X: np.ndarray, log_resp: np.ndarray):
         """Modified M-step to respect fixed means and covariances."""
         super()._m_step(X, log_resp)
 
-        if self.fixed_means is not None:
-            for i in range(self.n_components):
-                if self.fixed_means[i] is not None:
-                    self.means_[i] = self.fixed_means[i]
+        if self.fixed_mean_indices:
+            self.means_[self.fixed_mean_indices] = self.fixed_mean_values
 
-        if self.fixed_covariances is not None:
-            for i in range(self.n_components):
-                if self.fixed_covariances[i] is not None:
-                    self.covariances_[i] = self.fixed_covariances[i]
+        if self.fixed_cov_indices:
+            self.covariances_[self.fixed_cov_indices] = self.fixed_cov_values
 
         return self
-

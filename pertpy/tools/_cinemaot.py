@@ -2,18 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import jax
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy.stats as ss
-import seaborn as sns
 import sklearn.metrics
-from ott.geometry import pointcloud
+from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear import linear_problem
 from ott.solvers.linear import sinkhorn, sinkhorn_lr
 from scanpy.plotting import _utils
 from scipy.sparse import issparse
+from seaborn import heatmap
 from sklearn.decomposition import FastICA
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import NearestNeighbors
@@ -49,6 +50,7 @@ class Cinemaot:
         eps: float = 1e-3,
         solver: str = "Sinkhorn",
         preweight_label: str | None = None,
+        random_state: int | None = 0,
     ):
         """Calculate the confounding variation, optimal transport counterfactual pairs, and single-cell level treatment effects.
 
@@ -69,6 +71,7 @@ class Cinemaot:
             solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             preweight_label: The annotated label (e.g. cell type) that is used to assign weights for treated
                              and control cells to balance across the label. Helps overcome the differential abundance issue.
+            random_state: The random seed for the shuffling.
 
         Returns:
             Returns an AnnData object that contains the single-cell level treatment effect as de.X and the
@@ -85,7 +88,7 @@ class Cinemaot:
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         if solver not in available_solvers:
-            raise ValueError(f"solver = {solver} is not one of the supported solvers:" f" {available_solvers}")
+            raise ValueError(f"solver = {solver} is not one of the supported solvers: {available_solvers}")
 
         if dim is None:
             dim = self.get_dim(adata, use_rep=use_rep)
@@ -96,7 +99,7 @@ class Cinemaot:
         xi = np.zeros(dim)
         j = 0
         for source_row in X_transformed.T:
-            xi_obj = Xi(source_row, groupvec * 1)
+            xi_obj = Xi(source_row, groupvec * 1, random_state=random_state)
             xi[j] = xi_obj.correlation
             j = j + 1
 
@@ -111,7 +114,7 @@ class Cinemaot:
             sklearn.metrics.pairwise_distances(cf1, cf2)
 
         e = smoothness * sum(xi < thres)
-        geom = pointcloud.PointCloud(cf1, cf2, epsilon=e, batch_size=batch_size)
+        geom = PointCloud(cf1, cf2, epsilon=e, batch_size=batch_size)
 
         if preweight_label is None:
             ot_prob = linear_problem.LinearProblem(geom, a=None, b=None)
@@ -122,17 +125,15 @@ class Cinemaot:
             a = np.zeros(cf1.shape[0])
             b = np.zeros(cf2.shape[0])
 
-            adata1 = adata[adata.obs[pert_key] == control, :].copy()
-            adata2 = adata[adata.obs[pert_key] != control, :].copy()
+            adata1 = adata[adata.obs[pert_key] == control]
+            adata2 = adata[adata.obs[pert_key] != control]
 
             for label in adata1.obs[pert_key].unique():
+                mask_label = adata1.obs[pert_key] == label
                 for ct in adata1.obs[preweight_label].unique():
-                    a[((adata1.obs[preweight_label] == ct) & (adata1.obs[pert_key] == label)).values] = np.sum(
-                        (adata2.obs[preweight_label] == ct).values
-                    ) / np.sum((adata1.obs[preweight_label] == ct).values)
-                a[(adata1.obs[pert_key] == label).values] = a[(adata1.obs[pert_key] == label).values] / np.sum(
-                    a[(adata1.obs[pert_key] == label).values]
-                )
+                    mask_ct = adata1.obs[preweight_label] == ct
+                    a[mask_ct & mask_label] = np.sum(adata2.obs[preweight_label] == ct) / np.sum(mask_ct)
+                a[mask_label] /= np.sum(a[mask_label])
 
             a = a / np.sum(a)
             b[:] = 1 / cf2.shape[0]
@@ -141,25 +142,22 @@ class Cinemaot:
         if solver == "LRSinkhorn":
             if rank is None:
                 rank = int(min(cf1.shape[0], cf2.shape[0]) / 2)
-            _solver = sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps)
+            _solver = jax.jit(sinkhorn_lr.LRSinkhorn(rank=rank, threshold=eps))
             ot_sink = _solver(ot_prob)
             embedding = (
                 X_transformed[adata.obs[pert_key] != control, :]
                 - ot_sink.apply(X_transformed[adata.obs[pert_key] == control, :].T).T
                 / ot_sink.apply(np.ones_like(X_transformed[adata.obs[pert_key] == control, :].T)).T
             )
-            if issparse(adata.X):
-                te2 = (
-                    adata.X.toarray()[adata.obs[pert_key] != control, :]
-                    - ot_sink.apply(adata.X.toarray()[adata.obs[pert_key] == control, :].T).T
-                    / ot_sink.apply(np.ones_like(adata.X.toarray()[adata.obs[pert_key] == control, :].T)).T
-                )
-            else:
-                te2 = (
-                    adata.X[adata.obs[pert_key] != control, :]
-                    - ot_sink.apply(adata.X[adata.obs[pert_key] == control, :].T).T
-                    / ot_sink.apply(np.ones_like(adata.X[adata.obs[pert_key] == control, :].T)).T
-                )
+
+            X = adata.X.toarray() if issparse(adata.X) else adata.X
+            te2 = (
+                X[adata.obs[pert_key] != control, :]
+                - ot_sink.apply(X[adata.obs[pert_key] == control, :].T).T
+                / ot_sink.apply(np.ones_like(X[adata.obs[pert_key] == control, :].T)).T
+            )
+            if issparse(X):
+                del X
 
             adata.obsm[cf_rep] = cf
             adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = (
@@ -168,21 +166,20 @@ class Cinemaot:
             )
 
         else:
-            _solver = sinkhorn.Sinkhorn(threshold=eps)
+            _solver = jax.jit(sinkhorn.Sinkhorn(threshold=eps))
             ot_sink = _solver(ot_prob)
             ot_matrix = np.array(ot_sink.matrix.T, dtype=np.float64)
             embedding = X_transformed[adata.obs[pert_key] != control, :] - np.matmul(
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X_transformed[adata.obs[pert_key] == control, :]
             )
 
-            if issparse(adata.X):
-                te2 = adata.X.toarray()[adata.obs[pert_key] != control, :] - np.matmul(
-                    ot_matrix / np.sum(ot_matrix, axis=1)[:, None], adata.X.toarray()[adata.obs[pert_key] == control, :]
-                )
-            else:
-                te2 = adata.X[adata.obs[pert_key] != control, :] - np.matmul(
-                    ot_matrix / np.sum(ot_matrix, axis=1)[:, None], adata.X[adata.obs[pert_key] == control, :]
-                )
+            X = adata.X.toarray() if issparse(adata.X) else adata.X
+
+            te2 = X[adata.obs[pert_key] != control, :] - np.matmul(
+                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X[adata.obs[pert_key] == control, :]
+            )
+            if issparse(X):
+                del X
 
             adata.obsm[cf_rep] = cf
             adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = np.matmul(
@@ -251,7 +248,7 @@ class Cinemaot:
         """
         available_solvers = ["Sinkhorn", "LRSinkhorn"]
         assert solver in available_solvers, (
-            f"solver = {solver} is not one of the supported solvers:" f" {available_solvers}"
+            f"solver = {solver} is not one of the supported solvers: {available_solvers}"
         )
 
         if dim is None:
@@ -259,7 +256,9 @@ class Cinemaot:
 
         adata.obs_names_make_unique()
 
-        idx = self.get_weightidx(adata, pert_key=pert_key, control=control, k=k, use_rep=use_rep, resolution=resolution)
+        idx = self._get_weightidx(
+            adata, pert_key=pert_key, control=control, k=k, use_rep=use_rep, resolution=resolution
+        )
         adata_ = adata[idx].copy()
         TE = self.causaleffect(
             adata_,
@@ -329,11 +328,10 @@ class Cinemaot:
                 df = pd.DataFrame(adata.raw.X.toarray(), columns=adata.raw.var_names, index=adata.raw.obs_names)
             else:
                 df = pd.DataFrame(adata.raw.X, columns=adata.raw.var_names, index=adata.raw.obs_names)
+        elif issparse(adata.X):
+            df = pd.DataFrame(adata.X.toarray(), columns=adata.var_names, index=adata.obs_names)
         else:
-            if issparse(adata.X):
-                df = pd.DataFrame(adata.X.toarray(), columns=adata.var_names, index=adata.obs_names)
-            else:
-                df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
+            df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
 
         if label_list is None:
             label_list = ["ct"]
@@ -377,10 +375,7 @@ class Cinemaot:
             >>> dim = model.get_dim(adata)
         """
         sk = SinkhornKnopp()
-        if issparse(adata.raw.X):
-            data = adata.raw.X.toarray()
-        else:
-            data = adata.raw.X
+        data = adata.raw.X.toarray() if issparse(adata.raw.X) else adata.raw.X
         vm = (1e-3 + data + c * data * data) / (1 + c)
         sk.fit(vm)
         wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
@@ -388,9 +383,10 @@ class Cinemaot:
         dim = min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
         return dim
 
-    def get_weightidx(
+    def _get_weightidx(
         self,
         adata: AnnData,
+        *,
         pert_key: str,
         control: str,
         use_rep: str = "X_pca",
@@ -401,7 +397,8 @@ class Cinemaot:
 
         Args:
             adata: The annotated data object.
-            c: the parameter regarding the quadratic variance distribution. c=0 means Poisson count matrices.
+            pert_key: Key of the perturbation col.
+            control: Key of the control col.
             use_rep: the embedding used to give a upper bound for the estimated rank.
             k: the number of neighbors used in the k-NN matching phase.
             resolution: the clustering resolution used in the sampling phase.
@@ -413,7 +410,7 @@ class Cinemaot:
             >>> import pertpy as pt
             >>> adata = pt.dt.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
-            >>> idx = model.get_weightidx(adata, pert_key="perturbation", control="No stimulation")
+            >>> idx = model._get_weightidx(adata, pert_key="perturbation", control="No stimulation")
         """
         adata_ = adata.copy()
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]
@@ -621,13 +618,12 @@ class Cinemaot:
             else:
                 Y0 = adata.raw.X[adata.obs[pert_key] == control, :]
                 Y1 = adata.raw.X[adata.obs[pert_key] != control, :]
+        elif issparse(adata.X):
+            Y0 = adata.X.toarray()[adata.obs[pert_key] == control, :]
+            Y1 = adata.X.toarray()[adata.obs[pert_key] != control, :]
         else:
-            if issparse(adata.X):
-                Y0 = adata.X.toarray()[adata.obs[pert_key] == control, :]
-                Y1 = adata.X.toarray()[adata.obs[pert_key] != control, :]
-            else:
-                Y0 = adata.X[adata.obs[pert_key] == control, :]
-                Y1 = adata.X[adata.obs[pert_key] != control, :]
+            Y0 = adata.X[adata.obs[pert_key] == control, :]
+            Y1 = adata.X[adata.obs[pert_key] != control, :]
         X0 = cf[adata.obs[pert_key] == control, :]
         X1 = cf[adata.obs[pert_key] != control, :]
         ols0 = LinearRegression()
@@ -643,7 +639,7 @@ class Cinemaot:
         return c_effect, s_effect
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_vis_matching(
+    def plot_vis_matching(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         de: AnnData,
@@ -671,9 +667,11 @@ class Cinemaot:
             de_label: the label for differential response. If none, use leiden cluster labels at resolution 1.0.
             source_label: the confounder / cell type label.
             matching_rep: the place that stores the matching matrix. default de.obsm['ot'].
+            resolution: Leiden resolution.
             normalize: normalize the coarse-grained matching matrix by row / column.
             title: the title for the figure.
             min_val: The min value to truncate the matching matrix.
+            ax: Matplotlib axes object.
             {common_plot_args}
             **kwargs: Other parameters to input for seaborn.heatmap.
 
@@ -703,17 +701,11 @@ class Cinemaot:
         df["source_label"] = adata_.obs[source_label].astype(str).values
         df = df.groupby("source_label").sum()
 
-        if normalize == "col":
-            df = df / df.sum(axis=0)
-        else:
-            df = (df.T / df.sum(axis=1)).T
+        df = df / df.sum(axis=0) if normalize == "col" else (df.T / df.sum(axis=1)).T
         df = df.clip(lower=min_val) - min_val
-        if normalize == "col":
-            df = df / df.sum(axis=0)
-        else:
-            df = (df.T / df.sum(axis=1)).T
+        df = df / df.sum(axis=0) if normalize == "col" else (df.T / df.sum(axis=1)).T
 
-        g = sns.heatmap(df, annot=True, ax=ax, **kwargs)
+        g = heatmap(df, annot=True, ax=ax, **kwargs)
         plt.title(title)
 
         if return_fig:
@@ -723,14 +715,12 @@ class Cinemaot:
 
 
 class Xi:
-    """
-    A fast implementation of cross-rank dependence metric used in CINEMA-OT.
+    """A fast implementation of cross-rank dependence metric used in CINEMA-OT."""
 
-    """
-
-    def __init__(self, x, y):
+    def __init__(self, x, y, random_state: int | None = 0):
         self.x = x
         self.y = y
+        self.random_state = random_state
 
     @property
     def sample_size(self):
@@ -739,18 +729,15 @@ class Xi:
     @property
     def x_ordered_rank(self):
         # PI is the rank vector for x, with ties broken at random
-        # Not mine: source (https://stackoverflow.com/a/47430384/1628971)
-        # random shuffling of the data - reason to use random.choice is that
-        # pd.sample(frac=1) uses the same randomizing algorithm
         len_x = len(self.x)
-        rng = np.random.default_rng()
-        randomized_indices = rng.choice(np.arange(len_x), len_x, replace=False)
-        randomized = [self.x[idx] for idx in randomized_indices]
-        # same as pandas rank method 'first'
-        rankdata = ss.rankdata(randomized, method="ordinal")
-        # Reindexing based on pairs of indices before and after
-        unrandomized = [rankdata[j] for i, j in sorted(zip(randomized_indices, range(len_x), strict=False))]
-        return unrandomized
+        rng = np.random.default_rng(self.random_state)
+        perm = rng.permutation(len_x)
+        x_shuffled = self.x[perm]
+
+        ranks = np.empty(len_x, dtype=int)
+        ranks[perm[np.argsort(x_shuffled, stable=True)]] = np.arange(1, len_x + 1)
+
+        return ranks
 
     @property
     def y_rank_max(self):
@@ -760,7 +747,7 @@ class Xi:
     @property
     def g(self):
         # g[i] is number of j s.t. y[j] >= y[i], divided by n.
-        return ss.rankdata([-i for i in self.y], method="max") / self.sample_size
+        return ss.rankdata(-self.y, method="max") / self.sample_size
 
     @property
     def x_ordered(self):
@@ -769,32 +756,14 @@ class Xi:
 
     @property
     def x_rank_max_ordered(self):
-        x_ordered_result = self.x_ordered
-        y_rank_max_result = self.y_rank_max
-        # Rearrange f according to ord.
-        return [y_rank_max_result[i] for i in x_ordered_result]
+        return self.y_rank_max[self.x_ordered]
 
     @property
     def mean_absolute(self):
         x1 = self.x_rank_max_ordered[0 : (self.sample_size - 1)]
         x2 = self.x_rank_max_ordered[1 : self.sample_size]
 
-        return (
-            np.mean(
-                np.abs(
-                    [
-                        x - y
-                        for x, y in zip(
-                            x1,
-                            x2,
-                            strict=False,
-                        )
-                    ]
-                )
-            )
-            * (self.sample_size - 1)
-            / (2 * self.sample_size)
-        )
+        return np.mean(np.abs(x1 - x2)) * (self.sample_size - 1) / (2 * self.sample_size)
 
     @property
     def inverse_g_mean(self):
@@ -803,7 +772,7 @@ class Xi:
 
     @property
     def correlation(self):
-        """xi correlation"""
+        """Xi correlation."""
         return 1 - self.mean_absolute / self.inverse_g_mean
 
     @classmethod
@@ -852,10 +821,7 @@ class Xi:
 
 
 class SinkhornKnopp:
-    """
-    An simple implementation of Sinkhorn iteration used in the biwhitening approach.
-
-    """
+    """An simple implementation of Sinkhorn iteration used in the biwhitening approach."""
 
     def __init__(self, max_iter: float = 1000, setr: int = 0, setc: float = 0, epsilon: float = 1e-3):
         if max_iter < 0:
@@ -889,14 +855,8 @@ class SinkhornKnopp:
         assert P.ndim == 2
 
         N = P.shape[0]
-        if np.sum(abs(self._setr)) == 0:
-            rsum = P.shape[1]
-        else:
-            rsum = self._setr
-        if np.sum(abs(self._setc)) == 0:
-            csum = P.shape[0]
-        else:
-            csum = self._setc
+        rsum = P.shape[1] if np.sum(abs(self._setr)) == 0 else self._setr
+        csum = P.shape[0] if np.sum(abs(self._setc)) == 0 else self._setc
         max_threshr = rsum + self._epsilon
         min_threshr = rsum - self._epsilon
         max_threshc = csum + self._epsilon

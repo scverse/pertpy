@@ -39,9 +39,6 @@ def adata():
 
 @pytest.mark.parametrize("distance", distances)
 def test_distancetest(adata, distance):
-    if distance == "wasserstein":
-        pytest.mark.apply(pytest.mark.slow)
-
     etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak")
     tab = etest(adata, groupby="perturbation", contrast="control")
 

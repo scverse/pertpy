@@ -1,4 +1,4 @@
-"""Simple tests such as t-test, wilcoxon"""
+"""Simple tests such as t-test, wilcoxon."""
 
 import warnings
 from abc import abstractmethod
@@ -12,7 +12,7 @@ import scipy.stats
 import statsmodels
 from anndata import AnnData
 from lamin_utils import logger
-from pandas.core.api import DataFrame as DataFrame
+from pandas.core.api import DataFrame
 from scipy.sparse import diags, issparse
 from tqdm.auto import tqdm
 
@@ -173,11 +173,7 @@ class WilcoxonTest(SimpleComparisonBase):
     @staticmethod
     def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, float]:
         """Perform an unpaired or paired Wilcoxon/Mann-Whitney-U test."""
-
-        if paired:
-            test_result = scipy.stats.wilcoxon(x0, x1, **kwargs)
-        else:
-            test_result = scipy.stats.mannwhitneyu(x0, x1, **kwargs)
+        test_result = scipy.stats.wilcoxon(x0, x1, **kwargs) if paired else scipy.stats.mannwhitneyu(x0, x1, **kwargs)
 
         return {
             "p_value": test_result.pvalue,
@@ -190,10 +186,7 @@ class TTest(SimpleComparisonBase):
 
     @staticmethod
     def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, float]:
-        if paired:
-            test_result = scipy.stats.ttest_rel(x0, x1, **kwargs)
-        else:
-            test_result = scipy.stats.ttest_ind(x0, x1, **kwargs)
+        test_result = scipy.stats.ttest_rel(x0, x1, **kwargs) if paired else scipy.stats.ttest_ind(x0, x1, **kwargs)
 
         return {
             "p_value": test_result.pvalue,

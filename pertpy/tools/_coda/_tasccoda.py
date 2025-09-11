@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-import arviz as az
 import jax.numpy as jnp
 import numpy as np
 import numpyro as npy
@@ -25,14 +24,14 @@ from pertpy.tools._coda._base_coda import (
 )
 
 if TYPE_CHECKING:
+    import arviz as az
     import pandas as pd
 
 config.update("jax_enable_x64", True)
 
 
 class Tasccoda(CompositionalModel2):
-    """
-    Statistical model for tree-aggregated differential composition analysis (tascCODA, Ostner et al., 2021).
+    r"""Statistical model for tree-aggregated differential composition analysis (tascCODA, Ostner et al., 2021).
 
     The hierarchical formulation of the model for one sample is:
 
@@ -99,7 +98,7 @@ class Tasccoda(CompositionalModel2):
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
-            MuData: MuData object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
+            :class:`mudata.MuData` object with cell-level AnnData (`mudata[modality_key_1]`) and aggregated sample-level AnnData (`mudata[modality_key_2]`).
 
         Examples:
             >>> import pertpy as pt
@@ -111,7 +110,6 @@ class Tasccoda(CompositionalModel2):
             >>>     key_added="lineage", add_level_name=True
             >>> )
         """
-
         if type == "cell_level":
             adata_coda = from_scanpy(
                 adata=adata,
@@ -122,8 +120,10 @@ class Tasccoda(CompositionalModel2):
                 covariate_df=covariate_df,
             )
             mdata = MuData({modality_key_1: adata, modality_key_2: adata_coda})
-        else:
+        elif type == "sample_level":
             mdata = MuData({modality_key_1: AnnData(), modality_key_2: adata})
+        else:
+            raise ValueError(f'{type} is not a supported type, expected "cell_level" or "sample_level".')
         import_tree(
             data=mdata,
             modality_1=modality_key_1,
@@ -198,9 +198,8 @@ class Tasccoda(CompositionalModel2):
         if tree_key is None:
             raise ValueError("Please specify the key in .uns that contains the tree structure!")
 
-        # Scoped import due to installation issues
         try:
-            import ete3 as ete
+            import ete4 as ete
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
@@ -236,7 +235,7 @@ class Tasccoda(CompositionalModel2):
 
             # number of leaves for each internal node (important for aggregation penalty lambda_1)
             if "node_leaves" not in pen_args:
-                node_leaves = [len(n.get_leaves()) for n in phy_tree.idx_dict.values()]
+                node_leaves = [len(n.leaves()) for n in phy_tree.idx_dict.values()]
                 node_leaves.reverse()
                 pen_args["node_leaves"] = np.delete(np.array(node_leaves[:-1]), refs)
 
@@ -245,7 +244,7 @@ class Tasccoda(CompositionalModel2):
             # Collapse singularities in the tree
             phy_tree = collapse_singularities_2(adata.uns[tree_key])
 
-            node_names = [n.name for n in phy_tree.iter_descendants()]
+            node_names = [n.name for n in phy_tree.descendants()]
 
             # Get ancestor matrix
             A, T = get_a_2(phy_tree, leaf_order=adata.var.index.tolist(), node_order=node_names)
@@ -256,7 +255,7 @@ class Tasccoda(CompositionalModel2):
             # Ancestors of reference are a reference, too!
             # Get names of reference nodes
             reference_cell_type = adata.uns["scCODA_params"]["reference_cell_type"]
-            ref_nodes = [n.name for n in phy_tree.search_nodes(name=reference_cell_type)[0].get_ancestors()[:-1]]
+            ref_nodes = [n.name for n in list(next(phy_tree.search_nodes(name=reference_cell_type)).ancestors())[:-1]]
             ref_nodes = [reference_cell_type] + ref_nodes
             adata.uns["scCODA_params"]["reference_nodes"] = ref_nodes
 
@@ -267,12 +266,12 @@ class Tasccoda(CompositionalModel2):
 
             # number of leaves for each internal node (important for aggregation penalty lambda_1)
             if "node_leaves" not in pen_args:
-                node_leaves = [len(n.get_leaves()) for n in phy_tree.iter_descendants()]
+                node_leaves = [len(list(n.leaves())) for n in phy_tree.descendants()]
                 pen_args["node_leaves"] = np.delete(np.array(node_leaves), ref_idxs)
 
         # No valid tree structure
         else:
-            raise ValueError("Tree structure is not a toytree or ete3 tree object")
+            raise ValueError("Tree structure is not a toytree or ete4 tree object")
 
         # Default spike-and-slab LASSO parameters
         if "lambda_0" not in pen_args:
@@ -309,8 +308,7 @@ class Tasccoda(CompositionalModel2):
             return adata
 
     def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:  # type: ignore
-        """
-        Sets initial MCMC state values for tascCODA model
+        """Sets initial MCMC state values for tascCODA model.
 
         Args:
             rng_key: RNG value to be set
@@ -387,7 +385,7 @@ class Tasccoda(CompositionalModel2):
         ref_index: np.ndarray,
         sample_adata: AnnData,
     ):
-        """Implements tascCODA model in numpyro
+        """Implements tascCODA model in numpyro.
 
         Args:
             counts: Count data array
@@ -468,11 +466,11 @@ class Tasccoda(CompositionalModel2):
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
-        rng_key=None,
+        rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
     ) -> az.InferenceData:
-        """Creates arviz object from model results for MCMC diagnosis
+        """Creates arviz object from model results for MCMC diagnosis.
 
         Args:
             data: AnnData object or MuData object.
@@ -482,7 +480,7 @@ class Tasccoda(CompositionalModel2):
             use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
-            arviz.InferenceData: arviz_data
+            :class:`arviz.InferenceData`: arviz_data
 
         Examples:
             >>> import pertpy as pt
@@ -551,6 +549,8 @@ class Tasccoda(CompositionalModel2):
         if rng_key is None:
             rng = np.random.default_rng()
             rng_key = random.key(rng.integers(0, 10000))
+        else:
+            rng_key = random.key(rng_key)
 
         if use_posterior_predictive:
             posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
@@ -561,6 +561,15 @@ class Tasccoda(CompositionalModel2):
                 ref_index=ref_index,
                 sample_adata=sample_adata,
             )
+            # Remove problematic posterior predictive arrays with wrong dimensions
+            if posterior_predictive and "counts" in posterior_predictive:
+                counts_shape = posterior_predictive["counts"].shape
+                expected_dims = 2  # ['sample', 'cell_type']
+                if len(counts_shape) != expected_dims:
+                    posterior_predictive = {k: v for k, v in posterior_predictive.items() if k != "counts"}
+                    logger.warning(
+                        f"Removed 'counts' from posterior_predictive due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
+                    )
         else:
             posterior_predictive = None
 
@@ -573,8 +582,19 @@ class Tasccoda(CompositionalModel2):
                 ref_index=ref_index,
                 sample_adata=sample_adata,
             )
+            # Remove problematic prior arrays with wrong dimensions
+            if prior and "counts" in prior:
+                counts_shape = prior["counts"].shape
+                expected_dims = 2  # ['sample', 'cell_type']
+                if len(counts_shape) != expected_dims:
+                    prior = {k: v for k, v in prior.items() if k != "counts"}
+                    logger.warning(
+                        f"Removed 'counts' from prior due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
+                    )
         else:
             prior = None
+
+        import arviz as az
 
         # Create arviz object
         arviz_data = az.from_numpyro(
@@ -595,6 +615,7 @@ class Tasccoda(CompositionalModel2):
         **kwargs,
     ):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -607,14 +628,15 @@ class Tasccoda(CompositionalModel2):
             >>> mdata = tasccoda.prepare(
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
-            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-        """
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42).
+        """  # noqa: D205, D212
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
     run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -628,14 +650,15 @@ class Tasccoda(CompositionalModel2):
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> tasccoda.summary(mdata)
-        """
+            >>> tasccoda.summary(mdata).
+        """  # noqa: D205, D212
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
     summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -649,14 +672,15 @@ class Tasccoda(CompositionalModel2):
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> tasccoda.credible_effects(mdata)
-        """
+            >>> tasccoda.credible_effects(mdata).
+        """  # noqa: D205, D212
         return super().credible_effects(data, modality_key, est_fdr)
 
     credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """
+
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.tasccoda_example()
@@ -670,8 +694,8 @@ class Tasccoda(CompositionalModel2):
             >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-            >>> tasccoda.set_fdr(mdata, est_fdr=0.4)
-        """
+            >>> tasccoda.set_fdr(mdata, est_fdr=0.4).
+        """  # noqa: D205, D212
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
     set_fdr.__doc__ = CompositionalModel2.set_fdr.__doc__ + set_fdr.__doc__

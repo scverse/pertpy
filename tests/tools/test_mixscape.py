@@ -5,60 +5,57 @@ import numpy as np
 import pandas as pd
 import pertpy as pt
 import pytest
+from pertpy.tools._mixscape import MixscapeGaussianMixture
 from scipy import sparse
 
-from pertpy.tools._mixscape import MixscapeGaussianMixture
-
-CWD = Path(__file__).parent.resolve()
-
 # Random generate data settings
-num_cells_per_group = 10
-num_not_de = 10
-num_de = 10
-accuracy_threshold = 0.8
+NUM_CELLS_PER_GROUP = 10
+NUM_NOT_DE = 10
+NUM_DE = 10
+ACCURACY_THRESHOLD = 0.8
 
 
 @pytest.fixture
 def adata():
     rng = np.random.default_rng(seed=1)
     # generate not differentially expressed genes
-    for i in range(num_not_de):
-        NT = rng.normal(0, 1, num_cells_per_group)
+    for i in range(NUM_NOT_DE):
+        NT = rng.normal(0, 1, NUM_CELLS_PER_GROUP)
         NT = np.where(NT < 0, 0, NT)
-        NP = rng.normal(0, 1, num_cells_per_group)
+        NP = rng.normal(0, 1, NUM_CELLS_PER_GROUP)
         NP = np.where(NP < 0, 0, NP)
-        KO = rng.normal(0, 1, num_cells_per_group)
+        KO = rng.normal(0, 1, NUM_CELLS_PER_GROUP)
         KO = np.where(KO < 0, 0, KO)
         gene_i = np.concatenate((NT, NP, KO))
         gene_i = np.expand_dims(gene_i, axis=1)
-        if i == 0:
+        if i == 0:  # noqa: SIM108
             X = gene_i
         else:
             X = np.concatenate((X, gene_i), axis=1)
 
     # generate differentially expressed genes
-    for i in range(num_de):
-        NT = rng.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
+    for i in range(NUM_DE):
+        NT = rng.normal(i + 2, 0.5 + 0.05 * i, NUM_CELLS_PER_GROUP)
         NT = np.where(NT < 0, 0, NT)
-        NP = rng.normal(i + 2, 0.5 + 0.05 * i, num_cells_per_group)
+        NP = rng.normal(i + 2, 0.5 + 0.05 * i, NUM_CELLS_PER_GROUP)
         NP = np.where(NP < 0, 0, NP)
-        KO = rng.normal(i + 4, 0.5 + 0.1 * i, num_cells_per_group)
+        KO = rng.normal(i + 4, 0.5 + 0.1 * i, NUM_CELLS_PER_GROUP)
         KO = np.where(KO < 0, 0, KO)
         gene_i = np.concatenate((NT, NP, KO))
         gene_i = np.expand_dims(gene_i, axis=1)
         X = np.concatenate((X, gene_i), axis=1)
 
     # obs for random AnnData
-    gene_target = {"gene_target": ["NT"] * num_cells_per_group + ["target_gene_a"] * num_cells_per_group * 2}
+    gene_target = {"gene_target": ["NT"] * NUM_CELLS_PER_GROUP + ["target_gene_a"] * NUM_CELLS_PER_GROUP * 2}
     gene_target = pd.DataFrame(gene_target)
-    label = {"label": ["control"] * num_cells_per_group + ["treatment"] * num_cells_per_group* 2 }
+    label = {"label": ["control"] * NUM_CELLS_PER_GROUP + ["treatment"] * NUM_CELLS_PER_GROUP * 2}
     label = pd.DataFrame(label)
     obs = pd.concat([gene_target, label], axis=1)
-    obs = obs.set_index(np.arange(num_cells_per_group * 3))
+    obs = obs.set_index(np.arange(NUM_CELLS_PER_GROUP * 3))
     obs.index.rename("index", inplace=True)
 
     # var for random AnnData
-    var_data = {"name": ["gene" + str(i) for i in range(1, num_not_de + num_de + 1)]}
+    var_data = {"name": ["gene" + str(i) for i in range(1, NUM_NOT_DE + NUM_DE + 1)]}
     var = pd.DataFrame(var_data)
     var = var.set_index("name", drop=False)
     var.index.rename("index", inplace=True)
@@ -74,16 +71,16 @@ def test_mixscape(adata):
     mixscape_identifier = pt.tl.Mixscape()
     mixscape_identifier.mixscape(adata=adata, labels="gene_target", control="NT", test_method="t-test")
     np_result = adata.obs["mixscape_class_global"] == "NP"
-    np_result_correct = np_result[num_cells_per_group : num_cells_per_group * 2]
+    np_result_correct = np_result[NUM_CELLS_PER_GROUP : NUM_CELLS_PER_GROUP * 2]
 
     ko_result = adata.obs["mixscape_class_global"] == "KO"
-    ko_result_correct = ko_result[num_cells_per_group * 2 : num_cells_per_group * 3]
+    ko_result_correct = ko_result[NUM_CELLS_PER_GROUP * 2 : NUM_CELLS_PER_GROUP * 3]
 
     assert "mixscape_class" in adata.obs
     assert "mixscape_class_global" in adata.obs
     assert "mixscape_class_p_ko" in adata.obs
-    assert sum(np_result_correct) > accuracy_threshold * num_cells_per_group
-    assert sum(ko_result_correct) > accuracy_threshold * num_cells_per_group
+    assert sum(np_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
+    assert sum(ko_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
 
 
 def test_perturbation_signature(adata):
@@ -162,9 +159,9 @@ def test_deterministic_perturbation_signature():
         adata.layers["X_pert"][obs["cell_class"] == "KO"], -np.concatenate([pert_effect] * len(groups), axis=0)
     )
 
-    
+
 def test_mixscape_gaussian_mixture():
-    X = np.random.rand(100)
+    X = np.random.default_rng().random(100)
 
     fixed_means = [0.2, None]
     fixed_covariances = [None, 0.1]

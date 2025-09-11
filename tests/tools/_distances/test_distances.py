@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import pertpy as pt
 import pytest
 import scanpy as sc
@@ -59,7 +58,7 @@ def adata(request):
 
     adata.layers["lognorm"] = adata.X.copy()
     adata.layers["counts"] = np.round(adata.X.toarray()).astype(int)
-    if "X_pca" not in adata.obsm.keys():
+    if "X_pca" not in adata.obsm:
         sc.pp.pca(adata, n_comps=5)
     if distance in lognorm_counts_distances:
         groups = np.unique(adata.obs["perturbation"])
@@ -127,8 +126,8 @@ def test_distance_layers(pairwise_distance, distance):
 @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
 def test_distance_counts(adata, distance):
     if distance != "mahalanobis":  # skip, doesn't work because covariance matrix is a singular matrix, not invertible
-        Distance = pt.tl.Distance(distance, layer_key="counts")
-        df = Distance.pairwise(adata, groupby="perturbation")
+        distance = pt.tl.Distance(distance, layer_key="counts")
+        df = distance.pairwise(adata, groupby="perturbation")
         assert isinstance(df, DataFrame)
         assert df.columns.equals(df.index)
         assert np.sum(df.values - df.values.T) == 0

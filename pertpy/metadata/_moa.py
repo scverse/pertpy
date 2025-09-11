@@ -61,7 +61,7 @@ class Moa(MetaData):
             adata = adata.copy()
 
         if query_id not in adata.obs.columns:
-            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n" "Please check again.")
+            raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\nPlease check again.")
 
         if self.clue is None:
             self._download_clue()
@@ -110,8 +110,6 @@ class Moa(MetaData):
         """Generate LookUp object for Moa metadata.
 
         The LookUp object provides an overview of the metadata to annotate.
-        annotate_moa function has a corresponding lookup function in the LookUp object,
-        where users can search the query_ids and targets in the metadata.
 
         Returns:
             Returns a LookUp object specific for MoA annotation.

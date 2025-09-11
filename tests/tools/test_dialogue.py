@@ -1,6 +1,5 @@
 import pandas as pd
 import pertpy as pt
-import pytest
 import scanpy as sc
 
 # This is not a proper test!
@@ -8,7 +7,6 @@ import scanpy as sc
 # The pipeline is obtained from https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html
 
 
-@pytest.mark.slow
 def test_dialogue_pipeline():
     adata = pt.dt.dialogue_example()
 

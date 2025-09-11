@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import multiprocessing
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple
 
-import numba
+import jax
 import numpy as np
 import pandas as pd
+from numba import jit
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
@@ -32,6 +32,31 @@ if TYPE_CHECKING:
 class MeanVar(NamedTuple):
     mean: float
     variance: float
+
+
+Metric = Literal[
+    "edistance",
+    "euclidean",
+    "root_mean_squared_error",
+    "mse",
+    "mean_absolute_error",
+    "pearson_distance",
+    "spearman_distance",
+    "kendalltau_distance",
+    "cosine_distance",
+    "r2_distance",
+    "mean_pairwise",
+    "mmd",
+    "wasserstein",
+    "sym_kldiv",
+    "t_test",
+    "ks_test",
+    "nb_ll",
+    "classifier_proba",
+    "classifier_cp",
+    "mean_var_distribution",
+    "mahalanobis",
+]
 
 
 class Distance:
@@ -112,7 +137,7 @@ class Distance:
 
     def __init__(
         self,
-        metric: str = "edistance",
+        metric: Metric = "edistance",
         agg_fct: Callable = np.mean,
         layer_key: str = None,
         obsm_key: str = None,
@@ -135,9 +160,7 @@ class Distance:
         self.aggregation_func = agg_fct
         if metric == "edistance":
             metric_fct = Edistance()
-        elif metric == "euclidean":
-            metric_fct = EuclideanDistance(self.aggregation_func)
-        elif metric == "root_mean_squared_error":
+        elif metric in ("euclidean", "root_mean_squared_error"):
             metric_fct = EuclideanDistance(self.aggregation_func)
         elif metric == "mse":
             metric_fct = MeanSquaredDistance(self.aggregation_func)
@@ -181,7 +204,7 @@ class Distance:
 
         if layer_key and obsm_key:
             raise ValueError(
-                "Cannot use 'layer_key' and 'obsm_key' at the same time.\n" "Please provide only one of the two keys."
+                "Cannot use 'layer_key' and 'obsm_key' at the same time.\nPlease provide only one of the two keys."
             )
         if not layer_key and not obsm_key:
             obsm_key = "X_pca"
@@ -201,6 +224,7 @@ class Distance:
         Args:
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
+            kwargs: Passed to the metric function.
 
         Returns:
             float: Distance between X and Y.
@@ -239,9 +263,10 @@ class Distance:
             Y: Second vector of shape (n_samples, n_features).
             n_bootstrap: Number of bootstrap samples.
             random_state: Random state for bootstrapping.
+            **kwargs: Passed to the metric function.
 
         Returns:
-            MeanVar: Mean and variance of distance between X and Y.
+            Mean and variance of distance between X and Y.
 
         Examples:
             >>> import pertpy as pt
@@ -286,8 +311,8 @@ class Distance:
             kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
-            pd.DataFrame: Dataframe with pairwise distances.
-            tuple[pd.DataFrame, pd.DataFrame]: Two Dataframes, one for the mean and one for the variance of pairwise distances.
+            :class:`pandas.DataFrame`: Dataframe with pairwise distances.
+            tuple[:class:`pandas.DataFrame`, :class:`pandas.DataFrame`]: Two Dataframes, one for the mean and one for the variance of pairwise distances.
 
         Examples:
             >>> import pertpy as pt
@@ -309,7 +334,7 @@ class Distance:
         # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for index_x, group_x in enumerate(fct(groups)):
@@ -339,10 +364,7 @@ class Distance:
                         df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
                         df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
         else:
-            if self.layer_key:
-                embedding = adata.layers[self.layer_key]
-            else:
-                embedding = adata.obsm[self.obsm_key].copy()
+            embedding = adata.layers[self.layer_key] if self.layer_key else adata.obsm[self.obsm_key].copy()
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 for group_y in groups[index_x:]:  # type: ignore
@@ -409,8 +431,8 @@ class Distance:
             kwargs: Additional keyword arguments passed to the metric function.
 
         Returns:
-            pd.DataFrame: Dataframe with distances of groups to selected_group.
-            tuple[pd.DataFrame, pd.DataFrame]: Two Dataframes, one for the mean and one for the variance of distances of groups to selected_group.
+            :class:`pandas.DataFrame`: Dataframe with distances of groups to selected_group.
+            tuple[:class:`pandas.DataFrame`, :class:`pandas.DataFrame`]: Two Dataframes, one for the mean and one for the variance of distances of groups to selected_group.
 
 
         Examples:
@@ -446,7 +468,7 @@ class Distance:
         # able to handle precomputed distances such as the PseudobulkDistance.
         if self.metric_fct.accepts_precomputed:
             # Precompute the pairwise distances if needed
-            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp.keys():
+            if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"]
             for group_x in fct(groups):
@@ -473,10 +495,7 @@ class Distance:
                         df.loc[group_x] = bootstrap_output.mean
                         df_var.loc[group_x] = bootstrap_output.variance
         else:
-            if self.layer_key:
-                embedding = adata.layers[self.layer_key]
-            else:
-                embedding = adata.obsm[self.obsm_key].copy()
+            embedding = adata.layers[self.layer_key] if self.layer_key else adata.obsm[self.obsm_key].copy()
             for group_x in fct(groups):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
                 group_y = selected_group
@@ -524,10 +543,7 @@ class Distance:
             >>> distance = pt.tools.Distance(metric="edistance")
             >>> distance.precompute_distances(adata)
         """
-        if self.layer_key:
-            cells = adata.layers[self.layer_key]
-        else:
-            cells = adata.obsm[self.obsm_key].copy()
+        cells = adata.layers[self.layer_key] if self.layer_key else adata.obsm[self.obsm_key].copy()
         pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
 
@@ -618,6 +634,7 @@ class AbstractDistance(ABC):
         Args:
             X: First vector of shape (n_samples, n_features).
             Y: Second vector of shape (n_samples, n_features).
+            kwargs: Passed to the metrics function.
 
         Returns:
             float: Distance between X and Y.
@@ -630,8 +647,8 @@ class AbstractDistance(ABC):
 
         Args:
             P: Pairwise distance matrix of shape (n_samples, n_samples).
-            idx: Boolean array of shape (n_samples,) indicating which
-            samples belong to X (or Y, since each metric is symmetric).
+            idx: Boolean array of shape (n_samples,) indicating which samples belong to X (or Y, since each metric is symmetric).
+            kwargs: Passed to the metrics function.
 
         Returns:
             float: Distance between X and Y.
@@ -645,12 +662,12 @@ class Edistance(AbstractDistance):
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = True
-        self.cell_wise_metric = "sqeuclidean"
+        self.cell_wise_metric = "euclidean"
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        sigma_X = pairwise_distances(X, X, metric="sqeuclidean").mean()
-        sigma_Y = pairwise_distances(Y, Y, metric="sqeuclidean").mean()
-        delta = pairwise_distances(X, Y, metric="sqeuclidean").mean()
+        sigma_X = pairwise_distances(X, X, metric=self.cell_wise_metric, **kwargs).mean()
+        sigma_Y = pairwise_distances(Y, Y, metric=self.cell_wise_metric, **kwargs).mean()
+        delta = pairwise_distances(X, Y, metric=self.cell_wise_metric, **kwargs).mean()
         return 2 * delta - sigma_X - sigma_Y
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
@@ -668,19 +685,19 @@ class MMD(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, kernel="linear", **kwargs) -> float:
+    def __call__(self, X: np.ndarray, Y: np.ndarray, *, kernel="linear", gamma=1.0, degree=2, **kwargs) -> float:
         if kernel == "linear":
             XX = np.dot(X, X.T)
             YY = np.dot(Y, Y.T)
             XY = np.dot(X, Y.T)
         elif kernel == "rbf":
-            XX = rbf_kernel(X, X, gamma=1.0)
-            YY = rbf_kernel(Y, Y, gamma=1.0)
-            XY = rbf_kernel(X, Y, gamma=1.0)
+            XX = rbf_kernel(X, X, gamma=gamma)
+            YY = rbf_kernel(Y, Y, gamma=gamma)
+            XY = rbf_kernel(X, Y, gamma=gamma)
         elif kernel == "poly":
-            XX = polynomial_kernel(X, X, degree=2, gamma=1.0, coef0=0)
-            YY = polynomial_kernel(Y, Y, degree=2, gamma=1.0, coef0=0)
-            XY = polynomial_kernel(X, Y, degree=2, gamma=1.0, coef0=0)
+            XX = polynomial_kernel(X, X, degree=degree, gamma=gamma, coef0=0)
+            YY = polynomial_kernel(Y, Y, degree=degree, gamma=gamma, coef0=0)
+            XY = polynomial_kernel(X, Y, degree=degree, gamma=gamma, coef0=0)
         else:
             raise ValueError(f"Kernel {kernel} not recognized.")
 
@@ -694,6 +711,7 @@ class WassersteinDistance(AbstractDistance):
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
+        self.solver = jax.jit(Sinkhorn())
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         X = np.asarray(X, dtype=np.float64)
@@ -708,8 +726,7 @@ class WassersteinDistance(AbstractDistance):
 
     def solve_ot_problem(self, geom: Geometry, **kwargs):
         ot_prob = LinearProblem(geom)
-        solver = Sinkhorn()
-        ot = solver(ot_prob, **kwargs)
+        ot = self.solver(ot_prob, **kwargs)
         cost = float(ot.reg_ot_cost)
 
         # Check for NaN or invalid cost
@@ -881,7 +898,7 @@ class R2ScoreDistance(AbstractDistance):
 
 
 class SymmetricKLDivergence(AbstractDistance):
-    """Average of symmetric KL divergence between gene distributions of two groups
+    """Average of symmetric KL divergence between gene distributions of two groups.
 
     Assuming a Gaussian distribution for each gene in each group, calculates
     the KL divergence between them and averages over all genes. Repeats this ABBA to get a symmetrized distance.
@@ -908,7 +925,7 @@ class SymmetricKLDivergence(AbstractDistance):
 
 
 class TTestDistance(AbstractDistance):
-    """Average of T test statistic between two groups assuming unequal variances"""
+    """Average of T test statistic between two groups assuming unequal variances."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -932,16 +949,14 @@ class TTestDistance(AbstractDistance):
 
 
 class KSTestDistance(AbstractDistance):
-    """Average of two-sided KS test statistic between two groups"""
+    """Average of two-sided KS test statistic between two groups."""
 
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        stats = []
-        for i in range(X.shape[1]):
-            stats.append(abs(kstest(X[:, i], Y[:, i])[0]))
+        stats = [abs(kstest(X[:, i], Y[:, i])[0]) for i in range(X.shape[1])]
         return sum(stats) / len(stats)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
@@ -949,10 +964,7 @@ class KSTestDistance(AbstractDistance):
 
 
 class NBLL(AbstractDistance):
-    """
-    Average of Log likelihood (scalar) of group B cells
-    according to a NB distribution fitted over group A
-    """
+    """Average of Log likelihood (scalar) of group B cells according to a NB distribution fitted over group A."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -960,15 +972,12 @@ class NBLL(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
         def _is_count_matrix(matrix, tolerance=1e-6):
-            if matrix.dtype.kind == "i" or np.all(np.abs(matrix - np.round(matrix)) < tolerance):
-                return True
-            else:
-                return False
+            return bool(matrix.dtype.kind == "i" or np.all(np.abs(matrix - np.round(matrix)) < tolerance))
 
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBLL distance only works for raw counts.")
 
-        @numba.jit(forceobj=True)
+        @jit(forceobj=True)
         def _compute_nll(y: np.ndarray, nb_params: tuple[float, float], epsilon: float) -> float:
             mu = np.exp(nb_params[0])
             theta = 1 / nb_params[1]
@@ -1163,9 +1172,11 @@ class MeanVarDistributionDistance(AbstractDistance):
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         """Difference of mean-var distributions in 2 matrices.
+
         Args:
             X: Normalized and log transformed cells x genes count matrix.
             Y: Normalized and log transformed cells x genes count matrix.
+            kwargs: Passed to the metrics function.
         """
         mean_x, var_x = self._mean_var(X, log=True)
         mean_y, var_y = self._mean_var(Y, log=True)

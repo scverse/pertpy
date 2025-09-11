@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
-import pynndescent
 from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
 from sklearn.base import ClassifierMixin
@@ -23,7 +22,7 @@ class PerturbationComparison:
     ) -> float:
         """Compare classification accuracy between real and simulated perturbations.
 
-        Trains a classifier on the real perturbation data + the control data and reports a normalized
+        Trains a classifier on the real perturbation data & the control data and reports a normalized
         classification accuracy on the simulated perturbation.
 
         Args:
@@ -65,8 +64,8 @@ class PerturbationComparison:
             real: Real perturbed data.
             simulated: Simulated perturbed data.
             control: Control data
-            use_simulated_for_knn: Include simulted perturbed data (`simulated`) into the knn graph. Only valid when
-                control (`control`) is provided.
+            use_simulated_for_knn: Include simulted perturbed data (`simulated`) into the knn graph.
+                Only valid when control (`control`) is provided.
             n_neighbors: Number of neighbors to use in k-neighbor graph.
             random_state: Random state used for k-neighbor graph construction.
             n_jobs: Number of cores to use. Defaults to -1 (all).
@@ -95,7 +94,9 @@ class PerturbationComparison:
             labels[-control.shape[0] :] = "ctrl"
             label_groups.append("ctrl")
 
-        index = pynndescent.NNDescent(
+        from pynndescent import NNDescent
+
+        index = NNDescent(
             index_data,
             n_neighbors=max(50, n_neighbors),
             random_state=random_state,
@@ -106,7 +107,6 @@ class PerturbationComparison:
         uq, uq_counts = np.unique(labels[indices], return_counts=True)
         uq_counts_norm = uq_counts / uq_counts.sum()
         counts = dict(zip(label_groups, [0.0] * len(label_groups), strict=False))
-        for group, count_norm in zip(uq, uq_counts_norm, strict=False):
-            counts[group] = count_norm
+        counts = dict(zip(uq, uq_counts_norm, strict=False))
 
         return counts

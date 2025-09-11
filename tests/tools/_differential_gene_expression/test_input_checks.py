@@ -1,9 +1,13 @@
+from importlib.util import find_spec
+
 import anndata as ad
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from pertpy.tools._differential_gene_expression import Statsmodels
 from pertpy.tools._differential_gene_expression._checks import check_is_integer_matrix, check_is_numeric_matrix
+
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
 
 
 @pytest.mark.parametrize(
@@ -23,6 +27,9 @@ def test_invalid_inputs(matrix_type, invalid_input, test_counts, test_metadata):
     """Check that invalid inputs in MethodBase counts raise an error."""
     test_counts[0, 0] = invalid_input
     adata = ad.AnnData(X=matrix_type(test_counts), obs=test_metadata)
+
+    from pertpy.tools._differential_gene_expression import Statsmodels
+
     with pytest.raises((ValueError, TypeError)):
         Statsmodels(adata=adata, design="~condition")
 

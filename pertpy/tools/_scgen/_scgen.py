@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import anndata as ad
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -77,7 +78,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             restrict_arithmetic_to: Dictionary of celltypes you want to be observed for prediction.
 
         Returns:
-            `np nd-array` of predicted cells in primary space.
+            :class:`numpy.ndarray` of predicted cells in primary space.
         delta: float
             Difference between stimulated and control cells in latent space
 
@@ -198,7 +199,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                    corresponding to batch and cell type metadata, respectively.
 
         Returns:
-            corrected: `~anndata.AnnData`
+            A corrected `~anndata.AnnData` object.
             AnnData of corrected gene expression in adata.X and corrected latent space in adata.obsm["latent"].
             A reference to the original AnnData is in `corrected.raw` if the input adata had no `raw` attribute.
 
@@ -248,7 +249,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 temp_cell[batch_ind[study]].X = batch_list[study].X
             shared_ct.append(temp_cell)
 
-        all_shared_ann = AnnData.concatenate(*shared_ct, batch_key="concat_batch", index_unique=None)
+        all_shared_ann = ad.concat(shared_ct, label="concat_batch", index_unique=None)
         if "concat_batch" in all_shared_ann.obs.columns:
             del all_shared_ann.obs["concat_batch"]
         if len(not_shared_ct) < 1:
@@ -343,6 +344,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                    AnnData object used to initialize the model.
             indices: Indices of cells in adata to use. If `None`, all cells are used.
             batch_size: Minibatch size for data loading into model. Defaults to `scvi.settings.batch_size`.
+            give_mean: Whether to return the mean
+            n_samples: The number of samples to use.
 
         Returns:
             Low-dimensional representation for each cell
@@ -365,17 +368,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         latent = []
         for array_dict in scdl:
             out = jit_inference_fn(self.module.rngs, array_dict)
-            if give_mean:
-                z = out["qz"].mean
-            else:
-                z = out["z"]
+            z = out["qz"].mean if give_mean else out["z"]
             latent.append(z)
         concat_axis = 0 if ((n_samples == 1) or give_mean) else 1
         latent = jnp.concatenate(latent, axis=concat_axis)  # type: ignore
 
         return self.module.as_numpy_array(latent)
 
-    def plot_reg_mean_plot(
+    def plot_reg_mean_plot(  # pragma: no cover # noqa: D417
         self,
         adata,
         condition_key: str,
@@ -495,14 +495,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax.text(
             max(x) - max(x) * x_coeff,
             max(y) - y_coeff * max(y),
-            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value ** 2:.2f}",
+            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value**2:.2f}",
             fontsize=kwargs.get("textsize", fontsize),
         )
         if diff_genes is not None:
             ax.text(
                 max(x) - max(x) * x_coeff,
                 max(y) - (y_coeff + 0.15) * max(y),
-                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff ** 2:.2f}",
+                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff**2:.2f}",
                 fontsize=kwargs.get("textsize", fontsize),
             )
 
@@ -516,7 +516,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         else:
             return r_value**2
 
-    def plot_reg_var_plot(
+    def plot_reg_var_plot(  # pragma: no cover # noqa: D417
         self,
         adata,
         condition_key: str,
@@ -576,7 +576,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
                 logger.info("Top 100 DEGs var: ", r_value_diff**2)
-        if "y1" in axis_keys.keys():
+        if "y1" in axis_keys:
             real_stim = adata[adata.obs[condition_key] == axis_keys["y1"]]
         x = np.asarray(np.var(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.var(stim.X, axis=0)).ravel()
@@ -594,7 +594,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         # plt.plot(x, m * x + b, "-", color="green")
         ax.set_xlabel(labels["x"], fontsize=fontsize)
         ax.set_ylabel(labels["y"], fontsize=fontsize)
-        if "y1" in axis_keys.keys():
+        if "y1" in axis_keys:
             y1 = np.asarray(np.var(real_stim.X, axis=0)).ravel()
             _ = plt.scatter(
                 x,
@@ -611,7 +611,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 y_bar = y[j]
                 plt.text(x_bar, y_bar, i, fontsize=11, color="black")
                 plt.plot(x_bar, y_bar, "o", color="red", markersize=5)
-                if "y1" in axis_keys.keys():
+                if "y1" in axis_keys:
                     y1_bar = y1[j]
                     plt.text(x_bar, y1_bar, "*", color="black", alpha=0.5)
         if legend:
@@ -623,14 +623,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax.text(
             max(x) - max(x) * x_coeff,
             max(y) - y_coeff * max(y),
-            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value ** 2:.2f}",
+            r"$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= " + f"{r_value**2:.2f}",
             fontsize=kwargs.get("textsize", fontsize),
         )
         if diff_genes is not None:
             ax.text(
                 max(x) - max(x) * x_coeff,
                 max(y) - (y_coeff + 0.15) * max(y),
-                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff ** 2:.2f}",
+                r"$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= " + f"{r_value_diff**2:.2f}",
                 fontsize=kwargs.get("textsize", fontsize),
             )
 
@@ -645,7 +645,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             return r_value**2
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_binary_classifier(
+    def plot_binary_classifier(  # pragma: no cover # noqa: D417
         self,
         scgen: Scgen,
         adata: AnnData | None,
@@ -665,7 +665,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         Args:
             scgen: ScGen object that was trained.
             adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
-                   AnnData object used to initialize the model. Must have been setup with `batch_key` and `labels_key`,
+                   AnnData object used to initialize the model. Must have been set up with `batch_key` and `labels_key`,
                    corresponding to batch and cell type metadata, respectively.
             delta: Difference between stimulated and control cells in latent space
             ctrl_key: Key for `control` part of the `data` found in `condition_key`.

@@ -4,24 +4,23 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "0.10.1"
+version = "1.0.2"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11,<3.14"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
-    {name = "Yuge Ji"},
     {name = "Lilly May"},
-    {name = "Alejandro Tejada"},
-    {name = "Johannes Köster"},
+    {name = "Stefan Peidli"},
+    {name = "Johannes Ostner"},
+    {name = "Gregor Sturm"},
     {name = "Emma Dann"},
+    {name = "Yuge Ji"},
     {name = "Xinyue Zhang"},
     {name = "Xichen Wu"},
     {name = "Tessa Green"},
-    {name = "Stefan Peidli"},
     {name = "Antonia Schumacher"},
-    {name = "Gregor Sturm"},
 ]
 maintainers = [
     {name = "Lukas Heumos", email = "lukas.heumos@posteo.net"},
@@ -32,7 +31,7 @@ urls.Home-page = "https://github.com/scverse/pertpy"
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Framework :: Jupyter",
     "Intended Audience :: Developers",
@@ -41,7 +40,6 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -50,46 +48,52 @@ classifiers = [
 ]
 
 dependencies = [
-    "rich",
-    "scanpy[leiden]",
-    "muon",
     "requests",
+    "rich",
+    "scanpy",
+    "mudata",
     "scikit-misc",
-    "scvi-tools",
     "adjusttext",
-    "decoupler",
     "ott-jax",
+    "numpyro",
+    "flax",
     "sparsecca",
     "openpyxl",
     "pubchempy",
     "pyarrow",
     "blitzgsea",
-    "scikit-learn>=1.4",  # https://github.com/scverse/pertpy/issues/700
+    "scikit-learn>=1.4",
+    "fast-array-utils[accel,sparse]",
     "lamin_utils",
+    "arviz",
 ]
 
 [project.optional-dependencies]
-coda = [
-    "toytree",
-    "arviz",
-    "ete3",
-    "pyqt5"  # remove this after ete4 got released
+tcoda = [
+    "toytree>=3.0",
+    "ete4",
+    "pyqt6"
 ]
 de = [
     "formulaic-contrasts>=0.2.0",
     "formulaic",
-    "pydeseq2>=v0.5.0pre1",
+    "pydeseq2>=v0.5.0",
+]
+scgen = ["scvi-tools"]
+all = [
+    "pertpy[tcoda,de,scgen]"
 ]
 dev = [
     "pre-commit",
 ]
 doc = [
-    "docutils>=0.8,!=0.18.*,!=0.19.*",
-    "sphinx>=4",
-    "furo",
+    "docutils>=0.8",
+    "sphinx>=8.1",
+    "scanpydoc",
+    "sphinx-book-theme",
     "myst-nb",
-    "myst-parser",
     "sphinxcontrib-bibtex>=1.0.0",
+    "sphinx-issues",
     "sphinx-gallery",
     "sphinx-autodoc-typehints",
     "sphinx-copybutton",
@@ -107,10 +111,14 @@ doc = [
 test = [
     "pytest",
     "coverage",
+    "leidenalg"
 ]
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.coverage.run]
 source_pkgs = ["pertpy"]
@@ -127,7 +135,6 @@ addopts = [
 markers = [
     "conda: marks a subset of tests to be ran on the Bioconda CI.",
     "extra: marks tests that require extra dependencies.",
-    "slow: mark test as slow to run"
 ]
 minversion = 6.0
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
@@ -150,6 +157,19 @@ filterwarnings = [
     "ignore:Failed to correctly find n_neighbors for some samples:UserWarning"
 ]
 
+[tool.hatch.envs.default]
+installer = "uv"
+features = [ "dev" ]
+
+[tool.hatch.envs.docs]
+features = [ "doc" ]
+scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
+scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
+scripts.clean = "git clean -fdX -- {args:docs}"
+
+[tool.hatch.envs.hatch-test]
+features = [ "test", "tcoda" ]
+
 [tool.ruff]
 src = ["src"]
 line-length = 120
@@ -159,20 +179,26 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = [
-    "F",  # Errors detected by Pyflakes
-    "E",  # Error detected by Pycodestyle
-    "W",  # Warning detected by Pycodestyle
-    "I",  # isort
-    #"D",  # pydocstyle
-    "B",  # flake8-bugbear
-    "TID",  # flake8-tidy-imports
-    "C4",  # flake8-comprehensions
-    "BLE",  # flake8-blind-except
-    "UP",  # pyupgrade
-    "RUF100",  # Report unused noqa directives
-    "TCH",  # Typing imports
-    "NPY",  # Numpy specific rules
-    "PTH"  # Use pathlib
+    "F",      # Errors detected by Pyflakes
+    "E",      # Error detected by Pycodestyle
+    "W",      # Warning detected by Pycodestyle
+    "I",      # isort
+    "D",      # pydocstyle
+    "B",      # flake8-bugbear
+    "TID",    # flake8-tidy-imports
+    "C4",     # flake8-comprehensions
+    "BLE",    # flake8-blind-except
+    "UP",     # pyupgrade
+    "RUF100", # Report unused noqa directives
+    "TCH",    # Typing imports
+    "NPY",    # Numpy specific rules
+    "PTH",    # Use pathlib
+    "PERF",   # Performance
+    "PIE",    # Syntax simplification
+    "SIM",    # Code simplifications
+    "TID",    # banned imports
+    "TC",     # type checking sections
+    "PL"      # pylint
 ]
 ignore = [
     # line too long -> we accept long comment lines; black gets rid of long code lines
@@ -206,6 +232,18 @@ ignore = [
     "N813",
     # module import not at top level of file
     "E402",
+    # Too many arguments in function definition
+    "PLR0913",
+    # Too many branches
+    "PLR0912",
+    # magic value used in comparison
+    "PLR2004",
+    # Too many statements
+    "PLR0915",
+    # Extracting value from dictionary without calling `.items()` - clashes with sim
+    "PLC0206",
+    # import should be at top of file
+    "PLC0415"
 ]
 
 [tool.ruff.lint.pydocstyle]

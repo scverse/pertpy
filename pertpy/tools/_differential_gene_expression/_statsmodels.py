@@ -6,14 +6,14 @@ import statsmodels.api as sm
 from tqdm.auto import tqdm
 
 from ._base import LinearModelBase
-from ._checks import check_is_integer_matrix
+from ._checks import check_is_numeric_matrix
 
 
 class Statsmodels(LinearModelBase):
-    """Differential expression test using a statsmodels linear regression"""
+    """Differential expression test using a statsmodels linear regression."""
 
     def _check_counts(self):
-        check_is_integer_matrix(self.data)
+        check_is_numeric_matrix(self.data)
 
     def fit(
         self,
@@ -55,7 +55,10 @@ class Statsmodels(LinearModelBase):
                     "t_value": t_test.tvalue.item(),
                     "sd": t_test.sd.item(),
                     "log_fc": t_test.effect.item(),
-                    "adj_p_value": statsmodels.stats.multitest.fdrcorrection(np.array([t_test.pvalue]))[1].item(),
                 }
             )
-        return pd.DataFrame(res).sort_values("p_value")
+        return (
+            pd.DataFrame(res)
+            .sort_values("p_value")
+            .assign(adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1])
+        )

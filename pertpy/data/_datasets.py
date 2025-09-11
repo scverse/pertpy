@@ -37,7 +37,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
     Returns:
         :class:`~mudata.MuData` object of the ECCITE-seq dataset
     """
-    import muon as mu
+    import mudata as md
 
     output_file_name = "papalexi_2021.h5mu"
     output_file_path = settings.datasetdir / output_file_name
@@ -48,9 +48,11 @@ def papalexi_2021() -> MuData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    mudata = mu.read(output_file_path)
+    mdata = md.read_h5mu(output_file_path)
+    mdata.pull_obs()
+    mdata.pull_var()
 
-    return mudata
+    return mdata
 
 
 def sc_sim_augur() -> AnnData:  # pragma: no cover
@@ -408,7 +410,7 @@ def kang_2018() -> AnnData:  # pragma: no cover
 
 
 def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
-    """Processed 10X 5' scRNA-seq data from PBMC of COVID-19 patients and healthy donors
+    """Processed 10X 5' scRNA-seq data from PBMC of COVID-19 patients and healthy donors.
 
     The study profiled peripheral blood mononuclear cells from 90 COVID-19 patients with different disease severity and 23 healthy control donors.
     Here the dataset was downsampled to approx. 500 cells per donor and cells were mapped to a reference atlas of healthy PBMCs from 12 studies
@@ -453,7 +455,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://figshare.com/ndownloader/files/38169900",
+            url="https://figshare.com/ndownloader/files/54169301",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -650,7 +652,7 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
         Publication: https://doi.org/10.1038/s41592-021-01153-z \
         Obtained from scperturb: http://projects.sanderlab.org/scperturb/
 
-     Returns:
+    Returns:
          :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
     output_file_name = "datlinger_2021.h5ad"
@@ -1516,9 +1518,7 @@ def combosciplex() -> AnnData:  # pragma: no cover
 
 
 def sciplex_gxe1() -> AnnData:  # pragma: no cover
-    """sci-Plex-GxE combined chemical and genetic profiling of A172 dCas9-KRAB cells
-    genetically perturbed for HPRT1 or mismtach repair genes exposed to 6-thioguanine and temozolomide,
-    respectively, and A172 dCas9-SunTag cells genetically perturbed for HPRT1 exposed to 6-thioguanine.
+    """sci-Plex-GxE profiling of A172 dCas9-KRAB (HPRT1 or MMR knockout) with 6-TG/TMZ and A172 dCas9-SunTag (HPRT1 knockout) with 6-TG.
 
     References:
         McFaline-Figueroa JL et al., Trapnell C. Multiplex single-cell chemical genomics reveals

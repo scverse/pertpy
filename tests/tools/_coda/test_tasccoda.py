@@ -6,9 +6,9 @@ import scanpy as sc
 from mudata import MuData
 
 try:
-    import ete3
+    import ete4
 except ImportError:
-    pytest.skip("ete3 not available", allow_module_level=True)
+    pytest.skip("ete4 not available", allow_module_level=True)
 
 import pertpy as pt
 
@@ -56,6 +56,12 @@ def test_prepare(smillie_adata):
     assert "sample_counts" in mdata["coda"].obsm
     assert isinstance(mdata["coda"].obsm["sample_counts"], np.ndarray)
     assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 8
+
+
+def test_load_invalid_type_raises_error(smillie_adata):
+    invalid_type = "an_invalid_string"
+    with pytest.raises(ValueError, match=f"{invalid_type} is not a supported type"):
+        tasccoda.load(smillie_adata, type=invalid_type)
 
 
 def test_run_nuts(smillie_adata):

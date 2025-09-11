@@ -1,11 +1,24 @@
+import pytest
+
+try:
+    import scvi
+except Exception:  # noqa: BLE001
+    pytest.skip("Required R package 'edgeR' not available", allow_module_level=True)
+
+import warnings
+
+import anndata as ad
 import pertpy as pt
 import scanpy as sc
-from anndata import AnnData
-from scvi.data import synthetic_iid
 
 
 def test_scgen():
-    adata = synthetic_iid()
+    from scvi.data import synthetic_iid
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Observation names are not unique")
+        adata = synthetic_iid()
+        adata.obs_names_make_unique()
     pt.tl.Scgen.setup_anndata(
         adata,
         batch_key="batch",
@@ -24,7 +37,7 @@ def test_scgen():
     # reg mean and reg var
     ctrl_adata = adata[((adata.obs["labels"] == "label_0") & (adata.obs["batch"] == "batch_0"))]
     stim_adata = adata[((adata.obs["labels"] == "label_0") & (adata.obs["batch"] == "batch_1"))]
-    eval_adata = AnnData.concatenate(ctrl_adata, stim_adata, pred, batch_key="concat_batches")
+    eval_adata = ad.concat([ctrl_adata, stim_adata, pred], label="concat_batches")
     label_0 = adata[adata.obs["labels"] == "label_0"]
     sc.tl.rank_genes_groups(label_0, groupby="batch", method="wilcoxon")
     diff_genes = label_0.uns["rank_genes_groups"]["names"]["batch_1"]

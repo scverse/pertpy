@@ -20,7 +20,6 @@ from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 from scipy import stats
 from scipy.optimize import nnls
-from seaborn import PairGrid
 from sklearn.linear_model import LinearRegression
 from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 from statsmodels.sandbox.stats.multicomp import multipletests
@@ -33,9 +32,17 @@ if TYPE_CHECKING:
 
 
 class Dialogue:
-    """Python implementation of DIALOGUE"""
+    """Python implementation of DIALOGUE."""
 
-    def __init__(self, sample_id: str, celltype_key: str, n_counts_key: str, n_mpcs: int, feature_space_key: str = "X_pca", n_components: int = 50):
+    def __init__(
+        self,
+        sample_id: str,
+        celltype_key: str,
+        n_counts_key: str,
+        n_mpcs: int,
+        feature_space_key: str = "X_pca",
+        n_components: int = 50,
+    ):
         """Constructor for Dialogue.
 
         Args:
@@ -66,13 +73,14 @@ class Dialogue:
         Copied from `https://github.com/schillerlab/sc-toolbox/blob/397e80dc5e8fb8017b75f6c3fa634a1e1213d484/sc_toolbox/tools/__init__.py#L458`
 
         Args:
+            adata: Annotated data matrix.
             groupby: The key to groupby for pseudobulks
             strategy: The pseudobulking strategy. One of "median" or "mean"
 
         Returns:
             A Pandas DataFrame of pseudobulk counts
         """
-        # TODO: Replace with decoupler's implementation
+        # TODO: Replace with scanpy get implementation
         pseudobulk = {"Genes": adata.var_names.values}
 
         for category in adata.obs.loc[:, groupby].cat.categories:
@@ -87,7 +95,9 @@ class Dialogue:
         return pseudobulk
 
     def _pseudobulk_feature_space(
-        self, adata: AnnData, groupby: str,
+        self,
+        adata: AnnData,
+        groupby: str,
     ) -> pd.DataFrame:
         """Return Cell-averaged components from a passed feature space.
 
@@ -95,6 +105,7 @@ class Dialogue:
         TODO: DIALOGUE recommends running PCA on each cell type separately before running PMD - this should be implemented as an option here.
 
         Args:
+            adata: Annotated data matrix.
             groupby: The key to groupby for pseudobulks.
 
         Returns:
@@ -103,7 +114,7 @@ class Dialogue:
         aggr = {}
         for category in adata.obs.loc[:, groupby].cat.categories:
             temp = adata.obs.loc[:, groupby] == category
-            aggr[category] = adata[temp].obsm[self.feature_space_key][:, :self.n_components].mean(axis=0)
+            aggr[category] = adata[temp].obsm[self.feature_space_key][:, : self.n_components].mean(axis=0)
         aggr = pd.DataFrame(aggr)
         return aggr
 
@@ -132,6 +143,7 @@ class Dialogue:
 
         Args:
             adata: The AnnData object to append mcp scores to.
+            ct_subs: cell type objects.
             mcp_scores: The MCP scores dictionary.
             celltype_key: Key of the cell type column in obs.
 
@@ -215,7 +227,7 @@ class Dialogue:
         sample_obs: str,
         return_all: bool = False,
     ):
-        """Applies a mixed linear model using the specified formula (MCP scores used for the dependent var) and returns the coefficient and p-value
+        """Applies a mixed linear model using the specified formula (MCP scores used for the dependent var) and returns the coefficient and p-value.
 
         TODO: reduce runtime? Maybe we can use an approximation or something that isn't statsmodels.
 
@@ -334,7 +346,7 @@ class Dialogue:
 
         Args:
             mcp_name: The name of the MCP to model.
-            scores: The MCP scores for a cell type. Number of MCPs x number of features.
+            scores_df: The MCP scores for a cell type. Number of MCPs x number of features.
             ct_data: The AnnData object containing the metadata and labels in obs.
             tme: Transcript mean expression in `x`.
             sig: DataFrame containing a series of up and downregulated MCPs.
@@ -420,11 +432,10 @@ class Dialogue:
         # Finally get corr coeff
         return np.dot(A_mA, B_mB.T) / np.sqrt(np.dot(ssA[:, None], ssB[None]))
 
+    # TODO: needs check for correctness and variable renaming
+    # TODO: Confirm that this doesn't return duplicate gene names.
     def _get_top_elements(self, m: pd.DataFrame, max_length: int, min_threshold: float):
-        """
-
-        TODO: needs check for correctness and variable renaming
-        TODO: Confirm that this doesn't return duplicate gene names
+        """Get top elements.
 
         Args:
             m: Any DataFrame of Gene name as index with variable columns.
@@ -459,12 +470,11 @@ class Dialogue:
         # TODO this whole function should be standalone
         # It will contain the calculation of up/down + calculation (new final mcp scores)
         # Ensure that it'll still fit/work with the hierarchical multilevel_modeling
-
         """Determine the up and down genes per MCP."""
         # TODO: something is slightly slow here
         cca_sig_results: dict[Any, dict[str, Any]] = {}
         new_mcp_scores: dict[Any, list[Any]] = {}
-        for ct in ct_subs.keys():
+        for ct in ct_subs:
             ct_adata = ct_subs[ct]
             conf_m = ct_adata.obs[n_counts_key].values
 
@@ -485,9 +495,7 @@ class Dialogue:
             from scipy.stats import spearmanr
 
             def _pcor_mat(v1, v2, v3, method="spearman"):
-                """
-                MAJOR TODO: I've only used normal correlation instead of partial correlation as we wait on the implementation
-                """
+                """MAJOR TODO: I've only used normal correlation instead of partial correlation as we wait on the implementation."""
                 correlations = []  # R
                 pvals = []  # P
                 for x2 in v2:
@@ -508,7 +516,7 @@ class Dialogue:
                 return np.array(correlations), np.array(pvals)  # pvals_adjusted
 
             C1, P1 = _pcor_mat(ct_adata[:, top_cor_genes_flattened].X.toarray().T, mcp_scores[ct].T, conf_m)
-            C1[P1 > (0.05 / ct_adata.shape[1])] = 0  # why?
+            C1[(0.05 / ct_adata.shape[1]) < P1] = 0  # why?
 
             cca_sig_unformatted = self._get_top_elements(  # 3 up, 3 dn, for each mcp
                 pd.DataFrame(C1.T, index=top_cor_genes_flattened), max_length=max_genes, min_threshold=0.05
@@ -516,7 +524,7 @@ class Dialogue:
 
             # TODO: probably format the up and down within get_top_elements
             cca_sig: dict[str, Any] = defaultdict(dict)
-            for i in range(0, int(len(cca_sig_unformatted) / 2)):
+            for i in range(int(len(cca_sig_unformatted) / 2)):
                 cca_sig[f"MCP{i}"]["up"] = cca_sig_unformatted[i * 2]
                 cca_sig[f"MCP{i}"]["down"] = cca_sig_unformatted[i * 2 + 1]
 
@@ -525,7 +533,7 @@ class Dialogue:
 
             # This is basically DIALOGUE 3 now
             pre_r_scores = {
-                ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws_dict[ct]
+                ct: ct_subs[ct].obsm[self.feature_space_key][:, : self.n_components] @ ws_dict[ct]
                 for i, ct in enumerate(ct_subs.keys())
                 # TODO This is a recalculation and not a new calculation
             }
@@ -593,8 +601,8 @@ class Dialogue:
     def calculate_multifactor_PMD(
         self,
         adata: AnnData,
-        penalties: list[int] = None,
-        ct_order: list[str] = None,
+        penalties: list[int] | None = None,
+        ct_order: list[str] | None = None,
         agg_feature: bool = True,
         solver: Literal["lp", "bs"] = "bs",
         normalize: bool = True,
@@ -605,10 +613,9 @@ class Dialogue:
 
         Args:
             adata: AnnData object to calculate PMD for.
-            sample_id: Key to use for pseudobulk determination.
             penalties: PMD penalties.
             ct_order: The order of cell types.
-            agg_features: Whether to calculate cell-averaged principal components.
+            agg_feature: Whether to calculate cell-averaged principal components.
             solver: Which solver to use for PMD. Must be one of "lp" (linear programming) or "bs" (binary search).
                     For differences between these to please refer to https://github.com/theislab/sparsecca/blob/main/examples/linear_programming_multicca.ipynb
             normalize: Whether to mimic DIALOGUE as close as possible
@@ -646,8 +653,6 @@ class Dialogue:
                     raise ValueError("Please ensure that every cell type is represented in every sample.") from e
                 else:
                     raise
-        else:
-            penalties = penalties
 
         if solver == "bs":
             ws, _ = multicca_pmd(mcca_in, penalties, K=self.n_mcps, standardize=True, niter=100, mimic_R=normalize)
@@ -658,7 +663,7 @@ class Dialogue:
         ws_dict = {ct: ws[i] for i, ct in enumerate(ct_order)}
 
         pre_r_scores = {
-            ct: ct_subs[ct].obsm[self.feature_space_key][:, :self.n_components] @ ws[i]
+            ct: ct_subs[ct].obsm[self.feature_space_key][:, : self.n_components] @ ws[i]
             for i, ct in enumerate(cell_types)
         }
 
@@ -683,17 +688,17 @@ class Dialogue:
         ws_dict: dict,
         confounder: str | None,
         formula: str = None,
-    ):
+    ) -> pd.DataFrame:
         """Runs the multilevel modeling step to match genes to MCPs and generate p-values for MCPs.
 
         Args:
             ct_subs: The DIALOGUE cell type objects.
             mcp_scores: The determined MCP scores from the PMD step.
+            ws_dict: WS dictionary.
             confounder: Any modeling confounders.
             formula: The hierarchical modeling formula. Defaults to y ~ x + n_counts.
 
         Returns:
-            A Pandas DataFrame containing:
             - for each mcp: HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2
             - merged HLM_result_1, HLM_result_2, sig_genes_1, sig_genes_2 of all mcps
 
@@ -877,15 +882,15 @@ class Dialogue:
             if len(conditions_compare) != 2:
                 raise ValueError("Please specify conditions to compare or supply an object with only 2 conditions")
 
-        pvals = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
-        tstats = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
-        pvals_adj = pd.DataFrame(1, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(0, n_mcps)])
+        pvals = pd.DataFrame(1.0, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
+        tstats = pd.DataFrame(1.0, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
+        pvals_adj = pd.DataFrame(1.0, adata.obs[celltype_label].unique(), ["mcp_" + str(n) for n in range(n_mcps)])
 
         response = adata.obs.groupby(sample_label)[condition_label].agg(pd.Series.mode)
         for celltype in adata.obs[celltype_label].unique():
             df = adata.obs[adata.obs[celltype_label] == celltype]
 
-            for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
+            for mcpnum in ["mcp_" + str(n) for n in range(n_mcps)]:
                 mns = df.groupby(sample_label)[mcpnum].mean()
                 mns = pd.concat([mns, response], axis=1)
                 res = stats.ttest_ind(
@@ -895,7 +900,7 @@ class Dialogue:
                 pvals.loc[celltype, mcpnum] = res[1]
                 tstats.loc[celltype, mcpnum] = res[0]
 
-        for mcpnum in ["mcp_" + str(n) for n in range(0, n_mcps)]:
+        for mcpnum in ["mcp_" + str(n) for n in range(n_mcps)]:
             pvals_adj[mcpnum] = multipletests(pvals[mcpnum], method="fdr_bh")[1]
 
         return {"pvals": pvals, "tstats": tstats, "pvals_adj": pvals_adj}
@@ -958,7 +963,7 @@ class Dialogue:
 
         genes_dict_up = {}  # type: ignore
         genes_dict_down = {}  # type: ignore
-        for celltype2 in mcp_dict.keys():
+        for celltype2 in mcp_dict:
             for gene in mcp_dict[celltype2][MCP + ".up"]:
                 if gene in genes_dict_up:
                     genes_dict_up[gene] += 1
@@ -1010,7 +1015,7 @@ class Dialogue:
             >>> genes_results = _get_extrema_MCP_genes_single(ct_subs, mcp="mcp_4", fraction=0.2)
         """
         genes = {}
-        for ct in ct_subs.keys():
+        for ct in ct_subs:
             mini = ct_subs[ct]
             mini.obs["extrema"] = pd.qcut(
                 mini.obs[mcp],
@@ -1058,13 +1063,13 @@ class Dialogue:
         for mcp in mcps:
             rank_dfs[mcp] = {}
             ct_ranked = self._get_extrema_MCP_genes_single(ct_subs, mcp=mcp, fraction=fraction)
-            for celltype in ct_ranked.keys():
+            for celltype in ct_ranked:
                 rank_dfs[mcp][celltype] = sc.get.rank_genes_groups_df(ct_ranked[celltype], group=None)
 
         return rank_dfs
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_split_violins(
+    def plot_split_violins(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         split_key: str,
@@ -1117,7 +1122,7 @@ class Dialogue:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_pairplot(
+    def plot_pairplot(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
         celltype_key: str,

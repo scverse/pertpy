@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from lamin_utils import logger
-from rich import print
 from scipy.stats import entropy
 
 if TYPE_CHECKING:
@@ -70,7 +69,7 @@ class PerturbationSpace:
         if embedding_key is not None and embedding_key not in adata.obsm_keys():
             raise ValueError(f"Embedding key {embedding_key} not found in obsm keys of the anndata.")
 
-        if layer_key is not None and layer_key not in adata.layers.keys():
+        if layer_key is not None and layer_key not in adata.layers:
             raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
 
         if copy:
@@ -80,7 +79,7 @@ class PerturbationSpace:
         group_masks = (
             [(adata.obs[group_col] == sample) for sample in adata.obs[group_col].unique()]
             if group_col
-            else [[True] * adata.n_obs]
+            else [np.array([True] * adata.n_obs)]
         )
 
         if layer_key:
@@ -123,7 +122,7 @@ class PerturbationSpace:
         if all_data:
             layers_keys = list(adata.layers.keys())
             for local_layer_key in layers_keys:
-                if local_layer_key != layer_key and local_layer_key != new_layer_key:
+                if local_layer_key not in (layer_key, new_layer_key):
                     adata.layers[local_layer_key + "_control_diff"] = np.zeros((adata.n_obs, adata.n_vars))
                     for mask in group_masks:
                         adata.layers[local_layer_key + "_control_diff"][mask, :] = adata.layers[local_layer_key][
@@ -132,7 +131,7 @@ class PerturbationSpace:
 
             embedding_keys = list(adata.obsm_keys())
             for local_embedding_key in embedding_keys:
-                if local_embedding_key != embedding_key and local_embedding_key != new_embedding_key:
+                if local_embedding_key not in (embedding_key, new_embedding_key):
                     adata.obsm[local_embedding_key + "_control_diff"] = np.zeros(adata.obsm[local_embedding_key].shape)
                     for mask in group_masks:
                         adata.obsm[local_embedding_key + "_control_diff"][mask, :] = adata.obsm[local_embedding_key][
@@ -193,7 +192,7 @@ class PerturbationSpace:
 
         data: dict[str, np.array] = {}
 
-        for local_layer_key in adata.layers.keys():
+        for local_layer_key in adata.layers:
             data["layers"] = {}
             control_local = adata[reference_key].layers[local_layer_key].copy()
             for perturbation in perturbations:
@@ -231,14 +230,14 @@ class PerturbationSpace:
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs
         new_perturbation.obs = new_obs
 
-        if "layers" in data.keys():
+        if "layers" in data:
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
                     key_name = key.removesuffix("_control_diff")
                 new_perturbation.layers[key_name] = data["layers"][key]
 
-        if "embeddings" in data.keys():
+        if "embeddings" in data:
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):
@@ -260,7 +259,7 @@ class PerturbationSpace:
         ensure_consistency: bool = False,
         target_col: str = "perturbation",
     ) -> tuple[AnnData, AnnData] | AnnData:
-        """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality
+        """Subtract perturbations linearly. Assumes input of size n_perts x dimensionality.
 
         Args:
             adata: Anndata object of size n_perts x dim.
@@ -302,7 +301,7 @@ class PerturbationSpace:
 
         data: dict[str, np.array] = {}
 
-        for local_layer_key in adata.layers.keys():
+        for local_layer_key in adata.layers:
             data["layers"] = {}
             control_local = adata[reference_key].layers[local_layer_key].copy()
             for perturbation in perturbations:
@@ -340,14 +339,14 @@ class PerturbationSpace:
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs
         new_perturbation.obs = new_obs
 
-        if "layers" in data.keys():
+        if "layers" in data:
             for key in data["layers"]:
                 key_name = key
                 if key.endswith("_control_diff"):
                     key_name = key.removesuffix("_control_diff")
                 new_perturbation.layers[key_name] = data["layers"][key]
 
-        if "embeddings" in data.keys():
+        if "embeddings" in data:
             key_name = key
             for key in data["embeddings"]:
                 if key.endswith("_control_diff"):

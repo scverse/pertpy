@@ -76,13 +76,13 @@ class ClusteringSpace(PerturbationSpace):
             if metric == "asw":
                 from pertpy.tools._perturbation_space._metrics import asw
 
-                if "metric" not in kwargs.keys():
+                if "metric" not in kwargs:
                     kwargs["metric"] = "euclidean"
-                if "distances" not in kwargs.keys():
+                if "distances" not in kwargs:
                     distances = pairwise_distances(self.X, metric=kwargs["metric"])
-                if "sample_size" not in kwargs.keys():
+                if "sample_size" not in kwargs:
                     kwargs["sample_size"] = None
-                if "random_state" not in kwargs.keys():
+                if "random_state" not in kwargs:
                     kwargs["random_state"] = None
 
                 asw_score = asw(

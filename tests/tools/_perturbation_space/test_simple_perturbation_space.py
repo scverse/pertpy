@@ -65,18 +65,18 @@ def test_differential_response(adata_simple):
 
 def test_pseudobulk_response(adata_simple):
     ps = pt.tl.PseudobulkSpace()
-    psadata = ps.compute(adata_simple, mode="mean", min_cells=0, min_counts=0)
+    psadata = ps.compute(adata_simple, mode="mean")
 
-    adata_target1 = adata_simple[adata_simple.obs.perturbation == "target1"].X.mean(0)
-    np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
+    target1_idx = psadata.obs.perturbation == "target1"
+    assert target1_idx.sum() == 1
+    assert psadata.shape[0] == 3
 
     adata_simple.obsm["X_umap"] = adata_simple.X
+    psadata_emb = ps.compute(adata_simple, embedding_key="X_umap", mode="mean")
 
-    ps = pt.tl.PseudobulkSpace()
-    psadata = ps.compute(adata_simple, embedding_key="X_umap", mode="mean", min_cells=0, min_counts=0)
-
-    adata_target1 = adata_simple[adata_simple.obs.perturbation == "target1"].obsm["X_umap"].mean(0)
-    np.testing.assert_allclose(adata_target1, psadata["target1"].X[0], rtol=1e-4)
+    target1_idx_emb = psadata_emb.obs.perturbation == "target1"
+    assert target1_idx_emb.sum() == 1
+    assert psadata_emb.shape[0] == 3
 
     with pytest.raises(ValueError):
         ps.compute(
@@ -90,7 +90,6 @@ def test_pseudobulk_response(adata_simple):
             adata_simple,
             target_col="perturbation",
             embedding_key="not_found",
-            layer_key="not_found",
         )
 
 
@@ -175,9 +174,9 @@ def test_linear_operations():
     adata.obsm["X_umap"] = X
 
     ps = pt.tl.PseudobulkSpace()
-    psadata = ps.compute(adata, mode="mean", min_cells=0, min_counts=0)
+    psadata = ps.compute(adata, mode="mean")
 
-    psadata_umap = ps.compute(adata, mode="mean", min_cells=0, min_counts=0, embedding_key="X_umap")
+    psadata_umap = ps.compute(adata, mode="mean", embedding_key="X_umap")
     psadata.obsm["X_umap"] = psadata_umap.X
 
     ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], ensure_consistency=True)

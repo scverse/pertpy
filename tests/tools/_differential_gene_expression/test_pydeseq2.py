@@ -1,5 +1,13 @@
+from importlib.util import find_spec
+
 import numpy.testing as npt
-from pertpy.tools._differential_gene_expression import PyDESeq2
+import pytest
+
+if find_spec("pydeseq2") is None:
+    pytestmark = pytest.mark.skip(reason="pydeseq2 not available")
+
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
 
 
 def test_pydeseq2_simple(test_adata):
@@ -9,6 +17,8 @@ def test_pydeseq2_simple(test_adata):
     2. Fitted
     3. and that test_contrast returns a DataFrame with the correct number of rows.
     """
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
     method = PyDESeq2(adata=test_adata, design="~condition")
     method.fit()
     res_df = method.test_contrasts(method.contrast("condition", "A", "B"))
@@ -31,6 +41,8 @@ def test_pydeseq2_complex(test_adata):
     """Check that the pyDESeq2 method can be initialized with a different covariate name and fitted and that the test_contrast
     method returns a dataframe with the correct number of rows.
     """
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
     test_adata.obs["condition1"] = test_adata.obs["condition"].copy()
     method = PyDESeq2(adata=test_adata, design="~condition1+group")
     method.fit()
@@ -54,6 +66,8 @@ def test_pydeseq2_complex(test_adata):
 
 def test_pydeseq2_formula(test_adata):
     """Check that the pyDESeq2 method gives consistent results when specifying contrasts, regardless of the order of covariates"""
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
     model1 = PyDESeq2(adata=test_adata, design="~condition+group")
     model1.fit()
     res_1 = model1.test_contrasts(model1.contrast("condition", "A", "B"))

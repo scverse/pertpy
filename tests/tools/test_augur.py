@@ -5,14 +5,13 @@ import numpy as np
 import pertpy as pt
 import pytest
 import scanpy as sc
-from pertpy.tools._augur import Params
 
 CWD = Path(__file__).parent.resolve()
 
 
-ag_rfc = pt.tl.Augur("random_forest_classifier", Params(random_state=42))
-ag_lrc = pt.tl.Augur("logistic_regression_classifier", Params(random_state=42))
-ag_rfr = pt.tl.Augur("random_forest_regressor", Params(random_state=42))
+ag_rfc = pt.tl.Augur("random_forest_classifier", random_state=42)
+ag_lrc = pt.tl.Augur("logistic_regression_classifier", random_state=42)
+ag_rfr = pt.tl.Augur("random_forest_regressor", random_state=42)
 
 
 @pytest.fixture
@@ -45,7 +44,7 @@ def test_random_forest_classifier(adata):
     assert results["CellTypeA"][2]["subsample_idx"] == 2
     assert "augur_score" in h_adata.obs.columns
     assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.634920, 0.933484, 0.902494])
-    assert "feature_importances" in results.keys()
+    assert "feature_importances" in results
     assert len(set(results["summary_metrics"]["CellTypeA"])) == len(results["summary_metrics"]["CellTypeA"]) - 1
 
 
@@ -59,7 +58,7 @@ def test_logistic_regression_classifier(adata):
 
     assert "augur_score" in h_adata.obs.columns
     assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.691232, 0.955404, 0.972789])
-    assert "feature_importances" in results.keys()
+    assert "feature_importances" in results
 
 
 def test_random_forest_regressor(adata):
@@ -147,28 +146,15 @@ def test_select_variance(adata):
     adata_cell_type = adata[adata.obs["cell_type"] == "CellTypeA"].copy()
     ad = ag_rfc.select_variance(adata_cell_type, var_quantile=0.5, span=0.3, filter_negative_residuals=False)
 
-    assert 3672 == len(ad.var.index[ad.var["highly_variable"]])
+    assert len(ad.var.index[ad.var["highly_variable"]]) == 3672
 
 
-def test_params():
-    """Test parameters."""
-    rf_estimator = ag_rfr.create_estimator("random_forest_classifier", Params(n_estimators=9, max_depth=10, penalty=13))
-    lr_estimator = ag_rfr.create_estimator("logistic_regression_classifier", Params(penalty="elasticnet"))
-    assert rf_estimator.get_params()["n_estimators"] == 9
-    assert rf_estimator.get_params()["max_depth"] == 10
-    assert lr_estimator.get_params()["penalty"] == "elasticnet"
-
-    with pytest.raises(TypeError):
-        ag_rfr.create_estimator("random_forest_regressor", Params(unvalid=10))
-
-
-@pytest.mark.slow
 def test_differential_prioritization():
     """Test differential prioritization run."""
     # Requires the full dataset or it fails because of a lack of statistical power
     adata = pt.dt.sc_sim_augur()
     adata = sc.pp.subsample(adata, n_obs=500, copy=True, random_state=10)
-    ag = pt.tl.Augur("logistic_regression_classifier", Params(random_state=42))
+    ag = pt.tl.Augur("logistic_regression_classifier", random_state=42)
     ag.load(adata)
 
     adata, results1 = ag.predict(adata, n_threads=4, n_subsamples=3, random_state=2)

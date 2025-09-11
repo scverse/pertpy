@@ -3,16 +3,10 @@ from pathlib import Path
 import arviz as az
 import numpy as np
 import pandas as pd
+import pertpy as pt
 import pytest
 import scanpy as sc
 from mudata import MuData
-
-try:
-    import ete3
-except ImportError:
-    pytest.skip("ete3 not available", allow_module_level=True)
-
-import pertpy as pt
 
 CWD = Path(__file__).parent.resolve()
 
@@ -96,7 +90,6 @@ def test_credible_effects(adata):
     assert sccoda.credible_effects(mdata)["condition[T.Salmonella]"]["Enterocyte"]
 
 
-@pytest.mark.slow
 def test_make_arviz(adata):
     adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
     mdata = sccoda.load(
