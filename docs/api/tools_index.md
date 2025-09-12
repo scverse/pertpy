@@ -19,6 +19,7 @@ Pertpy enables differential gene expression tests through a common interface tha
     tools.EdgeR
     tools.WilcoxonTest
     tools.TTest
+    tools.PermutationTest
     tools.Statsmodels
 ```
 

@@ -34,7 +34,7 @@ def __getattr__(name: str):
             raise ImportError(
                 "Extra dependencies required: toytree, ete4. Please install with: pip install toytree ete4"
             ) from None
-    elif name in ["EdgeR", "PyDESeq2", "Statsmodels", "TTest", "WilcoxonTest"]:
+    elif name in ["EdgeR", "PermutationTest", "PyDESeq2", "Statsmodels", "TTest", "WilcoxonTest"]:
         module = import_module("pertpy.tools._differential_gene_expression")
         return getattr(module, name)
     elif name == "Scgen":
@@ -63,6 +63,7 @@ __all__ = [
     "PyDESeq2",
     "WilcoxonTest",
     "TTest",
+    "PermutationTest",
     "Statsmodels",
     "DistanceTest",
     "Distance",
