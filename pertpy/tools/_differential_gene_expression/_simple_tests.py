@@ -271,10 +271,9 @@ class PermutationTest(SimpleComparisonBase):
         x0: np.ndarray,
         x1: np.ndarray,
         paired: bool,
-        *,
         test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: np.log2(np.mean(y) + 1e-8)
         - np.log2(np.mean(x) + 1e-8),
-        n_permutations: int,
+        n_permutations: int = 1000,
         **kwargs,
     ) -> dict[str, float]:
         """Perform a permutation test.
