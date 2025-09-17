@@ -26,6 +26,7 @@ class PerturbationSpace:
     def compute_control_diff(  # type: ignore
         self,
         adata: AnnData,
+        *,
         target_col: str = "perturbation",
         group_col: str = None,
         reference_key: str = "control",
@@ -40,8 +41,8 @@ class PerturbationSpace:
 
         Args:
             adata: Anndata object of size cells x genes.
-            target_col: .obs column name that stores the label of the perturbation applied to each cell.
-            group_col: .obs column name that stores the label of the group of each cell. If None, ignore groups.
+            target_col: `.obs` column name that stores the label of the perturbation applied to each cell.
+            group_col: `.obs` column name that stores the label of the group of each cell. If None, ignore groups.
             reference_key: The key of the control values.
             layer_key: Key of the AnnData layer to use for computation.
             new_layer_key: the results are stored in the given layer.
@@ -145,6 +146,7 @@ class PerturbationSpace:
     def add(
         self,
         adata: AnnData,
+        *,
         perturbations: Iterable[str],
         reference_key: str = "control",
         ensure_consistency: bool = False,
@@ -156,8 +158,8 @@ class PerturbationSpace:
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to add.
             reference_key: perturbation source from which the perturbation summation starts.
-            ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
-            target_col: .obs column name that stores the label of the perturbation applied to each cell.
+            ensure_consistency: Whether to run differential expression on all data matrices to ensure consistency of linear space.
+            target_col: `.obs` column name that stores the label of the perturbation applied to each cell.
 
         Returns:
             Anndata object of size (n_perts+1) x dim, where the last row is the addition of the specified perturbations.
@@ -254,6 +256,7 @@ class PerturbationSpace:
     def subtract(
         self,
         adata: AnnData,
+        *,
         perturbations: Iterable[str],
         reference_key: str = "control",
         ensure_consistency: bool = False,
@@ -265,8 +268,8 @@ class PerturbationSpace:
             adata: Anndata object of size n_perts x dim.
             perturbations: Perturbations to subtract.
             reference_key: Perturbation source from which the perturbation subtraction starts.
-            ensure_consistency: If True, runs differential expression on all data matrices to ensure consistency of linear space.
-            target_col: .obs column name that stores the label of the perturbation applied to each cell.
+            ensure_consistency: Whether to run differential expression on all data matrices to ensure consistency of linear space.
+            target_col: `.obs` column name that stores the label of the perturbation applied to each cell.
 
         Returns:
             Anndata object of size (n_perts+1) x dim, where the last row is the subtraction of the specified perturbations.
@@ -360,13 +363,15 @@ class PerturbationSpace:
 
         return new_perturbation
 
-    def label_transfer(
+    def label_transfer(  # noqa: D417
         self,
         adata: AnnData,
-        column: str = "perturbation",
+        *,
+        target_column: str = "perturbation",
         column_uncertainty_score_key: str = "perturbation_transfer_uncertainty",
         target_val: str = "unknown",
         neighbors_key: str = "neighbors",
+        **kwargs,
     ) -> None:
         """Impute missing values in the specified column using KNN imputation in the space defined by `use_rep`.
 
@@ -376,7 +381,7 @@ class PerturbationSpace:
 
         Args:
             adata: The AnnData object containing single-cell data.
-            column: The column name in adata.obs to perform imputation on.
+            target_column: The column name in adata.obs to perform imputation on.
             column_uncertainty_score_key: The column name in adata.obs to store the uncertainty score of the label transfer.
             target_val: The target value to impute.
             neighbors_key: The key in adata.uns where the neighbors are stored.
@@ -398,12 +403,16 @@ class PerturbationSpace:
         if neighbors_key not in adata.uns:
             raise ValueError(f"Key {neighbors_key} not found in adata.uns. Please run `sc.pp.neighbors` first.")
 
-        labels = adata.obs[column].astype(str)
+        # backwards compatibility
+        if "column" in kwargs:
+            target_column = kwargs.pop("column")
+
+        labels = adata.obs[target_column].astype(str)
         target_cells = labels == target_val
 
         connectivities = adata.obsp[adata.uns[neighbors_key]["connectivities_key"]]
         # convert labels to an incidence matrix
-        one_hot_encoded_labels = adata.obs[column].astype(str).str.get_dummies()
+        one_hot_encoded_labels = adata.obs[target_column].astype(str).str.get_dummies()
         # convert to distance-weighted neighborhood incidence matrix
         weighted_label_occurence = pd.DataFrame(
             (one_hot_encoded_labels.values.T * connectivities).T,
@@ -412,8 +421,8 @@ class PerturbationSpace:
         )
         # choose best label for each target cell
         best_labels = weighted_label_occurence.drop(target_val, axis=1)[target_cells].idxmax(axis=1)
-        adata.obs[column] = labels
-        adata.obs.loc[target_cells, column] = best_labels
+        adata.obs[target_column] = labels
+        adata.obs.loc[target_cells, target_column] = best_labels
 
         # calculate uncertainty
         uncertainty = np.zeros(adata.n_obs)

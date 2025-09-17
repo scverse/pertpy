@@ -177,7 +177,7 @@ class Mixscape:
     def mixscape(
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         control: str,
         *,
         new_class_name: str | None = "mixscape_class",
@@ -201,12 +201,12 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             control: Control category from the `labels` column.
             new_class_name: Name of mixscape classification to be stored in `.obs`.
             layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
+            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
             test_method: Method to use for differential expression testing.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
@@ -256,7 +256,7 @@ class Mixscape:
             adata=adata,
             split_masks=split_masks,
             categories=categories,
-            labels=labels,
+            pert_key=pert_key,
             control=control,
             layer=de_layer,
             pval_cutoff=pval_cutoff,
@@ -278,7 +278,7 @@ class Mixscape:
 
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
-        adata.obs[new_class_name] = adata.obs[labels].astype(str)
+        adata.obs[new_class_name] = adata.obs[pert_key].astype(str)
         adata.obs[f"{new_class_name}_global"] = np.empty(
             [
                 adata.n_obs,
@@ -290,12 +290,12 @@ class Mixscape:
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
-            gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
+            gene_targets = list(set(adata[split_mask].obs[pert_key]).difference([control]))
             for gene in gene_targets:
                 post_prob = 0
-                orig_guide_cells = (adata.obs[labels] == gene) & split_mask
+                orig_guide_cells = (adata.obs[pert_key] == gene) & split_mask
                 orig_guide_cells_index = list(orig_guide_cells.index[orig_guide_cells])
-                nt_cells = (adata.obs[labels] == control) & split_mask
+                nt_cells = (adata.obs[pert_key] == control) & split_mask
                 all_cells = orig_guide_cells | nt_cells
 
                 if len(perturbation_markers[(category, gene)]) == 0:
@@ -335,10 +335,10 @@ class Mixscape:
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
 
                         if n_iter == 0:
-                            gv = pd.DataFrame(columns=["pvec", labels])
+                            gv = pd.DataFrame(columns=["pvec", pert_key])
                             gv["pvec"] = pvec
-                            gv[labels] = control
-                            gv.loc[guide_cells, labels] = gene
+                            gv[pert_key] = control
+                            gv.loc[guide_cells, pert_key] = gene
                             if gene not in gv_list:
                                 gv_list[gene] = {}
                             gv_list[gene][category] = gv
@@ -389,7 +389,7 @@ class Mixscape:
     def lda(
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         control: str,
         *,
         mixscape_class_global: str | None = "mixscape_class_global",
@@ -407,7 +407,7 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
@@ -456,7 +456,7 @@ class Mixscape:
             adata=adata,
             split_masks=split_masks,
             categories=categories,
-            labels=labels,
+            pert_key=pert_key,
             control=control,
             layer=layer,
             pval_cutoff=pval_cutoff,
@@ -475,7 +475,7 @@ class Mixscape:
                 continue
             else:
                 gene_subset = adata_subset[
-                    (adata_subset.obs[labels] == key[1]) | (adata_subset.obs[labels] == control)
+                    (adata_subset.obs[pert_key] == key[1]) | (adata_subset.obs[pert_key] == control)
                 ].copy()
                 sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
@@ -484,8 +484,8 @@ class Mixscape:
         # concatenate all pcs into a single matrix.
         projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
-        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
-        clf.fit(projected_pcs_array, adata_subset.obs[labels])
+        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[pert_key])) - 1)
+        clf.fit(projected_pcs_array, adata_subset.obs[pert_key])
         cell_embeddings = clf.transform(projected_pcs_array)
         adata.uns["mixscape_lda"] = cell_embeddings
 
@@ -495,9 +495,10 @@ class Mixscape:
     def _get_perturbation_markers(
         self,
         adata: AnnData,
+        *,
         split_masks: list[np.ndarray],
         categories: list[str],
-        labels: str,
+        pert_key: str,
         control: str,
         layer: str,
         pval_cutoff: float,
@@ -511,7 +512,7 @@ class Mixscape:
             adata: :class:`~anndata.AnnData` object
             split_masks: List of boolean masks for each split/group.
             categories: List of split/group names.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             control: Control category from the `labels` column.
             layer: Key from adata.layers whose value will be used to compare gene expression.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
@@ -526,7 +527,7 @@ class Mixscape:
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
             # get gene sets for each split
-            gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
+            gene_targets = list(set(adata[split_mask].obs[pert_key]).difference([control]))
             adata_split = adata[split_mask].copy()
             # find top DE genes between cells with targeting and non-targeting gRNAs
             with warnings.catch_warnings():
@@ -535,7 +536,7 @@ class Mixscape:
                 sc.tl.rank_genes_groups(
                     adata_split,
                     layer=layer,
-                    groupby=labels,
+                    groupby=pert_key,
                     groups=gene_targets,
                     reference=control,
                     method=test_method,

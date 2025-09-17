@@ -16,7 +16,6 @@ Many of the datasets originate from [scperturb](http://projects.sanderlab.org/sc
     data.adamson_2016_upr_perturb_seq
     data.aissa_2021
     data.bhattacherjee
-    data.burczynski_crohn
     data.chang_2021
     data.combosciplex
     data.cinemaot_example

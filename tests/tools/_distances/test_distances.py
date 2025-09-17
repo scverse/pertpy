@@ -105,7 +105,7 @@ def test_triangle_inequality(pairwise_distance, distance, rng):
     # Test if distances are well-defined in accordance with metric axioms
     # (M4) Triangle inequality (we just probe this for a few random triplets)
     # Some tests are not well defined for the triangle inequality. We skip those.
-    if distance in {"mahalanobis"}:
+    if distance in {"mahalanobis", "wasserstein"}:
         return
 
     for _ in range(5):

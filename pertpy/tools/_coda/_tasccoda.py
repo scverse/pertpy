@@ -33,24 +33,6 @@ config.update("jax_enable_x64", True)
 class Tasccoda(CompositionalModel2):
     r"""Statistical model for tree-aggregated differential composition analysis (tascCODA, Ostner et al., 2021).
 
-    The hierarchical formulation of the model for one sample is:
-
-    .. math::
-         \\begin{align*}
-            Y_i &\\sim \\textrm{DirMult}(\\bar{Y}_i, \\textbf{a}(\\textbf{x})_i)\\\\
-            \\log(\\textbf{a}(X))_i &= \\alpha + X_{i, \\cdot} \\beta\\\\
-            \\alpha_j &\\sim \\mathcal{N}(0, 10) & \\forall j\\in[p]\\\\
-            \\beta &= \\hat{\\beta} A^T \\\\
-            \\hat{\\beta}_{l, k} &= 0 & \\forall k \\in \\hat{v}, l \\in [d]\\\\
-            \\hat{\\beta}_{l, k} &= \\theta \\tilde{\\beta}_{1, l, k} + (1- \\theta) \\tilde{\\beta}_{0, l, k} \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in [d]\\\\
-            \\tilde{\\beta}_{m, l, k} &= \\sigma_{m, l, k} * b_{m, l, k} \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, m \\in \\{0, 1\\}, l \\in [d]\\\\
-            \\sigma_{m, l, k} &\\sim \\textrm{Exp}(\\lambda_{m, l, k}^2/2) \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in \\{0, 1\\}, l \\in [d]\\\\
-            b_{m, l, k} &\\sim N(0,1) \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in \\{0, 1\\}, l \\in [d]\\\\
-            \\theta &\\sim \\textrm{Beta}(1, \\frac{1}{|\\{[v] \\smallsetminus \\hat{v}\\}|})
-        \\end{align*}
-
-    with Y being the cell counts, X the covariates, and v the set of nodes of the underlying tree structure.
-
     For further information, see `tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data`
     (Ostner et al., 2021)
     """
@@ -75,11 +57,14 @@ class Tasccoda(CompositionalModel2):
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
     ) -> MuData:
-        """Prepare a MuData object for subsequent processing. If type is "cell_level", then create a compositional analysis dataset from the input adata. If type is "sample_level", generate ete tree for tascCODA models from dendrogram information or cell-level observations.
+        """Prepare a MuData object for subsequent processing.
 
-        When using ``type="cell_level"``, ``adata`` needs to have a column in ``adata.obs`` that contains the cell type assignment.
+        If type is "cell_level", then create a compositional analysis dataset from the input adata.
+        If type is "sample_level", generate ete tree for tascCODA models from dendrogram information or cell-level observations.
+
+        When using `type="cell_level"`, `adata` needs to have a column in `adata.obs` that contains the cell type assignment.
         Further, it must contain one column or a set of columns (e.g. subject id, treatment, disease status) that uniquely identify each (statistical) sample.
-        Further covariates (e.g. subject age) can either be specified via addidional column names in ``adata.obs``, a key in ``adata.uns``, or as a separate DataFrame.
+        Further covariates (e.g. subject age) can either be specified via addidional column names in `adata.obs`, a key in `adata.uns`, or as a separate DataFrame.
 
         Args:
             adata: AnnData object.
@@ -90,10 +75,13 @@ class Tasccoda(CompositionalModel2):
             covariate_obs: If type is "cell_level", specify list of keys for adata.obs, where covariate values are stored.
             covariate_df: If type is "cell_level", specify dataFrame with covariates.
             dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object.
-            levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
-            levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
+            levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels.
+                The list must begin with the root level, and end with the leaf level.
+            levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels.
+                The list must begin with the root level, and end with the leaf level.
             add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}.
-            key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2].
+            key_added: If not specified, the tree is stored in `.uns['tree']`.
+                If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2].
             modality_key_1: Key to the cell-level AnnData in the MuData object.
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
 

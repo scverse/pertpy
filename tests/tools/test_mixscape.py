@@ -69,7 +69,7 @@ def adata():
 def test_mixscape(adata):
     adata.layers["X_pert"] = adata.X
     mixscape_identifier = pt.tl.Mixscape()
-    mixscape_identifier.mixscape(adata=adata, labels="gene_target", control="NT", test_method="t-test")
+    mixscape_identifier.mixscape(adata=adata, pert_key="gene_target", control="NT", test_method="t-test")
     np_result = adata.obs["mixscape_class_global"] == "NP"
     np_result_correct = np_result[NUM_CELLS_PER_GROUP : NUM_CELLS_PER_GROUP * 2]
 
@@ -93,8 +93,8 @@ def test_perturbation_signature(adata):
 def test_lda(adata):
     adata.layers["X_pert"] = adata.X
     mixscape_identifier = pt.tl.Mixscape()
-    mixscape_identifier.mixscape(adata=adata, labels="gene_target", control="NT", test_method="t-test")
-    mixscape_identifier.lda(adata=adata, labels="gene_target", control="NT", test_method="t-test")
+    mixscape_identifier.mixscape(adata=adata, pert_key="gene_target", control="NT", test_method="t-test")
+    mixscape_identifier.lda(adata=adata, pert_key="gene_target", control="NT", test_method="t-test")
 
     assert "mixscape_lda" in adata.uns
 

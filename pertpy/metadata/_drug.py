@@ -14,12 +14,14 @@ from ._look_up import LookUp
 from ._metadata import MetaData
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from anndata import AnnData
 
 
 def _download_drug_annotation(
     source: Literal["chembl", "dgidb", "pharmgkb"] = "chembl",
-) -> pd.DataFrame | dict[str, dict[str, list[str]]]:
+) -> pd.DataFrame | Mapping[str, Mapping[str, list[str]]]:
     if source == "chembl":
         # Prepared in https://github.com/theislab/pertpy-datasets/blob/main/chembl_data.ipynb
         chembl_path = Path(settings.cachedir) / "chembl.json"
@@ -232,7 +234,7 @@ class Drug(MetaData):
                 self.set()
             return self.dataframe
 
-        def dict(self) -> dict[str, list[str]] | dict[str, dict[str, list[str]]]:
+        def dict(self) -> Mapping[str, list[str]] | Mapping[str, Mapping[str, list[str]]]:
             if not self.loaded:
                 self.set()
             return self.dictionary
