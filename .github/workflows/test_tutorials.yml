@@ -48,7 +48,7 @@ jobs:
                 fetch-depth: 0
                 submodules: "true"
 
-            - name: Cache .pertpy_cache
+            - name: Cache pertpy's cache folder
               uses: actions/cache@v4
               with:
                 path: cache

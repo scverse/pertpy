@@ -1,11 +1,30 @@
 from pathlib import Path
 
 import anndata as ad
+import scanpy as sc
 from anndata import AnnData
 from mudata import MuData
 from scanpy import settings
 
 from pertpy.data._dataloader import _download
+
+
+def burczynski_crohn() -> AnnData:  # pragma: no cover
+    """Bulk data with conditions ulcerative colitis (UC) and Crohn's disease (CD).
+
+    The study assesses transcriptional profiles in peripheral blood mononuclear
+    cells from 42 healthy individuals, 59 CD patients, and 26 UC patients by
+    hybridization to microarrays interrogating more than 22,000 sequences.
+
+    References:
+        Burczynski et al., "Molecular classification of Crohn's disease and
+        ulcerative colitis patients using transcriptional profiles in peripheral blood mononuclear cells"
+        J Mol Diagn 8, 51 (2006). PMID:16436634.
+
+    Returns:
+        :class:`~anndata.AnnData` object of the Burczynski dataset
+    """
+    return sc.datasets.burczynski06()
 
 
 def papalexi_2021() -> MuData:  # pragma: no cover
