@@ -17,7 +17,7 @@ def _download(  # pragma: no cover
     url: str,
     output_file_name: str | None = None,
     output_path: str | Path | None = None,
-    block_size: int = 1024,
+    block_size: int = 8192,
     overwrite: bool = False,
     is_zip: bool = False,
     timeout: int = 30,
@@ -74,7 +74,7 @@ def _download(  # pragma: no cover
                     response.raise_for_status()
                     total = int(response.headers.get("content-length", 0))
 
-                    with Progress(refresh_per_second=5) as progress:
+                    with Progress(refresh_per_second=3) as progress:
                         task = progress.add_task("[red]Downloading...", total=total)
                         with Path(temp_file_name).open("wb") as file:
                             for data in response.iter_content(block_size):
