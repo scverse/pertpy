@@ -80,7 +80,7 @@ de = [
     "formulaic",
     "pydeseq2>=v0.5.0",
 ]
-scgen = ["scvi-tools"]
+scgen = ["scvi-tools[jax]"]
 all = [
     "pertpy[tcoda,de,scgen]"
 ]
