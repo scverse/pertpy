@@ -307,7 +307,11 @@ class Mixscape:
 
                     dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     if scale:
-                        dat = sc.pp.scale(dat)
+                        with warnings.catch_warnings():
+                            warnings.filterwarnings(
+                                "ignore", message="zero-centering a sparse array/matrix densifies it."
+                            )
+                            dat = sc.pp.scale(dat)
 
                     converged = False
                     n_iter = 0
@@ -477,7 +481,9 @@ class Mixscape:
                 gene_subset = adata_subset[
                     (adata_subset.obs[labels] == key[1]) | (adata_subset.obs[labels] == control)
                 ].copy()
-                sc.pp.scale(gene_subset)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
                 # project cells into PCA space of gene_subset
                 projected_pcs[key[1]] = np.asarray(np.dot(X, gene_subset.varm["PCs"]))
@@ -715,8 +721,9 @@ class Mixscape:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             warnings.simplefilter("ignore", PerformanceWarning)
+            warnings.simplefilter("ignore", UserWarning)
             sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
-        sc.pp.scale(adata_subset, max_value=vmax)
+            sc.pp.scale(adata_subset, max_value=vmax)
         sc.pp.subsample(adata_subset, n_obs=subsample_number)
 
         fig = sc.pl.rank_genes_groups_heatmap(
@@ -1058,7 +1065,7 @@ class Mixscape:
                     data=obs_tidy,
                     order=order,
                     orient="vertical",
-                    scale=scale,
+                    density_norm=scale,
                     ax=ax,
                     hue=hue,
                     **kwargs,
