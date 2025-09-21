@@ -266,16 +266,23 @@ class GuideAssignment:
             res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
 
             # Add the parameters to the adata.var DataFrame
-            for params_name, param in mixture_model.params.items():
-                if param.ndim == 0:
-                    if params_name not in adata.var.columns:
-                        adata.var[params_name] = np.nan
-                    adata.var.loc[gene, params_name] = param.item()
-                else:
-                    for i, p in enumerate(param):
-                        if f"{params_name}_{i}" not in adata.var.columns:
-                            adata.var[f"{params_name}_{i}"] = np.nan
-                        adata.var.loc[gene, f"{params_name}_{i}"] = p
+            samples = mixture_model.mcmc.get_samples()
+            param_data = {}
+
+            for param_name in ["gaussian_mean", "gaussian_std", "poisson_rate", "mix_probs"]:
+                if param_name in samples:
+                    param_value = samples[param_name].mean(axis=0)
+                    if param_value.ndim == 0:
+                        param_data[param_name] = param_value.item()
+                    else:
+                        for i, p in enumerate(param_value):
+                            param_data[f"{param_name}_{i}"] = p.item()
+
+            # Add all columns at once
+            for col_name, value in param_data.items():
+                if col_name not in adata.var.columns:
+                    adata.var[col_name] = np.nan
+                adata.var.loc[gene, col_name] = value
 
         # Assign guides to cells
         # Some cells might have multiple guides assigned

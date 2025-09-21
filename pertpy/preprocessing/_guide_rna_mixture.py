@@ -8,7 +8,7 @@ import numpy as np
 from jax.random import PRNGKey
 from jax.scipy.special import logsumexp
 from numpyro import factor, plate, sample
-from numpyro.distributions import Dirichlet, Exponential, HalfNormal, Normal, Poisson
+from numpyro.distributions import Categorical, Dirichlet, Exponential, HalfNormal, Normal, Poisson
 from numpyro.infer import MCMC, NUTS
 
 ParamsDict = Mapping[str, jnp.ndarray]
@@ -102,8 +102,14 @@ class MixtureModel(ABC):
 
         with plate("data", data.shape[0]):
             log_likelihoods = self.log_likelihood(data, params)
-            log_mixture_likelihood = logsumexp(log_likelihoods, axis=-1)
-            sample("obs", Normal(log_mixture_likelihood, 1.0), obs=data)
+            mixture_probs = jnp.exp(log_likelihoods - logsumexp(log_likelihoods, axis=-1, keepdims=True))
+            z = sample("z", Categorical(mixture_probs), infer={"enumerate": "parallel"})
+
+            # Observe under selected component
+            poisson_ll = Poisson(params["poisson_rate"]).log_prob(data)
+            gaussian_ll = Normal(params["gaussian_mean"], params["gaussian_std"]).log_prob(data)
+            obs_ll = jnp.where(z == 0, poisson_ll, gaussian_ll)
+            factor("obs", obs_ll)
 
     def assignment(self, samples: ParamsDict, data: jnp.ndarray) -> np.ndarray:
         """Assign data points to mixture components.
