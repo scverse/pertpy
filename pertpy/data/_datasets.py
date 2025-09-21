@@ -1,8 +1,9 @@
 from pathlib import Path
 
-import scanpy as sc
+import anndata as ad
 from anndata import AnnData
 from mudata import MuData
+from scanpy import settings
 
 from pertpy.data._dataloader import _download
 
@@ -19,7 +20,6 @@ def papalexi_2021() -> MuData:  # pragma: no cover
         :class:`~mudata.MuData` object of the ECCITE-seq dataset
     """
     import mudata as md
-    from scanpy import settings
 
     output_file_name = "papalexi_2021.h5mu"
     output_file_path = settings.datasetdir / output_file_name
@@ -46,8 +46,6 @@ def sc_sim_augur() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of a simulated single-cell RNA seq dataset
     """
-    from scanpy import settings
-
     output_file_name = "sc_sim_augur.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -57,7 +55,7 @@ def sc_sim_augur() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -78,8 +76,6 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
     """
-    from scanpy import settings
-
     output_file_name = "bhattacherjee_rna.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -89,7 +85,7 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -105,8 +101,6 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of a single-cell RNA seq dataset
     """
-    from scanpy import settings
-
     output_file_name = "sciplex3.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -116,7 +110,7 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -135,8 +129,6 @@ def tasccoda_example() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the dataset.
     """
-    from scanpy import settings
-
     output_file_name = "tasccoda_smillie.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -146,7 +138,7 @@ def tasccoda_example() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -166,8 +158,6 @@ def frangieh_2021() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the Perturb-CITE-seq data.
     """
-    from scanpy import settings
-
     output_file_name = "frangieh_2021.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -177,7 +167,7 @@ def frangieh_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -197,8 +187,6 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of raw Perturb-CITE-seq data.
     """
-    from scanpy import settings
-
     output_file_name = "frangieh_2021_raw.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -208,7 +196,7 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -228,8 +216,6 @@ def dixit_2016_raw() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of raw Perturb-seq data.
     """
-    from scanpy import settings
-
     output_file_name = "dixit_2016_raw.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -239,7 +225,7 @@ def dixit_2016_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -259,8 +245,6 @@ def dixit_2016() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of Perturb-seq data
     """
-    from scanpy import settings
-
     output_file_name = "dixit_2016.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -270,7 +254,7 @@ def dixit_2016() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -289,8 +273,6 @@ def norman_2019() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of single-cell pooled CRISPR screening.
     """
-    from scanpy import settings
-
     output_file_name = "norman_2019.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -300,7 +282,7 @@ def norman_2019() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -319,8 +301,6 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of raw single-cell pooled CRISPR screening
     """
-    from scanpy import settings
-
     output_file_name = "norman_2019_raw.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -330,7 +310,7 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -344,8 +324,6 @@ def dialogue_example() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object
     """
-    from scanpy import settings
-
     output_file_name = "dialogue_example.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -355,7 +333,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -368,8 +346,6 @@ def distance_example() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object
     """
-    from scanpy import settings
-
     output_file_name = "distances_example_data.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -379,7 +355,7 @@ def distance_example() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -401,8 +377,6 @@ def kang_2018() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of droplet-based single cell RNA-sequencing
     """
-    from scanpy import settings
-
     output_file_name = "kang_2018.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -412,7 +386,7 @@ def kang_2018() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -431,8 +405,6 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scRNA-seq profiles
     """
-    from scanpy import settings
-
     output_file_name = "stephenson_2021_subsampled.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -442,7 +414,7 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -460,8 +432,6 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object
     """
-    from scanpy import settings
-
     output_file_name = "haber_2017_regions.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -471,7 +441,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -489,8 +459,6 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "adamson_2016_pilot.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -500,7 +468,7 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -522,8 +490,6 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb preparedsingle-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "adamson_2016_upr_epistasis.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -533,7 +499,7 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -553,8 +519,6 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "adamson_2016_upr_perturb_seq.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -564,7 +528,7 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -582,8 +546,6 @@ def aissa_2021() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "aissa_2021.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -593,7 +555,7 @@ def aissa_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -613,8 +575,6 @@ def chang_2021() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "chang_2021.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -624,7 +584,7 @@ def chang_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -646,8 +606,6 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "datlinger_2017.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -657,7 +615,7 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -678,8 +636,6 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
     Returns:
          :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "datlinger_2021.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -689,7 +645,7 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -710,8 +666,6 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "frangieh_2021_protein.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -721,7 +675,7 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -743,8 +697,6 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "frangieh_2021_rna.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -754,7 +706,7 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -773,8 +725,6 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "gasperini_2019_atscale.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -784,7 +734,7 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -804,8 +754,6 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "gasperini_2019_highmoi.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -815,7 +763,7 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -835,8 +783,6 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "gasperini_2019_lowmoi.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -846,7 +792,7 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -864,8 +810,6 @@ def gehring_2019() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of a scPerturb prepared single-cell dataset
     """
-    from scanpy import settings
-
     output_file_name = "gehring_2019.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -875,7 +819,7 @@ def gehring_2019() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -895,8 +839,6 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "mcfarland_2020.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -906,7 +848,7 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -926,8 +868,6 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "replogle_2022_k562_essential.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -937,7 +877,7 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -959,8 +899,6 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "replogle_2022_k562_gwps.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -970,7 +908,7 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -991,8 +929,6 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "replogle_2022_rpe1.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1002,7 +938,7 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1024,8 +960,6 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "schiebinger_2019_16day.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1035,7 +969,7 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1055,8 +989,6 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "Schiebinger_2019_18day.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1066,7 +998,7 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1086,8 +1018,6 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "schraivogel_2020_tap_screen_chr11.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1097,7 +1027,7 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1117,8 +1047,6 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "schraivogel_2020_tap_screen_chr8.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1128,7 +1056,7 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1149,8 +1077,6 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "shifrut_2018.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1160,7 +1086,7 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1182,8 +1108,6 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "srivatsan_2020_sciplex2.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1193,7 +1117,7 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1213,8 +1137,6 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "srivatsan_2020_sciplex3.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1224,7 +1146,7 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1247,8 +1169,6 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "srivatsan_2020_sciplex4.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1258,7 +1178,7 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1281,8 +1201,6 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "tian_2019_day7neuron.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1292,7 +1210,7 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1315,18 +1233,16 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
-    output_file_name = "tian_2019_iPSC.h5ad"
+    output_file_name = "tian_2019_iPad.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2019_iPSC.h5ad",
+            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2019_iPad.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1347,8 +1263,6 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "tian_2021_crispra.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1358,7 +1272,7 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1379,8 +1293,6 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "tian_2021_crispri.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1390,7 +1302,7 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1408,8 +1320,6 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "weinreb_2020.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1419,7 +1329,7 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1438,8 +1348,6 @@ def xie_2017() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "xie_2017.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1449,7 +1357,7 @@ def xie_2017() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1470,8 +1378,6 @@ def zhao_2021() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    from scanpy import settings
-
     output_file_name = "zhaoSims2021.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1481,7 +1387,7 @@ def zhao_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1497,8 +1403,6 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
     Returns:
         :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
     """
-    from scanpy import settings
-
     output_file_name = "cinemaot_example.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1508,7 +1412,7 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1527,8 +1431,6 @@ def dong_2023() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of PBMCs stimulated with interferon.
     """
-    from scanpy import settings
-
     output_file_name = "dong_2023.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1538,7 +1440,7 @@ def dong_2023() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1555,8 +1457,6 @@ def smillie_2019() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the dataset.
     """
-    from scanpy import settings
-
     output_file_name = "smillie_2019.h5ad.zip"
     output_file_path = settings.datasetdir / Path(output_file_name).with_suffix("")
     if not Path(output_file_path).exists():
@@ -1566,7 +1466,7 @@ def smillie_2019() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=True,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1582,8 +1482,6 @@ def combosciplex() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the dataset.
     """
-    from scanpy import settings
-
     output_file_name = "combosciplex.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1593,7 +1491,7 @@ def combosciplex() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1609,8 +1507,6 @@ def sciplex_gxe1() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the dataset.
     """
-    from scanpy import settings
-
     output_file_name = "sciPlexGxE_1_GSM7056148.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1620,7 +1516,7 @@ def sciplex_gxe1() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1643,8 +1539,6 @@ def zhang_2021() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the dataset.
     """
-    from scanpy import settings
-
     output_file_name = "zhang_2021.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1654,7 +1548,7 @@ def zhang_2021() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
 
@@ -1671,8 +1565,6 @@ def hagai_2018() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of the dataset.
     """
-    from scanpy import settings
-
     output_file_name = "hagai_2018.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
@@ -1682,6 +1574,6 @@ def hagai_2018() -> AnnData:  # pragma: no cover
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = sc.read_h5ad(output_file_path)
+    adata = ad.read_h5ad(output_file_path)
 
     return adata
