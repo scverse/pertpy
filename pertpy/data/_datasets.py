@@ -1,11 +1,29 @@
 from pathlib import Path
 
-import anndata as ad
+import scanpy as sc
 from anndata import AnnData
 from mudata import MuData
 from scanpy import settings
 
 from pertpy.data._dataloader import _download
+
+
+def burczynski_crohn() -> AnnData:  # pragma: no cover
+    """Bulk data with conditions ulcerative colitis (UC) and Crohn's disease (CD).
+
+    The study assesses transcriptional profiles in peripheral blood mononuclear
+    cells from 42 healthy individuals, 59 CD patients, and 26 UC patients by
+    hybridization to microarrays interrogating more than 22,000 sequences.
+
+    References:
+        Burczynski et al., "Molecular classification of Crohn's disease and
+        ulcerative colitis patients using transcriptional profiles in peripheral blood mononuclear cells"
+        J Mol Diagn 8, 51 (2006). PMID:16436634.
+
+    Returns:
+        :class:`~anndata.AnnData` object of the Burczynski dataset
+    """
+    return sc.datasets.burczynski06()
 
 
 def papalexi_2021() -> MuData:  # pragma: no cover
@@ -25,7 +43,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/papalexi_2021.h5mu",
+            url="https://figshare.com/ndownloader/files/36509460",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -50,12 +68,12 @@ def sc_sim_augur() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/sc_sim_augur.h5ad",
+            url="https://figshare.com/ndownloader/files/49828902",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -80,12 +98,12 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/bhattacher_rna.h5ad",
+            url="https://figshare.com/ndownloader/files/34526528",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -105,12 +123,12 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/sciplex3.h5ad",
+            url="https://figshare.com/ndownloader/files/33979517",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -123,7 +141,7 @@ def tasccoda_example() -> AnnData:  # pragma: no cover
     The full dataset containing the actual count data can be obtained via smillie_2019().
 
     References:
-        Smillie, Christopher S et al. "Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis."
+        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
         Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
 
     Returns:
@@ -133,12 +151,12 @@ def tasccoda_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tasccoda_smillie.h5ad",
+            url="https://figshare.com/ndownloader/files/38648585",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -162,12 +180,12 @@ def frangieh_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021.h5ad",
+            url="https://figshare.com/ndownloader/files/34013717",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -191,12 +209,12 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021_raw.h5ad",
+            url="https://figshare.com/ndownloader/files/34012565",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -220,12 +238,12 @@ def dixit_2016_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dixit_2016_raw.h5ad",
+            url="https://figshare.com/ndownloader/files/34012565",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -249,12 +267,12 @@ def dixit_2016() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dixit_2016.h5ad",
+            url="https://figshare.com/ndownloader/files/34014608",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -266,8 +284,8 @@ def norman_2019() -> AnnData:  # pragma: no cover
     overexpressing genes alone or in combination
 
     References:
-        Norman, Thomas M et al. "Exploring genetic interaction manifolds constructed from rich
-        single-cell phenotypes." Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
+        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
+        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
@@ -277,12 +295,12 @@ def norman_2019() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/norman_2019.h5ad",
+            url="https://figshare.com/ndownloader/files/34027562",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -294,8 +312,8 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
     overexpressing genes alone or in combination
 
     References:
-        Norman, Thomas M et al. "Exploring genetic interaction manifolds constructed from rich
-        single-cell phenotypes." Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
+        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
+        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
@@ -305,12 +323,12 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/norman_2019_raw.h5ad",
+            url="https://figshare.com/ndownloader/files/34002548",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -328,12 +346,12 @@ def dialogue_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dialogue_example.h5ad",
+            url="https://figshare.com/ndownloader/files/43462662",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -350,12 +368,12 @@ def distance_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/distances_example_data.h5ad",
+            url="https://figshare.com/ndownloader/files/39561379",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -381,12 +399,12 @@ def kang_2018() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/kang_2018.h5ad",
+            url="https://figshare.com/ndownloader/files/34464122",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -395,7 +413,8 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     """Processed 10X 5' scRNA-seq data from PBMC of COVID-19 patients and healthy donors.
 
     The study profiled peripheral blood mononuclear cells from 90 COVID-19 patients with different disease severity and 23 healthy control donors.
-    Here the dataset was downsampled to approx. 500 cells per donor and cells were mapped to a reference atlas of healthy PBMCs from 12 studies with scArches.
+    Here the dataset was downsampled to approx. 500 cells per donor and cells were mapped to a reference atlas of healthy PBMCs from 12 studies
+    with scArches.
 
     References:
         Stephenson, E., Reynolds, G., Botting, R. A., et al. (2021).
@@ -409,12 +428,12 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/stephenson_2021_subsampled.h5ad",
+            url="https://figshare.com/ndownloader/files/38171703",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -426,7 +445,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     Some of the cells were also subject to Salmonella or Heligmosomoides polygyrus infection (day 3 and day 10).
 
     References:
-        Haber, Adam L. et al. "A single-cell survey of the small intestinal epithelium" Nature vol. 551 (2017): 333-339
+        Haber, Adam L. et al. “A single-cell survey of the small intestinal epithelium” Nature vol. 551 (2017): 333-339
         doi:10.1038/nature24489
 
     Returns:
@@ -436,12 +455,12 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/haber_2017_regions.h5ad",
+            url="https://figshare.com/ndownloader/files/54169301",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -463,12 +482,12 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/adamson_2016_pilot.h5ad",
+            url="https://zenodo.org/record/10044268/files/AdamsonWeissman2016_GSM2406675_10X001.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -494,12 +513,12 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/adamson_2016_upr_epistasis.h5ad",
+            url="https://zenodo.org/record/10044268/files/AdamsonWeissman2016_GSM2406677_10X005.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -523,12 +542,12 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/adamson_2016_upr_perturb_seq.h5ad",
+            url="https://zenodo.org/record/10044268/files/AdamsonWeissman2016_GSM2406681_10X010.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -550,12 +569,12 @@ def aissa_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/aissa_2021.h5ad",
+            url="https://zenodo.org/record/10044268/files/AissaBenevolenskaya2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -579,12 +598,12 @@ def chang_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/chang_2021.h5ad",
+            url="https://zenodo.org/record/10044268/files/ChangYe2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -610,12 +629,12 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/datlinger_2017.h5ad",
+            url="https://zenodo.org/record/10044268/files/DatlingerBock2017.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -640,12 +659,12 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/datlinger_2021.h5ad",
+            url="https://zenodo.org/record/10044268/files/DatlingerBock2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -655,9 +674,10 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
 
     Perturb-CITE-seq was developed for pooled CRISPR perturbation screens with multi-modal
     RNA and protein single-cell profiling readout and applied to screen patient-derived
-    autologous melanoma and tumor infiltrating lymphocyte (TIL) co-cultures.
-    RNA and 20 surface proteins were profiled in over 218,000 cells under ~750 perturbations, chosen
-    by their membership in an immune evasion program that is associated with immunotherapy resistance in patients.
+    autologous melanoma and tumor infiltrating lymphocyte (TIL) co-cultures. RNA and 20
+    surface proteins were profiled in over 218,000 cells under ~750 perturbations, chosen
+    by their membership in an immune evasion program that is associated with immunotherapy
+    resistance in patients.
 
     References:
         Publication: https://doi.org/10.1038/s41588-021-00779-1 \
@@ -670,12 +690,12 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021_protein.h5ad",
+            url="https://zenodo.org/record/10044268/files/FrangiehIzar2021_protein.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -701,12 +721,12 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021_rna.h5ad",
+            url="https://zenodo.org/record/10044268/files/FrangiehIzar2021_RNA.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -729,12 +749,12 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_atscale.h5ad",
+            url="https://zenodo.org/record/10044268/files/GasperiniShendure2019_atscale.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -758,12 +778,12 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_highmoi.h5ad",
+            url="https://zenodo.org/record/10044268/files/GasperiniShendure2019_highMOI.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -787,12 +807,12 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_lowmoi.h5ad",
+            url="https://zenodo.org/record/10044268/files/GasperiniShendure2019_lowMOI.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -800,8 +820,9 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
 def gehring_2019() -> AnnData:  # pragma: no cover
     """96-plex perturbation experiment on live mouse neural stem cells.
 
-    In this study, a 96-plex perturbation experiment was conducted on live mouse neural stem cells (NSCs),
-    consisting of a pair of drug-triples with 4 drugs in total at 3 or 4 different concentractions.
+    In this study, a 96-plex perturbation experiment was conducted on live mouse neural
+    stem cells (NSCs), consisting of a pair of drug-triples with 4 drugs in total at 3
+    or 4 different concentractions.
 
     References:
         Publication: https://doi.org/10.1038/s41587-019-0372-z \
@@ -814,12 +835,12 @@ def gehring_2019() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gehring_2019.h5ad",
+            url="https://zenodo.org/record/10044268/files/GehringPachter2019.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -843,12 +864,12 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/mcfarland_2020.h5ad",
+            url="https://zenodo.org/record/10044268/files/McFarlandTsherniak2020.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -872,12 +893,12 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_atscale.h5ad",
+            url="https://zenodo.org/record/10044268/files/ReplogleWeissman2022_K562_essential.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -903,12 +924,12 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/replogle_2022_k562_gwps.h5ad",
+            url="https://zenodo.org/record/10044268/files/ReplogleWeissman2022_K562_gwps.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -933,12 +954,12 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/replogle_2022_rpe1.h5ad",
+            url="https://zenodo.org/record/10044268/files/ReplogleWeissman2022_rpe1.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -948,9 +969,9 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
 
     Samples were collected from established iPSC lines reprogrammed from the reprogramming mouse embryonic
     fibroblasts (MEFs), maintained in either 2i or serum conditions, at 10 time points across 16 days.
-    Overall, 68,339 cells were profiled to an average depth of 38,462 reads per cell.
-    After discarding cells with less than 1,000 genes detected, 65,781 cells were obtained,
-    with a median of 2,398 genes and 7,387 unique transcripts per cell.
+    Overall, 68,339 cells were profiled to an average depth of 38,462 reads per cell. After discarding
+    cells with less than 1,000 genes detected, 65,781 cells were obtained, with a median of 2,398 genes
+    and 7,387 unique transcripts per cell.
 
 
     References:
@@ -964,12 +985,12 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/schiebinger_2019_16day.h5ad",
+            url="https://zenodo.org/record/10044268/files/SchiebingerLander2019_GSE106340.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -993,12 +1014,12 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/Schiebinger_2019_18day.h5ad",
+            url="https://zenodo.org/record/10044268/files/SchiebingerLander2019_GSE115943.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1022,12 +1043,12 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/schraivogel_2020_tap_screen_chr11.h5ad",
+            url="https://zenodo.org/record/10044268/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_11_screen.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1037,8 +1058,8 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
 
     TAP-seq was applied to generate perturbation-based enhancer–target gene maps in K562 cells.
     They perturbed all 1,778 putatively active enhancers predicted on the basis of ENCODE data
-    in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes within the same regions.
-    Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.
+    in two regions on chromosome 8 and 11, and identified effects on expressed protein-coding genes
+    within the same regions. Thus, in each cell, 68 (chromosome 8) or 79 (chromosome 11) target genes were measured.
 
     References:
         Publication: https://doi.org/10.1038/s41592-020-0837-5 \
@@ -1051,12 +1072,12 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/schraivogel_2020_tap_screen_chr8.h5ad",
+            url="https://zenodo.org/record/10044268/files/SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_8_screen.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1067,8 +1088,8 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
     The authors developed a new method, single guide RNA (sgRNA) lentiviral infection
     with Cas9 protein electroporation (SLICE), and adapted it to allow for CROP-Seq in
     primary human T cells. They used a library of 48 sgRNA, derived from GW screens,
-    to explore transcriptional changes downstream of CRISPR-KO.
-    Dataset includes CD8 T cells from two donors, for two conditions: with TCR stimulation or No stimulation.
+    to explore transcriptional changes downstream of CRISPR-KO. Dataset includes CD8
+    T cells from two donors, for two conditions: with TCR stimulation or No stimulation.
 
     References:
         Publication: https://doi.org/10.1016/j.cell.2018.10.024 \
@@ -1081,12 +1102,12 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/shifrut_2018.h5ad",
+            url="https://zenodo.org/record/13350497/files/ShifrutMarson2018.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1098,8 +1119,8 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
     dexamethasone (a corticosteroid agonist), nutlin-3a (a p53-Mdm2 antagonist),
     BMS-345541 (an inhibitor of nuclear factor κB–dependent transcription), or vorinostat
     [suberoylanilide hydroxamic acid (SAHA), an HDAC inhibitor], for 24 hours across seven
-    doses in triplicate for a total of 84 drug–dose–replicate combinations and additional vehicle controls.
-    Nuclei from each well were labelled and subjected to sci-RNA-seq.
+    doses in triplicate for a total of 84 drug–dose–replicate combinations and additional
+    vehicle controls. Nuclei from each well were labelled and subjected to sci-RNA-seq.
 
     References:
         Publication: https://doi.org/10.1126/science.aax6234 \
@@ -1112,12 +1133,12 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/srivatsan_2020_sciplex2.h5ad",
+            url="https://zenodo.org/record/10044268/files/SrivatsanTrapnell2020_sciplex2.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1141,12 +1162,12 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/srivatsan_2020_sciplex3.h5ad",
+            url="https://zenodo.org/records/13350497/files/SrivatsanTrapnell2020_sciplex3.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1173,12 +1194,12 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/srivatsan_2020_sciplex4.h5ad",
+            url="https://zenodo.org/records/10044268/files/SrivatsanTrapnell2020_sciplex4.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1205,12 +1226,12 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2019_day7neuron.h5ad",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2019_day7neuron.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1233,16 +1254,16 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
     Returns:
         :class:`~anndata.AnnData` object of scPerturb prepared single-cell perturbation data
     """
-    output_file_name = "tian_2019_iPad.h5ad"
+    output_file_name = "tian_2019_iPSC.h5ad"
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2019_iPad.h5ad",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2019_iPSC.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1267,12 +1288,12 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2021_crispra.h5ad",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2021_CRISPRa.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1297,12 +1318,12 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2021_crispri.h5ad",
+            url="https://zenodo.org/records/10044268/files/TianKampmann2021_CRISPRi.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1324,12 +1345,12 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/weinreb_2020.h5ad",
+            url="https://zenodo.org/records/10044268/files/WeinrebKlein2020.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1352,12 +1373,12 @@ def xie_2017() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/xie_2017.h5ad",
+            url="https://zenodo.org/records/10044268/files/XieHon2017.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1382,12 +1403,12 @@ def zhao_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/zhaoSims2021.h5ad",
+            url="https://zenodo.org/records/10044268/files/ZhaoSims2021.h5ad?download=1",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1407,12 +1428,12 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/cinemaot_example.h5ad",
+            url="https://figshare.com/ndownloader/files/42362796?private_link=270b0d2c7f1ea57c366d",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1435,12 +1456,12 @@ def dong_2023() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dong_2023.h5ad",
+            url="https://figshare.com/ndownloader/files/43068190",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1451,7 +1472,7 @@ def smillie_2019() -> AnnData:  # pragma: no cover
     The resulting AnnData when preparing this dataset for processing with tascCODA is available via tasccoda_example().
 
     References:
-        Smillie, Christopher S et al. "Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis."
+        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
         Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
 
     Returns:
@@ -1461,12 +1482,12 @@ def smillie_2019() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / Path(output_file_name).with_suffix("")
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/smillie_2019.h5ad.zip",
+            url="https://figshare.com/ndownloader/files/43317285",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=True,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1486,12 +1507,12 @@ def combosciplex() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/combosciplex.h5ad",
+            url="https://figshare.com/ndownloader/files/44229635",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1511,12 +1532,12 @@ def sciplex_gxe1() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/sciPlexGxE_1_GSM7056148.h5ad",
+            url="https://figshare.com/ndownloader/files/45372454",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1543,12 +1564,12 @@ def zhang_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/zhang_2021.h5ad",
+            url="https://figshare.com/ndownloader/files/46457872",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
 
@@ -1569,11 +1590,11 @@ def hagai_2018() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/hagai_2018.h5ad",
+            url="https://figshare.com/ndownloader/files/46978846",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
         )
-    adata = ad.read_h5ad(output_file_path)
+    adata = sc.read_h5ad(output_file_path)
 
     return adata
