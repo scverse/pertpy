@@ -123,7 +123,7 @@ def tasccoda_example() -> AnnData:  # pragma: no cover
     The full dataset containing the actual count data can be obtained via smillie_2019().
 
     References:
-        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
+        Smillie, Christopher S et al. "Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis."
         Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
 
     Returns:
@@ -266,8 +266,8 @@ def norman_2019() -> AnnData:  # pragma: no cover
     overexpressing genes alone or in combination
 
     References:
-        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
-        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
+        Norman, Thomas M et al. "Exploring genetic interaction manifolds constructed from rich
+        single-cell phenotypes." Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
@@ -294,8 +294,8 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
     overexpressing genes alone or in combination
 
     References:
-        Norman, Thomas M et al. “Exploring genetic interaction manifolds constructed from rich
-        single-cell phenotypes.” Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
+        Norman, Thomas M et al. "Exploring genetic interaction manifolds constructed from rich
+        single-cell phenotypes." Science (New York, N.Y.) vol. 365,6455 (2019): 786-793.
         doi:10.1126/science.aax4438
 
     Returns:
@@ -426,7 +426,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     Some of the cells were also subject to Salmonella or Heligmosomoides polygyrus infection (day 3 and day 10).
 
     References:
-        Haber, Adam L. et al. “A single-cell survey of the small intestinal epithelium” Nature vol. 551 (2017): 333-339
+        Haber, Adam L. et al. "A single-cell survey of the small intestinal epithelium" Nature vol. 551 (2017): 333-339
         doi:10.1038/nature24489
 
     Returns:
@@ -1451,7 +1451,7 @@ def smillie_2019() -> AnnData:  # pragma: no cover
     The resulting AnnData when preparing this dataset for processing with tascCODA is available via tasccoda_example().
 
     References:
-        Smillie, Christopher S et al. “Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis.”
+        Smillie, Christopher S et al. "Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis."
         Cell vol. 178,3 (2019): 714-730.e22. doi:10.1016/j.cell.2019.06.029
 
     Returns:

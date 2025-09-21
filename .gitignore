@@ -149,7 +149,6 @@ dmypy.json
 # Datasets
 data/
 *.h5ad
-*.h5md
 *.h5mu
 
 # Test cache
