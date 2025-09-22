@@ -673,7 +673,7 @@ class Mixscape:
     def plot_heatmap(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         target_gene: str,
         control: str,
         *,
@@ -689,7 +689,7 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize heatmap for.
             control: Control category from the `pert_key` column.
             layer: Key from `adata.layers` whose value will be used to perform tests on.
@@ -718,12 +718,12 @@ class Mixscape:
         """
         if "mixscape_class" not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
-        adata_subset = adata[(adata.obs[labels] == target_gene) | (adata.obs[labels] == control)].copy()
+        adata_subset = adata[(adata.obs[pert_key] == target_gene) | (adata.obs[pert_key] == control)].copy()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             warnings.simplefilter("ignore", PerformanceWarning)
             warnings.simplefilter("ignore", UserWarning)
-            sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
+            sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=pert_key, method=method)
             sc.pp.scale(adata_subset, max_value=vmax)
         sc.pp.subsample(adata_subset, n_obs=subsample_number)
 
@@ -747,7 +747,7 @@ class Mixscape:
     def plot_perturbscore(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         target_gene: str,
         *,
         mixscape_class: str = "mixscape_class",
@@ -766,7 +766,7 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize perturbation scores for.
             mixscape_class: The column of `.obs` with mixscape classifications.
             color: Specify color of target gene class or knockout cell class. For control non-targeting and non-perturbed cells, colors are set to different shades of grey.
@@ -805,21 +805,21 @@ class Mixscape:
             else:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
         perturbation_score["mix"] = adata.obs[mixscape_class][perturbation_score.index]
-        gd = list(set(perturbation_score[labels]).difference({target_gene}))[0]
+        gd = list(set(perturbation_score[pert_key]).difference({target_gene}))[0]
 
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             palette = {gd: "#7d7d7d", target_gene: color}
-            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
+            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[cond].get_data()[1].max() for cond in range(len(plot_dens.get_lines())))
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
-            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = rng.uniform(
-                low=0.001, high=top_r / 10, size=sum(perturbation_score[labels] == gd)
+            perturbation_score.loc[perturbation_score[pert_key] == gd, "y_jitter"] = rng.uniform(
+                low=0.001, high=top_r / 10, size=sum(perturbation_score[pert_key] == gd)
             )
-            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = rng.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score[labels] == target_gene)
+            perturbation_score.loc[perturbation_score[pert_key] == target_gene, "y_jitter"] = rng.uniform(
+                low=-top_r / 10, high=0, size=sum(perturbation_score[pert_key] == target_gene)
             )
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
@@ -852,7 +852,7 @@ class Mixscape:
         else:
             if palette is None:
                 palette = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
-            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
+            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[i].get_data()[1].max() for i in range(len(plot_dens.get_lines())))
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
@@ -907,6 +907,7 @@ class Mixscape:
         if return_fig:
             return plt.gcf()
         plt.show()
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1080,7 +1081,7 @@ class Mixscape:
                         data=obs_tidy,
                         order=order,
                         jitter=jitter,
-                        color="black",
+                        palette="dark:black",
                         size=size,
                         ax=ax,
                         hue=hue,
