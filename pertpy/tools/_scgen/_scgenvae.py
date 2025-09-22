@@ -4,7 +4,8 @@ import flax.linen as nn
 import jax.numpy as jnp
 import numpyro.distributions as dist
 from scvi import REGISTRY_KEYS
-from scvi.module.base import JaxBaseModuleClass, LossOutput, flax_configure
+from scvi.module._jaxvae import LossOutput
+from scvi.module.base import JaxBaseModuleClass, flax_configure
 
 from ._base_components import FlaxDecoder, FlaxEncoder
 
