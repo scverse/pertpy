@@ -11,7 +11,6 @@ from jax import config, random
 from lamin_utils import logger
 from mudata import MuData
 from numpyro.infer import Predictive
-from rich import print
 
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
@@ -24,24 +23,6 @@ config.update("jax_enable_x64", True)
 
 class Sccoda(CompositionalModel2):
     r"""Statistical model for single-cell differential composition analysis with specification of a reference cell type.
-
-    This is the standard scCODA model and recommended for all uses.
-
-    The hierarchical formulation of the model for one sample is:
-
-    .. math::
-         y|x &\\sim DirMult(\\phi, \\bar{y}) \\\\
-         \\log(\\phi) &= \\alpha + x \\beta \\\\
-         \\alpha_k &\\sim N(0, 5) \\quad &\\forall k \\in [K] \\\\
-         \\beta_{m, \\hat{k}} &= 0 &\\forall m \\in [M]\\\\
-         \\beta_{m, k} &= \\tau_{m, k} \\tilde{\\beta}_{m, k} \\quad &\\forall m \\in [M], k \\in \\{[K] \\smallsetminus \\hat{k}\\} \\\\
-         \\tau_{m, k} &= \\frac{\\exp(t_{m, k})}{1+ \\exp(t_{m, k})} \\quad &\\forall m \\in [M], k \\in \\{[K] \\smallsetminus \\hat{k}\\} \\\\
-         \\frac{t_{m, k}}{50} &\\sim N(0, 1) \\quad &\\forall m \\in [M], k \\in \\{[K] \\smallsetminus \\hat{k}\\} \\\\
-         \\tilde{\\beta}_{m, k} &= \\sigma_m^2 \\cdot \\gamma_{m, k} \\quad &\\forall m \\in [M], k \\in \\{[K] \\smallsetminus \\hat{k}\\} \\\\
-         \\sigma_m^2 &\\sim HC(0, 1) \\quad &\\forall m \\in [M] \\\\
-         \\gamma_{m, k} &\\sim N(0,1) \\quad &\\forall m \\in [M], k \\in \\{[K] \\smallsetminus \\hat{k}\\} \\\\
-
-    with y being the cell counts and x the covariates.
 
     For further information, see `scCODA is a Bayesian model for compositional single-cell data analysis`
     (Büttner, Ostner et al., NatComms, 2021)
