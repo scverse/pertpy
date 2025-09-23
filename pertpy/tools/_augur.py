@@ -117,7 +117,7 @@ class Augur:
             >>> import pertpy as pt
             >>> adata = pt.dt.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
-            >>> loaded_data = ag_rfc.load(adata)
+            >>> augur_adata = ag_rfc.load(adata)
         """
         if isinstance(input, AnnData):
             adata = input
@@ -147,6 +147,9 @@ class Augur:
 
         # dummy variables for categorical data
         if final_adata.obs["label"].dtype.name == "category":
+            label_encoder = LabelEncoder()
+            final_adata.obs["y_"] = label_encoder.fit_transform(final_adata.obs["label"])
+
             if condition_label is not None and treatment_label is not None:
                 logger.info(f"Filtering samples with {condition_label} and {treatment_label} labels.")
                 final_adata = ad.concat(
@@ -155,8 +158,6 @@ class Augur:
                         final_adata[final_adata.obs["label"] == treatment_label],
                     ]
                 )
-            label_encoder = LabelEncoder()
-            final_adata.obs["y_"] = label_encoder.fit_transform(final_adata.obs["label"])
         else:
             y = final_adata.obs["label"].to_frame()
             y = y.rename(columns={"label": "y_"})
