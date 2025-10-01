@@ -7,7 +7,7 @@ name = "pertpy"
 version = "1.0.3"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.12,<3.14"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -67,6 +67,7 @@ dependencies = [
     "fast-array-utils[accel,sparse]",
     "lamin_utils",
     "arviz",
+    "filelock"
 ]
 
 [project.optional-dependencies]
