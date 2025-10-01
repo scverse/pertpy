@@ -84,7 +84,7 @@ class Milo:
             If `copy=True`, returns the copy of `adata` with the result in `.obs`, `.obsm`, and `.uns`.
             Otherwise:
 
-            nhoods: scipy.sparse._csr.csr_matrix in `adata.obsm['nhoods']`.
+            nhoods: :class:`scipy.sparse.csr_matrix` in `adata.obsm['nhoods']`.
             A binary matrix of cell to neighbourhood assignments. Neighbourhoods in the columns are ordered by the order of the index cell in adata.obs_names
 
             nhood_ixs_refined: pandas.Series in `adata.obs['nhood_ixs_refined']`.
