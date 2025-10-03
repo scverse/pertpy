@@ -3,9 +3,8 @@ from importlib import import_module
 from importlib.util import find_spec
 
 from ._base import LinearModelBase, MethodBase
-from ._dge_comparison import DGEEVAL
 from ._edger import EdgeR
-from ._simple_tests import SimpleComparisonBase, TTest, WilcoxonTest
+from ._simple_tests import PermutationTest, SimpleComparisonBase, TTest, WilcoxonTest
 
 
 def __getattr__(name: str):
@@ -57,4 +56,5 @@ __all__ = [
     "SimpleComparisonBase",
     "WilcoxonTest",
     "TTest",
+    "PermutationTest",
 ]
