@@ -191,8 +191,8 @@ class PermutationTest(SimpleComparisonBase):
     The permutation test relies on another test statistic (e.g. t-statistic or your own) to obtain a p-value through
     random permutations of the data and repeated generation of the test statistic.
 
-    For paired tests, each paired observation is permuted together and distributed randomly between the two groups. For
-    unpaired tests, all observations are permuted independently.
+    For paired tests, each paired observation is permuted together and distributed randomly between the two groups.
+    For unpaired tests, all observations are permuted independently.
 
     The null hypothesis for the unpaired test is that all observations come from the same underlying distribution and
     have been randomly assigned to one of the samples.
@@ -224,9 +224,10 @@ class PermutationTest(SimpleComparisonBase):
             adata: Data with observations to compare.
             column: Column in `adata.obs` that contains the groups to compare.
             baseline: Reference group.
-            groups_to_compare: Groups to compare against the baseline. If None, all other groups
-                are compared.
-            paired_by: Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
+            groups_to_compare: Groups to compare against the baseline.
+                If None, all other groups are compared.
+            paired_by: Column in `adata.obs` to use for pairing.
+                If None, an unpaired test is performed.
             mask: Mask to apply to the data.
             layer: Layer to use for the comparison.
             n_permutations: Number of permutations to perform.
@@ -234,10 +235,10 @@ class PermutationTest(SimpleComparisonBase):
                 Defaults to log2 fold change with pseudocount: log2(mean(x1) + 1e-8) - log2(mean(x0) + 1e-8).
                 The callable should have signature: test_statistic(x0, x1) -> float.
             fit_kwargs: Unused argument for compatibility with the `MethodBase` interface, do not specify.
-            test_kwargs: Additional kwargs passed to the permutation test function (not the test statistic). The
-                permutation test function is `scipy.stats.permutation_test`, so please refer to its documentation for
-                available options. Note that `test_statistic` and `n_permutations` are set by this function and should
-                not be provided here.
+            test_kwargs: Additional kwargs passed to the permutation test function (not the test statistic).
+                The permutation test function is `scipy.stats.permutation_test`.
+                We refer to its documentation for available options.
+                Note that `test_statistic` and `n_permutations` are set by this function and should not be provided here.
 
         Examples:
             >>> # Difference in means (log fold change)
@@ -284,8 +285,9 @@ class PermutationTest(SimpleComparisonBase):
             x0: Array with baseline values.
             x1: Array with values to compare.
             paired: Whether to perform a paired test.
-            test_statistic: A callable that takes two arrays (x0, x1) and returns a float statistic. Please refer to
-                the examples below for usage. The callable should have signature: test_statistic(x0, x1) -> float.
+            test_statistic: A callable that takes two arrays (x0, x1) and returns a float statistic.
+                Please refer to the examples below for usage.
+                The callable should have signature: test_statistic(x0, x1) -> float.
             n_permutations: Number of permutations to perform.
             **kwargs: Additional kwargs passed to scipy.stats.permutation_test.
 

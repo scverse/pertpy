@@ -48,7 +48,7 @@ class CellLine(MetaData):
             depmap_cell_line_path = Path(settings.cachedir) / "depmap_23Q4_info.csv"
             if not Path(depmap_cell_line_path).exists():
                 _download(
-                    url="https://ndownloader.figshare.com/files/43746708",
+                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/depmap_23Q4_info.csv",
                     output_file_name="depmap_23Q4_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -59,44 +59,16 @@ class CellLine(MetaData):
         else:
             # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
             # Source: https://www.cancerrxgene.org/celllines
-            cancerxgene_cell_line_path = Path(settings.cachedir) / "cell_line_cancer_project.csv"
             transformed_cancerxgene_cell_line_path = Path(settings.cachedir) / "cancerrxgene_info.csv"
-
-            if not Path(transformed_cancerxgene_cell_line_path).exists():
-                if not Path(cancerxgene_cell_line_path).exists():
-                    _download(
-                        url="https://www.cancerrxgene.org/api/celllines?list=all&sEcho=1&iColumns=7&sColumns=&"
-                        "iDisplayStart=0&iDisplayLength=25&mDataProp_0=0&mDataProp_1=1&mDataProp_2=2&mDataProp_3=3&"
-                        "mDataProp_4=4&mDataProp_5=5&mDataProp_6=6&sSearch=&bRegex=false&sSearch_0=&bRegex_0=false&"
-                        "bSearchable_0=true&sSearch_1=&bRegex_1=false&bSearchable_1=true&sSearch_2=&bRegex_2=false&"
-                        "bSearchable_2=true&sSearch_3=&bRegex_3=false&bSearchable_3=true&sSearch_4=&bRegex_4=false&"
-                        "bSearchable_4=true&sSearch_5=&bRegex_5=false&bSearchable_5=true&sSearch_6=&bRegex_6=false&"
-                        "bSearchable_6=true&iSortCol_0=0&sSortDir_0=asc&iSortingCols=1&bSortable_0=true&bSortable_1=true&"
-                        "bSortable_2=true&bSortable_3=true&bSortable_4=true&bSortable_5=true&bSortable_6=true&export=csv",
-                        output_file_name="cell_line_cancer_project.csv",
-                        output_path=settings.cachedir,
-                        block_size=4096,
-                        is_zip=False,
-                    )
-                self.cancerxgene = pd.read_csv(cancerxgene_cell_line_path)
-                self.cancerxgene.columns = self.cancerxgene.columns.str.strip()
-                self.cancerxgene["stripped_cell_line_name"] = (
-                    self.cancerxgene["Cell line Name"]
-                    .str.replace(r"\-|\.", "", regex=True)
-                    .str.upper()
-                    .astype("category")
+            if not transformed_cancerxgene_cell_line_path.exists():
+                _download(
+                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/cancerrxgene_info.csv",
+                    output_file_name="cancerrxgene_info.csv",
+                    output_path=settings.cachedir,
+                    block_size=4096,
+                    is_zip=False,
                 )
-                # pivot the data frame so that each cell line has only one row of metadata
-                index_col = set(self.cancerxgene.columns) - {
-                    "Datasets",
-                    "number of drugs",
-                }
-                self.cancerxgene = self.cancerxgene.pivot(index=index_col, columns="Datasets", values="number of drugs")
-                self.cancerxgene.columns.name = None
-                self.cancerxgene = self.cancerxgene.reset_index().rename(columns={"Cell line Name": "cell_line_name"})
-                self.cancerxgene.to_csv(transformed_cancerxgene_cell_line_path)
-            else:
-                self.cancerxgene = pd.read_csv(transformed_cancerxgene_cell_line_path, index_col=0)
+            self.cancerxgene = pd.read_csv(transformed_cancerxgene_cell_line_path, index_col=0)
 
     def _download_gene_annotation(self) -> None:
         # Download metadata for driver genes from DepMap.Sanger
@@ -104,7 +76,7 @@ class CellLine(MetaData):
         gene_annotation_file_path = Path(settings.cachedir) / "genes_info.csv"
         if not Path(gene_annotation_file_path).exists():
             _download(
-                url="https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv",
+                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/genes_info.csv",
                 output_file_name="genes_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -121,7 +93,7 @@ class CellLine(MetaData):
             bulk_rna_sanger_file_path = Path(settings.cachedir) / "rnaseq_sanger_info.csv"
             if not Path(bulk_rna_sanger_file_path).exists():
                 _download(
-                    url="https://figshare.com/ndownloader/files/42467103",
+                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/rnaseq_sanger_info.csv",
                     output_file_name="rnaseq_sanger_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -134,7 +106,7 @@ class CellLine(MetaData):
             bulk_rna_broad_file_path = Path(settings.cachedir) / "rnaseq_depmap_info.csv"
             if not Path(bulk_rna_broad_file_path).exists():
                 _download(
-                    url="https://figshare.com/ndownloader/files/34989922",
+                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/rnaseq_depmap_info.csv",
                     output_file_name="rnaseq_depmap_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -148,7 +120,7 @@ class CellLine(MetaData):
         proteomics_file_path = Path(settings.cachedir) / "proteomics_info.csv"
         if not Path(proteomics_file_path).exists():
             _download(
-                url="https://figshare.com/ndownloader/files/42468393",
+                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/proteomics_info.csv",
                 output_file_name="proteomics_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -164,7 +136,7 @@ class CellLine(MetaData):
             drug_response_gdsc1_file_path = Path(settings.cachedir) / "gdsc1_info.csv"
             if not Path(drug_response_gdsc1_file_path).exists():
                 _download(
-                    url="https://figshare.com/ndownloader/files/43757235",
+                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gdsc1_info.csv",
                     output_file_name="gdsc1_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -175,7 +147,7 @@ class CellLine(MetaData):
             drug_response_gdsc2_file_path = Path(settings.cachedir) / "gdsc2_info.csv"
             if not Path(drug_response_gdsc2_file_path).exists():
                 _download(
-                    url="https://figshare.com/ndownloader/files/43757232",
+                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gdsc2_info.csv",
                     output_file_name="gdsc2_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -189,7 +161,7 @@ class CellLine(MetaData):
         drug_response_prism_file_path = Path(settings.cachedir) / "prism_info.csv"
         if not Path(drug_response_prism_file_path).exists():
             _download(
-                url="https://figshare.com/ndownloader/files/20237739",
+                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/prism_info.csv",
                 output_file_name="prism_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -253,7 +225,7 @@ class CellLine(MetaData):
                 query_id = "stripped_cell_line_name"
                 logger.error(
                     "`stripped_cell_line_name` is used as reference and query identifier to annotate cell line metadata from Cancerrxgene. "
-                    "Ensure that stripped cell line names are available in 'adata.obs.' or use the DepMap as `cell_line_source` to annotate the cell line first."
+                    "Ensure that stripped cell line names are available in 'adata.obs.' or use the DepMap as `cell_line_source` first."
                 )
             if self.cancerxgene is None:
                 self._download_cell_line(cell_line_source="Cancerrxgene")

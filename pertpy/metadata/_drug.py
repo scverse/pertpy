@@ -27,7 +27,7 @@ def _download_drug_annotation(
         chembl_path = Path(settings.cachedir) / "chembl.json"
         if not Path(chembl_path).exists():
             _download(
-                url="https://figshare.com/ndownloader/files/43871718",
+                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/chembl.json",
                 output_file_name="chembl.json",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -41,7 +41,7 @@ def _download_drug_annotation(
         dgidb_path = Path(settings.cachedir) / "dgidb.tsv"
         if not Path(dgidb_path).exists():
             _download(
-                url="https://www.dgidb.org/data/latest/interactions.tsv",
+                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dgidb.tsv",
                 output_file_name="dgidb.tsv",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -54,7 +54,7 @@ def _download_drug_annotation(
         pharmgkb_path = Path(settings.cachedir) / "pharmgkb.tsv"
         if not Path(pharmgkb_path).exists():
             _download(
-                url="https://api.pharmgkb.org/v1/download/file/data/relationships.zip",
+                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/pharmgkb.zip",
                 output_file_name="pharmgkb.zip",
                 output_path=settings.cachedir,
                 block_size=4096,

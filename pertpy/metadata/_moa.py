@@ -26,7 +26,7 @@ class Moa(MetaData):
         clue_path = Path(settings.cachedir) / "repurposing_drugs_20200324.txt"
         if not Path(clue_path).exists():
             _download(
-                url="https://s3.amazonaws.com/data.clue.io/repurposing/downloads/repurposing_drugs_20200324.txt",
+                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/repurposing_drugs_20200324.txt",
                 output_file_name="repurposing_drugs_20200324.txt",
                 output_path=settings.cachedir,
                 block_size=4096,
