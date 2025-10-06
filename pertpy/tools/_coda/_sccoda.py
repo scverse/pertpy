@@ -8,10 +8,10 @@ import numpyro as npy
 import numpyro.distributions as npd
 from anndata import AnnData
 from jax import config, random
-from lamin_utils import logger
 from mudata import MuData
 from numpyro.infer import Predictive
 
+from pertpy._logger import logger
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 if TYPE_CHECKING:

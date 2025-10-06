@@ -11,7 +11,6 @@ import scanpy as sc
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import Array
-from lamin_utils import logger
 from scipy import stats
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
@@ -20,6 +19,7 @@ from scvi.model.base import BaseModelClass, JaxTrainingMixin
 from scvi.utils import setup_anndata_dsp
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
 
 from ._scgenvae import JaxSCGENVAE
 from ._utils import balancer, extractor
@@ -452,12 +452,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             y_diff = np.asarray(np.mean(stim_diff.X, axis=0)).ravel()
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
-                logger.info("top_100 DEGs mean: ", r_value_diff**2)
+                logger.info(f"top_100 DEGs mean: {r_value_diff**2}")
         x = np.asarray(np.mean(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.mean(stim.X, axis=0)).ravel()
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         if verbose:
-            logger.info("All genes mean: ", r_value**2)
+            logger.info(
+                f"All genes mean: {r_value**2}",
+            )
         df = pd.DataFrame({axis_keys["x"]: x, axis_keys["y"]: y})
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)
@@ -575,14 +577,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             y_diff = np.asarray(np.var(stim_diff.X, axis=0)).ravel()
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
-                logger.info("Top 100 DEGs var: ", r_value_diff**2)
+                logger.info(f"Top 100 DEGs var: {r_value_diff**2}")
         if "y1" in axis_keys:
             real_stim = adata[adata.obs[condition_key] == axis_keys["y1"]]
         x = np.asarray(np.var(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.var(stim.X, axis=0)).ravel()
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         if verbose:
-            logger.info("All genes var: ", r_value**2)
+            logger.info(f"All genes var: {r_value**2}")
         df = pd.DataFrame({axis_keys["x"]: x, axis_keys["y"]: y})
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)

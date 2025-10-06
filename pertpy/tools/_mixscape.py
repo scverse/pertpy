@@ -675,7 +675,7 @@ class Mixscape:
         adata: AnnData,
         pert_key: str,
         target_gene: str,
-        control: str,
+        control: str = "NT",
         *,
         layer: str | None = None,
         method: str | None = "wilcoxon",
@@ -733,7 +733,7 @@ class Mixscape:
             vmin=vmin,
             vmax=vmax,
             n_genes=20,
-            groups=["NT"],
+            groups=adata_subset[adata_subset.obs[pert_key] == control].obs["mixscape_class"].unique().tolist(),
             show=False,
             **kwds,
         )

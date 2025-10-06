@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-from lamin_utils import logger
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

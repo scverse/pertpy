@@ -2,8 +2,9 @@ from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
-from lamin_utils import logger
 from scipy.sparse import issparse
+
+from pertpy._logger import logger
 
 from ._base import LinearModelBase
 from ._checks import check_is_integer_matrix

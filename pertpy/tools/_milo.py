@@ -11,10 +11,10 @@ import pandas as pd
 import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
-from lamin_utils import logger
 from mudata import MuData
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

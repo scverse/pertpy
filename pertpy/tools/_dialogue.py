@@ -13,7 +13,6 @@ import seaborn as sns
 import statsmodels.formula.api as smf
 import statsmodels.stats.multitest as ssm
 from anndata import AnnData
-from lamin_utils import logger
 from pandas import DataFrame
 from rich.console import Group
 from rich.live import Live
@@ -25,6 +24,7 @@ from sparsecca import lp_pmd, multicca_permute, multicca_pmd
 from statsmodels.sandbox.stats.multicomp import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
