@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 from anndata import AnnData
-from lamin_utils import logger
 from scipy.stats import entropy
+
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -229,7 +230,8 @@ class PerturbationSpace:
         new_perturbation.obs_names = new_obs_names
 
         new_obs = adata.obs.copy()
-        new_obs.loc[new_pert_name[:-1]] = new_pert_obs
+        new_pert_obs_series = pd.Series(new_pert_obs, index=new_obs.columns)
+        new_obs.loc[new_pert_name[:-1]] = new_pert_obs_series
         new_perturbation.obs = new_obs
 
         if "layers" in data:
@@ -339,7 +341,8 @@ class PerturbationSpace:
         new_perturbation.obs_names = new_obs_names
 
         new_obs = adata.obs.copy()
-        new_obs.loc[new_pert_name[:-1]] = new_pert_obs
+        new_pert_obs_series = pd.Series(new_pert_obs, index=new_obs.columns)
+        new_obs.loc[new_pert_name[:-1]] = new_pert_obs_series
         new_perturbation.obs = new_obs
 
         if "layers" in data:

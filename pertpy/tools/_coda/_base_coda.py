@@ -13,7 +13,6 @@ import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import config, random
-from lamin_utils import logger
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
 from matplotlib.colors import Colormap
@@ -25,6 +24,7 @@ from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -8,9 +8,10 @@ from zipfile import ZipFile
 
 import requests
 from filelock import FileLock
-from lamin_utils import logger
 from requests.exceptions import RequestException
 from rich.progress import Progress
+
+from pertpy._logger import logger
 
 
 def _download(  # pragma: no cover

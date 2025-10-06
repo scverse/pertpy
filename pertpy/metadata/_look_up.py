@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import namedtuple
 from typing import TYPE_CHECKING, Literal
 
-from lamin_utils import logger
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -428,9 +428,8 @@ class LookUp:
         logger.info("To summarize: in the DepMap_Sanger gene annotation file, you can find: ")
         logger.info(f"{len(self.gene_annotation.index)} driver genes")
         logger.info(
-            f"{len(self.gene_annotation.columns)} meta data including: ",
-            *list(self.gene_annotation.columns.values),
-            sep="\n- ",
+            f"{len(self.gene_annotation.columns)} meta data including:\n- "
+            + "\n- ".join(self.gene_annotation.columns.values)
         )
         logger.info("Overview of gene annotation: ")
         logger.info(self.gene_annotation.head().to_string())

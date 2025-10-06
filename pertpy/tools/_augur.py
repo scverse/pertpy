@@ -12,7 +12,6 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from joblib import Parallel, delayed
-from lamin_utils import logger
 from rich.progress import track
 from scipy import sparse, stats
 from sklearn.base import is_classifier, is_regressor
@@ -36,6 +35,7 @@ from statsmodels.api import OLS
 from statsmodels.stats.multitest import fdrcorrection
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
 from pertpy.tools.core import _is_raw_counts
 
 if TYPE_CHECKING:
