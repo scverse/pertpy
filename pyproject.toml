@@ -125,7 +125,7 @@ allow-direct-references = true
 features = [ "test", "tcoda", "de", "scgen" ]
 
 [[tool.hatch.envs.hatch-test.matrix]]
-python = [ "3.11", "3.13" ]
+python = [ "3.12", "3.13" ]
 
 [tool.coverage.run]
 source = ["pertpy"]
