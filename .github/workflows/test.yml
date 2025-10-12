@@ -1,103 +1,94 @@
 name: Test
 
 on:
-    push:
-        branches: [main]
-    pull_request:
-        branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 5 1,15 * *"
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
 
 jobs:
-    test:
-        runs-on: ${{ matrix.os }}
-        defaults:
-            run:
-              # to fail on error in multiline statements (-e), in pipes (-o pipefail), and on unset variables (-u).
-              shell: bash -euo pipefail {0}
+  get-environments:
+    runs-on: ubuntu-latest
+    outputs:
+      envs: ${{ steps.get-envs.outputs.envs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Get test environments
+        id: get-envs
+        run: |
+          ENVS_JSON=$(uvx hatch env show --json | jq -c 'to_entries
+            | map(
+                select(.key | startswith("hatch-test"))
+                | {
+                    name: .key,
+                    label: (if (.key | contains("pre")) then .key + " (PRE-RELEASE DEPENDENCIES)" else .key end),
+                    python: .value.python
+                  }
+              )')
+          echo "envs=${ENVS_JSON}" | tee $GITHUB_OUTPUT
 
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      python: "3.13"
-                    - os: ubuntu-latest
-                      python: "3.13"
-                      pip-flags: "--pre"
+  test:
+    needs: get-environments
 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        env: ${{ fromJSON(needs.get-environments.outputs.envs) }}
+
+    name: ${{ matrix.env.label }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.env.python }}
+          cache-dependency-glob: pyproject.toml
+      - name: create hatch environment
+        run: uvx hatch env create ${{ matrix.env.name }}
+      - name: run tests using hatch
         env:
-            OS: ${{ matrix.os }}
-            PYTHON: ${{ matrix.python }}
+          MPLBACKEND: agg
+          PLATFORM: ${{ matrix.os }}
+          DISPLAY: :42
+        run: uvx hatch run ${{ matrix.env.name }}:run-cov -v --color=yes -n auto
+      - name: generate coverage report
+        run: |
+          # See https://coverage.readthedocs.io/en/latest/config.html#run-patch
+          test -f .coverage || uvx hatch run ${{ matrix.env.name }}:cov-combine
+          uvx hatch run ${{ matrix.env.name }}:cov-report   # report visibly
+          uvx hatch run ${{ matrix.env.name }}:coverage xml # create report for upload
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
 
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                filter: blob:none
-                fetch-depth: 0
-
-            - name: Cache .pertpy_cache
-              uses: actions/cache@v4
-              with:
-                path: cache
-                key: ${{ runner.os }}-pertpy-cache-${{ hashFiles('pertpy/metadata/**') }}
-                restore-keys: |
-                  ${{ runner.os }}-pertpy-cache
-
-            - name: Set up Python ${{ matrix.python }}
-              uses: actions/setup-python@v5
-              with:
-                  python-version: ${{ matrix.python }}
-            - name: Install R
-              uses: r-lib/actions/setup-r@v2
-
-            - name: Set R environment variables
-              run: |
-                  echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
-                  echo "LD_LIBRARY_PATH=$(R RHOME)/lib:${LD_LIBRARY_PATH:-}" >> $GITHUB_ENV
-
-
-            - name: Cache R packages
-              id: r-cache
-              uses: actions/cache@v3
-              with:
-                path: ${{ env.R_LIBS_USER }}
-                key: ${{ runner.os }}-r-${{ hashFiles('**/pertpy/tools/_milo.py') }}
-                restore-keys: ${{ runner.os }}-r-
-
-            - name: Install R dependencies
-              if: steps.r-cache.outputs.cache-hit != 'true'
-              run: |
-                mkdir -p ${{ env.R_LIBS_USER }}
-                Rscript --vanilla -e "install.packages(c('BiocManager', 'statmod'), repos='https://cran.r-project.org'); BiocManager::install('edgeR', lib='${{ env.R_LIBS_USER }}')"
-
-            - name: Install uv
-              uses: astral-sh/setup-uv@v6
-              with:
-                enable-cache: true
-                cache-dependency-glob: pyproject.toml
-            - name: Install dependencies
-              run: |
-                  uv pip install --system rpy2
-                  uv pip install --system ${{ matrix.pip-flags }} ".[dev,test,all]"
-
-            - name: Test
-              env:
-                  MPLBACKEND: agg
-                  PLATFORM: ${{ matrix.os }}
-                  DISPLAY: :42
-              run: |
-                  pytest_args="-m pytest -v --color=yes"
-                  coverage run $pytest_args
-
-            - name: Show coverage report
-              run: coverage report -m
-
-            - name: Upload coverage
-              uses: codecov/codecov-action@v4
-              with:
-                  token: ${{ secrets.CODECOV_TOKEN }}
-                  fail_ci_if_error: true
-                  verbose: true
+  check:
+    name: Tests pass in all hatch environments
+    if: always()
+    needs:
+      - get-environments
+      - test
+    runs-on: ubuntu-latest
+    steps:
+        - uses: re-actors/alls-green@release/v1
+          with:
+            jobs: ${{ toJSON(needs) }}

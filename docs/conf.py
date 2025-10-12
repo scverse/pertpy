@@ -38,6 +38,7 @@ extensions = [
     "sphinx_gallery.load_style",
     "sphinx_remove_toctrees",
     "sphinx_design",
+    "sphinx_tabs.tabs",
     "sphinx_issues",
     "sphinxcontrib.bibtex",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -139,6 +140,7 @@ nitpick_ignore = [
     ("py:class", "The requested data."),
     ("py:class", "Model with loaded state dictionaries."),
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
+    ("py:data", "typing.Union"),
 ]
 
 sphinx_gallery_conf = {"nested_sections=": False}
