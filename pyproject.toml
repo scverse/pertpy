@@ -121,8 +121,15 @@ source = "vcs"
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[tool.hatch.envs.hatch-test]
+features = [ "test", "tcoda", "de", "scgen" ]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = [ "3.11", "3.13" ]
+
 [tool.coverage.run]
-source_pkgs = ["pertpy"]
+source = ["pertpy"]
+patch = [ "subprocess" ]
 omit = [
     "**/test_*.py",
 ]
@@ -167,9 +174,6 @@ features = [ "doc" ]
 scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
 scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 scripts.clean = "git clean -fdX -- {args:docs}"
-
-[tool.hatch.envs.hatch-test]
-features = [ "test", "tcoda" ]
 
 [tool.ruff]
 src = ["src"]
@@ -254,15 +258,6 @@ convention = "google"
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
-
-[tool.mypy]
-strict = false
-pretty = true
-show_column_numbers = true
-show_error_codes = true
-show_error_context = true
-ignore_missing_imports = true
-no_strict_optional = true
 
 [tool.cruft]
 skip = [
