@@ -112,7 +112,7 @@ class CentroidSpace(PerturbationSpace):
 
 
 class PseudobulkSpace(PerturbationSpace):
-    """Determines pseudobulks using decoupler."""
+    """Calculates pseudobulks."""
 
     def compute(
         self,
@@ -127,10 +127,10 @@ class PseudobulkSpace(PerturbationSpace):
 
         Args:
             adata: Anndata object of size cells x genes
-            target_col: .obs column that stores the label of the perturbation applied to each cell.
-            groups_col: Optional .obs column that stores a grouping label to consider for pseudobulk computation.
+            target_col: `.obs` column that stores the label of the perturbation applied to each cell.
+            groups_col: Optional `.obs` column that stores a grouping label to consider for pseudobulk computation.
                 The summarized expression per perturbation (target_col) and group (groups_col) is computed.
-            layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with .X
+            layer_key: If specified pseudobulk computation is done by using the specified layer. Otherwise, computation is done with `.X`.
             embedding_key: `obsm` key of the AnnData embedding to use for computation. Defaults to the 'X' matrix otherwise.
             mode: Pseudobulk aggregation function
 
@@ -203,8 +203,8 @@ class KMeansSpace(ClusteringSpace):
 
         Args:
             adata: Anndata object of size cells x genes
-            layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
-            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
+            layer_key: if specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with `.X`.
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with `.X`.
             cluster_key: name of the .obs column to store the cluster labels. Default 'k-means'
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
@@ -269,8 +269,8 @@ class DBSCANSpace(ClusteringSpace):
 
         Args:
             adata: Anndata object of size cells x genes
-            layer_key: If specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with .X
-            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with .X
+            layer_key: If specified and exists in the adata, the clustering is done by using it. Otherwise, clustering is done with `.X`.
+            embedding_key: if specified and exists in the adata, the clustering is done with that embedding. Otherwise, clustering is done with `.X`.
             cluster_key: name of the .obs column to store the cluster labels.
             copy: if True returns a new Anndata of same size with the new column; otherwise it updates the initial adata
             return_object: if True returns the clustering object
