@@ -31,7 +31,11 @@ onesided_only = ("classifier_cp",)
 pseudo_counts_distances = ("nb_ll",)
 lognorm_counts_distances = ("mean_var_distribution",)
 all_distances: tuple[Metric, ...] = (
-    *actual_distances, *semi_distances, *non_distances, *lognorm_counts_distances, *pseudo_counts_distances
+    *actual_distances,
+    *semi_distances,
+    *non_distances,
+    *lognorm_counts_distances,
+    *pseudo_counts_distances,
 )  # , *onesided_only
 
 
