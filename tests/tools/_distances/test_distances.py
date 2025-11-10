@@ -8,7 +8,7 @@ from pytest import fixture, mark
 import pertpy as pt
 from pertpy.tools._distances._distances import Distance, Metric
 
-actual_distances = (
+actual_distances: tuple[Metric, ...] = (
     # Euclidean distances and related
     "euclidean",
     "mean_absolute_error",
@@ -25,11 +25,11 @@ actual_distances = (
     "wasserstein",
     "mahalanobis",
 )
-semi_distances = ("r2_distance", "sym_kldiv", "ks_test")
-non_distances = ("classifier_proba",)
-onesided_only = ("classifier_cp",)
-pseudo_counts_distances = ("nb_ll",)
-lognorm_counts_distances = ("mean_var_distribution",)
+semi_distances: tuple[Metric, ...] = ("r2_distance", "sym_kldiv", "ks_test")
+non_distances: tuple[Metric, ...] = ("classifier_proba",)
+onesided_only: tuple[Metric, ...] = ("classifier_cp",)
+pseudo_counts_distances: tuple[Metric, ...] = ("nb_ll",)
+lognorm_counts_distances: tuple[Metric, ...] = ("mean_var_distribution",)
 all_distances: tuple[Metric, ...] = (
     *actual_distances,
     *semi_distances,
@@ -131,12 +131,13 @@ def test_distance_layers(pairwise_distance: DataFrame, distance: Metric) -> None
 
 @mark.parametrize("distance", actual_distances + pseudo_counts_distances)
 def test_distance_counts(adata: AnnData, distance: Metric) -> None:
-    if distance != "mahalanobis":  # skip, doesn't work because covariance matrix is a singular matrix, not invertible
-        distance = pt.tl.Distance(distance, layer_key="counts")
-        df = distance.pairwise(adata, groupby="perturbation")
-        assert isinstance(df, DataFrame)
-        assert df.columns.equals(df.index)
-        assert np.sum(df.values - df.values.T) == 0
+    if distance == "mahalanobis":
+        pytest.skip("covariance matrix is a singular matrix, not invertible")
+    distance_obj = pt.tl.Distance(distance, layer_key="counts")
+    df = distance_obj.pairwise(adata, groupby="perturbation")
+    assert isinstance(df, DataFrame)
+    assert df.columns.equals(df.index)
+    assert np.sum(df.values - df.values.T) == 0
 
 
 @mark.parametrize("distance", all_distances)
@@ -217,4 +218,4 @@ def test_compare_distance(rng: np.random.Generator) -> None:
     res_scaled = Distance.compare_distance(X, Y, C, mode="scaled")
     assert isinstance(res_scaled, float)
     with pytest.raises(ValueError):
-        Distance.compare_distance(X, Y, C, mode="new_mode")
+        Distance.compare_distance(X, Y, C, mode="new_mode")  # type: ignore[arg-type]
