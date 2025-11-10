@@ -144,7 +144,7 @@ markers = [
     "conda: marks a subset of tests to be ran on the Bioconda CI.",
     "extra: marks tests that require extra dependencies.",
 ]
-minversion = 6.0
+minversion = "6.0"
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 filterwarnings = [
     "ignore::Warning:statsmodels.*",
@@ -195,7 +195,7 @@ select = [
     "BLE",    # flake8-blind-except
     "UP",     # pyupgrade
     "RUF100", # Report unused noqa directives
-    "TCH",    # Typing imports
+    "TC",     # Typing imports
     "NPY",    # Numpy specific rules
     "PTH",    # Use pathlib
     "PERF",   # Performance
@@ -250,6 +250,9 @@ ignore = [
     # import should be at top of file
     "PLC0415"
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pertpy"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

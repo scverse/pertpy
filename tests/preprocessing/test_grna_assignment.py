@@ -1,9 +1,10 @@
 import anndata as ad
 import numpy as np
 import pandas as pd
-import pertpy as pt
 import pytest
 from scipy import sparse
+
+import pertpy as pt
 
 
 @pytest.fixture

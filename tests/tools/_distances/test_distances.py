@@ -1,9 +1,10 @@
 import numpy as np
-import pertpy as pt
 import pytest
 import scanpy as sc
 from pandas import DataFrame, Series
 from pytest import fixture, mark
+
+import pertpy as pt
 
 actual_distances = [
     # Euclidean distances and related

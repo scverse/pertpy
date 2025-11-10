@@ -1,5 +1,6 @@
 import numpy.testing as npt
 import pytest
+
 from pertpy.tools._differential_gene_expression import EdgeR
 
 try:

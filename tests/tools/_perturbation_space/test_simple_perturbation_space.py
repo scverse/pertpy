@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
-import pertpy as pt
 import pytest
 import scanpy as sc
 from anndata import AnnData
+
+import pertpy as pt
 
 
 @pytest.fixture

@@ -3,10 +3,11 @@ from pathlib import Path
 import arviz as az
 import numpy as np
 import pandas as pd
-import pertpy as pt
 import pytest
 import scanpy as sc
 from mudata import MuData
+
+import pertpy as pt
 
 CWD = Path(__file__).parent.resolve()
 

@@ -8,8 +8,9 @@ except Exception:  # noqa: BLE001
 import warnings
 
 import anndata as ad
-import pertpy as pt
 import scanpy as sc
+
+import pertpy as pt
 
 
 def test_scgen():
