@@ -2,10 +2,11 @@ from importlib.util import find_spec
 
 import numpy as np
 import pandas as pd
-import pertpy as pt
 import pytest
 import scanpy as sc
 from mudata import MuData
+
+import pertpy as pt
 
 
 @pytest.fixture(params=["edger", "pydeseq2"])

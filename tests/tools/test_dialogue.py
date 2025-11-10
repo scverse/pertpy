@@ -1,6 +1,7 @@
 import pandas as pd
-import pertpy as pt
 import scanpy as sc
+
+import pertpy as pt
 
 # This is not a proper test!
 # We are only testing a few functions to ensure that at least these run

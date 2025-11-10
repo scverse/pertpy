@@ -1,7 +1,8 @@
-import pertpy as pt
 import pytest
 import scanpy as sc
 from pandas import DataFrame
+
+import pertpy as pt
 
 distances = [
     "edistance",

@@ -2,9 +2,10 @@ from math import isclose
 from pathlib import Path
 
 import numpy as np
-import pertpy as pt
 import pytest
 import scanpy as sc
+
+import pertpy as pt
 
 CWD = Path(__file__).parent.resolve()
 
