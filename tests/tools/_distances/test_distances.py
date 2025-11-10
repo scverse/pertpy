@@ -3,7 +3,7 @@ import pytest
 import scanpy as sc
 from anndata import AnnData
 from pandas import DataFrame, Series
-from pytest import FixtureRequest, fixture, mark
+from pytest import fixture, mark
 
 import pertpy as pt
 from pertpy.tools._distances._distances import Distance, Metric
@@ -36,7 +36,8 @@ all_distances: tuple[Metric, ...] = (
     *non_distances,
     *lognorm_counts_distances,
     *pseudo_counts_distances,
-)  # , *onesided_only
+    # *onesided_only,
+)
 
 
 @fixture
