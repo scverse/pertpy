@@ -1,10 +1,12 @@
 import pytest
 import scanpy as sc
+from anndata import AnnData
 from pandas import DataFrame
 
 import pertpy as pt
+from pertpy.tools._distances._distances import Metric
 
-distances = [
+distances: tuple[Metric, ...] = (
     "edistance",
     "euclidean",
     "mse",
@@ -25,13 +27,13 @@ distances = [
     # "nbll",
     "mahalanobis",
     "mean_var_distribution",
-]
+)
 
 count_distances = ["nb_ll"]
 
 
 @pytest.fixture
-def adata():
+def adata() -> AnnData:
     adata = pt.dt.distance_example()
     adata = sc.pp.subsample(adata, 0.1, copy=True)
 
@@ -39,7 +41,7 @@ def adata():
 
 
 @pytest.mark.parametrize("distance", distances)
-def test_distancetest(adata, distance):
+def test_distancetest(adata: AnnData, distance: Metric) -> None:
     etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak")
     tab = etest(adata, groupby="perturbation", contrast="control")
 
