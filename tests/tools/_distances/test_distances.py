@@ -35,11 +35,6 @@ all_distances: tuple[Metric, ...] = (
 )  # , *onesided_only
 
 
-@fixture(params=all_distances)
-def distance(request: FixtureRequest) -> Metric:
-    return request.param
-
-
 @fixture
 def adata(distance: Metric, rng: np.random.Generator) -> AnnData:
     low_subsample_distances = {
