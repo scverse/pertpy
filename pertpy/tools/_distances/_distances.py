@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal, NamedTuple
 import jax
 import numpy as np
 import pandas as pd
-from numba import jit
+from numba import jit, prange
 from ott.geometry.geometry import Geometry
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear.linear_problem import LinearProblem
@@ -27,6 +27,105 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from anndata import AnnData
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
+    """Compute mean pairwise euclidean distance within a group (X to X).
+
+    Efficiently computes the mean without storing the full distance matrix.
+    Uses parallel computation for speed.
+
+    Args:
+        X: Array of shape (n_samples, n_features).
+
+    Returns:
+        Mean pairwise euclidean distance within the group.
+    """
+    n_samples = X.shape[0]
+    if n_samples < 2:
+        return 0.0
+
+    total_distance = 0.0
+    n_pairs = 0
+
+    # Compute all pairs (i, j) where i < j to avoid duplicates and self-distances
+    for i in prange(n_samples):
+        for j in range(i + 1, n_samples):
+            # Compute euclidean distance
+            dist_sq = 0.0
+            for k in range(X.shape[1]):
+                diff = X[i, k] - X[j, k]
+                dist_sq += diff * diff
+            total_distance += np.sqrt(dist_sq)
+            n_pairs += 1
+
+    return total_distance / n_pairs if n_pairs > 0 else 0.0
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
+    """Compute mean pairwise euclidean distance between two groups (X to Y).
+
+    Efficiently computes the mean without storing the full distance matrix.
+    Uses parallel computation for speed.
+
+    Args:
+        X: Array of shape (n_samples_X, n_features).
+        Y: Array of shape (n_samples_Y, n_features).
+
+    Returns:
+        Mean pairwise euclidean distance between the groups.
+    """
+    n_samples_X = X.shape[0]
+    n_samples_Y = Y.shape[0]
+
+    if n_samples_X == 0 or n_samples_Y == 0:
+        return 0.0
+
+    total_distance = 0.0
+    n_pairs = n_samples_X * n_samples_Y
+
+    # Compute all pairs between X and Y
+    for i in prange(n_samples_X):
+        for j in range(n_samples_Y):
+            # Compute euclidean distance
+            dist_sq = 0.0
+            for k in range(X.shape[1]):
+                diff = X[i, k] - Y[j, k]
+                dist_sq += diff * diff
+            total_distance += np.sqrt(dist_sq)
+
+    return total_distance / n_pairs
+
+
+def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: str = "euclidean") -> float:
+    """Compute mean pairwise distance efficiently using numba.
+
+    This function is optimized to compute only the mean without storing the full
+    pairwise distance matrix, making it memory-efficient and fast.
+
+    Args:
+        X: First array of shape (n_samples_X, n_features).
+        Y: Second array of shape (n_samples_Y, n_features). If None, computes within-group
+           distances (X to X).
+        metric: Distance metric to use. Currently only "euclidean" is optimized with numba.
+                Other metrics fall back to sklearn's pairwise_distances.
+
+    Returns:
+        Mean pairwise distance.
+    """
+    if metric == "euclidean":
+        if Y is None:
+            # Within-group distance (X to X)
+            return _euclidean_pairwise_mean_within(X)
+        else:
+            # Between-group distance (X to Y)
+            return _euclidean_pairwise_mean_between(X, Y)
+    elif Y is None:
+        return pairwise_distances(X, X, metric=metric).mean()
+    else:
+        return pairwise_distances(X, Y, metric=metric).mean()
 
 
 class MeanVar(NamedTuple):
@@ -790,9 +889,9 @@ class Edistance(AbstractDistance):
         self.cell_wise_metric = "euclidean"
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        within_X = pairwise_distances(X, X, metric=self.cell_wise_metric, **kwargs).mean()
-        within_Y = pairwise_distances(Y, Y, metric=self.cell_wise_metric, **kwargs).mean()
-        between = pairwise_distances(X, Y, metric=self.cell_wise_metric, **kwargs).mean()
+        within_X = pairwise_distance_mean(X, metric=self.cell_wise_metric, **kwargs)
+        within_Y = pairwise_distance_mean(Y, metric=self.cell_wise_metric, **kwargs)
+        between = pairwise_distance_mean(X, Y, metric=self.cell_wise_metric, **kwargs)
         return 2 * between - within_X - within_Y
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
@@ -807,11 +906,11 @@ class Edistance(AbstractDistance):
 
     def compute_within_distance(self, X: np.ndarray, **kwargs) -> float:
         """Compute within-group distance (mean pairwise distance within group)."""
-        return pairwise_distances(X, X, metric=self.cell_wise_metric, **kwargs).mean()
+        return pairwise_distance_mean(X, metric=self.cell_wise_metric, **kwargs)
 
     def compute_between_distance(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         """Compute between-group distance (mean pairwise distance between groups)."""
-        return pairwise_distances(X, Y, metric=self.cell_wise_metric, **kwargs).mean()
+        return pairwise_distance_mean(X, Y, metric=self.cell_wise_metric, **kwargs)
 
     def from_cached_values(self, within_X: float, within_Y: float, between: float, **kwargs) -> float:
         """Compute edistance using cached within and between distances."""
@@ -985,7 +1084,7 @@ class MeanPairwiseDistance(AbstractDistance):
         self.accepts_precomputed = True
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        return pairwise_distances(X, Y, **kwargs).mean()
+        return pairwise_distance_mean(X, Y, **kwargs)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         return P[idx, :][:, ~idx].mean()
