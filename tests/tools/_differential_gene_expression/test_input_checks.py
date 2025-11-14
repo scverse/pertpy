@@ -4,6 +4,7 @@ import anndata as ad
 import numpy as np
 import pytest
 import scipy.sparse as sp
+
 from pertpy.tools._differential_gene_expression._checks import check_is_integer_matrix, check_is_numeric_matrix
 
 if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:

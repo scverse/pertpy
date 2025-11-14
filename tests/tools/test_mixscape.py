@@ -3,10 +3,11 @@ from pathlib import Path
 import anndata
 import numpy as np
 import pandas as pd
-import pertpy as pt
 import pytest
-from pertpy.tools._mixscape import MixscapeGaussianMixture
 from scipy import sparse
+
+import pertpy as pt
+from pertpy.tools._mixscape import MixscapeGaussianMixture
 
 # Random generate data settings
 NUM_CELLS_PER_GROUP = 10

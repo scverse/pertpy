@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-from pertpy.tools.core import _is_raw_counts
 from scipy import sparse
+
+from pertpy.tools.core import _is_raw_counts
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
-import pertpy as pt
 from anndata import AnnData
+
+import pertpy as pt
 
 
 def test_clustering():

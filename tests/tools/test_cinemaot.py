@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import numpy as np
-import pertpy as pt
 import scanpy as sc
 from _pytest.fixtures import fixture
+
+import pertpy as pt
 
 CWD = Path(__file__).parent.resolve()
 
