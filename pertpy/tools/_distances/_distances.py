@@ -48,7 +48,7 @@ def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
         return 0.0
 
     total_distance = 0.0
-    n_pairs = 0
+    n_pairs = n_samples * (n_samples - 1) / 2.0
 
     # Compute all pairs (i, j) where i < j to avoid duplicates and self-distances
     for i in prange(n_samples):
@@ -59,9 +59,8 @@ def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
                 diff = X[i, k] - X[j, k]
                 dist_sq += diff * diff
             total_distance += np.sqrt(dist_sq)
-            n_pairs += 1
 
-    return total_distance / n_pairs if n_pairs > 0 else 0.0
+    return total_distance / n_pairs
 
 
 @jit(nopython=True, parallel=True, cache=True)
