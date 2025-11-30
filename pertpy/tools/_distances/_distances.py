@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple
 
@@ -99,11 +100,12 @@ def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
     return total_distance / n_pairs
 
 
-def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: str = "euclidean") -> float:
+def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: str = "euclidean", **kwargs) -> float:
     """Compute mean pairwise distance efficiently using numba.
 
     This function is optimized to compute only the mean without storing the full
-    pairwise distance matrix, making it memory-efficient and fast.
+    pairwise distance matrix, making it memory-efficient and fast. If the metric is not "euclidean",
+    it falls back to sklearn's pairwise_distances.
 
     Args:
         X: First array of shape (n_samples_X, n_features).
@@ -111,11 +113,19 @@ def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: s
            distances (X to X).
         metric: Distance metric to use. Currently only "euclidean" is optimized with numba.
                 Other metrics fall back to sklearn's pairwise_distances.
+        kwargs: Additional keyword arguments passed to the metric function.
 
     Returns:
         Mean pairwise distance.
     """
     if metric == "euclidean":
+        if len(kwargs) > 0:
+            # warn that kwargs are not used
+            warnings.warn(
+                "kwargs are not used for euclidean distance.",
+                UserWarning,
+                stacklevel=2,
+            )
         if Y is None:
             # Within-group distance (X to X)
             return _euclidean_pairwise_mean_within(X)
@@ -123,9 +133,9 @@ def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: s
             # Between-group distance (X to Y)
             return _euclidean_pairwise_mean_between(X, Y)
     elif Y is None:
-        return pairwise_distances(X, X, metric=metric).mean()
+        return pairwise_distances(X, X, metric=metric, **kwargs).mean()
     else:
-        return pairwise_distances(X, Y, metric=metric).mean()
+        return pairwise_distances(X, Y, metric=metric, **kwargs).mean()
 
 
 class MeanVar(NamedTuple):
