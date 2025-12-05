@@ -28,8 +28,8 @@ class MixtureModel(ABC):
 
     def __init__(
         self,
-        num_warmup: int = 50,
-        num_samples: int = 100,
+        num_warmup: int = 10,
+        num_samples: int = 25,
         fraction_positive_expected: float = 0.15,
         poisson_rate_prior: float = 0.2,
         gaussian_mean_prior: tuple[float, float] = (3, 2),
@@ -41,8 +41,8 @@ class MixtureModel(ABC):
         self.poisson_rate_prior = poisson_rate_prior
         self.gaussian_mean_prior = gaussian_mean_prior
         self.gaussian_std_prior = gaussian_std_prior
-        self._cached_kernel = None
-        self._cached_data_size = None
+        self._cached_mcmc: MCMC | None = None
+        self._cached_data_size: int | None = None
 
     @abstractmethod
     def initialize_params(self) -> ParamsDict:
@@ -74,14 +74,15 @@ class MixtureModel(ABC):
         Returns:
             Fitted MCMC object containing samples.
         """
-        if self._cached_kernel is None or self._cached_data_size != data.shape[0]:
-            self._cached_kernel = NUTS(self.mixture_model)
+        if self._cached_mcmc is None or self._cached_data_size != data.shape[0]:
+            nuts_kernel = NUTS(self.mixture_model)
+            self._cached_mcmc = MCMC(
+                nuts_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False
+            )
             self._cached_data_size = data.shape[0]
 
-        mcmc = MCMC(self._cached_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False)
-        mcmc.run(PRNGKey(seed), data=data)
-
-        return mcmc
+        self._cached_mcmc.run(PRNGKey(seed), data=data)
+        return self._cached_mcmc
 
     def run_model(self, data: jnp.ndarray, seed: int = 0) -> np.ndarray:
         """Run model fitting and assign components.
