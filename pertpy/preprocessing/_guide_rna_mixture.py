@@ -28,8 +28,8 @@ class MixtureModel(ABC):
 
     def __init__(
         self,
-        num_warmup: int = 10,
-        num_samples: int = 25,
+        num_warmup: int = 50,
+        num_samples: int = 100,
         fraction_positive_expected: float = 0.15,
         poisson_rate_prior: float = 0.2,
         gaussian_mean_prior: tuple[float, float] = (3, 2),
