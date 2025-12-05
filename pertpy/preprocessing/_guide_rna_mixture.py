@@ -41,6 +41,8 @@ class MixtureModel(ABC):
         self.poisson_rate_prior = poisson_rate_prior
         self.gaussian_mean_prior = gaussian_mean_prior
         self.gaussian_std_prior = gaussian_std_prior
+        self._cached_kernel = None
+        self._cached_data_size = None
 
     @abstractmethod
     def initialize_params(self) -> ParamsDict:
@@ -72,9 +74,13 @@ class MixtureModel(ABC):
         Returns:
             Fitted MCMC object containing samples.
         """
-        nuts_kernel = NUTS(self.mixture_model)
-        mcmc = MCMC(nuts_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False)
+        if self._cached_kernel is None or self._cached_data_size != data.shape[0]:
+            self._cached_kernel = NUTS(self.mixture_model)
+            self._cached_data_size = data.shape[0]
+
+        mcmc = MCMC(self._cached_kernel, num_warmup=self.num_warmup, num_samples=self.num_samples, progress_bar=False)
         mcmc.run(PRNGKey(seed), data=data)
+
         return mcmc
 
     def run_model(self, data: jnp.ndarray, seed: int = 0) -> np.ndarray:
@@ -90,6 +96,7 @@ class MixtureModel(ABC):
         self.mcmc = self.fit_model(data, seed)
         self.samples = self.mcmc.get_samples()
         self.assignments = self.assignment(self.samples, data)
+
         return self.assignments
 
     def mixture_model(self, data: jnp.ndarray) -> None:

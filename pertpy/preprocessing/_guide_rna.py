@@ -205,6 +205,7 @@ class GuideAssignment:
     def assign_mixture_model(
         self,
         adata: AnnData,
+        *,
         model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
         assigned_guides_key: str = "assigned_guide",
         no_grna_assigned_key: str = "negative",
@@ -213,6 +214,7 @@ class GuideAssignment:
         multiple_grna_assignment_string: str = "+",
         only_return_results: bool = False,
         show_progress: bool = False,
+        pad_to_size: int | None = None,
         **mixture_model_kwargs,
     ) -> np.ndarray | None:
         """Assigns gRNAs to cells using a mixture model.
@@ -227,6 +229,7 @@ class GuideAssignment:
             multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
             only_return_results: Whether input AnnData is not modified and the result is returned as an np.ndarray.
             show_progress: Whether to shows progress bar.
+            pad_to_size: Fixed size to pad data arrays to for consistent JIT compilation. If None, uses max nonzero count across all genes.
             mixture_model_kwargs: Are passed to the mixture model.
 
         Examples:
@@ -241,17 +244,21 @@ class GuideAssignment:
         else:
             raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
 
+        if pad_to_size is None:
+            X = adata.X
+            pad_to_size = max((X[:, i] != 0).sum() for i in range(X.shape[1]))
+
         res = pd.DataFrame(0, index=adata.obs_names, columns=adata.var_names)
         fct = track if show_progress else lambda iterable: iterable
         for gene in fct(adata.var_names):
             is_nonzero = (
                 np.ravel((adata[:, gene].X != 0).todense()) if issparse(adata.X) else np.ravel(adata[:, gene].X != 0)
             )
-            if sum(is_nonzero) < 2:
+            n_nonzero = sum(is_nonzero)
+            if n_nonzero < 2:
                 warn(f"Skipping {gene} as there are less than 2 cells expressing the guide at all.", stacklevel=2)
                 continue
-            # We are only fitting the model to the non-zero values, the rest is
-            # automatically assigned to the negative class
+            # We are only fitting the model to the non-zero values, the rest is automatically assigned to the negative class
             data = adata[is_nonzero, gene].X.todense().A1 if issparse(adata.X) else adata[is_nonzero, gene].X
             data = np.ravel(data)
 
@@ -262,8 +269,12 @@ class GuideAssignment:
 
             # Log2 transform the data so positive population is approximately normal
             data = np.log2(data)
+
+            if n_nonzero < pad_to_size:
+                data = np.pad(data, (0, pad_to_size - n_nonzero), constant_values=data.min())
+
             assignments = mixture_model.run_model(data)
-            res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
+            res.loc[adata.obs_names[is_nonzero][assignments[:n_nonzero] == "Positive"], gene] = 1
 
             # Add the parameters to the adata.var DataFrame
             samples = mixture_model.mcmc.get_samples()
