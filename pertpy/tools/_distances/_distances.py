@@ -68,7 +68,6 @@ def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
     """Compute mean pairwise euclidean distance between two groups (X to Y).
 
     Efficiently computes the mean without storing the full distance matrix.
-    Uses parallel computation for speed.
 
     Args:
         X: Array of shape (n_samples_X, n_features).
