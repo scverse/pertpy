@@ -374,7 +374,6 @@ class GuideAssignment:
                 adata[order, :],
                 var_names=adata.var.index.tolist(),
                 groupby=temp_col_name,
-                cmap="viridis",
                 use_raw=False,
                 dendrogram=False,
                 layer=layer,
