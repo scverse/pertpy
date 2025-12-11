@@ -40,7 +40,7 @@ def _euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     return np.sqrt(dist_sq)
 
 
-@jit(nopython=True, parallel=True, cache=True)
+@jit(nopython=True, parallel=True, cache=True, fastmath=True)
 def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
     """Compute mean pairwise euclidean distance within a group (X to X)."""
     n_samples = X.shape[0]
@@ -57,7 +57,7 @@ def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
     return total_distance / n_pairs
 
 
-@jit(nopython=True, parallel=True, cache=True)
+@jit(nopython=True, parallel=True, cache=True, fastmath=True)
 def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
     """Compute mean pairwise euclidean distance between two groups (X to Y)."""
     n_samples_X = X.shape[0]
