@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Move metadata to scverse AWS ([#860](https://github.com/scverse/pertpy/pull/860)) @Zethson
 * Speedup For EDistance-like distances ([#880](https://github.com/scverse/pertpy/pull/880)) @selmanozleyen
 * add `milo-edger` extra ([#874](https://github.com/scverse/pertpy/pull/874)) @mschilli87
-
+* Add permutation test ([#726](https://github.com/scverse/pertpy/pull/726)) @maltekuehl
 
 ### 🐛 Bug Fixes
 
