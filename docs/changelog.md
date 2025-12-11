@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Add dataset cache back ([#885](https://github.com/scverse/pertpy/pull/885)) @Zethson
 * switch to template ([#866](https://github.com/scverse/pertpy/pull/866)) @Zethson
 * Move metadata to scverse AWS ([#860](https://github.com/scverse/pertpy/pull/860)) @Zethson
+* Speedup For EDistance-like distances ([#880](https://github.com/scverse/pertpy/pull/880)) @selmanozleyen
+* add `milo-edger` extra ([#874](https://github.com/scverse/pertpy/pull/874)) @mschilli87
+
 
 ### 🐛 Bug Fixes
 
@@ -20,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Remove decoupler mention ([#869](https://github.com/scverse/pertpy/pull/869)) @Zethson
 * Unpin R version in CI ([#863](https://github.com/scverse/pertpy/pull/863)) @Zethson
 * Fix harded control key in plot_heatmap ([#862](https://github.com/scverse/pertpy/pull/862)) @Zethson
+
+### 🧰 Maintenance
+
+* fix isort formatting ([#878](https://github.com/scverse/pertpy/pull/878)) @flying-sheep
 
 ## v1.0.3
 
