@@ -255,7 +255,7 @@ class Milo:
         subset_samples: list[str] | None = None,
         add_intercept: bool = True,
         feature_key: str | None = "rna",
-        solver: Literal["edger", "pydeseq2"] = "edger",
+        solver: Literal["edger", "pydeseq2"] = "pydeseq2",
     ):
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
 
@@ -266,11 +266,13 @@ class Milo:
             model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl").
                              If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group.
             subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test.
-            add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula. When model_contrasts is specified, this is set to False by default.
+            add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula.
+                When model_contrasts is specified, this is set to False by default.
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
             solver: The solver to fit the model to.
                 The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
-                The "pydeseq2" requires pydeseq2 to be installed. It is still very comparable to the "edger" solver but might be a bit slower.
+                The "pydeseq2" requires pydeseq2 to be installed.
+                It is still very comparable to the "edger" solver but might be a bit slower.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
