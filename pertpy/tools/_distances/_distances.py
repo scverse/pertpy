@@ -30,19 +30,19 @@ if TYPE_CHECKING:
     from anndata import AnnData
 
 
+@jit(nopython=True, cache=True)
+def _euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
+    """Compute euclidean distance between two vectors."""
+    dist_sq = 0.0
+    for k in range(x.shape[0]):
+        diff = x[k] - y[k]
+        dist_sq += diff * diff
+    return np.sqrt(dist_sq)
+
+
 @jit(nopython=True, parallel=True, cache=True)
 def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
-    """Compute mean pairwise euclidean distance within a group (X to X).
-
-    Efficiently computes the mean without storing the full distance matrix.
-    Uses parallel computation for speed.
-
-    Args:
-        X: Array of shape (n_samples, n_features).
-
-    Returns:
-        Mean pairwise euclidean distance within the group.
-    """
+    """Compute mean pairwise euclidean distance within a group (X to X)."""
     n_samples = X.shape[0]
     if n_samples < 2:
         return 0.0
@@ -50,32 +50,16 @@ def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
     total_distance = 0.0
     n_pairs = n_samples * (n_samples - 1) / 2.0
 
-    # Compute all pairs (i, j) where i < j to avoid duplicates and self-distances
     for i in prange(n_samples):
         for j in range(i + 1, n_samples):
-            # Compute euclidean distance
-            dist_sq = 0.0
-            for k in range(X.shape[1]):
-                diff = X[i, k] - X[j, k]
-                dist_sq += diff * diff
-            total_distance += np.sqrt(dist_sq)
+            total_distance += _euclidean_distance(X[i], X[j])
 
     return total_distance / n_pairs
 
 
 @jit(nopython=True, parallel=True, cache=True)
 def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
-    """Compute mean pairwise euclidean distance between two groups (X to Y).
-
-    Efficiently computes the mean without storing the full distance matrix.
-
-    Args:
-        X: Array of shape (n_samples_X, n_features).
-        Y: Array of shape (n_samples_Y, n_features).
-
-    Returns:
-        Mean pairwise euclidean distance between the groups.
-    """
+    """Compute mean pairwise euclidean distance between two groups (X to Y)."""
     n_samples_X = X.shape[0]
     n_samples_Y = Y.shape[0]
 
@@ -85,32 +69,22 @@ def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
     total_distance = 0.0
     n_pairs = n_samples_X * n_samples_Y
 
-    # Compute all pairs between X and Y
     for i in prange(n_samples_X):
         for j in range(n_samples_Y):
-            # Compute euclidean distance
-            dist_sq = 0.0
-            for k in range(X.shape[1]):
-                diff = X[i, k] - Y[j, k]
-                dist_sq += diff * diff
-            total_distance += np.sqrt(dist_sq)
+            total_distance += _euclidean_distance(X[i], Y[j])
 
     return total_distance / n_pairs
 
 
 def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: str = "euclidean", **kwargs) -> float:
-    """Compute mean pairwise distance efficiently using numba.
+    """Compute mean pairwise distance. Memory-efficient and fast for euclidean.
 
-    This function is optimized to compute only the mean without storing the full
-    pairwise distance matrix, making it memory-efficient and fast. If the metric is not "euclidean",
-    it falls back to sklearn's pairwise_distances.
+    If Y is None, computes within-group distances (X to X).
 
     Args:
         X: First array of shape (n_samples_X, n_features).
-        Y: Second array of shape (n_samples_Y, n_features). If None, computes within-group
-           distances (X to X).
-        metric: Distance metric to use. Currently only "euclidean" is optimized with numba.
-                Other metrics fall back to sklearn's pairwise_distances.
+        Y: Second array of shape (n_samples_Y, n_features). If None, computes within-group distances.
+        metric: Distance metric to use.
         kwargs: Additional keyword arguments passed to the metric function.
 
     Returns:
@@ -830,10 +804,6 @@ class AbstractDistance(ABC):
 
     def supports_value_cache(self) -> bool:
         """Whether this metric supports value-level caching (within/between distances).
-
-        When True, the metric can precompute and cache intermediate values
-        (like mean pairwise distances within groups, between groups) to avoid redundant computation.
-        This mode is incompatible with bootstrap since cached values would be invalid.
 
         Returns:
             bool: True if value caching is supported, False otherwise.
