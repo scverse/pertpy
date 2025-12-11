@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.4
+
+### 🚀 Features
+
+* Add dataset cache back ([#885](https://github.com/scverse/pertpy/pull/885)) @Zethson
+* switch to template ([#866](https://github.com/scverse/pertpy/pull/866)) @Zethson
+* Move metadata to scverse AWS ([#860](https://github.com/scverse/pertpy/pull/860)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Remove cmap default in `GuideAssignment.heatmap` ([#887](https://github.com/scverse/pertpy/pull/887)) @Zethson
+* Adapt fixture usage to newer pytest versions ([#879](https://github.com/scverse/pertpy/pull/879)) @flying-sheep
+* Remove decoupler mention ([#869](https://github.com/scverse/pertpy/pull/869)) @Zethson
+* Unpin R version in CI ([#863](https://github.com/scverse/pertpy/pull/863)) @Zethson
+* Fix harded control key in plot_heatmap ([#862](https://github.com/scverse/pertpy/pull/862)) @Zethson
+
 ## v1.0.3
 
 ### 🚀 Features
