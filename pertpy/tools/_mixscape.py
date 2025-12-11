@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import warnings
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1220,9 +1220,12 @@ class MixscapeGaussianMixture(GaussianMixture):
             if self.fixed_cov_indices:
                 self.fixed_cov_values = np.array([fixed_covariances[i] for i in self.fixed_cov_indices])
 
-    def _m_step(self, X: np.ndarray, log_resp: np.ndarray):
-        """Modified M-step to respect fixed means and covariances."""
-        super()._m_step(X, log_resp)
+    def _m_step(self, X: np.ndarray, log_resp: np.ndarray, xp: Any | None = None):
+        """Modified M-step to respect fixed means and covariances.
+
+        xp is the array API namespace passed by sklearn 1.6+ for backend compatibility.
+        """
+        super()._m_step(X, log_resp, xp=xp)
 
         if self.fixed_mean_indices:
             self.means_[self.fixed_mean_indices] = self.fixed_mean_values
