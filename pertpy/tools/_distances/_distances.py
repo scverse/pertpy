@@ -92,7 +92,6 @@ def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: s
     """
     if metric == "euclidean":
         if len(kwargs) > 0:
-            # warn that kwargs are not used
             warnings.warn(
                 "kwargs are not used for euclidean distance.",
                 UserWarning,
