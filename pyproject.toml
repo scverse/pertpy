@@ -7,7 +7,7 @@ name = "pertpy"
 version = "1.0.4"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.15"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -128,7 +128,7 @@ allow-direct-references = true
 features = [ "test", "tcoda", "de", "scgen" ]
 
 [[tool.hatch.envs.hatch-test.matrix]]
-python = [ "3.12", "3.13" ]
+python = [ "3.12", "3.14" ]
 
 [tool.coverage.run]
 source = ["pertpy"]
