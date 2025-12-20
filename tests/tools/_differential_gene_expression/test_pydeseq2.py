@@ -77,3 +77,26 @@ def test_pydeseq2_formula(test_adata):
     res_2 = model2.test_contrasts(model2.contrast("condition", "A", "B"))
 
     npt.assert_almost_equal(res_2.log_fc.values, res_1.log_fc.values)
+
+
+def test_pydeseq2_uses_layer_counts_for_fit(test_adata):
+    """Regression test: when `layer` is provided, `.fit()` must use that layer as counts, not `.X`."""
+    import numpy as np
+
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
+    adata = test_adata.copy()
+    adata.layers["sum"] = adata.X.copy()
+
+    # Make X explicitly non-integer to reproduce the failure mode if `.fit()` ignores `layer=`.
+    X_layer_before = np.array(adata.layers["sum"], copy=True)
+    adata.X = np.array(adata.X, dtype=float) / 2.0
+    X_before_fit = np.array(adata.X, copy=True)
+
+    model = PyDESeq2(adata=adata, layer="sum", design="~condition")
+    model.fit(n_cpus=1)
+    res_df = model.test_contrasts(model.contrast("condition", "A", "B"))
+
+    assert len(res_df) == adata.n_vars
+    npt.assert_array_equal(X_layer_before, adata.layers["sum"])
+    npt.assert_array_equal(X_before_fit, np.array(adata.X))
