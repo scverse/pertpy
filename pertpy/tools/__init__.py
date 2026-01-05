@@ -7,6 +7,7 @@ from pertpy.tools._dialogue import Dialogue
 from pertpy.tools._distances._distance_tests import DistanceTest
 from pertpy.tools._distances._distances import Distance
 from pertpy.tools._enrichment import Enrichment
+from pertpy.tools._hucira import hucira
 from pertpy.tools._milo import Milo
 from pertpy.tools._mixscape import Mixscape
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
@@ -68,6 +69,7 @@ __all__ = [
     "DistanceTest",
     "Distance",
     "Enrichment",
+    "hucira",
     "Milo",
     "Mixscape",
     "ClusteringSpace",
