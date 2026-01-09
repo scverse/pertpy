@@ -43,7 +43,7 @@ def papalexi_2021() -> MuData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/papalexi_2021.h5mu",
+            url="https://exampledata.scverse.org/pertpy/papalexi_2021.h5mu",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -68,7 +68,7 @@ def sc_sim_augur() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/sc_sim_augur.h5ad",
+            url="https://exampledata.scverse.org/pertpy/sc_sim_augur.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -98,7 +98,7 @@ def bhattacherjee() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/bhattacher_rna.h5ad",
+            url="https://exampledata.scverse.org/pertpy/bhattacher_rna.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -123,7 +123,7 @@ def sciplex3_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/sciplex3.h5ad",
+            url="https://exampledata.scverse.org/pertpy/sciplex3.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -151,7 +151,7 @@ def tasccoda_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tasccoda_smillie.h5ad",
+            url="https://exampledata.scverse.org/pertpy/tasccoda_smillie.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -180,7 +180,7 @@ def frangieh_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021.h5ad",
+            url="https://exampledata.scverse.org/pertpy/frangieh_2021.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -209,7 +209,7 @@ def frangieh_2021_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021_raw.h5ad",
+            url="https://exampledata.scverse.org/pertpy/frangieh_2021_raw.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -238,7 +238,7 @@ def dixit_2016_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dixit_2016_raw.h5ad",
+            url="https://exampledata.scverse.org/pertpy/dixit_2016_raw.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -267,7 +267,7 @@ def dixit_2016() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dixit_2016.h5ad",
+            url="https://exampledata.scverse.org/pertpy/dixit_2016.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -295,7 +295,7 @@ def norman_2019() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/norman_2019.h5ad",
+            url="https://exampledata.scverse.org/pertpy/norman_2019.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -323,7 +323,7 @@ def norman_2019_raw() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/norman_2019_raw.h5ad",
+            url="https://exampledata.scverse.org/pertpy/norman_2019_raw.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -346,7 +346,7 @@ def dialogue_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dialogue_example.h5ad",
+            url="https://exampledata.scverse.org/pertpy/dialogue_example.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -368,7 +368,7 @@ def distance_example() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/distances_example_data.h5ad",
+            url="https://exampledata.scverse.org/pertpy/distances_example_data.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -399,7 +399,7 @@ def kang_2018() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/kang_2018.h5ad",
+            url="https://exampledata.scverse.org/pertpy/kang_2018.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -428,7 +428,7 @@ def stephenson_2021_subsampled() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/stephenson_2021_subsampled.h5ad",
+            url="https://exampledata.scverse.org/pertpy/stephenson_2021_subsampled.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -455,7 +455,7 @@ def haber_2017_regions() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/haber_2017_regions.h5ad",
+            url="https://exampledata.scverse.org/pertpy/haber_2017_regions.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -482,7 +482,7 @@ def adamson_2016_pilot() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/adamson_2016_pilot.h5ad",
+            url="https://exampledata.scverse.org/pertpy/adamson_2016_pilot.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -513,7 +513,7 @@ def adamson_2016_upr_epistasis() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/adamson_2016_upr_epistasis.h5ad",
+            url="https://exampledata.scverse.org/pertpy/adamson_2016_upr_epistasis.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -542,7 +542,7 @@ def adamson_2016_upr_perturb_seq() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/adamson_2016_upr_perturb_seq.h5ad",
+            url="https://exampledata.scverse.org/pertpy/adamson_2016_upr_perturb_seq.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -569,7 +569,7 @@ def aissa_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/aissa_2021.h5ad",
+            url="https://exampledata.scverse.org/pertpy/aissa_2021.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -598,7 +598,7 @@ def chang_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/chang_2021.h5ad",
+            url="https://exampledata.scverse.org/pertpy/chang_2021.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -629,7 +629,7 @@ def datlinger_2017() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/datlinger_2017.h5ad",
+            url="https://exampledata.scverse.org/pertpy/datlinger_2017.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -659,7 +659,7 @@ def datlinger_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/datlinger_2021.h5ad",
+            url="https://exampledata.scverse.org/pertpy/datlinger_2021.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -690,7 +690,7 @@ def frangieh_2021_protein() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021_protein.h5ad",
+            url="https://exampledata.scverse.org/pertpy/frangieh_2021_protein.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -721,7 +721,7 @@ def frangieh_2021_rna() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/frangieh_2021_rna.h5ad",
+            url="https://exampledata.scverse.org/pertpy/frangieh_2021_rna.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -749,7 +749,7 @@ def gasperini_2019_atscale() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_atscale.h5ad",
+            url="https://exampledata.scverse.org/pertpy/gasperini_2019_atscale.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -778,7 +778,7 @@ def gasperini_2019_highmoi() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_highmoi.h5ad",
+            url="https://exampledata.scverse.org/pertpy/gasperini_2019_highmoi.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -807,7 +807,7 @@ def gasperini_2019_lowmoi() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_lowmoi.h5ad",
+            url="https://exampledata.scverse.org/pertpy/gasperini_2019_lowmoi.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -835,7 +835,7 @@ def gehring_2019() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gehring_2019.h5ad",
+            url="https://exampledata.scverse.org/pertpy/gehring_2019.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -864,7 +864,7 @@ def mcfarland_2020() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/mcfarland_2020.h5ad",
+            url="https://exampledata.scverse.org/pertpy/mcfarland_2020.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -893,7 +893,7 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gasperini_2019_atscale.h5ad",
+            url="https://exampledata.scverse.org/pertpy/gasperini_2019_atscale.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -924,7 +924,7 @@ def replogle_2022_k562_gwps() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/replogle_2022_k562_gwps.h5ad",
+            url="https://exampledata.scverse.org/pertpy/replogle_2022_k562_gwps.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -954,7 +954,7 @@ def replogle_2022_rpe1() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/replogle_2022_rpe1.h5ad",
+            url="https://exampledata.scverse.org/pertpy/replogle_2022_rpe1.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -985,7 +985,7 @@ def schiebinger_2019_16day() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/schiebinger_2019_16day.h5ad",
+            url="https://exampledata.scverse.org/pertpy/schiebinger_2019_16day.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1014,7 +1014,7 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/Schiebinger_2019_18day.h5ad",
+            url="https://exampledata.scverse.org/pertpy/Schiebinger_2019_18day.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1043,7 +1043,7 @@ def schraivogel_2020_tap_screen_chr11() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/schraivogel_2020_tap_screen_chr11.h5ad",
+            url="https://exampledata.scverse.org/pertpy/schraivogel_2020_tap_screen_chr11.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1072,7 +1072,7 @@ def schraivogel_2020_tap_screen_chr8() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/schraivogel_2020_tap_screen_chr8.h5ad",
+            url="https://exampledata.scverse.org/pertpy/schraivogel_2020_tap_screen_chr8.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1102,7 +1102,7 @@ def shifrut_2018() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/shifrut_2018.h5ad",
+            url="https://exampledata.scverse.org/pertpy/shifrut_2018.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1133,7 +1133,7 @@ def srivatsan_2020_sciplex2() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/srivatsan_2020_sciplex2.h5ad",
+            url="https://exampledata.scverse.org/pertpy/srivatsan_2020_sciplex2.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1162,7 +1162,7 @@ def srivatsan_2020_sciplex3() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/srivatsan_2020_sciplex3.h5ad",
+            url="https://exampledata.scverse.org/pertpy/srivatsan_2020_sciplex3.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1194,7 +1194,7 @@ def srivatsan_2020_sciplex4() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/srivatsan_2020_sciplex4.h5ad",
+            url="https://exampledata.scverse.org/pertpy/srivatsan_2020_sciplex4.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1226,7 +1226,7 @@ def tian_2019_day7neuron() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2019_day7neuron.h5ad",
+            url="https://exampledata.scverse.org/pertpy/tian_2019_day7neuron.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1258,7 +1258,7 @@ def tian_2019_ipsc() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2019_iPad.h5ad",
+            url="https://exampledata.scverse.org/pertpy/tian_2019_iPad.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1288,7 +1288,7 @@ def tian_2021_crispra() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2021_crispra.h5ad",
+            url="https://exampledata.scverse.org/pertpy/tian_2021_crispra.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1318,7 +1318,7 @@ def tian_2021_crispri() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/tian_2021_crispri.h5ad",
+            url="https://exampledata.scverse.org/pertpy/tian_2021_crispri.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1345,7 +1345,7 @@ def weinreb_2020() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/weinreb_2020.h5ad",
+            url="https://exampledata.scverse.org/pertpy/weinreb_2020.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1373,7 +1373,7 @@ def xie_2017() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/xie_2017.h5ad",
+            url="https://exampledata.scverse.org/pertpy/xie_2017.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1403,7 +1403,7 @@ def zhao_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/zhaoSims2021.h5ad",
+            url="https://exampledata.scverse.org/pertpy/zhaoSims2021.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1428,7 +1428,7 @@ def cinemaot_example() -> AnnData:  # pragma: no cover:
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/cinemaot_example.h5ad",
+            url="https://exampledata.scverse.org/pertpy/cinemaot_example.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1456,7 +1456,7 @@ def dong_2023() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/dong_2023.h5ad",
+            url="https://exampledata.scverse.org/pertpy/dong_2023.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1482,7 +1482,7 @@ def smillie_2019() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / Path(output_file_name).with_suffix("")
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/smillie_2019.h5ad.zip",
+            url="https://exampledata.scverse.org/pertpy/smillie_2019.h5ad.zip",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=True,
@@ -1507,7 +1507,7 @@ def combosciplex() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/combosciplex.h5ad",
+            url="https://exampledata.scverse.org/pertpy/combosciplex.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1532,7 +1532,7 @@ def sciplex_gxe1() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/sciPlexGxE_1_GSM7056148.h5ad",
+            url="https://exampledata.scverse.org/pertpy/sciPlexGxE_1_GSM7056148.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1564,7 +1564,7 @@ def zhang_2021() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/zhang_2021.h5ad",
+            url="https://exampledata.scverse.org/pertpy/zhang_2021.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1590,7 +1590,7 @@ def hagai_2018() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/hagai_2018.h5ad",
+            url="https://exampledata.scverse.org/pertpy/hagai_2018.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,

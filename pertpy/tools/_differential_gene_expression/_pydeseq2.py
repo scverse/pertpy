@@ -42,12 +42,18 @@ class PyDESeq2(LinearModelBase):
         try:
             usable_cpus = len(os.sched_getaffinity(0))  # type: ignore # os.sched_getaffinity is not available on Windows and macOS
         except AttributeError:
-            usable_cpus = os.cpu_count()
+            usable_cpus = os.cpu_count() or 1
 
         inference = DefaultInference(n_cpus=kwargs.pop("n_cpus", usable_cpus))
 
+        adata_for_dds = self.adata
+        if self.layer is not None:
+            # pydeseq2 always uses `adata.X` as the count matrix, so ensure that `X`
+            # reflects the chosen layer without mutating the user-provided `.X`.
+            adata_for_dds = AnnData(X=self.data, obs=self.adata.obs, var=self.adata.var)
+
         dds = DeseqDataSet(
-            adata=self.adata,
+            adata=adata_for_dds,
             design=self.design,  # initialize using design matrix, not formula
             refit_cooks=True,
             inference=inference,

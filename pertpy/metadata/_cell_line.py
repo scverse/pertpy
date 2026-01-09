@@ -48,7 +48,7 @@ class CellLine(MetaData):
             depmap_cell_line_path = Path(settings.cachedir) / "depmap_23Q4_info.csv"
             if not Path(depmap_cell_line_path).exists():
                 _download(
-                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/depmap_23Q4_info.csv",
+                    url="https://exampledata.scverse.org/pertpy/depmap_23Q4_info.csv",
                     output_file_name="depmap_23Q4_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -62,7 +62,7 @@ class CellLine(MetaData):
             transformed_cancerxgene_cell_line_path = Path(settings.cachedir) / "cancerrxgene_info.csv"
             if not transformed_cancerxgene_cell_line_path.exists():
                 _download(
-                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/cancerrxgene_info.csv",
+                    url="https://exampledata.scverse.org/pertpy/cancerrxgene_info.csv",
                     output_file_name="cancerrxgene_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -76,7 +76,7 @@ class CellLine(MetaData):
         gene_annotation_file_path = Path(settings.cachedir) / "genes_info.csv"
         if not Path(gene_annotation_file_path).exists():
             _download(
-                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/genes_info.csv",
+                url="https://exampledata.scverse.org/pertpy/genes_info.csv",
                 output_file_name="genes_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -93,7 +93,7 @@ class CellLine(MetaData):
             bulk_rna_sanger_file_path = Path(settings.cachedir) / "rnaseq_sanger_info.csv"
             if not Path(bulk_rna_sanger_file_path).exists():
                 _download(
-                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/rnaseq_sanger_info.csv",
+                    url="https://exampledata.scverse.org/pertpy/rnaseq_sanger_info.csv",
                     output_file_name="rnaseq_sanger_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -106,7 +106,7 @@ class CellLine(MetaData):
             bulk_rna_broad_file_path = Path(settings.cachedir) / "rnaseq_depmap_info.csv"
             if not Path(bulk_rna_broad_file_path).exists():
                 _download(
-                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/rnaseq_depmap_info.csv",
+                    url="https://exampledata.scverse.org/pertpy/rnaseq_depmap_info.csv",
                     output_file_name="rnaseq_depmap_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -120,7 +120,7 @@ class CellLine(MetaData):
         proteomics_file_path = Path(settings.cachedir) / "proteomics_info.csv"
         if not Path(proteomics_file_path).exists():
             _download(
-                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/proteomics_info.csv",
+                url="https://exampledata.scverse.org/pertpy/proteomics_info.csv",
                 output_file_name="proteomics_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,
@@ -136,7 +136,7 @@ class CellLine(MetaData):
             drug_response_gdsc1_file_path = Path(settings.cachedir) / "gdsc1_info.csv"
             if not Path(drug_response_gdsc1_file_path).exists():
                 _download(
-                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gdsc1_info.csv",
+                    url="https://exampledata.scverse.org/pertpy/gdsc1_info.csv",
                     output_file_name="gdsc1_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -147,7 +147,7 @@ class CellLine(MetaData):
             drug_response_gdsc2_file_path = Path(settings.cachedir) / "gdsc2_info.csv"
             if not Path(drug_response_gdsc2_file_path).exists():
                 _download(
-                    url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/gdsc2_info.csv",
+                    url="https://exampledata.scverse.org/pertpy/gdsc2_info.csv",
                     output_file_name="gdsc2_info.csv",
                     output_path=settings.cachedir,
                     block_size=4096,
@@ -161,7 +161,7 @@ class CellLine(MetaData):
         drug_response_prism_file_path = Path(settings.cachedir) / "prism_info.csv"
         if not Path(drug_response_prism_file_path).exists():
             _download(
-                url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/pertpy/prism_info.csv",
+                url="https://exampledata.scverse.org/pertpy/prism_info.csv",
                 output_file_name="prism_info.csv",
                 output_path=settings.cachedir,
                 block_size=4096,

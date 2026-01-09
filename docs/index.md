@@ -1,7 +1,9 @@
 # pertpy
 
-Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
+[Pertpy](https://www.nature.com/articles/s41592-025-02909-7) is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
 It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic modifications, drug treatments, and environmental changes.
+
+For more details, see [Pertpy: an end-to-end framework for perturbation analysis ](https://www.nature.com/articles/s41592-025-02909-7).
 
 ![overview](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
 
@@ -80,16 +82,15 @@ Discourse <https://discourse.scverse.org/c/ecosystem/pertpy/46>
 ## Citation
 
 ```bibtex
-@article {Heumos2024.08.04.606516,
-    author = {Heumos, Lukas and Ji, Yuge and May, Lilly and Green, Tessa and Zhang, Xinyue and Wu, Xichen and Ostner, Johannes and Peidli, Stefan and Schumacher, Antonia and Hrovatin, Karin and Müller, Michaela and Chong, Faye and Sturm, Gregor and Tejada, Alejandro and Dann, Emma and Dong, Mingze and Bahrami, Mojtaba and Gold, Ilan and Rybakov, Sergei and Namsaraeva, Altana and Moinfar, Amir and Zheng, Zihe and Roellin, Eljas and Mekki, Isra and Sander, Chris and Lotfollahi, Mohammad and Schiller, Herbert B. and Theis, Fabian J.},
-    title = {Pertpy: an end-to-end framework for perturbation analysis},
-    elocation-id = {2024.08.04.606516},
-    year = {2024},
-    doi = {10.1101/2024.08.04.606516},
-    publisher = {Cold Spring Harbor Laboratory},
-    URL = {https://www.biorxiv.org/content/early/2024/08/07/2024.08.04.606516},
-    eprint = {https://www.biorxiv.org/content/early/2024/08/07/2024.08.04.606516.full.pdf},
-    journal = {bioRxiv}
+@article{Heumos2025,
+  author    = {Heumos, Lukas and Ji, Yuge and May, Lilly and Green, Tessa D. and Peidli, Stefan and Zhang, Xinyue and Wu, Xichen and Ostner, Johannes and Schumacher, Antonia and Hrovatin, Karin and Müller, Michaela and Chong, Faye and Sturm, Gregor and Tejada, Alejandro and Dann, Emma and Dong, Mingze and Pinto, Gonçalo and Bahrami, Mojtaba and Gold, Ilan and Rybakov, Sergei and Namsaraeva, Altana and Moinfar, Amir Ali and Zheng, Zihe and Roellin, Eljas and Mekki, Isra and Sander, Chris and Lotfollahi, Mohammad and Schiller, Herbert B. and Theis, Fabian J.},
+  title     = {Pertpy: an end-to-end framework for perturbation analysis},
+  journal   = {Nature Methods},
+  year      = {2025},
+  publisher = {Springer Nature},
+  doi       = {10.1038/s41592-025-02909-7},
+  url       = {https://doi.org/10.1038/s41592-025-02909-7},
+  issn      = {1548-7105}
 }
 ```
 
