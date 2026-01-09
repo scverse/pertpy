@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -166,6 +167,15 @@ class CompositionalModel2(ABC):
             sample_adata.X[sample_adata.X == 0] = 0.5
 
         sample_adata.obsm["sample_counts"] = np.sum(sample_adata.X, axis=1)
+
+        # Check for relative abundances
+        if np.allclose(sample_adata.obsm["sample_counts"], 1.0):
+            warnings.warn(
+                "All samples sum to ~1, suggesting relative abundances were provided. "
+                "scCODA requires absolute cell counts. Results may be meaningless.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Check input data
         if covariate_matrix.shape[0] != sample_adata.X.shape[0]:
