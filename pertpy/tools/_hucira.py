@@ -382,16 +382,20 @@ class Hucira:
                 threads=threads,
             )
             """
-
-            _res = blitzgsea.gsea(rnk, gene_set_dict, permutations=permutation_num)
-
-            _res.loc[:, "Term"] = _res.index
-            _res.loc[:, "contrast"] = contrast_name
-            _res.loc[:, "num_cells_1"] = num_cells_per_condition.loc[contrast_name, "num_cells_1"]
-            _res.loc[:, "num_cells_2"] = num_cells_per_condition.loc[contrast_name, "num_cells_2"]
-            _res.loc[:, "percent_duplicate_ranking_stats"] = (rnk.duplicated(keep="first").sum() / rnk.shape[0]) * 100
-            results.append(_res)
-            _vprint(f"{contrast_name}: done.", verbose)
+            if len(gene_set_dict) > 0:
+                _res = blitzgsea.gsea(rnk, gene_set_dict, permutations=permutation_num)
+                _res.loc[:, "Term"] = _res.index
+                _res.loc[:, "contrast"] = contrast_name
+                _res.loc[:, "num_cells_1"] = num_cells_per_condition.loc[contrast_name, "num_cells_1"]
+                _res.loc[:, "num_cells_2"] = num_cells_per_condition.loc[contrast_name, "num_cells_2"]
+                _res.loc[:, "percent_duplicate_ranking_stats"] = (
+                    rnk.duplicated(keep="first").sum() / rnk.shape[0]
+                ) * 100
+                results.append(_res)
+                _vprint(f"{contrast_name}: done.", verbose)
+            else:
+                print(f"No enrichment results for {celltype_signature} because gene set is empty.")
+                return
 
         # combine results and save hyperparams
         results = pd.concat(results, axis=0, ignore_index=True)
@@ -423,6 +427,101 @@ class Hucira:
             results.direction = "custom input"
 
         return results
+
+    def run_all_enrichment_test(
+        self,
+        adata: AnnData,
+        df: pd.DataFrame,
+        celltype_combos: list[tuple[str, str]] = None,
+        celltype_column: str = "cell_type",
+        contrasts_combo: tuple[str, str] | list[tuple[str, str]] = None,
+        contrast_column: str = "disease_state",
+        direction: Literal["upregulated", "downregulated", "both"] = "upregulated",
+        # Filtering parameters for gene set construction
+        threshold_lfc: float | list[float] = 1.0,
+        threshold_expression: float | list[float] = 0.0,
+        threshold_pval: float = 0.01,
+        # GSEA parameters
+        min_size: int = 10,
+        max_size: int = 1000,
+        permutation_num: int = 1000,
+        weight: float = 1.0,
+        seed: int = 2025,
+        verbose: bool = False,
+        threads: int = 6,
+    ) -> pd.DataFrame:
+        """Function wrapper: Computes cytokine enrichment activity in one celltype using GSEA scoring. Loops through several threshold value to obtain more robust gene sets.
+
+        1. "Looks up" query cell type in human cytokine dictionary and retrieves associated up-/downregulated genes per cytokine as reference.
+        2. Creates ranking of query data genes contrasting condition1 vs condition2. A continuum from genes most associated with condition1 (top) to genes most associated with condition2 (bottom)
+        3. Computes enrichment of each cytokine by matching their associated gene set in the ranked list.
+
+        Parameters
+        ----------
+        - adata
+            The query adata object.
+        - df
+            Human Cytokine Dictionary
+        - celltype_combos
+            A tuple with the celltype names of query adata in first position and respective celltype name of df in second position. Simulates "lookup of query in dictionary".
+        - celltype_column
+            Column name of adata.obs object that stores the cell types.
+        - contrasts_combo
+            Tuple that stores two biological conditions that are compared to each other in enrichment. E.g., which cytokines are enriched in healthy samples vs disease samples? Can be a list of tuples, function automatically loops through them.
+        - contrast_column
+            Column name of adata.obs object that stores the biological condition of samples.
+        - direction
+            "upregulated", "downregulated", or "both" are valid input. Up-/downregulation w.r.t condition1 (condition1 is the first of the two elements in each contrasts tuple.
+        - threshold_pval
+            Constructs the gene set: Filters for genes in human df with an adj. p-val lower than threshold_pval.
+        - threshold_lfc
+            Constructs the gene set: Filters for genes in human df that are up/downregulated with a lfc higher than threshold_lfc.
+        - threshold_expression
+            Filters out genes with mean gene expression across all cells lower than threshold_expression.
+
+        Returns:
+        -------
+        - results
+            A DataFrame with all computed enrichment scores and statistical parameters. All results from multiple thresholds (ran for robustness).
+        """
+        if celltype_combos is None:
+            celltype_combos = [("B cell", "B_cell")]
+        if isinstance(threshold_lfc, float):
+            threshold_lfc = [threshold_lfc]
+        if isinstance(threshold_expression, float):
+            threshold_expression = [threshold_expression]
+
+        all_enrichment_results = []
+        for _celltype_combo_k, celltype_combo in enumerate(celltype_combos):
+            for lfc in threshold_lfc:
+                for expr in threshold_expression:
+                    results = self.run_one_enrichment_test(
+                        adata=adata,
+                        df=df,
+                        celltype_combo=celltype_combo,
+                        celltype_column=celltype_column,
+                        contrasts_combo=contrasts_combo,
+                        contrast_column=contrast_column,
+                        direction=direction,
+                        # Robustness parameters
+                        threshold_pval=threshold_pval,
+                        threshold_lfc=lfc,
+                        threshold_expression=expr,
+                        # GSEA parameters
+                        min_size=min_size,
+                        max_size=max_size,
+                        permutation_num=permutation_num,
+                        weight=weight,
+                        seed=seed,
+                        verbose=verbose,
+                        threads=threads,
+                    )
+
+                    all_enrichment_results.append(results)
+
+        all_enrichment_results = pd.concat(all_enrichment_results, axis=0)
+
+        return all_enrichment_results
 
     def _check_robustness_fractions(
         self,
@@ -654,6 +753,7 @@ class Hucira:
 
         return robust_results_dict
 
+    ######## cell communication methods ########
     def _get_senders(
         self,
         adata: AnnData,
@@ -974,6 +1074,8 @@ class Hucira:
                     pivot,
                     square=True,
                     annot=annot,
+                    vmin=-1,
+                    vmax=1,
                     cmap="RdBu_r",
                     center=0,
                     annot_kws={"fontsize": fontsize, "family": "sans-serif"},
@@ -1026,6 +1128,8 @@ class Hucira:
                 results_pivot,
                 square=True,
                 annot=df_annot,
+                vmin=-1,
+                vmax=1,
                 cmap="RdBu_r",
                 center=0,
                 annot_kws={"fontsize": fontsize, "family": "sans-serif"},
