@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Literal
 
 import blitzgsea
-import gseapy as gp
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import numpy as np
@@ -546,7 +545,7 @@ class Hucira:
         threshold_qval: float = 0.1,
         threshold_valid: float = 0.1,
         threshold_below_alpha: float = 0.9,
-    ):
+    ) -> pd.DataFrame:
         """Filters for robust and significant results (<threshold_qval/alpha) out of original enrichments (run_enrichment_test() output).
 
         Returns only the enrichments that are stable across many different tests and that are statistically significant.
@@ -650,7 +649,7 @@ class Hucira:
         alphas: list[float] | None = None,
         threshold_valid: float = 0.1,
         threshold_below_alpha: float = 0.9,
-    ):
+    ) -> pd.DataFrame:
         """Function Wrapper: Filters for robust and signifcant results across several alpha/q-val from original enrichments (run_enrichment_test() output).
 
         Returns only the enrichments that are statistically significant (q-val), and stable across many different tests (per contrast).
