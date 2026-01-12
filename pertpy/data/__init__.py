@@ -1,4 +1,5 @@
 from pertpy.data._datasets import (
+    MS_CSF_tutorial_data,
     adamson_2016_pilot,
     adamson_2016_upr_epistasis,
     adamson_2016_upr_perturb_seq,
@@ -88,6 +89,7 @@ __all__ = [
     "human_cytokine_dict",
     "kang_2018",
     "mcfarland_2020",
+    "MS_CSF_tutorial_data",
     "norman_2019",
     "norman_2019_raw",
     "papalexi_2021",

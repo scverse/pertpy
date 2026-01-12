@@ -48,7 +48,7 @@ class Hucira:
         save_dir.mkdir(parents=True, exist_ok=True)
         local_path = save_dir / "cytokine_info.xlsx"
 
-        if force_download or not Path.exists(local_path):
+        if force_download or not local_path.exists():
             print("Downloading Cytokine Information sheet...")
             cytokine_info = pd.read_excel(url, sheet_name="all_cytokines", engine="openpyxl")
             cytokine_info.to_excel(local_path, sheet_name="all_cytokines")
@@ -57,6 +57,36 @@ class Hucira:
             cytokine_info = pd.read_excel(local_path)
 
         return cytokine_info
+
+    def load_CIP_signatures(self, save_dir="", force_download=False):
+        """Download and load metadata file (sheet "13.CIP_activations") from supplemental data: information about CIPs (cytokine induced gene programs).
+
+        Parameters
+        ----------
+        save_dir : str
+            Directory where the file will be saved.
+        force_download : bool
+            Allows user to force a fresh download
+
+        Returns:
+        -------
+        CIP_signatures : pandas.DataFrame
+        """
+        url = "https://raw.githubusercontent.com/theislab/huCIRA/main/src/hucira/data/df_cips_genesets.csv"
+        if save_dir == "":
+            save_dir = Path.cwd()
+        save_dir.mkdir(parents=True, exist_ok=True)
+        local_path = save_dir / "CIP_signatures.csv"
+
+        if force_download or not local_path.exists():
+            print("Downloading Cytokine-induced Gene Programs...")
+            CIP_signatures = pd.read_csv(url, index_col=0)
+            CIP_signatures.to_csv(local_path, index=False)
+        else:
+            print(f"Loading from: {local_path}")
+            CIP_signatures = pd.read_csv(local_path, index_col=0)
+
+        return CIP_signatures
 
     def _get_genesets(
         self,
@@ -303,10 +333,14 @@ class Hucira:
         - results
             A DataFrame with all computed enrichment scores and statistical parameters. Not filtered by significance or robustness yet.
         """
-        print(type(contrasts_combo))
         if not isinstance(contrasts_combo, list):
             assert isinstance(contrasts_combo, tuple)
             contrasts_combo = [contrasts_combo]
+
+        if not isinstance(celltype_combo, tuple):
+            raise ValueError(
+                f"Expected a tuple of two strings for celltype_combo, got {type(celltype_combo)}. This function only computes enrichment for one cell type. If you want to compute enrichment for several celltypes, use 'run_all_enrichment_test()'."
+            )
 
         celltype_adata = celltype_combo[0]
         celltype_signature = celltype_combo[1]

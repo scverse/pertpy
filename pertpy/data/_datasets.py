@@ -1633,3 +1633,36 @@ def human_cytokine_dict(exclude_well_biased_genes=True) -> pd.DataFrame:
         cytokine_dict = cytokine_dict.loc[~cytokine_dict.well_biased]
 
     return cytokine_dict
+
+
+def MS_CSF_tutorial_data(save_dir="", force_download=False):
+    """Multiple Sklerosis Dataset (blood and cerebrospinal fluid) for hucira tutorial.
+
+    Download and load the MS dataset automatically.
+    Xu, Chenling (2021). MS_CSF.h5ad. figshare. Dataset. https://doi.org/10.6084/m9.figshare.14356661.v1
+
+    Parameters
+    ----------
+    save_dir : str
+        Directory where the file will be saved.
+    force_download : bool
+        Allows user to force a fresh download from CellxGene
+
+    Returns:
+    -------
+    adata : AnnData
+        MS adata object.
+    """
+    output_file_name = "MS_CSF.h5ad"
+    output_file_path = settings.datasetdir / output_file_name
+
+    if force_download or not output_file_path.exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/27405182",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+
+    adata = sc.read_h5ad(output_file_path)
+    return adata

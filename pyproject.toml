@@ -65,7 +65,11 @@ dependencies = [
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
     "arviz",
-    "filelock"
+    "filelock",
+    "bokeh",
+    "pycirclize",
+    "tqdm"
+
 ]
 
 [project.optional-dependencies]
