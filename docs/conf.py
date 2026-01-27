@@ -33,6 +33,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",  # needs to be after napoleon
+    "scanpydoc.elegant_typehints",
     "sphinx.ext.autosummary",
     "sphinx_copybutton",
     "sphinx_gallery.load_style",
@@ -111,7 +112,7 @@ add_module_names = False
 autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
-    "mudata": ("https://mudata.readthedocs.io/en/stable/", None),
+    "mudata": ("https://mudata.readthedocs.io/stable/", None),
     "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
@@ -142,6 +143,9 @@ nitpick_ignore = [
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
     ("py:data", "typing.Union"),
 ]
+qualname_overrides = {
+    "pandas.core.series.Series": "pandas.Series",
+}
 
 sphinx_gallery_conf = {"nested_sections=": False}
 nbsphinx_thumbnails = {

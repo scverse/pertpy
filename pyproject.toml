@@ -91,7 +91,7 @@ dev = [
 ]
 doc = [
     "docutils>=0.8",
-    "sphinx>=8.1",
+    "sphinx>=8.1,<9.0",  # https://github.com/vidartf/nbsphinx-link/pull/26
     "scanpydoc",
     "sphinx-book-theme",
     "myst-nb",
