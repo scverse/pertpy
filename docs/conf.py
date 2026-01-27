@@ -111,7 +111,7 @@ add_module_names = False
 autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
-    "mudata": ("https://mudata.readthedocs.io/en/stable/", None),
+    "mudata": ("https://mudata.readthedocs.io/stable/", None),
     "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
