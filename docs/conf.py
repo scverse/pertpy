@@ -143,6 +143,9 @@ nitpick_ignore = [
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
     ("py:data", "typing.Union"),
 ]
+qualname_overrides = {
+    "pandas.core.series.Series": "pandas.Series",
+}
 
 sphinx_gallery_conf = {"nested_sections=": False}
 nbsphinx_thumbnails = {
