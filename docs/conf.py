@@ -33,6 +33,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",  # needs to be after napoleon
+    "scanpydoc.elegant_typehints",
     "sphinx.ext.autosummary",
     "sphinx_copybutton",
     "sphinx_gallery.load_style",
@@ -142,10 +143,6 @@ nitpick_ignore = [
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
     ("py:data", "typing.Union"),
 ]
-qualname_overrides = {
-    "pandas.core.frame.DataFrame": "pandas.DataFrame",
-    "pandas.core.series.Series": "pandas.Series",
-}
 
 sphinx_gallery_conf = {"nested_sections=": False}
 nbsphinx_thumbnails = {
