@@ -355,7 +355,6 @@ class MLPClassifierSpace(PerturbationSpace):
         # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
         labels = to_dense(adata.obs[target_col]).reshape(-1, 1)
-        # labels = adata.obs[target_col].values.reshape(-1, 1)
         encoder = OneHotEncoder()
         encoded_labels = encoder.fit_transform(labels).toarray()
         adata = adata.copy()
