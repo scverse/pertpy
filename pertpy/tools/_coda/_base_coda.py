@@ -2608,4 +2608,9 @@ def from_scanpy(
     var_dat.index = var_dat.index.astype(str)
     covariate_df_.index = covariate_df_.index.astype(str)
 
+    # Reset index name to None to avoid arviz coordinate dimension mismatch.
+    # When arviz processes coordinates, it uses the index name as the dimension name.
+    # If the index retains 'scCODA_sample_id' from the groupby operation,
+    # arviz will create coordinates with dimension ('scCODA_sample_id',) instead of ('sample',), causing a CoordinateValidationError
+    covariate_df_.index.name = None
     return AnnData(X=ct_count_data.values, var=var_dat, obs=covariate_df_)
