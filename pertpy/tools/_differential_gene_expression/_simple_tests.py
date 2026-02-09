@@ -213,8 +213,9 @@ class PermutationTest(SimpleComparisonBase):
         mask: str | None = None,
         layer: str | None = None,
         n_permutations: int = 1000,
-        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: np.log2(np.mean(y) + 1e-8)
-        - np.log2(np.mean(x) + 1e-8),
+        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: (
+            np.log2(np.mean(y) + 1e-8) - np.log2(np.mean(x) + 1e-8)
+        ),
         fit_kwargs: Mapping = MappingProxyType({}),
         test_kwargs: Mapping = MappingProxyType({}),
     ) -> DataFrame:
@@ -272,8 +273,9 @@ class PermutationTest(SimpleComparisonBase):
         x0: np.ndarray,
         x1: np.ndarray,
         paired: bool,
-        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: np.log2(np.mean(y) + 1e-8)
-        - np.log2(np.mean(x) + 1e-8),
+        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: (
+            np.log2(np.mean(y) + 1e-8) - np.log2(np.mean(x) + 1e-8)
+        ),
         n_permutations: int = 1000,
         **kwargs,
     ) -> dict[str, float]:
@@ -301,7 +303,7 @@ class PermutationTest(SimpleComparisonBase):
         """
         test_result = scipy.stats.permutation_test(
             [x0, x1],
-            statistic=lambda x0_perm, x1_perm: test_statistic(x0_perm, x1_perm),
+            statistic=test_statistic,
             n_resamples=n_permutations,
             permutation_type=("samples" if paired else "independent"),
             **kwargs,
