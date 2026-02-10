@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from mudata import MuData
@@ -1597,4 +1598,71 @@ def hagai_2018() -> AnnData:  # pragma: no cover
         )
     adata = sc.read_h5ad(output_file_path)
 
+    return adata
+
+
+def human_cytokine_dict(exclude_well_biased_genes=True) -> pd.DataFrame:
+    r"""Human Cytokine Dictionary curated from PBMC allows you to infer differential cytokine activity.
+
+    The Human Cytokine Dictionary was created from single-cell RNA-seq of 9,697,974 human peripheral blood mononuclear cells (PBMC) from 12 donors stimulated in vitro with 87 different cytokines. The object is a dataframe representing cytokine activity as differentially expressed genes after cytokine perturbation.
+
+    References:
+        Oesinghaus, Lukas and Becker, S{\"o}ren and Vornholz, Larsen
+        .... bla bla coming
+
+    Returns:
+        Pandas DataFrame
+
+    """
+    output_file_name = "human_cytokine_dict.csv"
+    output_file_path = settings.datasetdir / output_file_name
+    if not Path(output_file_path).exists():
+        _download(
+            url="https://cdn.parsebiosciences.com/gigalab/10m/DEGs.csv",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+
+    cytokine_dict = pd.read_csv(output_file_path, index_col=0)
+    revision_cytokines = ["TGF-beta1", "IL-18", "C3a"]
+    cytokine_dict = cytokine_dict[~cytokine_dict["cytokine"].isin(revision_cytokines)]
+    cytokine_dict = cytokine_dict.reset_index(drop=True)
+
+    if exclude_well_biased_genes:
+        cytokine_dict = cytokine_dict.loc[~cytokine_dict.well_biased]
+
+    return cytokine_dict
+
+
+def MS_CSF_tutorial_data(save_dir="", force_download=False):
+    """Multiple Sklerosis Dataset (blood and cerebrospinal fluid) for hucira tutorial.
+
+    Download and load the MS dataset automatically.
+    Xu, Chenling (2021). MS_CSF.h5ad. figshare. Dataset. https://doi.org/10.6084/m9.figshare.14356661.v1
+
+    Parameters
+    ----------
+    save_dir : str
+        Directory where the file will be saved.
+    force_download : bool
+        Allows user to force a fresh download from CellxGene
+
+    Returns:
+    -------
+    adata : AnnData
+        MS adata object.
+    """
+    output_file_name = "MS_CSF.h5ad"
+    output_file_path = settings.datasetdir / output_file_name
+
+    if force_download or not output_file_path.exists():
+        _download(
+            url="https://figshare.com/ndownloader/files/27405182",
+            output_file_name=output_file_name,
+            output_path=settings.datasetdir,
+            is_zip=False,
+        )
+
+    adata = sc.read_h5ad(output_file_path)
     return adata
