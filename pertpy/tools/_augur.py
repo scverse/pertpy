@@ -991,7 +991,7 @@ class Augur:
             pd.merge(
                 delta_rnd[["cell_type", "delta_rnd"]], delta[["cell_type", "delta_augur"]], on="cell_type", how="left"
             )
-            .assign(b=lambda x: (x.delta_rnd >= x.delta_augur))
+            .assign(b=lambda x: x.delta_rnd >= x.delta_augur)
             .groupby("cell_type", as_index=False)
             .sum()["b"]
         )

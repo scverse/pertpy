@@ -893,7 +893,7 @@ def replogle_2022_k562_essential() -> AnnData:  # pragma: no cover
     output_file_path = settings.datasetdir / output_file_name
     if not Path(output_file_path).exists():
         _download(
-            url="https://exampledata.scverse.org/pertpy/gasperini_2019_atscale.h5ad",
+            url="https://exampledata.scverse.org/pertpy/replogle_2022_k562_essential.h5ad",
             output_file_name=output_file_name,
             output_path=settings.datasetdir,
             is_zip=False,
@@ -1000,8 +1000,8 @@ def schiebinger_2019_18day() -> AnnData:  # pragma: no cover
 
     Samples were collected from established iPSC lines reprogrammed from the reprogramming mouse embryonic
     fibroblasts (MEFs), maintained in either 2i or serum conditions, over 39 time points separated by
-    ∼12 hours across an 18-day time course (and every 6 hours between days 8 and 9). Overall, 259,155 cells
-    were profiled.
+    ∼12 hours across an 18-day time course (and every 6 hours between days 8 and 9).
+    Overall, 259,155 cells were profiled.
 
     References:
         Publication: https://doi.org/10.1016/j.cell.2019.01.006 \

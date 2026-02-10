@@ -789,6 +789,10 @@ class Milo:
         sample_adata.var["SpatialFDR"] = np.nan
         sample_adata.var.loc[keep_nhoods, "SpatialFDR"] = adjp
 
+        # Fill missing values with 1 to avoid downstream NaN complications
+        # e.g. https://github.com/scverse/pertpy/issues/912
+        sample_adata.var["SpatialFDR"] = sample_adata.var["SpatialFDR"].fillna(1)
+
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_nhood_graph(  # pragma: no cover # noqa: D417
         self,
