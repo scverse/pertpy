@@ -472,14 +472,16 @@ class CompositionalModel2(ABC):
 
         import arviz as az
 
+        arviz_data = self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False)
+
         summ = az.summary(
-            data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False),
+            data=arviz_data,
             var_names=var_names,
             kind="stats",
-            stat_funcs={"median": np.median},
+            stat_focus="median",
             *args,  # noqa: B026
             **kwargs,
-        )  # type: ignore
+        )
 
         effect_df = summ.loc[summ.index.str.match("|".join([r"beta\["]))].copy()
         intercept_df = summ.loc[summ.index.str.match("|".join([r"alpha\["]))].copy()

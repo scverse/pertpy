@@ -68,7 +68,7 @@ class PerturbationSpace:
                 f"Reference key {reference_key} not found in {target_col}. {reference_key} must be in obs column {target_col}."
             )
 
-        if embedding_key is not None and embedding_key not in adata.obsm_keys():
+        if embedding_key is not None and embedding_key not in adata.obsm:
             raise ValueError(f"Embedding key {embedding_key} not found in obsm keys of the anndata.")
 
         if layer_key is not None and layer_key not in adata.layers:
@@ -131,7 +131,7 @@ class PerturbationSpace:
                             mask, :
                         ] - np.mean(adata.layers[local_layer_key][(control_mask & mask), :], axis=0)
 
-            embedding_keys = list(adata.obsm_keys())
+            embedding_keys = list(adata.obsm.keys())
             for local_embedding_key in embedding_keys:
                 if local_embedding_key not in (embedding_key, new_embedding_key):
                     adata.obsm[local_embedding_key + "_control_diff"] = np.zeros(adata.obsm[local_embedding_key].shape)
@@ -204,7 +204,7 @@ class PerturbationSpace:
             new_data = np.concatenate((original_data, control_local))
             data["layers"][local_layer_key] = new_data
 
-        for local_embedding_key in adata.obsm_keys():
+        for local_embedding_key in adata.obsm:
             data["embeddings"] = {}
             control_local = adata[reference_key].obsm[local_embedding_key].copy()
             for perturbation in perturbations:
@@ -315,7 +315,7 @@ class PerturbationSpace:
             new_data = np.concatenate((original_data, control_local))
             data["layers"][local_layer_key] = new_data
 
-        for local_embedding_key in adata.obsm_keys():
+        for local_embedding_key in adata.obsm:
             data["embeddings"] = {}
             control_local = adata[reference_key].obsm[local_embedding_key].copy()
             for perturbation in perturbations:
