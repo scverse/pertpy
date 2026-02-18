@@ -26,6 +26,7 @@ from pertpy.tools._coda._base_coda import (
 if TYPE_CHECKING:
     import arviz as az
     import pandas as pd
+    from xarray import DataTree
 
 config.update("jax_enable_x64", True)
 
@@ -457,7 +458,7 @@ class Tasccoda(CompositionalModel2):
         rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
-    ) -> az.InferenceData:
+    ) -> DataTree:
         """Creates arviz object from model results for MCMC diagnosis.
 
         Args:
@@ -468,7 +469,7 @@ class Tasccoda(CompositionalModel2):
             use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
-            :class:`arviz.InferenceData`: arviz_data
+            :class:`xarray.DataTree`: MCMC information
 
         Examples:
             >>> import pertpy as pt
@@ -511,8 +512,8 @@ class Tasccoda(CompositionalModel2):
             "b_tilde_1": ["covariate", "node_nb"],
             "b_tilde": ["covariate", "node"],
             "beta": ["covariate", "cell_type"],
-            "concentrations": ["sample", "cell_type"],
-            "counts": ["sample", "cell_type"],
+            "concentrations": ["obs", "cell_type"],
+            "counts": ["obs", "cell_type"],
         }
 
         # arviz coordinates
@@ -524,7 +525,7 @@ class Tasccoda(CompositionalModel2):
             "node_nb": nodes_nb,
             "node": node_names,
             "covariate": sample_adata.uns["scCODA_params"]["covariate_names"],
-            "sample": sample_adata.obs.index,
+            "obs": sample_adata.obs.index,
         }
 
         dtype = "float64"

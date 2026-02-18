@@ -478,10 +478,12 @@ class CompositionalModel2(ABC):
             data=arviz_data,
             var_names=var_names,
             kind="stats",
-            stat_focus="median",
             *args,  # noqa: B026
             **kwargs,
         )
+
+        posterior = arviz_data["posterior"].to_dataset()
+        summ["median"] = posterior[var_names].median(dim=["chain", "draw"]).to_dataframe().stack().reindex(summ.index)
 
         effect_df = summ.loc[summ.index.str.match("|".join([r"beta\["]))].copy()
         intercept_df = summ.loc[summ.index.str.match("|".join([r"alpha\["]))].copy()
@@ -523,8 +525,10 @@ class CompositionalModel2(ABC):
             )
 
         # Give nice column names, remove unnecessary columns
-        hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi")]
-        hdis_new = hdis.str.replace("hdi_", "HDI ")
+        hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi|eti")]
+        hdis_new = hdis.str.replace("hdi_", "HDI ").str.replace(
+            r"eti(\d+)_(lb|ub)", lambda m: f"ETI {m.group(1)}% {'lower' if m.group(2) == 'lb' else 'upper'}", regex=True
+        )
 
         # Calculate credible intervals if using classical spike-and-slab
         if select_type == "spikeslab":
@@ -534,12 +538,12 @@ class CompositionalModel2(ABC):
 
             b_raw_sel = np.array(sample_adata.uns["scCODA_params"]["mcmc"]["samples"]["b_raw"]) * ind_post
 
-            res = az.convert_to_inference_data(np.array([b_raw_sel]))
+            res = az.from_dict({"posterior": {"b_raw_sel": np.array([b_raw_sel])}})
 
             summary_sel = az.summary(
                 data=res,
                 kind="stats",
-                var_names=["x"],
+                var_names=["b_raw_sel"],
                 skipna=True,
                 *args,  # noqa: B026
                 **kwargs,

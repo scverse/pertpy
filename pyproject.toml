@@ -64,7 +64,7 @@ dependencies = [
     "blitzgsea",
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
-    "arviz",
+    "arviz>=1.0.0rc0",
     "filelock"
 ]
 

@@ -15,8 +15,8 @@ from pertpy._logger import logger
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 if TYPE_CHECKING:
-    import arviz as az
     import pandas as pd
+    from xarray import DataTree
 
 config.update("jax_enable_x64", True)
 
@@ -287,7 +287,7 @@ class Sccoda(CompositionalModel2):
         rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
-    ) -> az.InferenceData:
+    ) -> DataTree:
         """Creates arviz object from model results for MCMC diagnosis.
 
         Args:
@@ -298,7 +298,7 @@ class Sccoda(CompositionalModel2):
             use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
-            :class:`arviz.InferenceData`: arviz_data with all MCMC information
+            :class:`xarray.DataTree`: MCMC information
 
         Examples:
             >>> import pertpy as pt
@@ -337,9 +337,9 @@ class Sccoda(CompositionalModel2):
             "ind": ["covariate", "cell_type_nb"],
             "b_raw": ["covariate", "cell_type_nb"],
             "beta": ["covariate", "cell_type"],
-            "concentrations": ["sample", "cell_type"],
-            "predictions": ["sample", "cell_type"],
-            "counts": ["sample", "cell_type"],
+            "concentrations": ["obs", "cell_type"],
+            "predictions": ["obs", "cell_type"],
+            "counts": ["obs", "cell_type"],
         }
 
         # arviz coordinates
@@ -349,7 +349,7 @@ class Sccoda(CompositionalModel2):
             "cell_type": cell_types,
             "cell_type_nb": cell_types_nb,
             "covariate": sample_adata.uns["scCODA_params"]["covariate_names"],
-            "sample": sample_adata.obs.index,
+            "obs": sample_adata.obs.index,
         }
 
         dtype = "float64"
