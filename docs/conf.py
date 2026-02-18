@@ -113,16 +113,12 @@ autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
     "mudata": ("https://mudata.readthedocs.io/stable/", None),
-    "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
-    "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "torch": ("https://docs.pytorch.org/docs/main", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
-    "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
     "pyro": ("https://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),
     "flax": ("https://flax.readthedocs.io/en/latest/", None),
@@ -131,6 +127,7 @@ intersphinx_mapping = {
     "arviz": ("https://python.arviz.org/en/stable/", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
+    "xarray": ("https://docs.xarray.dev/en/stable/", None),
 }
 nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
