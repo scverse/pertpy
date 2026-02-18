@@ -128,6 +128,9 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
     "xarray": ("https://docs.xarray.dev/en/stable/", None),
+    "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
+    "torch": ("https://docs.pytorch.org/docs/main", None),
+    "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
 }
 nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
