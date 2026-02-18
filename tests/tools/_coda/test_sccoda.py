@@ -1,11 +1,11 @@
 from pathlib import Path
 
-import arviz as az
 import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
 from mudata import MuData
+from xarray import DataTree
 
 import pertpy as pt
 
@@ -104,4 +104,4 @@ def test_make_arviz(adata):
     mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Goblet")
     sccoda.run_nuts(mdata)
     arviz_data = sccoda.make_arviz(mdata, num_prior_samples=100)
-    assert isinstance(arviz_data, az.InferenceData)
+    assert isinstance(arviz_data, DataTree)

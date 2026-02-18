@@ -54,7 +54,7 @@ class CentroidSpace(PerturbationSpace):
             raise ValueError("Please, select just either layer or embedding for computation.")
 
         if embedding_key is not None:
-            if embedding_key not in adata.obsm_keys():
+            if embedding_key not in adata.obsm:
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
             else:
                 X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
@@ -153,7 +153,7 @@ class PseudobulkSpace(PerturbationSpace):
             raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
 
         if embedding_key is not None:
-            if embedding_key not in adata.obsm_keys():
+            if embedding_key not in adata.obsm:
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
             else:
                 adata_emb = AnnData(X=adata.obsm[embedding_key])
@@ -228,7 +228,7 @@ class KMeansSpace(ClusteringSpace):
             raise ValueError("Please, select just either layer or embedding for computation.")
 
         if embedding_key is not None:
-            if embedding_key not in adata.obsm_keys():
+            if embedding_key not in adata.obsm:
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
             else:
                 self.X = adata.obsm[embedding_key]
@@ -291,7 +291,7 @@ class DBSCANSpace(ClusteringSpace):
             adata = adata.copy()
 
         if embedding_key is not None:
-            if embedding_key not in adata.obsm_keys():
+            if embedding_key not in adata.obsm:
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
             else:
                 self.X = adata.obsm[embedding_key]

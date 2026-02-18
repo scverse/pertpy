@@ -472,14 +472,18 @@ class CompositionalModel2(ABC):
 
         import arviz as az
 
+        arviz_data = self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False)
+
         summ = az.summary(
-            data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False),
+            data=arviz_data,
             var_names=var_names,
             kind="stats",
-            stat_funcs={"median": np.median},
             *args,  # noqa: B026
             **kwargs,
-        )  # type: ignore
+        )
+
+        posterior = arviz_data["posterior"].to_dataset()
+        summ["median"] = posterior[var_names].median(dim=["chain", "draw"]).to_dataframe().stack().reindex(summ.index)
 
         effect_df = summ.loc[summ.index.str.match("|".join([r"beta\["]))].copy()
         intercept_df = summ.loc[summ.index.str.match("|".join([r"alpha\["]))].copy()
@@ -521,8 +525,10 @@ class CompositionalModel2(ABC):
             )
 
         # Give nice column names, remove unnecessary columns
-        hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi")]
-        hdis_new = hdis.str.replace("hdi_", "HDI ")
+        hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi|eti")]
+        hdis_new = hdis.str.replace("hdi_", "HDI ").str.replace(
+            r"eti(\d+)_(lb|ub)", lambda m: f"ETI {m.group(1)}% {'lower' if m.group(2) == 'lb' else 'upper'}", regex=True
+        )
 
         # Calculate credible intervals if using classical spike-and-slab
         if select_type == "spikeslab":
@@ -532,12 +538,12 @@ class CompositionalModel2(ABC):
 
             b_raw_sel = np.array(sample_adata.uns["scCODA_params"]["mcmc"]["samples"]["b_raw"]) * ind_post
 
-            res = az.convert_to_inference_data(np.array([b_raw_sel]))
+            res = az.from_dict({"posterior": {"b_raw_sel": np.array([b_raw_sel])}})
 
             summary_sel = az.summary(
                 data=res,
                 kind="stats",
-                var_names=["x"],
+                var_names=["b_raw_sel"],
                 skipna=True,
                 *args,  # noqa: B026
                 **kwargs,
@@ -2608,4 +2614,9 @@ def from_scanpy(
     var_dat.index = var_dat.index.astype(str)
     covariate_df_.index = covariate_df_.index.astype(str)
 
+    # Reset index name to None to avoid arviz coordinate dimension mismatch.
+    # When arviz processes coordinates, it uses the index name as the dimension name.
+    # If the index retains 'scCODA_sample_id' from the groupby operation,
+    # arviz will create coordinates with dimension ('scCODA_sample_id',) instead of ('sample',), causing a CoordinateValidationError
+    covariate_df_.index.name = None
     return AnnData(X=ct_count_data.values, var=var_dat, obs=covariate_df_)
