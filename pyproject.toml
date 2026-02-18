@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "1.0.4"
+version = "1.0.5"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
@@ -65,7 +65,7 @@ dependencies = [
     "blitzgsea",
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
-    "arviz",
+    "arviz>=1.0.0rc0",
     "filelock"
 ]
 
@@ -92,7 +92,7 @@ dev = [
 ]
 doc = [
     "docutils>=0.8",
-    "sphinx>=8.1",
+    "sphinx>=8.1,<9.0",  # https://github.com/vidartf/nbsphinx-link/pull/26
     "scanpydoc",
     "sphinx-book-theme",
     "myst-nb",
@@ -126,10 +126,18 @@ source = "vcs"
 allow-direct-references = true
 
 [tool.hatch.envs.hatch-test]
-features = [ "test", "tcoda", "de", "scgen" ]
+features = ["test", "tcoda", "de", "scgen"]
+overrides.matrix.deps.env-vars = [
+    { if = ["pre"], key = "UV_PRERELEASE", value = "allow" },
+]
 
 [[tool.hatch.envs.hatch-test.matrix]]
 python = [ "3.12", "3.14" ]
+deps = ["stable"]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.14"]
+deps = ["pre"]
 
 [tool.coverage.run]
 source = ["pertpy"]

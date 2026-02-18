@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.5
+
+### 🐛 Bug Fixes
+
+* fix use raw & docs build ([#906](https://github.com/scverse/pertpy/pull/906)) @Zethson
+* Add relative abundance warning ([#900](https://github.com/scverse/pertpy/pull/900)) @Zethson
+* Fix PyDESeq2 layer handling in fit() ([#895](https://github.com/scverse/pertpy/pull/895)) @giovp
+
+### 🧰 Maintenance
+
+* Update citation ([#899](https://github.com/scverse/pertpy/pull/899)) @Zethson
+* Update the exampledataset URLs to point to cloudfront ([#898](https://github.com/scverse/pertpy/pull/898)) @grst
+
 ## v1.0.4
 
 ### 🚀 Features

@@ -13,7 +13,7 @@ import seaborn as sns
 from fast_array_utils.stats import mean, mean_var
 from pandas.errors import PerformanceWarning
 from scanpy import get
-from scanpy._utils import _check_use_raw, sanitize_anndata
+from scanpy._utils import check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
 from scanpy.tools._utils import _choose_representation
 from scipy.sparse import csr_matrix, issparse, spmatrix
@@ -980,7 +980,7 @@ class Mixscape:
         adata = adata[mixscape_class_mask]
 
         sanitize_anndata(adata)
-        use_raw = _check_use_raw(adata, use_raw)
+        use_raw = check_use_raw(adata, use_raw)
         if isinstance(keys, str):
             keys = [keys]
         keys = list(OrderedDict.fromkeys(keys))  # remove duplicates, preserving the order
