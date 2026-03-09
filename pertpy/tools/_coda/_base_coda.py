@@ -732,7 +732,7 @@ class CompositionalModel2(ABC):
 
         # Get expected sample, log-fold change
         y_bar = np.mean(np.sum(sample_adata.X, axis=1))
-        alpha_par = intercept_df.loc[:, "final_parameter"]
+        alpha_par = intercept_df.loc[:, "final_parameter"].astype(float)
         alphas_exp = np.exp(alpha_par)
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
 
@@ -805,7 +805,7 @@ class CompositionalModel2(ABC):
 
         # Get expected sample
         y_bar = np.mean(np.sum(sample_adata.X, axis=1))
-        alphas_exp = np.exp(intercept_df.loc[:, "final_parameter"])
+        alphas_exp = np.exp(intercept_df.loc[:, "final_parameter"].astype(float))
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
         intercept_df.loc[:, "expected_sample"] = alpha_sample
 
