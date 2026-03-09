@@ -141,6 +141,7 @@ nitpick_ignore = [
     ("py:class", "The requested data."),
     ("py:class", "Model with loaded state dictionaries."),
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
+    ("py:class", "scvi.train._config.KwargsConfig"),
     ("py:data", "typing.Union"),
 ]
 qualname_overrides = {

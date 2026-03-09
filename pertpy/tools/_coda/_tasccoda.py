@@ -24,7 +24,6 @@ from pertpy.tools._coda._base_coda import (
 )
 
 if TYPE_CHECKING:
-    import arviz as az
     import pandas as pd
     from xarray import DataTree
 
@@ -148,8 +147,10 @@ class Tasccoda(CompositionalModel2):
                                                    determine the maximum fraction of zero entries for a cell type
                                                    to be considered as a possible reference cell type.
             tree_key: Key in `adata.uns` that contains the tree structure
-            pen_args: Dictionary with penalty arguments. With `reg="scaled_3"`, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.
-                See the tascCODA paper for an explanation of these parameters. Default: lambda_0 = 50, lambda_1 = 5, phi = 0.
+            pen_args: Dictionary with penalty arguments.
+                With `reg="scaled_3"`, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.
+                See the tascCODA paper for an explanation of these parameters.
+                Default: lambda_0 = 50, lambda_1 = 5, phi = 0.
             modality_key: If data is a MuData object, specify key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
@@ -422,7 +423,7 @@ class Tasccoda(CompositionalModel2):
             b_tilde_1 = npy.deterministic("b_tilde_1", a_1 * b_raw_1)
 
             # calculate proposed beta and perform spike-and-slab
-            b_tilde = (1 - theta) * b_tilde_0 + theta + b_tilde_1
+            b_tilde = (1 - theta) * b_tilde_0 + theta * b_tilde_1
 
         with node_axis, covariate_axis:
             # Include effect 0 for reference nodes

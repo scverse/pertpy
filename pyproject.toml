@@ -65,7 +65,7 @@ dependencies = [
     "blitzgsea",
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
-    "arviz>=1.0.0rc0",
+    "arviz>=1.0.0",
     "filelock"
 ]
 
@@ -159,6 +159,7 @@ markers = [
 minversion = "6.0"
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 filterwarnings = [
+    "ignore::DeprecationWarning:pyparsing",
     "ignore::Warning:statsmodels.*",
     "ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
     "ignore:lbfgs failed to converge",
