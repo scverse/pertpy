@@ -277,7 +277,7 @@ def add_nhood_expression_mdata(milo):
     sc.pp.highly_variable_genes(adata)
     sc.pp.pca(adata)
     sc.pp.neighbors(adata)
-    sc.tl.leiden(adata)
+    sc.tl.leiden(adata, flavor="igraph")
     milo.make_nhoods(adata)
 
     # Simulate experimental condition

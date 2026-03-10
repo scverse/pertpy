@@ -159,7 +159,7 @@ markers = [
 minversion = "6.0"
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 filterwarnings = [
-    "ignore::DeprecationWarning:pyparsing",
+    "ignore::pyparsing.core.PyparsingDeprecationWarning",
     "ignore::Warning:statsmodels.*",
     "ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
     "ignore:lbfgs failed to converge",
