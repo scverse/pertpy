@@ -322,7 +322,7 @@ class Cinemaot:
             >>>         adata, de, pert_key="perturbation", control="No stimulation", label_list=None)
         """
         sc.pp.neighbors(de, use_rep=de_rep)
-        sc.tl.leiden(de, resolution=de_resolution)
+        sc.tl.leiden(de, resolution=de_resolution, flavor="igraph")
         if use_raw:
             if issparse(adata.raw.X):
                 df = pd.DataFrame(adata.raw.X.toarray(), columns=adata.raw.var_names, index=adata.raw.obs_names)
@@ -336,7 +336,7 @@ class Cinemaot:
         if label_list is None:
             label_list = ["ct"]
             sc.pp.neighbors(adata, use_rep=cf_rep)
-            sc.tl.leiden(adata, resolution=cf_resolution)
+            sc.tl.leiden(adata, resolution=cf_resolution, flavor="igraph")
             df["ct"] = adata.obs["leiden"].astype(str)
         df["ptb"] = "control"
         df.loc[adata.obs[pert_key] != control, "ptb"] = de.obs["leiden"].astype(str)
@@ -424,7 +424,7 @@ class Cinemaot:
 
         adata_.obsm["X_mpca"] = mixscape_pca
         sc.pp.neighbors(adata_, use_rep="X_mpca")
-        sc.tl.leiden(adata_, resolution=resolution)
+        sc.tl.leiden(adata_, resolution=resolution, flavor="igraph")
 
         j = 0
 
@@ -694,7 +694,7 @@ class Cinemaot:
         if de_label is None:
             de_label = "leiden"
             sc.pp.neighbors(de, use_rep="X_embedding")
-            sc.tl.leiden(de, resolution=resolution)
+            sc.tl.leiden(de, resolution=resolution, flavor="igraph")
         df["de_label"] = de.obs[de_label].astype(str).values
         df["de_label"] = "Response " + df["de_label"]
         df = df.groupby("de_label").sum().T

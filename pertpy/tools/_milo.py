@@ -536,8 +536,8 @@ class Milo:
         sample_adata.varm["frac_annotation"] = anno_frac_dataframe.values
         sample_adata.uns["annotation_labels"] = anno_frac_dataframe.columns.to_list()
         sample_adata.uns["annotation_obs"] = anno_col
-        sample_adata.var["nhood_annotation"] = anno_frac_dataframe.idxmax(1)
-        sample_adata.var["nhood_annotation_frac"] = anno_frac_dataframe.max(1)
+        sample_adata.var["nhood_annotation"] = anno_frac_dataframe.idxmax(axis=1)
+        sample_adata.var["nhood_annotation_frac"] = anno_frac_dataframe.max(axis=1)
 
     def annotate_nhoods_continuous(self, mdata: MuData, anno_col: str, feature_key: str | None = "rna"):
         """Assigns a continuous value to neighbourhoods, based on mean cell level covariate stored in adata.obs. This can be useful to correlate DA log-foldChanges with continuous covariates such as pseudotime, gene expression scores etc...
