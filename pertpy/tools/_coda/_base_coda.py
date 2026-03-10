@@ -1612,10 +1612,7 @@ class CompositionalModel2(ABC):
 
             K = X.shape[1]
 
-            if layout == "wide":
-                col_wrap = int(np.ceil(np.sqrt(K)))
-            else:
-                col_wrap = int(np.floor(np.sqrt(K)))
+            col_wrap = int(np.ceil(np.sqrt(K))) if layout == "wide" else int(np.floor(np.sqrt(K)))
 
             if figsize is not None:
                 height = figsize[0]
