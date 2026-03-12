@@ -12,11 +12,13 @@
 Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
 It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic modifications, drug treatments, and environmental changes.
 
+Please read our associated manuscript ["Pertpy: an end-to-end framework for perturbation analysis"](https://www.nature.com/articles/s41592-025-02909-7).
+
 ![fig1](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
 
 ## Documentation
 
-Please read the [documentation](https://pertpy.readthedocs.io/en/latest) for installation, tutorials, use cases, and more.
+Please read the [documentation](https://pertpy.readthedocs.io/en/latest) for installation instructions, tutorials, use cases, and more.
 
 ## Installation
 
