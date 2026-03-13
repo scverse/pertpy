@@ -1512,6 +1512,7 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        layout: Literal["long", "wide"] = "long",
         return_fig: bool = False,
     ) -> Figure | None:
         """Grouped boxplot visualization.
@@ -1536,6 +1537,9 @@ class CompositionalModel2(ABC):
             show_legend: If True, adds a legend.
             level_order: Custom ordering of bars on the x-axis.
             {common_plot_args}
+            layout: Controls subplot layout when `plot_facets=True`.
+                "long": uses floor(sqrt(K)) resulting in taller layout.
+                "wide": uses ceil(sqrt(K)) resulting in wider layout.
 
         Returns:
             If `return_fig` is `True`, returns the figure, otherwise `None`.
@@ -1559,6 +1563,8 @@ class CompositionalModel2(ABC):
             data = data[modality_key]
         if isinstance(palette, Colormap):
             palette = list(palette(range(len(data.obs[feature_name].unique()))))
+        if layout not in {"long", "wide"}:
+            raise ValueError("layout must be either 'long' or 'wide'")
 
         # y scale transformations
         if y_scale == "relative":
@@ -1608,6 +1614,8 @@ class CompositionalModel2(ABC):
 
             K = X.shape[1]
 
+            col_wrap = int(np.ceil(np.sqrt(K))) if layout == "wide" else int(np.floor(np.sqrt(K)))
+
             if figsize is not None:
                 height = figsize[0]
                 aspect = np.round(figsize[1] / figsize[0], 2)
@@ -1619,7 +1627,7 @@ class CompositionalModel2(ABC):
                 plot_df,
                 col="Cell type",
                 sharey=False,
-                col_wrap=int(np.floor(np.sqrt(K))),
+                col_wrap=col_wrap,
                 height=height,
                 aspect=aspect,
             )
