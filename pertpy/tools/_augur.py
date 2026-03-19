@@ -793,13 +793,7 @@ class Augur:
         for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data..."):
             cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
 
-            if len(cell_type_subsample) < min_cells:
-                logger.warning(
-                    f"Skipping {cell_type} cell type - {len(cell_type_subsample)} samples is less than min_cells {min_cells}."
-                )
-                continue
-
-            if augur_mode in ("default", "permute"):
+            if augur_mode in ("default", "permute") and len(cell_type_subsample) >= min_cells:
                 cell_type_subsample = (
                     self.select_highly_variable(cell_type_subsample)
                     if not select_variance_features
@@ -809,6 +803,10 @@ class Augur:
                         filter_negative_residuals=filter_negative_residuals,
                         span=span,
                     )
+                )
+            if len(cell_type_subsample) < min_cells:
+                logger.warning(
+                    f"Skipping {cell_type} cell type - {len(cell_type_subsample)} samples is less than min_cells {min_cells}."
                 )
             elif (
                 cell_type_subsample.obs.groupby(
