@@ -73,8 +73,8 @@ class Milo:
         Args:
             data: AnnData object with KNN graph defined in `obsp` or MuData object with a modality with KNN graph defined in `obsp`
             neighbors_key: The key in `adata.obsp` or `mdata[feature_key].obsp` to use as KNN graph.
-                           If not specified, `make_nhoods` looks .obsp[‘connectivities’] for connectivities (default storage places for `scanpy.pp.neighbors`).
-                           If specified, it looks at .obsp[.uns[neighbors_key][‘connectivities_key’]] for connectivities.
+               If not specified, `make_nhoods` looks at `.obsp['connectivities']` for connectivities.
+               If specified, looks at `.obsp[neighbors_key + '_connectivities']` for connectivities.
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
             prop: Fraction of cells to sample for neighbourhood index search.
             seed: Random seed for cell sampling.
@@ -540,7 +540,9 @@ class Milo:
         sample_adata.var["nhood_annotation_frac"] = anno_frac_dataframe.max(axis=1)
 
     def annotate_nhoods_continuous(self, mdata: MuData, anno_col: str, feature_key: str | None = "rna"):
-        """Assigns a continuous value to neighbourhoods, based on mean cell level covariate stored in adata.obs. This can be useful to correlate DA log-foldChanges with continuous covariates such as pseudotime, gene expression scores etc...
+        """Assigns a continuous value to neighbourhoods, based on mean cell level covariate stored in adata.obs.
+
+        This can be useful to correlate DA log-foldChanges with continuous covariates such as pseudotime, gene expression scores etc...
 
         Args:
             mdata: MuData object
