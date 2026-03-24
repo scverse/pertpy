@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.6
+
+### 🚀 Features
+
+* Support Python 3.14 ([#893](https://github.com/scverse/pertpy/pull/893)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Correct `neighbors_key` docstring for `make_nhoods` ([#940](https://github.com/scverse/pertpy/pull/940)) @Zethson
+* Fix augur low frequency cell type behavior ([#938](https://github.com/scverse/pertpy/pull/938)) @Zethson
+* Fix replogle_2022_k562_essential URL ([#917](https://github.com/scverse/pertpy/pull/917)) @Zethson
+* Fix reshaping ([#909](https://github.com/scverse/pertpy/pull/909)) @Zethson
+* fillna(1) spatialfdr ([#913](https://github.com/scverse/pertpy/pull/913)) @ktpolanski
+
+### 🧰 Maintenance
+
+* Mention paper in README ([#935](https://github.com/scverse/pertpy/pull/935)) @Zethson
+
 ## v1.0.5
 
 ### 🐛 Bug Fixes
