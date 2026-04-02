@@ -1532,14 +1532,14 @@ class CompositionalModel2(ABC):
             args_boxplot: Arguments passed to sns.boxplot.
             args_swarmplot: Arguments passed to sns.swarmplot.
             figsize: Figure size.
-            dpi: Dpi setting.
+            dpi: DPI setting.
             palette: The seaborn color map (name) for the barplot.
             show_legend: If True, adds a legend.
             level_order: Custom ordering of bars on the x-axis.
-            {common_plot_args}
             layout: Controls subplot layout when `plot_facets=True`.
                 "long": uses floor(sqrt(K)) resulting in taller layout.
                 "wide": uses ceil(sqrt(K)) resulting in wider layout.
+            {common_plot_args}
 
         Returns:
             If `return_fig` is `True`, returns the figure, otherwise `None`.
