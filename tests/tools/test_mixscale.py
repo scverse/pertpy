@@ -32,16 +32,9 @@ def synthetic_perturbation_adata():
     adata.var_names = [f"Gene_{i}" for i in range(n_genes)]
     adata.obs_names = [f"Cell_{i}" for i in range(n_cells)]
 
-    labels = (
-        ["NT"] * 100
-        + ["GeneA"] * 100
-        + ["GeneA"] * 100
-        + ["GeneB"] * 50
-    )
+    labels = ["NT"] * 100 + ["GeneA"] * 100 + ["GeneA"] * 100 + ["GeneB"] * 50
     adata.obs["gene_target"] = labels
-    adata.obs["perturbation"] = [
-        "NT" if x == "NT" else "targeting" for x in labels
-    ]
+    adata.obs["perturbation"] = ["NT" if x == "NT" else "targeting" for x in labels]
 
     sc.pp.pca(adata)
 
@@ -68,9 +61,7 @@ class TestMixscale:
         ms.perturbation_signature(adata, "gene_target", "NT")
         ms.mixscale(adata, "gene_target", "NT", layer="X_pert")
 
-        nt_scores = adata.obs.loc[
-            adata.obs["gene_target"] == "NT", "mixscale_score"
-        ]
+        nt_scores = adata.obs.loc[adata.obs["gene_target"] == "NT", "mixscale_score"]
         assert (nt_scores == 0).all()
 
     def test_perturbed_cells_nonzero(self, synthetic_perturbation_adata):
@@ -80,9 +71,7 @@ class TestMixscale:
         ms.perturbation_signature(adata, "gene_target", "NT")
         ms.mixscale(adata, "gene_target", "NT", layer="X_pert")
 
-        ko_scores = adata.obs.loc[
-            adata.obs["gene_target"] == "GeneA", "mixscale_score"
-        ]
+        ko_scores = adata.obs.loc[adata.obs["gene_target"] == "GeneA", "mixscale_score"]
         assert ko_scores.abs().mean() > 0
 
     def test_strong_vs_weak_perturbation(self, synthetic_perturbation_adata):
@@ -98,8 +87,7 @@ class TestMixscale:
         weak_mean = np.abs(scores[200:300]).mean()
 
         assert strong_mean > weak_mean, (
-            f"Strong KO mean ({strong_mean:.2f}) should exceed "
-            f"weak KO mean ({weak_mean:.2f})"
+            f"Strong KO mean ({strong_mean:.2f}) should exceed weak KO mean ({weak_mean:.2f})"
         )
 
     def test_custom_column_name(self, synthetic_perturbation_adata):
@@ -135,9 +123,7 @@ class TestMixscale:
         assert result is not adata
         assert "mixscale_score" in result.obs.columns
 
-    def test_no_perturbation_signature_raises(
-        self, synthetic_perturbation_adata
-    ):
+    def test_no_perturbation_signature_raises(self, synthetic_perturbation_adata):
         """Should raise KeyError if perturbation_signature hasn't been run."""
         adata = synthetic_perturbation_adata
         ms = pt.tl.Mixscape()
@@ -153,12 +139,8 @@ class TestMixscale:
         ms.mixscale(adata, "gene_target", "NT", layer="X_pert")
 
         # Both GeneA and GeneB should have scores
-        gene_a_scores = adata.obs.loc[
-            adata.obs["gene_target"] == "GeneA", "mixscale_score"
-        ]
-        gene_b_scores = adata.obs.loc[
-            adata.obs["gene_target"] == "GeneB", "mixscale_score"
-        ]
+        gene_a_scores = adata.obs.loc[adata.obs["gene_target"] == "GeneA", "mixscale_score"]
+        gene_b_scores = adata.obs.loc[adata.obs["gene_target"] == "GeneB", "mixscale_score"]
 
         assert gene_a_scores.abs().mean() > 0
         assert gene_b_scores.abs().mean() > 0
@@ -172,8 +154,4 @@ class TestMixscale:
         ms.mixscale(adata, "gene_target", "NT", layer="X_pert")
 
         assert "mixscale_score" in adata.obs.columns
-        assert not np.isnan(
-            adata.obs.loc[
-                adata.obs["gene_target"] != "NT", "mixscale_score"
-            ]
-        ).any()
+        assert not np.isnan(adata.obs.loc[adata.obs["gene_target"] != "NT", "mixscale_score"]).any()

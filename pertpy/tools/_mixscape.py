@@ -498,19 +498,14 @@ class Mixscape:
             try:
                 X = adata.layers["X_pert"]
             except KeyError:
-                raise KeyError(
-                    "No 'X_pert' found in .layers! "
-                    "Please run perturbation_signature first."
-                ) from None
+                raise KeyError("No 'X_pert' found in .layers! Please run perturbation_signature first.") from None
 
         # Initialize scores to 0 (NT control default)
         adata.obs[new_class_name] = 0.0
 
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
-            gene_targets = list(
-                set(adata[split_mask].obs[pert_key]).difference([control])
-            )
+            gene_targets = list(set(adata[split_mask].obs[pert_key]).difference([control]))
             nt_cells = (adata.obs[pert_key] == control) & split_mask
 
             for gene in gene_targets:
@@ -525,9 +520,7 @@ class Mixscape:
                 if len(de_genes) > max_de_genes:
                     de_genes = de_genes[:max_de_genes]
 
-                de_genes_indices = np.where(
-                    np.isin(adata.var_names, list(de_genes))
-                )[0]
+                de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
                 if len(de_genes_indices) == 0:
                     continue
@@ -543,14 +536,8 @@ class Mixscape:
                         dat = sc.pp.scale(dat)
 
                 # Compute indices within the subsetted data
-                nt_cells_dat_idx = (
-                    all_cells[all_cells]
-                    .index.get_indexer(nt_cells[nt_cells].index)
-                )
-                guide_cells_dat_idx = (
-                    all_cells[all_cells]
-                    .index.get_indexer(guide_cells[guide_cells].index)
-                )
+                nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
+                guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
 
                 # Compute perturbation direction vector
                 # (mean of perturbed cells minus mean of control cells)
@@ -563,10 +550,7 @@ class Mixscape:
                 if vec_norm_sq == 0:
                     continue
 
-                if isinstance(dat, spmatrix):
-                    pvec = dat.dot(vec) / vec_norm_sq
-                else:
-                    pvec = np.dot(dat, vec) / vec_norm_sq
+                pvec = dat.dot(vec) / vec_norm_sq if isinstance(dat, spmatrix) else np.dot(dat, vec) / vec_norm_sq
                 pvec = np.asarray(pvec).flatten()
 
                 # Extract scores for guide and NT cells
@@ -583,12 +567,11 @@ class Mixscape:
 
                 # Store scores for perturbed cells
                 guide_cell_indices = guide_cells[guide_cells].index
-                adata.obs.loc[guide_cell_indices, new_class_name] = (
-                    standardized_scores
-                )
+                adata.obs.loc[guide_cell_indices, new_class_name] = standardized_scores
 
         if copy:
             return adata
+
     def lda(
         self,
         adata: AnnData,
