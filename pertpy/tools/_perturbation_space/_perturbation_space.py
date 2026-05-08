@@ -193,10 +193,9 @@ class PerturbationSpace:
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True, target_col=target_col)
 
-        data: dict[str, np.array] = {}
+        data: dict[str, dict[str, np.ndarray]] = {"layers": {}, "embeddings": {}}
 
         for local_layer_key in adata.layers:
-            data["layers"] = {}
             control_local = adata[reference_key].layers[local_layer_key].copy()
             for perturbation in perturbations:
                 control_local += adata[perturbation].layers[local_layer_key]
@@ -205,7 +204,6 @@ class PerturbationSpace:
             data["layers"][local_layer_key] = new_data
 
         for local_embedding_key in adata.obsm:
-            data["embeddings"] = {}
             control_local = adata[reference_key].obsm[local_embedding_key].copy()
             for perturbation in perturbations:
                 control_local += adata[perturbation].obsm[local_embedding_key]
@@ -234,19 +232,13 @@ class PerturbationSpace:
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs_series
         new_perturbation.obs = new_obs
 
-        if "layers" in data:
-            for key in data["layers"]:
-                key_name = key
-                if key.endswith("_control_diff"):
-                    key_name = key.removesuffix("_control_diff")
-                new_perturbation.layers[key_name] = data["layers"][key]
+        for key, value in data["layers"].items():
+            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            new_perturbation.layers[key_name] = value
 
-        if "embeddings" in data:
-            key_name = key
-            for key in data["embeddings"]:
-                if key.endswith("_control_diff"):
-                    key_name = key.removesuffix("_control_diff")
-                new_perturbation.obsm[key_name] = data["embeddings"][key]
+        for key, value in data["embeddings"].items():
+            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            new_perturbation.obsm[key_name] = value
 
         new_perturbation.obs[target_col] = new_perturbation.obs_names.astype("category")
 
@@ -304,10 +296,9 @@ class PerturbationSpace:
         else:
             adata = self.compute_control_diff(adata, copy=True, all_data=True, target_col=target_col)
 
-        data: dict[str, np.array] = {}
+        data: dict[str, dict[str, np.ndarray]] = {"layers": {}, "embeddings": {}}
 
         for local_layer_key in adata.layers:
-            data["layers"] = {}
             control_local = adata[reference_key].layers[local_layer_key].copy()
             for perturbation in perturbations:
                 control_local -= adata[perturbation].layers[local_layer_key]
@@ -316,7 +307,6 @@ class PerturbationSpace:
             data["layers"][local_layer_key] = new_data
 
         for local_embedding_key in adata.obsm:
-            data["embeddings"] = {}
             control_local = adata[reference_key].obsm[local_embedding_key].copy()
             for perturbation in perturbations:
                 control_local -= adata[perturbation].obsm[local_embedding_key]
@@ -345,19 +335,13 @@ class PerturbationSpace:
         new_obs.loc[new_pert_name[:-1]] = new_pert_obs_series
         new_perturbation.obs = new_obs
 
-        if "layers" in data:
-            for key in data["layers"]:
-                key_name = key
-                if key.endswith("_control_diff"):
-                    key_name = key.removesuffix("_control_diff")
-                new_perturbation.layers[key_name] = data["layers"][key]
+        for key, value in data["layers"].items():
+            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            new_perturbation.layers[key_name] = value
 
-        if "embeddings" in data:
-            key_name = key
-            for key in data["embeddings"]:
-                if key.endswith("_control_diff"):
-                    key_name = key.removesuffix("_control_diff")
-                new_perturbation.obsm[key_name] = data["embeddings"][key]
+        for key, value in data["embeddings"].items():
+            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            new_perturbation.obsm[key_name] = value
 
         new_perturbation.obs[target_col] = new_perturbation.obs_names.astype("category")
 
