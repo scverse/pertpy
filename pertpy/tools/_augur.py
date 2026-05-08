@@ -543,10 +543,10 @@ class Augur:
         # standardized coefficients with Agresti method
         # cf. https://think-lab.github.io/d/205/#3
         if isinstance(self.estimator, LogisticRegression):
-            for fold, self.estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
+            for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
                 feature_importances["genes"].extend(x.columns.tolist())
                 feature_importances["feature_importances"].extend(
-                    (self.estimator.coef_ * self.estimator.coef_.std()).flatten().tolist()
+                    (estimator.coef_ * estimator.coef_.std()).flatten().tolist()
                 )
                 feature_importances["subsample_idx"].extend(len(x.columns) * [subsample_idx])
                 feature_importances["fold"].extend(len(x.columns) * [fold])

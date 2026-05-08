@@ -105,7 +105,7 @@ class PerturbationSpace:
                 elif num_control > 1:
                     control_expression = np.mean(adata.obsm[embedding_key][(control_mask & mask), :], axis=0)
                 else:
-                    control_expression = np.zeros((1, adata.n_vars))
+                    control_expression = np.zeros((1, adata.obsm[embedding_key].shape[1]))
                 adata.obsm[new_embedding_key][mask, :] = adata.obsm[embedding_key][mask, :] - control_expression
 
         if (not layer_key and not embedding_key) or all_data:

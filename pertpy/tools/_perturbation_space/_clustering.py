@@ -78,7 +78,9 @@ class ClusteringSpace(PerturbationSpace):
 
                 if "metric" not in kwargs:
                     kwargs["metric"] = "euclidean"
-                if "distances" not in kwargs:
+                if "distances" in kwargs:
+                    distances = kwargs["distances"]
+                else:
                     distances = pairwise_distances(self.X, metric=kwargs["metric"])
                 if "sample_size" not in kwargs:
                     kwargs["sample_size"] = None

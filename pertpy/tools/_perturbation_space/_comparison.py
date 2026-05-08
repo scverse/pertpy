@@ -107,6 +107,6 @@ class PerturbationComparison:
         uq, uq_counts = np.unique(labels[indices], return_counts=True)
         uq_counts_norm = uq_counts / uq_counts.sum()
         counts = dict(zip(label_groups, [0.0] * len(label_groups), strict=False))
-        counts = dict(zip(uq, uq_counts_norm, strict=False))
+        counts.update(zip(uq, uq_counts_norm, strict=False))
 
         return counts
