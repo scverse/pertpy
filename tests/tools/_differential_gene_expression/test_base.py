@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from importlib.util import find_spec
 
+import pandas as pd
 import pytest
 from pandas.core.api import DataFrame
 
@@ -89,3 +90,37 @@ def test_model_cond(test_adata_minimal, MockLinearModel, formula, cond_kwargs, e
         actual_contrast = mod.cond(**cond_kwargs)
         assert actual_contrast.tolist() == expected_contrast
         assert actual_contrast.index.tolist() == mod.design.columns.tolist()
+
+
+def test_plot_multicomparison_fc_default_figsize(MockLinearModel, test_adata_minimal):
+    """Test that plot_multicomparison_fc works with default figsize.
+
+    Regression test for issue #755.
+    When using default figsize, seaborn heatmap may not show xticklabels,
+    causing a ValueError when trying to plot significance markers.
+    """
+    # Create mock results similar to what compare_groups would return
+    results = []
+    genes = ["GENE1", "GENE2", "GENE3", "IL5", "IL6", "IL10"]
+    contrasts = ["contrast1", "contrast2"]
+
+    for contrast in contrasts:
+        for i, gene in enumerate(genes):
+            results.append(
+                {
+                    "contrast": contrast,
+                    "variable": gene,
+                    "log_fc": 1.5 + i * 0.3,
+                    "adj_p_value": 0.001 if i < 3 else 0.05,
+                }
+            )
+
+    results_df = pd.DataFrame(results)
+
+    # Create a mock model instance
+    mod = MockLinearModel(test_adata_minimal, "~condition")
+
+    # This should not raise ValueError: 'IL5' is not in list
+    # even with default figsize (which may cause heatmap to hide labels)
+    fig = mod.plot_multicomparison_fc(results_df, return_fig=True)
+    assert fig is not None
