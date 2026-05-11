@@ -836,7 +836,11 @@ class MethodBase(ABC):
         df = results_df.pivot(index=contrast_col, columns=symbol_col, values=log2fc_col)[var_names]
 
         plt.figure(figsize=figsize)
-        sns.heatmap(df, **heatmap_kwargs, cmap="coolwarm", center=0, cbar_kws={"label": "Log2 fold change"})
+        # Ensure tick labels are shown by default (fixes #755)
+        # Users can override via heatmap_kwargs
+        default_heatmap_kwargs = {"xticklabels": True, "yticklabels": True}
+        default_heatmap_kwargs.update(heatmap_kwargs)
+        sns.heatmap(df, **default_heatmap_kwargs, cmap="coolwarm", center=0, cbar_kws={"label": "Log2 fold change"})
 
         _size = {"< 0.001": marker_size, "< 0.01": math.floor(marker_size / 2), "< 0.1": math.floor(marker_size / 4)}
         x_locs, x_labels = plt.xticks()[0], [label.get_text() for label in plt.xticks()[1]]
