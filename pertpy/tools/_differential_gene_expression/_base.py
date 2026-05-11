@@ -836,15 +836,15 @@ class MethodBase(ABC):
         df = results_df.pivot(index=contrast_col, columns=symbol_col, values=log2fc_col)[var_names]
 
         plt.figure(figsize=figsize)
-        # Ensure tick labels are shown by default (fixes #755)
-        # Users can override via heatmap_kwargs
-        default_heatmap_kwargs = {"xticklabels": True, "yticklabels": True}
-        default_heatmap_kwargs.update(heatmap_kwargs)
-        sns.heatmap(df, **default_heatmap_kwargs, cmap="coolwarm", center=0, cbar_kws={"label": "Log2 fold change"})
+        sns.heatmap(df, **heatmap_kwargs, cmap="coolwarm", center=0, cbar_kws={"label": "Log2 fold change"})
 
         _size = {"< 0.001": marker_size, "< 0.01": math.floor(marker_size / 2), "< 0.1": math.floor(marker_size / 4)}
-        x_locs, x_labels = plt.xticks()[0], [label.get_text() for label in plt.xticks()[1]]
-        y_locs, y_labels = plt.yticks()[0], [label.get_text() for label in plt.yticks()[1]]
+        # Calculate locations directly from DataFrame instead of extracting from rendered plot (fixes #755)
+        # Seaborn places cell centers at 0.5, 1.5, 2.5, etc.
+        x_locs = np.arange(len(df.columns)) + 0.5
+        x_labels = df.columns.tolist()
+        y_locs = np.arange(len(df.index)) + 0.5
+        y_labels = df.index.tolist()
 
         for _i, row in results_df.iterrows():
             if row["significance"] != "n.s.":
