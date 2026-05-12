@@ -127,5 +127,5 @@ def test_plot_multicomparison_fc_many_genes(MockLinearModel, test_adata_minimal)
     assert fig is not None
 
     # Also test with heatmap_kwargs that explicitly hide labels
-    fig = mod.plot_multicomparison_fc(results_df, heatmap_kwargs={"xticklabels": False}, return_fig=True)
+    fig = mod.plot_multicomparison_fc(results_df, xticklabels=False, return_fig=True)
     assert fig is not None
