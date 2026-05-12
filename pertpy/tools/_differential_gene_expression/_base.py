@@ -841,6 +841,7 @@ class MethodBase(ABC):
         _size = {"< 0.001": marker_size, "< 0.01": math.floor(marker_size / 2), "< 0.1": math.floor(marker_size / 4)}
         # Calculate locations directly from DataFrame instead of extracting from rendered plot (fixes #755)
         # Seaborn places cell centers at 0.5, 1.5, 2.5, etc.
+        # NOTE: This assumes a non-clustered heatmap. If using clustermap, coordinates would need reordering.
         x_locs = np.arange(len(df.columns)) + 0.5
         x_labels = df.columns.tolist()
         y_locs = np.arange(len(df.index)) + 0.5
