@@ -2208,7 +2208,9 @@ class CompositionalModel2(ABC):
                 cluster: palette(i % palette.N) for i, cluster in enumerate(data_rna.obs[cluster_key].unique().tolist())
             }
         for _, effect in enumerate(effect_name):
-            data_rna.obs[effect] = [data_coda.varm[effect].loc[f"{c}", "Effect"] for c in data_rna.obs[cluster_key]]
+            effect_df = data_coda.varm[effect]
+            effect_col = "Effect" if "Effect" in effect_df.columns else "Final Parameter"
+            data_rna.obs[effect] = [effect_df.loc[f"{c}", effect_col] for c in data_rna.obs[cluster_key]]
         if kwargs.get("vmin"):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")

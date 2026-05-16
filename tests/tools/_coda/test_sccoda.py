@@ -105,3 +105,30 @@ def test_make_arviz(adata):
     sccoda.run_nuts(mdata)
     arviz_data = sccoda.make_arviz(mdata, num_prior_samples=100)
     assert isinstance(arviz_data, DataTree)
+
+
+def test_plot_effects_umap_sccoda(adata):
+    # Regression test for #780: Sccoda writes effect column as "Final Parameter",
+    # not "Effect" like Tasccoda, so plot_effects_umap must look up either name.
+    adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
+    mdata = sccoda.load(
+        adata_salm,
+        type="cell_level",
+        generate_sample_level=True,
+        cell_type_identifier="cell_label",
+        sample_identifier="batch",
+        covariate_obs=["condition"],
+    )
+    mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Goblet")
+    sccoda.run_nuts(mdata, num_samples=200, num_warmup=50)
+    sc.pp.pca(mdata["rna"])
+    sc.pp.neighbors(mdata["rna"])
+    sc.tl.umap(mdata["rna"])
+    effect = "effect_df_condition[T.Salmonella]"
+    sccoda.plot_effects_umap(
+        mdata,
+        modality_key_2="coda",
+        effect_name=effect,
+        cluster_key="cell_label",
+    )
+    assert effect in mdata["rna"].obs.columns
