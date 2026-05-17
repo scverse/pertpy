@@ -92,16 +92,17 @@ def test_model_cond(test_adata_minimal, MockLinearModel, formula, cond_kwargs, e
         assert actual_contrast.index.tolist() == mod.design.columns.tolist()
 
 
-def test_plot_multicomparison_fc_default_figsize(MockLinearModel, test_adata_minimal):
-    """Test that plot_multicomparison_fc works with default figsize.
+def test_plot_multicomparison_fc_many_genes(MockLinearModel, test_adata_minimal):
+    """Test that plot_multicomparison_fc works even when heatmap hides tick labels.
 
     Regression test for issue #755.
-    When using default figsize, seaborn heatmap may not show xticklabels,
-    causing a ValueError when trying to plot significance markers.
+    When using small figsize or many genes, seaborn heatmap hides xticklabels.
+    The old code extracted labels from the rendered plot, causing ValueError.
+    The fix calculates positions directly from the DataFrame.
     """
-    # Create mock results similar to what compare_groups would return
+    # Create mock results with many genes to force label hiding
     results = []
-    genes = ["GENE1", "GENE2", "GENE3", "IL5", "IL6", "IL10"]
+    genes = [f"GENE{i}" for i in range(50)]  # 50 genes will force label hiding
     contrasts = ["contrast1", "contrast2"]
 
     for contrast in contrasts:
@@ -110,8 +111,8 @@ def test_plot_multicomparison_fc_default_figsize(MockLinearModel, test_adata_min
                 {
                     "contrast": contrast,
                     "variable": gene,
-                    "log_fc": 1.5 + i * 0.3,
-                    "adj_p_value": 0.001 if i < 3 else 0.05,
+                    "log_fc": 1.5 + i * 0.05,
+                    "adj_p_value": 0.001 if i < 10 else 0.05,
                 }
             )
 
@@ -120,7 +121,11 @@ def test_plot_multicomparison_fc_default_figsize(MockLinearModel, test_adata_min
     # Create a mock model instance
     mod = MockLinearModel(test_adata_minimal, "~condition")
 
-    # This should not raise ValueError: 'IL5' is not in list
-    # even with default figsize (which may cause heatmap to hide labels)
-    fig = mod.plot_multicomparison_fc(results_df, return_fig=True)
+    # This should not raise ValueError even with small figsize
+    # that causes seaborn to hide tick labels
+    fig = mod.plot_multicomparison_fc(results_df, figsize=(6, 4), return_fig=True)
+    assert fig is not None
+
+    # Also test with heatmap_kwargs that explicitly hide labels
+    fig = mod.plot_multicomparison_fc(results_df, xticklabels=False, return_fig=True)
     assert fig is not None
