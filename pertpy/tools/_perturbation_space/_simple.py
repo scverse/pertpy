@@ -171,6 +171,9 @@ class PseudobulkSpace(PerturbationSpace):
         if mode in ps_adata.layers:
             ps_adata.X = ps_adata.layers[mode]
 
+        if None in ps_adata.layers:
+            del ps_adata.layers[None]
+
         missing_cols = [col for col in original_obs.columns if col not in ps_adata.obs.columns]
         new_cols_data = {}
 

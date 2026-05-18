@@ -233,11 +233,15 @@ class PerturbationSpace:
         new_perturbation.obs = new_obs
 
         for key, value in data["layers"].items():
-            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            key_name = (
+                key.removesuffix("_control_diff") if isinstance(key, str) and key.endswith("_control_diff") else key
+            )
             new_perturbation.layers[key_name] = value
 
         for key, value in data["embeddings"].items():
-            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            key_name = (
+                key.removesuffix("_control_diff") if isinstance(key, str) and key.endswith("_control_diff") else key
+            )
             new_perturbation.obsm[key_name] = value
 
         new_perturbation.obs[target_col] = new_perturbation.obs_names.astype("category")
@@ -336,11 +340,15 @@ class PerturbationSpace:
         new_perturbation.obs = new_obs
 
         for key, value in data["layers"].items():
-            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            key_name = (
+                key.removesuffix("_control_diff") if isinstance(key, str) and key.endswith("_control_diff") else key
+            )
             new_perturbation.layers[key_name] = value
 
         for key, value in data["embeddings"].items():
-            key_name = key.removesuffix("_control_diff") if key.endswith("_control_diff") else key
+            key_name = (
+                key.removesuffix("_control_diff") if isinstance(key, str) and key.endswith("_control_diff") else key
+            )
             new_perturbation.obsm[key_name] = value
 
         new_perturbation.obs[target_col] = new_perturbation.obs_names.astype("category")
