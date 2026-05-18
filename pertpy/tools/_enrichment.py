@@ -187,6 +187,7 @@ class Enrichment:
             warnings.warn(
                 "`pvals_adj_thresh` is deprecated and will be removed in a future release; use `padj_threshold`",
                 DeprecationWarning,
+                stacklevel=2,
             )
             padj_threshold = kwargs.pop("pvals_adj_thresh")
         if kwargs:
