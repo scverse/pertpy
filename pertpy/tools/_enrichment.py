@@ -13,6 +13,7 @@ from scanpy.plotting import DotPlot
 from scanpy.tools._score_genes import _sparse_nanmean
 from scipy.sparse import issparse
 from scipy.stats import hypergeom
+from scverse_misc import Deprecation, deprecated_arg
 from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -147,6 +148,12 @@ class Enrichment:
             adata.uns[f"{key_added}_genes"]["var"].loc[drug, "genes"] = "|".join(adata.var_names[targets[drug]])
             adata.uns[f"{key_added}_all_genes"]["var"].loc[drug, "all_genes"] = "|".join(full_targets[drug])
 
+    @deprecated_arg(
+        "pvals_adj_thresh",
+        Deprecation(
+            "1.0.6", "`pvals_adj_thresh` is deprecated and will be removed in a future release. Use `padj_threshold`."
+        ),
+    )
     def hypergeometric(
         self,
         adata: AnnData,
@@ -176,18 +183,13 @@ class Enrichment:
                        Can be `up`, `down`, or `both` (for no selection).
             corr_method: Which FDR correction to apply to the p-values of the hypergeometric test.
                          Can be `benjamini-hochberg` or `bonferroni`.
+            kwargs: Used only for the deprecated `pvals_adj_thresh` argument.
 
         Returns:
             Dictionary with clusters for which the original object markers were computed as the keys,
             and data frames of test results sorted on q-value as the items.
         """
         if "pvals_adj_thresh" in kwargs:
-            import warnings
-
-            warnings.warn(
-                "`pvals_adj_thresh` is deprecated and will be removed in a future release; use `padj_threshold`",
-                DeprecationWarning,
-            )
             padj_threshold = kwargs.pop("pvals_adj_thresh")
         if kwargs:
             raise TypeError(f"hypergeometric() got unexpected keyword arguments {list(kwargs.keys())}")
