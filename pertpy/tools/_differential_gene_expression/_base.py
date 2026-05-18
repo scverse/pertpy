@@ -675,6 +675,8 @@ class MethodBase(ABC):
         *,
         var_names: Sequence[str] = None,
         n_top_vars: int = 15,
+        padj_threshold: float = 0.01,
+        padj_threshold_col: str = "adj_p_value",
         log2fc_col: str = "log_fc",
         symbol_col: str = "variable",
         y_label: str = "Log2 fold change",
@@ -688,6 +690,8 @@ class MethodBase(ABC):
             results_df: DataFrame with results from DE analysis.
             var_names: Variables to plot. If None, the top n_top_vars variables based on the log2 fold change are plotted.
             n_top_vars: Number of top variables to plot. The top and bottom n_top_vars variables are plotted, respectively.
+            padj_threshold: Only variables with adjusted p-values below this threshold are included in the plot.
+            padj_threshold_col: Column name of adjusted p-values,
             log2fc_col: Column name of log2 Fold-Change values.
             symbol_col: Column name of gene IDs.
             y_label: Label for the y-axis.
@@ -729,6 +733,7 @@ class MethodBase(ABC):
             assert len(var_names) == 2 * n_top_vars
 
         df = results_df[results_df[symbol_col].isin(var_names)]
+        df = df[df[padj_threshold_col] < padj_threshold]
         df.sort_values(log2fc_col, ascending=False, inplace=True)
 
         plt.figure(figsize=figsize)

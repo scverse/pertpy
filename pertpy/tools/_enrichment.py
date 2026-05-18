@@ -153,9 +153,10 @@ class Enrichment:
         targets: dict[str, list[str] | dict[str, list[str]]] | None = None,
         nested: bool = False,
         categories: str | list[str] | None = None,
-        pvals_adj_thresh: float = 0.05,
+        padj_threshold: float = 0.05,
         direction: str = "both",
         corr_method: Literal["benjamini-hochberg", "bonferroni"] = "benjamini-hochberg",
+        **kwargs,
     ):
         """Perform a hypergeometric test to assess the overrepresentation of gene group members.
 
@@ -170,7 +171,7 @@ class Enrichment:
             nested: Whether `targets` is a dictionary of dictionaries with group categories as keys.
             categories: If `targets=None` or `nested=True`, this argument can be used to subset the gene groups to one or more categories (keys of the original dictionary).
                         In case of the ChEMBL drug targets, these are ATC level 1/level 2 category codes.
-            pvals_adj_thresh: The `pvals_adj` cutoff to use on the `sc.tl.rank_genes_groups()` output to identify markers.
+            padj_threshold: The `pvals_adj` cutoff to use on the `sc.tl.rank_genes_groups()` output to identify markers.
             direction: Whether to seek out up/down-regulated genes for the groups, based on the values from `scores`.
                        Can be `up`, `down`, or `both` (for no selection).
             corr_method: Which FDR correction to apply to the p-values of the hypergeometric test.
@@ -180,6 +181,17 @@ class Enrichment:
             Dictionary with clusters for which the original object markers were computed as the keys,
             and data frames of test results sorted on q-value as the items.
         """
+        if "pvals_adj_thresh" in kwargs:
+            import warnings
+
+            warnings.warn(
+                "`pvals_adj_thresh` is deprecated and will be removed in a future release; use `padj_threshold`",
+                DeprecationWarning,
+            )
+            padj_threshold = kwargs.pop("pvals_adj_thresh")
+        if kwargs:
+            raise TypeError(f"hypergeometric() got unexpected keyword arguments {list(kwargs.keys())}")
+
         universe = set(adata.var_names)
         targets = _prepare_targets(targets=targets, nested=nested, categories=categories)  # type: ignore
         for group in targets:
@@ -201,7 +213,7 @@ class Enrichment:
                     "pvals_adj",
                 ],
             )
-            mask = adata.uns["rank_genes_groups"]["pvals_adj"][cluster] < pvals_adj_thresh
+            mask = adata.uns["rank_genes_groups"]["pvals_adj"][cluster] < padj_threshold
             if direction == "up":
                 mask = mask & (adata.uns["rank_genes_groups"]["scores"][cluster] > 0)
             elif direction == "down":
