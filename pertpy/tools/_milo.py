@@ -678,7 +678,7 @@ class Milo:
         )
     )
     def add_covariate_to_nhoods_var(self, mdata: MuData, new_covariates: list[str], feature_key: str | None = "rna"):
-        """Deprecated alias of :meth:`add_covariate_to_nhoods_obs`."""
+        """Deprecated alias of :meth:`pertpy.tools.Milo.add_covariate_to_nhoods_obs`."""
         return self.add_covariate_to_nhoods_obs(mdata, new_covariates, feature_key=feature_key)
 
     def build_nhood_graph(self, mdata: MuData, basis: str = "X_umap", feature_key: str | None = "rna"):
