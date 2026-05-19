@@ -1,9 +1,12 @@
+import logging
 import tempfile
 from pathlib import Path
 from zipfile import ZipFile
 
 import pooch
 from rich.progress import Progress, TaskID
+
+pooch.get_logger().setLevel(logging.WARNING)
 
 
 class _RichProgress:
