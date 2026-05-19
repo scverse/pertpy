@@ -672,7 +672,11 @@ class Milo:
             raise
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
 
-    @deprecated(Deprecation("1.0.7", "Use `add_covariate_to_nhoods_obs` instead — the destination is `mdata['milo'].obs`, not `.var`."))
+    @deprecated(
+        Deprecation(
+            "1.0.7", "Use `add_covariate_to_nhoods_obs` instead — the destination is `mdata['milo'].obs`, not `.var`."
+        )
+    )
     def add_covariate_to_nhoods_var(self, mdata: MuData, new_covariates: list[str], feature_key: str | None = "rna"):
         """Deprecated alias of :meth:`add_covariate_to_nhoods_obs`."""
         return self.add_covariate_to_nhoods_obs(mdata, new_covariates, feature_key=feature_key)
