@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import warnings
-
+import anndata as ad
 import numpy as np
 
 
@@ -83,9 +82,6 @@ def balancer(
         index_all.append(index_cls_r)
 
     indices = np.concatenate(index_all)
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="Observation names are not unique")
-        balanced_data = adata[indices].copy()
-    balanced_data.obs_names_make_unique()
+    balanced_data = ad.concat([adata[i : i + 1] for i in indices], index_unique="-")
 
     return balanced_data
