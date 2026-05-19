@@ -66,7 +66,8 @@ dependencies = [
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
     "arviz>=1.0.0",
-    "pooch"
+    "pooch",
+    "scverse-misc"
 ]
 
 [project.optional-dependencies]
@@ -92,7 +93,7 @@ dev = [
 ]
 doc = [
     "docutils>=0.8",
-    "sphinx>=8.1,<9.0",  # https://github.com/vidartf/nbsphinx-link/pull/26
+    "sphinx>=8.1",
     "scanpydoc",
     "sphinx-book-theme",
     "myst-nb",
@@ -109,7 +110,6 @@ doc = [
     "sphinxext-opengraph",
     "pygments",
     "nbsphinx",
-    "nbsphinx-link",
     "ipykernel",
     "ipython",
 ]

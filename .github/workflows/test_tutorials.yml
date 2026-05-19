@@ -72,20 +72,14 @@ jobs:
               uses: r-lib/actions/setup-r@v2
               with:
                   r-version: "4.5.3"
-
-            - name: Cache R packages
-              id: r-cache
-              uses: actions/cache@v3
-              with:
-                path: ${{ env.R_LIBS_USER }}
-                key: ${{ runner.os }}-r-${{ hashFiles('**/pertpy/tools/_milo.py') }}
-                restore-keys: ${{ runner.os }}-r-
+                  use-public-rspm: true
 
             - name: Install R dependencies
-              if: steps.r-cache.outputs.cache-hit != 'true'
-              run: |
-                mkdir -p ${{ env.R_LIBS_USER }}
-                Rscript --vanilla -e "install.packages(c('BiocManager', 'statmod'), repos='https://cran.r-project.org'); BiocManager::install('edgeR', lib='${{ env.R_LIBS_USER }}')"
+              uses: r-lib/actions/setup-r-dependencies@v2
+              with:
+                packages: |
+                  any::statmod
+                  bioc::edgeR
 
             - name: Install uv
               uses: astral-sh/setup-uv@v7
