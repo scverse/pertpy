@@ -168,11 +168,11 @@ class PseudobulkSpace(PerturbationSpace):
             adata, by=[target_col] if groups_col is None else [target_col, groups_col], func=mode, layer=layer_key
         )
 
-        if mode in ps_adata.layers:
-            ps_adata.X = ps_adata.layers[mode]
-
         if None in ps_adata.layers:
             del ps_adata.layers[None]
+
+        if mode in ps_adata.layers:
+            ps_adata.X = ps_adata.layers[mode]
 
         missing_cols = [col for col in original_obs.columns if col not in ps_adata.obs.columns]
         new_cols_data = {}
