@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from importlib.util import find_spec
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.core.api import DataFrame
@@ -90,6 +91,14 @@ def test_model_cond(test_adata_minimal, MockLinearModel, formula, cond_kwargs, e
         actual_contrast = mod.cond(**cond_kwargs)
         assert actual_contrast.tolist() == expected_contrast
         assert actual_contrast.index.tolist() == mod.design.columns.tolist()
+
+
+def test_test_contrasts_rejects_zero_contrast(MockLinearModel, test_adata_minimal):
+    mod = MockLinearModel(test_adata_minimal, "~ condition")
+    with pytest.raises(ValueError, match="null space of the design matrix"):
+        mod.test_contrasts(np.zeros(2))
+    with pytest.raises(ValueError, match="'interaction'"):
+        mod.test_contrasts({"interaction": np.zeros(2)})
 
 
 def test_plot_multicomparison_fc_many_genes(MockLinearModel, test_adata_minimal):
