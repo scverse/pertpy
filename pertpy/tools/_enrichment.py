@@ -150,9 +150,7 @@ class Enrichment:
 
     @deprecated_arg(
         "pvals_adj_thresh",
-        Deprecation(
-            "1.0.6", "`pvals_adj_thresh` is deprecated and will be removed in a future release. Use `padj_threshold`."
-        ),
+        Deprecation("1.0.6", "Use `padj_threshold`."),
     )
     def hypergeometric(
         self,
@@ -161,9 +159,9 @@ class Enrichment:
         nested: bool = False,
         categories: str | list[str] | None = None,
         padj_threshold: float = 0.05,
+        pvals_adj_thresh: float | None = None,
         direction: str = "both",
         corr_method: Literal["benjamini-hochberg", "bonferroni"] = "benjamini-hochberg",
-        **kwargs,
     ):
         """Perform a hypergeometric test to assess the overrepresentation of gene group members.
 
@@ -183,16 +181,14 @@ class Enrichment:
                        Can be `up`, `down`, or `both` (for no selection).
             corr_method: Which FDR correction to apply to the p-values of the hypergeometric test.
                          Can be `benjamini-hochberg` or `bonferroni`.
-            kwargs: Used only for the deprecated `pvals_adj_thresh` argument.
+            pvals_adj_thresh: Deprecated and will be removed in a future release. Use `padj_threshold`.
 
         Returns:
             Dictionary with clusters for which the original object markers were computed as the keys,
             and data frames of test results sorted on q-value as the items.
         """
-        if "pvals_adj_thresh" in kwargs:
-            padj_threshold = kwargs.pop("pvals_adj_thresh")
-        if kwargs:
-            raise TypeError(f"hypergeometric() got unexpected keyword arguments {list(kwargs.keys())}")
+        if pvals_adj_thresh is not None:
+            padj_threshold = pvals_adj_thresh
 
         universe = set(adata.var_names)
         targets = _prepare_targets(targets=targets, nested=nested, categories=categories)  # type: ignore
