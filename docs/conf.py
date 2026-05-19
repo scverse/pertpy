@@ -6,8 +6,6 @@ from datetime import datetime
 from importlib.metadata import metadata
 from pathlib import Path
 
-from sphinx.domains.changeset import VersionChange
-
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
 
@@ -31,7 +29,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "nbsphinx",
-    "nbsphinx_link",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",  # needs to be after napoleon
@@ -173,15 +170,3 @@ nbsphinx_thumbnails = {
     "tutorials/notebooks/mcfarland_use_case": "_static/tutorials/mcfarland.png",
     "tutorials/notebooks/zhang_use_case": "_static/tutorials/zhang.png",
 }
-
-
-class _VersionDeprecated(VersionChange):
-    """Render ``scverse_misc``'s ``.. version-deprecated::`` blocks like Sphinx's built-in ``.. deprecated::``."""
-
-    def run(self):
-        self.name = "deprecated"
-        return super().run()
-
-
-def setup(app):
-    app.add_directive("version-deprecated", _VersionDeprecated)
