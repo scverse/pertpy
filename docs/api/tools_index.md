@@ -23,6 +23,32 @@ Pertpy enables differential gene expression tests through a common interface tha
     tools.Statsmodels
 ```
 
+Example implementation:
+
+```python
+import pertpy as pt
+
+adata = pt.dt.zhang_2021()
+adata.layers["counts"] = adata.X.copy()
+
+ps = pt.tl.PseudobulkSpace()
+pdata = ps.compute(
+    adata,
+    target_col="Patient",
+    groups_col="Cluster",
+    layer_key="counts",
+    mode="sum",
+)
+
+edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+edgr.fit()
+res_df = edgr.test_contrasts(
+    edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+)
+```
+
+See [differential gene expression tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/differential_gene_expression.html).
+
 ## Pooled CRISPR screens
 
 ### Perturbation assignment - Mixscape
@@ -259,6 +285,10 @@ For more details, we refer to [scPerturb: harmonized single-cell perturbation da
     tools.DistanceTest
 ```
 
+`Distance` supports a broad range of metrics including `edistance`, `mmd`, `wasserstein`,
+`sym_kldiv`, `mahalanobis`, `mean_var_distribution`, `classifier_proba`, `pearson_distance`,
+and more. See {class}`~pertpy.tools.Distance` for the full list.
+
 Example implementation:
 
 ```python
@@ -270,10 +300,8 @@ adata = pt.dt.distance_example()
 distance = pt.tl.Distance(metric="edistance", obsm_key="X_pca")
 pairwise_edistance = distance.pairwise(adata, groupby="perturbation")
 
-# E-test (Permutation test using E-distance)
-etest = pt.tl.PermutationTest(
-    metric="edistance", obsm_key="X_pca", correction="holm-sidak"
-)
+# E-test (permutation test using E-distance)
+etest = pt.tl.DistanceTest("edistance", n_perms=1000, obsm_key="X_pca")
 tab = etest(adata, groupby="perturbation", contrast="control")
 ```
 
