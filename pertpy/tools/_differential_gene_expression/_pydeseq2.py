@@ -63,18 +63,24 @@ class PyDESeq2(LinearModelBase):
         dds.deseq2()
         self.dds = dds
 
-    def _test_single_contrast(self, contrast, alpha=0.05, **kwargs) -> pd.DataFrame:
+    def _test_single_contrast(self, contrast, alpha=0.05, *, lfc_shrink=None, **kwargs) -> pd.DataFrame:
         """Conduct a specific test and returns a Pandas DataFrame.
 
         Args:
             contrast: list of three strings of the form `["variable", "tested level", "reference level"]`.
             alpha: p value threshold used for controlling fdr with independent hypothesis weighting
+            lfc_shrink: If given, apply apeGLM LFC shrinkage to the named coefficient (must be a column
+                of the fitted `DeseqStats.LFC` matrix). Shrinkage is opt-in because apeGLM operates on
+                individual coefficients rather than arbitrary contrasts, so the right coefficient depends
+                on the design and cannot be inferred from a numerical contrast vector.
             **kwargs: extra arguments to pass to DeseqStats()
         """
         contrast = np.array(contrast)
         stat_res = DeseqStats(self.dds, contrast=contrast, alpha=alpha, **kwargs)
         # Calling `.summary()` is required to fill the `results_df` data frame
         stat_res.summary()
+        if lfc_shrink is not None:
+            stat_res.lfc_shrink(coeff=lfc_shrink)
         res_df = (
             pd.DataFrame(stat_res.results_df)
             .rename(columns={"pvalue": "p_value", "padj": "adj_p_value", "log2FoldChange": "log_fc"})
