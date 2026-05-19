@@ -243,10 +243,11 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 batch_list[i] = temp
                 batch_ind[i] = temp_ind
             max_batch_ann = batch_list[max_batch_ind]
+            max_batch_mean = np.average(max_batch_ann.X, axis=0)
             for study in batch_list:
-                delta = np.average(max_batch_ann.X, axis=0) - np.average(batch_list[study].X, axis=0)
+                batch_list[study] = batch_list[study].copy()
+                delta = max_batch_mean - np.average(batch_list[study].X, axis=0)
                 batch_list[study].X = delta + batch_list[study].X
-                temp_cell[batch_ind[study]].X = batch_list[study].X
             shared_ct.append(temp_cell)
 
         all_shared_ann = ad.concat(shared_ct, label="concat_batch", index_unique=None)
@@ -258,7 +259,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 obs=all_shared_ann.obs,
             )
             corrected.var_names = adata.var_names.tolist()
-            corrected = corrected[adata.obs_names]
+            corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names
@@ -281,7 +282,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 obs=all_corrected_data.obs,
             )
             corrected.var_names = adata.var_names.tolist()
-            corrected = corrected[adata.obs_names]
+            corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names
