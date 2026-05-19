@@ -677,6 +677,8 @@ class MethodBase(ABC):
         n_top_vars: int = 15,
         log2fc_col: str = "log_fc",
         symbol_col: str = "variable",
+        adj_p_col: str = "adj_p_value",
+        sig_threshold: float | None = None,
         y_label: str = "Log2 fold change",
         figsize: tuple[int, int] = (10, 5),
         return_fig: bool = False,
@@ -690,6 +692,9 @@ class MethodBase(ABC):
             n_top_vars: Number of top variables to plot. The top and bottom n_top_vars variables are plotted, respectively.
             log2fc_col: Column name of log2 Fold-Change values.
             symbol_col: Column name of gene IDs.
+            adj_p_col: Column name of adjusted p-values. Only used when `sig_threshold` is set.
+            sig_threshold: If set, restrict the top-N selection to rows with `adj_p_col` below this threshold.
+                Has no effect when `var_names` is provided.
             y_label: Label for the y-axis.
             figsize: Size of the figure.
             {common_plot_args}
@@ -724,9 +729,16 @@ class MethodBase(ABC):
             .. image:: /_static/docstring_previews/de_fold_change.png
         """
         if var_names is None:
-            var_names = results_df.sort_values(log2fc_col, ascending=False).head(n_top_vars)[symbol_col].tolist()
-            var_names += results_df.sort_values(log2fc_col, ascending=True).head(n_top_vars)[symbol_col].tolist()
-            assert len(var_names) == 2 * n_top_vars
+            candidates = results_df
+            if sig_threshold is not None:
+                if adj_p_col not in results_df.columns:
+                    raise KeyError(
+                        f"sig_threshold is set but adj_p_col {adj_p_col!r} is not in results_df.columns. "
+                        "Pass adj_p_col to point at the right column."
+                    )
+                candidates = candidates[candidates[adj_p_col] < sig_threshold]
+            var_names = candidates.sort_values(log2fc_col, ascending=False).head(n_top_vars)[symbol_col].tolist()
+            var_names += candidates.sort_values(log2fc_col, ascending=True).head(n_top_vars)[symbol_col].tolist()
 
         df = results_df[results_df[symbol_col].isin(var_names)]
         df.sort_values(log2fc_col, ascending=False, inplace=True)
