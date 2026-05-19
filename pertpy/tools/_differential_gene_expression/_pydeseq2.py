@@ -69,10 +69,8 @@ class PyDESeq2(LinearModelBase):
         Args:
             contrast: list of three strings of the form `["variable", "tested level", "reference level"]`.
             alpha: p value threshold used for controlling fdr with independent hypothesis weighting
-            lfc_shrink: If given, apply apeGLM LFC shrinkage to the named coefficient (must be a column
-                of the fitted `DeseqStats.LFC` matrix). Shrinkage is opt-in because apeGLM operates on
-                individual coefficients rather than arbitrary contrasts, so the right coefficient depends
-                on the design and cannot be inferred from a numerical contrast vector.
+            lfc_shrink: If given, apply apeGLM LFC shrinkage to the named coefficient (must be a column of the fitted `DeseqStats.LFC` matrix).
+                Opt-in because apeGLM shrinks individual coefficients rather than arbitrary contrasts, so the right coefficient depends on the design and cannot be inferred from a numerical contrast vector.
             **kwargs: extra arguments to pass to DeseqStats()
         """
         contrast = np.array(contrast)
