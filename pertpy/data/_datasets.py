@@ -1601,17 +1601,23 @@ def hagai_2018() -> AnnData:  # pragma: no cover
     return adata
 
 
-def human_cytokine_dict(exclude_well_biased_genes=True) -> pd.DataFrame:
-    r"""Human Cytokine Dictionary curated from PBMC allows you to infer differential cytokine activity.
+def human_cytokine_dict(exclude_well_biased_genes: bool = True) -> pd.DataFrame:
+    """Human Cytokine Dictionary curated from PBMC allows you to infer differential cytokine activity.
 
-    The Human Cytokine Dictionary was created from single-cell RNA-seq of 9,697,974 human peripheral blood mononuclear cells (PBMC) from 12 donors stimulated in vitro with 87 different cytokines. The object is a dataframe representing cytokine activity as differentially expressed genes after cytokine perturbation.
+    The Human Cytokine Dictionary was created from single-cell RNA-seq of 9,697,974 human peripheral blood mononuclear cells (PBMC)
+    from 12 donors stimulated in vitro with 87 different cytokines.
+    Genes with a mean-to-stddev-ratio above 1 across all 6 wells for >10 cytokines in a given cell type and for >5 cell types are "well-biased".
+
+    Args:
+        exclude_well_biased_genes: Whether to exclude well-biased genes from the returned dataframe.
 
     References:
-        Oesinghaus, Lukas and Becker, S{\"o}ren and Vornholz, Larsen
-        .... bla bla coming
+        Oesinghaus, L., Becker, S., Vornholz, L., Papalexi, E. et al.
+        A single-cell cytokine dictionary of human peripheral blood.
+        bioRxiv (2025). https://doi.org/10.64898/2025.12.12.693897
 
     Returns:
-        Pandas DataFrame
+        :class:`~ pandas.DataFrame` object of differentially expressed genes after cytokine perturbation.
 
     """
     output_file_name = "human_cytokine_dict.csv"
@@ -1633,36 +1639,3 @@ def human_cytokine_dict(exclude_well_biased_genes=True) -> pd.DataFrame:
         cytokine_dict = cytokine_dict.loc[~cytokine_dict.well_biased]
 
     return cytokine_dict
-
-
-def MS_CSF_tutorial_data(save_dir="", force_download=False):
-    """Multiple Sklerosis Dataset (blood and cerebrospinal fluid) for hucira tutorial.
-
-    Download and load the MS dataset automatically.
-    Xu, Chenling (2021). MS_CSF.h5ad. figshare. Dataset. https://doi.org/10.6084/m9.figshare.14356661.v1
-
-    Parameters
-    ----------
-    save_dir : str
-        Directory where the file will be saved.
-    force_download : bool
-        Allows user to force a fresh download from CellxGene
-
-    Returns:
-    -------
-    adata : AnnData
-        MS adata object.
-    """
-    output_file_name = "MS_CSF.h5ad"
-    output_file_path = settings.datasetdir / output_file_name
-
-    if force_download or not output_file_path.exists():
-        _download(
-            url="https://figshare.com/ndownloader/files/27405182",
-            output_file_name=output_file_name,
-            output_path=settings.datasetdir,
-            is_zip=False,
-        )
-
-    adata = sc.read_h5ad(output_file_path)
-    return adata
