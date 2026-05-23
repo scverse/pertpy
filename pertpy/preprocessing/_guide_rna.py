@@ -253,10 +253,7 @@ class GuideAssignment:
             raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
 
         X = adata.X
-        if issparse(X):
-            X_dense = X.toarray()
-        else:
-            X_dense = np.asarray(X)
+        X_dense = X.toarray() if issparse(X) else np.asarray(X)
         X_dense = np.ascontiguousarray(X_dense, dtype=np.float32)
 
         if np.any(X_dense < 0):
