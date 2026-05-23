@@ -107,7 +107,11 @@ def test_grna_threshold_assignment(request, adata_fixture):
 
     assert output_layer in adata.layers
 
-    result_matrix = adata.layers[output_layer].toarray() if sparse.issparse(adata.layers[output_layer]) else adata.layers[output_layer]
+    result_matrix = (
+        adata.layers[output_layer].toarray()
+        if sparse.issparse(adata.layers[output_layer])
+        else adata.layers[output_layer]
+    )
     original_matrix = adata.X.toarray() if sparse.issparse(adata.X) else adata.X
     assert np.all((original_matrix >= threshold) == (result_matrix == 1))
 
@@ -161,9 +165,7 @@ def test_grna_mixture_model_dense_matches_sparse(synthetic_dense_adata, syntheti
     pt.pp.GuideAssignment().assign_mixture_model(adata_sparse)
 
     assert list(adata_dense.obs["assigned_guide"]) == list(adata_sparse.obs["assigned_guide"])
-    np.testing.assert_array_equal(
-        adata_dense.var["threshold"].to_numpy(), adata_sparse.var["threshold"].to_numpy()
-    )
+    np.testing.assert_array_equal(adata_dense.var["threshold"].to_numpy(), adata_sparse.var["threshold"].to_numpy())
     for col in ("poisson_rate", "gaussian_mean", "gaussian_std", "mix_probs_0", "mix_probs_1"):
         np.testing.assert_allclose(
             adata_dense.var[col].to_numpy(),
@@ -247,10 +249,7 @@ def test_grna_mixture_model_skips_low_count_guides(request, adata_fixture):
 @pytest.mark.parametrize("sparsify", [False, True])
 def test_grna_mixture_model_rejects_negative_values(sparsify):
     X = np.array([[1.0, 2.0], [-0.5, 3.0]], dtype=np.float32)
-    if sparsify:
-        X_in = sparse.csr_matrix(X)
-    else:
-        X_in = X
+    X_in = sparse.csr_matrix(X) if sparsify else X
     adata = ad.AnnData(
         X_in,
         obs=pd.DataFrame(index=["c0", "c1"]),
@@ -281,10 +280,7 @@ def test_grna_mixture_model_only_return_results(request, adata_fixture):
 def test_grna_mixture_model_matrix_overloads_match_anndata(matrix_type, synthetic_dense_adata):
     """Calling the matrix overloads must yield the same per-cell strings as the AnnData overload."""
     adata, _ = synthetic_dense_adata
-    if matrix_type == "numpy":
-        X = np.asarray(adata.X)
-    else:
-        X = sparse.csr_matrix(adata.X)
+    X = np.asarray(adata.X) if matrix_type == "numpy" else sparse.csr_matrix(adata.X)
     out = pt.pp.GuideAssignment().assign_mixture_model(X, var=adata.var)
     assert isinstance(out, np.ndarray)
     assert out.shape == (adata.n_obs,)

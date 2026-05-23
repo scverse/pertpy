@@ -496,10 +496,9 @@ class GuideAssignment:
                 sel = data_col >= thr
                 if sel.any():
                     binary[X_csc.indices[start:end][sel], g] = 1
-        else:
-            if valid_idx.size:
-                valid_thr = thresholds[valid_idx]
-                binary[:, valid_idx] = (X_dense[:, valid_idx] >= valid_thr[None, :]).astype(np.int8)
+        elif valid_idx.size:
+            valid_thr = thresholds[valid_idx]
+            binary[:, valid_idx] = (X_dense[:, valid_idx] >= valid_thr[None, :]).astype(np.int8)
 
         return {
             "binary": binary,
