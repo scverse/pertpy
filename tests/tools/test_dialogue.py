@@ -464,3 +464,140 @@ def test_fit_programs_raises_on_too_few_shared_samples(dialogue_adata):
             n_permutations=2,
             random_state=1234,
         ).fit_programs(a)
+
+
+# ---------------------------------------------------------------------------
+# Full pipeline: run / test_celltype_pairs / refine_scores / aux methods
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def run_dialogue(dialogue_adata):
+    """Module-scoped: run the full pipeline once and share the result across tests."""
+    adata = dialogue_adata.copy()
+    pt.tl.Dialogue(
+        celltype_key="cell.subtypes",
+        sample_key="sample",
+        cell_quality_key="cellQ",
+        n_programs=3,
+        n_components=30,
+        n_genes_per_signature=30,
+        n_permutations=20,
+        random_state=1234,
+    ).run(adata)
+    return adata
+
+
+def test_run_populates_obsm_and_obs(run_dialogue):
+    state = run_dialogue.uns["dialogue"]
+    assert "X_dialogue" in run_dialogue.obsm
+    assert "X_dialogue_cca" in run_dialogue.obsm
+    assert run_dialogue.obsm["X_dialogue"].shape[1] == 3
+    assert not np.isnan(run_dialogue.obsm["X_dialogue"]).any()
+    for i in range(3):
+        col = f"mcp_{i}"
+        assert col in run_dialogue.obs.columns
+        np.testing.assert_allclose(run_dialogue.obs[col].to_numpy(), run_dialogue.obsm["X_dialogue"][:, i])
+    assert set(state["gene_pvalues"].keys()) == set(state["cell_type_order"])
+    assert set(state["pair_results"].keys()) >= {"CD8+ IELs_CD8+ LP", "Macrophages_TA2"}
+
+
+def test_run_program_signatures_have_content(run_dialogue):
+    """The cross-cell-type-shared programs (MCP1, MCP3) should produce non-empty refined signatures."""
+    sigs = run_dialogue.uns["dialogue"]["program_gene_signatures"]
+    for program in ("MCP1", "MCP3"):
+        for ct, info in sigs[program].items():
+            assert len(info["up"]) + len(info["down"]) > 0, f"{program}/{ct} signature is empty"
+
+
+def test_run_gene_pvalues_have_fisher_combined(run_dialogue):
+    """`gene_pvalues[ct]` rows tagged 'up'==True must have finite Fisher-combined p_up."""
+    for df in run_dialogue.uns["dialogue"]["gene_pvalues"].values():
+        if df.empty:
+            continue
+        up_rows = df[df["up"].astype(bool)]
+        assert (up_rows["p_up"] >= 0).all() and (up_rows["p_up"] <= 1).all()
+
+
+@pytest.mark.skipif(not REFERENCE_DIR.exists(), reason="R reference fixture not available")
+def test_refined_scores_correlate_with_R(run_dialogue):
+    """The Python refined per-cell scores should agree with R's `R$scores` to within sign+rtol per program."""
+    py_scores = run_dialogue.obsm["X_dialogue"]
+    state = run_dialogue.uns["dialogue"]
+    for ct in state["cell_type_order"]:
+        mask = (run_dialogue.obs["cell.subtypes"] == ct).to_numpy()
+        py = py_scores[mask]
+        r_path = REFERENCE_DIR / f"final_scores_{_safe_name(ct)}.parquet"
+        if not r_path.exists():
+            continue
+        r_df = pd.read_parquet(r_path)
+        # R columns prefixed MCP1, MCP2, MCP3 -> match first three columns
+        program_cols = [c for c in r_df.columns if c.startswith("MCP")][:3]
+        r_df[program_cols].to_numpy(dtype=np.float64)
+        # Align rows: r_df indexed by cell names, run_dialogue.obs is too
+        cell_names = run_dialogue.obs_names[mask].astype(str)
+        aligned = r_df.loc[cell_names, program_cols].to_numpy(dtype=np.float64)
+        for p in range(py.shape[1]):
+            x = py[:, p]
+            y = aligned[:, p]
+            valid = np.isfinite(x) & np.isfinite(y)
+            if valid.sum() < 10:
+                continue
+            r = abs(float(np.corrcoef(x[valid], y[valid])[0, 1]))
+            assert r > 0.7, f"{ct}/MCP{p + 1}: corr with R refined scores {r:.3f} < 0.7"
+
+
+def test_dense_matches_sparse_full_pipeline(dialogue_adata):
+    """Identical state for dense vs sparse adata.X through the full pipeline."""
+    common_kwargs = {
+        "celltype_key": "cell.subtypes",
+        "sample_key": "sample",
+        "cell_quality_key": "cellQ",
+        "n_programs": 3,
+        "n_components": 30,
+        "n_genes_per_signature": 20,
+        "n_permutations": 10,
+        "random_state": 1234,
+    }
+    dense = dialogue_adata.copy()
+    sparse_ad = dialogue_adata.copy()
+    sparse_ad.X = sparse.csr_matrix(sparse_ad.X)
+    pt.tl.Dialogue(**common_kwargs).run(dense)
+    pt.tl.Dialogue(**common_kwargs).run(sparse_ad)
+    np.testing.assert_allclose(dense.obsm["X_dialogue"], sparse_ad.obsm["X_dialogue"], atol=1e-7)
+    np.testing.assert_allclose(dense.obsm["X_dialogue_cca"], sparse_ad.obsm["X_dialogue_cca"], atol=1e-7)
+    for ct in dense.uns["dialogue"]["cell_type_order"]:
+        np.testing.assert_allclose(
+            dense.uns["dialogue"]["weights"][ct],
+            sparse_ad.uns["dialogue"]["weights"][ct],
+            atol=1e-7,
+        )
+
+
+def test_get_program_genes(run_dialogue):
+    dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+    per_ct = dl.get_program_genes(run_dialogue, program="MCP1", celltype="CD8+ IELs")
+    assert "up" in per_ct and "down" in per_ct
+    intersected = dl.get_program_genes(run_dialogue, program="MCP1")
+    assert "up" in intersected and "down" in intersected
+
+
+def test_find_extreme_score_genes_returns_rank_tables(run_dialogue):
+    dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+    res = dl.find_extreme_score_genes(run_dialogue, program="MCP1", fraction=0.1)
+    assert isinstance(res, dict)
+    assert any(isinstance(df, pd.DataFrame) and not df.empty for df in res.values())
+
+
+def test_test_phenotype_association_returns_zscore_table(run_dialogue):
+    adata = run_dialogue.copy()
+    dl = pt.tl.Dialogue(
+        celltype_key="cell.subtypes",
+        sample_key="sample",
+        cell_quality_key="cellQ",
+        n_programs=3,
+    )
+    z = dl.test_phenotype_association(adata, condition_key="path_str")
+    assert isinstance(z, pd.DataFrame)
+    assert z.shape == (len(adata.uns["dialogue"]["cell_type_order"]), 3)
+    assert "phenotype_pvalues" in adata.uns["dialogue"]
