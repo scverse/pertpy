@@ -8,7 +8,8 @@ The pipeline has three phases:
     2. ``test_celltype_pairs`` For every ordered pair of cell types, fit a hierarchical linear model (``y ~ (1 | sample) + x + cell_quality + tme_qc``) of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes, producing signed z-scores.
     3. ``refine_scores``       Aggregate per-gene HLM p-values across pairs via Fisher's method, fit a non-negative least-squares regression of CCA scores against retained genes, and write final per-cell program scores back to ``adata.obsm``.
 
-Sparse ``adata.X`` is supported end-to-end: per-celltype sub-AnnDatas keep their sparse representation, pseudobulks use ``scanpy.get.aggregate``, and the only dense materialization is on the per-sample × n_features pseudobulk matrix.
+Sparse ``adata.X`` is accepted; the matrix is never fully densified.
+Per-sample pseudobulks go through :func:`scanpy.get.aggregate` (sparse-aware); the partial-Spearman gene-signature step processes gene columns in blocks via :func:`_partial_spearman`; and the iterative-NNLS refinement densifies only the candidate-gene subset selected by :meth:`Dialogue.test_celltype_pairs`.
 """
 
 from __future__ import annotations
@@ -33,11 +34,6 @@ if TYPE_CHECKING:
     from anndata import AnnData
 
 _LOG2_PI = float(np.log(2.0 * np.pi))
-
-
-# ---------------------------------------------------------------------------
-# Building blocks
-# ---------------------------------------------------------------------------
 
 
 def _pseudobulk_per_sample(
@@ -141,40 +137,73 @@ def _residualize(values: np.ndarray, covariates: np.ndarray) -> np.ndarray:
     return values - design @ beta
 
 
-def _partial_spearman(
-    X: np.ndarray,
-    Y: np.ndarray,
-    Z: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
+@singledispatch
+def _partial_spearman(X, Y, Z, *, batch_size: int = 2048):
     """Partial Spearman correlation of every column of X against every column of Y, controlling for Z.
 
-    Returns ``(R, P)`` arrays of shape ``[X_cols, Y_cols]``. Matches R's ``ppcor::pcor.mat`` with the
-    Spearman method as used by ``DIALOGUE::pcor.mat``.
+    Returns ``(R, P)`` arrays of shape ``[X_cols, Y_cols]``.
+    Matches R's ``ppcor::pcor.mat`` with the Spearman method as used by ``DIALOGUE::pcor.mat``.
+    Dispatches on dense ``np.ndarray`` and sparse ``scipy.sparse`` matrices.
+    The sparse branch processes column blocks of ``batch_size`` so the full gene-by-cell matrix is never materialized.
     """
-    X = np.asarray(X, dtype=np.float64)
+    raise NotImplementedError(f"Unsupported X type: {type(X)!r}")
+
+
+def _prepare_partial_targets(Y: np.ndarray, Z: np.ndarray) -> tuple[np.ndarray, np.ndarray, int, int]:
+    """Compute the rank-residualized + standardized target ``Ys`` and the design matrix used to residualize X column blocks."""
     Y = np.asarray(Y, dtype=np.float64)
     Z = np.asarray(Z, dtype=np.float64)
     if Z.ndim == 1:
         Z = Z[:, None]
-    n = X.shape[0]
-    if Y.shape[0] != n or Z.shape[0] != n:
-        raise ValueError("X, Y, Z must have the same number of rows")
-
-    X_rank = pd.DataFrame(X).rank().to_numpy()
+    n = Y.shape[0]
+    if Z.shape[0] != n:
+        raise ValueError("Y and Z must have the same number of rows")
     Y_rank = pd.DataFrame(Y).rank().to_numpy()
     Z_rank = pd.DataFrame(Z).rank().to_numpy()
-
     design = np.column_stack([np.ones(n), Z_rank])
-    Xr = X_rank - design @ np.linalg.lstsq(design, X_rank, rcond=None)[0]
     Yr = Y_rank - design @ np.linalg.lstsq(design, Y_rank, rcond=None)[0]
-
-    Xs = (Xr - Xr.mean(0)) / np.where(Xr.std(0, ddof=1) > 0, Xr.std(0, ddof=1), 1.0)
-    Ys = (Yr - Yr.mean(0)) / np.where(Yr.std(0, ddof=1) > 0, Yr.std(0, ddof=1), 1.0)
-    R = (Xs.T @ Ys) / (n - 1)
+    Y_std = np.where(Yr.std(0, ddof=1) > 0, Yr.std(0, ddof=1), 1.0)
+    Ys = (Yr - Yr.mean(0)) / Y_std
     df = max(n - 2 - Z_rank.shape[1], 1)
+    return Ys, design, n, df
+
+
+def _partial_spearman_block(
+    X_block: np.ndarray, Ys: np.ndarray, design: np.ndarray, n: int, df: int
+) -> tuple[np.ndarray, np.ndarray]:
+    X_rank = pd.DataFrame(X_block).rank().to_numpy()
+    Xr = X_rank - design @ np.linalg.lstsq(design, X_rank, rcond=None)[0]
+    Xs = (Xr - Xr.mean(0)) / np.where(Xr.std(0, ddof=1) > 0, Xr.std(0, ddof=1), 1.0)
+    R = (Xs.T @ Ys) / (n - 1)
     t_stat = R * np.sqrt(df / np.clip(1 - R**2, 1e-30, None))
     P = 2.0 * stats.t.sf(np.abs(t_stat), df=df)
     return R, P
+
+
+@_partial_spearman.register(np.ndarray)
+def _partial_spearman_dense(X: np.ndarray, Y: np.ndarray, Z: np.ndarray, *, batch_size: int = 2048):
+    Ys, design, n, df = _prepare_partial_targets(Y, Z)
+    if X.shape[0] != n:
+        raise ValueError("X and Y must have the same number of rows")
+    return _partial_spearman_block(np.asarray(X, dtype=np.float64), Ys, design, n, df)
+
+
+@_partial_spearman.register(sp.spmatrix)
+def _partial_spearman_sparse(X: sp.spmatrix, Y: np.ndarray, Z: np.ndarray, *, batch_size: int = 2048):
+    Ys, design, n, df = _prepare_partial_targets(Y, Z)
+    if X.shape[0] != n:
+        raise ValueError("X and Y must have the same number of rows")
+    n_features = X.shape[1]
+    R_all = np.zeros((n_features, Ys.shape[1]), dtype=np.float64)
+    P_all = np.zeros((n_features, Ys.shape[1]), dtype=np.float64)
+    X_csc = X.tocsc()
+    for start in range(0, n_features, batch_size):
+        end = min(start + batch_size, n_features)
+        block = np.asarray(X_csc[:, start:end].toarray(), dtype=np.float64)
+        R, P = _partial_spearman_block(block, Ys, design, n, df)
+        R_all[start:end] = R
+        P_all[start:end] = P
+    return R_all, P_all
 
 
 def _zscores_from_signed_pvalues(estimate: np.ndarray, pvalue: np.ndarray) -> np.ndarray:
@@ -316,11 +345,6 @@ def _hlm_pvalue_per_row(
             except Exception:  # noqa: BLE001 — model may fail on degenerate covariates; record NaN
                 continue
     return pd.DataFrame({"estimate": estimates, "pvalue": pvalues}, index=gene_index)
-
-
-# ---------------------------------------------------------------------------
-# Public class skeleton (methods filled in subsequent commits)
-# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -467,10 +491,6 @@ class Dialogue:
             "params": self._param_dict(),
         }
         return adata
-
-    # ------------------------------------------------------------------
-    # fit_programs implementation helpers
-    # ------------------------------------------------------------------
 
     def _cell_type_order(self, adata: AnnData) -> list[str]:
         col = adata.obs[self.celltype_key]
@@ -659,14 +679,15 @@ class Dialogue:
         out: dict[str, dict[str, dict[str, list[str]]]] = {f"MCP{i + 1}": {} for i in range(self.n_programs)}
         for ct, scores in cca_scores.items():
             view = ct_views[ct]
-            X = view.X.toarray() if sp.issparse(view.X) else np.asarray(view.X)
+            X = view.X  # may be sparse; _partial_spearman dispatches and streams
             cellQ = view.obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+            n_genes = view.n_vars
             R, P = _partial_spearman(X, scores, cellQ)
             for program_idx in range(scores.shape[1]):
                 program_name = f"MCP{program_idx + 1}"
                 col_R = R[:, program_idx]
                 col_P = P[:, program_idx]
-                bonferroni = 0.05 / max(X.shape[1], 1)
+                bonferroni = 0.05 / max(n_genes, 1)
                 ranked = np.argsort(-np.abs(col_R))
                 up: list[str] = []
                 down: list[str] = []
@@ -682,10 +703,6 @@ class Dialogue:
                         down.append(name)
                 out[program_name][ct] = {"up": up, "down": down}
         return out
-
-    # ------------------------------------------------------------------
-    # test_celltype_pairs
-    # ------------------------------------------------------------------
 
     def test_celltype_pairs(self, adata: AnnData, *, show_progress: bool = False) -> AnnData:
         """For every ordered pair of cell types, fit a hierarchical linear model of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes.
@@ -785,10 +802,6 @@ class Dialogue:
         state["per_sample_quality"] = {ct: per_sample_quality[ct] for ct in celltypes}
         return adata
 
-    # ------------------------------------------------------------------
-    # test_celltype_pairs implementation helpers
-    # ------------------------------------------------------------------
-
     def _rebuild_celltype_views(self, adata: AnnData, celltypes: list[str]) -> dict[str, AnnData]:
         return {ct: adata[(adata.obs[self.celltype_key] == ct).to_numpy()].copy() for ct in celltypes}
 
@@ -873,10 +886,6 @@ class Dialogue:
             "down": down_candidates.head(n).index.tolist(),
         }
 
-    # ------------------------------------------------------------------
-    # refine_scores
-    # ------------------------------------------------------------------
-
     def refine_scores(self, adata: AnnData) -> AnnData:
         """Aggregate per-pair HLM evidence and fit final per-cell program scores via iterative non-negative least squares.
 
@@ -910,12 +919,6 @@ class Dialogue:
         }
         for ct in celltypes:
             view = ct_views[ct]
-            X_dense = view.X.toarray() if sp.issparse(view.X) else np.asarray(view.X)
-            cellQ = view.obs[self.cell_quality_key].to_numpy(dtype=np.float64)
-
-            # Standardize expression
-            zscored = self._zscore_expression(X_dense)
-            # Compute initial CCA scores (unresidualized) for NNLS targets
             cca0 = self._cca_scores_unresidualized(view, state, ct)
 
             program_columns = [f"MCP{p + 1}" for p in range(self.n_programs)]
@@ -923,15 +926,36 @@ class Dialogue:
             gene_pval = gene_pvalues[ct]
             gene_pval["coef"] = 0.0
 
+            # Densify only the candidate gene columns; for a typical run that bounds the dense
+            # working set at a few hundred columns rather than the per-celltype full gene matrix.
+            candidate_genes_per_program: dict[str, np.ndarray] = {}
+            all_candidates: list[str] = []
+            for program in program_columns:
+                program_rows = gene_pval[gene_pval["program"] == program]
+                if program_rows.empty:
+                    candidate_genes_per_program[program] = np.empty(0, dtype=object)
+                    continue
+                names = program_rows["gene"].to_numpy()
+                candidate_genes_per_program[program] = names
+                all_candidates.extend(names.tolist())
+            unique_candidates = sorted(set(all_candidates))
+            if unique_candidates:
+                slim = _select_dense_gene_columns(view.X, view.var_names, unique_candidates)
+                zscored_slim = _zscore_columns(slim)
+                slim_name_to_idx = {name: i for i, name in enumerate(unique_candidates)}
+            else:
+                zscored_slim = np.empty((view.n_obs, 0), dtype=np.float64)
+                slim_name_to_idx = {}
+
             for program_idx, program in enumerate(program_columns):
                 y_target = cca0[:, program_idx]
                 program_rows = gene_pval[gene_pval["program"] == program]
                 if program_rows.empty:
                     ct_scores[:, program_idx] = y_target
                     continue
-                gene_names = program_rows["gene"].to_numpy()
-                gene_indices = self._gene_indices(view.var_names, gene_names)
-                X_program = zscored[:, gene_indices].copy()
+                gene_names = candidate_genes_per_program[program]
+                slim_indices = np.array([slim_name_to_idx[g] for g in gene_names], dtype=np.int64)
+                X_program = zscored_slim[:, slim_indices].copy()
                 down_mask = ~program_rows["up"].to_numpy(dtype=bool)
                 X_program[:, down_mask] *= -1.0
                 ranks = program_rows["Nf"].to_numpy(dtype=np.float64)
@@ -940,7 +964,6 @@ class Dialogue:
                 gene_pval.loc[program_rows.index, "coef"] = coefs
 
             nnls_scores[ct] = ct_scores
-            # Refined signatures
             for program in program_columns:
                 program_rows = gene_pval[gene_pval["program"] == program]
                 if program_rows.empty:
@@ -959,7 +982,6 @@ class Dialogue:
                 refined_signatures[program][ct] = self._split_up_down(program_rows.loc[strong_p])
                 strict_signatures[program][ct] = self._split_up_down(program_rows.loc[strict])
 
-        # Residualize on confounders
         for ct in celltypes:
             view = ct_views[ct]
             cellQ = view.obs[self.cell_quality_key].to_numpy(dtype=np.float64)
@@ -969,7 +991,6 @@ class Dialogue:
         for p in range(self.n_programs):
             adata.obs[f"mcp_{p}"] = adata.obsm["X_dialogue"][:, p]
 
-        # Pair-level refined correlations on sample-averaged refined scores
         pair_refined = self._refined_pair_correlations(adata, nnls_scores, ct_views, celltypes)
 
         state["gene_pvalues"] = gene_pvalues
@@ -977,10 +998,6 @@ class Dialogue:
         state["program_gene_signatures_strict"] = strict_signatures
         state["pair_refined_correlations"] = pair_refined
         return adata
-
-    # ------------------------------------------------------------------
-    # refine_scores implementation helpers
-    # ------------------------------------------------------------------
 
     def _aggregate_gene_pvalues_for_celltype(
         self,
@@ -1001,7 +1018,7 @@ class Dialogue:
                 partner_cols.append(colname)
             for program, info in programs.items():
                 df = info.get(ct)
-                if df is None or df.empty:
+                if not isinstance(df, pd.DataFrame) or df.empty:
                     continue
                 for gene_name, row in df.iterrows():
                     if not np.isfinite(row["zscore"]):
@@ -1096,14 +1113,6 @@ class Dialogue:
         down = rows.loc[~rows["up"].astype(bool), "gene"].tolist()
         return {"up": up, "down": down}
 
-    @staticmethod
-    def _zscore_expression(X: np.ndarray) -> np.ndarray:
-        arr = np.asarray(X, dtype=np.float64)
-        mean = arr.mean(axis=0, keepdims=True)
-        std = arr.std(axis=0, ddof=1, keepdims=True)
-        std = np.where(std > 0, std, 1.0)
-        return (arr - mean) / std
-
     def _cca_scores_unresidualized(self, view: AnnData, state: dict, ct: str) -> np.ndarray:
         W = state["weights"][ct]
         idx_names = state["weights_index"][ct]
@@ -1146,10 +1155,6 @@ class Dialogue:
                 r = float(np.cov(ap, bp, ddof=1)[0, 1] / denom)
                 out[pair_name][f"MCP{p + 1}"] = {"R": r}
         return out
-
-    # ------------------------------------------------------------------
-    # End-user convenience entry points
-    # ------------------------------------------------------------------
 
     def run(self, adata: AnnData) -> AnnData:
         """Run all three DIALOGUE phases in order on ``adata`` (in-place)."""
@@ -1318,11 +1323,6 @@ class Dialogue:
         }
 
 
-# ---------------------------------------------------------------------------
-# Module-level helpers used by fit_programs that are not part of the public API
-# ---------------------------------------------------------------------------
-
-
 def _retained_indices(pseudobulk_full: pd.DataFrame, weights: pd.DataFrame) -> np.ndarray:
     """Position indices in ``pseudobulk_full`` columns of the components retained in ``weights``."""
     full_cols = list(pseudobulk_full.columns)
@@ -1340,3 +1340,34 @@ def _column_shuffle(matrix: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         perm = rng.permutation(n)
         out[:, j] = matrix[perm, j]
     return out
+
+
+@singledispatch
+def _select_dense_gene_columns(X, var_names, gene_names: list[str]) -> np.ndarray:
+    """Return the dense ``cells × len(gene_names)`` slice of ``X`` for the requested genes.
+
+    Dispatches on dense ``np.ndarray`` and sparse ``scipy.sparse`` matrices so that a sparse adata never has to be densified beyond the candidate-gene subset (typically a few hundred columns).
+    """
+    raise NotImplementedError(f"Unsupported X type: {type(X)!r}")
+
+
+@_select_dense_gene_columns.register(np.ndarray)
+def _select_dense_gene_columns_dense(X: np.ndarray, var_names, gene_names: list[str]) -> np.ndarray:
+    lookup = {g: i for i, g in enumerate(var_names)}
+    idx = np.array([lookup[g] for g in gene_names], dtype=np.int64)
+    return np.asarray(X[:, idx], dtype=np.float64)
+
+
+@_select_dense_gene_columns.register(sp.spmatrix)
+def _select_dense_gene_columns_sparse(X: sp.spmatrix, var_names, gene_names: list[str]) -> np.ndarray:
+    lookup = {g: i for i, g in enumerate(var_names)}
+    idx = np.array([lookup[g] for g in gene_names], dtype=np.int64)
+    return np.asarray(X.tocsc()[:, idx].toarray(), dtype=np.float64)
+
+
+def _zscore_columns(matrix: np.ndarray) -> np.ndarray:
+    arr = np.asarray(matrix, dtype=np.float64)
+    mean = arr.mean(axis=0, keepdims=True)
+    std = arr.std(axis=0, ddof=1, keepdims=True)
+    std = np.where(std > 0, std, 1.0)
+    return (arr - mean) / std

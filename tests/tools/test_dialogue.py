@@ -69,11 +69,6 @@ def tiny_adata_sparse(tiny_adata_dense):
     return adata
 
 
-# ---------------------------------------------------------------------------
-# _pseudobulk_per_sample
-# ---------------------------------------------------------------------------
-
-
 @pytest.mark.parametrize("fixture", ["tiny_adata_dense", "tiny_adata_sparse"])
 def test_pseudobulk_per_sample_matches_groupby_median(request, fixture):
     adata = request.getfixturevalue(fixture)
@@ -91,11 +86,6 @@ def test_pseudobulk_per_sample_mean_matches_groupby_mean(tiny_adata_sparse):
     X = adata.X.toarray()
     expected = pd.DataFrame(X, columns=adata.var_names).groupby(adata.obs["sample"].to_numpy()).mean().sort_index()
     pd.testing.assert_frame_equal(pb.loc[expected.index].astype(float), expected.astype(float), check_dtype=False)
-
-
-# ---------------------------------------------------------------------------
-# _column_anova / _anova_filter_features
-# ---------------------------------------------------------------------------
 
 
 def test_column_anova_finds_signal():
@@ -130,11 +120,6 @@ def test_anova_filter_features_drops_uninformative():
     assert mask[1:].sum() < 3
 
 
-# ---------------------------------------------------------------------------
-# _center_scale_winsorize
-# ---------------------------------------------------------------------------
-
-
 def test_center_scale_winsorize_centered_and_capped():
     rng = np.random.default_rng(3)
     x = rng.normal(0, 1, (200, 4))
@@ -151,11 +136,6 @@ def test_center_scale_winsorize_zero_var_column_is_zero():
     x[:, 1] = np.arange(10)
     out = _center_scale_winsorize(x, cap=0.0)
     np.testing.assert_allclose(out[:, 0], 0.0)
-
-
-# ---------------------------------------------------------------------------
-# _residualize
-# ---------------------------------------------------------------------------
 
 
 def test_residualize_known_regression():
@@ -175,11 +155,6 @@ def test_residualize_multi_target():
     resid = _residualize(Y, z)
     for col in range(resid.shape[1]):
         assert abs(np.corrcoef(resid[:, col], z[:, 0])[0, 1]) < 0.1
-
-
-# ---------------------------------------------------------------------------
-# _partial_spearman
-# ---------------------------------------------------------------------------
 
 
 def test_partial_spearman_removes_confound():
@@ -205,11 +180,6 @@ def test_partial_spearman_keeps_unconfounded_correlation():
     assert P[0, 0] < 1e-30
 
 
-# ---------------------------------------------------------------------------
-# _zscores_from_signed_pvalues
-# ---------------------------------------------------------------------------
-
-
 def test_zscores_from_signed_pvalues_sign_follows_estimate():
     estimate = np.array([1.0, -1.0, 1.0, -1.0])
     pvalue = np.array([0.001, 0.001, 0.5, 0.5])
@@ -233,11 +203,6 @@ def test_zscores_from_signed_pvalues_handles_zero_pvalue():
     assert z[0] > 20
     assert z[1] < -20
     assert z[2] > 20
-
-
-# ---------------------------------------------------------------------------
-# _fisher_combine_by_label
-# ---------------------------------------------------------------------------
 
 
 def test_fisher_combine_strong_signal_combines_to_significant():
@@ -270,11 +235,6 @@ def test_fisher_combine_per_label_independence():
     assert combined[3] > 0.05
 
 
-# ---------------------------------------------------------------------------
-# _iterative_nnls
-# ---------------------------------------------------------------------------
-
-
 def test_iterative_nnls_recovers_positive_weights():
     """Each rank bucket needs >= minimum_features (default 5) entries to be fit, matching R's gating."""
     rng = np.random.default_rng(8)
@@ -292,11 +252,6 @@ def test_iterative_nnls_recovers_positive_weights():
     assert coef[1] > 1.0
     fit = X @ coef
     assert np.corrcoef(fit, y)[0, 1] > 0.95
-
-
-# ---------------------------------------------------------------------------
-# _hlm_pvalue_per_row
-# ---------------------------------------------------------------------------
 
 
 def test_hlm_pvalue_per_row_detects_planted_signal():
@@ -327,11 +282,6 @@ def test_hlm_pvalue_per_row_handles_degenerate_row():
     score = np.linspace(-1, 1, n)
     res = _hlm_pvalue_per_row(expression, score, covariates, sample)
     assert res.shape == (2, 2)
-
-
-# ---------------------------------------------------------------------------
-# Dialogue.fit_programs — end-to-end on dialogue_example with R reference
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -464,11 +414,6 @@ def test_fit_programs_raises_on_too_few_shared_samples(dialogue_adata):
             n_permutations=2,
             random_state=1234,
         ).fit_programs(a)
-
-
-# ---------------------------------------------------------------------------
-# Full pipeline: run / test_celltype_pairs / refine_scores / aux methods
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
