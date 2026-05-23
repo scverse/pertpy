@@ -1,17 +1,22 @@
-"""Unit tests for the DIALOGUE building blocks.
+"""Tests for DIALOGUE: unit tests for the building blocks plus an R-reference regression
+test for ``Dialogue.fit_programs``.
 
-End-to-end / R-reference tests are added in follow-up commits alongside the public
-``Dialogue.fit_programs`` / ``test_celltype_pairs`` / ``refine_scores`` methods.
+The R-reference test is gated on the presence of ``tests/_data/dialogue_reference/``
+so the suite still runs (with that test skipped) if the fixture is missing.
 """
 
 from __future__ import annotations
+
+from pathlib import Path
 
 import anndata as ad
 import numpy as np
 import pandas as pd
 import pytest
-from scipy import sparse, stats
+import scanpy as sc
+from scipy import sparse
 
+import pertpy as pt
 from pertpy.tools._dialogue import (
     _anova_filter_features,
     _center_scale_winsorize,
@@ -24,6 +29,22 @@ from pertpy.tools._dialogue import (
     _residualize,
     _zscores_from_signed_pvalues,
 )
+
+REFERENCE_DIR = Path(__file__).resolve().parents[1] / "_data" / "dialogue_reference"
+
+
+def _safe_name(ct: str) -> str:
+    """Filename suffix used by the R reference exporter (`make.names` in R)."""
+    return ct.replace("+ ", "..").replace("+", "")
+
+
+def _sign_align(W_py: np.ndarray, W_r: np.ndarray) -> np.ndarray:
+    """Flip sign of each column of ``W_py`` to maximize agreement with ``W_r``."""
+    out = W_py.copy()
+    for j in range(out.shape[1]):
+        if np.dot(out[:, j], W_r[:, j]) < 0:
+            out[:, j] *= -1.0
+    return out
 
 
 @pytest.fixture
@@ -306,3 +327,140 @@ def test_hlm_pvalue_per_row_handles_degenerate_row():
     score = np.linspace(-1, 1, n)
     res = _hlm_pvalue_per_row(expression, score, covariates, sample)
     assert res.shape == (2, 2)
+
+
+# ---------------------------------------------------------------------------
+# Dialogue.fit_programs — end-to-end on dialogue_example with R reference
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def dialogue_adata():
+    """Same preprocessing as the R reference run: 30-PC PCA, drop CD8+ IL17+, keep samples present in every remaining cell type."""
+    adata = pt.dt.dialogue_example()
+    sc.pp.pca(adata, n_comps=30, random_state=0)
+    adata = adata[adata.obs["cell.subtypes"] != "CD8+ IL17+"].copy()
+    isecs = pd.crosstab(adata.obs["cell.subtypes"], adata.obs["sample"])
+    keep_pts = list(isecs.loc[:, (isecs > 3).sum(axis=0) == isecs.shape[0]].columns.values)
+    adata = adata[adata.obs["sample"].isin(keep_pts), :].copy()
+    adata.obs["cell.subtypes"] = adata.obs["cell.subtypes"].astype("category").cat.remove_unused_categories()
+    return adata
+
+
+@pytest.fixture
+def fitted_dialogue(dialogue_adata):
+    adata = dialogue_adata.copy()
+    pt.tl.Dialogue(
+        celltype_key="cell.subtypes",
+        sample_key="sample",
+        cell_quality_key="cellQ",
+        n_programs=3,
+        n_components=30,
+        n_permutations=20,
+        min_cells_per_sample=5,
+        random_state=1234,
+    ).fit_programs(adata)
+    return adata
+
+
+def test_fit_programs_populates_uns(fitted_dialogue):
+    state = fitted_dialogue.uns["dialogue"]
+    for key in (
+        "weights",
+        "weights_index",
+        "pseudobulk_features",
+        "empirical_pvalues",
+        "cca_correlations_R",
+        "cca_correlations_P",
+        "program_celltypes",
+        "program_signatures",
+        "cell_type_order",
+        "shared_samples",
+        "params",
+    ):
+        assert key in state, f"missing dialogue state key: {key}"
+    assert "X_dialogue_cca" in fitted_dialogue.obsm
+    assert fitted_dialogue.obsm["X_dialogue_cca"].shape[1] == 3
+    assert np.isnan(fitted_dialogue.obsm["X_dialogue_cca"]).sum() == 0
+
+
+@pytest.mark.skipif(not REFERENCE_DIR.exists(), reason="R reference fixture not available")
+def test_fit_programs_weights_match_R(fitted_dialogue):
+    """PMD weights should match the R reference up to per-column sign (cosine > 0.99 per program)."""
+    state = fitted_dialogue.uns["dialogue"]
+    for ct in state["cell_type_order"]:
+        W_py = state["weights"][ct]
+        index_py = state["weights_index"][ct]
+        W_r = pd.read_csv(REFERENCE_DIR / f"weights_{_safe_name(ct)}.csv", index_col=0).to_numpy()
+        # Embed Python weights at original PC indices (R weights span the full PC range).
+        full_py = np.zeros_like(W_r)
+        for i, name in enumerate(index_py):
+            full_py[int(name[2:]) - 1] = W_py[i]
+        aligned = _sign_align(full_py, W_r)
+        cos = np.array(
+            [
+                np.dot(aligned[:, j], W_r[:, j]) / (np.linalg.norm(aligned[:, j]) * np.linalg.norm(W_r[:, j]) + 1e-30)
+                for j in range(aligned.shape[1])
+            ]
+        )
+        assert (cos > 0.99).all(), f"weights for {ct} drift from R: cos={cos}"
+
+
+@pytest.mark.skipif(not REFERENCE_DIR.exists(), reason="R reference fixture not available")
+def test_fit_programs_significant_program_matches_R(fitted_dialogue):
+    """MCP1 is highly significant across every pair in R (empirical p ~0.04). Verify the Python run flags it as significant for all pairs too."""
+    emp = fitted_dialogue.uns["dialogue"]["empirical_pvalues"]
+    assert (emp.loc["MCP1"] < 0.1).all(), f"MCP1 empirical p > 0.1: {emp.loc['MCP1'].to_dict()}"
+
+
+def test_fit_programs_dense_matches_sparse(dialogue_adata):
+    """Dense and sparse X produce identical weights, scores, and signatures."""
+    adata_dense = dialogue_adata.copy()
+    adata_sparse = dialogue_adata.copy()
+    adata_sparse.X = sparse.csr_matrix(adata_sparse.X)
+
+    common_kwargs = {
+        "celltype_key": "cell.subtypes",
+        "sample_key": "sample",
+        "cell_quality_key": "cellQ",
+        "n_programs": 3,
+        "n_components": 30,
+        "n_permutations": 5,
+        "random_state": 1234,
+    }
+    pt.tl.Dialogue(**common_kwargs).fit_programs(adata_dense)
+    pt.tl.Dialogue(**common_kwargs).fit_programs(adata_sparse)
+
+    for ct in adata_dense.uns["dialogue"]["cell_type_order"]:
+        np.testing.assert_allclose(
+            adata_dense.uns["dialogue"]["weights"][ct],
+            adata_sparse.uns["dialogue"]["weights"][ct],
+            atol=1e-8,
+        )
+    np.testing.assert_allclose(
+        adata_dense.obsm["X_dialogue_cca"],
+        adata_sparse.obsm["X_dialogue_cca"],
+        atol=1e-8,
+    )
+    # Signature gene sets must be identical
+    for prog, by_ct_d in adata_dense.uns["dialogue"]["program_signatures"].items():
+        for ct, sig_d in by_ct_d.items():
+            sig_s = adata_sparse.uns["dialogue"]["program_signatures"][prog][ct]
+            assert sig_d["up"] == sig_s["up"], f"{prog}/{ct} up differ: dense vs sparse"
+            assert sig_d["down"] == sig_s["down"], f"{prog}/{ct} down differ"
+
+
+def test_fit_programs_raises_on_too_few_shared_samples(dialogue_adata):
+    """Synthesizes a case with too few shared samples by restricting to two samples."""
+    keep = list(dialogue_adata.obs["sample"].cat.categories[:2])
+    a = dialogue_adata[dialogue_adata.obs["sample"].isin(keep)].copy()
+    a.obs["sample"] = a.obs["sample"].astype("category").cat.remove_unused_categories()
+    with pytest.raises(ValueError, match="at least 5"):
+        pt.tl.Dialogue(
+            celltype_key="cell.subtypes",
+            sample_key="sample",
+            n_programs=3,
+            n_components=30,
+            n_permutations=2,
+            random_state=1234,
+        ).fit_programs(a)

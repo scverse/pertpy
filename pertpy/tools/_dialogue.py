@@ -386,8 +386,335 @@ class Dialogue:
         self.min_cells_per_sample = min_cells_per_sample
         self.random_state = int(random_state)
 
-    # The fit_programs / test_celltype_pairs / refine_scores methods are added in
-    # subsequent commits — this file currently exposes only the helper functions.
+    def fit_programs(self, adata: AnnData) -> AnnData:
+        """Identify multicellular programs across cell types via penalized multiple-CCA.
 
-    def run(self, adata: AnnData) -> AnnData:  # pragma: no cover - placeholder
-        raise NotImplementedError("Dialogue.run is implemented in a follow-up commit.")
+        Phase 1 of DIALOGUE. Pseudobulks each cell type per sample, filters uninformative components by ANOVA, centers and winsorizes them, then runs penalized multiple-CCA on the cell types' pseudobulk feature spaces to obtain weights and per-cell program scores. Empirical p-values for each program × pair are computed by repeating the PMD on permuted matrices.
+
+        Stores the following on ``adata``:
+
+        - ``adata.obsm["X_dialogue_cca"]`` — per-cell CCA scores (``n_obs × n_programs``), residualized on the cell-quality confounder, NaN-padded for cells of cell types skipped during fitting.
+        - ``adata.uns["dialogue"]["weights"][celltype]`` — PMD weights (``n_components × n_programs``).
+        - ``adata.uns["dialogue"]["pseudobulk_features"][celltype]`` — the post-filter, post-center pseudobulk matrices (samples × retained components).
+        - ``adata.uns["dialogue"]["empirical_pvalues"]`` — programs × cell-type pairs.
+        - ``adata.uns["dialogue"]["cca_correlations_R"]`` / ``"_P"`` — per-pair pairwise correlation and p-value of the cell types' CCA scores.
+        - ``adata.uns["dialogue"]["program_celltypes"]`` — mapping of each program to the cell types whose pair passed ``empirical_alpha``.
+        - ``adata.uns["dialogue"]["program_signatures"][program][celltype]`` — initial signature genes from partial Spearman correlation of CCA scores against the cell type's expression matrix.
+        - ``adata.uns["dialogue"]["params"]`` — recorded hyperparameters.
+        - ``adata.uns["dialogue"]["shared_samples"]`` — samples present in all cell types.
+        - ``adata.uns["dialogue"]["cell_type_order"]`` — cell types fit (in stable order).
+        """
+        celltypes = self._cell_type_order(adata)
+        pseudobulks_full, ct_views = self._per_celltype_pseudobulks(adata, celltypes)
+        pseudobulks = self._anova_filter_per_celltype(pseudobulks_full, ct_views)
+
+        for ct, pb in pseudobulks.items():
+            if pb.shape[1] < self.n_programs:
+                raise ValueError(
+                    f"Cell type {ct!r} retained only {pb.shape[1]} components after the ANOVA "
+                    f"filter (need >= n_programs={self.n_programs}). Loosen anova_alpha or use more PCs."
+                )
+
+        shared = self._shared_samples(pseudobulks)
+        pseudobulks = {ct: pb.loc[shared] for ct, pb in pseudobulks.items()}
+        centered = {ct: self._center(pb) for ct, pb in pseudobulks.items()}
+
+        matrices = [centered[ct].to_numpy() for ct in celltypes]
+        weights = self._fit_pmd(matrices)
+        ws_dict = {
+            ct: pd.DataFrame(
+                weights[i], index=centered[ct].columns, columns=[f"MCP{j + 1}" for j in range(weights[i].shape[1])]
+            )
+            for i, ct in enumerate(celltypes)
+        }
+
+        empirical_p = self._empirical_pmd_pvalues(matrices, celltypes)
+
+        cca_correlations_R, cca_correlations_P = self._cca_correlations(matrices, weights, celltypes)
+
+        cca_scores = {
+            ct: ct_views[ct].obsm[self.feature_space_key][:, : self.n_components][
+                :, _retained_indices(pb_full, ws_dict[ct])
+            ]
+            @ ws_dict[ct].to_numpy()
+            for ct, pb_full in pseudobulks_full.items()
+        }
+        cca_scores = self._residualize_cca_scores(cca_scores, ct_views)
+
+        adata.obsm["X_dialogue_cca"] = self._broadcast_per_celltype(adata, cca_scores, ct_views, n_cols=self.n_programs)
+
+        program_celltypes = self._program_celltypes(empirical_p, celltypes)
+        program_signatures = self._initial_program_signatures(ct_views, cca_scores, ws_dict)
+
+        adata.uns["dialogue"] = {
+            "weights": {ct: ws_dict[ct].to_numpy() for ct in celltypes},
+            "weights_index": {ct: list(ws_dict[ct].index) for ct in celltypes},
+            "pseudobulk_features": {ct: centered[ct] for ct in celltypes},
+            "empirical_pvalues": empirical_p,
+            "cca_correlations_R": cca_correlations_R,
+            "cca_correlations_P": cca_correlations_P,
+            "program_celltypes": program_celltypes,
+            "program_signatures": program_signatures,
+            "cell_type_order": list(celltypes),
+            "shared_samples": list(shared),
+            "params": self._param_dict(),
+        }
+        return adata
+
+    # ------------------------------------------------------------------
+    # fit_programs implementation helpers
+    # ------------------------------------------------------------------
+
+    def _cell_type_order(self, adata: AnnData) -> list[str]:
+        col = adata.obs[self.celltype_key]
+        if hasattr(col, "cat"):
+            return [str(c) for c in col.cat.categories if (col == c).any()]
+        return sorted(map(str, col.unique()))
+
+    def _per_celltype_pseudobulks(
+        self, adata: AnnData, celltypes: list[str]
+    ) -> tuple[dict[str, pd.DataFrame], dict[str, AnnData]]:
+        """Per cell type, return (sample-level median PCA pseudobulk, cell-level AnnData view).
+
+        R uses ``colMedians`` as ``param$averaging.function``; we match.
+        """
+        ct_views: dict[str, AnnData] = {}
+        pseudobulks: dict[str, pd.DataFrame] = {}
+        for ct in celltypes:
+            mask = (adata.obs[self.celltype_key] == ct).to_numpy()
+            sub = adata[mask].copy()
+            ct_views[ct] = sub
+            pcs = sub.obsm[self.feature_space_key][:, : self.n_components]
+            pb_df = (
+                pd.DataFrame(pcs, columns=[f"PC{i + 1}" for i in range(pcs.shape[1])])
+                .assign(_sample=sub.obs[self.sample_key].astype(str).to_numpy())
+                .groupby("_sample")
+                .median()
+                .sort_index()
+            )
+            pseudobulks[ct] = pb_df
+        return pseudobulks, ct_views
+
+    def _anova_filter_per_celltype(
+        self, pseudobulks_full: dict[str, pd.DataFrame], ct_views: dict[str, AnnData]
+    ) -> dict[str, pd.DataFrame]:
+        """For each cell type, drop pseudobulk components whose per-cell ANOVA across samples is non-significant.
+
+        Mirrors R's filter: the ANOVA is run on the per-cell PCA values (not the sample-level pseudobulks), restricting to samples with ``>= min_cells_per_sample`` cells, and BH-adjusted.
+        """
+        out: dict[str, pd.DataFrame] = {}
+        for ct, pb in pseudobulks_full.items():
+            view = ct_views[ct]
+            pcs = view.obsm[self.feature_space_key][:, : self.n_components]
+            samples = view.obs[self.sample_key].astype(str).to_numpy()
+            counts = pd.Series(samples).value_counts()
+            abundant = counts[counts >= self.min_cells_per_sample].index
+            row_mask = np.isin(samples, abundant.to_numpy())
+            if row_mask.sum() == 0 or np.unique(samples[row_mask]).size < 2:
+                out[ct] = pb
+                continue
+            mask = _anova_filter_features(pcs[row_mask], samples[row_mask], alpha=self.anova_alpha)
+            if mask.sum() < self.n_programs:
+                # R also keeps the original components when too few pass; we propagate that.
+                out[ct] = pb
+                continue
+            out[ct] = pb.iloc[:, mask]
+        return out
+
+    def _shared_samples(self, pseudobulks: dict[str, pd.DataFrame]) -> list[str]:
+        shared = set.intersection(*[set(pb.index) for pb in pseudobulks.values()])
+        if len(shared) < 5:
+            raise ValueError(f"Only {len(shared)} samples are present in all cell types; DIALOGUE needs at least 5.")
+        return sorted(shared)
+
+    def _center(self, pseudobulk: pd.DataFrame) -> pd.DataFrame:
+        scaled = _center_scale_winsorize(pseudobulk.to_numpy(), cap=self.winsorize_quantile)
+        return pd.DataFrame(scaled, index=pseudobulk.index, columns=pseudobulk.columns)
+
+    def _fit_pmd(self, matrices: list[np.ndarray]) -> list[np.ndarray]:
+        n_samples = matrices[0].shape[0]
+        penalties = multicca_permute(
+            matrices,
+            penalties=float(np.sqrt(n_samples) / 2.0),
+            nperms=10,
+            niter=50,
+            standardize=True,
+        )["bestpenalties"]
+        weights, _ = multicca_pmd(
+            matrices,
+            penalties,
+            K=self.n_programs,
+            standardize=True,
+            niter=100,
+            mimic_R=True,
+        )
+        return weights
+
+    def _empirical_pmd_pvalues(self, matrices: list[np.ndarray], celltypes: list[str]) -> pd.DataFrame:
+        rng = np.random.default_rng(self.random_state)
+        baseline = self._pmd_pair_correlations(matrices, celltypes)
+        pair_names = baseline.columns.tolist()
+        better = np.zeros((self.n_programs, len(pair_names)), dtype=np.float64)
+        for _ in range(self.n_permutations):
+            permuted = [_column_shuffle(m, rng) for m in matrices]
+            try:
+                perm_cor = self._pmd_pair_correlations(permuted, celltypes)
+            except Exception:  # noqa: BLE001 - degenerate permutation; treat as exceeded
+                better += 1.0
+                continue
+            better += (np.abs(perm_cor.to_numpy()) >= np.abs(baseline.to_numpy())).astype(np.float64)
+        empirical = (better + 1.0) / (self.n_permutations + 1.0)
+        index = [f"MCP{i + 1}" for i in range(self.n_programs)]
+        return pd.DataFrame(empirical, index=index, columns=pair_names)
+
+    def _pmd_pair_correlations(self, matrices: list[np.ndarray], celltypes: list[str]) -> pd.DataFrame:
+        weights = self._fit_pmd(matrices)
+        scores = [matrices[i] @ weights[i] for i in range(len(matrices))]
+        names = [f"{celltypes[i]}_{celltypes[j]}" for i, j in _pair_indices(len(matrices))]
+        cor = np.zeros((self.n_programs, len(names)))
+        for col, (i, j) in enumerate(_pair_indices(len(matrices))):
+            for k in range(self.n_programs):
+                a = scores[i][:, k]
+                b = scores[j][:, k]
+                denom = (a.std(ddof=1) * b.std(ddof=1)) or 1.0
+                cor[k, col] = float(np.cov(a, b, ddof=1)[0, 1] / denom)
+        return pd.DataFrame(cor, columns=names, index=[f"MCP{i + 1}" for i in range(self.n_programs)])
+
+    def _cca_correlations(
+        self, matrices: list[np.ndarray], weights: list[np.ndarray], celltypes: list[str]
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        scores = [matrices[i] @ weights[i] for i in range(len(matrices))]
+        names = [f"{celltypes[i]}_{celltypes[j]}" for i, j in _pair_indices(len(matrices))]
+        n = matrices[0].shape[0]
+        df = max(n - 2, 1)
+        R = np.zeros((self.n_programs, len(names)))
+        P = np.zeros((self.n_programs, len(names)))
+        for col, (i, j) in enumerate(_pair_indices(len(matrices))):
+            for k in range(self.n_programs):
+                a = scores[i][:, k]
+                b = scores[j][:, k]
+                denom = (a.std(ddof=1) * b.std(ddof=1)) or 1.0
+                r = float(np.cov(a, b, ddof=1)[0, 1] / denom)
+                R[k, col] = r
+                t_stat = r * np.sqrt(df / np.clip(1 - r**2, 1e-30, None))
+                P[k, col] = 2.0 * stats.t.sf(np.abs(t_stat), df=df)
+        index = [f"MCP{i + 1}" for i in range(self.n_programs)]
+        return (
+            pd.DataFrame(R, index=index, columns=names),
+            pd.DataFrame(P, index=index, columns=names),
+        )
+
+    def _residualize_cca_scores(
+        self, cca_scores: dict[str, np.ndarray], ct_views: dict[str, AnnData]
+    ) -> dict[str, np.ndarray]:
+        out = {}
+        for ct, scores in cca_scores.items():
+            conf = ct_views[ct].obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+            out[ct] = _residualize(scores, conf)
+        return out
+
+    def _broadcast_per_celltype(
+        self,
+        adata: AnnData,
+        per_ct: dict[str, np.ndarray],
+        ct_views: dict[str, AnnData],
+        *,
+        n_cols: int,
+    ) -> np.ndarray:
+        out = np.full((adata.n_obs, n_cols), np.nan, dtype=np.float64)
+        cell_index = pd.Index(adata.obs_names)
+        for ct, mat in per_ct.items():
+            view = ct_views[ct]
+            positions = cell_index.get_indexer(view.obs_names)
+            out[positions] = mat
+        return out
+
+    def _program_celltypes(self, empirical_p: pd.DataFrame, celltypes: list[str]) -> dict[str, list[str]]:
+        pair_to_celltypes = {
+            f"{celltypes[i]}_{celltypes[j]}": (celltypes[i], celltypes[j]) for i, j in _pair_indices(len(celltypes))
+        }
+        out: dict[str, list[str]] = {}
+        for program in empirical_p.index:
+            members: set[str] = set()
+            for col, value in empirical_p.loc[program].items():
+                if value < self.empirical_alpha:
+                    a, b = pair_to_celltypes[col]
+                    members.update({a, b})
+            out[program] = sorted(members) if members else []
+        return out
+
+    def _initial_program_signatures(
+        self,
+        ct_views: dict[str, AnnData],
+        cca_scores: dict[str, np.ndarray],
+        ws_dict: dict[str, pd.DataFrame],
+    ) -> dict[str, dict[str, dict[str, list[str]]]]:
+        out: dict[str, dict[str, dict[str, list[str]]]] = {f"MCP{i + 1}": {} for i in range(self.n_programs)}
+        for ct, scores in cca_scores.items():
+            view = ct_views[ct]
+            X = view.X.toarray() if sp.issparse(view.X) else np.asarray(view.X)
+            cellQ = view.obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+            R, P = _partial_spearman(X, scores, cellQ)
+            for program_idx in range(scores.shape[1]):
+                program_name = f"MCP{program_idx + 1}"
+                col_R = R[:, program_idx]
+                col_P = P[:, program_idx]
+                bonferroni = 0.05 / max(X.shape[1], 1)
+                ranked = np.argsort(-np.abs(col_R))
+                up: list[str] = []
+                down: list[str] = []
+                for gene_idx in ranked:
+                    if len(up) + len(down) >= self.n_genes_per_signature * 2:
+                        break
+                    if col_P[gene_idx] > bonferroni:
+                        continue
+                    name = view.var_names[gene_idx]
+                    if col_R[gene_idx] > 0 and len(up) < self.n_genes_per_signature:
+                        up.append(name)
+                    elif col_R[gene_idx] < 0 and len(down) < self.n_genes_per_signature:
+                        down.append(name)
+                out[program_name][ct] = {"up": up, "down": down}
+        return out
+
+    def _param_dict(self) -> dict[str, object]:
+        return {
+            "celltype_key": self.celltype_key,
+            "sample_key": self.sample_key,
+            "cell_quality_key": self.cell_quality_key,
+            "n_programs": self.n_programs,
+            "feature_space_key": self.feature_space_key,
+            "n_components": self.n_components,
+            "n_genes_per_signature": self.n_genes_per_signature,
+            "anova_alpha": self.anova_alpha,
+            "winsorize_quantile": self.winsorize_quantile,
+            "n_permutations": self.n_permutations,
+            "empirical_alpha": self.empirical_alpha,
+            "use_tme_qc": self.use_tme_qc,
+            "additional_covariates": list(self.additional_covariates),
+            "min_cells_per_sample": self.min_cells_per_sample,
+            "random_state": self.random_state,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Module-level helpers used by fit_programs that are not part of the public API
+# ---------------------------------------------------------------------------
+
+
+def _retained_indices(pseudobulk_full: pd.DataFrame, weights: pd.DataFrame) -> np.ndarray:
+    """Position indices in ``pseudobulk_full`` columns of the components retained in ``weights``."""
+    full_cols = list(pseudobulk_full.columns)
+    return np.asarray([full_cols.index(c) for c in weights.index], dtype=np.int64)
+
+
+def _pair_indices(n: int) -> list[tuple[int, int]]:
+    return [(i, j) for i in range(n) for j in range(i + 1, n)]
+
+
+def _column_shuffle(matrix: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    out = matrix.copy()
+    n = matrix.shape[0]
+    for j in range(matrix.shape[1]):
+        perm = rng.permutation(n)
+        out[:, j] = matrix[perm, j]
+    return out
