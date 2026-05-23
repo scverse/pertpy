@@ -236,9 +236,11 @@ def test_grna_mixture_model_gaussian_above_poisson(request, adata_fixture):
 def test_grna_mixture_model_skips_low_count_guides(request, adata_fixture):
     """Guides with <2 nonzero cells or max count <2 must be skipped (NaN params and a warning)."""
     adata = request.getfixturevalue(adata_fixture)
-    with pytest.warns(UserWarning, match="less than 2 cells"):
-        with pytest.warns(UserWarning, match="maximum count is below 2"):
-            pt.pp.GuideAssignment().assign_mixture_model(adata)
+    with (
+        pytest.warns(UserWarning, match="less than 2 cells"),
+        pytest.warns(UserWarning, match="maximum count is below 2"),
+    ):
+        pt.pp.GuideAssignment().assign_mixture_model(adata)
     assert np.isnan(adata.var.loc["zero", "threshold"])
     assert np.isnan(adata.var.loc["one_nonzero", "threshold"])
     assert np.isnan(adata.var.loc["max_below_two", "threshold"])
