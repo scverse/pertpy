@@ -440,6 +440,14 @@ class Dialogue:
         - ``adata.uns["dialogue"]["params"]`` — recorded hyperparameters.
         - ``adata.uns["dialogue"]["shared_samples"]`` — samples present in all cell types.
         - ``adata.uns["dialogue"]["cell_type_order"]`` — cell types fit (in stable order).
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.fit_programs(adata)
         """
         celltypes = self._cell_type_order(adata)
         pseudobulks_full, ct_views = self._per_celltype_pseudobulks(adata, celltypes)
@@ -724,6 +732,15 @@ class Dialogue:
         Args:
             adata: AnnData previously processed by :meth:`fit_programs`.
             show_progress: If True, print one line per pair while running.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.fit_programs(adata)
+            >>> dl.test_celltype_pairs(adata)
         """
         if "dialogue" not in adata.uns:
             raise RuntimeError("Run fit_programs(adata) before test_celltype_pairs(adata).")
@@ -909,6 +926,16 @@ class Dialogue:
         - ``pair_refined_correlations[pair][program]`` — per-pair sample-average correlation R of the refined scores plus the HLM p-value for the same pair.
 
         Updates ``adata.obsm["X_dialogue"]`` with the refined per-cell program scores.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.fit_programs(adata)
+            >>> dl.test_celltype_pairs(adata)
+            >>> dl.refine_scores(adata)
         """
         if "pair_results" not in adata.uns.get("dialogue", {}):
             raise RuntimeError("Run test_celltype_pairs(adata) before refine_scores(adata).")
@@ -1186,6 +1213,17 @@ class Dialogue:
         Returns:
             ``zscores`` DataFrame (rows: cell types, columns: programs).
             The combined p-values are stored on ``adata.uns["dialogue"]["phenotype_pvalues"]``.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.fit_programs(adata)
+            >>> dl.test_celltype_pairs(adata)
+            >>> dl.refine_scores(adata)
+            >>> dl.test_phenotype_association(adata, condition_key="path_str")
         """
         if "dialogue" not in adata.uns:
             raise RuntimeError("Run fit_programs/refine_scores before test_phenotype_association.")
@@ -1252,6 +1290,17 @@ class Dialogue:
             celltype: If given, return only that cell type's signature.
                 Otherwise return the cross-celltype intersection of consistently up/down genes.
             strict: Use the strict variant from ``program_gene_signatures_strict`` (genes flagged in every pair).
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.fit_programs(adata)
+            >>> dl.test_celltype_pairs(adata)
+            >>> dl.refine_scores(adata)
+            >>> dl.get_program_genes(adata, program="MCP1", celltype="CD8+ IELs")
         """
         if "dialogue" not in adata.uns:
             raise RuntimeError("Run refine_scores before get_program_genes.")
@@ -1284,6 +1333,17 @@ class Dialogue:
             program: Program to use (``"MCP1"`` by default).
             fraction: Fraction of cells at each tail to compare.
                 Must lie in ``(0, 0.5)``.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.dialogue_example()
+            >>> sc.pp.pca(adata)
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.fit_programs(adata)
+            >>> dl.test_celltype_pairs(adata)
+            >>> dl.refine_scores(adata)
+            >>> dl.find_extreme_score_genes(adata, program="MCP1", fraction=0.1)
         """
         if "X_dialogue" not in adata.obsm:
             raise RuntimeError("Run refine_scores(adata) first.")

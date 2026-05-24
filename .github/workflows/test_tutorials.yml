@@ -27,6 +27,7 @@ jobs:
                 notebook: [
                         "augur.ipynb",
                         "cinemaot.ipynb",
+                        "dialogue.ipynb",
                         "differential_gene_expression.ipynb",
                         "distances.ipynb",
                         "distance_tests.ipynb",
@@ -36,7 +37,6 @@ jobs:
                         "mixscape.ipynb",
                         "sccoda.ipynb",
                         # "perturbation_space.ipynb",  seems to run OOM as of Jax implementation
-                        # "dialogue.ipynb", takes too long
                         # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
                         # also no use cases yet
                     ]
