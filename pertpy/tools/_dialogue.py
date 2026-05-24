@@ -18,9 +18,11 @@ from dataclasses import dataclass
 from functools import singledispatch
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import seaborn as sns
 import statsmodels.formula.api as smf
 from scipy import sparse as sp
 from scipy import stats
@@ -28,10 +30,13 @@ from scipy.optimize import nnls
 from sparsecca import multicca_permute, multicca_pmd
 from statsmodels.stats.multitest import multipletests
 
+from pertpy._doc import _doc_params, doc_common_plot_args
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from anndata import AnnData
+    from matplotlib.figure import Figure
 
 _LOG2_PI = float(np.log(2.0 * np.pi))
 
@@ -1302,6 +1307,108 @@ class Dialogue:
             result = sc.get.rank_genes_groups_df(sub, group="high")
             out[ct] = result
         return out
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_split_violins(  # pragma: no cover # noqa: D417
+        self,
+        adata: AnnData,
+        *,
+        condition_key: str,
+        program: str = "MCP1",
+        conditions: tuple[str, str] | None = None,
+        return_fig: bool = False,
+    ) -> Figure | None:
+        """Per-celltype split violin of program scores stratified by a binary phenotype.
+
+        Args:
+            adata: AnnData processed by :meth:`run` / :meth:`refine_scores`.
+            condition_key: ``adata.obs`` column with the binary phenotype to split on.
+            program: Program label (``"MCP1"``, ``"MCP2"`` ...).
+            conditions: Pick which two values of ``adata.obs[condition_key]`` to plot.
+                Required when the column has more than two levels.
+            {common_plot_args}
+
+        Returns:
+            If ``return_fig`` is ``True``, returns the figure, otherwise ``None``.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.run(adata)
+            >>> dl.plot_split_violins(adata, condition_key="path_str", program="MCP1")
+
+        Preview:
+            .. image:: /_static/docstring_previews/dialogue_violin.png
+        """
+        score_col = f"mcp_{int(program.replace('MCP', '')) - 1}"
+        if score_col not in adata.obs.columns:
+            raise RuntimeError(f"{score_col!r} not in adata.obs; run refine_scores(adata) first.")
+        df = adata.obs[[self.celltype_key, score_col, condition_key]].copy()
+        if conditions is not None:
+            df = df[df[condition_key].isin(conditions)]
+        else:
+            unique = pd.Series(df[condition_key]).dropna().unique()
+            if len(unique) != 2:
+                raise ValueError(f"adata.obs[{condition_key!r}] has {len(unique)} levels; pass `conditions=(a, b)`.")
+        df[condition_key] = pd.Categorical(df[condition_key]).remove_unused_categories()
+        fig, ax = plt.subplots(figsize=(8, 4))
+        sns.violinplot(data=df, x=self.celltype_key, y=score_col, hue=condition_key, split=True, ax=ax)
+        ax.set_ylabel(program)
+        ax.tick_params(axis="x", rotation=90)
+        plt.tight_layout()
+        if return_fig:
+            return fig
+        plt.show()
+        plt.close(fig)
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_pairplot(  # pragma: no cover # noqa: D417
+        self,
+        adata: AnnData,
+        *,
+        color: str,
+        program: str = "MCP1",
+        return_fig: bool = False,
+    ) -> Figure | None:
+        """Cross-celltype pairplot of sample-level program scores, colored by a phenotype.
+
+        Aggregates each (sample, cell type) to the mean program score, pivots into a sample × cell-type matrix, and runs :func:`seaborn.pairplot` with the sample-level ``color`` annotation as the hue.
+
+        Args:
+            adata: AnnData processed by :meth:`run` / :meth:`refine_scores`.
+            color: ``adata.obs`` column for the per-sample annotation used as the pairplot hue.
+            program: Program label.
+            {common_plot_args}
+
+        Returns:
+            If ``return_fig`` is ``True``, returns the figure, otherwise ``None``.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.dialogue_example()
+            >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
+            >>> dl.run(adata)
+            >>> dl.plot_pairplot(adata, color="clinical.status", program="MCP1")
+
+        Preview:
+            .. image:: /_static/docstring_previews/dialogue_pairplot.png
+        """
+        score_col = f"mcp_{int(program.replace('MCP', '')) - 1}"
+        if score_col not in adata.obs.columns:
+            raise RuntimeError(f"{score_col!r} not in adata.obs; run refine_scores(adata) first.")
+        sample_means = (
+            adata.obs.groupby([self.sample_key, self.celltype_key], observed=True)[score_col].mean().unstack()
+        )
+        sample_color = adata.obs.groupby(self.sample_key, observed=True)[color].first()
+        df = sample_means.copy()
+        df[color] = sample_color
+        grid = sns.pairplot(df, hue=color, corner=True)
+        if return_fig:
+            return grid.fig
+        plt.show()
+        return None
 
     def _param_dict(self) -> dict[str, object]:
         return {
