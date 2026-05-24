@@ -96,6 +96,68 @@ class CompositionalModel2(ABC):
     def set_init_mcmc_states(self, *args, **kwargs):
         pass
 
+    def _build_arviz_from_adata(
+        self,
+        sample_adata: AnnData,
+        dims: dict,
+        coords: dict,
+        rng_key: int | None,
+        num_prior_samples: int,
+        use_posterior_predictive: bool,
+    ):
+        """Build an ArviZ DataTree from MCMC samples stored on ``sample_adata``.
+
+        The samples and chain count come from ``sample_adata.uns["scCODA_params"]["mcmc"]``
+        rather than from ``self.mcmc``, so ``make_arviz`` works on stored MuData objects
+        even after the model instance has been reused for other datasets (issue #812).
+        """
+        import arviz as az
+        from numpyro.infer import Predictive
+
+        mcmc_state = sample_adata.uns.get("scCODA_params", {}).get("mcmc", {})
+        if "samples" not in mcmc_state:
+            raise ValueError("No MCMC sampling found. Please run a sampler first!")
+
+        samples = {k: np.asarray(v) for k, v in mcmc_state["samples"].items()}
+        num_chains = int(mcmc_state.get("num_chains", 1)) or 1
+
+        predict_kwargs = {
+            "counts": None,
+            "covariates": jnp.array(sample_adata.obsm["covariate_matrix"], dtype="float64"),
+            "n_total": jnp.array(sample_adata.obsm["sample_counts"], dtype="float64"),
+            "ref_index": jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
+            "sample_adata": sample_adata,
+        }
+        rng = random.key(rng_key if rng_key is not None else int(np.random.default_rng().integers(0, 10000)))
+
+        def _grouped(d: dict, chains: int, *, predictive: bool = False) -> dict:
+            out = {}
+            for k, v in d.items():
+                arr = np.asarray(v)
+                # Drop variables whose rank past the sample axis doesn't match `dims[k]`,
+                # e.g. `counts` from `Predictive` carries an extra batch axis under
+                # numpyro's DirichletMultinomial broadcasting and would otherwise
+                # collide with the cell_type coord.
+                if predictive and len(arr.shape) - 1 != len(dims.get(k, [])):
+                    continue
+                out[k] = arr.reshape((chains, -1, *arr.shape[1:]))
+            return out
+
+        groups = {"posterior": _grouped(samples, num_chains)}
+        extra_fields = mcmc_state.get("extra_fields") or {}
+        if extra_fields:
+            groups["sample_stats"] = _grouped(extra_fields, num_chains)
+        if num_prior_samples > 0:
+            groups["prior"] = _grouped(
+                Predictive(self.model, num_samples=num_prior_samples)(rng, **predict_kwargs), 1, predictive=True
+            )
+        if use_posterior_predictive:
+            groups["posterior_predictive"] = _grouped(
+                Predictive(self.model, samples)(rng, **predict_kwargs), num_chains, predictive=True
+            )
+
+        return az.from_dict(groups, coords=coords, dims=dims)
+
     def prepare(
         self,
         sample_adata: AnnData,
@@ -265,6 +327,13 @@ class CompositionalModel2(ABC):
         for k, v in samples.items():
             samples[k] = np.array(v)
         sample_adata.uns["scCODA_params"]["mcmc"]["samples"] = samples
+
+        # Persist what `make_arviz` needs so it can rebuild ArviZ without `self.mcmc`
+        # (issue #812: the model instance gets reused across datasets in loops).
+        sample_adata.uns["scCODA_params"]["mcmc"]["num_chains"] = int(self.mcmc.num_chains)
+        sample_adata.uns["scCODA_params"]["mcmc"]["extra_fields"] = {
+            k.replace(".", "_"): np.asarray(v) for k, v in self.mcmc.get_extra_fields().items()
+        }
 
         # Evaluate results and create result dataframes (based on tree-aggregation or not)
         if sample_adata.uns["scCODA_params"]["model_type"] == "classic":
