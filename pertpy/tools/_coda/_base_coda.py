@@ -861,10 +861,6 @@ class CompositionalModel2(ABC):
             effect_df.index = pd.MultiIndex.from_product(
                 (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
             )
-            effect_df.index = effect_df.index.set_levels(
-                effect_df.index.levels[0].str.replace("Condition", "").str.replace("[", "").str.replace("]", ""),
-                level=0,
-            )
             if model_type == "tree_agg":
                 node_df = sample_adata.uns["scCODA_params"]["node_df"]
 
@@ -1022,10 +1018,6 @@ class CompositionalModel2(ABC):
         effect_df = pd.concat(effect_dfs)
         effect_df.index = pd.MultiIndex.from_product(
             (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
-        )
-        effect_df.index = effect_df.index.set_levels(
-            effect_df.index.levels[0].str.replace("Condition", "").str.replace("[", "").str.replace("]", ""),
-            level=0,
         )
 
         return effect_df
