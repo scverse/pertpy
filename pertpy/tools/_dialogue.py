@@ -6,9 +6,6 @@ The pipeline has three phases:
     1. ``fit_programs`` — pseudobulk per sample, filter informative features by ANOVA, center + winsorize, run penalized multiple-CCA, residualize on confounders, find program gene signatures by partial Spearman correlation.
     2. ``test_celltype_pairs`` — for every ordered pair of cell types, fit a hierarchical linear model (``y ~ (1 | sample) + x + cell_quality + tme_qc``) of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes, producing signed z-scores.
     3. ``refine_scores`` — aggregate per-gene HLM p-values across pairs via Fisher's method, fit a non-negative least-squares regression of CCA scores against retained genes, and write final per-cell program scores back to ``adata.obsm``.
-
-Sparse ``adata.X`` is accepted; the matrix is never fully densified.
-Per-sample pseudobulks go through :func:`scanpy.get.aggregate` (sparse-aware), the partial-Spearman gene-signature step processes gene columns in blocks via :func:`_partial_spearman`, and the iterative-NNLS refinement densifies only the candidate-gene subset selected by :meth:`Dialogue.test_celltype_pairs`.
 """
 
 from __future__ import annotations
