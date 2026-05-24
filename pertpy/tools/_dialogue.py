@@ -1,15 +1,14 @@
 """DIALOGUE: cross-cell-type multicellular program discovery.
 
-Re-implements the algorithm of Jerby-Arnon & Regev (2022),
-`livnatje/DIALOGUE <https://github.com/livnatje/DIALOGUE>`__, on AnnData.
+Re-implements the algorithm of Jerby-Arnon & Regev (2022), `livnatje/DIALOGUE <https://github.com/livnatje/DIALOGUE>`__, on AnnData.
 
 The pipeline has three phases:
-    1. ``fit_programs``        Pseudobulk per sample, filter informative features by ANOVA, center + winsorize, run penalized multiple-CCA, residualize on confounders, find program gene signatures by partial Spearman correlation.
-    2. ``test_celltype_pairs`` For every ordered pair of cell types, fit a hierarchical linear model (``y ~ (1 | sample) + x + cell_quality + tme_qc``) of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes, producing signed z-scores.
-    3. ``refine_scores``       Aggregate per-gene HLM p-values across pairs via Fisher's method, fit a non-negative least-squares regression of CCA scores against retained genes, and write final per-cell program scores back to ``adata.obsm``.
+    1. ``fit_programs`` — pseudobulk per sample, filter informative features by ANOVA, center + winsorize, run penalized multiple-CCA, residualize on confounders, find program gene signatures by partial Spearman correlation.
+    2. ``test_celltype_pairs`` — for every ordered pair of cell types, fit a hierarchical linear model (``y ~ (1 | sample) + x + cell_quality + tme_qc``) of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes, producing signed z-scores.
+    3. ``refine_scores`` — aggregate per-gene HLM p-values across pairs via Fisher's method, fit a non-negative least-squares regression of CCA scores against retained genes, and write final per-cell program scores back to ``adata.obsm``.
 
 Sparse ``adata.X`` is accepted; the matrix is never fully densified.
-Per-sample pseudobulks go through :func:`scanpy.get.aggregate` (sparse-aware); the partial-Spearman gene-signature step processes gene columns in blocks via :func:`_partial_spearman`; and the iterative-NNLS refinement densifies only the candidate-gene subset selected by :meth:`Dialogue.test_celltype_pairs`.
+Per-sample pseudobulks go through :func:`scanpy.get.aggregate` (sparse-aware), the partial-Spearman gene-signature step processes gene columns in blocks via :func:`_partial_spearman`, and the iterative-NNLS refinement densifies only the candidate-gene subset selected by :meth:`Dialogue.test_celltype_pairs`.
 """
 
 from __future__ import annotations
@@ -370,17 +369,17 @@ class Dialogue:
     """Multicellular program discovery (DIALOGUE).
 
     Args:
-        celltype_key: ``adata.obs`` column with the cell-type assignment.
-        sample_key: ``adata.obs`` column with the sample / niche identifier.
-        cell_quality_key: ``adata.obs`` column with the per-cell QC value (typically log-counts), used as a confounder in residualization and in the per-pair HLM. Matches R's ``cellQ``.
+        celltype_key: Column of ``adata.obs`` with the cell-type assignment.
+        sample_key: Column of ``adata.obs`` with the sample / niche identifier.
+        cell_quality_key: Column of ``adata.obs`` with the per-cell QC value (typically log-counts) used as a confounder in residualization and in the per-pair HLM (R's ``cellQ``).
         n_programs: Number of multicellular programs to fit (``k`` in the paper).
         feature_space_key: ``adata.obsm`` key for the pre-computed feature space (typically PCA).
-        n_components: Number of components from the feature space to use.
+        n_components: Number of components of the feature space to use.
         n_genes_per_signature: Number of top-correlated genes kept per program signature (R's ``n.genes``).
         anova_alpha: Per-feature ANOVA significance threshold for filtering uninformative components (R's ``p.anova``).
         winsorize_quantile: Tail clipping fraction applied to pseudobulk components (R's ``cap.mat`` parameter).
         n_permutations: Permutations used to derive empirical PMD p-values (R's ``n1`` in ``DIALOGUE1.PMD.empirical``).
-        empirical_alpha: p-value threshold below which a program is considered shared between a pair of cell types (R's implicit ``< 0.1``).
+        empirical_alpha: P-value threshold below which a program is considered shared between a pair of cell types (R's implicit ``< 0.1``).
         use_tme_qc: If True, add ``tme_qc`` (partner-celltype per-sample average of ``cell_quality_key``) as an additional HLM covariate (R default).
         additional_covariates: Extra ``adata.obs`` columns to include as HLM covariates.
         min_cells_per_sample: Minimum cells per sample required for a cell type to be considered in the pair-level HLM (R's ``abn.c``).
@@ -425,7 +424,9 @@ class Dialogue:
     def fit_programs(self, adata: AnnData) -> AnnData:
         """Identify multicellular programs across cell types via penalized multiple-CCA.
 
-        Phase 1 of DIALOGUE. Pseudobulks each cell type per sample, filters uninformative components by ANOVA, centers and winsorizes them, then runs penalized multiple-CCA on the cell types' pseudobulk feature spaces to obtain weights and per-cell program scores. Empirical p-values for each program × pair are computed by repeating the PMD on permuted matrices.
+        Phase 1 of DIALOGUE.
+        Pseudobulks each cell type per sample, filters uninformative components by ANOVA, centers and winsorizes them, then runs penalized multiple-CCA on the cell types' pseudobulk feature spaces to obtain weights and per-cell program scores.
+        Empirical p-values for each program-by-pair are computed by repeating the PMD on permuted matrices.
 
         Stores the following on ``adata``:
 
@@ -712,11 +713,13 @@ class Dialogue:
     def test_celltype_pairs(self, adata: AnnData, *, show_progress: bool = False) -> AnnData:
         """For every ordered pair of cell types, fit a hierarchical linear model of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes.
 
-        Phase 2 of DIALOGUE. Builds per-pair, per-program tables of (estimate, pvalue, z-score) for each candidate gene from ``fit_programs``' signatures and prunes them to the top ``n_genes_per_signature`` per direction. Pair-level "shared abundant" samples are those with at least ``min_cells_per_sample`` cells in both cell types of the pair.
+        Phase 2 of DIALOGUE.
+        Builds per-pair, per-program tables of (estimate, pvalue, z-score) for each candidate gene from ``fit_programs``' signatures and prunes them to the top ``n_genes_per_signature`` per direction.
+        Pair-level "shared abundant" samples are those with at least ``min_cells_per_sample`` cells in both cell types of the pair.
 
-        Stores on ``adata.uns["dialogue"]["pair_results"]`` a nested dict:
-        ``pair_results[pair_name][program][celltype]`` -> DataFrame with one row per gene tested (in that cell type's signature) and columns ``estimate, pvalue, zscore, up``.
-        Also writes refined per-pair signatures at ``pair_results[pair_name][program]["refined_signatures"][celltype] = {"up": [...], "down": [...]}``.
+        Stores on ``adata.uns["dialogue"]["pair_results"]`` a nested dict.
+        ``pair_results[pair_name][program][celltype]`` is a DataFrame with one row per gene tested (in that cell type's signature) and columns ``estimate, pvalue, zscore, up``.
+        Refined per-pair signatures live at ``pair_results[pair_name][program]["refined_signatures"][celltype] = {"up": [...], "down": [...]}``.
 
         Args:
             adata: AnnData previously processed by :meth:`fit_programs`.
@@ -894,7 +897,9 @@ class Dialogue:
     def refine_scores(self, adata: AnnData) -> AnnData:
         """Aggregate per-pair HLM evidence and fit final per-cell program scores via iterative non-negative least squares.
 
-        Phase 3 of DIALOGUE. For every cell type, gather the per-gene z-scores produced by :meth:`test_celltype_pairs` across every pair the cell type appears in, BH-adjust within each program × direction, Fisher-combine across pairs, then run iterative NNLS to fit per-cell program scores against the resulting candidate gene set (sign-flipping down-regulated columns). The fitted scores are residualized on the cell-quality confounder and written back to ``adata.obsm["X_dialogue"]``.
+        Phase 3 of DIALOGUE.
+        For every cell type, gather the per-gene z-scores produced by :meth:`test_celltype_pairs` across every pair the cell type appears in, BH-adjust within each program-by-direction, Fisher-combine across pairs, then run iterative NNLS to fit per-cell program scores against the resulting candidate gene set (sign-flipping down-regulated columns).
+        The fitted scores are residualized on the cell-quality confounder and written back to ``adata.obsm["X_dialogue"]``.
 
         Stores on ``adata.uns["dialogue"]``:
 
@@ -1161,13 +1166,6 @@ class Dialogue:
                 out[pair_name][f"MCP{p + 1}"] = {"R": r}
         return out
 
-    def run(self, adata: AnnData) -> AnnData:
-        """Run all three DIALOGUE phases in order on ``adata`` (in-place)."""
-        self.fit_programs(adata)
-        self.test_celltype_pairs(adata)
-        self.refine_scores(adata)
-        return adata
-
     def test_phenotype_association(
         self,
         adata: AnnData,
@@ -1177,11 +1175,12 @@ class Dialogue:
     ) -> pd.DataFrame:
         """Test each program's association with a binary phenotype using per-celltype hierarchical models.
 
-        For every (program, cell type), fits ``score ~ phenotype + cell_quality + (1 | sample)`` on the cells of that cell type, where ``phenotype`` is a binary indicator coded from ``adata.obs[condition_key]``. Returns a DataFrame of signed z-scores (rows = cell types, columns = programs) plus a Fisher-combined p-value column across cell types per program.
+        For every (program, cell type), fits ``score ~ phenotype + cell_quality + (1 | sample)`` on the cells of that cell type, where ``phenotype`` is a binary indicator coded from ``adata.obs[condition_key]``.
+        Returns a DataFrame of signed z-scores (rows = cell types, columns = programs) plus a Fisher-combined p-value column across cell types per program.
 
         Args:
-            adata: AnnData after :meth:`run` / :meth:`refine_scores`.
-            condition_key: ``adata.obs`` column with the phenotype labels (categorical with exactly two levels, or pass ``conditions`` to pick which two to compare).
+            adata: AnnData after :meth:`refine_scores`.
+            condition_key: Column of ``adata.obs`` with the phenotype labels (categorical with exactly two levels, or pass ``conditions`` to pick which two to compare).
             conditions: Optional two-element tuple selecting which two values of ``adata.obs[condition_key]`` are compared.
 
         Returns:
@@ -1250,7 +1249,8 @@ class Dialogue:
         Args:
             adata: AnnData after :meth:`refine_scores`.
             program: Program label (e.g. ``"MCP1"``).
-            celltype: If given, return only that cell type's signature; otherwise return the cross-celltype intersection of consistently up/down genes.
+            celltype: If given, return only that cell type's signature.
+                Otherwise return the cross-celltype intersection of consistently up/down genes.
             strict: Use the strict variant from ``program_gene_signatures_strict`` (genes flagged in every pair).
         """
         if "dialogue" not in adata.uns:
@@ -1282,7 +1282,8 @@ class Dialogue:
         Args:
             adata: AnnData after :meth:`refine_scores`.
             program: Program to use (``"MCP1"`` by default).
-            fraction: Fraction of cells at each tail to compare; must lie in ``(0, 0.5)``.
+            fraction: Fraction of cells at each tail to compare.
+                Must lie in ``(0, 0.5)``.
         """
         if "X_dialogue" not in adata.obsm:
             raise RuntimeError("Run refine_scores(adata) first.")
@@ -1321,9 +1322,9 @@ class Dialogue:
         """Per-celltype split violin of program scores stratified by a binary phenotype.
 
         Args:
-            adata: AnnData processed by :meth:`run` / :meth:`refine_scores`.
-            condition_key: ``adata.obs`` column with the binary phenotype to split on.
-            program: Program label (``"MCP1"``, ``"MCP2"`` ...).
+            adata: AnnData processed by :meth:`refine_scores`.
+            condition_key: Column of ``adata.obs`` with the binary phenotype to split on.
+            program: Program label (``"MCP1"``, ``"MCP2"``, ...).
             conditions: Pick which two values of ``adata.obs[condition_key]`` to plot.
                 Required when the column has more than two levels.
             {common_plot_args}
@@ -1335,7 +1336,9 @@ class Dialogue:
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
-            >>> dl.run(adata)
+            >>> dl.fit_programs(adata)
+            >>> dl.test_celltype_pairs(adata)
+            >>> dl.refine_scores(adata)
             >>> dl.plot_split_violins(adata, condition_key="path_str", program="MCP1")
 
         Preview:
@@ -1374,11 +1377,11 @@ class Dialogue:
     ) -> Figure | None:
         """Cross-celltype pairplot of sample-level program scores, colored by a phenotype.
 
-        Aggregates each (sample, cell type) to the mean program score, pivots into a sample × cell-type matrix, and runs :func:`seaborn.pairplot` with the sample-level ``color`` annotation as the hue.
+        Aggregates each (sample, cell type) to the mean program score, pivots into a sample-by-celltype matrix, and runs ``seaborn.pairplot`` with the sample-level ``color`` annotation as the hue.
 
         Args:
-            adata: AnnData processed by :meth:`run` / :meth:`refine_scores`.
-            color: ``adata.obs`` column for the per-sample annotation used as the pairplot hue.
+            adata: AnnData processed by :meth:`refine_scores`.
+            color: Column of ``adata.obs`` with the per-sample annotation used as the pairplot hue.
             program: Program label.
             {common_plot_args}
 
@@ -1389,7 +1392,9 @@ class Dialogue:
             >>> import pertpy as pt
             >>> adata = pt.dt.dialogue_example()
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
-            >>> dl.run(adata)
+            >>> dl.fit_programs(adata)
+            >>> dl.test_celltype_pairs(adata)
+            >>> dl.refine_scores(adata)
             >>> dl.plot_pairplot(adata, color="clinical.status", program="MCP1")
 
         Preview:
