@@ -220,23 +220,23 @@ import scanpy as sc
 
 adata = pt.dt.dialogue_example()
 sc.pp.pca(adata)
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-
 
 dl = pt.tl.Dialogue(
-    sample_id="clinical.status",
     celltype_key="cell.subtypes",
-    n_counts_key="nCount_RNA",
-    n_mpcs=3,
+    sample_key="sample",
+    cell_quality_key="cellQ",
+    n_programs=3,
 )
-adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
-all_results, new_mcps = dl.multilevel_modeling(
-    ct_subs=ct_subs,
-    mcp_scores=mcps,
-    ws_dict=ws,
-    confounder="gender",
-)
+dl.fit_programs(adata)
+dl.test_celltype_pairs(adata)
+dl.refine_scores(adata)
+
+# per-cell program scores
+adata.obsm["X_dialogue"]
+# refined gene signatures
+dl.get_program_genes(adata, program="MCP1", celltype="CD8+ IELs")
+# phenotype association
+dl.test_phenotype_association(adata, condition_key="path_str")
 ```
 
 See [DIALOGUE tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html).
