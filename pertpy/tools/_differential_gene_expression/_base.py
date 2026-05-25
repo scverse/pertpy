@@ -83,15 +83,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
         """
@@ -163,15 +155,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> edgr.fit()
             >>> res_df = edgr.test_contrasts(
@@ -538,15 +522,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> edgr.fit()
             >>> res_df = edgr.test_contrasts(
@@ -704,15 +680,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> edgr.fit()
             >>> res_df = edgr.test_contrasts(
@@ -791,15 +759,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
             >>> edgr.plot_multicomparison_fc(res_df)
