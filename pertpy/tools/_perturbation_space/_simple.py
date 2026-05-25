@@ -9,7 +9,7 @@ from anndata import AnnData
 from sklearn.cluster import DBSCAN, KMeans
 
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
-from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace, _resolve_matrix
 
 
 class CentroidSpace(PerturbationSpace):
@@ -49,45 +49,20 @@ class CentroidSpace(PerturbationSpace):
             >>> cs = pt.tl.CentroidSpace()
             >>> cs_adata = cs.compute(mdata["rna"], target_col="gene_target")
         """
-        X = None
-        if layer_key is not None and embedding_key is not None:
-            raise ValueError("Please, select just either layer or embedding for computation.")
-
-        if embedding_key is not None:
-            if embedding_key not in adata.obsm:
-                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-            else:
-                X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
-
-        if layer_key is not None:
-            if layer_key not in adata.layers:
-                raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
-            else:
-                X = np.empty((len(adata.obs[target_col].unique()), adata.layers[layer_key].shape[1]))
-
         if target_col not in adata.obs:
             raise ValueError(f"Obs {target_col!r} does not exist in the .obs attribute.")
 
-        grouped = adata.obs.groupby(target_col)
+        coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
 
-        if X is None:
-            X = np.empty((len(adata.obs[target_col].unique()), adata.obsm[embedding_key].shape[1]))
-
-        index = []
-        for pert_index, (group_name, group_data) in enumerate(grouped):
-            indices = group_data.index
-            if layer_key is not None:
-                points = adata[indices].layers[layer_key]
-            elif embedding_key is not None:
-                points = adata[indices].obsm[embedding_key]
-            else:
-                points = adata[indices].X
-            index.append(group_name)
-            centroid = np.mean(points, axis=0)  # find centroid of cloud of points
-            closest_point = min(
-                points, key=lambda point: np.linalg.norm(point - centroid)
-            )  # Find the point in the array closest to the centroid
-            X[pert_index, :] = closest_point
+        groups = adata.obs.groupby(target_col, observed=True)
+        index = list(groups.groups.keys())
+        X = np.empty((len(index), coords.shape[1]), dtype=coords.dtype)
+        for pert_index, (_, group_data) in enumerate(groups):
+            row_idx = adata.obs_names.get_indexer(group_data.index)
+            points = coords[row_idx]
+            centroid = points.mean(axis=0)
+            closest = np.argmin(np.linalg.norm(points - centroid, axis=1))
+            X[pert_index, :] = points[closest]
 
         ps_adata = AnnData(X=X)
         ps_adata.obs_names = index
@@ -97,9 +72,8 @@ class CentroidSpace(PerturbationSpace):
             ps_adata.obsm[embedding_key] = X
 
         if keep_obs:  # Save the values of the obs columns of interest in the ps_adata object
-            obs_df = adata.obs
-            obs_df = obs_df.groupby(target_col).agg(
-                lambda pert_group: np.nan if len(set(pert_group)) != 1 else list(set(pert_group))[0]
+            obs_df = adata.obs.groupby(target_col, observed=True).agg(
+                lambda pert_group: np.nan if len(set(pert_group)) != 1 else next(iter(set(pert_group)))
             )
             for obs_name in obs_df.columns:
                 if not obs_df[obs_name].isnull().values.any():
@@ -155,18 +129,16 @@ class PseudobulkSpace(PerturbationSpace):
         if embedding_key is not None:
             if embedding_key not in adata.obsm:
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-            else:
-                adata_emb = AnnData(X=adata.obsm[embedding_key])
-                adata_emb.obs_names = adata.obs_names
-                adata_emb.obs = adata.obs
-                adata = adata_emb
-
+            adata_emb = AnnData(X=adata.obsm[embedding_key])
+            adata_emb.obs_names = adata.obs_names
+            adata_emb.obs = adata.obs.copy()
+            adata = adata_emb
+        else:
+            adata = adata.copy()
         adata.obs[target_col] = adata.obs[target_col].astype("category")
         grouping_cols = [target_col] if groups_col is None else [target_col, groups_col]
         original_obs = adata.obs.copy()
-        ps_adata = sc.get.aggregate(
-            adata, by=[target_col] if groups_col is None else [target_col, groups_col], func=mode, layer=layer_key
-        )
+        ps_adata = sc.get.aggregate(adata, by=grouping_cols, func=mode, layer=layer_key)
 
         if None in ps_adata.layers:
             del ps_adata.layers[None]
@@ -187,6 +159,25 @@ class PseudobulkSpace(PerturbationSpace):
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
         return ps_adata
+
+
+def _run_clustering(
+    estimator,
+    adata: AnnData,
+    *,
+    layer_key: str | None,
+    embedding_key: str | None,
+    cluster_key: str,
+    copy: bool,
+    return_object: bool,
+) -> tuple[AnnData, object] | AnnData:
+    """Shared body for KMeansSpace/DBSCANSpace — resolve coords, fit, write labels."""
+    if copy:
+        adata = adata.copy()
+    coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
+    fitted = estimator.fit(coords)
+    adata.obs[cluster_key] = pd.Categorical(fitted.labels_)
+    return (adata, fitted) if return_object else adata
 
 
 class KMeansSpace(ClusteringSpace):
@@ -215,8 +206,7 @@ class KMeansSpace(ClusteringSpace):
 
         Returns:
             If return_object is True, the adata and the clustering object is returned.
-            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
-            that stores the cluster labels.
+            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key, that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt
@@ -224,35 +214,15 @@ class KMeansSpace(ClusteringSpace):
             >>> kmeans = pt.tl.KMeansSpace()
             >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
         """
-        if copy:
-            adata = adata.copy()
-
-        if layer_key is not None and embedding_key is not None:
-            raise ValueError("Please, select just either layer or embedding for computation.")
-
-        if embedding_key is not None:
-            if embedding_key not in adata.obsm:
-                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-            else:
-                self.X = adata.obsm[embedding_key]
-
-        elif layer_key is not None:
-            if layer_key not in adata.layers:
-                raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
-            else:
-                self.X = adata.layers[layer_key]
-
-        else:
-            self.X = adata.X
-
-        clustering = KMeans(**kwargs).fit(self.X)
-        adata.obs[cluster_key] = clustering.labels_
-        adata.obs[cluster_key] = adata.obs[cluster_key].astype("category")
-
-        if return_object:
-            return adata, clustering
-
-        return adata
+        return _run_clustering(
+            KMeans(**kwargs),
+            adata,
+            layer_key=layer_key,
+            embedding_key=embedding_key,
+            cluster_key=cluster_key,
+            copy=copy,
+            return_object=return_object,
+        )
 
 
 class DBSCANSpace(ClusteringSpace):
@@ -281,8 +251,7 @@ class DBSCANSpace(ClusteringSpace):
 
         Returns:
             If return_object is True, the adata and the clustering object is returned.
-            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key,
-            that stores the cluster labels.
+            Otherwise, only the adata is returned. The adata is updated with a new .obs column as specified in cluster_key, that stores the cluster labels.
 
         Examples:
             >>> import pertpy as pt
@@ -290,29 +259,12 @@ class DBSCANSpace(ClusteringSpace):
             >>> dbscan = pt.tl.DBSCANSpace()
             >>> dbscan_adata = dbscan.compute(mdata["rna"])
         """
-        if copy:
-            adata = adata.copy()
-
-        if embedding_key is not None:
-            if embedding_key not in adata.obsm:
-                raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-            else:
-                self.X = adata.obsm[embedding_key]
-
-        elif layer_key is not None:
-            if layer_key not in adata.layers:
-                raise ValueError(f"Layer {layer_key!r} does not exist in the anndata.")
-            else:
-                self.X = adata.layers[layer_key]
-
-        else:
-            self.X = adata.X
-
-        clustering = DBSCAN(**kwargs).fit(self.X)
-        adata.obs[cluster_key] = clustering.labels_
-        adata.obs[cluster_key] = adata.obs[cluster_key].astype("category")
-
-        if return_object:
-            return adata, clustering
-
-        return adata
+        return _run_clustering(
+            DBSCAN(**kwargs),
+            adata,
+            layer_key=layer_key,
+            embedding_key=embedding_key,
+            cluster_key=cluster_key,
+            copy=copy,
+            return_object=return_object,
+        )
