@@ -450,13 +450,13 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        # Set rng key if needed
+        # Set rng key if needed. Keep the int seed for `set_init_mcmc_states` (which uses
+        # `np.random.default_rng(seed=...)`) and only build a JAX PRNGKey for the MCMC,
+        # mirroring `run_nuts` — see issue #883.
         if rng_key is None:
-            rng = np.random.default_rng()
-            rng_key = random.key(rng.integers(0, 10000))
-            sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = rng_key
-        else:
-            rng_key = random.key(rng_key)
+            rng_key = int(np.random.default_rng().integers(0, 10000))
+        rng_key_array = random.key_data(random.key(rng_key))
+        sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up HMC kernel
         sample_adata = self.set_init_mcmc_states(
@@ -471,7 +471,7 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["algorithm"] = "HMC"
 
         return self.__run_mcmc(
-            sample_adata, hmc_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key, copy=copy
+            sample_adata, hmc_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key_array, copy=copy
         )
 
     def summary_prepare(
@@ -505,7 +505,11 @@ class CompositionalModel2(ABC):
                 - HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)
                 - SD: Standard deviation of MCMC samples
                 - Expected sample: Expected cell counts for a sample with only the current covariate set to 1. See the tutorial for more explanation
-                - log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate
+                - log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate.
+                  This is a *compositional* fold change — expected counts are re-normalized to the same total per sample before the ratio is taken.
+                  Because of that re-normalization, the sign of ``log2-fold change`` can disagree with the sign of ``Final Parameter``:
+                  a cell type with ``Final Parameter = 0`` can still have a non-zero log2-fold change driven entirely by other cell types' effects,
+                  and a cell type with a small negative ``Final Parameter`` can have a positive log2-fold change if other cell types are shifting down faster.
                 - Inclusion probability: Share of MCMC samples, for which this effect was not set to 0 by the spike-and-slab prior.
 
             node_df
