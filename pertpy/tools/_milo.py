@@ -455,6 +455,7 @@ class Milo:
                 metadata=design_df_filtered,
                 design=design_clean,
                 refit_cooks=True,
+                size_factors_fit_type="poscounts",
             )
 
             dds.deseq2()
