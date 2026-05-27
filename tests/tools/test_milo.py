@@ -267,11 +267,19 @@ def test_de_nhoods_shapes(de_nhoods_mdata, milo):
         min_n_cells_per_sample=2,
         min_count=1,
     )
-    assert de.n_obs == mdata["milo"].n_vars
-    assert de.n_vars == mdata["rna"].n_vars
-    for k in ["logFC", "pvalue", "pval_corrected_across_genes", "pval_corrected_across_nhoods"]:
-        assert k in de.layers
-    assert de.obs["test_performed"].dtype == bool
+    expected = mdata["milo"].n_vars * mdata["rna"].n_vars
+    assert len(de) == expected
+    for c in [
+        "nhood",
+        "variable",
+        "log_fc",
+        "p_value",
+        "adj_p_value",
+        "pval_corrected_across_nhoods",
+        "test_performed",
+    ]:
+        assert c in de.columns
+    assert de["test_performed"].dtype == bool
 
 
 def test_de_nhoods_fdr_bounds(de_nhoods_mdata, milo):
@@ -288,15 +296,12 @@ def test_de_nhoods_fdr_bounds(de_nhoods_mdata, milo):
         min_n_cells_per_sample=2,
         min_count=1,
     )
-    p = de.layers["pvalue"]
-    padj_g = de.layers["pval_corrected_across_genes"]
-    padj_n = de.layers["pval_corrected_across_nhoods"]
-    p_valid = p[~np.isnan(p)]
-    assert (p_valid >= 0).all() and (p_valid <= 1).all()
-    both = ~np.isnan(p) & ~np.isnan(padj_g)
-    assert np.all(p[both] <= padj_g[both] + 1e-12)
-    both_n = ~np.isnan(p) & ~np.isnan(padj_n)
-    assert np.all(p[both_n] <= padj_n[both_n] + 1e-12)
+    valid = de.dropna(subset=["p_value"])
+    assert ((valid["p_value"] >= 0) & (valid["p_value"] <= 1)).all()
+    both_g = valid.dropna(subset=["adj_p_value"])
+    assert (both_g["p_value"] <= both_g["adj_p_value"] + 1e-12).all()
+    both_n = valid.dropna(subset=["pval_corrected_across_nhoods"])
+    assert (both_n["p_value"] <= both_n["pval_corrected_across_nhoods"] + 1e-12).all()
 
 
 def test_de_nhoods_planted_signal(de_nhoods_mdata, milo):
@@ -314,9 +319,7 @@ def test_de_nhoods_planted_signal(de_nhoods_mdata, milo):
         min_count=1,
     )
     g = mdata["rna"].uns["de_gene"]
-    gi = list(de.var_names).index(g)
-    lfc = de.layers["logFC"][:, gi]
-    lfc = lfc[~np.isnan(lfc)]
+    lfc = de.loc[de["variable"] == g, "log_fc"].dropna()
     assert np.median(lfc) > 0
 
 
@@ -333,7 +336,7 @@ def test_de_nhoods_statsmodels_runs(de_nhoods_mdata, milo):
         min_n_cells_per_sample=2,
         min_count=1,
     )
-    assert de.obs["test_performed"].any()
+    assert de["test_performed"].any()
 
 
 def test_annotate_nhoods_missing_samples(annotate_nhoods_mdata, milo):

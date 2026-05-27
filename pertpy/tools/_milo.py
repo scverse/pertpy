@@ -553,11 +553,11 @@ class Milo:
         min_count: int = 3,
         subset_nhoods: list[int] | None = None,
         fit_kwargs: dict | None = None,
-    ) -> AnnData:
+    ) -> pd.DataFrame:
         """Per-neighbourhood differential expression testing (miloDE).
 
-        For each neighbourhood, cells are pseudobulked by sample and a per-gene linear model is fit on the pseudobulk counts.
-        P-values are corrected twice: across genes within each nhood (BH) and across nhoods per gene (density-weighted BH, the same correction `da_nhoods` uses).
+        For each neighbourhood, cells are pseudobulked by sample and a per-gene linear model is fit on the pseudobulk counts via the existing pertpy DE method (`PyDESeq2` or `Statsmodels`).
+        P-values are corrected twice: across genes within each nhood (BH, exposed as `adj_p_value` to match pertpy DE conventions) and across nhoods per gene (density-weighted BH, the same correction `da_nhoods` uses).
         Neighbourhoods that fail validity checks (too few samples per condition, rank-deficient design) are skipped and marked `test_performed=False`.
 
         Args:
@@ -576,8 +576,8 @@ class Milo:
             fit_kwargs: Extra keyword arguments forwarded to the per-nhood model's `fit`.
 
         Returns:
-            AnnData of shape `(n_nhoods, n_genes)` with layers `logFC`, `pvalue`, `pval_corrected_across_genes`, `pval_corrected_across_nhoods`, and a boolean `obs["test_performed"]` flag.
-            `obs_names` match `mdata['milo'].var_names` and `var_names` match `mdata[feature_key].var_names`.
+            Long-form DataFrame with one row per (nhood, gene) pair, columns `nhood`, `variable`, `log_fc`, `p_value`, `adj_p_value`, `pval_corrected_across_nhoods`, `test_performed`.
+            Skipped nhoods contribute rows with NaN test statistics and `test_performed=False`.
 
         Examples:
             >>> import pertpy as pt
@@ -731,24 +731,21 @@ class Milo:
         weights = 1.0 / np.asarray(sample_adata.var["kth_distance"], dtype=float)
         padj_nhoods = np.full_like(pvals, np.nan)
         for g in range(n_genes):
-            col_p = pvals[:, g]
-            padj_nhoods[:, g] = _weighted_bh(col_p, weights)
+            padj_nhoods[:, g] = _weighted_bh(pvals[:, g], weights)
 
-        de = AnnData(
-            X=logfc,
-            obs=pd.DataFrame(
-                {"test_performed": test_performed},
-                index=pd.Index(nhood_names, name="nhood"),
-            ),
-            var=pd.DataFrame(index=pd.Index(var_names, name="gene")),
-            layers={
-                "logFC": logfc,
-                "pvalue": pvals,
-                "pval_corrected_across_genes": padj_genes,
-                "pval_corrected_across_nhoods": padj_nhoods,
-            },
+        nhood_rep = np.repeat(nhood_names, n_genes)
+        gene_rep = np.tile(var_names, n_nhoods_total)
+        return pd.DataFrame(
+            {
+                "nhood": nhood_rep,
+                "variable": gene_rep,
+                "log_fc": logfc.ravel(),
+                "p_value": pvals.ravel(),
+                "adj_p_value": padj_genes.ravel(),
+                "pval_corrected_across_nhoods": padj_nhoods.ravel(),
+                "test_performed": np.repeat(test_performed, n_genes),
+            }
         )
-        return de
 
     def annotate_nhoods(
         self,
