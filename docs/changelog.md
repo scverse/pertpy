@@ -2,8 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## v1.1.0
+
+### 🚀 Features
+
+* milo: speed up pydeseq2 da_nhoods ~100x via poscounts size factors ([#992](https://github.com/scverse/pertpy/pull/992)) @Zethson
+* Guide RNA assignment: crispat-matching JAX MAP fit (10–30× faster) ([#987](https://github.com/scverse/pertpy/pull/987)) @Zethson
+* DIALOGUE: from-scratch port of the R reference (PMD + HLM + iterative NNLS) ([#988](https://github.com/scverse/pertpy/pull/988)) @Zethson
+* PyDESeq2: optional apeGLM LFC shrinkage ([#985](https://github.com/scverse/pertpy/pull/985)) @Zethson
+* Add layout option to coda plot_boxplots (#718) ([#932](https://github.com/scverse/pertpy/pull/932)) @emekaokoli19
+
+### 🐛 Bug Fixes
+
+* scCODA: fix run_hmc TypeError; clarify log2-fold-change sign ([#993](https://github.com/scverse/pertpy/pull/993)) @Zethson
+* scCODA/tascCODA: make make_arviz stateless ([#991](https://github.com/scverse/pertpy/pull/991)) @Zethson
+* scCODA: unify covariate index format across get_effect_df / summary / credible_effects ([#989](https://github.com/scverse/pertpy/pull/989)) @Zethson
+* Reject all-zero contrasts in test_contrasts ([#981](https://github.com/scverse/pertpy/pull/981)) @Zethson
+* Fix PseudobulkSpace.compute losing X with anndata main ([#979](https://github.com/scverse/pertpy/pull/979)) @Zethson
+* Fix plot_effects_umap KeyError on Sccoda output (#780) ([#971](https://github.com/scverse/pertpy/pull/971)) @LiudengZhang
+* Fix marker positions: calculate marker positions from DataFrame, not rendered labels ([#970](https://github.com/scverse/pertpy/pull/970)) @kimjune01
+* Fix plot_multicomparison_fc ValueError with default figsize ([#965](https://github.com/scverse/pertpy/pull/965)) @kimjune01
+* Fix minor bugs ([#960](https://github.com/scverse/pertpy/pull/960)) @Zethson
+* Fix `add` and `subtract` ([#959](https://github.com/scverse/pertpy/pull/959)) @Zethson
+
+### 🧰 Maintenance
+
+* Milo cleanup: address #181 ([#986](https://github.com/scverse/pertpy/pull/986)) @Zethson
+* Refresh tools API page ([#983](https://github.com/scverse/pertpy/pull/983)) @Zethson
+* Resolve scgen test warnings ([#982](https://github.com/scverse/pertpy/pull/982)) @Zethson
+* Upgrade R ([#943](https://github.com/scverse/pertpy/pull/943)) @Zethson
+* Use pooch for dataset downloads ([#980](https://github.com/scverse/pertpy/pull/980)) @Zethson
 
 ## v1.0.6
 

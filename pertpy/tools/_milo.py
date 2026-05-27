@@ -12,6 +12,7 @@ import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
 from mudata import MuData
+from scverse_misc import Deprecation, deprecated, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
@@ -247,6 +248,14 @@ class Milo:
             milo_mdata = MuData({feature_key: adata, "milo": sample_adata})
             return milo_mdata
 
+    @deprecated_arg(
+        "subset_samples",
+        Deprecation(
+            "1.0.7",
+            "subset_samples is buggy in edge cases and will be removed. "
+            "Specify the comparison via `model_contrasts` instead, or subset cells before building the kNN graph.",
+        ),
+    )
     def da_nhoods(
         self,
         mdata: MuData,
@@ -401,9 +410,15 @@ class Milo:
                 try:
                     with localconverter(ro.default_converter + pandas2ri.converter):
                         mod_contrast = limma.makeContrasts(contrasts=model_contrasts, levels=model_df)
-                except ValueError:
-                    logger.error("Model contrasts must be in the form 'A-B' or 'A+B'")
-                    raise
+                except ValueError as err:
+                    logger.error(
+                        f"Failed to build contrast {model_contrasts!r} against model columns {list(model_df.columns)}. "
+                        "The reference level is dropped from the design matrix when an intercept is fit, so it cannot appear in a contrast — "
+                        "either pick another level pair or pass `add_intercept=False`."
+                    )
+                    raise ValueError(
+                        f"Failed to build contrast {model_contrasts!r} against model columns {list(model_df.columns)}."
+                    ) from err
                 with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
                     res = base.as_data_frame(
                         edgeR.topTags(edgeR.glmQLFTest(fit, contrast=mod_contrast), sort_by="none", n=np.inf)
@@ -440,6 +455,7 @@ class Milo:
                 metadata=design_df_filtered,
                 design=design_clean,
                 refit_cooks=True,
+                size_factors_fit_type="poscounts",
             )
 
             dds.deseq2()
@@ -455,6 +471,22 @@ class Milo:
                 factor_name = design_clean.replace("~", "").split("+")[-1].strip()
                 group1 = parts[0].replace(factor_name, "").strip()
                 group2 = parts[1].replace(factor_name, "").strip()
+                if factor_name not in design_df_filtered.columns:
+                    raise ValueError(
+                        f"Contrast factor {factor_name!r} is not a column of the design dataframe. "
+                        f"Available columns: {list(design_df_filtered.columns)}."
+                    )
+                if not isinstance(design_df_filtered[factor_name].dtype, pd.CategoricalDtype):
+                    design_df_filtered[factor_name] = design_df_filtered[factor_name].astype("category")
+                available_levels = list(design_df_filtered[factor_name].cat.categories)
+                missing = [g for g in (group1, group2) if g not in available_levels]
+                if missing:
+                    raise ValueError(
+                        f"Contrast levels {missing!r} not found in factor {factor_name!r}. "
+                        f"Available levels: {available_levels}. "
+                        f"Contrasts must follow the form '{factor_name}<level_a>-{factor_name}<level_b>' "
+                        "with both levels present in the data."
+                    )
                 stat_res = DeseqStats(dds, contrast=[factor_name, group1, group2])
             else:
                 factor_name = design_clean.replace("~", "").split("+")[-1].strip()
@@ -582,8 +614,10 @@ class Milo:
 
         mdata["milo"].var[f"nhood_{anno_col}"] = mean_anno_val
 
-    def add_covariate_to_nhoods_var(self, mdata: MuData, new_covariates: list[str], feature_key: str | None = "rna"):
-        """Add covariate from cell-level obs to sample-level obs. These should be covariates for which a single value can be assigned to each sample.
+    def add_covariate_to_nhoods_obs(self, mdata: MuData, new_covariates: list[str], feature_key: str | None = "rna"):
+        """Add covariate from cell-level obs to sample-level obs.
+
+        These should be covariates for which a single value can be assigned to each sample.
 
         Args:
             mdata: MuData object
@@ -602,7 +636,7 @@ class Milo:
             >>> sc.pp.neighbors(mdata["rna"])
             >>> milo.make_nhoods(mdata["rna"])
             >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
-            >>> milo.add_covariate_to_nhoods_var(mdata, new_covariates=["label"])
+            >>> milo.add_covariate_to_nhoods_obs(mdata, new_covariates=["label"])
         """
         try:
             sample_adata = mdata["milo"]
@@ -623,8 +657,13 @@ class Milo:
             missing_cov = [covar for covar in covariates if covar not in sample_adata.obs.columns]
             logger.error("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
             raise
-        sample_obs = sample_obs[covariates + [sample_col]].astype("str")
-        sample_obs.index = sample_obs[sample_col]
+        sample_obs = sample_obs[covariates + [sample_col]].copy()
+        sample_obs.index = sample_obs[sample_col].astype("str")
+        # Preserve categoricals; coerce remaining object columns to category so downstream
+        # plotting (e.g. plot_nhood_counts_by_cond) doesn't choke on object dtype.
+        for col in covariates:
+            if sample_obs[col].dtype == "object":
+                sample_obs[col] = sample_obs[col].astype("category")
         try:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
         except ValueError:
@@ -633,6 +672,15 @@ class Milo:
             )
             raise
         sample_adata.obs = sample_obs.loc[sample_adata.obs_names]
+
+    @deprecated(
+        Deprecation(
+            "1.0.7", "Use `add_covariate_to_nhoods_obs` instead — the destination is `mdata['milo'].obs`, not `.var`."
+        )
+    )
+    def add_covariate_to_nhoods_var(self, mdata: MuData, new_covariates: list[str], feature_key: str | None = "rna"):
+        """Deprecated alias of :meth:`pertpy.tools.Milo.add_covariate_to_nhoods_obs`."""
+        return self.add_covariate_to_nhoods_obs(mdata, new_covariates, feature_key=feature_key)
 
     def build_nhood_graph(self, mdata: MuData, basis: str = "X_umap", feature_key: str | None = "rna"):
         """Build graph of neighbourhoods used for visualization of DA results.
@@ -1106,6 +1154,12 @@ class Milo:
                 "mdata should be a MuData object with two slots: feature_key and 'milo'. Run milopy.count_nhoods(mdata) first"
             ) from None
 
+        if test_var not in nhood_adata.var.columns:
+            raise KeyError(
+                f"{test_var!r} not found in mdata['milo'].obs. "
+                "Run `milo.add_covariate_to_nhoods_obs(mdata, new_covariates=[<test_var>])` first."
+            )
+
         if subset_nhoods is None:
             subset_nhoods = nhood_adata.obs_names
 
@@ -1113,6 +1167,9 @@ class Milo:
             var_name=nhood_adata.uns["sample_col"], value_name="n_cells"
         )
         pl_df = pd.merge(pl_df, nhood_adata.var)
+        # Seaborn handles categoricals cleanly; object dtype columns can produce odd ordering.
+        if pl_df[test_var].dtype == "object":
+            pl_df[test_var] = pl_df[test_var].astype("category")
         pl_df["log_n_cells"] = np.log1p(pl_df["n_cells"])
         if not log_counts:
             sns.boxplot(data=pl_df, x=test_var, y="n_cells", color="lightblue", ax=ax)

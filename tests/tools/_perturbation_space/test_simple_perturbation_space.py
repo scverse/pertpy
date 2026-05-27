@@ -46,7 +46,7 @@ def adata_simple(rng):
 
 def test_differential_response(adata_simple):
     ps = pt.tl.PseudobulkSpace()
-    ps_adata = ps.compute_control_diff(adata_simple, target_col="perturbation", copy=True)
+    ps_adata = ps.compute_control_diff(adata_simple, target_col="perturbation")
 
     expected_diff_matrix = adata_simple.X - adata_simple.X[0, :]
     np.testing.assert_allclose(ps_adata.X, expected_diff_matrix, rtol=1e-4)
@@ -60,7 +60,6 @@ def test_differential_response(adata_simple):
             new_layer_key="counts_diff",
             embedding_key="X_pca",
             new_embedding_key="pca_diff",
-            copy=True,
         )
 
 
@@ -180,7 +179,7 @@ def test_linear_operations():
     psadata_umap = ps.compute(adata, mode="mean", embedding_key="X_umap")
     psadata.obsm["X_umap"] = psadata_umap.X
 
-    ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], ensure_consistency=True)
+    ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"])
 
     test = data_compare["control"].X + data_compare["target1"].X + data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1+target2"].X, rtol=1e-4)
@@ -192,27 +191,24 @@ def test_linear_operations():
     )
     np.testing.assert_allclose(test, ps_adata["target1+target2"].obsm["X_umap"], rtol=1e-4)
 
-    ps_adata, data_compare = ps.subtract(
-        psadata, reference_key="target1", perturbations=["target2"], ensure_consistency=True
-    )
+    ps_adata, data_compare = ps.subtract(psadata, reference_key="target1", perturbations=["target2"])
 
     test = data_compare["target1"].X - data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1-target2"].X, rtol=1e-4)
 
-    ps_adata = ps.compute_control_diff(psadata, copy=True)
+    # Input that has already been differenced — opt out of the auto-diff with ensure_consistency=False.
+    ps_adata = ps.compute_control_diff(psadata)
 
-    ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"])
+    ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"], ensure_consistency=False)
 
     test = ps_adata["control"].X + ps_adata["target1"].X + ps_adata["target2"].X
     np.testing.assert_allclose(test, ps_adata2["target1+target2"].X, rtol=1e-4)
 
-    ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"])
+    ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=False)
     ps_vector = ps_adata2["target1-target1"].X
     np.testing.assert_allclose(ps_adata2["control"].X, ps_adata2["target1-target1"].X, rtol=1e-4)
 
-    ps_adata2, data_compare = ps.subtract(
-        ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=True
-    )
+    ps_adata2, data_compare = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"])
     ps_inner_vector = ps_adata2["target1-target1"].X
 
     np.testing.assert_allclose(ps_inner_vector, ps_vector, rtol=1e-4)
@@ -220,12 +216,6 @@ def test_linear_operations():
     np.testing.assert_allclose(
         data_compare["control"].obsm["X_umap_control_diff"], ps_adata2["target1-target1"].obsm["X_umap"], rtol=1e-4
     )
-
-    with pytest.raises(ValueError):
-        ps.add(
-            ps_adata,
-            perturbations=["target1", "target3"],
-        )
 
     with pytest.raises(ValueError):
         ps.add(
