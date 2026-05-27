@@ -28,6 +28,32 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import euclidean_distances
 
 
+def _weighted_bh(pvalues: np.ndarray, weights: np.ndarray) -> np.ndarray:
+    """Density-weighted Benjamini-Hochberg adjustment (Cydar/Milo style).
+
+    NaN p-values are passed through; infinite weights are treated as zero.
+    """
+    pvalues = np.asarray(pvalues, dtype=float)
+    weights = np.asarray(weights, dtype=float)
+    weights = np.where(np.isinf(weights), 0.0, weights)
+    out = np.full_like(pvalues, np.nan)
+    keep = ~np.isnan(pvalues)
+    if not keep.any():
+        return out
+    p = pvalues[keep]
+    w = weights[keep]
+    o = np.argsort(p)
+    p_sorted = p[o]
+    w_sorted = w[o]
+    adj_rev = (w.sum() * p_sorted / np.cumsum(w_sorted))[::-1]
+    adj = np.minimum.accumulate(adj_rev)[::-1]
+    adj = np.minimum(adj, 1.0)
+    final = np.empty_like(p)
+    final[o] = adj
+    out[keep] = final
+    return out
+
+
 class Milo:
     """Python implementation of Milo."""
 
@@ -511,6 +537,219 @@ class Milo:
 
         self._graph_spatial_fdr(sample_adata)
 
+    def de_nhoods(
+        self,
+        mdata: MuData,
+        design: str,
+        *,
+        column: str,
+        baseline: str,
+        group_to_compare: str,
+        solver: Literal["pydeseq2", "statsmodels"] = "pydeseq2",
+        layer: str | None = None,
+        sample_col: str | None = None,
+        feature_key: str | None = "rna",
+        min_n_cells_per_sample: int = 3,
+        min_count: int = 3,
+        subset_nhoods: list[int] | None = None,
+        fit_kwargs: dict | None = None,
+    ) -> AnnData:
+        """Per-neighbourhood differential expression testing (miloDE).
+
+        For each neighbourhood, cells are pseudobulked by sample and a per-gene linear model is fit on the pseudobulk counts.
+        P-values are corrected twice: across genes within each nhood (BH) and across nhoods per gene (density-weighted BH, the same correction `da_nhoods` uses).
+        Neighbourhoods that fail validity checks (too few samples per condition, rank-deficient design) are skipped and marked `test_performed=False`.
+
+        Args:
+            mdata: MuData with `make_nhoods` and `count_nhoods` already run.
+            design: Right-hand-side formula referencing columns of `mdata[feature_key].obs`, e.g. `"~condition"` or `"~replicate+condition"`.
+            column: Column from the design that defines the contrast factor.
+            baseline: Level of `column` used as the reference (denominator).
+            group_to_compare: Level of `column` compared against `baseline` (numerator).
+            solver: `"pydeseq2"` for the NB-GLM Wald test, `"statsmodels"` for OLS by default (pass `fit_kwargs={"regression_model": sm.GLM, "family": ...}` for a GLM).
+            layer: Layer in `mdata[feature_key]` to use as raw counts; defaults to `.X`.
+            sample_col: Column in `mdata[feature_key].obs` identifying samples; defaults to the value stored by `count_nhoods` in `mdata['milo'].uns['sample_col']`.
+            feature_key: Cell-level modality key in `mdata`.
+            min_n_cells_per_sample: Drop samples with fewer than this many cells in the nhood before pseudobulking.
+            min_count: Drop genes whose total pseudobulk count across the surviving samples is below this threshold.
+            subset_nhoods: Optional integer indices (into `mdata['milo'].var_names`) restricting which nhoods are tested.
+            fit_kwargs: Extra keyword arguments forwarded to the per-nhood model's `fit`.
+
+        Returns:
+            AnnData of shape `(n_nhoods, n_genes)` with layers `logFC`, `pvalue`, `pval_corrected_across_genes`, `pval_corrected_across_nhoods`, and a boolean `obs["test_performed"]` flag.
+            `obs_names` match `mdata['milo'].var_names` and `var_names` match `mdata[feature_key].var_names`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> de = milo.de_nhoods(
+            ...     mdata, design="~label", column="label", baseline="control", group_to_compare="treated"
+            ... )
+        """
+        from scipy.sparse import issparse
+
+        try:
+            sample_adata = mdata["milo"]
+        except KeyError:
+            raise RuntimeError("mdata['milo'] is missing -- run Milo.count_nhoods() first.") from None
+        adata = mdata[feature_key]
+
+        if "nhoods" not in adata.obsm:
+            raise KeyError(f"mdata[{feature_key!r}].obsm['nhoods'] is missing -- run make_nhoods() first.")
+
+        if sample_col is None:
+            sample_col = sample_adata.uns.get("sample_col")
+            if sample_col is None:
+                raise KeyError(
+                    "sample_col not found in mdata['milo'].uns -- run count_nhoods() first or pass `sample_col`."
+                )
+
+        covariates = [c.strip() for c in re.split(r"\+|\*|:", design.lstrip("~ "))]
+        covariates = [c for c in covariates if c and c not in {"0", "1"}]
+        missing = [c for c in covariates + [sample_col] if c not in adata.obs.columns]
+        if missing:
+            raise KeyError(f"Columns {missing!r} not found in mdata[{feature_key!r}].obs.")
+
+        sample_obs_map = adata.obs[[sample_col, *covariates]].drop_duplicates().set_index(sample_col)
+        if not sample_obs_map.index.is_unique:
+            raise AssertionError(
+                f"Each sample must map to a single covariate value; got duplicates for samples "
+                f"{sample_obs_map.index[sample_obs_map.index.duplicated()].unique().tolist()}."
+            )
+
+        nhoods = adata.obsm["nhoods"]
+        if not issparse(nhoods):
+            nhoods = csr_matrix(nhoods)
+        nhoods_csc = nhoods.tocsc()
+        n_nhoods_total = nhoods.shape[1]
+
+        nhood_ix = np.arange(n_nhoods_total) if subset_nhoods is None else np.asarray(subset_nhoods, dtype=int)
+
+        nhood_names = sample_adata.var_names.to_numpy()
+        var_names = adata.var_names.to_numpy()
+        n_genes = adata.n_vars
+
+        logfc = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float32)
+        pvals = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float32)
+        padj_genes = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float32)
+        test_performed = np.zeros(n_nhoods_total, dtype=bool)
+
+        # Lazy-import the DE class
+        sm = None
+        if solver == "pydeseq2":
+            from pertpy.tools._differential_gene_expression._pydeseq2 import PyDESeq2
+
+            model_cls: type = PyDESeq2
+        elif solver == "statsmodels":
+            import statsmodels.api as sm  # type: ignore[no-redef]
+
+            from pertpy.tools._differential_gene_expression._statsmodels import Statsmodels
+
+            model_cls = Statsmodels
+        else:
+            raise ValueError(f"Unknown solver {solver!r}. Use 'pydeseq2' or 'statsmodels'.")
+        user_fit_kwargs = dict(fit_kwargs or {})
+
+        # For statsmodels on raw counts the regression model should be an NB-GLM with a library-size offset.
+        sm_glm_default = solver == "statsmodels" and "regression_model" not in user_fit_kwargs
+
+        for j in nhood_ix:
+            col = nhoods_csc.getcol(j)
+            cell_idx = col.indices
+            if cell_idx.size == 0:
+                continue
+            sub = adata[cell_idx]
+            sample_counts = sub.obs[sample_col].value_counts()
+            kept_samples = sample_counts[sample_counts >= min_n_cells_per_sample].index.to_list()
+            cond_levels = sample_obs_map.loc[kept_samples, column].dropna().unique()
+            if {baseline, group_to_compare} - set(cond_levels):
+                continue
+            sub = sub[sub.obs[sample_col].isin(kept_samples)].copy()
+
+            try:
+                pdata = sc.get.aggregate(sub, by=sample_col, func="sum", layer=layer)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"Nhood {j}: pseudobulk failed ({e}); skipping.")
+                continue
+            pdata.X = pdata.layers["sum"]
+            if issparse(pdata.X):
+                pdata.X = pdata.X.toarray()
+
+            for cov in covariates:
+                pdata.obs[cov] = pdata.obs[sample_col].map(sample_obs_map[cov]).astype("category")
+
+            gene_mask = np.asarray(pdata.X.sum(axis=0)).ravel() >= min_count
+            if gene_mask.sum() < 2:
+                continue
+            pdata = pdata[:, gene_mask].copy()
+
+            try:
+                model = model_cls(pdata, design=design)
+                this_fit_kwargs = dict(user_fit_kwargs)
+                if sm_glm_default and sm is not None:
+                    lib_size = np.asarray(pdata.X.sum(axis=1)).ravel().astype(float)
+                    lib_size[lib_size <= 0] = 1.0
+                    this_fit_kwargs.setdefault("regression_model", sm.GLM)
+                    this_fit_kwargs.setdefault("family", sm.families.NegativeBinomial())
+                    this_fit_kwargs.setdefault("offset", np.log(lib_size))
+                model.fit(**this_fit_kwargs)
+                contrast_vec = model.contrast(column=column, baseline=baseline, group_to_compare=group_to_compare)
+                res = model.test_contrasts(contrast_vec)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"Nhood {j}: DE test failed ({e}); skipping.")
+                continue
+
+            gene_pos = pd.Series(np.arange(n_genes), index=var_names)
+            gi = gene_pos.reindex(res["variable"]).to_numpy()
+            ok = ~np.isnan(gi)
+            gi = gi[ok].astype(int)
+            logfc[j, gi] = res.loc[ok, "log_fc"].to_numpy(dtype=np.float32)
+            pvals[j, gi] = res.loc[ok, "p_value"].to_numpy(dtype=np.float32)
+            if "adj_p_value" in res.columns:
+                padj_genes[j, gi] = res.loc[ok, "adj_p_value"].to_numpy(dtype=np.float32)
+            test_performed[j] = True
+
+        # Backfill BH across genes for solvers that did not provide it
+        from statsmodels.stats.multitest import multipletests
+
+        for j in range(n_nhoods_total):
+            if not test_performed[j]:
+                continue
+            row = pvals[j]
+            valid = ~np.isnan(row)
+            if not valid.any() or not np.isnan(padj_genes[j, valid]).any():
+                continue
+            padj_genes[j, valid] = multipletests(row[valid], method="fdr_bh")[1]
+
+        # Density-weighted BH across nhoods per gene
+        weights = 1.0 / np.asarray(sample_adata.var["kth_distance"], dtype=float)
+        padj_nhoods = np.full_like(pvals, np.nan)
+        for g in range(n_genes):
+            col_p = pvals[:, g]
+            padj_nhoods[:, g] = _weighted_bh(col_p, weights)
+
+        de = AnnData(
+            X=logfc,
+            obs=pd.DataFrame(
+                {"test_performed": test_performed},
+                index=pd.Index(nhood_names, name="nhood"),
+            ),
+            var=pd.DataFrame(index=pd.Index(var_names, name="gene")),
+            layers={
+                "logFC": logfc,
+                "pvalue": pvals,
+                "pval_corrected_across_genes": padj_genes,
+                "pval_corrected_across_nhoods": padj_nhoods,
+            },
+        )
+        return de
+
     def annotate_nhoods(
         self,
         mdata: MuData,
@@ -821,24 +1060,9 @@ class Milo:
         Args:
             sample_adata: Sample-level AnnData.
         """
-        # use 1/connectivity as the weighting for the weighted BH adjustment from Cydar
-        w = 1 / sample_adata.var["kth_distance"]
-        w[np.isinf(w)] = 0
-
-        # Computing a density-weighted q-value.
-        pvalues = sample_adata.var["PValue"]
-        keep_nhoods = ~pvalues.isna()  # Filtering in case of test on subset of nhoods
-        o = pvalues[keep_nhoods].argsort()
-        pvalues = pvalues.loc[keep_nhoods].iloc[o]
-        w = w.loc[keep_nhoods].iloc[o]
-
-        adjp = np.zeros(shape=len(o))
-        adjp[o] = (sum(w) * pvalues / np.cumsum(w))[::-1].cummin()[::-1]
-        adjp = np.array([x if x < 1 else 1 for x in adjp])
-
-        sample_adata.var["SpatialFDR"] = np.nan
-        sample_adata.var.loc[keep_nhoods, "SpatialFDR"] = adjp
-
+        weights = 1.0 / np.asarray(sample_adata.var["kth_distance"], dtype=float)
+        adjp = _weighted_bh(sample_adata.var["PValue"].to_numpy(dtype=float), weights)
+        sample_adata.var["SpatialFDR"] = adjp
         # Fill missing values with 1 to avoid downstream NaN complications
         # e.g. https://github.com/scverse/pertpy/issues/912
         sample_adata.var["SpatialFDR"] = sample_adata.var["SpatialFDR"].fillna(1)
