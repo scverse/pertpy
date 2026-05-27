@@ -323,6 +323,31 @@ def test_de_nhoods_planted_signal(de_nhoods_mdata, milo):
     assert np.median(lfc) > 0
 
 
+def test_plot_de_nhood_graph(de_nhoods_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    import matplotlib
+
+    matplotlib.use("Agg")
+    mdata = de_nhoods_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    de = milo.de_nhoods(
+        mdata,
+        design="~condition",
+        column="condition",
+        baseline="ConditionA",
+        group_to_compare="ConditionB",
+        layer="counts",
+        min_n_cells_per_sample=2,
+        min_count=1,
+    )
+    g = mdata["rna"].uns["de_gene"]
+    fig = milo.plot_de_nhood_graph(mdata, de, gene=g, return_fig=True)
+    assert fig is not None
+    with pytest.raises(KeyError):
+        milo.plot_de_nhood_graph(mdata, de, gene="not_a_real_gene")
+
+
 def test_de_nhoods_statsmodels_runs(de_nhoods_mdata, milo):
     mdata = de_nhoods_mdata.copy()
     de = milo.de_nhoods(

@@ -1112,16 +1112,130 @@ class Milo:
             .. image:: /_static/docstring_previews/milo_nhood_graph.png
         """
         nhood_adata = mdata["milo"].T.copy()
+        return self._render_nhood_graph(
+            nhood_adata,
+            logfc=nhood_adata.obs["logFC"],
+            spatial_fdr=nhood_adata.obs["SpatialFDR"],
+            alpha=alpha,
+            min_logFC=min_logFC,
+            min_size=min_size,
+            plot_edges=plot_edges,
+            title=title,
+            color_map=color_map,
+            palette=palette,
+            ax=ax,
+            return_fig=return_fig,
+            **kwargs,
+        )
 
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_de_nhood_graph(  # pragma: no cover # noqa: D417
+        self,
+        mdata: MuData,
+        de_results: pd.DataFrame,
+        gene: str,
+        *,
+        alpha: float = 0.1,
+        min_logFC: float = 0,
+        min_size: int = 10,
+        plot_edges: bool = False,
+        title: str | None = None,
+        color_map: Colormap | str | None = None,
+        palette: str | Sequence[str] | None = None,
+        ax: Axes | None = None,
+        return_fig: bool = False,
+        **kwargs,
+    ) -> Figure | None:
+        """Visualize per-neighbourhood DE logFC of a single gene from `de_nhoods` results.
+
+        Pairs with `de_nhoods` the same way `plot_nhood_graph` pairs with `da_nhoods`.
+        Uses the same embedding (`build_nhood_graph` must have been run) and colors nhoods by `log_fc`, masking those with `pval_corrected_across_nhoods > alpha`.
+
+        Args:
+            mdata: MuData with `build_nhood_graph` already run.
+            de_results: Long DataFrame returned by `de_nhoods`.
+            gene: Gene to plot; must appear in `de_results["variable"]`.
+            alpha: Significance threshold on `pval_corrected_across_nhoods`.
+            min_logFC: Minimum absolute log fold-change to color a nhood.
+            min_size: Multiplier on `Nhood_size` for the node radius.
+            plot_edges: Whether to draw nhood overlap edges.
+            title: Plot title; defaults to `miloDE logFC for <gene>`.
+            {common_plot_args}
+            **kwargs: Forwarded to `scanpy.pl.embedding`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> sc.tl.umap(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.build_nhood_graph(mdata)
+            >>> de = milo.de_nhoods(
+            ...     mdata,
+            ...     design="~label",
+            ...     column="label",
+            ...     baseline="control",
+            ...     group_to_compare="treated",
+            ...     layer="counts",
+            ... )
+            >>> milo.plot_de_nhood_graph(mdata, de, gene="CD4")
+
+        Preview:
+            .. image:: /_static/docstring_previews/milo_de_nhoods_nhood_graph.png
+        """
+        g = de_results.loc[de_results["variable"] == gene]
+        if g.empty:
+            raise KeyError(f"Gene {gene!r} not found in de_results['variable'].")
+        g = g.set_index("nhood")
+        nhood_adata = mdata["milo"].T.copy()
+        logfc = g["log_fc"].reindex(nhood_adata.obs_names).to_numpy(dtype=float)
+        spatial_fdr = g["pval_corrected_across_nhoods"].reindex(nhood_adata.obs_names).to_numpy(dtype=float)
+        return self._render_nhood_graph(
+            nhood_adata,
+            logfc=pd.Series(logfc, index=nhood_adata.obs_names),
+            spatial_fdr=pd.Series(spatial_fdr, index=nhood_adata.obs_names),
+            alpha=alpha,
+            min_logFC=min_logFC,
+            min_size=min_size,
+            plot_edges=plot_edges,
+            title=title if title is not None else f"miloDE logFC for {gene}",
+            color_map=color_map,
+            palette=palette,
+            ax=ax,
+            return_fig=return_fig,
+            **kwargs,
+        )
+
+    def _render_nhood_graph(
+        self,
+        nhood_adata: AnnData,
+        *,
+        logfc: pd.Series,
+        spatial_fdr: pd.Series,
+        alpha: float,
+        min_logFC: float,
+        min_size: int,
+        plot_edges: bool,
+        title: str,
+        color_map,
+        palette,
+        ax,
+        return_fig: bool,
+        **kwargs,
+    ) -> Figure | None:
         if "Nhood_size" not in nhood_adata.obs.columns:
             raise KeyError(
-                'Cannot find "Nhood_size" column in adata.uns["nhood_adata"].obs -- \
-                    please run milopy.utils.build_nhood_graph(adata)'
+                'Cannot find "Nhood_size" column in adata.uns["nhood_adata"].obs -- '
+                "please run milo.build_nhood_graph(mdata) first"
             )
 
-        nhood_adata.obs["graph_color"] = nhood_adata.obs["logFC"]
-        nhood_adata.obs.loc[nhood_adata.obs["SpatialFDR"] > alpha, "graph_color"] = np.nan
-        nhood_adata.obs["abs_logFC"] = abs(nhood_adata.obs["logFC"])
+        nhood_adata.obs["graph_color"] = logfc
+        nhood_adata.obs.loc[spatial_fdr > alpha, "graph_color"] = np.nan
+        nhood_adata.obs["abs_logFC"] = logfc.abs()
         nhood_adata.obs.loc[nhood_adata.obs["abs_logFC"] < min_logFC, "graph_color"] = np.nan
 
         # Plotting order - extreme logFC on top
@@ -1151,7 +1265,6 @@ class Milo:
             show=False,
             **kwargs,
         )
-
         if return_fig:
             return fig
         plt.show()
