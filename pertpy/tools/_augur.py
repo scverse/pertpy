@@ -543,10 +543,10 @@ class Augur:
         # standardized coefficients with Agresti method
         # cf. https://think-lab.github.io/d/205/#3
         if isinstance(self.estimator, LogisticRegression):
-            for fold, self.estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
+            for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
                 feature_importances["genes"].extend(x.columns.tolist())
                 feature_importances["feature_importances"].extend(
-                    (self.estimator.coef_ * self.estimator.coef_.std()).flatten().tolist()
+                    (estimator.coef_ * estimator.coef_.std()).flatten().tolist()
                 )
                 feature_importances["subsample_idx"].extend(len(x.columns) * [subsample_idx])
                 feature_importances["fold"].extend(len(x.columns) * [fold])
@@ -792,7 +792,8 @@ class Augur:
         adata.obs["augur_score"] = nan
         for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data..."):
             cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
-            if augur_mode in ("default", "permute"):
+
+            if augur_mode in ("default", "permute") and len(cell_type_subsample) >= min_cells:
                 cell_type_subsample = (
                     self.select_highly_variable(cell_type_subsample)
                     if not select_variance_features
@@ -991,7 +992,7 @@ class Augur:
             pd.merge(
                 delta_rnd[["cell_type", "delta_rnd"]], delta[["cell_type", "delta_augur"]], on="cell_type", how="left"
             )
-            .assign(b=lambda x: (x.delta_rnd >= x.delta_augur))
+            .assign(b=lambda x: x.delta_rnd >= x.delta_augur)
             .groupby("cell_type", as_index=False)
             .sum()["b"]
         )

@@ -17,7 +17,7 @@ from scipy.sparse import csr_matrix, issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import CSRBase
-from pertpy.preprocessing._guide_rna_mixture import PoissonGaussMixture
+from pertpy.preprocessing._guide_rna_mixture import compute_count_thresholds, fit_poisson_gauss_mixture
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Figure
@@ -202,10 +202,14 @@ class GuideAssignment:
 
         return assigned_grna
 
+    @singledispatchmethod
     def assign_mixture_model(
         self,
-        adata: AnnData,
+        data: AnnData | np.ndarray | CSRBase,
+        /,
+        *,
         model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
+        layer: str | None = None,
         assigned_guides_key: str = "assigned_guide",
         no_grna_assigned_key: str = "negative",
         max_assignments_per_cell: int = 5,
@@ -213,21 +217,35 @@ class GuideAssignment:
         multiple_grna_assignment_string: str = "+",
         only_return_results: bool = False,
         show_progress: bool = False,
-        **mixture_model_kwargs,
+        n_iter: int = 500,
+        learning_rate: float = 0.01,
+        n_init_seeds: int = 10,
+        seed: int = 2024,
     ) -> np.ndarray | None:
-        """Assigns gRNAs to cells using a mixture model.
+        """Assigns gRNAs to cells using a Poisson-Gaussian mixture model.
+
+        The model, priors, and per-guide thresholding rule reproduce ``crispat.ga_poisson_gauss`` (Velten group, https://github.com/velten-group/crispat).
+        MAP estimation runs for all guides in parallel on JAX, replacing crispat's per-guide Pyro SVI loop.
+
+        For each guide, the model is fit only to cells with non-zero counts.
+        Log2 counts are modelled as a mixture of a continuous Poisson background and a Gaussian on-target component with priors ``weights ~ Dirichlet([0.9, 0.1])``, ``mu ~ Normal(3, 2)``, ``scale ~ LogNormal(2, 1)``, ``lam ~ LogNormal(0, 1)``.
+        A cell is assigned to a guide if its UMI count is at least the smallest integer ``t`` for which ``P(Normal | log2(t)) > 0.5``.
 
         Args:
-            adata: AnnData object containing gRNA values.
-            model: The model to use for the mixture model. Currently only `Poisson_Gauss_Mixture` is supported.
-            assigned_guides_key: Assigned guide will be saved on adata.obs[output_key].
-            no_grna_assigned_key: The key to return if a cell is negative for all gRNAs.
-            max_assignments_per_cell: The maximum number of gRNAs that can be assigned to a cell.
-            multiple_grna_assigned_key: The key to return if multiple gRNAs are assigned to a cell.
-            multiple_grna_assignment_string: The string to use to join multiple gRNAs assigned to a cell.
-            only_return_results: Whether input AnnData is not modified and the result is returned as an np.ndarray.
-            show_progress: Whether to shows progress bar.
-            mixture_model_kwargs: Are passed to the mixture model.
+            data: AnnData with gRNA counts, or a dense or sparse cell-by-guide count matrix.
+            model: The mixture model to use; currently only ``"poisson_gauss_mixture"`` is supported.
+            layer: Layer name to use when ``data`` is an AnnData (defaults to ``X``).
+            assigned_guides_key: Per-cell assignment is saved on ``adata.obs[assigned_guides_key]``.
+            no_grna_assigned_key: Key to use when a cell is negative for all gRNAs.
+            max_assignments_per_cell: Maximum number of gRNAs that can be assigned to a cell.
+            multiple_grna_assigned_key: Key to use when more than ``max_assignments_per_cell`` gRNAs are assigned.
+            multiple_grna_assignment_string: Separator used to join multiple gRNAs assigned to one cell.
+            only_return_results: If ``True``, do not modify ``adata`` and return the assignment array.
+            show_progress: Whether to print a progress line.
+            n_iter: Optimization steps for the SVI loop (crispat default: 500).
+            learning_rate: Adam learning rate (crispat default: 0.01).
+            n_init_seeds: Number of prior-sampled inits per guide; best is kept (crispat default: 10).
+            seed: Random seed used for initialization.
 
         Examples:
             >>> import pertpy as pt
@@ -236,69 +254,282 @@ class GuideAssignment:
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_mixture_model(gdo)
         """
-        if model == "poisson_gauss_mixture":
-            mixture_model = PoissonGaussMixture(**mixture_model_kwargs)
-        else:
+        raise NotImplementedError(
+            f"No implementation found for {type(data)}. Must be numpy array, sparse matrix, or AnnData object."
+        )
+
+    @assign_mixture_model.register(AnnData)
+    def _assign_mixture_model_anndata(
+        self,
+        adata: AnnData,
+        /,
+        *,
+        model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
+        layer: str | None = None,
+        assigned_guides_key: str = "assigned_guide",
+        no_grna_assigned_key: str = "negative",
+        max_assignments_per_cell: int = 5,
+        multiple_grna_assigned_key: str = "multiple",
+        multiple_grna_assignment_string: str = "+",
+        only_return_results: bool = False,
+        show_progress: bool = False,
+        n_iter: int = 500,
+        learning_rate: float = 0.01,
+        n_init_seeds: int = 10,
+        seed: int = 2024,
+    ) -> np.ndarray | None:
+        if model != "poisson_gauss_mixture":
             raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
+        X = _get_obs_rep(adata, layer=layer)
+        result = self._fit_mixture_pg(
+            X,
+            guide_names=list(adata.var_names),
+            n_iter=n_iter,
+            learning_rate=learning_rate,
+            n_init_seeds=n_init_seeds,
+            seed=seed,
+            show_progress=show_progress,
+        )
 
-        res = pd.DataFrame(0, index=adata.obs_names, columns=adata.var_names)
-        fct = track if show_progress else lambda iterable: iterable
-        for gene in fct(adata.var_names):
-            is_nonzero = (
-                np.ravel((adata[:, gene].X != 0).todense()) if issparse(adata.X) else np.ravel(adata[:, gene].X != 0)
-            )
-            if sum(is_nonzero) < 2:
-                warn(f"Skipping {gene} as there are less than 2 cells expressing the guide at all.", stacklevel=2)
-                continue
-            # We are only fitting the model to the non-zero values, the rest is
-            # automatically assigned to the negative class
-            data = adata[is_nonzero, gene].X.todense().A1 if issparse(adata.X) else adata[is_nonzero, gene].X
-            data = np.ravel(data)
+        adata.var["poisson_rate"] = result["poisson_rate"]
+        adata.var["gaussian_mean"] = result["gaussian_mean"]
+        adata.var["gaussian_std"] = result["gaussian_std"]
+        adata.var["mix_probs_0"] = result["mix_probs_pois"]
+        adata.var["mix_probs_1"] = result["mix_probs_norm"]
+        adata.var["threshold"] = result["thresholds"]
+        adata.var["final_loss"] = result["final_loss"]
 
-            if np.any(data < 0):
+        assignments = self._binary_to_per_cell_strings(
+            result["binary"],
+            np.asarray(adata.var_names, dtype=object),
+            no_grna_assigned_key=no_grna_assigned_key,
+            max_assignments_per_cell=max_assignments_per_cell,
+            multiple_grna_assigned_key=multiple_grna_assigned_key,
+            multiple_grna_assignment_string=multiple_grna_assignment_string,
+        )
+
+        if only_return_results:
+            return assignments
+
+        adata.obs[assigned_guides_key] = pd.Categorical(assignments)
+        return None
+
+    @assign_mixture_model.register(np.ndarray)
+    def _assign_mixture_model_numpy(
+        self,
+        X: np.ndarray,
+        /,
+        *,
+        var: pd.DataFrame,
+        model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
+        no_grna_assigned_key: str = "negative",
+        max_assignments_per_cell: int = 5,
+        multiple_grna_assigned_key: str = "multiple",
+        multiple_grna_assignment_string: str = "+",
+        show_progress: bool = False,
+        n_iter: int = 500,
+        learning_rate: float = 0.01,
+        n_init_seeds: int = 10,
+        seed: int = 2024,
+    ) -> np.ndarray:
+        if model != "poisson_gauss_mixture":
+            raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
+        result = self._fit_mixture_pg(
+            X,
+            guide_names=list(var.index),
+            n_iter=n_iter,
+            learning_rate=learning_rate,
+            n_init_seeds=n_init_seeds,
+            seed=seed,
+            show_progress=show_progress,
+        )
+        return self._binary_to_per_cell_strings(
+            result["binary"],
+            np.asarray(var.index, dtype=object),
+            no_grna_assigned_key=no_grna_assigned_key,
+            max_assignments_per_cell=max_assignments_per_cell,
+            multiple_grna_assigned_key=multiple_grna_assigned_key,
+            multiple_grna_assignment_string=multiple_grna_assignment_string,
+        )
+
+    @assign_mixture_model.register(CSRBase)
+    def _assign_mixture_model_sparse(
+        self,
+        X: CSRBase,
+        /,
+        *,
+        var: pd.DataFrame,
+        model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
+        no_grna_assigned_key: str = "negative",
+        max_assignments_per_cell: int = 5,
+        multiple_grna_assigned_key: str = "multiple",
+        multiple_grna_assignment_string: str = "+",
+        show_progress: bool = False,
+        n_iter: int = 500,
+        learning_rate: float = 0.01,
+        n_init_seeds: int = 10,
+        seed: int = 2024,
+    ) -> np.ndarray:
+        if model != "poisson_gauss_mixture":
+            raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
+        result = self._fit_mixture_pg(
+            X,
+            guide_names=list(var.index),
+            n_iter=n_iter,
+            learning_rate=learning_rate,
+            n_init_seeds=n_init_seeds,
+            seed=seed,
+            show_progress=show_progress,
+        )
+        return self._binary_to_per_cell_strings(
+            result["binary"],
+            np.asarray(var.index, dtype=object),
+            no_grna_assigned_key=no_grna_assigned_key,
+            max_assignments_per_cell=max_assignments_per_cell,
+            multiple_grna_assigned_key=multiple_grna_assigned_key,
+            multiple_grna_assignment_string=multiple_grna_assignment_string,
+        )
+
+    def _fit_mixture_pg(
+        self,
+        X: np.ndarray | CSRBase,
+        *,
+        guide_names: list[str],
+        n_iter: int,
+        learning_rate: float,
+        n_init_seeds: int,
+        seed: int,
+        show_progress: bool,
+    ) -> dict[str, np.ndarray]:
+        """Fit the Poisson-Gaussian mixture for every guide and produce a binary assignment matrix.
+
+        Dispatches the per-guide nonzero extraction and per-guide thresholding on dense vs sparse so that a sparse input never gets densified at full ``[cells, guides]`` size.
+        """
+        if issparse(X):
+            X_csc = X.tocsc()
+            n_cells, n_guides = X_csc.shape
+            if X_csc.data.size and X_csc.data.min() < 0:
                 raise ValueError(
                     "Data contains negative values. Please use non-negative data for guide assignment with the Mixture Model."
                 )
+            nonzero_counts = np.diff(X_csc.indptr).astype(np.int64)
+            max_counts = np.zeros(n_guides, dtype=np.float64)
+            if X_csc.data.size:
+                max_counts[:] = X_csc.max(axis=0).toarray().ravel()
 
-            # Log2 transform the data so positive population is approximately normal
-            data = np.log2(data)
-            assignments = mixture_model.run_model(data)
-            res.loc[adata.obs_names[is_nonzero][assignments == "Positive"], gene] = 1
+            def _nonzero_values(g: int) -> np.ndarray:
+                start, end = X_csc.indptr[g], X_csc.indptr[g + 1]
+                return np.asarray(X_csc.data[start:end])
+        else:
+            X_dense = np.ascontiguousarray(np.asarray(X), dtype=np.float32)
+            n_cells, n_guides = X_dense.shape
+            if np.any(X_dense < 0):
+                raise ValueError(
+                    "Data contains negative values. Please use non-negative data for guide assignment with the Mixture Model."
+                )
+            nonzero_counts = (X_dense != 0).sum(axis=0).astype(np.int64)
+            max_counts = X_dense.max(axis=0).astype(np.float64)
 
-            # Add the parameters to the adata.var DataFrame
-            samples = mixture_model.mcmc.get_samples()
-            param_data = {}
+            def _nonzero_values(g: int) -> np.ndarray:
+                col = X_dense[:, g]
+                return col[col != 0]
 
-            for param_name in ["gaussian_mean", "gaussian_std", "poisson_rate", "mix_probs"]:
-                if param_name in samples:
-                    param_value = samples[param_name].mean(axis=0)
-                    if param_value.ndim == 0:
-                        param_data[param_name] = param_value.item()
-                    else:
-                        for i, p in enumerate(param_value):
-                            param_data[f"{param_name}_{i}"] = p.item()
+        # crispat fits only on cells with non-zero counts and requires max count >= 2.
+        fittable_mask = (nonzero_counts >= 2) & (max_counts >= 2)
+        for gene_idx in np.where(~fittable_mask)[0]:
+            gene = guide_names[gene_idx]
+            if nonzero_counts[gene_idx] < 2:
+                warn(f"Skipping {gene} as there are less than 2 cells expressing the guide at all.", stacklevel=3)
+            else:
+                warn(f"Skipping {gene} as its maximum count is below 2.", stacklevel=3)
 
-            # Add all columns at once
-            for col_name, value in param_data.items():
-                if col_name not in adata.var.columns:
-                    adata.var[col_name] = np.nan
-                adata.var.loc[gene, col_name] = value
+        fittable_idx = np.where(fittable_mask)[0]
+        thresholds = np.full(n_guides, np.nan, dtype=np.float64)
+        poisson_rate = np.full(n_guides, np.nan, dtype=np.float64)
+        gaussian_mean = np.full(n_guides, np.nan, dtype=np.float64)
+        gaussian_std = np.full(n_guides, np.nan, dtype=np.float64)
+        mix_probs_pois = np.full(n_guides, np.nan, dtype=np.float64)
+        mix_probs_norm = np.full(n_guides, np.nan, dtype=np.float64)
+        final_loss = np.full(n_guides, np.nan, dtype=np.float64)
 
-        # Assign guides to cells
-        # Some cells might have multiple guides assigned
-        series = pd.Series(no_grna_assigned_key, index=adata.obs_names)
-        num_guides_assigned = res.sum(1)
-        series.loc[(num_guides_assigned <= max_assignments_per_cell) & (num_guides_assigned != 0)] = res.apply(
-            lambda row: row.index[row == 1].tolist(), axis=1
-        ).str.join(multiple_grna_assignment_string)
-        series.loc[num_guides_assigned > max_assignments_per_cell] = multiple_grna_assigned_key
+        if fittable_idx.size > 0:
+            n_max = int(nonzero_counts[fittable_idx].max())
+            data_batch = np.zeros((fittable_idx.size, n_max), dtype=np.float32)
+            mask_batch = np.zeros((fittable_idx.size, n_max), dtype=bool)
+            for i, g in enumerate(fittable_idx):
+                nz = _nonzero_values(int(g))
+                log_values = np.log2(nz).astype(np.float32)
+                data_batch[i, : log_values.size] = log_values
+                mask_batch[i, : log_values.size] = True
 
-        if only_return_results:
-            return series.values
+            if show_progress:
+                print(f"Fitting Poisson-Gaussian mixture for {fittable_idx.size} guides in parallel.")
 
-        adata.obs[assigned_guides_key] = series.values
+            fit = fit_poisson_gauss_mixture(
+                data_batch,
+                mask_batch,
+                n_iter=n_iter,
+                learning_rate=learning_rate,
+                n_init_seeds=n_init_seeds,
+                seed=seed,
+            )
 
-        return None
+            thresholds[fittable_idx] = compute_count_thresholds(fit, max_counts[fittable_idx].astype(np.int64))
+            poisson_rate[fittable_idx] = fit.poisson_rate
+            gaussian_mean[fittable_idx] = fit.gaussian_mean
+            gaussian_std[fittable_idx] = fit.gaussian_std
+            mix_probs_pois[fittable_idx] = fit.mix_probs[:, 0]
+            mix_probs_norm[fittable_idx] = fit.mix_probs[:, 1]
+            final_loss[fittable_idx] = fit.final_loss
+
+        # Per-cell binary assignment using the per-guide thresholds; thresholds are >=1 so only
+        # the non-zero entries of each column can pass.
+        binary = np.zeros((n_cells, n_guides), dtype=np.int8)
+        valid_idx = np.where(~np.isnan(thresholds))[0]
+        if issparse(X):
+            for g in valid_idx:
+                thr = thresholds[g]
+                start, end = X_csc.indptr[g], X_csc.indptr[g + 1]
+                data_col = X_csc.data[start:end]
+                if data_col.size == 0:
+                    continue
+                sel = data_col >= thr
+                if sel.any():
+                    binary[X_csc.indices[start:end][sel], g] = 1
+        elif valid_idx.size:
+            valid_thr = thresholds[valid_idx]
+            binary[:, valid_idx] = (X_dense[:, valid_idx] >= valid_thr[None, :]).astype(np.int8)
+
+        return {
+            "binary": binary,
+            "thresholds": thresholds,
+            "poisson_rate": poisson_rate,
+            "gaussian_mean": gaussian_mean,
+            "gaussian_std": gaussian_std,
+            "mix_probs_pois": mix_probs_pois,
+            "mix_probs_norm": mix_probs_norm,
+            "final_loss": final_loss,
+        }
+
+    @staticmethod
+    def _binary_to_per_cell_strings(
+        binary: np.ndarray,
+        guide_names: np.ndarray,
+        *,
+        no_grna_assigned_key: str,
+        max_assignments_per_cell: int,
+        multiple_grna_assigned_key: str,
+        multiple_grna_assignment_string: str,
+    ) -> np.ndarray:
+        n_cells = binary.shape[0]
+        num_guides_assigned = binary.sum(axis=1)
+        assignments = np.full(n_cells, no_grna_assigned_key, dtype=object)
+        multi_mask = (num_guides_assigned > 0) & (num_guides_assigned <= max_assignments_per_cell)
+        for cell_idx in np.where(multi_mask)[0]:
+            assigned_guides = guide_names[binary[cell_idx] == 1]
+            assignments[cell_idx] = multiple_grna_assignment_string.join(assigned_guides.tolist())
+        assignments[num_guides_assigned > max_assignments_per_cell] = multiple_grna_assigned_key
+        return assignments
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_heatmap(  # pragma: no cover # noqa: D417

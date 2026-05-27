@@ -23,6 +23,32 @@ Pertpy enables differential gene expression tests through a common interface tha
     tools.Statsmodels
 ```
 
+Example implementation:
+
+```python
+import pertpy as pt
+
+adata = pt.dt.zhang_2021()
+adata.layers["counts"] = adata.X.copy()
+
+ps = pt.tl.PseudobulkSpace()
+pdata = ps.compute(
+    adata,
+    target_col="Patient",
+    groups_col="Cluster",
+    layer_key="counts",
+    mode="sum",
+)
+
+edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+edgr.fit()
+res_df = edgr.test_contrasts(
+    edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+)
+```
+
+See [differential gene expression tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/differential_gene_expression.html).
+
 ## Pooled CRISPR screens
 
 ### Perturbation assignment - Mixscape
@@ -194,23 +220,23 @@ import scanpy as sc
 
 adata = pt.dt.dialogue_example()
 sc.pp.pca(adata)
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-
 
 dl = pt.tl.Dialogue(
-    sample_id="clinical.status",
     celltype_key="cell.subtypes",
-    n_counts_key="nCount_RNA",
-    n_mpcs=3,
+    sample_key="sample",
+    cell_quality_key="cellQ",
+    n_programs=3,
 )
-adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
-all_results, new_mcps = dl.multilevel_modeling(
-    ct_subs=ct_subs,
-    mcp_scores=mcps,
-    ws_dict=ws,
-    confounder="gender",
-)
+dl.fit_programs(adata)
+dl.test_celltype_pairs(adata)
+dl.refine_scores(adata)
+
+# per-cell program scores
+adata.obsm["X_dialogue"]
+# refined gene signatures
+dl.get_program_genes(adata, program="MCP1", celltype="CD8+ IELs")
+# phenotype association
+dl.test_phenotype_association(adata, condition_key="path_str")
 ```
 
 See [DIALOGUE tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html).
@@ -259,6 +285,10 @@ For more details, we refer to [scPerturb: harmonized single-cell perturbation da
     tools.DistanceTest
 ```
 
+`Distance` supports a broad range of metrics including `edistance`, `mmd`, `wasserstein`,
+`sym_kldiv`, `mahalanobis`, `mean_var_distribution`, `classifier_proba`, `pearson_distance`,
+and more. See {class}`~pertpy.tools.Distance` for the full list.
+
 Example implementation:
 
 ```python
@@ -270,10 +300,8 @@ adata = pt.dt.distance_example()
 distance = pt.tl.Distance(metric="edistance", obsm_key="X_pca")
 pairwise_edistance = distance.pairwise(adata, groupby="perturbation")
 
-# E-test (Permutation test using E-distance)
-etest = pt.tl.PermutationTest(
-    metric="edistance", obsm_key="X_pca", correction="holm-sidak"
-)
+# E-test (permutation test using E-distance)
+etest = pt.tl.DistanceTest("edistance", n_perms=1000, obsm_key="X_pca")
 tab = etest(adata, groupby="perturbation", contrast="control")
 ```
 

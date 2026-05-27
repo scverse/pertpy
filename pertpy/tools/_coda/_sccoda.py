@@ -7,16 +7,15 @@ import numpy as np
 import numpyro as npy
 import numpyro.distributions as npd
 from anndata import AnnData
-from jax import config, random
+from jax import config
 from mudata import MuData
-from numpyro.infer import Predictive
 
 from pertpy._logger import logger
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 if TYPE_CHECKING:
-    import arviz as az
     import pandas as pd
+    from xarray import DataTree
 
 config.update("jax_enable_x64", True)
 
@@ -287,7 +286,7 @@ class Sccoda(CompositionalModel2):
         rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
-    ) -> az.InferenceData:
+    ) -> DataTree:
         """Creates arviz object from model results for MCMC diagnosis.
 
         Args:
@@ -298,7 +297,7 @@ class Sccoda(CompositionalModel2):
             use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
-            :class:`arviz.InferenceData`: arviz_data with all MCMC information
+            :class:`xarray.DataTree`: MCMC information
 
         Examples:
             >>> import pertpy as pt
@@ -322,8 +321,6 @@ class Sccoda(CompositionalModel2):
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
-        if not self.mcmc:
-            raise ValueError("No MCMC sampling found. Please run a sampler first!")
 
         # feature names
         cell_types = sample_adata.var.index.to_list()
@@ -337,9 +334,9 @@ class Sccoda(CompositionalModel2):
             "ind": ["covariate", "cell_type_nb"],
             "b_raw": ["covariate", "cell_type_nb"],
             "beta": ["covariate", "cell_type"],
-            "concentrations": ["sample", "cell_type"],
-            "predictions": ["sample", "cell_type"],
-            "counts": ["sample", "cell_type"],
+            "concentrations": ["obs", "cell_type"],
+            "predictions": ["obs", "cell_type"],
+            "counts": ["obs", "cell_type"],
         }
 
         # arviz coordinates
@@ -349,72 +346,17 @@ class Sccoda(CompositionalModel2):
             "cell_type": cell_types,
             "cell_type_nb": cell_types_nb,
             "covariate": sample_adata.uns["scCODA_params"]["covariate_names"],
-            "sample": sample_adata.obs.index,
+            "obs": sample_adata.obs.index,
         }
 
-        dtype = "float64"
-
-        # Prior and posterior predictive simulation
-        numpyro_covariates = jnp.array(sample_adata.obsm["covariate_matrix"], dtype=dtype)
-        numpyro_n_total = jnp.array(sample_adata.obsm["sample_counts"], dtype=dtype)
-        ref_index = jnp.array(sample_adata.uns["scCODA_params"]["reference_index"])
-
-        if rng_key is None:
-            rng = np.random.default_rng()
-            rng_key = random.key(rng.integers(0, 10000))
-        else:
-            rng_key = random.key(rng_key)
-
-        if use_posterior_predictive:
-            posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
-                rng_key,
-                counts=None,
-                covariates=numpyro_covariates,
-                n_total=numpyro_n_total,
-                ref_index=ref_index,
-                sample_adata=sample_adata,
-            )
-            # Remove problematic posterior predictive arrays with wrong dimensions
-            if posterior_predictive and "counts" in posterior_predictive:
-                counts_shape = posterior_predictive["counts"].shape
-                expected_dims = 2  # ['sample', 'cell_type']
-                if len(counts_shape) != expected_dims:
-                    posterior_predictive = {k: v for k, v in posterior_predictive.items() if k != "counts"}
-                    logger.warning(
-                        f"Removed 'counts' from posterior_predictive due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
-                    )
-        else:
-            posterior_predictive = None
-
-        if num_prior_samples > 0:
-            prior = Predictive(self.model, num_samples=num_prior_samples)(
-                rng_key,
-                counts=None,
-                covariates=numpyro_covariates,
-                n_total=numpyro_n_total,
-                ref_index=ref_index,
-                sample_adata=sample_adata,
-            )
-            # Remove problematic prior arrays with wrong dimensions
-            if prior and "counts" in prior:
-                counts_shape = prior["counts"].shape
-                expected_dims = 2  # ['sample', 'cell_type']
-                if len(counts_shape) != expected_dims:
-                    prior = {k: v for k, v in prior.items() if k != "counts"}
-                    logger.warning(
-                        f"Removed 'counts' from prior due to dimension mismatch: got {len(counts_shape)}D, expected {expected_dims}D"
-                    )
-        else:
-            prior = None
-
-        import arviz as az
-
-        # Create arviz object
-        arviz_data = az.from_numpyro(
-            self.mcmc, prior=prior, posterior_predictive=posterior_predictive, dims=dims, coords=coords
+        return self._build_arviz_from_adata(
+            sample_adata,
+            dims=dims,
+            coords=coords,
+            rng_key=rng_key,
+            num_prior_samples=num_prior_samples,
+            use_posterior_predictive=use_posterior_predictive,
         )
-
-        return arviz_data
 
     def run_nuts(
         self,

@@ -4,10 +4,10 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "1.0.4"
+version = "1.1.0"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.15"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -42,6 +42,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
@@ -64,8 +65,9 @@ dependencies = [
     "blitzgsea",
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
-    "arviz",
-    "filelock"
+    "arviz>=1.0.0",
+    "pooch",
+    "scverse-misc"
 ]
 
 [project.optional-dependencies]
@@ -108,7 +110,6 @@ doc = [
     "sphinxext-opengraph",
     "pygments",
     "nbsphinx",
-    "nbsphinx-link",
     "ipykernel",
     "ipython",
 ]
@@ -125,10 +126,18 @@ source = "vcs"
 allow-direct-references = true
 
 [tool.hatch.envs.hatch-test]
-features = [ "test", "tcoda", "de", "scgen" ]
+features = ["test", "tcoda", "de", "scgen"]
+overrides.matrix.deps.env-vars = [
+    { if = ["pre"], key = "UV_PRERELEASE", value = "allow" },
+]
 
 [[tool.hatch.envs.hatch-test.matrix]]
-python = [ "3.12", "3.13" ]
+python = [ "3.12", "3.14" ]
+deps = ["stable"]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.14"]
+deps = ["pre"]
 
 [tool.coverage.run]
 source = ["pertpy"]
@@ -150,6 +159,7 @@ markers = [
 minversion = "6.0"
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 filterwarnings = [
+    "ignore::pyparsing.core.PyparsingDeprecationWarning",
     "ignore::Warning:statsmodels.*",
     "ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
     "ignore:lbfgs failed to converge",

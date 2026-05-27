@@ -56,7 +56,7 @@ class LRClassifierSpace(PerturbationSpace):
             >>> rcs = pt.tl.LRClassifierSpace()
             >>> pert_embeddings = rcs.compute(adata, embedding_key="X_pca", target_col="perturbation_name")
         """
-        if layer_key is not None and layer_key not in adata.obs.columns:
+        if layer_key is not None and layer_key not in adata.layers:
             raise ValueError(f"Layer key {layer_key} not found in adata.")
 
         if embedding_key is not None and embedding_key not in adata.obsm:
@@ -343,7 +343,7 @@ class MLPClassifierSpace(PerturbationSpace):
             >>> dcs = pt.tl.MLPClassifierSpace()
             >>> cell_embeddings = dcs.compute(adata, target_col="perturbation_name")
         """
-        if layer_key is not None and layer_key not in adata.obs.columns:
+        if layer_key is not None and layer_key not in adata.layers:
             raise ValueError(f"Layer key {layer_key} not found in adata.")
 
         if target_col not in adata.obs:
@@ -354,7 +354,7 @@ class MLPClassifierSpace(PerturbationSpace):
 
         # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
-        labels = adata.obs[target_col].values.reshape(-1, 1)
+        labels = to_dense(adata.obs[target_col]).reshape(-1, 1)
         encoder = OneHotEncoder()
         encoded_labels = encoder.fit_transform(labels).toarray()
         adata = adata.copy()
