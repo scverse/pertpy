@@ -1,3 +1,3 @@
 [submodule "docs/notebooks"]
 	path = docs/tutorials/notebooks
-	url = https://github.com/Jenniliu12/pertpy-tutorials/
+	url = https://github.com/scverse/pertpy-tutorials/
