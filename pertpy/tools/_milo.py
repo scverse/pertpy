@@ -844,11 +844,15 @@ class Milo:
         sample_adata.var["SpatialFDR"] = sample_adata.var["SpatialFDR"].fillna(1)
 
     @_doc_params(common_plot_args=doc_common_plot_args)
+    @deprecated_arg(
+        "alpha",
+        Deprecation("1.1.0", "Use `padj_threshold`."),
+    )
     def plot_nhood_graph(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         *,
-        alpha: float = 0.1,
+        padj_threshold: float = 0.1,
         min_logFC: float = 0,
         min_size: int = 10,
         plot_edges: bool = False,
@@ -857,17 +861,19 @@ class Milo:
         palette: str | Sequence[str] | None = None,
         ax: Axes | None = None,
         return_fig: bool = False,
+        alpha: float | None = None,
         **kwargs,
     ) -> Figure | None:
         """Visualize DA results on abstracted graph (wrapper around sc.pl.embedding).
 
         Args:
             mdata: MuData object
-            alpha: Significance threshold. (default: 0.1)
+            padj_threshold: Significance threshold. (default: 0.1)
             min_logFC: Minimum absolute log-Fold Change to show results. If is 0, show all significant neighbourhoods.
             min_size: Minimum size of nodes in visualization. (default: 10)
             plot_edges: If edges for neighbourhood overlaps whould be plotted.
             title: Plot title.
+            alpha: Deprecated and will be removed in a future release. Use `padj_threshold`.
             {common_plot_args}
             **kwargs: Additional arguments to `scanpy.pl.embedding`.
 
@@ -890,6 +896,9 @@ class Milo:
         Preview:
             .. image:: /_static/docstring_previews/milo_nhood_graph.png
         """
+        if alpha is not None:
+            padj_threshold = alpha
+
         nhood_adata = mdata["milo"].T.copy()
 
         if "Nhood_size" not in nhood_adata.obs.columns:
@@ -899,7 +908,7 @@ class Milo:
             )
 
         nhood_adata.obs["graph_color"] = nhood_adata.obs["logFC"]
-        nhood_adata.obs.loc[nhood_adata.obs["SpatialFDR"] > alpha, "graph_color"] = np.nan
+        nhood_adata.obs.loc[nhood_adata.obs["SpatialFDR"] > padj_threshold, "graph_color"] = np.nan
         nhood_adata.obs["abs_logFC"] = abs(nhood_adata.obs["logFC"])
         nhood_adata.obs.loc[nhood_adata.obs["abs_logFC"] < min_logFC, "graph_color"] = np.nan
 
@@ -998,16 +1007,21 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
+    @deprecated_arg(
+        "alpha",
+        Deprecation("1.1.0", "Use `padj_threshold`."),
+    )
     def plot_da_beeswarm(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
         *,
         feature_key: str | None = "rna",
         anno_col: str = "nhood_annotation",
-        alpha: float = 0.1,
+        padj_threshold: float = 0.1,
         subset_nhoods: list[str] = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
         return_fig: bool = False,
+        alpha: float | None = None,
     ) -> Figure | None:
         """Plot beeswarm plot of logFC against nhood labels.
 
@@ -1015,10 +1029,11 @@ class Milo:
             mdata: MuData object
             feature_key: Key in mdata to the cell-level AnnData object.
             anno_col: Column in adata.uns['nhood_adata'].obs to use as annotation. (default: 'nhood_annotation'.)
-            alpha: Significance threshold. (default: 0.1)
+            padj_threshold: Significance threshold. (default: 0.1)
             subset_nhoods: List of nhoods to plot. If None, plot all nhoods.
             palette: Name of Seaborn color palette for violinplots.
                      Defaults to pre-defined category colors for violinplots.
+            alpha: Deprecated and will be removed in a future release. Use `padj_threshold`.
             {common_plot_args}
 
         Returns:
@@ -1040,6 +1055,9 @@ class Milo:
         Preview:
             .. image:: /_static/docstring_previews/milo_da_beeswarm.png
         """
+        if alpha is not None:
+            padj_threshold = alpha
+
         try:
             nhood_adata = mdata["milo"].T.copy()
         except KeyError:
@@ -1069,7 +1087,7 @@ class Milo:
         )
 
         anno_df = nhood_adata.obs[[anno_col, "logFC", "SpatialFDR"]].copy()
-        anno_df["is_signif"] = anno_df["SpatialFDR"] < alpha
+        anno_df["is_signif"] = anno_df["SpatialFDR"] < padj_threshold
         anno_df = anno_df[anno_df[anno_col] != "nan"]
 
         try:
@@ -1115,7 +1133,9 @@ class Milo:
             orient="h",
             alpha=0.5,
         )
-        plt.legend(loc="upper left", title=f"< {int(alpha * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False)
+        plt.legend(
+            loc="upper left", title=f"< {int(padj_threshold * 100)}% SpatialFDR", bbox_to_anchor=(1, 1), frameon=False
+        )
         plt.axvline(x=0, ymin=0, ymax=1, color="black", linestyle="--")
 
         if return_fig:
