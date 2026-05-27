@@ -84,15 +84,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
         """
@@ -182,15 +174,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> edgr.fit()
             >>> res_df = edgr.test_contrasts(
@@ -564,15 +548,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> edgr.fit()
             >>> res_df = edgr.test_contrasts(
@@ -734,15 +710,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> edgr.fit()
             >>> res_df = edgr.test_contrasts(
@@ -822,15 +790,7 @@ class MethodBase(ABC):
             >>> adata = pt.dt.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> pdata = ps.compute(
-            ...     adata,
-            ...     target_col="Patient",
-            ...     groups_col="Cluster",
-            ...     layer_key="counts",
-            ...     mode="sum",
-            ...     min_cells=10,
-            ...     min_counts=1000,
-            ... )
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
             >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
             >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
             >>> edgr.plot_multicomparison_fc(res_df)
@@ -1003,6 +963,13 @@ class LinearModelBase(MethodBase):
             contrasts = {None: contrasts}
         results = []
         for name, contrast in contrasts.items():
+            if np.allclose(np.asarray(contrast, dtype=float), 0):
+                raise ValueError(
+                    f"Contrast {name!r} is all zeros, which yields a meaningless test. "
+                    "This typically happens when the contrast lies in the null space of the design matrix — "
+                    "for example, requesting an interaction contrast from a model fit without the interaction term. "
+                    "Refit the model with a design that spans the contrast (e.g. add `factor_a * factor_b`)."
+                )
             results.append(self._test_single_contrast(contrast, **kwargs).assign(contrast=name))
 
         results_df = pd.concat(results)

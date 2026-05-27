@@ -29,7 +29,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "nbsphinx",
-    "nbsphinx_link",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",  # needs to be after napoleon
@@ -112,6 +111,7 @@ add_module_names = False
 autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
+    "decoupler": ("https://decoupler.readthedocs.io/en/latest/", None),
     "mudata": ("https://mudata.readthedocs.io/stable/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),

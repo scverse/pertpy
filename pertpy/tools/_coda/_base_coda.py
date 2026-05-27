@@ -96,6 +96,68 @@ class CompositionalModel2(ABC):
     def set_init_mcmc_states(self, *args, **kwargs):
         pass
 
+    def _build_arviz_from_adata(
+        self,
+        sample_adata: AnnData,
+        dims: dict,
+        coords: dict,
+        rng_key: int | None,
+        num_prior_samples: int,
+        use_posterior_predictive: bool,
+    ):
+        """Build an ArviZ DataTree from MCMC samples stored on ``sample_adata``.
+
+        The samples and chain count come from ``sample_adata.uns["scCODA_params"]["mcmc"]``
+        rather than from ``self.mcmc``, so ``make_arviz`` works on stored MuData objects
+        even after the model instance has been reused for other datasets (issue #812).
+        """
+        import arviz as az
+        from numpyro.infer import Predictive
+
+        mcmc_state = sample_adata.uns.get("scCODA_params", {}).get("mcmc", {})
+        if "samples" not in mcmc_state:
+            raise ValueError("No MCMC sampling found. Please run a sampler first!")
+
+        samples = {k: np.asarray(v) for k, v in mcmc_state["samples"].items()}
+        num_chains = int(mcmc_state.get("num_chains", 1)) or 1
+
+        predict_kwargs = {
+            "counts": None,
+            "covariates": jnp.array(sample_adata.obsm["covariate_matrix"], dtype="float64"),
+            "n_total": jnp.array(sample_adata.obsm["sample_counts"], dtype="float64"),
+            "ref_index": jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
+            "sample_adata": sample_adata,
+        }
+        rng = random.key(rng_key if rng_key is not None else int(np.random.default_rng().integers(0, 10000)))
+
+        def _grouped(d: dict, chains: int, *, predictive: bool = False) -> dict:
+            out = {}
+            for k, v in d.items():
+                arr = np.asarray(v)
+                # Drop variables whose rank past the sample axis doesn't match `dims[k]`,
+                # e.g. `counts` from `Predictive` carries an extra batch axis under
+                # numpyro's DirichletMultinomial broadcasting and would otherwise
+                # collide with the cell_type coord.
+                if predictive and len(arr.shape) - 1 != len(dims.get(k, [])):
+                    continue
+                out[k] = arr.reshape((chains, -1, *arr.shape[1:]))
+            return out
+
+        groups = {"posterior": _grouped(samples, num_chains)}
+        extra_fields = mcmc_state.get("extra_fields") or {}
+        if extra_fields:
+            groups["sample_stats"] = _grouped(extra_fields, num_chains)
+        if num_prior_samples > 0:
+            groups["prior"] = _grouped(
+                Predictive(self.model, num_samples=num_prior_samples)(rng, **predict_kwargs), 1, predictive=True
+            )
+        if use_posterior_predictive:
+            groups["posterior_predictive"] = _grouped(
+                Predictive(self.model, samples)(rng, **predict_kwargs), num_chains, predictive=True
+            )
+
+        return az.from_dict(groups, coords=coords, dims=dims)
+
     def prepare(
         self,
         sample_adata: AnnData,
@@ -266,6 +328,13 @@ class CompositionalModel2(ABC):
             samples[k] = np.array(v)
         sample_adata.uns["scCODA_params"]["mcmc"]["samples"] = samples
 
+        # Persist what `make_arviz` needs so it can rebuild ArviZ without `self.mcmc`
+        # (issue #812: the model instance gets reused across datasets in loops).
+        sample_adata.uns["scCODA_params"]["mcmc"]["num_chains"] = int(self.mcmc.num_chains)
+        sample_adata.uns["scCODA_params"]["mcmc"]["extra_fields"] = {
+            k.replace(".", "_"): np.asarray(v) for k, v in self.mcmc.get_extra_fields().items()
+        }
+
         # Evaluate results and create result dataframes (based on tree-aggregation or not)
         if sample_adata.uns["scCODA_params"]["model_type"] == "classic":
             intercept_df, effect_df = self.summary_prepare(sample_adata)  # type: ignore
@@ -381,13 +450,13 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        # Set rng key if needed
+        # Set rng key if needed. Keep the int seed for `set_init_mcmc_states` (which uses
+        # `np.random.default_rng(seed=...)`) and only build a JAX PRNGKey for the MCMC,
+        # mirroring `run_nuts` — see issue #883.
         if rng_key is None:
-            rng = np.random.default_rng()
-            rng_key = random.key(rng.integers(0, 10000))
-            sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = rng_key
-        else:
-            rng_key = random.key(rng_key)
+            rng_key = int(np.random.default_rng().integers(0, 10000))
+        rng_key_array = random.key_data(random.key(rng_key))
+        sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up HMC kernel
         sample_adata = self.set_init_mcmc_states(
@@ -402,7 +471,7 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["algorithm"] = "HMC"
 
         return self.__run_mcmc(
-            sample_adata, hmc_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key, copy=copy
+            sample_adata, hmc_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key_array, copy=copy
         )
 
     def summary_prepare(
@@ -436,7 +505,11 @@ class CompositionalModel2(ABC):
                 - HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)
                 - SD: Standard deviation of MCMC samples
                 - Expected sample: Expected cell counts for a sample with only the current covariate set to 1. See the tutorial for more explanation
-                - log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate
+                - log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate.
+                  This is a *compositional* fold change — expected counts are re-normalized to the same total per sample before the ratio is taken.
+                  Because of that re-normalization, the sign of ``log2-fold change`` can disagree with the sign of ``Final Parameter``:
+                  a cell type with ``Final Parameter = 0`` can still have a non-zero log2-fold change driven entirely by other cell types' effects,
+                  and a cell type with a small negative ``Final Parameter`` can have a positive log2-fold change if other cell types are shifting down faster.
                 - Inclusion probability: Share of MCMC samples, for which this effect was not set to 0 by the spike-and-slab prior.
 
             node_df
@@ -861,10 +934,6 @@ class CompositionalModel2(ABC):
             effect_df.index = pd.MultiIndex.from_product(
                 (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
             )
-            effect_df.index = effect_df.index.set_levels(
-                effect_df.index.levels[0].str.replace("Condition", "").str.replace("[", "").str.replace("]", ""),
-                level=0,
-            )
             if model_type == "tree_agg":
                 node_df = sample_adata.uns["scCODA_params"]["node_df"]
 
@@ -1022,10 +1091,6 @@ class CompositionalModel2(ABC):
         effect_df = pd.concat(effect_dfs)
         effect_df.index = pd.MultiIndex.from_product(
             (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
-        )
-        effect_df.index = effect_df.index.set_levels(
-            effect_df.index.levels[0].str.replace("Condition", "").str.replace("[", "").str.replace("]", ""),
-            level=0,
         )
 
         return effect_df
