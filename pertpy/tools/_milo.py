@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import random
 import re
 from importlib.util import find_spec
@@ -690,17 +692,20 @@ class Milo:
             pdata = pdata[:, gene_mask].copy()
 
             try:
-                model = model_cls(pdata, design=design)
-                this_fit_kwargs = dict(user_fit_kwargs)
-                if sm_glm_default and sm is not None:
-                    lib_size = np.asarray(pdata.X.sum(axis=1)).ravel().astype(float)
-                    lib_size[lib_size <= 0] = 1.0
-                    this_fit_kwargs.setdefault("regression_model", sm.GLM)
-                    this_fit_kwargs.setdefault("family", sm.families.NegativeBinomial())
-                    this_fit_kwargs.setdefault("offset", np.log(lib_size))
-                model.fit(**this_fit_kwargs)
-                contrast_vec = model.contrast(column=column, baseline=baseline, group_to_compare=group_to_compare)
-                res = model.test_contrasts(contrast_vec)
+                # Solvers (pydeseq2 in particular) print progress per call; silenced
+                # because running once per nhood would otherwise flood stdout.
+                with contextlib.redirect_stdout(io.StringIO()):
+                    model = model_cls(pdata, design=design)
+                    this_fit_kwargs = dict(user_fit_kwargs)
+                    if sm_glm_default and sm is not None:
+                        lib_size = np.asarray(pdata.X.sum(axis=1)).ravel().astype(float)
+                        lib_size[lib_size <= 0] = 1.0
+                        this_fit_kwargs.setdefault("regression_model", sm.GLM)
+                        this_fit_kwargs.setdefault("family", sm.families.NegativeBinomial())
+                        this_fit_kwargs.setdefault("offset", np.log(lib_size))
+                    model.fit(**this_fit_kwargs)
+                    contrast_vec = model.contrast(column=column, baseline=baseline, group_to_compare=group_to_compare)
+                    res = model.test_contrasts(contrast_vec)
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"Nhood {j}: DE test failed ({e}); skipping.")
                 continue
