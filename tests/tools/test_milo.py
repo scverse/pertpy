@@ -233,6 +233,137 @@ def annotate_nhoods_mdata(adata, milo):
     return milo_mdata
 
 
+@pytest.fixture
+def de_nhoods_mdata(da_nhoods_mdata):
+    # da_nhoods_mdata is built from pbmc68k_reduced whose X is log-normalized.
+    # de_nhoods needs an integer-count layer (for PyDESeq2) so we simulate one
+    # by drawing NB counts whose mean tracks the normalized expression — plus a
+    # planted DE effect on a chosen gene to make the test directional.
+    mdata = da_nhoods_mdata.copy()
+    rna = mdata["rna"]
+    rng = np.random.default_rng(0)
+    base = np.asarray(rna.X.todense() if hasattr(rna.X, "todense") else rna.X)
+    mu = np.clip(np.expm1(np.clip(base, 0, 8)), 0.0, 200.0) + 0.5
+    # planted DE: gene 0 up in ConditionB
+    is_b = (rna.obs["condition"] == "ConditionB").to_numpy()
+    mu[is_b, 0] *= 5.0
+    counts = rng.negative_binomial(n=4, p=4 / (4 + mu)).astype(np.int32)
+    rna.layers["counts"] = counts
+    rna.uns["de_gene"] = rna.var_names[0]
+    return mdata
+
+
+def test_de_nhoods_shapes(de_nhoods_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    mdata = de_nhoods_mdata.copy()
+    de = milo.de_nhoods(
+        mdata,
+        design="~condition",
+        column="condition",
+        baseline="ConditionA",
+        group_to_compare="ConditionB",
+        layer="counts",
+        min_n_cells_per_sample=2,
+        min_count=1,
+    )
+    expected = mdata["milo"].n_vars * mdata["rna"].n_vars
+    assert len(de) == expected
+    for c in [
+        "nhood",
+        "variable",
+        "log_fc",
+        "p_value",
+        "adj_p_value",
+        "pval_corrected_across_nhoods",
+        "test_performed",
+    ]:
+        assert c in de.columns
+    assert de["test_performed"].dtype == bool
+
+
+def test_de_nhoods_fdr_bounds(de_nhoods_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    mdata = de_nhoods_mdata.copy()
+    de = milo.de_nhoods(
+        mdata,
+        design="~condition",
+        column="condition",
+        baseline="ConditionA",
+        group_to_compare="ConditionB",
+        layer="counts",
+        min_n_cells_per_sample=2,
+        min_count=1,
+    )
+    valid = de.dropna(subset=["p_value"])
+    assert ((valid["p_value"] >= 0) & (valid["p_value"] <= 1)).all()
+    both_g = valid.dropna(subset=["adj_p_value"])
+    assert (both_g["p_value"] <= both_g["adj_p_value"] + 1e-12).all()
+    both_n = valid.dropna(subset=["pval_corrected_across_nhoods"])
+    assert (both_n["p_value"] <= both_n["pval_corrected_across_nhoods"] + 1e-12).all()
+
+
+def test_de_nhoods_planted_signal(de_nhoods_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    mdata = de_nhoods_mdata.copy()
+    de = milo.de_nhoods(
+        mdata,
+        design="~condition",
+        column="condition",
+        baseline="ConditionA",
+        group_to_compare="ConditionB",
+        layer="counts",
+        min_n_cells_per_sample=2,
+        min_count=1,
+    )
+    g = mdata["rna"].uns["de_gene"]
+    lfc = de.loc[de["variable"] == g, "log_fc"].dropna()
+    assert np.median(lfc) > 0
+
+
+def test_plot_de_nhood_graph(de_nhoods_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    import matplotlib
+
+    matplotlib.use("Agg")
+    mdata = de_nhoods_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    de = milo.de_nhoods(
+        mdata,
+        design="~condition",
+        column="condition",
+        baseline="ConditionA",
+        group_to_compare="ConditionB",
+        layer="counts",
+        min_n_cells_per_sample=2,
+        min_count=1,
+    )
+    g = mdata["rna"].uns["de_gene"]
+    fig = milo.plot_de_nhood_graph(mdata, de, gene=g, return_fig=True)
+    assert fig is not None
+    with pytest.raises(KeyError):
+        milo.plot_de_nhood_graph(mdata, de, gene="not_a_real_gene")
+
+
+def test_de_nhoods_statsmodels_runs(de_nhoods_mdata, milo):
+    mdata = de_nhoods_mdata.copy()
+    de = milo.de_nhoods(
+        mdata,
+        design="~condition",
+        column="condition",
+        baseline="ConditionA",
+        group_to_compare="ConditionB",
+        solver="statsmodels",
+        layer="counts",
+        min_n_cells_per_sample=2,
+        min_count=1,
+    )
+    assert de["test_performed"].any()
+
+
 def test_annotate_nhoods_missing_samples(annotate_nhoods_mdata, milo):
     mdata = annotate_nhoods_mdata.copy()
     del mdata.mod["milo"]
