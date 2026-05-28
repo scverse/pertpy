@@ -638,8 +638,10 @@ class Milo:
         n_genes = adata.n_vars
 
         logfc = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float32)
-        pvals = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float32)
-        padj_genes = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float32)
+        # p-values are stored in float64 because Wald tests on strong DE signals
+        # routinely produce values < 1e-45, which would underflow to zero in float32.
+        pvals = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float64)
+        padj_genes = np.full((n_nhoods_total, n_genes), np.nan, dtype=np.float64)
         test_performed = np.zeros(n_nhoods_total, dtype=bool)
 
         # Lazy-import the DE class
@@ -661,6 +663,8 @@ class Milo:
         # For statsmodels on raw counts the regression model should be an NB-GLM with a library-size offset.
         sm_glm_default = solver == "statsmodels" and "regression_model" not in user_fit_kwargs
 
+        failures: dict[str, list[int]] = {}
+
         for j in nhood_ix:
             col = nhoods_csc.getcol(j)
             cell_idx = col.indices
@@ -677,7 +681,7 @@ class Milo:
             try:
                 pdata = sc.get.aggregate(sub, by=sample_col, func="sum", layer=layer)
             except Exception as e:  # noqa: BLE001
-                logger.warning(f"Nhood {j}: pseudobulk failed ({e}); skipping.")
+                failures.setdefault(f"pseudobulk failed ({type(e).__name__})", []).append(int(j))
                 continue
             pdata.X = pdata.layers["sum"]
             if issparse(pdata.X):
@@ -707,7 +711,9 @@ class Milo:
                     contrast_vec = model.contrast(column=column, baseline=baseline, group_to_compare=group_to_compare)
                     res = model.test_contrasts(contrast_vec)
             except Exception as e:  # noqa: BLE001
-                logger.warning(f"Nhood {j}: DE test failed ({e}); skipping.")
+                # Keep the message stable so similar small-sample failures collapse into one bucket.
+                key = str(e).split("\n", 1)[0][:120]
+                failures.setdefault(key, []).append(int(j))
                 continue
 
             gene_pos = pd.Series(np.arange(n_genes), index=var_names)
@@ -715,10 +721,17 @@ class Milo:
             ok = ~np.isnan(gi)
             gi = gi[ok].astype(int)
             logfc[j, gi] = res.loc[ok, "log_fc"].to_numpy(dtype=np.float32)
-            pvals[j, gi] = res.loc[ok, "p_value"].to_numpy(dtype=np.float32)
+            pvals[j, gi] = res.loc[ok, "p_value"].to_numpy(dtype=np.float64)
             if "adj_p_value" in res.columns:
-                padj_genes[j, gi] = res.loc[ok, "adj_p_value"].to_numpy(dtype=np.float32)
+                padj_genes[j, gi] = res.loc[ok, "adj_p_value"].to_numpy(dtype=np.float64)
             test_performed[j] = True
+
+        if failures:
+            total = sum(len(v) for v in failures.values())
+            logger.warning(
+                f"de_nhoods: {total} of {len(nhood_ix)} nhoods skipped "
+                f"(see `obs['test_performed'] == False`); commonest reason: {max(failures, key=lambda k: len(failures[k]))!r}."
+            )
 
         # Backfill BH across genes for solvers that did not provide it
         from statsmodels.stats.multitest import multipletests
