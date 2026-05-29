@@ -102,7 +102,7 @@ class MethodBase(ABC):
         data: pd.DataFrame | ad.AnnData,
         *,
         log2fc_threshold: float = 0.75,
-        padj_threshold: float = 0.01,
+        padj_threshold: float = 0.05,
         log2fc_col: str = "log_fc",
         padj_col: str = "adj_p_value",
         symbol_col: str = "variable",
