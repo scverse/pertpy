@@ -95,14 +95,8 @@ class MethodBase(ABC):
         "pval_thresh",
         Deprecation("1.1.0", "Use `padj_threshold`."),
     )
-    @deprecated_arg(
-        "pvalue_col",
-        Deprecation("1.1.0", "Use `padj_col`."),
-    )
-    @deprecated_arg(
-        "log2fc_thresh",
-        Deprecation("1.1.0", "Use `log2fc_threshold`."),
-    )
+    @deprecated_arg("pvalue_col", Deprecation("1.1.0", "Use `padj_col`."), stacklevel=2)
+    @deprecated_arg("log2fc_thresh", Deprecation("1.1.0", "Use `log2fc_threshold`."), stacklevel=3)
     def plot_volcano(  # pragma: no cover # noqa: D417
         self,
         data: pd.DataFrame | ad.AnnData,
@@ -721,13 +715,13 @@ class MethodBase(ABC):
         Preview:
             .. image:: /_static/docstring_previews/de_fold_change.png
         """
+        results_df = results_df[results_df[padj_col] < padj_threshold]
         if var_names is None:
             var_names = results_df.sort_values(log2fc_col, ascending=False).head(n_top_vars)[symbol_col].tolist()
             var_names += results_df.sort_values(log2fc_col, ascending=True).head(n_top_vars)[symbol_col].tolist()
             assert len(var_names) == 2 * n_top_vars
 
-        df = results_df[results_df[symbol_col].isin(var_names)]
-        df = df[df[padj_col] < padj_threshold]
+        df = results_df[results_df[symbol_col].isin(var_names)].copy()
         df.sort_values(log2fc_col, ascending=False, inplace=True)
 
         plt.figure(figsize=figsize)

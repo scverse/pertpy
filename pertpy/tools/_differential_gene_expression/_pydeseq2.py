@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,8 @@ from scipy.sparse import issparse
 
 from ._base import LinearModelBase
 from ._checks import check_is_integer_matrix
+
+warnings.filterwarnings("always", message=".*(pval_thresh|pvalue_col|log2fc_thresh).*")
 
 
 class PyDESeq2(LinearModelBase):
