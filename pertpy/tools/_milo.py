@@ -466,8 +466,12 @@ class Milo:
             if find_spec("pydeseq2") is None:
                 raise ImportError("pydeseq2 is required but not installed. Install with: pip install pydeseq2")
 
+            import warnings
+
             from pydeseq2.dds import DeseqDataSet
             from pydeseq2.ds import DeseqStats
+
+            warnings.filterwarnings("always", message=".*(alpha).*")
 
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
             design_df_filtered = design_df.iloc[keep_smp].copy()
