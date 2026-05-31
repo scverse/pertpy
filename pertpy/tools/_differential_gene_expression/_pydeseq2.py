@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from anndata import AnnData
@@ -9,6 +10,8 @@ from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
 from pydeseq2.ds import DeseqStats
 from scipy.sparse import issparse
+
+from pertpy._doc import _doc_params, doc_common_plot_args
 
 from ._base import LinearModelBase
 from ._checks import check_is_integer_matrix
@@ -65,6 +68,172 @@ class PyDESeq2(LinearModelBase):
 
         dds.deseq2()
         self.dds = dds
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_disp_ests(
+        self,
+        *,
+        ymin: float | None = None,
+        cv: bool = False,
+        gene_col: str = "black",
+        fit_col: str = "red",
+        final_col: str = "dodgerblue",
+        legend: bool = True,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
+        log: str = "xy",
+        s: float = 0.45,
+        return_fig: bool = False,
+        **kwargs,
+    ) -> None:
+        """Plot dispersion estimates.
+
+        A helper function that visualizes per-gene dispersion estimates together
+        with the fitted mean–dispersion relationship.
+
+        This plot shows:
+        - gene-wise dispersion estimates
+        - fitted dispersion trend
+        - final dispersion estimates used for testing
+
+        Optionally, the square root of dispersion (coefficient of variation) can
+        be shown instead of raw dispersion values.
+
+        Args:
+            ymin: Lower bound for plotted values. Points below this threshold
+                are clipped and drawn at ymin using triangle markers.
+            cv: If True, plot the square root of dispersion (coefficient of
+                variation) instead of dispersion.
+            gene_col: Color for gene-wise dispersion estimates.
+            fit_col: Color for fitted dispersion trend.
+            final_col: Color for final dispersion estimates used for testing.
+            legend: Whether to draw a legend.
+            xlabel: Label for the x-axis (defaults to "mean of normalized counts").
+            ylabel: Label for the y-axis (defaults to dispersion or CV).
+            log: Axis scaling. "x", "y", or "xy" for log scaling.
+            s: Scaling factor for point sizes.
+            return_fig: If True, returns the matplotlib figure instead of None.
+            {common_plot_args}
+            **kwargs: Additional arguments for TODO
+
+        Returns:
+            matplotlib.figure.Figure | None
+
+        Examples:
+            >>> model.plot_disp_ests()
+
+        Preview:
+            .. image:: /_static/docstring_previews/dispersion_estimates.png
+        """
+        if not hasattr(self, "dds"):
+            raise ValueError("Model not fitted yet. Call .fit() first.")
+
+        dds = self.dds
+
+        genecol = gene_col
+        fitcol = fit_col
+        finalcol = final_col
+
+        if xlabel is None:
+            xlabel = "mean of normalized counts"
+        if ylabel is None:
+            ylabel = "coefficient of variation" if cv else "dispersion"
+
+        px = np.asarray(dds.var["_normed_means"])
+        sel = px > 0
+        px = px[sel]
+
+        py = np.asarray(dds.var["genewise_dispersions"])[sel]
+        if cv:
+            py = np.sqrt(py)
+
+        if ymin is None:
+            positive = py[(py > 0) & np.isfinite(py)]
+            ymin = 1e-08 if positive.size == 0 else 10 ** np.floor(np.log10(np.min(positive)) - 0.1)
+
+        py_plot = np.maximum(py, ymin)
+
+        fig, ax = plt.subplots(dpi=300)
+
+        below = py < ymin
+        above = ~below
+
+        if above.any():
+            ax.scatter(
+                px[above],
+                py_plot[above],
+                facecolor=genecol,
+                edgecolors="none",
+                s=s * 20,
+                marker="o",
+                **kwargs,
+            )
+
+        if below.any():
+            ax.scatter(
+                px[below],
+                py_plot[below],
+                c=genecol,
+                s=s * 20,
+                marker="v",
+                **kwargs,
+            )
+
+        outliers = np.asarray(
+            dds.var.get(
+                "_outlier_genes",
+                pd.Series(False, index=dds.var_names),
+            )
+        )[sel]
+
+        final_disp = np.asarray(dds.var["dispersions"])[sel]
+        final_y = np.sqrt(final_disp) if cv else final_disp
+
+        ax.scatter(
+            px,
+            final_y,
+            s=s * (20 + 20 * outliers.astype(int)),
+            facecolor=np.where(outliers, "none", finalcol),
+            edgecolors=np.where(outliers, finalcol, "none"),
+        )
+
+        fitted_disp = np.asarray(dds.var["fitted_dispersions"])[sel]
+        fitted_y = np.sqrt(fitted_disp) if cv else fitted_disp
+
+        ax.scatter(
+            px,
+            fitted_y,
+            facecolor=fitcol,
+            edgecolors="none",
+            marker="o",
+            s=s * 20,
+        )
+
+        if "x" in log:
+            ax.set_xscale("log")
+        if "y" in log:
+            ax.set_yscale("log")
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+
+        if legend:
+            from matplotlib.lines import Line2D
+
+            handles = [
+                Line2D([0], [0], marker="o", linestyle="", color=genecol, label="gene-est"),
+                Line2D([0], [0], marker="o", linestyle="", color=fitcol, label="fitted"),
+                Line2D([0], [0], marker="o", linestyle="", color=finalcol, label="final"),
+            ]
+            ax.legend(handles=handles, loc="lower right", frameon=True)
+
+        plt.tight_layout()
+
+        if return_fig:
+            return plt.gcf()
+
+        plt.show()
+        return None
 
     def _test_single_contrast(self, contrast, alpha=0.05, *, lfc_shrink=None, **kwargs) -> pd.DataFrame:
         """Conduct a specific test and returns a Pandas DataFrame.
