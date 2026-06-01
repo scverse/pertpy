@@ -14,6 +14,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.pyplot import Figure
 from matplotlib.ticker import MaxNLocator
+from scverse_misc import Deprecation, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
@@ -90,15 +91,21 @@ class MethodBase(ABC):
         ...
 
     @_doc_params(common_plot_args=doc_common_plot_args)
+    @deprecated_arg(
+        "pval_thresh",
+        Deprecation("1.1.0", "Use `padj_threshold`."),
+    )
+    @deprecated_arg("pvalue_col", Deprecation("1.1.0", "Use `padj_col`."), stacklevel=2)
+    @deprecated_arg("log2fc_thresh", Deprecation("1.1.0", "Use `log2fc_threshold`."), stacklevel=3)
     def plot_volcano(  # pragma: no cover # noqa: D417
         self,
         data: pd.DataFrame | ad.AnnData,
         *,
+        log2fc_threshold: float = 0.75,
+        padj_threshold: float = 0.05,
         log2fc_col: str = "log_fc",
-        pvalue_col: str = "adj_p_value",
+        padj_col: str = "adj_p_value",
         symbol_col: str = "variable",
-        pval_thresh: float = 0.05,
-        log2fc_thresh: float = 0.75,
         to_label: int | list[str] = 5,
         s_curve: bool | None = False,
         colors: list[str] = None,
@@ -116,20 +123,23 @@ class MethodBase(ABC):
         x_label: str | None = None,
         y_label: str | None = None,
         return_fig: bool = False,
+        log2fc_thresh: float | None = None,
+        pval_thresh: float | None = None,
+        pvalue_col: str | None = None,
         **kwargs: int,
     ) -> Figure | None:
         """Creates a volcano plot from a pandas DataFrame or Anndata.
 
         Args:
             data: DataFrame or Anndata to plot.
+            log2fc_threshold: Threshold for log2 fold change significance.
+            padj_threshold: Adjusted p-values for significance.
             log2fc_col: Column name of log2 Fold-Change values.
-            pvalue_col: Column name of the p values.
+            padj_col: Column name of adjusted p-values.
             symbol_col: Column name of gene IDs.
             varm_key: Key in Anndata.varm slot to use for plotting if an Anndata object was passed.
             size_col: Column name to size points by.
             point_sizes: Lower and upper bounds of point sizes.
-            pval_thresh: Threshold p value for significance.
-            log2fc_thresh: Threshold for log2 fold change significance.
             to_label: Number of top genes or list of genes to label.
             s_curve: Whether to use a reciprocal threshold for up and down gene determination.
             color_dict: Dictionary for coloring dots by categories.
@@ -143,6 +153,9 @@ class MethodBase(ABC):
             shape_order: Order of categories for shapes.
             x_label: Label for the x-axis.
             y_label: Label for the y-axis.
+            log2fc_thresh: Deprecated and will be removed in a future release. Use `log2fc_threshold`.
+            pval_thresh: Deprecated and will be removed in a future release. Use `padj_threshold`.
+            pvalue_col: Deprecated and will be removed in a future release. Use `padj_col`.
             {common_plot_args}
             **kwargs: Additional arguments for seaborn.scatterplot.
 
@@ -161,11 +174,18 @@ class MethodBase(ABC):
             >>> res_df = edgr.test_contrasts(
             ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
             ... )
-            >>> edgr.plot_volcano(res_df, log2fc_thresh=0)
+            >>> edgr.plot_volcano(res_df, log2fc_threshold=0)
 
         Preview:
             .. image:: /_static/docstring_previews/de_volcano.png
         """
+        if pvalue_col is not None:
+            padj_col = pvalue_col
+        if pval_thresh is not None:
+            padj_threshold = pval_thresh
+        if log2fc_thresh is not None:
+            log2fc_threshold = log2fc_thresh
+
         if colors is None:
             colors = ["gray", "#D62728", "#1F77B4"]
 
@@ -174,7 +194,7 @@ class MethodBase(ABC):
 
             Used for plotting the S-curve
             """
-            return pval_thresh / (lfc - log2fc_thresh)
+            return padj_threshold / (lfc - log2fc_threshold)
 
         def _map_shape(symbol: str) -> str:
             if shape_dict is not None:
@@ -188,8 +208,8 @@ class MethodBase(ABC):
             row: pd.Series,
             log2fc_col: str,
             nlog10_col: str,
-            log2fc_thresh: float,
-            pval_thresh: float = None,
+            log2fc_threshold: float,
+            padj_threshold: float = None,
             s_curve: bool = False,
         ) -> str:
             """Map genes to categorize based on log2fc and pvalue.
@@ -203,16 +223,16 @@ class MethodBase(ABC):
             if s_curve:
                 # S-curve condition for Up or Down categorization
                 reciprocal_thresh = _pval_reciprocal(abs(log2fc))
-                if log2fc > log2fc_thresh and nlog10 > reciprocal_thresh:
+                if log2fc > log2fc_threshold and nlog10 > reciprocal_thresh:
                     return "Up"
-                elif log2fc < -log2fc_thresh and nlog10 > reciprocal_thresh:
+                elif log2fc < -log2fc_threshold and nlog10 > reciprocal_thresh:
                     return "Down"
                 else:
                     return "not DE"
             # Standard condition for Up or Down categorization
-            elif log2fc > log2fc_thresh and nlog10 > pval_thresh:
+            elif log2fc > log2fc_threshold and nlog10 > padj_threshold:
                 return "Up"
-            elif log2fc < -log2fc_thresh and nlog10 > pval_thresh:
+            elif log2fc < -log2fc_threshold and nlog10 > padj_threshold:
                 return "Down"
             else:
                 return "not DE"
@@ -221,8 +241,8 @@ class MethodBase(ABC):
             row: pd.Series,
             log2fc_col: str,
             nlog10_col: str,
-            log2fc_thresh: float,
-            pval_thresh: float = None,
+            log2fc_threshold: float,
+            padj_threshold: float = None,
             s_curve: bool = False,
             symbol_col: str = None,
         ) -> str:
@@ -242,12 +262,12 @@ class MethodBase(ABC):
 
             if s_curve:
                 # Use S-curve condition for filtering DE
-                if nlog10 > _pval_reciprocal(abs(log2fc)) and abs(log2fc) > log2fc_thresh:
+                if nlog10 > _pval_reciprocal(abs(log2fc)) and abs(log2fc) > log2fc_threshold:
                     return "DE"
                 return "not DE"
             else:
                 # Use standard condition for filtering DE
-                if abs(log2fc) < log2fc_thresh or nlog10 < pval_thresh:
+                if abs(log2fc) < log2fc_threshold or nlog10 < padj_threshold:
                     return "not DE"
                 return "DE"
 
@@ -261,18 +281,18 @@ class MethodBase(ABC):
         df = data.copy(deep=True)
 
         # clean and replace 0s as they would lead to -inf
-        if df[[log2fc_col, pvalue_col]].isnull().values.any():
+        if df[[log2fc_col, padj_col]].isnull().values.any():
             print("NaNs encountered, dropping rows with NaNs")
-            df = df.dropna(subset=[log2fc_col, pvalue_col])
+            df = df.dropna(subset=[log2fc_col, padj_col])
 
-        if df[pvalue_col].min() == 0:
+        if df[padj_col].min() == 0:
             print("0s encountered for p value, replacing with 1e-323")
-            df.loc[df[pvalue_col] == 0, pvalue_col] = 1e-323
+            df.loc[df[padj_col] == 0, padj_col] = 1e-323
 
         # convert p value threshold to nlog10
-        pval_thresh = -np.log10(pval_thresh)
+        padj_threshold = -np.log10(padj_threshold)
         # make nlog10 column
-        df["nlog10"] = -np.log10(df[pvalue_col])
+        df["nlog10"] = -np.log10(df[padj_col])
         y_max = df["nlog10"].max() + 1
         # make a column to pick top genes
         df["top_genes"] = df["nlog10"] * df[log2fc_col]
@@ -307,8 +327,8 @@ class MethodBase(ABC):
                     row,
                     log2fc_col=log2fc_col,
                     nlog10_col="nlog10",
-                    log2fc_thresh=log2fc_thresh,
-                    pval_thresh=pval_thresh,
+                    log2fc_threshold=log2fc_threshold,
+                    padj_threshold=padj_threshold,
                     s_curve=s_curve,
                 ),
                 axis=1,
@@ -323,8 +343,8 @@ class MethodBase(ABC):
                     row,
                     log2fc_col=log2fc_col,
                     nlog10_col="nlog10",
-                    log2fc_thresh=log2fc_thresh,
-                    pval_thresh=pval_thresh,
+                    log2fc_threshold=log2fc_threshold,
+                    padj_threshold=padj_threshold,
                     symbol_col=symbol_col,
                     s_curve=s_curve,
                 ),
@@ -411,15 +431,15 @@ class MethodBase(ABC):
 
         # plot vertical and horizontal lines
         if s_curve:
-            x = np.arange((log2fc_thresh + 0.000001), y_max, 0.01)
+            x = np.arange((log2fc_threshold + 0.000001), y_max, 0.01)
             y = _pval_reciprocal(x)
             ax.plot(x, y, zorder=1, c="k", lw=2, ls="--")
             ax.plot(-x, y, zorder=1, c="k", lw=2, ls="--")
 
         else:
-            ax.axhline(pval_thresh, zorder=1, c="k", lw=2, ls="--")
-            ax.axvline(log2fc_thresh, zorder=1, c="k", lw=2, ls="--")
-            ax.axvline(log2fc_thresh * -1, zorder=1, c="k", lw=2, ls="--")
+            ax.axhline(padj_threshold, zorder=1, c="k", lw=2, ls="--")
+            ax.axvline(log2fc_threshold, zorder=1, c="k", lw=2, ls="--")
+            ax.axvline(log2fc_threshold * -1, zorder=1, c="k", lw=2, ls="--")
         plt.ylim(0, y_max)
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
@@ -454,7 +474,7 @@ class MethodBase(ABC):
         if x_label is None:
             x_label = log2fc_col
         if y_label is None:
-            y_label = f"-$log_{{10}}$ {pvalue_col}"
+            y_label = f"-$log_{{10}}$ {padj_col}"
 
         plt.xlabel(x_label, size=15)
         plt.ylabel(y_label, size=15)
@@ -651,6 +671,8 @@ class MethodBase(ABC):
         *,
         var_names: Sequence[str] = None,
         n_top_vars: int = 15,
+        padj_threshold: float = 0.01,
+        padj_col: str = "adj_p_value",
         log2fc_col: str = "log_fc",
         symbol_col: str = "variable",
         y_label: str = "Log2 fold change",
@@ -664,6 +686,8 @@ class MethodBase(ABC):
             results_df: DataFrame with results from DE analysis.
             var_names: Variables to plot. If None, the top n_top_vars variables based on the log2 fold change are plotted.
             n_top_vars: Number of top variables to plot. The top and bottom n_top_vars variables are plotted, respectively.
+            padj_threshold: Only variables with adjusted p-values below this threshold are included in the plot.
+            padj_col: Column name of adjusted p-values.
             log2fc_col: Column name of log2 Fold-Change values.
             symbol_col: Column name of gene IDs.
             y_label: Label for the y-axis.
@@ -691,12 +715,13 @@ class MethodBase(ABC):
         Preview:
             .. image:: /_static/docstring_previews/de_fold_change.png
         """
+        results_df = results_df[results_df[padj_col] < padj_threshold]
         if var_names is None:
             var_names = results_df.sort_values(log2fc_col, ascending=False).head(n_top_vars)[symbol_col].tolist()
             var_names += results_df.sort_values(log2fc_col, ascending=True).head(n_top_vars)[symbol_col].tolist()
             assert len(var_names) == 2 * n_top_vars
 
-        df = results_df[results_df[symbol_col].isin(var_names)]
+        df = results_df[results_df[symbol_col].isin(var_names)].copy()
         df.sort_values(log2fc_col, ascending=False, inplace=True)
 
         plt.figure(figsize=figsize)
