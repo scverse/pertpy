@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from matplotlib.lines import Line2D
+from matplotlib.pyplot import Figure
 from numpy import ndarray
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
@@ -86,7 +87,7 @@ class PyDESeq2(LinearModelBase):
         s: float = 0.45,
         return_fig: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Figure | None:
         """Plots per-gene dispersion estimates together with the fitted mean–dispersion relationship.
 
         Args:
