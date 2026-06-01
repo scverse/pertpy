@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from matplotlib.lines import Line2D
 from numpy import ndarray
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
@@ -70,7 +71,7 @@ class PyDESeq2(LinearModelBase):
         self.dds = dds
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    def plot_disp_ests(
+    def plot_disp_ests(  # pragma: no cover # noqa: D417
         self,
         *,
         ymin: float | None = None,
@@ -86,53 +87,45 @@ class PyDESeq2(LinearModelBase):
         return_fig: bool = False,
         **kwargs,
     ) -> None:
-        """Plot dispersion estimates.
-
-        A helper function that visualizes per-gene dispersion estimates together
-        with the fitted mean–dispersion relationship.
-
-        This plot shows:
-        - gene-wise dispersion estimates
-        - fitted dispersion trend
-        - final dispersion estimates used for testing
-
-        Optionally, the square root of dispersion (coefficient of variation) can
-        be shown instead of raw dispersion values.
+        """Plots per-gene dispersion estimates together with the fitted mean–dispersion relationship.
 
         Args:
             ymin: Lower bound for plotted values. Points below this threshold
-                are clipped and drawn at ymin using triangle markers.
+                are drawn at ymin using triangle markers.
             cv: If True, plot the square root of dispersion (coefficient of
                 variation) instead of dispersion.
             gene_col: Color for gene-wise dispersion estimates.
             fit_col: Color for fitted dispersion trend.
             final_col: Color for final dispersion estimates used for testing.
             legend: Whether to draw a legend.
-            xlabel: Label for the x-axis (defaults to "mean of normalized counts").
-            ylabel: Label for the y-axis (defaults to dispersion or CV).
+            xlabel: Label for the x-axis (default: "mean of normalized counts").
+            ylabel: Label for the y-axis (default: "dispersion" or "coefficient of variation").
             log: Axis scaling. "x", "y", or "xy" for log scaling.
             s: Scaling factor for point sizes.
-            return_fig: If True, returns the matplotlib figure instead of None.
             {common_plot_args}
-            **kwargs: Additional arguments for TODO
+            **kwargs: Additional arguments for ax.scatter.
 
         Returns:
-            matplotlib.figure.Figure | None
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
 
         Examples:
-            >>> model.plot_disp_ests()
-
+            >>> import pertpy as pt
+            >>> import decoupler as dc
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata = adata[adata.obs["Origin"] == "t", :].copy()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> pdata = dc.pp.pseudobulk(adata, sample_col="Patient", groups_col="Cluster", layer="counts", mode="sum")
+            >>> dc.pp.filter_samples(pdata, inplace=True)
+            >>> pds2 = pt.tl.PyDESeq2(pdata, design="~Efficacy+Treatment")
+            >>> pds2.fit()
+            >>> pds2.plot_disp_ests(s=0.1)
         Preview:
-            .. image:: /_static/docstring_previews/dispersion_estimates.png
+            .. image:: /_static/docstring_previews/de_disp_ests.png
         """
         if not hasattr(self, "dds"):
             raise ValueError("Model not fitted yet. Call .fit() first.")
 
         dds = self.dds
-
-        genecol = gene_col
-        fitcol = fit_col
-        finalcol = final_col
 
         if xlabel is None:
             xlabel = "mean of normalized counts"
@@ -149,7 +142,7 @@ class PyDESeq2(LinearModelBase):
 
         if ymin is None:
             positive = py[(py > 0) & np.isfinite(py)]
-            ymin = 1e-08 if positive.size == 0 else 10 ** np.floor(np.log10(np.min(positive)) - 0.1)
+            ymin = 10 ** np.floor(np.log10(np.min(positive)) - 0.1)
 
         py_plot = np.maximum(py, ymin)
 
@@ -162,7 +155,7 @@ class PyDESeq2(LinearModelBase):
             ax.scatter(
                 px[above],
                 py_plot[above],
-                facecolor=genecol,
+                facecolor=gene_col,
                 edgecolors="none",
                 s=s * 20,
                 marker="o",
@@ -173,7 +166,8 @@ class PyDESeq2(LinearModelBase):
             ax.scatter(
                 px[below],
                 py_plot[below],
-                c=genecol,
+                facecolor=gene_col,
+                edgecolors="none",
                 s=s * 20,
                 marker="v",
                 **kwargs,
@@ -193,8 +187,8 @@ class PyDESeq2(LinearModelBase):
             px,
             final_y,
             s=s * (20 + 20 * outliers.astype(int)),
-            facecolor=np.where(outliers, "none", finalcol),
-            edgecolors=np.where(outliers, finalcol, "none"),
+            facecolor=np.where(outliers, "none", final_col),
+            edgecolors=np.where(outliers, final_col, "none"),
         )
 
         fitted_disp = np.asarray(dds.var["fitted_dispersions"])[sel]
@@ -203,7 +197,7 @@ class PyDESeq2(LinearModelBase):
         ax.scatter(
             px,
             fitted_y,
-            facecolor=fitcol,
+            facecolor=fit_col,
             edgecolors="none",
             marker="o",
             s=s * 20,
@@ -218,16 +212,14 @@ class PyDESeq2(LinearModelBase):
         ax.set_ylabel(ylabel)
 
         if legend:
-            from matplotlib.lines import Line2D
-
             handles = [
-                Line2D([0], [0], marker="o", linestyle="", color=genecol, label="gene-est"),
-                Line2D([0], [0], marker="o", linestyle="", color=fitcol, label="fitted"),
-                Line2D([0], [0], marker="o", linestyle="", color=finalcol, label="final"),
+                Line2D([0], [0], marker="o", linestyle="", color=gene_col, label="gene-est"),
+                Line2D([0], [0], marker="o", linestyle="", color=fit_col, label="fitted"),
+                Line2D([0], [0], marker="o", linestyle="", color=final_col, label="final"),
             ]
             ax.legend(handles=handles, loc="lower right", frameon=True)
 
-        plt.tight_layout()
+        plt.tight_layout(pad=2.0)
 
         if return_fig:
             return plt.gcf()
