@@ -1,7 +1,10 @@
 from collections.abc import Sequence
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
+from matplotlib.pyplot import Figure
 from scipy.sparse import issparse
 
 from pertpy._logger import logger
@@ -60,11 +63,182 @@ class EdgeR(LinearModelBase):
         logger.info("Estimating Dispersions")
         dge = edger.estimateDisp(dge, design=design_r)
 
+        self.dge = dge
+
         logger.info("Fitting linear model")
         fit = edger.glmQLFit(dge, design=design_r, **kwargs)
 
         ro.globalenv["fit"] = fit
         self.fit = fit
+
+    def plot_bcv(
+        self,
+        *,
+        xlab: str = "Average log CPM",
+        ylab: str = "Biological coefficient of variation",
+        pch: str = "o",
+        cex: float = 0.2,
+        col_common: str = "red",
+        col_trend: str = "blue",
+        col_tagwise: str = "black",
+        legend: bool = True,
+        return_fig: bool = False,
+    ) -> Figure | None:
+        """Plot biological coefficient of variation (BCV) like edgeR::plotBCV.
+
+        Must be called after `.fit()`.
+
+        Args:
+            xlab:
+                X-axis label.
+            ylab:
+                Y-axis label.
+            pch:
+                Marker style (matplotlib-compatible).
+            cex:
+                Point size scaling (similar to R cex).
+            col_common:
+                Color for common dispersion line.
+            col_trend:
+                Color for trended dispersion line.
+            col_tagwise:
+                Color for tagwise dispersion points.
+            legend:
+                Whether to show legend.
+            return_fig:
+                If True, return matplotlib figure instead of showing it.
+        """
+        if not hasattr(self, "dge"):
+            raise ValueError("Model not fitted yet. Call `.fit()` first.")
+
+        # dge = self.dge
+
+        try:
+            from rpy2 import robjects as ro
+            from rpy2.robjects import numpy2ri, pandas2ri
+            from rpy2.robjects.conversion import get_conversion, localconverter
+            from rpy2.robjects.packages import importr
+
+        except ImportError:
+            raise ImportError("edger requires rpy2 to be installed.") from None
+
+        with localconverter(get_conversion() + numpy2ri.converter):
+            A = np.asarray(self.dge.rx2("AveLogCPM"))
+            tagwise = np.asarray(self.dge.rx2("tagwise.dispersion")) if "tagwise.dispersion" in self.dge.names else None
+            trended = np.asarray(self.dge.rx2("trended.dispersion")) if "trended.dispersion" in self.dge.names else None
+            common = np.asarray(self.dge.rx2("common.dispersion"))[0] if "common.dispersion" in self.dge.names else None
+
+        if common is None and trended is None and tagwise is None:
+            raise ValueError("No dispersions found in DGEList. Did you run estimateDisp()?")
+
+        # ensure correct shapes
+        A = np.asarray(A)
+
+        # -----------------------------
+        # Figure setup
+        # -----------------------------
+        fig, ax = plt.subplots(dpi=300)
+
+        labels = []
+
+        # -----------------------------
+        # Tagwise dispersion
+        # -----------------------------
+        if tagwise is not None:
+            tagwise = np.asarray(tagwise)
+
+            ax.scatter(
+                A,
+                np.sqrt(tagwise),
+                c=col_tagwise,
+                s=cex * 20,
+                marker=pch,
+                linewidths=0,
+            )
+            labels.append("Tagwise")
+
+        # -----------------------------
+        # Common dispersion
+        # -----------------------------
+        if common is not None:
+            common_val = float(np.asarray(common).reshape(-1)[0])
+            ax.axhline(
+                np.sqrt(common_val),
+                color=col_common,
+                linewidth=2,
+            )
+            labels.append("Common")
+
+        # -----------------------------
+        # Trended dispersion
+        # -----------------------------
+        if trended is not None:
+            trended = np.asarray(trended)
+            order = np.argsort(A)
+
+            ax.plot(
+                A[order],
+                np.sqrt(trended)[order],
+                color=col_trend,
+                linewidth=2,
+            )
+            labels.append("Trend")
+
+        # -----------------------------
+        # Axes styling
+        # -----------------------------
+        ax.set_xlabel(xlab)
+        ax.set_ylabel(ylab)
+
+        # -----------------------------
+        # Legend (R-style)
+        # -----------------------------
+        if legend:
+            handles = []
+
+            if tagwise is not None:
+                handles.append(
+                    Line2D(
+                        [0],
+                        [0],
+                        marker=pch,
+                        linestyle="",
+                        color=col_tagwise,
+                        label="Tagwise",
+                    )
+                )
+
+            if common is not None:
+                handles.append(
+                    Line2D(
+                        [0],
+                        [0],
+                        linestyle="-",
+                        color=col_common,
+                        label="Common",
+                    )
+                )
+
+            if trended is not None:
+                handles.append(
+                    Line2D(
+                        [0],
+                        [0],
+                        linestyle="-",
+                        color=col_trend,
+                        label="Trend",
+                    )
+                )
+
+            ax.legend(handles=handles, loc="upper right", frameon=True)
+
+        plt.tight_layout()
+
+        if return_fig:
+            return fig
+
+        plt.show()
+        return None
 
     def _test_single_contrast(self, contrast: Sequence[float], **kwargs) -> pd.DataFrame:  # noqa: D417
         """Conduct test for each contrast and return a data frame.
