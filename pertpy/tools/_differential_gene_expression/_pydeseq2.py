@@ -84,17 +84,15 @@ class PyDESeq2(LinearModelBase):
         xlabel: str | None = None,
         ylabel: str | None = None,
         log: str = "xy",
-        s: float = 0.45,
+        point_size: float = 0.45,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
         """Plots per-gene dispersion estimates together with the fitted mean–dispersion relationship.
 
         Args:
-            ymin: Lower bound for plotted values. Points below this threshold
-                are drawn at ymin using triangle markers.
-            cv: If True, plot the square root of dispersion (coefficient of
-                variation) instead of dispersion.
+            ymin: Lower bound for plotted values. Points below this threshold are drawn at ymin using triangle markers.
+            cv: If True, plot the square root of dispersion (coefficient of variation) instead of dispersion.
             gene_col: Color for gene-wise dispersion estimates.
             fit_col: Color for fitted dispersion trend.
             final_col: Color for final dispersion estimates used for testing.
@@ -102,7 +100,7 @@ class PyDESeq2(LinearModelBase):
             xlabel: Label for the x-axis (default: "mean of normalized counts").
             ylabel: Label for the y-axis (default: "dispersion" or "coefficient of variation").
             log: Axis scaling. "x", "y", or "xy" for log scaling.
-            s: Scaling factor for point sizes.
+            point_size: Scaling factor for point sizes.
             {common_plot_args}
             **kwargs: Additional arguments for ax.scatter.
 
@@ -119,7 +117,8 @@ class PyDESeq2(LinearModelBase):
             >>> dc.pp.filter_samples(pdata, inplace=True)
             >>> pds2 = pt.tl.PyDESeq2(pdata, design="~Efficacy+Treatment")
             >>> pds2.fit()
-            >>> pds2.plot_disp_ests(s=0.1)
+            >>> pds2.plot_disp_ests(point_size=0.1)
+
         Preview:
             .. image:: /_static/docstring_previews/de_disp_ests.png
         """
@@ -158,7 +157,7 @@ class PyDESeq2(LinearModelBase):
                 py_plot[above],
                 facecolor=gene_col,
                 edgecolors="none",
-                s=s * 20,
+                s=point_size * 20,
                 marker="o",
                 **kwargs,
             )
@@ -169,7 +168,7 @@ class PyDESeq2(LinearModelBase):
                 py_plot[below],
                 facecolor=gene_col,
                 edgecolors="none",
-                s=s * 20,
+                s=point_size * 20,
                 marker="v",
                 **kwargs,
             )
@@ -187,7 +186,7 @@ class PyDESeq2(LinearModelBase):
         ax.scatter(
             px,
             final_y,
-            s=s * (20 + 20 * outliers.astype(int)),
+            s=point_size * (20 + 20 * outliers.astype(int)),
             facecolor=np.where(outliers, "none", final_col),
             edgecolors=np.where(outliers, final_col, "none"),
         )
@@ -201,7 +200,7 @@ class PyDESeq2(LinearModelBase):
             facecolor=fit_col,
             edgecolors="none",
             marker="o",
-            s=s * 20,
+            s=point_size * 20,
         )
 
         if "x" in log:
