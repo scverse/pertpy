@@ -7,6 +7,7 @@ from matplotlib.lines import Line2D
 from matplotlib.pyplot import Figure
 from scipy.sparse import issparse
 
+from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 
 from ._base import LinearModelBase
@@ -27,21 +28,9 @@ class EdgeR(LinearModelBase):
         Args:
             **kwargs: Keyword arguments specific to glmQLFit()
         """
-        try:
-            from rpy2 import robjects as ro
-            from rpy2.robjects import numpy2ri, pandas2ri
-            from rpy2.robjects.conversion import get_conversion, localconverter
-            from rpy2.robjects.packages import importr
-
-        except ImportError:
-            raise ImportError("edger requires rpy2 to be installed.") from None
-
-        try:
-            edger = importr("edgeR")
-        except ImportError as e:
-            raise ImportError(
-                "edgeR requires a valid R installation with the following packages:\nedgeR, BiocParallel, RhpcBLASctl"
-            ) from e
+        ro, numpy2ri, pandas2ri, get_conversion, localconverter, edger = self._ensure_deps(
+            "ro", "numpy2ri", "pandas2ri", "get_conversion", "localconverter", "edger"
+        )
 
         # Convert dataframe
         with localconverter(get_conversion() + numpy2ri.converter):
@@ -71,165 +60,82 @@ class EdgeR(LinearModelBase):
         ro.globalenv["fit"] = fit
         self.fit = fit
 
-    def plot_bcv(
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_bcv(  # pragma: no cover # noqa: D417
         self,
         *,
-        xlab: str = "Average log CPM",
-        ylab: str = "Biological coefficient of variation",
-        pch: str = "o",
-        cex: float = 0.2,
-        col_common: str = "red",
-        col_trend: str = "blue",
-        col_tagwise: str = "black",
+        xlabel: str | None = "Average log CPM",
+        ylabel: str | None = "Biological coefficient of variation",
+        marker: str = "o",
+        point_size: float = 0.2,
+        common_col: str = "red",
+        trend_col: str = "blue",
+        tagwise_col: str = "black",
         legend: bool = True,
         return_fig: bool = False,
+        **kwargs,
     ) -> Figure | None:
         """Plot biological coefficient of variation (BCV) like edgeR::plotBCV.
 
-        Must be called after `.fit()`.
-
         Args:
-            xlab:
-                X-axis label.
-            ylab:
-                Y-axis label.
-            pch:
-                Marker style (matplotlib-compatible).
-            cex:
-                Point size scaling (similar to R cex).
-            col_common:
-                Color for common dispersion line.
-            col_trend:
-                Color for trended dispersion line.
-            col_tagwise:
-                Color for tagwise dispersion points.
-            legend:
-                Whether to show legend.
-            return_fig:
-                If True, return matplotlib figure instead of showing it.
+            xlabel: Label for the x-axis (default: "Average log CPM").
+            ylabel: Label for the y-axis (default: "Biological coefficient of variation").
+            marker: Marker style.
+            point_size: Scaling factor for point sizes.
+            common_col: Color for common dispersion line.
+            trend_col: Color for trended dispersion line.
+            tagwise_col: Color for tagwise dispersion points.
+            legend: Whether to draw a legend.
+            {common_plot_args}
+            **kwargs: Additional arguments for ax.scatter and ax.axhline.
         """
+        # TODO
         if not hasattr(self, "dge"):
             raise ValueError("Model not fitted yet. Call `.fit()` first.")
 
-        # dge = self.dge
-
-        try:
-            from rpy2 import robjects as ro
-            from rpy2.robjects import numpy2ri, pandas2ri
-            from rpy2.robjects.conversion import get_conversion, localconverter
-            from rpy2.robjects.packages import importr
-
-        except ImportError:
-            raise ImportError("edger requires rpy2 to be installed.") from None
+        numpy2ri, get_conversion, localconverter = self._ensure_deps("numpy2ri", "get_conversion", "localconverter")
 
         with localconverter(get_conversion() + numpy2ri.converter):
             A = np.asarray(self.dge.rx2("AveLogCPM"))
-            tagwise = np.asarray(self.dge.rx2("tagwise.dispersion")) if "tagwise.dispersion" in self.dge.names else None
-            trended = np.asarray(self.dge.rx2("trended.dispersion")) if "trended.dispersion" in self.dge.names else None
-            common = np.asarray(self.dge.rx2("common.dispersion"))[0] if "common.dispersion" in self.dge.names else None
+            tagwise = np.asarray(self.dge.rx2("tagwise.dispersion"))
+            common = float(self.dge.rx2("common.dispersion")[0])
+            trended = np.asarray(self.dge.rx2("trended.dispersion"))
 
-        if common is None and trended is None and tagwise is None:
-            raise ValueError("No dispersions found in DGEList. Did you run estimateDisp()?")
-
-        # ensure correct shapes
-        A = np.asarray(A)
-
-        # -----------------------------
-        # Figure setup
-        # -----------------------------
         fig, ax = plt.subplots(dpi=300)
 
-        labels = []
+        ax.scatter(
+            A,
+            np.sqrt(tagwise),
+            c=tagwise_col,
+            s=point_size * 20,
+            marker=marker,
+            linewidths=0,
+        )
 
-        # -----------------------------
-        # Tagwise dispersion
-        # -----------------------------
-        if tagwise is not None:
-            tagwise = np.asarray(tagwise)
+        ax.axhline(
+            np.sqrt(common),
+            color=common_col,
+            linewidth=2,
+        )
 
-            ax.scatter(
-                A,
-                np.sqrt(tagwise),
-                c=col_tagwise,
-                s=cex * 20,
-                marker=pch,
-                linewidths=0,
-            )
-            labels.append("Tagwise")
+        order = np.argsort(A)
 
-        # -----------------------------
-        # Common dispersion
-        # -----------------------------
-        if common is not None:
-            common_val = float(np.asarray(common).reshape(-1)[0])
-            ax.axhline(
-                np.sqrt(common_val),
-                color=col_common,
-                linewidth=2,
-            )
-            labels.append("Common")
+        ax.plot(
+            A[order],
+            np.sqrt(trended)[order],
+            color=trend_col,
+            linewidth=2,
+        )
 
-        # -----------------------------
-        # Trended dispersion
-        # -----------------------------
-        if trended is not None:
-            trended = np.asarray(trended)
-            order = np.argsort(A)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
 
-            ax.plot(
-                A[order],
-                np.sqrt(trended)[order],
-                color=col_trend,
-                linewidth=2,
-            )
-            labels.append("Trend")
-
-        # -----------------------------
-        # Axes styling
-        # -----------------------------
-        ax.set_xlabel(xlab)
-        ax.set_ylabel(ylab)
-
-        # -----------------------------
-        # Legend (R-style)
-        # -----------------------------
         if legend:
-            handles = []
-
-            if tagwise is not None:
-                handles.append(
-                    Line2D(
-                        [0],
-                        [0],
-                        marker=pch,
-                        linestyle="",
-                        color=col_tagwise,
-                        label="Tagwise",
-                    )
-                )
-
-            if common is not None:
-                handles.append(
-                    Line2D(
-                        [0],
-                        [0],
-                        linestyle="-",
-                        color=col_common,
-                        label="Common",
-                    )
-                )
-
-            if trended is not None:
-                handles.append(
-                    Line2D(
-                        [0],
-                        [0],
-                        linestyle="-",
-                        color=col_trend,
-                        label="Trend",
-                    )
-                )
-
+            handles = [
+                Line2D([0], [0], marker=marker, linestyle="", color=tagwise_col, label="Tagwise"),
+                Line2D([0], [0], linestyle="-", color=common_col, label="Common"),
+                Line2D([0], [0], linestyle="-", color=trend_col, label="Trend"),
+            ]
             ax.legend(handles=handles, loc="upper right", frameon=True)
 
         plt.tight_layout()
@@ -255,21 +161,9 @@ class EdgeR(LinearModelBase):
         #  parse **kwargs to R function
         #  Fix mask for .fit()
 
-        try:
-            from rpy2 import robjects as ro
-            from rpy2.robjects import numpy2ri, pandas2ri
-            from rpy2.robjects.conversion import get_conversion, localconverter
-            from rpy2.robjects.packages import importr
-
-        except ImportError:
-            raise ImportError("edger requires rpy2 to be installed.") from None
-
-        try:
-            importr("edgeR")
-        except ImportError:
-            raise ImportError(
-                "edgeR requires a valid R installation with the following packages: edgeR, BiocParallel, RhpcBLASctl"
-            ) from None
+        ro, numpy2ri, pandas2ri, get_conversion, localconverter = self._ensure_deps(
+            "ro", "numpy2ri", "pandas2ri", "get_conversion", "localconverter"
+        )
 
         # Convert vector to R, which drops a category like `self.design_matrix` to use the intercept for the left out.
         with localconverter(get_conversion() + numpy2ri.converter) as cv:
@@ -300,3 +194,45 @@ class EdgeR(LinearModelBase):
         de_res = de_res.reset_index()
 
         return de_res.rename(columns={"PValue": "p_value", "logFC": "log_fc", "FDR": "adj_p_value"})
+
+    def _ensure_deps(self, *names):
+        """Lazy loader for rpy2 objects with per-instance caching.
+
+        Example:
+            ro, numpy2ri, edger = self._ensure_deps("ro", "numpy2ri", "edger")
+        """
+        if not hasattr(self, "_imports_cache"):
+            try:
+                from rpy2 import robjects as ro
+                from rpy2.robjects import numpy2ri, pandas2ri
+                from rpy2.robjects.conversion import get_conversion, localconverter
+                from rpy2.robjects.packages import importr
+
+            except ImportError:
+                raise ImportError("edger requires rpy2 to be installed.") from None
+
+            try:
+                edger = importr("edgeR")
+            except ImportError as e:
+                raise ImportError(
+                    "edgeR requires a valid R installation with the following packages:\nedgeR, BiocParallel, RhpcBLASctl"
+                ) from e
+
+            self._imports_cache = {
+                "ro": ro,
+                "numpy2ri": numpy2ri,
+                "pandas2ri": pandas2ri,
+                "get_conversion": get_conversion,
+                "localconverter": localconverter,
+                "edger": edger,
+            }
+
+        results = {}
+
+        for name in names:
+            if name in self._imports_cache:
+                results[name] = self._imports_cache[name]
+            else:
+                raise KeyError(f"Unknown import request: '{name}'")
+
+        return tuple(results[name] for name in names)
