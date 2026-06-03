@@ -28,34 +28,13 @@ class EdgeR(LinearModelBase):
         Args:
             **kwargs: Keyword arguments specific to glmQLFit()
         """
-        ro, numpy2ri, pandas2ri, get_conversion, localconverter, edger = self._ensure_deps(
-            "ro", "numpy2ri", "pandas2ri", "get_conversion", "localconverter", "edger"
-        )
+        ro, edger = self._ensure_deps("ro", "edger")
 
-        # Convert dataframe
-        with localconverter(get_conversion() + numpy2ri.converter):
-            expr = self.adata.X if self.layer is None else self.adata.layers[self.layer]
-            expr = expr.T.toarray() if issparse(expr) else expr.T
-
-        with localconverter(get_conversion() + pandas2ri.converter) as cv:
-            expr_r = cv.py2rpy(pd.DataFrame(expr, index=self.adata.var_names, columns=self.adata.obs_names))
-            samples_r = cv.py2rpy(self.adata.obs)
-
-        dge = edger.DGEList(counts=expr_r, samples=samples_r)
-
-        logger.info("Calculating NormFactors")
-        dge = edger.calcNormFactors(dge)
-
-        with localconverter(get_conversion() + numpy2ri.converter) as cv:
-            design_r = cv.py2rpy(self.design.values)
-
-        logger.info("Estimating Dispersions")
-        dge = edger.estimateDisp(dge, design=design_r)
-
-        self.dge = dge
+        if not hasattr(self, "dge") or not hasattr(self, "design_r"):
+            self._prepare_dge()
 
         logger.info("Fitting linear model")
-        fit = edger.glmQLFit(dge, design=design_r, **kwargs)
+        fit = edger.glmQLFit(self.dge, design=self.design_r, **kwargs)
 
         ro.globalenv["fit"] = fit
         self.fit = fit
@@ -89,9 +68,8 @@ class EdgeR(LinearModelBase):
             {common_plot_args}
             **kwargs: Additional arguments for ax.scatter and ax.axhline.
         """
-        # TODO
         if not hasattr(self, "dge"):
-            raise ValueError("Model not fitted yet. Call `.fit()` first.")
+            self._prepare_dge()
 
         numpy2ri, get_conversion, localconverter = self._ensure_deps("numpy2ri", "get_conversion", "localconverter")
 
@@ -103,29 +81,13 @@ class EdgeR(LinearModelBase):
 
         fig, ax = plt.subplots(dpi=300)
 
-        ax.scatter(
-            A,
-            np.sqrt(tagwise),
-            c=tagwise_col,
-            s=point_size * 20,
-            marker=marker,
-            linewidths=0,
-        )
+        ax.scatter(A, np.sqrt(tagwise), c=tagwise_col, s=point_size * 20, marker=marker, linewidths=0, **kwargs)
 
-        ax.axhline(
-            np.sqrt(common),
-            color=common_col,
-            linewidth=2,
-        )
+        ax.axhline(np.sqrt(common), color=common_col, linewidth=2, **kwargs)
 
         order = np.argsort(A)
 
-        ax.plot(
-            A[order],
-            np.sqrt(trended)[order],
-            color=trend_col,
-            linewidth=2,
-        )
+        ax.plot(A[order], np.sqrt(trended)[order], color=trend_col, linewidth=2, **kwargs)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -145,6 +107,35 @@ class EdgeR(LinearModelBase):
 
         plt.show()
         return None
+
+    def _prepare_dge(self) -> None:
+        """Create DGEList, calculate normalization factors, and estimate dispersions."""
+        numpy2ri, pandas2ri, get_conversion, localconverter, edger = self._ensure_deps(
+            "numpy2ri", "pandas2ri", "get_conversion", "localconverter", "edger"
+        )
+
+        # Convert dataframe
+        with localconverter(get_conversion() + numpy2ri.converter):
+            expr = self.adata.X if self.layer is None else self.adata.layers[self.layer]
+            expr = expr.T.toarray() if issparse(expr) else expr.T
+
+        with localconverter(get_conversion() + pandas2ri.converter) as cv:
+            expr_r = cv.py2rpy(pd.DataFrame(expr, index=self.adata.var_names, columns=self.adata.obs_names))
+            samples_r = cv.py2rpy(self.adata.obs)
+
+        dge = edger.DGEList(counts=expr_r, samples=samples_r)
+
+        logger.info("Calculating NormFactors")
+        dge = edger.calcNormFactors(dge)
+
+        with localconverter(get_conversion() + numpy2ri.converter) as cv:
+            design_r = cv.py2rpy(self.design.values)
+
+        logger.info("Estimating Dispersions")
+        dge = edger.estimateDisp(dge, design=design_r)
+
+        self.dge = dge
+        self.design_r = design_r
 
     def _test_single_contrast(self, contrast: Sequence[float], **kwargs) -> pd.DataFrame:  # noqa: D417
         """Conduct test for each contrast and return a data frame.
