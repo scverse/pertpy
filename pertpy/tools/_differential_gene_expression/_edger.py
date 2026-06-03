@@ -67,6 +67,23 @@ class EdgeR(LinearModelBase):
             legend: Whether to draw a legend.
             {common_plot_args}
             **kwargs: Additional arguments for ax.scatter and ax.axhline.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import decoupler as dc
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata = adata[adata.obs["Origin"] == "t", :].copy()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> pdata = dc.pp.pseudobulk(adata, sample_col="Patient", groups_col="Cluster", layer="counts", mode="sum")
+            >>> dc.pp.filter_samples(pdata, inplace=True)
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.plot_bcv()
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_plot_bcv.png
         """
         if not hasattr(self, "dge"):
             self._prepare_dge()
