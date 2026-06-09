@@ -1505,8 +1505,10 @@ class CompositionalModel2(ABC):
                 sns.barplot,
                 "Cell Type",
                 "value",
+                "Cell Type",
                 palette=palette,
                 order=level_order,
+                hue_order=level_order,
                 **args_barplot,
             )
             g.set_xticklabels(rotation=90)
