@@ -92,6 +92,7 @@ jobs:
         uses: codecov/codecov-action@v6
         with:
           fail_ci_if_error: true
+          use_oidc: true
 
   check:
     name: Tests pass in all hatch environments
