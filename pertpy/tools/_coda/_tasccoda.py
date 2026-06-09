@@ -191,7 +191,7 @@ class Tasccoda(CompositionalModel2):
             import ete4 as ete
         except ImportError:
             raise ImportError(
-                "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+                "To use tasccoda please install additional dependencies as `pip install 'pertpy[tcoda]'`"
             ) from None
 
         # toytree tree - only for legacy reasons, can be removed in the final version
