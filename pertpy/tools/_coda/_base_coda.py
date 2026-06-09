@@ -1501,11 +1501,11 @@ class CompositionalModel2(ABC):
                 aspect=aspect,
             )
 
-            g.map(
+            g.map_dataframe(
                 sns.barplot,
-                "Cell Type",
-                "value",
-                "Cell Type",
+                x="Cell Type",
+                y="value",
+                hue="Cell Type",
                 palette=palette,
                 order=level_order,
                 hue_order=level_order,
