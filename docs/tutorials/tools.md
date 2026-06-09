@@ -13,7 +13,7 @@
 ```{eval-rst}
 .. nbgallery::
 
-   notebooks/mixscape
+   notebooks/perturbation_efficacy
 ```
 
 ## Compositional analysis
