@@ -89,10 +89,10 @@ jobs:
           uvx hatch run ${{ matrix.env.name }}:cov-report   # report visibly
           uvx hatch run ${{ matrix.env.name }}:coverage xml # create report for upload
       - name: Upload coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-          use_oidc: true
 
   check:
     name: Tests pass in all hatch environments
