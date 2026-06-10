@@ -199,12 +199,14 @@ def test_linear_operations():
     # Input that has already been differenced — opt out of the auto-diff with ensure_consistency=False.
     ps_adata = ps.compute_control_diff(psadata)
 
-    ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"], ensure_consistency=False)
+    with pytest.warns(UserWarning, match="Combining perturbations without"):
+        ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"], ensure_consistency=False)
 
     test = ps_adata["control"].X + ps_adata["target1"].X + ps_adata["target2"].X
     np.testing.assert_allclose(test, ps_adata2["target1+target2"].X, rtol=1e-4)
 
-    ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=False)
+    with pytest.warns(UserWarning, match="Combining perturbations without"):
+        ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=False)
     ps_vector = ps_adata2["target1-target1"].X
     np.testing.assert_allclose(ps_adata2["control"].X, ps_adata2["target1-target1"].X, rtol=1e-4)
 

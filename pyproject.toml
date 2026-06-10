@@ -175,7 +175,14 @@ filterwarnings = [
     "ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
     "ignore:In the future, the default backend for leiden will be igraph instead of leidenalg:FutureWarning",
     "ignore:Transforming to str index:anndata.ImplicitModificationWarning",
-    "ignore:Failed to correctly find n_neighbors for some samples:UserWarning"
+    "ignore:Failed to correctly find n_neighbors for some samples:UserWarning",
+    # pydeseq2 emits these on the small synthetic data used by the Milo and compare_groups tests; they are not actionable in pertpy.
+    "ignore:The dispersion trend curve fitting did not converge:UserWarning",
+    "ignore:As the residual degrees of freedom is less than 3:UserWarning",
+    # Third-party deprecation and runtime notices that pertpy cannot resolve at the source.
+    "ignore:JAXopt is no longer maintained:DeprecationWarning",
+    "ignore:A worker stopped while some jobs were given to the executor:UserWarning",
+    "ignore:Data has categories outside of the nominated levels"
 ]
 
 [tool.hatch.envs.default]

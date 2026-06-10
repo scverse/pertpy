@@ -8,7 +8,7 @@ if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
     pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
 
 
-@pytest.mark.parametrize("kwargs", [{}, {"regression_model": sm.GLM, "family": sm.families.NegativeBinomial()}])
+@pytest.mark.parametrize("kwargs", [{}, {"regression_model": sm.GLM, "family": sm.families.NegativeBinomial(alpha=1.0)}])
 def test_statsmodels(test_adata, kwargs):
     """Check that the method can be initialized and fitted, and perform basic checks on the result of test_contrasts."""
     from pertpy.tools._differential_gene_expression import Statsmodels
