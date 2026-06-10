@@ -149,7 +149,9 @@ class Tasccoda(CompositionalModel2):
             pen_args: Dictionary with penalty arguments.
                 With `reg="scaled_3"`, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.
                 See the tascCODA paper for an explanation of these parameters.
-                Default: lambda_0 = 50, lambda_1 = 5, phi = 0.
+                `theta` is the global spike-and-slab mixing weight that sets the selection threshold; it is held fixed rather than sampled, since its posterior is weakly identified and collapses toward 0 under HMC/NUTS (issue #1015).
+                Lower `theta` raises the threshold and selects fewer effects; 0.5 matches the reference implementation's operating point.
+                Default: lambda_0 = 50, lambda_1 = 5, phi = 0, theta = 0.5.
             modality_key: If data is a MuData object, specify key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
@@ -269,6 +271,9 @@ class Tasccoda(CompositionalModel2):
             pen_args["lambda_1"] = 5
         if "phi" not in pen_args:
             pen_args["phi"] = 0
+        # Global spike-and-slab mixing weight, held fixed because its posterior collapses under HMC/NUTS (issue #1015).
+        if "theta" not in pen_args:
+            pen_args["theta"] = 0.5
 
         adata.uns["scCODA_params"]["sslasso_pen_args"] = pen_args
 
@@ -360,7 +365,6 @@ class Tasccoda(CompositionalModel2):
             "b_raw_0": rng.normal(0.0, 1.0, beta_nobl_size),
             "a_1": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_1,
             "b_raw_1": rng.normal(0.0, 1.0, beta_nobl_size),
-            "theta": np.ones(dtype=np.float64, shape=1) * 0.5,
             "alpha": rng.normal(0.0, 1.0, alpha_size),
         }
 
@@ -399,9 +403,6 @@ class Tasccoda(CompositionalModel2):
         ref_index = jnp.sort(ref_index)
         num_ref_nodes = len(ref_index)
 
-        # Size of inferred parameter matrix
-        d = D * (T - num_ref_nodes)
-
         # numpyro plates for all dimensions
         covariate_axis = npy.plate("covs", D, dim=-2)
         node_axis = npy.plate("ct", T, dim=-1)
@@ -409,8 +410,9 @@ class Tasccoda(CompositionalModel2):
         cell_type_axis = npy.plate("ct", P, dim=-1)
         sample_axis = npy.plate("sample", N, dim=-2)
 
-        # Spike-and-slab LASSO effects
-        theta = npy.sample("theta", npd.Beta(concentration1=1.0, concentration0=d))
+        # Global spike-and-slab mixing weight, held fixed at pen_args["theta"] rather than sampled.
+        # Its Beta(1, d) posterior is weakly identified and collapses toward 0 under HMC/NUTS, which inflates the selection threshold delta until no effect is credible (issue #1015).
+        theta = npy.deterministic("theta", jnp.array(sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["theta"]))
 
         with covariate_axis, node_axis_nobl:
             a_0 = npy.sample("a_0", npd.Exponential((lambda_0**2) / 2))
