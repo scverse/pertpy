@@ -84,7 +84,34 @@ ms.lda(adata=mdata["rna"], labels="gene_target", layer="X_pert", control="NT")
 ms.plot_lda(adata=mdata["rna"], control="NT")
 ```
 
-See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html).
+See [perturbation efficacy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_efficacy.html).
+
+### Perturbation scoring - Mixscale
+
+[Mixscale](https://doi.org/10.1038/s41556-025-01622-z) extends Mixscape with a continuous perturbation score instead of a binary perturbed/non-perturbed call {cite}`Jiang2025`.
+Where Mixscape assigns each cell a discrete KO/NP label, Mixscale quantifies how strongly each cell responded to its perturbation.
+This is useful for CRISPRi/CRISPRa screens where cells show a gradient of responses, and as input to downstream weighted differential expression and pathway analyses.
+Mixscale shares the perturbation signature and differential expression steps with Mixscape, so `perturbation_signature` is available on both classes.
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Mixscale
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+mdata = pt.dt.papalexi_2021()
+ms = pt.tl.Mixscale()
+ms.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+ms.mixscale(mdata["rna"], "gene_target", "NT", layer="X_pert")
+```
+
+See [perturbation efficacy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_efficacy.html).
 
 ## Compositional analysis
 
