@@ -556,8 +556,11 @@ class CompositionalModel2(ABC):
         )
         summ = summ.convert_dtypes(dtype_backend="numpy_nullable").infer_objects()
 
+        # az.summary orders rows by var_names then C-order of each variable's dims, matching values.flatten(), so align the medians positionally.
         posterior = arviz_data["posterior"].to_dataset()
-        summ["median"] = posterior[var_names].median(dim=["chain", "draw"]).to_dataframe().stack().reindex(summ.index)
+        summ["median"] = np.concatenate(
+            [posterior[var].median(dim=["chain", "draw"]).values.flatten() for var in var_names]
+        )
 
         effect_df = summ.loc[summ.index.str.match("|".join([r"beta\["]))].copy()
         intercept_df = summ.loc[summ.index.str.match("|".join([r"alpha\["]))].copy()
