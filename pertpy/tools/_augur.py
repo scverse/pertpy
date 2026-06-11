@@ -230,7 +230,12 @@ class Augur:
                 random_state=random_state,
             )
         elif classifier == "logistic_regression_classifier":
-            return LogisticRegression(penalty=penalty, random_state=random_state)
+            # scikit-learn 1.8 deprecated `penalty` in favor of `l1_ratio` (the L1/L2 mix) and `C` (no penalty via C=inf).
+            if penalty in (None, "none"):
+                return LogisticRegression(C=np.inf, random_state=random_state)
+            l1_ratio = {"l2": 0.0, "l1": 1.0, "elasticnet": 0.5}[penalty]
+            solver = "saga" if l1_ratio > 0.0 else "lbfgs"
+            return LogisticRegression(l1_ratio=l1_ratio, solver=solver, random_state=random_state)
         else:
             raise ValueError("Invalid classifier")
 
