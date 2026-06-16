@@ -93,7 +93,7 @@ def test_pseudobulk_response(adata_simple):
         )
 
 
-def test_pseudobulk_preserves_extra_obs_with_groups_col(rng):
+def test_pseudobulk_preserves_extra_obs_with_and_without_groups_col(rng):
     """Regression test for https://github.com/scverse/pertpy/issues/1003.
 
     When `groups_col` is provided, the pseudobulk output's obs index is joined (e.g. "P0_C0"),
@@ -120,9 +120,14 @@ def test_pseudobulk_preserves_extra_obs_with_groups_col(rng):
 
     ps = pt.tl.PseudobulkSpace()
     pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", mode="sum")
+    pdata2 = ps.compute(adata, target_col="Patient", mode="sum")
 
     assert pdata.obs["Efficacy"].isna().sum() == 0
     for row in pdata.obs.itertuples():
+        assert row.Efficacy == efficacy_per_patient[row.Patient]
+
+    assert pdata2.obs["Efficacy"].isna().sum() == 0
+    for row in pdata2.obs.itertuples():
         assert row.Efficacy == efficacy_per_patient[row.Patient]
 
 

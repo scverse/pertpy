@@ -150,15 +150,13 @@ class PseudobulkSpace(PerturbationSpace):
 
         if missing_cols:
             grouped = original_obs.groupby(grouping_cols, observed=False)[missing_cols].first()
-            # `ps_adata.obs` is indexed by joined group keys (e.g. "patient_cluster"),
-            # so reindex by the grouping columns themselves rather than the joined index.
             if len(grouping_cols) == 1:
-                lookup = pd.Index(ps_adata.obs[grouping_cols[0]])
+                index = pd.Index(ps_adata.obs[grouping_cols[0]])
             else:
-                lookup = pd.MultiIndex.from_frame(ps_adata.obs[grouping_cols])
-            aligned = grouped.reindex(lookup)
-            aligned.index = ps_adata.obs.index
-            ps_adata.obs = pd.concat([ps_adata.obs, aligned], axis=1)
+                index = pd.MultiIndex.from_frame(ps_adata.obs[grouping_cols])
+            grouped = grouped.reindex(index)
+            grouped.index = ps_adata.obs.index
+            ps_adata.obs = pd.concat([ps_adata.obs, grouped], axis=1)
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
 
