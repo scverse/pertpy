@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.1
+
+### 🚀 Features
+
+* mixscale: add continuous perturbation scoring ([#945](https://github.com/scverse/pertpy/pull/945)) @stefanm808
+* Add MiloDE for neighbourhood-level differential expression ([#1001](https://github.com/scverse/pertpy/pull/1001)) @Zethson
+* Add `plot_disp_ests()` for dispersion-estimate visualisation ([#1004](https://github.com/scverse/pertpy/pull/1004)) @LuisHeinzlmeier
+* Add and rename significance thresholds ([#974](https://github.com/scverse/pertpy/pull/974)) @LuisHeinzlmeier
+
+### 🐛 Bug Fixes
+
+* tascCODA: fix no credible effects returned (theta collapse) ([#1017](https://github.com/scverse/pertpy/pull/1017)) @Zethson
+* tascCODA: fix always returning insignificant results ([#1016](https://github.com/scverse/pertpy/pull/1016)) @Zethson
+* PseudobulkSpace: fix all-NaN extra obs with `groups_col` ([#1006](https://github.com/scverse/pertpy/pull/1006)) @Zethson
+* perturbation_space: skip None-keyed layers in `_combine` ([#1000](https://github.com/scverse/pertpy/pull/1000)) @Zethson
+* `plot_effects_barplot()`: remove FutureWarning ([#1013](https://github.com/scverse/pertpy/pull/1013)) @LuisHeinzlmeier
+* coda: fix ImportError ([#1014](https://github.com/scverse/pertpy/pull/1014)) @LuisHeinzlmeier
+
+### 🧰 Maintenance
+
+* perturbation_space: cleanup, safer defaults, kill stale-state bugs ([#994](https://github.com/scverse/pertpy/pull/994)) @Zethson
+* Resolve test-suite warnings ([#1018](https://github.com/scverse/pertpy/pull/1018)) @Zethson
+* docs: refresh DE docstring pseudobulk examples ([#996](https://github.com/scverse/pertpy/pull/996)) @Zethson
+* ci: bump codecov-action to v6 and fail CI on upload error ([#1009](https://github.com/scverse/pertpy/pull/1009)) @timtreis
+
 ## v1.1.0
 
 ### 🚀 Features
