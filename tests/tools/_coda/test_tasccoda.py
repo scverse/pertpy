@@ -56,6 +56,7 @@ def test_prepare(smillie_adata):
     assert "sample_counts" in mdata["coda"].obsm
     assert isinstance(mdata["coda"].obsm["sample_counts"], np.ndarray)
     assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 8
+    assert mdata["coda"].uns["scCODA_params"]["sslasso_pen_args"]["theta"] == 0.5
 
 
 def test_load_invalid_type_raises_error(smillie_adata):
@@ -80,3 +81,29 @@ def test_run_nuts(smillie_adata):
     assert "effect_df_Health[T.Non-inflamed]" in mdata["coda"].varm
     assert mdata["coda"].varm["effect_df_Health[T.Inflamed]"].shape == (51, 7)
     assert mdata["coda"].varm["effect_df_Health[T.Non-inflamed]"].shape == (51, 7)
+
+
+def test_theta_fixed_not_collapsed(smillie_adata):
+    """Regression test for #1015.
+
+    The global spike-and-slab mixing weight theta is held fixed rather than sampled.
+    A sampled theta collapses toward its Beta(1, d) prior (~0) under NUTS, which sends the selection threshold delta to infinity and makes every node non-credible.
+    Pinning theta keeps it at the configured value and the threshold finite.
+    """
+    mdata = tasccoda.load(
+        smillie_adata,
+        type="sample_level",
+        levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+        key_added="lineage",
+        add_level_name=True,
+    )
+    mdata = tasccoda.prepare(
+        mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0, "theta": 0.3}
+    )
+    tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+
+    theta_samples = np.asarray(mdata["coda"].uns["scCODA_params"]["mcmc"]["samples"]["theta"])
+    assert np.allclose(theta_samples, 0.3)
+
+    node_df = tasccoda.get_node_df(mdata)
+    assert np.isfinite(node_df["Delta"]).all()
