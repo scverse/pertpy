@@ -55,6 +55,14 @@
    notebooks/scgen_perturbation_prediction
 ```
 
+## Batch correction
+
+```{eval-rst}
+.. nbgallery::
+
+   notebooks/scgen_batch_removal
+```
+
 ## Perturbation space
 
 ```{eval-rst}
