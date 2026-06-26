@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+from scanpy import settings
+
 from pertpy._logger import logger
+from pertpy.data._dataloader import _download
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -10,6 +14,21 @@ if TYPE_CHECKING:
 
 class MetaData:
     """Superclass for pertpy's MetaData components."""
+
+    _BASE_URL = "https://exampledata.scverse.org/pertpy"
+
+    @staticmethod
+    def _download_metadata(file_name: str) -> Path:
+        """Download a metadata file into scanpy's cache directory if absent and return its path."""
+        path = Path(settings.cachedir) / file_name
+        if not path.exists():
+            _download(
+                url=f"{MetaData._BASE_URL}/{file_name}",
+                output_file_name=file_name,
+                output_path=settings.cachedir,
+                block_size=4096,
+            )
+        return path
 
     def _warn_unmatch(
         self,

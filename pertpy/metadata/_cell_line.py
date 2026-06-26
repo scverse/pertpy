@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from pertpy._logger import logger
@@ -13,11 +12,9 @@ if TYPE_CHECKING:
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scanpy import settings
 from scipy import stats
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -43,130 +40,49 @@ class CellLine(MetaData):
 
     def _download_cell_line(self, cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap") -> None:
         if cell_line_source == "DepMap":
-            # Download cell line metadata from DepMap
-            # Source: https://depmap.org/portal/download/all/ (DepMap Public 23Q4)
-            depmap_cell_line_path = Path(settings.cachedir) / "depmap_23Q4_info.csv"
-            if not Path(depmap_cell_line_path).exists():
-                _download(
-                    url="https://exampledata.scverse.org/pertpy/depmap_23Q4_info.csv",
-                    output_file_name="depmap_23Q4_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # DepMap Public 23Q4: https://depmap.org/portal/download/all/
+            depmap_cell_line_path = self._download_metadata("depmap_23Q4_info.csv")
             self.depmap = pd.read_csv(depmap_cell_line_path)
             self.depmap = self.depmap.reset_index().rename(columns={"CellLineName": "cell_line_name"})
         else:
-            # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
-            # Source: https://www.cancerrxgene.org/celllines
-            transformed_cancerxgene_cell_line_path = Path(settings.cachedir) / "cancerrxgene_info.csv"
-            if not transformed_cancerxgene_cell_line_path.exists():
-                _download(
-                    url="https://exampledata.scverse.org/pertpy/cancerrxgene_info.csv",
-                    output_file_name="cancerrxgene_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
-            self.cancerxgene = pd.read_csv(transformed_cancerxgene_cell_line_path, index_col=0)
+            # The Genomics of Drug Sensitivity in Cancer Project: https://www.cancerrxgene.org/celllines
+            cancerxgene_cell_line_path = self._download_metadata("cancerrxgene_info.csv")
+            self.cancerxgene = pd.read_csv(cancerxgene_cell_line_path, index_col=0)
 
     def _download_gene_annotation(self) -> None:
-        # Download metadata for driver genes from DepMap.Sanger
-        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
-        gene_annotation_file_path = Path(settings.cachedir) / "genes_info.csv"
-        if not Path(gene_annotation_file_path).exists():
-            _download(
-                url="https://exampledata.scverse.org/pertpy/genes_info.csv",
-                output_file_name="genes_info.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
+        # Driver genes from DepMap.Sanger: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
+        gene_annotation_file_path = self._download_metadata("genes_info.csv")
         self.gene_annotation = pd.read_table(gene_annotation_file_path, delimiter=",")
 
     def _download_bulk_rna(self, cell_line_source: Literal["broad", "sanger"] = "broad") -> None:
         if cell_line_source == "sanger":
-            # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute from DepMap.Sanger
-            # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
-            # issue: read count values contain random whitespace
-            # solution: remove the white space and convert to int before depmap updates the metadata
-            bulk_rna_sanger_file_path = Path(settings.cachedir) / "rnaseq_sanger_info.csv"
-            if not Path(bulk_rna_sanger_file_path).exists():
-                _download(
-                    url="https://exampledata.scverse.org/pertpy/rnaseq_sanger_info.csv",
-                    output_file_name="rnaseq_sanger_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # Bulk RNA-seq collated by the Sanger and Broad institutes from DepMap.Sanger:
+            # https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
+            # Read counts contain random whitespace, hence the unicode dtype.
+            bulk_rna_sanger_file_path = self._download_metadata("rnaseq_sanger_info.csv")
             self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0, dtype="unicode")
         else:
-            # Download CCLE expression data from DepMap
-            # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-            bulk_rna_broad_file_path = Path(settings.cachedir) / "rnaseq_depmap_info.csv"
-            if not Path(bulk_rna_broad_file_path).exists():
-                _download(
-                    url="https://exampledata.scverse.org/pertpy/rnaseq_depmap_info.csv",
-                    output_file_name="rnaseq_depmap_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # CCLE expression data from DepMap Public 22Q2: https://depmap.org/portal/download/all/
+            bulk_rna_broad_file_path = self._download_metadata("rnaseq_depmap_info.csv")
             self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
 
     def _download_proteomics(self) -> None:
-        # Download proteomics data processed by DepMap.Sanger
-        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
-        proteomics_file_path = Path(settings.cachedir) / "proteomics_info.csv"
-        if not Path(proteomics_file_path).exists():
-            _download(
-                url="https://exampledata.scverse.org/pertpy/proteomics_info.csv",
-                output_file_name="proteomics_info.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
+        # Proteomics data processed by DepMap.Sanger: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
+        proteomics_file_path = self._download_metadata("proteomics_info.csv")
         self.proteomics = pd.read_csv(proteomics_file_path, index_col=0)
 
     def _download_gdsc(self, gdsc_dataset: Literal[1, 2] = 1) -> None:
         if gdsc_dataset == 1:
-            # Download GDSC drug response data
-            # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s and AUC)
-            # URL: https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx
-            drug_response_gdsc1_file_path = Path(settings.cachedir) / "gdsc1_info.csv"
-            if not Path(drug_response_gdsc1_file_path).exists():
-                _download(
-                    url="https://exampledata.scverse.org/pertpy/gdsc1_info.csv",
-                    output_file_name="gdsc1_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # GDSC drug response (IC50s and AUC): https://www.cancerrxgene.org/downloads/bulk_download
+            drug_response_gdsc1_file_path = self._download_metadata("gdsc1_info.csv")
             self.drug_response_gdsc1 = pd.read_csv(drug_response_gdsc1_file_path, index_col=0)
         if gdsc_dataset == 2:
-            drug_response_gdsc2_file_path = Path(settings.cachedir) / "gdsc2_info.csv"
-            if not Path(drug_response_gdsc2_file_path).exists():
-                _download(
-                    url="https://exampledata.scverse.org/pertpy/gdsc2_info.csv",
-                    output_file_name="gdsc2_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            drug_response_gdsc2_file_path = self._download_metadata("gdsc2_info.csv")
             self.drug_response_gdsc2 = pd.read_csv(drug_response_gdsc2_file_path, index_col=0)
 
     def _download_prism(self) -> None:
-        # Download PRISM drug response data
-        # Source: DepMap PRISM Repurposing 19Q4 secondary screen dose response curve parameters
-        drug_response_prism_file_path = Path(settings.cachedir) / "prism_info.csv"
-        if not Path(drug_response_prism_file_path).exists():
-            _download(
-                url="https://exampledata.scverse.org/pertpy/prism_info.csv",
-                output_file_name="prism_info.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
+        # DepMap PRISM Repurposing 19Q4 secondary screen dose response curve parameters
+        drug_response_prism_file_path = self._download_metadata("prism_info.csv")
         df = pd.read_csv(
             drug_response_prism_file_path, index_col=0, usecols=["broad_id", "depmap_id", "name", "ic50", "ec50", "auc"]
         )
