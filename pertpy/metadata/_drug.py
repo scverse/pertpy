@@ -24,31 +24,13 @@ def _download_drug_annotation(
 ) -> pd.DataFrame | Mapping[str, Mapping[str, list[str]]]:
     if source == "chembl":
         # Prepared in https://github.com/theislab/pertpy-datasets/blob/main/chembl_data.ipynb
-        chembl_path = Path(settings.cachedir) / "chembl.json"
-        if not Path(chembl_path).exists():
-            _download(
-                url="https://exampledata.scverse.org/pertpy/chembl.json",
-                output_file_name="chembl.json",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
+        chembl_path = MetaData._download_metadata("chembl.json")
         with chembl_path.open() as file:
-            chembl_json = json.load(file)
-        return chembl_json
+            return json.load(file)
 
     elif source == "dgidb":
-        dgidb_path = Path(settings.cachedir) / "dgidb.tsv"
-        if not Path(dgidb_path).exists():
-            _download(
-                url="https://exampledata.scverse.org/pertpy/dgidb.tsv",
-                output_file_name="dgidb.tsv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
-        dgidb_df = pd.read_table(dgidb_path)
-        return dgidb_df
+        dgidb_path = MetaData._download_metadata("dgidb.tsv")
+        return pd.read_table(dgidb_path)
 
     else:
         pharmgkb_path = Path(settings.cachedir) / "pharmgkb.tsv"
@@ -110,18 +92,10 @@ class Drug(MetaData):
         if copy:
             adata = adata.copy()
 
-        if source == "chembl":
-            if not self.chembl.loaded:
-                self.chembl.set()
-            interaction = self.chembl.dataframe
-        elif source == "dgidb":
-            if not self.dgidb.loaded:
-                self.dgidb.set()
-            interaction = self.dgidb.dataframe
-        else:
-            if not self.pharmgkb.loaded:
-                self.pharmgkb.set()
-            interaction = self.pharmgkb.data
+        db = getattr(self, source)
+        if not db.loaded:
+            db.set()
+        interaction = db.data if source == "pharmgkb" else db.dataframe
 
         if source != "pharmgkb":
             exploded_df = interaction.explode("targets")
@@ -163,12 +137,9 @@ class Drug(MetaData):
         Returns:
             Returns a LookUp object specific for drug annotation.
         """
-        if not self.chembl.loaded:
-            self.chembl.set()
-        if not self.dgidb.loaded:
-            self.dgidb.set()
-        if not self.pharmgkb.loaded:
-            self.pharmgkb.set()
+        for db in (self.chembl, self.dgidb, self.pharmgkb):
+            if not db.loaded:
+                db.set()
 
         return LookUp(
             type="drug",
