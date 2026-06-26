@@ -27,6 +27,8 @@ class JaxSCGENVAE(JaxBaseModuleClass):
     def setup(self):
         use_batch_norm_encoder = self.use_batch_norm in ("encoder", "both")
         use_layer_norm_encoder = self.use_layer_norm in ("encoder", "both")
+        use_batch_norm_decoder = self.use_batch_norm in ("decoder", "both")
+        use_layer_norm_decoder = self.use_layer_norm in ("decoder", "both")
 
         self.encoder = FlaxEncoder(
             n_latent=self.n_latent,
@@ -44,6 +46,8 @@ class JaxSCGENVAE(JaxBaseModuleClass):
             n_output=self.n_input,
             n_layers=self.n_layers,
             n_hidden=self.n_hidden,
+            use_batch_norm=use_batch_norm_decoder,
+            use_layer_norm=use_layer_norm_decoder,
             activation_fn=nn.activation.leaky_relu,
             dropout_rate=self.dropout_rate,
             training=self.training,
@@ -128,4 +132,4 @@ class JaxSCGENVAE(JaxBaseModuleClass):
         return px
 
     def get_reconstruction_loss(self, x, px):
-        return jnp.sum((x - px) ** 2)
+        return jnp.sum((x - px) ** 2, axis=-1)

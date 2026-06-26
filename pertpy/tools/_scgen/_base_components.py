@@ -20,7 +20,7 @@ class FlaxEncoder(nn.Module):
     activation_fn: jaxlib.xla_extension.CompiledFunction = nn.activation.leaky_relu  # type: ignore
     training: bool | None = None
     var_activation: jaxlib.xla_extension.CompiledFunction = jnp.exp  # type: ignore
-    # var_eps: float=1e-4,
+    var_eps: float = 1e-4
 
     @nn.compact
     def __call__(self, x: jnp.ndarray, training: bool | None = None) -> tuple[float, float]:
@@ -50,7 +50,7 @@ class FlaxEncoder(nn.Module):
         mean_x = nn.Dense(self.n_latent)(x)
         logvar_x = nn.Dense(self.n_latent)(x)
 
-        return mean_x, self.var_activation(logvar_x)
+        return mean_x, self.var_activation(logvar_x) + self.var_eps
 
 
 class FlaxDecoder(nn.Module):

@@ -8,9 +8,14 @@ except Exception:  # noqa: BLE001
 import warnings
 
 import anndata as ad
+import jax
+import jax.numpy as jnp
 import scanpy as sc
+from scvi import REGISTRY_KEYS
 
 import pertpy as pt
+from pertpy.tools._scgen._base_components import FlaxEncoder
+from pertpy.tools._scgen._scgenvae import JaxSCGENVAE
 
 
 def test_scgen():
@@ -64,3 +69,30 @@ def test_scgen():
         show=False,
         legend=False,
     )
+
+
+def test_scgen_reconstruction_loss_is_per_cell():
+    """The reconstruction loss must be summed per cell, matching PyTorch scGen, not over the whole minibatch."""
+    module = JaxSCGENVAE(n_input=5)
+    reconstruction_loss = module.get_reconstruction_loss(jnp.zeros((4, 5)), jnp.ones((4, 5)))
+    assert reconstruction_loss.shape == (4,)
+    assert jnp.allclose(reconstruction_loss, 5.0)
+
+
+def test_scgen_decoder_uses_batch_norm():
+    """With ``use_batch_norm="both"`` the decoder must use batch norm, matching PyTorch scGen."""
+    module = JaxSCGENVAE(n_input=6, n_hidden=8, n_latent=3, n_layers=2)
+    rngs = {name: jax.random.PRNGKey(i) for i, name in enumerate(module.required_rngs)}
+    variables = module.init(rngs, {REGISTRY_KEYS.X_KEY: jnp.ones((4, 6))})
+    decoder_params = variables["params"]["decoder"]
+    assert any(key.startswith("BatchNorm") for key in decoder_params)
+
+
+def test_scgen_encoder_applies_var_eps():
+    """The encoder must add ``var_eps`` to the latent variance, matching PyTorch scGen."""
+    encoder = FlaxEncoder(n_latent=3, n_hidden=8, n_layers=1, dropout_rate=0.0, use_batch_norm=False, training=False)
+    x = jnp.ones((2, 4))
+    variables = encoder.init({"params": jax.random.PRNGKey(0)}, x)
+    _, var = encoder.apply(variables, x)
+    _, var_without_eps = encoder.clone(var_eps=0.0).apply(variables, x)
+    assert jnp.allclose(var - var_without_eps, 1e-4)
