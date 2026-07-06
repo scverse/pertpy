@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import flax.linen as nn
 import jax
@@ -17,7 +17,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 
-from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace
+from pertpy.tools._perturbation_space._perturbation_space import (
+    PerturbationSpace,
+    _carry_constant_obs,
+    _sklearn_random_state,
+)
+
+if TYPE_CHECKING:
+    from pertpy._types import RandomStateLike
 
 
 class LRClassifierSpace(PerturbationSpace):
@@ -30,25 +37,27 @@ class LRClassifierSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
-        target_col: str = "perturbations",
-        layer_key: str = None,
-        embedding_key: str = None,
+        target_col: str = "perturbation",
+        layer_key: str | None = None,
+        embedding_key: str | None = None,
         test_split_size: float = 0.2,
         max_iter: int = 1000,
-    ):
+        random_state: RandomStateLike = 0,
+    ) -> AnnData:
         """Fits a logistic regression model to the data and takes the coefficients of the logistic regression model as perturbation embedding.
 
         Args:
             adata: AnnData object of size cells x genes
-            target_col: .obs column that stores the perturbations.
+            target_col: `.obs` column that stores the label of the perturbation applied to each cell.
             layer_key: Layer in adata to use.
             embedding_key: Key of the embedding in obsm to be used as data for the logistic regression classifier.
                 Can only be specified if layer_key is None.
             test_split_size: Fraction of data to put in the test set.
             max_iter: Maximum number of iterations taken for the solvers to converge.
+            random_state: Random seed for the train/test split and the classifier.
 
         Returns:
-            AnnData object with the logistic regression coefficients as the embedding in X and the perturbations as .obs['perturbations'].
+            AnnData object with one observation per perturbation, the logistic regression coefficients in `.X` and the perturbation labels in `.obs[target_col]`.
 
         Examples:
             >>> import pertpy as pt
@@ -76,35 +85,28 @@ class LRClassifierSpace(PerturbationSpace):
             regression_data = adata.X
 
         regression_labels = adata.obs[target_col]
+        random_state = _sklearn_random_state(random_state)
+        regression_model = LogisticRegression(max_iter=max_iter, class_weight="balanced", random_state=random_state)
 
-        adata_obs = adata.obs.reset_index(drop=True)
-        adata_obs = adata_obs.groupby(target_col).agg(
-            lambda pert_group: np.nan if len(set(pert_group)) != 1 else list(set(pert_group))[0]
-        )
-
-        regression_model = LogisticRegression(max_iter=max_iter, class_weight="balanced")
-        regression_embeddings = {}
-        regression_scores = {}
-
-        for perturbation in regression_labels.unique():
+        perturbations = list(regression_labels.unique())
+        embeddings = []
+        scores = []
+        for perturbation in perturbations:
             labels = np.where(regression_labels == perturbation, 1, 0)
             X_train, X_test, y_train, y_test = train_test_split(
-                regression_data, labels, test_size=test_split_size, stratify=labels
+                regression_data, labels, test_size=test_split_size, stratify=labels, random_state=random_state
             )
-
             regression_model.fit(X_train, y_train)
-            regression_embeddings[perturbation] = regression_model.coef_
-            regression_scores[perturbation] = regression_model.score(X_test, y_test)
+            embeddings.append(regression_model.coef_)
+            scores.append(regression_model.score(X_test, y_test))
 
-        pert_adata = AnnData(X=np.array(list(regression_embeddings.values())).squeeze())
-        pert_adata.obs["perturbations"] = list(regression_embeddings.keys())
-        pert_adata.obs["classifier_score"] = list(regression_scores.values())
+        pert_adata = AnnData(X=np.concatenate(embeddings, axis=0))
+        pert_adata.obs_names = [str(perturbation) for perturbation in perturbations]
+        pert_adata.obs[target_col] = pd.Categorical(perturbations)
+        pert_adata.obs["classifier_score"] = scores
 
-        for obs_name in adata_obs.columns:
-            if not adata_obs[obs_name].isnull().values.any():
-                pert_adata.obs[obs_name] = pert_adata.obs["perturbations"].map(
-                    {pert: adata_obs.loc[pert][obs_name] for pert in adata_obs.index}
-                )
+        _carry_constant_obs(pert_adata, adata.obs, target_col)
+        pert_adata.obs[target_col] = pert_adata.obs[target_col].astype("category")
 
         return pert_adata
 
@@ -219,9 +221,9 @@ class JAXDataset:
     def __init__(
         self,
         adata: AnnData,
-        target_col: str = "perturbations",
-        label_col: str = "perturbations",
-        layer_key: str = None,
+        target_col: str = "perturbation",
+        label_col: str = "perturbation",
+        layer_key: str | None = None,
     ):
         """JAX Dataset for perturbation classification.
 
@@ -231,10 +233,7 @@ class JAXDataset:
             label_col: key with the perturbation labels.
             layer_key: key of the layer to be used as data, otherwise .X.
         """
-        if layer_key:
-            self.data = adata.layers[layer_key]
-        else:
-            self.data = adata.X
+        self.data = adata.layers[layer_key] if layer_key else adata.X
 
         if target_col in adata.obs.columns:
             self.labels = adata.obs[target_col].values
@@ -245,10 +244,12 @@ class JAXDataset:
 
         self.pert_labels = adata.obs[label_col].values
 
-        if scipy.sparse.issparse(self.data):
-            self.data = to_dense(self.data)
-
-        self.data = jnp.array(self.data, dtype=jnp.float32)
+        # Keep sparse data sparse and densify only the requested batch to avoid materializing the full dense matrix.
+        self.is_sparse = scipy.sparse.issparse(self.data)
+        if self.is_sparse:
+            self.data = self.data.tocsr()
+        else:
+            self.data = jnp.array(np.asarray(self.data), dtype=jnp.float32)
         self.labels = jnp.array(self.labels, dtype=jnp.float32)
 
     def __len__(self):
@@ -256,9 +257,13 @@ class JAXDataset:
 
     def get_batch(self, indices: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, list]:
         """Returns a batch of samples and corresponding perturbations applied (labels)."""
-        batch_data = self.data[indices]
-        batch_labels = self.labels[indices]
-        batch_pert_labels = [self.pert_labels[i] for i in indices]
+        idx = np.asarray(indices)
+        if self.is_sparse:
+            batch_data = jnp.array(to_dense(self.data[idx]), dtype=jnp.float32)
+        else:
+            batch_data = self.data[jnp.asarray(idx)]
+        batch_labels = self.labels[jnp.asarray(idx)]
+        batch_pert_labels = [self.pert_labels[i] for i in idx]
         return batch_data, batch_labels, batch_pert_labels
 
 
@@ -290,9 +295,10 @@ class MLPClassifierSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
-        target_col: str = "perturbations",
-        layer_key: str = None,
-        hidden_dim: list[int] = None,
+        target_col: str = "perturbation",
+        layer_key: str | None = None,
+        embedding_key: str | None = None,
+        hidden_dim: list[int] | None = None,
         dropout: float = 0.0,
         batch_norm: bool = True,
         batch_size: int = 128,
@@ -304,19 +310,19 @@ class MLPClassifierSpace(PerturbationSpace):
         lr: float = 1e-4,
         seed: int = 42,
     ) -> AnnData:
-        """Creates cell embeddings by training a MLP classifier model to distinguish between perturbations.
+        """Creates a perturbation embedding by training a MLP classifier model to distinguish between perturbations.
 
         A model is created using the specified parameters (hidden_dim, dropout, batch_norm). Further parameters such as
         the number of classes to predict (number of perturbations) are obtained from the provided AnnData object directly.
         Dataloaders that take into account class imbalances are created. Next, the model is trained and tested, using the
-        GPU if available. The embeddings are obtained by passing the data through the model and extracting the values in
-        the last layer of the MLP. You will get one embedding per cell, so be aware that you might need to apply another
-        perturbation space to aggregate the embeddings per perturbation.
+        GPU if available. The penultimate-layer activations are extracted for every cell and averaged per perturbation,
+        yielding one embedding per perturbation.
 
         Args:
             adata: AnnData object of size cells x genes
-            target_col: .obs column that stores the perturbations.
+            target_col: `.obs` column that stores the label of the perturbation applied to each cell.
             layer_key: Layer in adata to use.
+            embedding_key: `.obsm` embedding to train the classifier on. Mutually exclusive with layer_key.
             hidden_dim: List of number of neurons in each hidden layers of the neural network.
                 For instance, [512, 256] will create a neural network with two hidden layers, the first with 512 neurons and the second with 256 neurons.
             dropout: Amount of dropout applied, constant for all layers.
@@ -334,17 +340,22 @@ class MLPClassifierSpace(PerturbationSpace):
             seed: Random seed for reproducibility.
 
         Returns:
-            AnnData whose `X` attribute is the perturbation embedding and whose .obs['perturbations'] are the names of the perturbations.
-            The AnnData will have shape (n_cells, n_features) where n_features is the number of features in the last layer of the MLP.
+            AnnData with one observation per perturbation, the averaged penultimate-layer embedding in `.X` and the perturbation labels in `.obs[target_col]`.
 
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.norman_2019()
             >>> dcs = pt.tl.MLPClassifierSpace()
-            >>> cell_embeddings = dcs.compute(adata, target_col="perturbation_name")
+            >>> pert_embeddings = dcs.compute(adata, target_col="perturbation_name")
         """
         if layer_key is not None and layer_key not in adata.layers:
             raise ValueError(f"Layer key {layer_key} not found in adata.")
+
+        if embedding_key is not None and embedding_key not in adata.obsm:
+            raise ValueError(f"Embedding key {embedding_key} not found in adata.obsm.")
+
+        if layer_key is not None and embedding_key is not None:
+            raise ValueError("Cannot specify both layer_key and embedding_key.")
 
         if target_col not in adata.obs:
             raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
@@ -352,20 +363,30 @@ class MLPClassifierSpace(PerturbationSpace):
         if hidden_dim is None:
             hidden_dim = [512]
 
+        if embedding_key is not None:
+            work = AnnData(X=adata.obsm[embedding_key])
+            work.obs_names = adata.obs_names
+            work.obs = adata.obs.copy()
+            adata = work
+            layer_key = None
+        else:
+            adata = adata.copy()
+
         # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
         labels = to_dense(adata.obs[target_col]).reshape(-1, 1)
         encoder = OneHotEncoder()
         encoded_labels = encoder.fit_transform(labels).toarray()
-        adata = adata.copy()
         adata.obsm["encoded_perturbations"] = encoded_labels.astype(np.float32)
 
         X = list(range(adata.n_obs))
         y = adata.obs[target_col]
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split_size, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_split_size, stratify=y, random_state=seed
+        )
         X_train, X_val, y_train, y_val = train_test_split(
-            X_train, y_train, test_size=validation_split_size, stratify=y_train
+            X_train, y_train, test_size=validation_split_size, stratify=y_train, random_state=seed
         )
 
         train_dataset = JAXDataset(
@@ -453,22 +474,18 @@ class MLPClassifierSpace(PerturbationSpace):
             embeddings_list.append(batch_embeddings)
             labels_list.extend(batch_pert_labels)
 
-        all_embeddings = jnp.concatenate(embeddings_list, axis=0)
+        all_embeddings = np.asarray(jnp.concatenate(embeddings_list, axis=0))
 
-        pert_adata = AnnData(X=np.array(all_embeddings))
-        pert_adata.obs["perturbations"] = labels_list
+        # Average the per-cell embeddings within each perturbation to obtain one embedding per perturbation.
+        cell_embeddings = pd.DataFrame(all_embeddings)
+        cell_embeddings[target_col] = [str(label) for label in labels_list]
+        aggregated = cell_embeddings.groupby(target_col, observed=True).mean()
 
-        adata_obs = adata.obs.reset_index(drop=True)
-        if "perturbations" in adata_obs.columns:
-            adata_obs = adata_obs.drop("perturbations", axis=1)
+        pert_adata = AnnData(X=aggregated.to_numpy(dtype=np.float32))
+        pert_adata.obs_names = aggregated.index.astype(str)
+        pert_adata.obs[target_col] = pd.Categorical(aggregated.index.astype(str))
 
-        obs_subset = adata_obs.iloc[: len(pert_adata.obs)].copy()
-        cols_to_add = [col for col in obs_subset.columns if col not in ["perturbations", "encoded_perturbations"]]
-        new_cols_data = {col: obs_subset[col].values for col in cols_to_add}
-
-        if new_cols_data:
-            pert_adata.obs = pd.concat(
-                [pert_adata.obs, pd.DataFrame(new_cols_data, index=pert_adata.obs.index)], axis=1
-            )
+        _carry_constant_obs(pert_adata, adata.obs, target_col)
+        pert_adata.obs[target_col] = pert_adata.obs[target_col].astype("category")
 
         return pert_adata

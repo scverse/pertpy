@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,16 @@ from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+    from pertpy._types import RandomStateLike
+    from pertpy.tools._distances._distances import Metric
+
+
+def _sklearn_random_state(random_state: RandomStateLike) -> int | np.random.RandomState | None:
+    """Normalize a random state to something scikit-learn accepts (an int, a ``RandomState`` or ``None``)."""
+    if isinstance(random_state, np.random.Generator):
+        return int(random_state.integers(np.iinfo(np.int32).max))
+    return random_state
 
 
 def _resolve_matrix(adata: AnnData, *, layer_key: str | None, embedding_key: str | None) -> np.ndarray:
@@ -30,6 +41,40 @@ def _resolve_matrix(adata: AnnData, *, layer_key: str | None, embedding_key: str
             raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
         return np.asarray(adata.obsm[embedding_key])
     return np.asarray(adata.X)
+
+
+def _constant_obs_per_group(obs: pd.DataFrame, target_col: str) -> pd.DataFrame:
+    """Collapse ``obs`` to one row per ``target_col`` value, keeping only columns constant within every group.
+
+    Columns that vary within any group are dropped so the result can be safely mapped back onto a perturbation-level AnnData.
+    """
+    grouped = obs.groupby(target_col, observed=True).agg(
+        lambda values: next(iter(set(values))) if len(set(values)) == 1 else np.nan
+    )
+    return grouped.loc[:, ~grouped.isna().any()]
+
+
+def _carry_constant_obs(ps_adata: AnnData, source_obs: pd.DataFrame, target_col: str) -> None:
+    """Copy every ``source_obs`` column that is constant within each ``target_col`` group onto ``ps_adata``."""
+    extra = _constant_obs_per_group(source_obs, target_col)
+    for col in extra.columns:
+        if col == target_col:
+            continue
+        ps_adata.obs[col] = ps_adata.obs[target_col].map(extra[col].to_dict())
+
+
+def _vector_distance(u: np.ndarray, v: np.ndarray, metric: str) -> float:
+    """Distance between two 1D perturbation vectors."""
+    if metric == "euclidean":
+        return float(np.linalg.norm(u - v))
+    if metric == "cosine":
+        denom = float(np.linalg.norm(u) * np.linalg.norm(v))
+        return 1.0 - float(np.dot(u, v)) / denom if denom else float("nan")
+    if metric == "pearson":
+        if u.std() == 0 or v.std() == 0:
+            return float("nan")
+        return 1.0 - float(np.corrcoef(u, v)[0, 1])
+    raise ValueError(f"Unknown metric {metric!r}. Choose from 'euclidean', 'cosine', 'pearson'.")
 
 
 def _subtract_control_mean(
@@ -69,16 +114,16 @@ class PerturbationSpace:
     def __init__(self):
         self.control_diff_computed = False
 
-    def compute_control_diff(  # type: ignore
+    def compute_control_diff(
         self,
         adata: AnnData,
         *,
         target_col: str = "perturbation",
-        group_col: str = None,
+        group_col: str | None = None,
         reference_key: str = "control",
-        layer_key: str = None,
+        layer_key: str | None = None,
         new_layer_key: str = "control_diff",
-        embedding_key: str = None,
+        embedding_key: str | None = None,
         new_embedding_key: str = "control_diff",
         all_data: bool = False,
         copy: bool = True,
@@ -401,3 +446,248 @@ class PerturbationSpace:
         uncertainty = np.zeros(adata.n_obs)
         uncertainty[target_cells] = entropy(weighted_label_occurence.drop(target_val, axis=1)[target_cells], axis=1)
         adata.obs[column_uncertainty_score_key] = uncertainty
+
+    def nearest_perturbations(
+        self,
+        adata: AnnData,
+        perturbation: str,
+        *,
+        target_col: str = "perturbation",
+        n_neighbors: int = 10,
+        layer_key: str | None = None,
+        embedding_key: str | None = None,
+        metric: str = "euclidean",
+    ) -> pd.DataFrame:
+        """Rank perturbations by their proximity to a query perturbation in a perturbation space.
+
+        Operates on a perturbation-level AnnData (one observation per perturbation), i.e. the output of any ``compute``.
+        Useful for discovering perturbations with a similar mechanism of action.
+        If ``adata.obsp["distances"]`` is present (as produced by :class:`~pertpy.tools.DistanceSpace`) and no representation is requested explicitly, those precomputed distances are used directly.
+
+        Args:
+            adata: Perturbation-level AnnData indexed by perturbation.
+            perturbation: The query perturbation to find neighbors for.
+            target_col: `.obs` column identifying each perturbation.
+            n_neighbors: Number of nearest perturbations to return.
+            layer_key: Layer to compute distances from.
+            embedding_key: `.obsm` embedding to compute distances from.
+            metric: Distance metric passed to :func:`sklearn.metrics.pairwise_distances`.
+
+        Returns:
+            DataFrame indexed by perturbation with a ``distance`` column, sorted ascending and excluding the query.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.norman_2019()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> ps_adata = ps.compute(adata, target_col="perturbation_name")
+            >>> neighbors = ps.nearest_perturbations(ps_adata, "CBL+CNN1", target_col="perturbation_name")
+        """
+        names = (
+            adata.obs[target_col].astype(str).to_numpy()
+            if target_col in adata.obs
+            else adata.obs_names.to_numpy().astype(str)
+        )
+        matches = np.flatnonzero(names == str(perturbation))
+        if matches.size == 0:
+            raise ValueError(f"Perturbation {perturbation!r} not found in adata.obs[{target_col!r}].")
+        query_idx = int(matches[0])
+
+        if layer_key is None and embedding_key is None and "distances" in adata.obsp:
+            distances = np.asarray(adata.obsp["distances"])[query_idx]
+        else:
+            from sklearn.metrics import pairwise_distances
+
+            coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
+            distances = pairwise_distances(coords[[query_idx]], coords, metric=metric)[0]
+
+        keep = np.arange(len(names)) != query_idx
+        result = pd.DataFrame({"distance": distances[keep]}, index=names[keep])
+        return result.sort_values("distance").head(n_neighbors)
+
+    def evaluate_combinations(
+        self,
+        adata: AnnData,
+        *,
+        combinations: Iterable[str] | None = None,
+        target_col: str = "perturbation",
+        reference_key: str = "control",
+        metric: Literal["pearson", "cosine", "euclidean"] = "pearson",
+        sep: str = "+",
+    ) -> pd.DataFrame:
+        """Score how well an additive model predicts combination perturbations.
+
+        For every combination ``"A+B"`` whose components ``A`` and ``B`` are each present as single perturbations, the additive prediction ``effect(A) + effect(B)`` is compared against the measured combination effect, where effects are taken relative to ``reference_key``.
+        A small distance indicates additive, non-interacting perturbations, whereas a large deviation flags a genetic or pharmacological interaction.
+
+        Args:
+            adata: Perturbation-level AnnData indexed by perturbation (one observation per perturbation).
+            combinations: Combination names to evaluate. If None, every ``obs_name`` containing ``sep`` whose components are all present as singles is used.
+            target_col: `.obs` column identifying each perturbation.
+            reference_key: Control perturbation subtracted to obtain effects. If absent, values are used as-is.
+            metric: Distance between predicted and measured combination effects.
+            sep: Separator between components in combination names.
+
+        Returns:
+            DataFrame indexed by combination with ``distance``, ``predicted_magnitude`` and ``measured_magnitude`` columns, sorted by ascending distance.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.norman_2019()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> ps_adata = ps.compute(adata, target_col="perturbation_name")
+            >>> scores = ps.evaluate_combinations(ps_adata, target_col="perturbation_name", reference_key="control")
+        """
+        names = adata.obs_names.astype(str)
+        matrix = np.asarray(adata.X, dtype=float)
+        vectors = {name: matrix[i] for i, name in enumerate(names)}
+
+        effects = (
+            {name: vec - vectors[reference_key] for name, vec in vectors.items()}
+            if reference_key in vectors
+            else vectors
+        )
+
+        if combinations is None:
+            combinations = [n for n in names if sep in n and all(part in vectors for part in n.split(sep))]
+        combinations = list(combinations)
+        if not combinations:
+            raise ValueError("No evaluable combinations found; provide `combinations` explicitly or check `sep`.")
+
+        rows: dict[str, dict[str, float]] = {}
+        for combo in combinations:
+            if combo not in effects:
+                raise ValueError(f"Combination {combo!r} not found in adata.")
+            components = combo.split(sep)
+            missing = [part for part in components if part not in effects]
+            if missing:
+                raise ValueError(f"Components {missing} of {combo!r} are not present as single perturbations.")
+            predicted = np.sum([effects[part] for part in components], axis=0)
+            measured = effects[combo]
+            rows[combo] = {
+                "distance": _vector_distance(predicted, measured, metric),
+                "predicted_magnitude": float(np.linalg.norm(predicted)),
+                "measured_magnitude": float(np.linalg.norm(measured)),
+            }
+
+        return pd.DataFrame.from_dict(rows, orient="index").sort_values("distance")
+
+    def dose_response(
+        self,
+        adata: AnnData,
+        *,
+        target_col: str = "perturbation",
+        dose_col: str = "dose",
+        reference_key: str = "control",
+        metric: Metric = "edistance",
+        layer_key: str | None = None,
+        embedding_key: str | None = None,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Quantify the effect size of each perturbation as a function of dose.
+
+        For every (perturbation, dose) group the statistical distance to ``reference_key`` is computed in the chosen representation using :class:`~pertpy.tools.Distance`.
+        Operates on cell-level data, since distances are defined between groups of cells.
+
+        Args:
+            adata: Cell-level AnnData.
+            target_col: `.obs` column with the perturbation label.
+            dose_col: `.obs` column with the (numeric) dose.
+            reference_key: Control perturbation all doses are compared against.
+            metric: Distance metric passed to :class:`~pertpy.tools.Distance`.
+            layer_key: Layer to compute distances from.
+            embedding_key: `.obsm` embedding to compute distances from.
+            kwargs: Passed to :meth:`~pertpy.tools.Distance.onesided_distances`.
+
+        Returns:
+            Tidy DataFrame with ``perturbation``, ``dose`` and ``distance`` columns, sorted by perturbation then dose.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.srivatsan_2020_sciplex2()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> curves = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
+        """
+        for col in (target_col, dose_col):
+            if col not in adata.obs:
+                raise ValueError(f"Column {col!r} does not exist in the .obs attribute.")
+        from pertpy.tools._distances._distances import Distance
+
+        sep = "\x1f"
+        is_control = (adata.obs[target_col] == reference_key).to_numpy()
+        group = adata.obs[target_col].astype(str).str.cat(adata.obs[dose_col].astype(str), sep=sep)
+        group = group.mask(is_control, reference_key)
+        grouped = adata.copy()
+        grouped.obs["_dose_group"] = pd.Categorical(group)
+
+        distance = Distance(metric=metric, layer_key=layer_key, obsm_key=embedding_key)
+        dists = distance.onesided_distances(
+            grouped, groupby="_dose_group", selected_group=reference_key, show_progressbar=False, **kwargs
+        )
+        if isinstance(dists, tuple):
+            dists = dists[0]
+
+        records = []
+        for label, value in dists.items():
+            if label == reference_key:
+                continue
+            perturbation, _, dose = str(label).partition(sep)
+            records.append({"perturbation": perturbation, "dose": dose, "distance": float(value)})
+        result = pd.DataFrame.from_records(records)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with contextlib.suppress(ValueError, TypeError):
+                result["dose"] = pd.to_numeric(result["dose"])
+        return result.sort_values(["perturbation", "dose"]).reset_index(drop=True)
+
+    def plot_similarity(  # pragma: no cover
+        self,
+        adata: AnnData,
+        *,
+        target_col: str = "perturbation",
+        layer_key: str | None = None,
+        embedding_key: str | None = None,
+        metric: str = "euclidean",
+        cmap: str = "viridis",
+        **kwargs,
+    ):
+        """Plot a clustered heatmap of pairwise distances between perturbations.
+
+        Uses ``adata.obsp["distances"]`` when present (e.g. from :class:`~pertpy.tools.DistanceSpace`) and otherwise computes pairwise distances in the chosen representation.
+
+        Args:
+            adata: Perturbation-level AnnData indexed by perturbation.
+            target_col: `.obs` column identifying each perturbation.
+            layer_key: Layer to compute distances from.
+            embedding_key: `.obsm` embedding to compute distances from.
+            metric: Distance metric passed to :func:`sklearn.metrics.pairwise_distances`.
+            cmap: Matplotlib colormap.
+            kwargs: Passed to :func:`seaborn.clustermap`.
+
+        Returns:
+            The grid returned by :func:`seaborn.clustermap`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.norman_2019()
+            >>> ds = pt.tl.DistanceSpace()
+            >>> ds_adata = ds.compute(adata, target_col="perturbation_name", metric="edistance")
+            >>> ds.plot_similarity(ds_adata, target_col="perturbation_name")
+        """
+        import seaborn as sns
+
+        names = (
+            adata.obs[target_col].astype(str).to_numpy()
+            if target_col in adata.obs
+            else adata.obs_names.to_numpy().astype(str)
+        )
+        if layer_key is None and embedding_key is None and "distances" in adata.obsp:
+            distances = np.asarray(adata.obsp["distances"])
+        else:
+            from sklearn.metrics import pairwise_distances
+
+            coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
+            distances = pairwise_distances(coords, metric=metric)
+        frame = pd.DataFrame(distances, index=names, columns=names)
+
+        return sns.clustermap(frame, cmap=cmap, **kwargs)
