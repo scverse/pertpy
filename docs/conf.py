@@ -119,6 +119,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
+    "seaborn": ("https://seaborn.pydata.org/", None),
     "pyro": ("https://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),
     "flax": ("https://flax.readthedocs.io/en/latest/", None),

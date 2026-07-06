@@ -665,7 +665,7 @@ class PerturbationSpace:
             kwargs: Passed to :func:`seaborn.clustermap`.
 
         Returns:
-            The :class:`seaborn.matrix.ClusterGrid` instance.
+            The grid returned by :func:`seaborn.clustermap`.
 
         Examples:
             >>> import pertpy as pt
