@@ -18,7 +18,9 @@ from pertpy.tools._perturbation_space._discriminator_classifiers import (
 )
 from pertpy.tools._perturbation_space._simple import (
     CentroidSpace,
-    DBSCANSpace,
+    DistanceSpace,
+    EmbeddingSpace,
+    HDBSCANSpace,
     KMeansSpace,
     PseudobulkSpace,
 )
@@ -77,7 +79,9 @@ __all__ = [
     "LRClassifierSpace",
     "MLPClassifierSpace",
     "CentroidSpace",
-    "DBSCANSpace",
+    "DistanceSpace",
+    "EmbeddingSpace",
+    "HDBSCANSpace",
     "KMeansSpace",
     "PseudobulkSpace",
     "Scgen",

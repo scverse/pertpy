@@ -451,20 +451,25 @@ See [CINEMA-OT tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteb
 
 ## Perturbation space
 
-Perturbation spaces depart from the individualistic perspective of cells and instead organizes cells into cohesive ensembles.
-This specialized space enables comprehending the collective impact of perturbations on cells.
-Pertpy offers various modules for calculating and evaluating perturbation spaces that are either based on summary statistics or clusters.
+Perturbation spaces depart from the individualistic perspective of cells and instead organize cells into cohesive ensembles.
+Every space summarizes all cells of a perturbation into a single representation, yielding an AnnData with one observation per perturbation that can be clustered, compared and combined.
+Pertpy offers summary-statistic spaces (pseudobulk, centroid), a distance-based space, discriminative spaces, a space for external per-perturbation embeddings, and clustering spaces.
+The shared base class additionally provides operations on the resulting spaces such as control differencing, linear combination, nearest-perturbation queries, additive combination scoring and dose-response quantification.
 
 ```{eval-rst}
 .. autosummary::
     :toctree: tools
 
-    tools.MLPClassifierSpace
-    tools.LRClassifierSpace
-    tools.CentroidSpace
-    tools.DBSCANSpace
-    tools.KMeansSpace
     tools.PseudobulkSpace
+    tools.CentroidSpace
+    tools.DistanceSpace
+    tools.EmbeddingSpace
+    tools.LRClassifierSpace
+    tools.MLPClassifierSpace
+    tools.KMeansSpace
+    tools.HDBSCANSpace
+    tools.ClusteringSpace
+    tools.PerturbationComparison
 ```
 
 Example implementation:
@@ -473,13 +478,15 @@ Example implementation:
 import pertpy as pt
 
 mdata = pt.dt.papalexi_2021()
+
+# Summarize each perturbation into one observation
 ps = pt.tl.PseudobulkSpace()
-ps_adata = ps.compute(
-    mdata["rna"],
-    target_col="gene_target",
-    groups_col="gene_target",
-    mode="mean",
-)
+ps_adata = ps.compute(mdata["rna"], target_col="gene_target", mode="mean")
+
+# Represent each perturbation by its distance to all others and find similar perturbations
+ds = pt.tl.DistanceSpace()
+ds_adata = ds.compute(mdata["rna"], target_col="gene_target", metric="edistance", embedding_key="X_pca")
+similar = ds.nearest_perturbations(ds_adata, "IFNGR2", target_col="gene_target")
 ```
 
 See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html).
