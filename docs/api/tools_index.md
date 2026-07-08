@@ -159,6 +159,11 @@ mdata["rna"].obs["Status"] = (
     mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
 )
 milo.da_nhoods(mdata, design="~Status")
+
+# Group differentially abundant neighbourhoods and find their marker genes
+milo.build_nhood_graph(mdata)
+milo.group_nhoods(mdata)
+milo.annotate_cells_from_nhoods(mdata)
 ```
 
 See [milo tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milo.html).
