@@ -443,12 +443,11 @@ def test_add_nhood_expression_nhood_mean_range(add_nhood_expression_mdata, milo)
 
 
 @pytest.fixture
-def grouped_mdata(de_nhoods_mdata, milo):
+def grouped_mdata(de_nhoods_mdata, milo, rng):
     """Milo object with a neighbourhood graph, synthetic DA results, groups and per-cell annotations."""
     pytest.importorskip("igraph")
     mdata = de_nhoods_mdata.copy()
     milo.build_nhood_graph(mdata)
-    rng = np.random.default_rng(0)
     n = mdata["milo"].n_vars
     n_da = max(2, n // 4)
     mdata["milo"].var["logFC"] = rng.normal(0.0, 2.0, size=n)
@@ -510,10 +509,9 @@ def test_annotate_cells_from_nhoods(grouped_mdata):
 
 
 @pytest.fixture
-def markers_mdata(de_nhoods_mdata):
+def markers_mdata(de_nhoods_mdata, rng):
     """Milo object with raw counts and cell-level neighbourhood groups for marker testing."""
     mdata = de_nhoods_mdata.copy()
-    rng = np.random.default_rng(0)
     mdata["rna"].obs["nhood_groups"] = pd.Categorical(rng.choice(["g0", "g1"], size=mdata["rna"].n_obs))
     return mdata
 
