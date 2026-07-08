@@ -3,5 +3,5 @@ import pytest
 
 
 @pytest.fixture
-def rng():
+def rng() -> np.random.Generator:
     return np.random.default_rng()

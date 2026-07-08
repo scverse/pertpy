@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
-import pertpy as pt
 import pytest
 import scanpy as sc
 from anndata import AnnData
+
+import pertpy as pt
 
 
 @pytest.fixture
@@ -45,7 +46,7 @@ def adata_simple(rng):
 
 def test_differential_response(adata_simple):
     ps = pt.tl.PseudobulkSpace()
-    ps_adata = ps.compute_control_diff(adata_simple, target_col="perturbation", copy=True)
+    ps_adata = ps.compute_control_diff(adata_simple, target_col="perturbation")
 
     expected_diff_matrix = adata_simple.X - adata_simple.X[0, :]
     np.testing.assert_allclose(ps_adata.X, expected_diff_matrix, rtol=1e-4)
@@ -59,7 +60,6 @@ def test_differential_response(adata_simple):
             new_layer_key="counts_diff",
             embedding_key="X_pca",
             new_embedding_key="pca_diff",
-            copy=True,
         )
 
 
@@ -91,6 +91,44 @@ def test_pseudobulk_response(adata_simple):
             target_col="perturbation",
             embedding_key="not_found",
         )
+
+
+def test_pseudobulk_preserves_extra_obs_with_and_without_groups_col(rng):
+    """Regression test for https://github.com/scverse/pertpy/issues/1003.
+
+    When `groups_col` is provided, the pseudobulk output's obs index is joined (e.g. "P0_C0"),
+    so reindexing extra obs columns must use the grouping columns as keys, not the joined index.
+    Otherwise every extra column ends up all-NaN and downstream tools (e.g. PyDESeq2) fail.
+    """
+    patients = [f"P{i}" for i in range(4)]
+    clusters = [f"C{i}" for i in range(2)]
+    efficacy_per_patient = {"P0": "SD", "P1": "PR", "P2": "PD", "P3": "SD"}
+    n_cells = 200
+    patient_choice = rng.choice(patients, size=n_cells)
+    cluster_choice = rng.choice(clusters, size=n_cells)
+    obs = pd.DataFrame(
+        {
+            "Patient": pd.Categorical(patient_choice, categories=patients),
+            "Cluster": pd.Categorical(cluster_choice, categories=clusters),
+            "Efficacy": pd.Categorical(
+                [efficacy_per_patient[p] for p in patient_choice], categories=["SD", "PR", "PD"]
+            ),
+        }
+    )
+    X = rng.poisson(5, size=(n_cells, 10)).astype(float)
+    adata = AnnData(X=X, obs=obs)
+
+    ps = pt.tl.PseudobulkSpace()
+    pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", mode="sum")
+    pdata2 = ps.compute(adata, target_col="Patient", mode="sum")
+
+    assert pdata.obs["Efficacy"].isna().sum() == 0
+    for row in pdata.obs.itertuples():
+        assert row.Efficacy == efficacy_per_patient[row.Patient]
+
+    assert pdata2.obs["Efficacy"].isna().sum() == 0
+    for row in pdata2.obs.itertuples():
+        assert row.Efficacy == efficacy_per_patient[row.Patient]
 
 
 def test_centroid_umap_response():
@@ -179,7 +217,7 @@ def test_linear_operations():
     psadata_umap = ps.compute(adata, mode="mean", embedding_key="X_umap")
     psadata.obsm["X_umap"] = psadata_umap.X
 
-    ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"], ensure_consistency=True)
+    ps_adata, data_compare = ps.add(psadata, perturbations=["target1", "target2"])
 
     test = data_compare["control"].X + data_compare["target1"].X + data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1+target2"].X, rtol=1e-4)
@@ -191,27 +229,26 @@ def test_linear_operations():
     )
     np.testing.assert_allclose(test, ps_adata["target1+target2"].obsm["X_umap"], rtol=1e-4)
 
-    ps_adata, data_compare = ps.subtract(
-        psadata, reference_key="target1", perturbations=["target2"], ensure_consistency=True
-    )
+    ps_adata, data_compare = ps.subtract(psadata, reference_key="target1", perturbations=["target2"])
 
     test = data_compare["target1"].X - data_compare["target2"].X
     np.testing.assert_allclose(test, ps_adata["target1-target2"].X, rtol=1e-4)
 
-    ps_adata = ps.compute_control_diff(psadata, copy=True)
+    # Input that has already been differenced — opt out of the auto-diff with ensure_consistency=False.
+    ps_adata = ps.compute_control_diff(psadata)
 
-    ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"])
+    with pytest.warns(UserWarning, match="Combining perturbations without"):
+        ps_adata2 = ps.add(ps_adata, perturbations=["target1", "target2"], ensure_consistency=False)
 
     test = ps_adata["control"].X + ps_adata["target1"].X + ps_adata["target2"].X
     np.testing.assert_allclose(test, ps_adata2["target1+target2"].X, rtol=1e-4)
 
-    ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"])
+    with pytest.warns(UserWarning, match="Combining perturbations without"):
+        ps_adata2 = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=False)
     ps_vector = ps_adata2["target1-target1"].X
     np.testing.assert_allclose(ps_adata2["control"].X, ps_adata2["target1-target1"].X, rtol=1e-4)
 
-    ps_adata2, data_compare = ps.subtract(
-        ps_adata, reference_key="target1", perturbations=["target1"], ensure_consistency=True
-    )
+    ps_adata2, data_compare = ps.subtract(ps_adata, reference_key="target1", perturbations=["target1"])
     ps_inner_vector = ps_adata2["target1-target1"].X
 
     np.testing.assert_allclose(ps_inner_vector, ps_vector, rtol=1e-4)
@@ -219,12 +256,6 @@ def test_linear_operations():
     np.testing.assert_allclose(
         data_compare["control"].obsm["X_umap_control_diff"], ps_adata2["target1-target1"].obsm["X_umap"], rtol=1e-4
     )
-
-    with pytest.raises(ValueError):
-        ps.add(
-            ps_adata,
-            perturbations=["target1", "target3"],
-        )
 
     with pytest.raises(ValueError):
         ps.add(

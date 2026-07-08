@@ -4,10 +4,10 @@ requires = ["hatchling"]
 
 [project]
 name = "pertpy"
-version = "1.0.0"
+version = "1.1.1"
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.12,<3.15"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -40,36 +40,39 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
 
 dependencies = [
+    "requests",
     "rich",
     "scanpy",
     "mudata",
-    "requests",
     "scikit-misc",
-    "scvi-tools",
     "adjusttext",
     "ott-jax",
+    "numpyro",
+    "funsor",
+    "flax",
     "sparsecca",
     "openpyxl",
     "pubchempy",
     "pyarrow",
     "blitzgsea",
     "scikit-learn>=1.4",
-    "fast-array-utils",
-    "lamin_utils",
-    "arviz",
+    "fast-array-utils[accel,sparse]",
+    "arviz>=1.0.0",
+    "pooch",
+    "scverse-misc"
 ]
 
 [project.optional-dependencies]
 tcoda = [
-    "toytree",
+    "toytree>=3.0",
     "ete4",
     "pyqt6"
 ]
@@ -77,6 +80,13 @@ de = [
     "formulaic-contrasts>=0.2.0",
     "formulaic",
     "pydeseq2>=v0.5.0",
+]
+milo-edger = [
+    "rpy2"
+]
+scgen = ["scvi-tools[jax]"]
+all = [
+    "pertpy[tcoda,de,scgen]"
 ]
 dev = [
     "pre-commit",
@@ -94,12 +104,12 @@ doc = [
     "sphinx-copybutton",
     "sphinx-remove-toctrees",
     "sphinx-design",
+    "sphinx-tabs",
     "sphinx-last-updated-by-git",
     "sphinx-automodapi",
     "sphinxext-opengraph",
     "pygments",
     "nbsphinx",
-    "nbsphinx-link",
     "ipykernel",
     "ipython",
 ]
@@ -115,8 +125,23 @@ source = "vcs"
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[tool.hatch.envs.hatch-test]
+features = ["test", "tcoda", "de", "scgen"]
+overrides.matrix.deps.env-vars = [
+    { if = ["pre"], key = "UV_PRERELEASE", value = "allow" },
+]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = [ "3.12", "3.14" ]
+deps = ["stable"]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.14"]
+deps = ["pre"]
+
 [tool.coverage.run]
-source_pkgs = ["pertpy"]
+source = ["pertpy"]
+patch = [ "subprocess" ]
 omit = [
     "**/test_*.py",
 ]
@@ -131,9 +156,10 @@ markers = [
     "conda: marks a subset of tests to be ran on the Bioconda CI.",
     "extra: marks tests that require extra dependencies.",
 ]
-minversion = 6.0
+minversion = "6.0"
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 filterwarnings = [
+    "ignore::pyparsing.core.PyparsingDeprecationWarning",
     "ignore::Warning:statsmodels.*",
     "ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
     "ignore:lbfgs failed to converge",
@@ -149,7 +175,14 @@ filterwarnings = [
     "ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
     "ignore:In the future, the default backend for leiden will be igraph instead of leidenalg:FutureWarning",
     "ignore:Transforming to str index:anndata.ImplicitModificationWarning",
-    "ignore:Failed to correctly find n_neighbors for some samples:UserWarning"
+    "ignore:Failed to correctly find n_neighbors for some samples:UserWarning",
+    # pydeseq2 emits these on the small synthetic data used by the Milo and compare_groups tests; they are not actionable in pertpy.
+    "ignore:The dispersion trend curve fitting did not converge:UserWarning",
+    "ignore:As the residual degrees of freedom is less than 3:UserWarning",
+    # Third-party deprecation and runtime notices that pertpy cannot resolve at the source.
+    "ignore:JAXopt is no longer maintained:DeprecationWarning",
+    "ignore:A worker stopped while some jobs were given to the executor:UserWarning",
+    "ignore:Data has categories outside of the nominated levels"
 ]
 
 [tool.hatch.envs.default]
@@ -157,13 +190,10 @@ installer = "uv"
 features = [ "dev" ]
 
 [tool.hatch.envs.docs]
-features = [ "doc" ]
+features = [ "doc", "all" ]
 scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
 scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 scripts.clean = "git clean -fdX -- {args:docs}"
-
-[tool.hatch.envs.hatch-test]
-features = [ "test" ]
 
 [tool.ruff]
 src = ["src"]
@@ -185,7 +215,7 @@ select = [
     "BLE",    # flake8-blind-except
     "UP",     # pyupgrade
     "RUF100", # Report unused noqa directives
-    "TCH",    # Typing imports
+    "TC",     # Typing imports
     "NPY",    # Numpy specific rules
     "PTH",    # Use pathlib
     "PERF",   # Performance
@@ -236,8 +266,13 @@ ignore = [
     # Too many statements
     "PLR0915",
     # Extracting value from dictionary without calling `.items()` - clashes with sim
-    "PLC0206"
+    "PLC0206",
+    # import should be at top of file
+    "PLC0415"
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pertpy"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -246,15 +281,6 @@ convention = "google"
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
-
-[tool.mypy]
-strict = false
-pretty = true
-show_column_numbers = true
-show_error_codes = true
-show_error_context = true
-ignore_missing_imports = true
-no_strict_optional = true
 
 [tool.cruft]
 skip = [

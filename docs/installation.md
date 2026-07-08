@@ -50,7 +50,7 @@ pip install rpy2
 milo requires either the "de" extra for the "pydeseq2" solver:
 
 ```console
-pip install 'pertpy[de]'
+pip install 'pertpy[de,milo-edger]'
 ```
 
 or, edger, statmod, and rpy2 for the "edger" solver:
@@ -58,10 +58,6 @@ or, edger, statmod, and rpy2 for the "edger" solver:
 ```R
 BiocManager::install("edgeR")
 BiocManager::install("statmod")
-```
-
-```console
-pip install rpy2
 ```
 
 #### tascCODA

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -13,7 +14,6 @@ import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import config, random
-from lamin_utils import logger
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
 from matplotlib.colors import Colormap
@@ -25,6 +25,7 @@ from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -94,6 +95,68 @@ class CompositionalModel2(ABC):
     @abstractmethod
     def set_init_mcmc_states(self, *args, **kwargs):
         pass
+
+    def _build_arviz_from_adata(
+        self,
+        sample_adata: AnnData,
+        dims: dict,
+        coords: dict,
+        rng_key: int | None,
+        num_prior_samples: int,
+        use_posterior_predictive: bool,
+    ):
+        """Build an ArviZ DataTree from MCMC samples stored on ``sample_adata``.
+
+        The samples and chain count come from ``sample_adata.uns["scCODA_params"]["mcmc"]``
+        rather than from ``self.mcmc``, so ``make_arviz`` works on stored MuData objects
+        even after the model instance has been reused for other datasets (issue #812).
+        """
+        import arviz as az
+        from numpyro.infer import Predictive
+
+        mcmc_state = sample_adata.uns.get("scCODA_params", {}).get("mcmc", {})
+        if "samples" not in mcmc_state:
+            raise ValueError("No MCMC sampling found. Please run a sampler first!")
+
+        samples = {k: np.asarray(v) for k, v in mcmc_state["samples"].items()}
+        num_chains = int(mcmc_state.get("num_chains", 1)) or 1
+
+        predict_kwargs = {
+            "counts": None,
+            "covariates": jnp.array(sample_adata.obsm["covariate_matrix"], dtype="float64"),
+            "n_total": jnp.array(sample_adata.obsm["sample_counts"], dtype="float64"),
+            "ref_index": jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
+            "sample_adata": sample_adata,
+        }
+        rng = random.key(rng_key if rng_key is not None else int(np.random.default_rng().integers(0, 10000)))
+
+        def _grouped(d: dict, chains: int, *, predictive: bool = False) -> dict:
+            out = {}
+            for k, v in d.items():
+                arr = np.asarray(v)
+                # Drop variables whose rank past the sample axis doesn't match `dims[k]`,
+                # e.g. `counts` from `Predictive` carries an extra batch axis under
+                # numpyro's DirichletMultinomial broadcasting and would otherwise
+                # collide with the cell_type coord.
+                if predictive and len(arr.shape) - 1 != len(dims.get(k, [])):
+                    continue
+                out[k] = arr.reshape((chains, -1, *arr.shape[1:]))
+            return out
+
+        groups = {"posterior": _grouped(samples, num_chains)}
+        extra_fields = mcmc_state.get("extra_fields") or {}
+        if extra_fields:
+            groups["sample_stats"] = _grouped(extra_fields, num_chains)
+        if num_prior_samples > 0:
+            groups["prior"] = _grouped(
+                Predictive(self.model, num_samples=num_prior_samples)(rng, **predict_kwargs), 1, predictive=True
+            )
+        if use_posterior_predictive:
+            groups["posterior_predictive"] = _grouped(
+                Predictive(self.model, samples)(rng, **predict_kwargs), num_chains, predictive=True
+            )
+
+        return az.from_dict(groups, coords=coords, dims=dims)
 
     def prepare(
         self,
@@ -166,6 +229,15 @@ class CompositionalModel2(ABC):
             sample_adata.X[sample_adata.X == 0] = 0.5
 
         sample_adata.obsm["sample_counts"] = np.sum(sample_adata.X, axis=1)
+
+        # Check for relative abundances
+        if np.allclose(sample_adata.obsm["sample_counts"], 1.0):
+            warnings.warn(
+                "All samples sum to ~1, suggesting relative abundances were provided. "
+                "scCODA requires absolute cell counts. Results may be meaningless.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Check input data
         if covariate_matrix.shape[0] != sample_adata.X.shape[0]:
@@ -255,6 +327,13 @@ class CompositionalModel2(ABC):
         for k, v in samples.items():
             samples[k] = np.array(v)
         sample_adata.uns["scCODA_params"]["mcmc"]["samples"] = samples
+
+        # Persist what `make_arviz` needs so it can rebuild ArviZ without `self.mcmc`
+        # (issue #812: the model instance gets reused across datasets in loops).
+        sample_adata.uns["scCODA_params"]["mcmc"]["num_chains"] = int(self.mcmc.num_chains)
+        sample_adata.uns["scCODA_params"]["mcmc"]["extra_fields"] = {
+            k.replace(".", "_"): np.asarray(v) for k, v in self.mcmc.get_extra_fields().items()
+        }
 
         # Evaluate results and create result dataframes (based on tree-aggregation or not)
         if sample_adata.uns["scCODA_params"]["model_type"] == "classic":
@@ -371,13 +450,13 @@ class CompositionalModel2(ABC):
         if copy:
             sample_adata = sample_adata.copy()
 
-        # Set rng key if needed
+        # Set rng key if needed. Keep the int seed for `set_init_mcmc_states` (which uses
+        # `np.random.default_rng(seed=...)`) and only build a JAX PRNGKey for the MCMC,
+        # mirroring `run_nuts` — see issue #883.
         if rng_key is None:
-            rng = np.random.default_rng()
-            rng_key = random.key(rng.integers(0, 10000))
-            sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = rng_key
-        else:
-            rng_key = random.key(rng_key)
+            rng_key = int(np.random.default_rng().integers(0, 10000))
+        rng_key_array = random.key_data(random.key(rng_key))
+        sample_adata.uns["scCODA_params"]["mcmc"]["rng_key"] = np.array(rng_key_array)
 
         # Set up HMC kernel
         sample_adata = self.set_init_mcmc_states(
@@ -392,7 +471,7 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["algorithm"] = "HMC"
 
         return self.__run_mcmc(
-            sample_adata, hmc_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key, copy=copy
+            sample_adata, hmc_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key_array, copy=copy
         )
 
     def summary_prepare(
@@ -426,7 +505,11 @@ class CompositionalModel2(ABC):
                 - HDI X%: Upper and lower boundaries of confidence interval (width specified via hdi_prob=)
                 - SD: Standard deviation of MCMC samples
                 - Expected sample: Expected cell counts for a sample with only the current covariate set to 1. See the tutorial for more explanation
-                - log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate
+                - log2-fold change: Log2-fold change between expected cell counts with no covariates and with only the current covariate.
+                  This is a *compositional* fold change — expected counts are re-normalized to the same total per sample before the ratio is taken.
+                  Because of that re-normalization, the sign of ``log2-fold change`` can disagree with the sign of ``Final Parameter``:
+                  a cell type with ``Final Parameter = 0`` can still have a non-zero log2-fold change driven entirely by other cell types' effects,
+                  and a cell type with a small negative ``Final Parameter`` can have a positive log2-fold change if other cell types are shifting down faster.
                 - Inclusion probability: Share of MCMC samples, for which this effect was not set to 0 by the spike-and-slab prior.
 
             node_df
@@ -462,14 +545,22 @@ class CompositionalModel2(ABC):
 
         import arviz as az
 
+        arviz_data = self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False)
+
         summ = az.summary(
-            data=self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False),
+            data=arviz_data,
             var_names=var_names,
             kind="stats",
-            stat_funcs={"median": np.median},
             *args,  # noqa: B026
             **kwargs,
-        )  # type: ignore
+        )
+        summ = summ.convert_dtypes(dtype_backend="numpy_nullable").infer_objects()
+
+        # az.summary orders rows by var_names then C-order of each variable's dims, matching values.flatten(), so align the medians positionally.
+        posterior = arviz_data["posterior"].to_dataset()
+        summ["median"] = np.concatenate(
+            [posterior[var].median(dim=["chain", "draw"]).values.flatten() for var in var_names]
+        )
 
         effect_df = summ.loc[summ.index.str.match("|".join([r"beta\["]))].copy()
         intercept_df = summ.loc[summ.index.str.match("|".join([r"alpha\["]))].copy()
@@ -511,8 +602,10 @@ class CompositionalModel2(ABC):
             )
 
         # Give nice column names, remove unnecessary columns
-        hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi")]
-        hdis_new = hdis.str.replace("hdi_", "HDI ")
+        hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi|eti")]
+        hdis_new = hdis.str.replace("hdi_", "HDI ").str.replace(
+            r"eti(\d+)_(lb|ub)", lambda m: f"ETI {m.group(1)}% {'lower' if m.group(2) == 'lb' else 'upper'}", regex=True
+        )
 
         # Calculate credible intervals if using classical spike-and-slab
         if select_type == "spikeslab":
@@ -522,16 +615,17 @@ class CompositionalModel2(ABC):
 
             b_raw_sel = np.array(sample_adata.uns["scCODA_params"]["mcmc"]["samples"]["b_raw"]) * ind_post
 
-            res = az.convert_to_inference_data(np.array([b_raw_sel]))
+            res = az.from_dict({"posterior": {"b_raw_sel": np.array([b_raw_sel])}})
 
             summary_sel = az.summary(
                 data=res,
                 kind="stats",
-                var_names=["x"],
+                var_names=["b_raw_sel"],
                 skipna=True,
                 *args,  # noqa: B026
                 **kwargs,
             )
+            summary_sel = summary_sel.convert_dtypes(dtype_backend="numpy_nullable").infer_objects()
 
             ref_index = sample_adata.uns["scCODA_params"]["reference_index"]
             n_conditions = len(covariates)
@@ -553,8 +647,8 @@ class CompositionalModel2(ABC):
                     pd.DataFrame.from_dict(data={"mean": [0], "sd": [0], hdis[0]: [0], hdis[1]: [0]}),
                 )
 
-            effect_df.loc[:, hdis[0]] = list(summary_sel[hdis[0]])
-            effect_df.loc[:, hdis[1]] = list(summary_sel.loc[:, hdis[1]])  # type: ignore
+            effect_df[hdis[0]] = summary_sel[hdis[0]].to_numpy(dtype=float, na_value=np.nan)
+            effect_df[hdis[1]] = summary_sel[hdis[1]].to_numpy(dtype=float, na_value=np.nan)
         # For spike-and-slab LASSO, credible intervals are as calculated by `az.summary`
         elif select_type == "sslasso":
             pass
@@ -716,7 +810,7 @@ class CompositionalModel2(ABC):
 
         # Get expected sample, log-fold change
         y_bar = np.mean(np.sum(sample_adata.X, axis=1))
-        alpha_par = intercept_df.loc[:, "final_parameter"]
+        alpha_par = intercept_df.loc[:, "final_parameter"].astype(float)
         alphas_exp = np.exp(alpha_par)
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
 
@@ -789,7 +883,7 @@ class CompositionalModel2(ABC):
 
         # Get expected sample
         y_bar = np.mean(np.sum(sample_adata.X, axis=1))
-        alphas_exp = np.exp(intercept_df.loc[:, "final_parameter"])
+        alphas_exp = np.exp(intercept_df.loc[:, "final_parameter"].astype(float))
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
         intercept_df.loc[:, "expected_sample"] = alpha_sample
 
@@ -842,10 +936,6 @@ class CompositionalModel2(ABC):
             effect_df = pd.concat(effect_dfs)
             effect_df.index = pd.MultiIndex.from_product(
                 (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
-            )
-            effect_df.index = effect_df.index.set_levels(
-                effect_df.index.levels[0].str.replace("Condition", "").str.replace("[", "").str.replace("]", ""),
-                level=0,
             )
             if model_type == "tree_agg":
                 node_df = sample_adata.uns["scCODA_params"]["node_df"]
@@ -1004,10 +1094,6 @@ class CompositionalModel2(ABC):
         effect_df = pd.concat(effect_dfs)
         effect_df.index = pd.MultiIndex.from_product(
             (covariates, sample_adata.var.index.tolist()), names=["Covariate", "Cell Type"]
-        )
-        effect_df.index = effect_df.index.set_levels(
-            effect_df.index.levels[0].str.replace("Condition", "").str.replace("[", "").str.replace("]", ""),
-            level=0,
         )
 
         return effect_df
@@ -1181,7 +1267,7 @@ class CompositionalModel2(ABC):
                 r,
                 bars,
                 bottom=cum_bars,
-                color=palette(n % palette.N),
+                color=palette(n % palette.N),  # type: ignore
                 width=barwidth,
                 label=type_names[n],
                 linewidth=0,
@@ -1377,6 +1463,7 @@ class CompositionalModel2(ABC):
         plot_df.columns = covariate_names
         plot_df = pd.melt(plot_df, ignore_index=False, var_name="Covariate")
 
+        plot_df.index.name = "Cell Type"
         plot_df = plot_df.reset_index()
 
         if len(covariate_names_zero) != 0 and plot_facets and plot_zero_covariate and not plot_zero_cell_type:
@@ -1417,12 +1504,14 @@ class CompositionalModel2(ABC):
                 aspect=aspect,
             )
 
-            g.map(
+            g.map_dataframe(
                 sns.barplot,
-                "Cell Type",
-                "value",
+                x="Cell Type",
+                y="value",
+                hue="Cell Type",
                 palette=palette,
                 order=level_order,
+                hue_order=level_order,
                 **args_barplot,
             )
             g.set_xticklabels(rotation=90)
@@ -1472,6 +1561,7 @@ class CompositionalModel2(ABC):
         if return_fig and not plot_facets:
             return plt.gcf()
         plt.show()
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1492,6 +1582,7 @@ class CompositionalModel2(ABC):
         level_order: list[str] = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
+        layout: Literal["long", "wide"] = "long",
         return_fig: bool = False,
     ) -> Figure | None:
         """Grouped boxplot visualization.
@@ -1511,10 +1602,13 @@ class CompositionalModel2(ABC):
             args_boxplot: Arguments passed to sns.boxplot.
             args_swarmplot: Arguments passed to sns.swarmplot.
             figsize: Figure size.
-            dpi: Dpi setting.
+            dpi: DPI setting.
             palette: The seaborn color map (name) for the barplot.
             show_legend: If True, adds a legend.
             level_order: Custom ordering of bars on the x-axis.
+            layout: Controls subplot layout when `plot_facets=True`.
+                "long": uses floor(sqrt(K)) resulting in taller layout.
+                "wide": uses ceil(sqrt(K)) resulting in wider layout.
             {common_plot_args}
 
         Returns:
@@ -1539,6 +1633,8 @@ class CompositionalModel2(ABC):
             data = data[modality_key]
         if isinstance(palette, Colormap):
             palette = list(palette(range(len(data.obs[feature_name].unique()))))
+        if layout not in {"long", "wide"}:
+            raise ValueError("layout must be either 'long' or 'wide'")
 
         # y scale transformations
         if y_scale == "relative":
@@ -1588,6 +1684,8 @@ class CompositionalModel2(ABC):
 
             K = X.shape[1]
 
+            col_wrap = int(np.ceil(np.sqrt(K))) if layout == "wide" else int(np.floor(np.sqrt(K)))
+
             if figsize is not None:
                 height = figsize[0]
                 aspect = np.round(figsize[1] / figsize[0], 2)
@@ -1599,7 +1697,7 @@ class CompositionalModel2(ABC):
                 plot_df,
                 col="Cell type",
                 sharey=False,
-                col_wrap=int(np.floor(np.sqrt(K))),
+                col_wrap=col_wrap,
                 height=height,
                 aspect=aspect,
             )
@@ -1823,6 +1921,7 @@ class CompositionalModel2(ABC):
         if return_fig:
             return plt.gcf()
         plt.show()
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -1881,7 +1980,7 @@ class CompositionalModel2(ABC):
             from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
         except ImportError:
             raise ImportError(
-                "To use tasccoda please install additional dependencies with `pip install pertpy[coda]`"
+                "To use tasccoda please install additional dependencies: `pip install 'pertpy[coda]'`"
             ) from None
 
         if isinstance(data, MuData):
@@ -1902,8 +2001,8 @@ class CompositionalModel2(ABC):
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if return_fig:
             return tree, tree_style
+
         return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
-        return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_draw_effects(  # pragma: no cover # noqa: D417
@@ -1969,7 +2068,7 @@ class CompositionalModel2(ABC):
             from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
         except ImportError:
             raise ImportError(
-                "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+                "To use tasccoda please install additional dependencies: `pip install 'pertpy[coda]'`"
             ) from None
 
         if isinstance(data, MuData):
@@ -2179,7 +2278,9 @@ class CompositionalModel2(ABC):
                 cluster: palette(i % palette.N) for i, cluster in enumerate(data_rna.obs[cluster_key].unique().tolist())
             }
         for _, effect in enumerate(effect_name):
-            data_rna.obs[effect] = [data_coda.varm[effect].loc[f"{c}", "Effect"] for c in data_rna.obs[cluster_key]]
+            effect_df = data_coda.varm[effect]
+            effect_col = "Effect" if "Effect" in effect_df.columns else "Final Parameter"
+            data_rna.obs[effect] = [effect_df.loc[f"{c}", effect_col] for c in data_rna.obs[cluster_key]]
         if kwargs.get("vmin"):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")
@@ -2207,6 +2308,7 @@ class CompositionalModel2(ABC):
         if return_fig:
             return fig
         plt.show()
+
         return None
 
 
@@ -2325,6 +2427,7 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
     strs = [traverse(df_tax, a, 0, inner_label) for a in alevel]
 
     newick = f"({','.join(strs)});"
+
     return newick
 
 
@@ -2354,7 +2457,7 @@ def get_a_2(
         import ete4 as ete
     except ImportError:
         raise ImportError(
-            "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+            "To use tasccoda please install additional dependencies as `pip install 'pertpy[coda]'`"
         ) from None
 
     n_tips = len(list(tree.leaves()))
@@ -2474,7 +2577,7 @@ def import_tree(
         import ete4 as ete
     except ImportError:
         raise ImportError(
-            "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+            "To use tasccoda please install additional dependencies as `pip install 'pertpy[coda]'`"
         ) from None
 
     if isinstance(data, MuData):
@@ -2562,6 +2665,7 @@ def from_scanpy(
     covariate_obs = list(set(covariate_obs or []) | set(sample_identifier))
 
     if isinstance(sample_identifier, list):
+        adata.obs = adata.obs.copy()
         adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
 
@@ -2592,4 +2696,9 @@ def from_scanpy(
     var_dat.index = var_dat.index.astype(str)
     covariate_df_.index = covariate_df_.index.astype(str)
 
+    # Reset index name to None to avoid arviz coordinate dimension mismatch.
+    # When arviz processes coordinates, it uses the index name as the dimension name.
+    # If the index retains 'scCODA_sample_id' from the groupby operation,
+    # arviz will create coordinates with dimension ('scCODA_sample_id',) instead of ('sample',), causing a CoordinateValidationError
+    covariate_df_.index.name = None
     return AnnData(X=ct_count_data.values, var=var_dat, obs=covariate_df_)

@@ -3,23 +3,22 @@ from __future__ import annotations
 import copy
 import warnings
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-from fast_array_utils.stats import mean, mean_var
 from pandas.errors import PerformanceWarning
 from scanpy import get
-from scanpy._utils import _check_use_raw, sanitize_anndata
+from scanpy._utils import check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
-from scanpy.tools._utils import _choose_representation
-from scipy.sparse import csr_matrix, issparse, spmatrix
+from scipy.sparse import spmatrix
 from sklearn.mixture import GaussianMixture
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -30,154 +29,13 @@ if TYPE_CHECKING:
     from matplotlib.pyplot import Figure
 
 
-class Mixscape:
-    """identify perturbation effects in CRISPR screens by separating cells into perturbation groups."""
-
-    def __init__(self):
-        pass
-
-    def perturbation_signature(
-        self,
-        adata: AnnData,
-        pert_key: str,
-        control: str,
-        *,
-        ref_selection_mode: Literal["nn", "split_by"] = "nn",
-        split_by: str | None = None,
-        n_neighbors: int = 20,
-        use_rep: str | None = None,
-        n_dims: int | None = 15,
-        n_pcs: int | None = None,
-        batch_size: int | None = None,
-        copy: bool = False,
-        **kwargs,
-    ):
-        """Calculate perturbation signature.
-
-        The perturbation signature is calculated by subtracting the mRNA expression profile of each cell from the averaged
-        mRNA expression profile of the control cells (selected according to `ref_selection_mode`).
-        The implementation resembles https://satijalab.org/seurat/reference/runmixscape. Note that in the original implementation, the
-        perturbation signature is calculated on unscaled data by default, and we therefore recommend to do the same.
-
-        Args:
-            adata: The annotated data object.
-            pert_key: The column  of `.obs` with perturbation categories, should also contain `control`.
-            control: Name of the control category from the `pert_key` column.
-            ref_selection_mode: Method to select reference cells for the perturbation signature calculation. If `nn`,
-                the `n_neighbors` cells from the control pool with the most similar mRNA expression profiles are selected. If `split_by`,
-                the control cells from the same split in `split_by` (e.g. indicating biological replicates) are used to calculate the perturbation signature.
-            split_by: Provide the column `.obs` if multiple biological replicates exist to calculate
-                the perturbation signature for every replicate separately.
-            n_neighbors: Number of neighbors from the control to use for the perturbation signature.
-            use_rep: Use the indicated representation. `'X'` or any key for `.obsm` is valid.
-                If `None`, the representation is chosen automatically:
-                For `.n_vars` < 50, `.X` is used, otherwise 'X_pca' is used.
-                If 'X_pca' is not present, it's computed with default parameters.
-            n_dims: Number of dimensions to use from the representation to calculate the perturbation signature.
-                If `None`, use all dimensions.
-            n_pcs: If PCA representation is used, the number of principal components to compute.
-                If `n_pcs==0` use `.X` if `use_rep is None`.
-            batch_size: Size of batch to calculate the perturbation signature.
-                If 'None', the perturbation signature is calcuated in the full mode, requiring more memory.
-                The batched mode is very inefficient for sparse data.
-            copy: Determines whether a copy of the `adata` is returned.
-            **kwargs: Additional arguments for the `NNDescent` class from `pynndescent`.
-
-        Returns:
-            If `copy=True`, returns the copy of `adata` with the perturbation signature in `.layers["X_pert"]`.
-            Otherwise, writes the perturbation signature directly to `.layers["X_pert"]` of the provided `adata`.
-
-        Examples:
-            Calcutate perturbation signature for each cell in the dataset:
-
-            >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
-            >>> ms_pt = pt.tl.Mixscape()
-            >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
-        """
-        if ref_selection_mode not in ["nn", "split_by"]:
-            raise ValueError("ref_selection_mode must be either 'nn' or 'split_by'.")
-        if ref_selection_mode == "split_by" and split_by is None:
-            raise ValueError("split_by must be provided if ref_selection_mode is 'split_by'.")
-
-        if copy:
-            adata = adata.copy()
-
-        adata.layers["X_pert"] = adata.X.copy()
-
-        # Work with LIL for efficient indexing but don't store it in AnnData as LIL is not supported anymore
-        X_pert_lil = adata.layers["X_pert"].tolil() if issparse(adata.layers["X_pert"]) else adata.layers["X_pert"]
-
-        control_mask = adata.obs[pert_key] == control
-
-        if ref_selection_mode == "split_by":
-            for split in adata.obs[split_by].unique():
-                split_mask = adata.obs[split_by] == split
-                control_mask_group = control_mask & split_mask
-                control_mean_expr = mean(adata.X[control_mask_group], axis=0)
-                X_pert_lil[split_mask] = (
-                    np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0) - X_pert_lil[split_mask]
-                )
-        else:
-            if split_by is None:
-                split_masks = [np.full(adata.n_obs, True, dtype=bool)]
-            else:
-                split_obs = adata.obs[split_by]
-                split_masks = [split_obs == cat for cat in split_obs.unique()]
-
-            representation = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
-            if n_dims is not None and n_dims < representation.shape[1]:
-                representation = representation[:, :n_dims]
-
-            from pynndescent import NNDescent
-
-            for split_mask in split_masks:
-                control_mask_split = control_mask & split_mask
-                R_split = representation[split_mask]
-                R_control = representation[np.asarray(control_mask_split)]
-                eps = kwargs.pop("epsilon", 0.1)
-                nn_index = NNDescent(R_control, **kwargs)
-                indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
-                X_control = np.expm1(adata.X[np.asarray(control_mask_split)])
-                n_split = split_mask.sum()
-                n_control = X_control.shape[0]
-
-                if batch_size is None:
-                    col_indices = np.ravel(indices)
-                    row_indices = np.repeat(np.arange(n_split), n_neighbors)
-                    neigh_matrix = csr_matrix(
-                        (np.ones_like(col_indices, dtype=np.float64), (row_indices, col_indices)),
-                        shape=(n_split, n_control),
-                    )
-                    neigh_matrix /= n_neighbors
-                    X_pert_lil[np.asarray(split_mask)] = (
-                        sc.pp.log1p(neigh_matrix @ X_control) - X_pert_lil[np.asarray(split_mask)]
-                    )
-                else:
-                    split_indices = np.where(split_mask)[0]
-                    for i in range(0, n_split, batch_size):
-                        size = min(i + batch_size, n_split)
-                        select = slice(i, size)
-                        batch = np.ravel(indices[select])
-                        split_batch = split_indices[select]
-                        size = size - i
-                        means_batch = X_control[batch]
-                        batch_reshaped = means_batch.reshape(size, n_neighbors, -1)
-                        means_batch, _ = mean_var(batch_reshaped, axis=1)
-                        X_pert_lil[split_batch] = np.log1p(means_batch) - X_pert_lil[split_batch]
-
-        if issparse(X_pert_lil):
-            adata.layers["X_pert"] = X_pert_lil.tocsr()
-        else:
-            adata.layers["X_pert"] = X_pert_lil
-
-        if copy:
-            return adata
+class Mixscape(PerturbationEfficacyAnalyzer):
+    """Identify perturbation effects in CRISPR screens by separating cells into perturbation groups."""
 
     def mixscape(
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         control: str,
         *,
         new_class_name: str | None = "mixscape_class",
@@ -201,12 +59,12 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             control: Control category from the `labels` column.
             new_class_name: Name of mixscape classification to be stored in `.obs`.
             layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells (default: 0.25).
+            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
             test_method: Method to use for differential expression testing.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
@@ -256,7 +114,7 @@ class Mixscape:
             adata=adata,
             split_masks=split_masks,
             categories=categories,
-            labels=labels,
+            pert_key=pert_key,
             control=control,
             layer=de_layer,
             pval_cutoff=pval_cutoff,
@@ -278,7 +136,7 @@ class Mixscape:
 
         # initialize return variables
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
-        adata.obs[new_class_name] = adata.obs[labels].astype(str)
+        adata.obs[new_class_name] = adata.obs[pert_key].astype(str)
         adata.obs[f"{new_class_name}_global"] = np.empty(
             [
                 adata.n_obs,
@@ -290,12 +148,12 @@ class Mixscape:
         adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
-            gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
+            gene_targets = list(set(adata[split_mask].obs[pert_key]).difference([control]))
             for gene in gene_targets:
                 post_prob = 0
-                orig_guide_cells = (adata.obs[labels] == gene) & split_mask
+                orig_guide_cells = (adata.obs[pert_key] == gene) & split_mask
                 orig_guide_cells_index = list(orig_guide_cells.index[orig_guide_cells])
-                nt_cells = (adata.obs[labels] == control) & split_mask
+                nt_cells = (adata.obs[pert_key] == control) & split_mask
                 all_cells = orig_guide_cells | nt_cells
 
                 if len(perturbation_markers[(category, gene)]) == 0:
@@ -307,7 +165,11 @@ class Mixscape:
 
                     dat = X[np.asarray(all_cells)][:, de_genes_indices]
                     if scale:
-                        dat = sc.pp.scale(dat)
+                        with warnings.catch_warnings():
+                            warnings.filterwarnings(
+                                "ignore", message="zero-centering a sparse array/matrix densifies it."
+                            )
+                            dat = sc.pp.scale(dat)
 
                     converged = False
                     n_iter = 0
@@ -335,10 +197,10 @@ class Mixscape:
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
 
                         if n_iter == 0:
-                            gv = pd.DataFrame(columns=["pvec", labels])
+                            gv = pd.DataFrame(columns=["pvec", pert_key])
                             gv["pvec"] = pvec
-                            gv[labels] = control
-                            gv.loc[guide_cells, labels] = gene
+                            gv[pert_key] = control
+                            gv.loc[guide_cells, pert_key] = gene
                             if gene not in gv_list:
                                 gv_list[gene] = {}
                             gv_list[gene][category] = gv
@@ -389,7 +251,7 @@ class Mixscape:
     def lda(
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         control: str,
         *,
         mixscape_class_global: str | None = "mixscape_class_global",
@@ -407,7 +269,7 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
@@ -456,7 +318,7 @@ class Mixscape:
             adata=adata,
             split_masks=split_masks,
             categories=categories,
-            labels=labels,
+            pert_key=pert_key,
             control=control,
             layer=layer,
             pval_cutoff=pval_cutoff,
@@ -475,85 +337,24 @@ class Mixscape:
                 continue
             else:
                 gene_subset = adata_subset[
-                    (adata_subset.obs[labels] == key[1]) | (adata_subset.obs[labels] == control)
+                    (adata_subset.obs[pert_key] == key[1]) | (adata_subset.obs[pert_key] == control)
                 ].copy()
-                sc.pp.scale(gene_subset)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
                 # project cells into PCA space of gene_subset
                 projected_pcs[key[1]] = np.asarray(np.dot(X, gene_subset.varm["PCs"]))
         # concatenate all pcs into a single matrix.
         projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
-        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[labels])) - 1)
-        clf.fit(projected_pcs_array, adata_subset.obs[labels])
+        clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[pert_key])) - 1)
+        clf.fit(projected_pcs_array, adata_subset.obs[pert_key])
         cell_embeddings = clf.transform(projected_pcs_array)
         adata.uns["mixscape_lda"] = cell_embeddings
 
         if copy:
             return adata
-
-    def _get_perturbation_markers(
-        self,
-        adata: AnnData,
-        split_masks: list[np.ndarray],
-        categories: list[str],
-        labels: str,
-        control: str,
-        layer: str,
-        pval_cutoff: float,
-        min_de_genes: float,
-        logfc_threshold: float,
-        test_method: str,
-    ) -> dict[tuple, np.ndarray]:
-        """Determine gene sets across all splits/groups through differential gene expression.
-
-        Args:
-            adata: :class:`~anndata.AnnData` object
-            split_masks: List of boolean masks for each split/group.
-            categories: List of split/group names.
-            labels: The column of `.obs` with target gene labels.
-            control: Control category from the `labels` column.
-            layer: Key from adata.layers whose value will be used to compare gene expression.
-            pval_cutoff: P-value cut-off for selection of significantly DE genes.
-            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
-            test_method: Method to use for differential expression testing.
-
-        Returns:
-            Set of column indices.
-        """
-        perturbation_markers: dict[tuple, np.ndarray] = {}  # type: ignore
-        for split, split_mask in enumerate(split_masks):
-            category = categories[split]
-            # get gene sets for each split
-            gene_targets = list(set(adata[split_mask].obs[labels]).difference([control]))
-            adata_split = adata[split_mask].copy()
-            # find top DE genes between cells with targeting and non-targeting gRNAs
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                warnings.simplefilter("ignore", PerformanceWarning)
-                sc.tl.rank_genes_groups(
-                    adata_split,
-                    layer=layer,
-                    groupby=labels,
-                    groups=gene_targets,
-                    reference=control,
-                    method=test_method,
-                    use_raw=False,
-                )
-                # get DE genes for each target gene
-                for gene in gene_targets:
-                    logfc_threshold_mask = (
-                        np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
-                    )
-                    de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
-                    pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
-                    de_genes = de_genes[pvals_adj < pval_cutoff]
-                    if len(de_genes) < min_de_genes:
-                        de_genes = np.array([])
-                    perturbation_markers[(category, gene)] = de_genes
-
-        return perturbation_markers
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_barplot(  # pragma: no cover # noqa: D417
@@ -666,9 +467,9 @@ class Mixscape:
     def plot_heatmap(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         target_gene: str,
-        control: str,
+        control: str = "NT",
         *,
         layer: str | None = None,
         method: str | None = "wilcoxon",
@@ -682,7 +483,7 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize heatmap for.
             control: Control category from the `pert_key` column.
             layer: Key from `adata.layers` whose value will be used to perform tests on.
@@ -711,12 +512,13 @@ class Mixscape:
         """
         if "mixscape_class" not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
-        adata_subset = adata[(adata.obs[labels] == target_gene) | (adata.obs[labels] == control)].copy()
+        adata_subset = adata[(adata.obs[pert_key] == target_gene) | (adata.obs[pert_key] == control)].copy()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             warnings.simplefilter("ignore", PerformanceWarning)
-            sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=labels, method=method)
-        sc.pp.scale(adata_subset, max_value=vmax)
+            warnings.simplefilter("ignore", UserWarning)
+            sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=pert_key, method=method)
+            sc.pp.scale(adata_subset, max_value=vmax)
         sc.pp.subsample(adata_subset, n_obs=subsample_number)
 
         fig = sc.pl.rank_genes_groups_heatmap(
@@ -725,7 +527,7 @@ class Mixscape:
             vmin=vmin,
             vmax=vmax,
             n_genes=20,
-            groups=["NT"],
+            groups=adata_subset[adata_subset.obs[pert_key] == control].obs["mixscape_class"].unique().tolist(),
             show=False,
             **kwds,
         )
@@ -739,7 +541,7 @@ class Mixscape:
     def plot_perturbscore(  # pragma: no cover # noqa: D417
         self,
         adata: AnnData,
-        labels: str,
+        pert_key: str,
         target_gene: str,
         *,
         mixscape_class: str = "mixscape_class",
@@ -758,7 +560,7 @@ class Mixscape:
 
         Args:
             adata: The annotated data object.
-            labels: The column of `.obs` with target gene labels.
+            pert_key: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize perturbation scores for.
             mixscape_class: The column of `.obs` with mixscape classifications.
             color: Specify color of target gene class or knockout cell class. For control non-targeting and non-perturbed cells, colors are set to different shades of grey.
@@ -797,21 +599,21 @@ class Mixscape:
             else:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
         perturbation_score["mix"] = adata.obs[mixscape_class][perturbation_score.index]
-        gd = list(set(perturbation_score[labels]).difference({target_gene}))[0]
+        gd = list(set(perturbation_score[pert_key]).difference({target_gene}))[0]
 
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             palette = {gd: "#7d7d7d", target_gene: color}
-            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
+            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[cond].get_data()[1].max() for cond in range(len(plot_dens.get_lines())))
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
-            perturbation_score.loc[perturbation_score[labels] == gd, "y_jitter"] = rng.uniform(
-                low=0.001, high=top_r / 10, size=sum(perturbation_score[labels] == gd)
+            perturbation_score.loc[perturbation_score[pert_key] == gd, "y_jitter"] = rng.uniform(
+                low=0.001, high=top_r / 10, size=sum(perturbation_score[pert_key] == gd)
             )
-            perturbation_score.loc[perturbation_score[labels] == target_gene, "y_jitter"] = rng.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score[labels] == target_gene)
+            perturbation_score.loc[perturbation_score[pert_key] == target_gene, "y_jitter"] = rng.uniform(
+                low=-top_r / 10, high=0, size=sum(perturbation_score[pert_key] == target_gene)
             )
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
@@ -844,7 +646,7 @@ class Mixscape:
         else:
             if palette is None:
                 palette = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
-            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=labels, fill=False, common_norm=False)
+            plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
             top_r = max(plot_dens.get_lines()[i].get_data()[1].max() for i in range(len(plot_dens.get_lines())))
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
@@ -899,6 +701,7 @@ class Mixscape:
         if return_fig:
             return plt.gcf()
         plt.show()
+
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
@@ -971,7 +774,7 @@ class Mixscape:
         adata = adata[mixscape_class_mask]
 
         sanitize_anndata(adata)
-        use_raw = _check_use_raw(adata, use_raw)
+        use_raw = check_use_raw(adata, use_raw)
         if isinstance(keys, str):
             keys = [keys]
         keys = list(OrderedDict.fromkeys(keys))  # remove duplicates, preserving the order
@@ -1058,7 +861,7 @@ class Mixscape:
                     data=obs_tidy,
                     order=order,
                     orient="vertical",
-                    scale=scale,
+                    density_norm=scale,
                     ax=ax,
                     hue=hue,
                     **kwargs,
@@ -1072,7 +875,7 @@ class Mixscape:
                         data=obs_tidy,
                         order=order,
                         jitter=jitter,
-                        color="black",
+                        palette="dark:black",
                         size=size,
                         ax=ax,
                         hue=hue,
@@ -1211,9 +1014,12 @@ class MixscapeGaussianMixture(GaussianMixture):
             if self.fixed_cov_indices:
                 self.fixed_cov_values = np.array([fixed_covariances[i] for i in self.fixed_cov_indices])
 
-    def _m_step(self, X: np.ndarray, log_resp: np.ndarray):
-        """Modified M-step to respect fixed means and covariances."""
-        super()._m_step(X, log_resp)
+    def _m_step(self, X: np.ndarray, log_resp: np.ndarray, xp: Any | None = None):
+        """Modified M-step to respect fixed means and covariances.
+
+        xp is the array API namespace passed by sklearn 1.6+ for backend compatibility.
+        """
+        super()._m_step(X, log_resp, xp=xp)
 
         if self.fixed_mean_indices:
             self.means_[self.fixed_mean_indices] = self.fixed_mean_values

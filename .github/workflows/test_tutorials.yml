@@ -1,0 +1,96 @@
+name: Test tutorials
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+              # to fail on error in multiline statements (-e), in pipes (-o pipefail), and on unset variables (-u).
+              shell: bash -euo pipefail {0}
+
+        env:
+            NOTEBOOK_PATH: docs/tutorials/notebooks
+
+        strategy:
+            fail-fast: false
+            matrix:
+                notebook: [
+                        "augur.ipynb",
+                        "cinemaot.ipynb",
+                        "dialogue.ipynb",
+                        "differential_gene_expression.ipynb",
+                        "distances.ipynb",
+                        "distance_tests.ipynb",
+                        "enrichment.ipynb",
+                        "guide_rna_assignment.ipynb",
+                        "milo.ipynb",
+                        "perturbation_efficacy.ipynb",
+                        "sccoda.ipynb",
+                        # "perturbation_space.ipynb",  seems to run OOM as of Jax implementation
+                        # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
+                        # also no use cases yet
+                    ]
+
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                filter: blob:none
+                fetch-depth: 0
+                submodules: "true"
+
+            - name: Cache pertpy's metadata folder
+              uses: actions/cache@v4
+              with:
+                path: cache
+                key: ${{ runner.os }}-pertpy-cache-${{ hashFiles('pertpy/metadata/**') }}
+                restore-keys: |
+                  ${{ runner.os }}-pertpy-cache
+
+            - name: Cache data aka datasets folder
+              uses: actions/cache@v4
+              with:
+                path: data
+                key: ${{ runner.os }}-pertpy-data
+                restore-keys: |
+                  ${{ runner.os }}-pertpy-data
+
+            - name: Set up Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.14"
+            - name: Install R
+              uses: r-lib/actions/setup-r@v2
+              with:
+                  r-version: "4.5.3"
+                  use-public-rspm: true
+
+            - name: Install R dependencies
+              uses: r-lib/actions/setup-r-dependencies@v2
+              with:
+                packages: |
+                  any::statmod
+                  bioc::edgeR
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v7
+              with:
+                enable-cache: true
+                cache-dependency-glob: pyproject.toml
+            - name: Install dependencies
+              run: |
+                  uv pip install --system rpy2 decoupler muon
+                  uv pip install --system ".[dev,test,all]"
+                  uv pip install --system nbconvert ipykernel
+
+            - name: Run ${{ matrix.notebook }} Notebook
+              run: jupyter nbconvert --to notebook --execute ${{ env.NOTEBOOK_PATH }}/${{ matrix.notebook }}

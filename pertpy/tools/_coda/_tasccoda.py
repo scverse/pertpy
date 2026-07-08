@@ -8,11 +8,10 @@ import numpyro as npy
 import numpyro.distributions as npd
 import toytree as tt
 from anndata import AnnData
-from jax import config, random
-from lamin_utils import logger
+from jax import config
 from mudata import MuData
-from numpyro.infer import Predictive
 
+from pertpy._logger import logger
 from pertpy.tools._coda._base_coda import (
     CompositionalModel2,
     collapse_singularities,
@@ -24,32 +23,14 @@ from pertpy.tools._coda._base_coda import (
 )
 
 if TYPE_CHECKING:
-    import arviz as az
     import pandas as pd
+    from xarray import DataTree
 
 config.update("jax_enable_x64", True)
 
 
 class Tasccoda(CompositionalModel2):
     r"""Statistical model for tree-aggregated differential composition analysis (tascCODA, Ostner et al., 2021).
-
-    The hierarchical formulation of the model for one sample is:
-
-    .. math::
-         \\begin{align*}
-            Y_i &\\sim \\textrm{DirMult}(\\bar{Y}_i, \\textbf{a}(\\textbf{x})_i)\\\\
-            \\log(\\textbf{a}(X))_i &= \\alpha + X_{i, \\cdot} \\beta\\\\
-            \\alpha_j &\\sim \\mathcal{N}(0, 10) & \\forall j\\in[p]\\\\
-            \\beta &= \\hat{\\beta} A^T \\\\
-            \\hat{\\beta}_{l, k} &= 0 & \\forall k \\in \\hat{v}, l \\in [d]\\\\
-            \\hat{\\beta}_{l, k} &= \\theta \\tilde{\\beta}_{1, l, k} + (1- \\theta) \\tilde{\\beta}_{0, l, k} \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in [d]\\\\
-            \\tilde{\\beta}_{m, l, k} &= \\sigma_{m, l, k} * b_{m, l, k} \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, m \\in \\{0, 1\\}, l \\in [d]\\\\
-            \\sigma_{m, l, k} &\\sim \\textrm{Exp}(\\lambda_{m, l, k}^2/2) \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in \\{0, 1\\}, l \\in [d]\\\\
-            b_{m, l, k} &\\sim N(0,1) \\quad & \\forall k\\in\\{[v] \\smallsetminus \\hat{v}\\}, l \\in \\{0, 1\\}, l \\in [d]\\\\
-            \\theta &\\sim \\textrm{Beta}(1, \\frac{1}{|\\{[v] \\smallsetminus \\hat{v}\\}|})
-        \\end{align*}
-
-    with Y being the cell counts, X the covariates, and v the set of nodes of the underlying tree structure.
 
     For further information, see `tascCODA: Bayesian Tree-Aggregated Analysis of Compositional Amplicon and Single-Cell Data`
     (Ostner et al., 2021)
@@ -75,11 +56,14 @@ class Tasccoda(CompositionalModel2):
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
     ) -> MuData:
-        """Prepare a MuData object for subsequent processing. If type is "cell_level", then create a compositional analysis dataset from the input adata. If type is "sample_level", generate ete tree for tascCODA models from dendrogram information or cell-level observations.
+        """Prepare a MuData object for subsequent processing.
 
-        When using ``type="cell_level"``, ``adata`` needs to have a column in ``adata.obs`` that contains the cell type assignment.
+        If type is "cell_level", then create a compositional analysis dataset from the input adata.
+        If type is "sample_level", generate ete tree for tascCODA models from dendrogram information or cell-level observations.
+
+        When using `type="cell_level"`, `adata` needs to have a column in `adata.obs` that contains the cell type assignment.
         Further, it must contain one column or a set of columns (e.g. subject id, treatment, disease status) that uniquely identify each (statistical) sample.
-        Further covariates (e.g. subject age) can either be specified via addidional column names in ``adata.obs``, a key in ``adata.uns``, or as a separate DataFrame.
+        Further covariates (e.g. subject age) can either be specified via addidional column names in `adata.obs`, a key in `adata.uns`, or as a separate DataFrame.
 
         Args:
             adata: AnnData object.
@@ -90,10 +74,13 @@ class Tasccoda(CompositionalModel2):
             covariate_obs: If type is "cell_level", specify list of keys for adata.obs, where covariate values are stored.
             covariate_df: If type is "cell_level", specify dataFrame with covariates.
             dendrogram_key: Key to the scanpy.tl.dendrogram result in `.uns` of original cell level anndata object.
-            levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
-            levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels. The list must begin with the root level, and end with the leaf level.
+            levels_orig: List that indicates which columns in `.obs` of the original data correspond to tree levels.
+                The list must begin with the root level, and end with the leaf level.
+            levels_agg: List that indicates which columns in `.var` of the aggregated data correspond to tree levels.
+                The list must begin with the root level, and end with the leaf level.
             add_level_name: If True, internal nodes in the tree will be named as "{level_name}_{node_name}" instead of just {level_name}.
-            key_added: If not specified, the tree is stored in .uns[‘tree’]. If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2].
+            key_added: If not specified, the tree is stored in `.uns['tree']`.
+                If `data` is AnnData, save tree in `data`. If `data` is MuData, save tree in data[modality_2].
             modality_key_1: Key to the cell-level AnnData in the MuData object.
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
 
@@ -120,8 +107,10 @@ class Tasccoda(CompositionalModel2):
                 covariate_df=covariate_df,
             )
             mdata = MuData({modality_key_1: adata, modality_key_2: adata_coda})
-        else:
+        elif type == "sample_level":
             mdata = MuData({modality_key_1: AnnData(), modality_key_2: adata})
+        else:
+            raise ValueError(f'{type} is not a supported type, expected "cell_level" or "sample_level".')
         import_tree(
             data=mdata,
             modality_1=modality_key_1,
@@ -157,8 +146,12 @@ class Tasccoda(CompositionalModel2):
                                                    determine the maximum fraction of zero entries for a cell type
                                                    to be considered as a possible reference cell type.
             tree_key: Key in `adata.uns` that contains the tree structure
-            pen_args: Dictionary with penalty arguments. With `reg="scaled_3"`, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.
-                See the tascCODA paper for an explanation of these parameters. Default: lambda_0 = 50, lambda_1 = 5, phi = 0.
+            pen_args: Dictionary with penalty arguments.
+                With `reg="scaled_3"`, the parameters phi (aggregation bias), lambda_1, lambda_0 can be set here.
+                See the tascCODA paper for an explanation of these parameters.
+                `theta` is the global spike-and-slab mixing weight that sets the selection threshold; it is held fixed rather than sampled, since its posterior is weakly identified and collapses toward 0 under HMC/NUTS (issue #1015).
+                Lower `theta` raises the threshold and selects fewer effects; 0.5 matches the reference implementation's operating point.
+                Default: lambda_0 = 50, lambda_1 = 5, phi = 0, theta = 0.5.
             modality_key: If data is a MuData object, specify key to the aggregated sample-level AnnData object in the MuData object.
 
         Returns:
@@ -200,7 +193,7 @@ class Tasccoda(CompositionalModel2):
             import ete4 as ete
         except ImportError:
             raise ImportError(
-                "To use tasccoda please install additional dependencies as `pip install pertpy[coda]`"
+                "To use tasccoda please install additional dependencies as `pip install 'pertpy[tcoda]'`"
             ) from None
 
         # toytree tree - only for legacy reasons, can be removed in the final version
@@ -278,6 +271,9 @@ class Tasccoda(CompositionalModel2):
             pen_args["lambda_1"] = 5
         if "phi" not in pen_args:
             pen_args["phi"] = 0
+        # Global spike-and-slab mixing weight, held fixed because its posterior collapses under HMC/NUTS (issue #1015).
+        if "theta" not in pen_args:
+            pen_args["theta"] = 0.5
 
         adata.uns["scCODA_params"]["sslasso_pen_args"] = pen_args
 
@@ -369,7 +365,6 @@ class Tasccoda(CompositionalModel2):
             "b_raw_0": rng.normal(0.0, 1.0, beta_nobl_size),
             "a_1": np.ones(dtype=np.float64, shape=beta_nobl_size) * 1 / lambda_1,
             "b_raw_1": rng.normal(0.0, 1.0, beta_nobl_size),
-            "theta": np.ones(dtype=np.float64, shape=1) * 0.5,
             "alpha": rng.normal(0.0, 1.0, alpha_size),
         }
 
@@ -408,9 +403,6 @@ class Tasccoda(CompositionalModel2):
         ref_index = jnp.sort(ref_index)
         num_ref_nodes = len(ref_index)
 
-        # Size of inferred parameter matrix
-        d = D * (T - num_ref_nodes)
-
         # numpyro plates for all dimensions
         covariate_axis = npy.plate("covs", D, dim=-2)
         node_axis = npy.plate("ct", T, dim=-1)
@@ -418,8 +410,9 @@ class Tasccoda(CompositionalModel2):
         cell_type_axis = npy.plate("ct", P, dim=-1)
         sample_axis = npy.plate("sample", N, dim=-2)
 
-        # Spike-and-slab LASSO effects
-        theta = npy.sample("theta", npd.Beta(concentration1=1.0, concentration0=d))
+        # Global spike-and-slab mixing weight, held fixed at pen_args["theta"] rather than sampled.
+        # Its Beta(1, d) posterior is weakly identified and collapses toward 0 under HMC/NUTS, which inflates the selection threshold delta until no effect is credible (issue #1015).
+        theta = npy.deterministic("theta", jnp.array(sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["theta"]))
 
         with covariate_axis, node_axis_nobl:
             a_0 = npy.sample("a_0", npd.Exponential((lambda_0**2) / 2))
@@ -431,7 +424,7 @@ class Tasccoda(CompositionalModel2):
             b_tilde_1 = npy.deterministic("b_tilde_1", a_1 * b_raw_1)
 
             # calculate proposed beta and perform spike-and-slab
-            b_tilde = (1 - theta) * b_tilde_0 + theta + b_tilde_1
+            b_tilde = (1 - theta) * b_tilde_0 + theta * b_tilde_1
 
         with node_axis, covariate_axis:
             # Include effect 0 for reference nodes
@@ -464,10 +457,10 @@ class Tasccoda(CompositionalModel2):
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
-        rng_key=None,
+        rng_key: int | None = None,
         num_prior_samples: int = 500,
         use_posterior_predictive: bool = True,
-    ) -> az.InferenceData:
+    ) -> DataTree:
         """Creates arviz object from model results for MCMC diagnosis.
 
         Args:
@@ -478,7 +471,7 @@ class Tasccoda(CompositionalModel2):
             use_posterior_predictive: If True, the posterior predictive will be calculated.
 
         Returns:
-            :class:`arviz.InferenceData`: arviz_data
+            :class:`xarray.DataTree`: MCMC information
 
         Examples:
             >>> import pertpy as pt
@@ -503,8 +496,6 @@ class Tasccoda(CompositionalModel2):
                 raise
         if isinstance(data, AnnData):
             sample_adata = data
-        if not self.mcmc:
-            raise ValueError("No MCMC sampling found. Please run a sampler first!")
 
         # feature names
         cell_types = sample_adata.var.index.to_list()
@@ -521,8 +512,8 @@ class Tasccoda(CompositionalModel2):
             "b_tilde_1": ["covariate", "node_nb"],
             "b_tilde": ["covariate", "node"],
             "beta": ["covariate", "cell_type"],
-            "concentrations": ["sample", "cell_type"],
-            "counts": ["sample", "cell_type"],
+            "concentrations": ["obs", "cell_type"],
+            "counts": ["obs", "cell_type"],
         }
 
         # arviz coordinates
@@ -534,52 +525,17 @@ class Tasccoda(CompositionalModel2):
             "node_nb": nodes_nb,
             "node": node_names,
             "covariate": sample_adata.uns["scCODA_params"]["covariate_names"],
-            "sample": sample_adata.obs.index,
+            "obs": sample_adata.obs.index,
         }
 
-        dtype = "float64"
-
-        # Prior and posterior predictive simulation
-        numpyro_covariates = jnp.array(sample_adata.obsm["covariate_matrix"], dtype=dtype)
-        numpyro_n_total = jnp.array(sample_adata.obsm["sample_counts"], dtype=dtype)
-        ref_index = jnp.array(sample_adata.uns["scCODA_params"]["reference_index"])
-
-        if rng_key is None:
-            rng = np.random.default_rng()
-            rng_key = random.key(rng.integers(0, 10000))
-
-        if use_posterior_predictive:
-            posterior_predictive = Predictive(self.model, self.mcmc.get_samples())(
-                rng_key,
-                counts=None,
-                covariates=numpyro_covariates,
-                n_total=numpyro_n_total,
-                ref_index=ref_index,
-                sample_adata=sample_adata,
-            )
-        else:
-            posterior_predictive = None
-
-        if num_prior_samples > 0:
-            prior = Predictive(self.model, num_samples=num_prior_samples)(
-                rng_key,
-                counts=None,
-                covariates=numpyro_covariates,
-                n_total=numpyro_n_total,
-                ref_index=ref_index,
-                sample_adata=sample_adata,
-            )
-        else:
-            prior = None
-
-        import arviz as az
-
-        # Create arviz object
-        arviz_data = az.from_numpyro(
-            self.mcmc, prior=prior, posterior_predictive=posterior_predictive, dims=dims, coords=coords
+        return self._build_arviz_from_adata(
+            sample_adata,
+            dims=dims,
+            coords=coords,
+            rng_key=rng_key,
+            num_prior_samples=num_prior_samples,
+            use_posterior_predictive=use_posterior_predictive,
         )
-
-        return arviz_data
 
     def run_nuts(
         self,
@@ -592,80 +548,88 @@ class Tasccoda(CompositionalModel2):
         *args,
         **kwargs,
     ):
-        """Examples:
-        >>> import pertpy as pt
-        >>> adata = pt.dt.tasccoda_example()
-        >>> tasccoda = pt.tl.Tasccoda()
-        >>> mdata = tasccoda.load(
-        >>>     adata, type="sample_level",
-        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-        >>>     key_added="lineage", add_level_name=True
-        >>> )
-        >>> mdata = tasccoda.prepare(
-        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-        >>> )
-        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42).
-        """  # noqa: D205
+        """
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.tasccoda_example()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42).
+        """  # noqa: D205, D212
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
     run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
-        """Examples:
-        >>> import pertpy as pt
-        >>> adata = pt.dt.tasccoda_example()
-        >>> tasccoda = pt.tl.Tasccoda()
-        >>> mdata = tasccoda.load(
-        >>>     adata, type="sample_level",
-        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-        >>>     key_added="lineage", add_level_name=True
-        >>> )
-        >>> mdata = tasccoda.prepare(
-        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-        >>> )
-        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-        >>> tasccoda.summary(mdata).
-        """  # noqa: D205
+        """
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.tasccoda_example()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> tasccoda.summary(mdata).
+        """  # noqa: D205, D212
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
     summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
 
     def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
-        """Examples:
-        >>> import pertpy as pt
-        >>> adata = pt.dt.tasccoda_example()
-        >>> tasccoda = pt.tl.Tasccoda()
-        >>> mdata = tasccoda.load(
-        >>>     adata, type="sample_level",
-        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-        >>>     key_added="lineage", add_level_name=True
-        >>> )
-        >>> mdata = tasccoda.prepare(
-        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-        >>> )
-        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-        >>> tasccoda.credible_effects(mdata).
-        """  # noqa: D205
+        """
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.tasccoda_example()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> tasccoda.credible_effects(mdata).
+        """  # noqa: D205, D212
         return super().credible_effects(data, modality_key, est_fdr)
 
     credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
-        """Examples:
-        >>> import pertpy as pt
-        >>> adata = pt.dt.tasccoda_example()
-        >>> tasccoda = pt.tl.Tasccoda()
-        >>> mdata = tasccoda.load(
-        >>>     adata, type="sample_level",
-        >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
-        >>>     key_added="lineage", add_level_name=True
-        >>> )
-        >>> mdata = tasccoda.prepare(
-        >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
-        >>> )
-        >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
-        >>> tasccoda.set_fdr(mdata, est_fdr=0.4).
-        """  # noqa: D205
+        """
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.dt.tasccoda_example()
+            >>> tasccoda = pt.tl.Tasccoda()
+            >>> mdata = tasccoda.load(
+            >>>     adata, type="sample_level",
+            >>>     levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+            >>>     key_added="lineage", add_level_name=True
+            >>> )
+            >>> mdata = tasccoda.prepare(
+            >>>     mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+            >>> )
+            >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42)
+            >>> tasccoda.set_fdr(mdata, est_fdr=0.4).
+        """  # noqa: D205, D212
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
     set_fdr.__doc__ = CompositionalModel2.set_fdr.__doc__ + set_fdr.__doc__

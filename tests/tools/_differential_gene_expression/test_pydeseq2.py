@@ -1,11 +1,14 @@
 from importlib.util import find_spec
 
+import numpy as np
 import numpy.testing as npt
 import pytest
-from pertpy.tools._differential_gene_expression import PyDESeq2
 
 if find_spec("pydeseq2") is None:
     pytestmark = pytest.mark.skip(reason="pydeseq2 not available")
+
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
 
 
 def test_pydeseq2_simple(test_adata):
@@ -15,6 +18,8 @@ def test_pydeseq2_simple(test_adata):
     2. Fitted
     3. and that test_contrast returns a DataFrame with the correct number of rows.
     """
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
     method = PyDESeq2(adata=test_adata, design="~condition")
     method.fit()
     res_df = method.test_contrasts(method.contrast("condition", "A", "B"))
@@ -37,6 +42,8 @@ def test_pydeseq2_complex(test_adata):
     """Check that the pyDESeq2 method can be initialized with a different covariate name and fitted and that the test_contrast
     method returns a dataframe with the correct number of rows.
     """
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
     test_adata.obs["condition1"] = test_adata.obs["condition"].copy()
     method = PyDESeq2(adata=test_adata, design="~condition1+group")
     method.fit()
@@ -60,6 +67,8 @@ def test_pydeseq2_complex(test_adata):
 
 def test_pydeseq2_formula(test_adata):
     """Check that the pyDESeq2 method gives consistent results when specifying contrasts, regardless of the order of covariates"""
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
     model1 = PyDESeq2(adata=test_adata, design="~condition+group")
     model1.fit()
     res_1 = model1.test_contrasts(model1.contrast("condition", "A", "B"))
@@ -69,3 +78,23 @@ def test_pydeseq2_formula(test_adata):
     res_2 = model2.test_contrasts(model2.contrast("condition", "A", "B"))
 
     npt.assert_almost_equal(res_2.log_fc.values, res_1.log_fc.values)
+
+
+def test_pydeseq2_uses_layer_counts_for_fit(test_adata):
+    """Regression test: when `layer` is provided, `.fit()` must use that layer as counts, not `.X`."""
+    from pertpy.tools._differential_gene_expression import PyDESeq2
+
+    test_adata.layers["sum"] = test_adata.X.copy()
+
+    # Make X explicitly non-integer to reproduce the failure mode if `.fit()` ignores `layer=`.
+    X_layer_before = np.array(test_adata.layers["sum"], copy=True)
+    test_adata.X = np.array(test_adata.X, dtype=float) / 2.0
+    X_before_fit = np.array(test_adata.X, copy=True)
+
+    model = PyDESeq2(adata=test_adata, layer="sum", design="~condition")
+    model.fit(n_cpus=1)
+    res_df = model.test_contrasts(model.contrast("condition", "A", "B"))
+
+    assert len(res_df) == test_adata.n_vars
+    npt.assert_array_equal(X_layer_before, test_adata.layers["sum"])
+    npt.assert_array_equal(X_before_fit, np.array(test_adata.X))

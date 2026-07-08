@@ -1,7 +1,14 @@
 from collections.abc import Sequence
+from importlib.util import find_spec
 
+import numpy as np
+import pandas as pd
 import pytest
 from pandas.core.api import DataFrame
+
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
+
 from pertpy.tools._differential_gene_expression import LinearModelBase
 
 
@@ -84,3 +91,50 @@ def test_model_cond(test_adata_minimal, MockLinearModel, formula, cond_kwargs, e
         actual_contrast = mod.cond(**cond_kwargs)
         assert actual_contrast.tolist() == expected_contrast
         assert actual_contrast.index.tolist() == mod.design.columns.tolist()
+
+
+def test_test_contrasts_rejects_zero_contrast(MockLinearModel, test_adata_minimal):
+    mod = MockLinearModel(test_adata_minimal, "~ condition")
+    with pytest.raises(ValueError, match="null space of the design matrix"):
+        mod.test_contrasts(np.zeros(2))
+    with pytest.raises(ValueError, match="'interaction'"):
+        mod.test_contrasts({"interaction": np.zeros(2)})
+
+
+def test_plot_multicomparison_fc_many_genes(MockLinearModel, test_adata_minimal):
+    """Test that plot_multicomparison_fc works even when heatmap hides tick labels.
+
+    Regression test for issue #755.
+    When using small figsize or many genes, seaborn heatmap hides xticklabels.
+    The old code extracted labels from the rendered plot, causing ValueError.
+    The fix calculates positions directly from the DataFrame.
+    """
+    # Create mock results with many genes to force label hiding
+    results = []
+    genes = [f"GENE{i}" for i in range(50)]  # 50 genes will force label hiding
+    contrasts = ["contrast1", "contrast2"]
+
+    for contrast in contrasts:
+        for i, gene in enumerate(genes):
+            results.append(
+                {
+                    "contrast": contrast,
+                    "variable": gene,
+                    "log_fc": 1.5 + i * 0.05,
+                    "adj_p_value": 0.001 if i < 10 else 0.05,
+                }
+            )
+
+    results_df = pd.DataFrame(results)
+
+    # Create a mock model instance
+    mod = MockLinearModel(test_adata_minimal, "~condition")
+
+    # This should not raise ValueError even with small figsize
+    # that causes seaborn to hide tick labels
+    fig = mod.plot_multicomparison_fc(results_df, figsize=(6, 4), return_fig=True)
+    assert fig is not None
+
+    # Also test with heatmap_kwargs that explicitly hide labels
+    fig = mod.plot_multicomparison_fc(results_df, xticklabels=False, return_fig=True)
+    assert fig is not None

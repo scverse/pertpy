@@ -14,7 +14,7 @@ needs_sphinx = "4.3"
 info = metadata("pertpy")
 project_name = info["Name"]
 author = info["Author"]
-copyright = f"{datetime.now():%Y}, {author}."
+copyright = f"{datetime.now():%Y}, {author}"
 version = info["Version"]
 urls = dict(pu.split(", ") for pu in info.get_all("Project-URL"))
 repository_url = urls["Source"]
@@ -29,15 +29,16 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "nbsphinx",
-    "nbsphinx_link",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",  # needs to be after napoleon
+    "scanpydoc.elegant_typehints",
     "sphinx.ext.autosummary",
     "sphinx_copybutton",
     "sphinx_gallery.load_style",
     "sphinx_remove_toctrees",
     "sphinx_design",
+    "sphinx_tabs.tabs",
     "sphinx_issues",
     "sphinxcontrib.bibtex",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -110,17 +111,15 @@ add_module_names = False
 autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
-    "mudata": ("https://mudata.readthedocs.io/en/stable/", None),
-    "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
-    "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
+    "decoupler": ("https://decoupler.readthedocs.io/en/latest/", None),
+    "mudata": ("https://mudata.readthedocs.io/stable/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "torch": ("https://docs.pytorch.org/docs/main", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
-    "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
+    "seaborn": ("https://seaborn.pydata.org/", None),
     "pyro": ("https://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),
     "flax": ("https://flax.readthedocs.io/en/latest/", None),
@@ -129,6 +128,10 @@ intersphinx_mapping = {
     "arviz": ("https://python.arviz.org/en/stable/", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
+    "xarray": ("https://docs.xarray.dev/en/stable/", None),
+    "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
+    "torch": ("https://docs.pytorch.org/docs/main", None),
+    "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
 }
 nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
@@ -139,12 +142,17 @@ nitpick_ignore = [
     ("py:class", "The requested data."),
     ("py:class", "Model with loaded state dictionaries."),
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
+    ("py:class", "scvi.train._config.KwargsConfig"),
+    ("py:data", "typing.Union"),
 ]
+qualname_overrides = {
+    "pandas.core.series.Series": "pandas.Series",
+}
 
 sphinx_gallery_conf = {"nested_sections=": False}
 nbsphinx_thumbnails = {
     "tutorials/notebooks/guide_rna_assignment": "_static/tutorials/guide_rna_assignment.png",
-    "tutorials/notebooks/mixscape": "_static/tutorials/mixscape.png",
+    "tutorials/notebooks/perturbation_efficacy": "_static/tutorials/perturbation_efficacy.png",
     "tutorials/notebooks/augur": "_static/tutorials/augur.png",
     "tutorials/notebooks/sccoda": "_static/tutorials/sccoda.png",
     "tutorials/notebooks/sccoda_extended": "_static/tutorials/sccoda_extended.png",

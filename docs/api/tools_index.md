@@ -19,8 +19,35 @@ Pertpy enables differential gene expression tests through a common interface tha
     tools.EdgeR
     tools.WilcoxonTest
     tools.TTest
+    tools.PermutationTest
     tools.Statsmodels
 ```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+adata = pt.dt.zhang_2021()
+adata.layers["counts"] = adata.X.copy()
+
+ps = pt.tl.PseudobulkSpace()
+pdata = ps.compute(
+    adata,
+    target_col="Patient",
+    groups_col="Cluster",
+    layer_key="counts",
+    mode="sum",
+)
+
+edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+edgr.fit()
+res_df = edgr.test_contrasts(
+    edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+)
+```
+
+See [differential gene expression tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/differential_gene_expression.html).
 
 ## Pooled CRISPR screens
 
@@ -57,7 +84,34 @@ ms.lda(adata=mdata["rna"], labels="gene_target", layer="X_pert", control="NT")
 ms.plot_lda(adata=mdata["rna"], control="NT")
 ```
 
-See [mixscape tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/mixscape.html).
+See [perturbation efficacy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_efficacy.html).
+
+### Perturbation scoring - Mixscale
+
+[Mixscale](https://doi.org/10.1038/s41556-025-01622-z) extends Mixscape with a continuous perturbation score instead of a binary perturbed/non-perturbed call {cite}`Jiang2025`.
+Where Mixscape assigns each cell a discrete KO/NP label, Mixscale quantifies how strongly each cell responded to its perturbation.
+This is useful for CRISPRi/CRISPRa screens where cells show a gradient of responses, and as input to downstream weighted differential expression and pathway analyses.
+Mixscale shares the perturbation signature and differential expression steps with Mixscape, so `perturbation_signature` is available on both classes.
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Mixscale
+```
+
+Example implementation:
+
+```python
+import pertpy as pt
+
+mdata = pt.dt.papalexi_2021()
+ms = pt.tl.Mixscale()
+ms.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
+ms.mixscale(mdata["rna"], "gene_target", "NT", layer="X_pert")
+```
+
+See [perturbation efficacy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_efficacy.html).
 
 ## Compositional analysis
 
@@ -193,23 +247,23 @@ import scanpy as sc
 
 adata = pt.dt.dialogue_example()
 sc.pp.pca(adata)
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-
 
 dl = pt.tl.Dialogue(
-    sample_id="clinical.status",
     celltype_key="cell.subtypes",
-    n_counts_key="nCount_RNA",
-    n_mpcs=3,
+    sample_key="sample",
+    cell_quality_key="cellQ",
+    n_programs=3,
 )
-adata, mcps, ws, ct_subs = dl.calculate_multifactor_PMD(adata, normalize=True)
-all_results, new_mcps = dl.multilevel_modeling(
-    ct_subs=ct_subs,
-    mcp_scores=mcps,
-    ws_dict=ws,
-    confounder="gender",
-)
+dl.fit_programs(adata)
+dl.test_celltype_pairs(adata)
+dl.refine_scores(adata)
+
+# per-cell program scores
+adata.obsm["X_dialogue"]
+# refined gene signatures
+dl.get_program_genes(adata, program="MCP1", celltype="CD8+ IELs")
+# phenotype association
+dl.test_phenotype_association(adata, condition_key="path_str")
 ```
 
 See [DIALOGUE tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html).
@@ -258,6 +312,10 @@ For more details, we refer to [scPerturb: harmonized single-cell perturbation da
     tools.DistanceTest
 ```
 
+`Distance` supports a broad range of metrics including `edistance`, `mmd`, `wasserstein`,
+`sym_kldiv`, `mahalanobis`, `mean_var_distribution`, `classifier_proba`, `pearson_distance`,
+and more. See {class}`~pertpy.tools.Distance` for the full list.
+
 Example implementation:
 
 ```python
@@ -269,10 +327,8 @@ adata = pt.dt.distance_example()
 distance = pt.tl.Distance(metric="edistance", obsm_key="X_pca")
 pairwise_edistance = distance.pairwise(adata, groupby="perturbation")
 
-# E-test (Permutation test using E-distance)
-etest = pt.tl.PermutationTest(
-    metric="edistance", obsm_key="X_pca", correction="holm-sidak"
-)
+# E-test (permutation test using E-distance)
+etest = pt.tl.DistanceTest("edistance", n_perms=1000, obsm_key="X_pca")
 tab = etest(adata, groupby="perturbation", contrast="control")
 ```
 
@@ -395,20 +451,25 @@ See [CINEMA-OT tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/noteb
 
 ## Perturbation space
 
-Perturbation spaces depart from the individualistic perspective of cells and instead organizes cells into cohesive ensembles.
-This specialized space enables comprehending the collective impact of perturbations on cells.
-Pertpy offers various modules for calculating and evaluating perturbation spaces that are either based on summary statistics or clusters.
+Perturbation spaces depart from the individualistic perspective of cells and instead organize cells into cohesive ensembles.
+Every space summarizes all cells of a perturbation into a single representation, yielding an AnnData with one observation per perturbation that can be clustered, compared and combined.
+Pertpy offers summary-statistic spaces (pseudobulk, centroid), a distance-based space, discriminative spaces, a space for external per-perturbation embeddings, and clustering spaces.
+The shared base class additionally provides operations on the resulting spaces such as control differencing, linear combination, nearest-perturbation queries, additive combination scoring and dose-response quantification.
 
 ```{eval-rst}
 .. autosummary::
     :toctree: tools
 
-    tools.MLPClassifierSpace
-    tools.LRClassifierSpace
-    tools.CentroidSpace
-    tools.DBSCANSpace
-    tools.KMeansSpace
     tools.PseudobulkSpace
+    tools.CentroidSpace
+    tools.DistanceSpace
+    tools.EmbeddingSpace
+    tools.LRClassifierSpace
+    tools.MLPClassifierSpace
+    tools.KMeansSpace
+    tools.HDBSCANSpace
+    tools.ClusteringSpace
+    tools.PerturbationComparison
 ```
 
 Example implementation:
@@ -417,15 +478,15 @@ Example implementation:
 import pertpy as pt
 
 mdata = pt.dt.papalexi_2021()
+
+# Summarize each perturbation into one observation
 ps = pt.tl.PseudobulkSpace()
-ps_adata = ps.compute(
-    mdata["rna"],
-    target_col="gene_target",
-    groups_col="gene_target",
-    mode="mean",
-    min_cells=0,
-    min_counts=0,
-)
+ps_adata = ps.compute(mdata["rna"], target_col="gene_target", mode="mean")
+
+# Represent each perturbation by its distance to all others and find similar perturbations
+ds = pt.tl.DistanceSpace()
+ds_adata = ds.compute(mdata["rna"], target_col="gene_target", metric="edistance", embedding_key="X_pca")
+similar = ds.nearest_perturbations(ds_adata, "IFNGR2", target_col="gene_target")
 ```
 
 See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html).

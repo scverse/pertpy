@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from scanpy import settings
-
-from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -23,17 +19,8 @@ class Moa(MetaData):
         self.clue = None
 
     def _download_clue(self) -> None:
-        clue_path = Path(settings.cachedir) / "repurposing_drugs_20200324.txt"
-        if not Path(clue_path).exists():
-            _download(
-                url="https://s3.amazonaws.com/data.clue.io/repurposing/downloads/repurposing_drugs_20200324.txt",
-                output_file_name="repurposing_drugs_20200324.txt",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
-        self.clue = pd.read_csv(clue_path, sep="	", skiprows=9)
-        self.clue = self.clue[["pert_iname", "moa", "target"]]
+        clue_path = self._download_metadata("repurposing_drugs_20200324.txt")
+        self.clue = pd.read_csv(clue_path, sep="	", skiprows=9)[["pert_iname", "moa", "target"]]
 
     def annotate(
         self,

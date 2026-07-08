@@ -1,10 +1,11 @@
 import anndata
 import numpy as np
 import pandas as pd
-import pertpy as pt
 import pytest
 from anndata import AnnData
 from scipy import sparse
+
+import pertpy as pt
 
 NUM_CELLS = 100
 NUM_GENES = 100

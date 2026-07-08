@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
-from lamin_utils import logger
+from pertpy._logger import logger
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -13,11 +12,9 @@ if TYPE_CHECKING:
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scanpy import settings
 from scipy import stats
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy.data._dataloader import _download
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -43,159 +40,52 @@ class CellLine(MetaData):
 
     def _download_cell_line(self, cell_line_source: Literal["DepMap", "Cancerrxgene"] = "DepMap") -> None:
         if cell_line_source == "DepMap":
-            # Download cell line metadata from DepMap
-            # Source: https://depmap.org/portal/download/all/ (DepMap Public 23Q4)
-            depmap_cell_line_path = Path(settings.cachedir) / "depmap_23Q4_info.csv"
-            if not Path(depmap_cell_line_path).exists():
-                _download(
-                    url="https://ndownloader.figshare.com/files/43746708",
-                    output_file_name="depmap_23Q4_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # DepMap Public 23Q4: https://depmap.org/portal/download/all/
+            depmap_cell_line_path = self._download_metadata("depmap_23Q4_info.csv")
             self.depmap = pd.read_csv(depmap_cell_line_path)
             self.depmap = self.depmap.reset_index().rename(columns={"CellLineName": "cell_line_name"})
         else:
-            # Download cell line metadata from The Genomics of Drug Sensitivity in Cancer Project
-            # Source: https://www.cancerrxgene.org/celllines
-            cancerxgene_cell_line_path = Path(settings.cachedir) / "cell_line_cancer_project.csv"
-            transformed_cancerxgene_cell_line_path = Path(settings.cachedir) / "cancerrxgene_info.csv"
-
-            if not Path(transformed_cancerxgene_cell_line_path).exists():
-                if not Path(cancerxgene_cell_line_path).exists():
-                    _download(
-                        url="https://www.cancerrxgene.org/api/celllines?list=all&sEcho=1&iColumns=7&sColumns=&"
-                        "iDisplayStart=0&iDisplayLength=25&mDataProp_0=0&mDataProp_1=1&mDataProp_2=2&mDataProp_3=3&"
-                        "mDataProp_4=4&mDataProp_5=5&mDataProp_6=6&sSearch=&bRegex=false&sSearch_0=&bRegex_0=false&"
-                        "bSearchable_0=true&sSearch_1=&bRegex_1=false&bSearchable_1=true&sSearch_2=&bRegex_2=false&"
-                        "bSearchable_2=true&sSearch_3=&bRegex_3=false&bSearchable_3=true&sSearch_4=&bRegex_4=false&"
-                        "bSearchable_4=true&sSearch_5=&bRegex_5=false&bSearchable_5=true&sSearch_6=&bRegex_6=false&"
-                        "bSearchable_6=true&iSortCol_0=0&sSortDir_0=asc&iSortingCols=1&bSortable_0=true&bSortable_1=true&"
-                        "bSortable_2=true&bSortable_3=true&bSortable_4=true&bSortable_5=true&bSortable_6=true&export=csv",
-                        output_file_name="cell_line_cancer_project.csv",
-                        output_path=settings.cachedir,
-                        block_size=4096,
-                        is_zip=False,
-                    )
-                self.cancerxgene = pd.read_csv(cancerxgene_cell_line_path)
-                self.cancerxgene.columns = self.cancerxgene.columns.str.strip()
-                self.cancerxgene["stripped_cell_line_name"] = (
-                    self.cancerxgene["Cell line Name"]
-                    .str.replace(r"\-|\.", "", regex=True)
-                    .str.upper()
-                    .astype("category")
-                )
-                # pivot the data frame so that each cell line has only one row of metadata
-                index_col = set(self.cancerxgene.columns) - {
-                    "Datasets",
-                    "number of drugs",
-                }
-                self.cancerxgene = self.cancerxgene.pivot(index=index_col, columns="Datasets", values="number of drugs")
-                self.cancerxgene.columns.name = None
-                self.cancerxgene = self.cancerxgene.reset_index().rename(columns={"Cell line Name": "cell_line_name"})
-                self.cancerxgene.to_csv(transformed_cancerxgene_cell_line_path)
-            else:
-                self.cancerxgene = pd.read_csv(transformed_cancerxgene_cell_line_path, index_col=0)
+            # The Genomics of Drug Sensitivity in Cancer Project: https://www.cancerrxgene.org/celllines
+            cancerxgene_cell_line_path = self._download_metadata("cancerrxgene_info.csv")
+            self.cancerxgene = pd.read_csv(cancerxgene_cell_line_path, index_col=0)
 
     def _download_gene_annotation(self) -> None:
-        # Download metadata for driver genes from DepMap.Sanger
-        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
-        gene_annotation_file_path = Path(settings.cachedir) / "genes_info.csv"
-        if not Path(gene_annotation_file_path).exists():
-            _download(
-                url="https://cog.sanger.ac.uk/cmp/download/gene_identifiers_20191101.csv",
-                output_file_name="genes_info.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
+        # Driver genes from DepMap.Sanger: https://cellmodelpassports.sanger.ac.uk/downloads (Gene annotation)
+        gene_annotation_file_path = self._download_metadata("genes_info.csv")
         self.gene_annotation = pd.read_table(gene_annotation_file_path, delimiter=",")
 
     def _download_bulk_rna(self, cell_line_source: Literal["broad", "sanger"] = "broad") -> None:
         if cell_line_source == "sanger":
-            # Download bulk RNA-seq data collated by the Wellcome Sanger Institute and the Broad Institute from DepMap.Sanger
-            # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
-            # issue: read count values contain random whitespace
-            # solution: remove the white space and convert to int before depmap updates the metadata
-            bulk_rna_sanger_file_path = Path(settings.cachedir) / "rnaseq_sanger_info.csv"
-            if not Path(bulk_rna_sanger_file_path).exists():
-                _download(
-                    url="https://figshare.com/ndownloader/files/42467103",
-                    output_file_name="rnaseq_sanger_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # Bulk RNA-seq collated by the Sanger and Broad institutes from DepMap.Sanger:
+            # https://cellmodelpassports.sanger.ac.uk/downloads (Expression data)
+            # Read counts contain random whitespace, hence the unicode dtype.
+            bulk_rna_sanger_file_path = self._download_metadata("rnaseq_sanger_info.csv")
             self.bulk_rna_sanger = pd.read_csv(bulk_rna_sanger_file_path, index_col=0, dtype="unicode")
         else:
-            # Download CCLE expression data from DepMap
-            # Source: https://depmap.org/portal/download/all/ (DepMap Public 22Q2)
-            bulk_rna_broad_file_path = Path(settings.cachedir) / "rnaseq_depmap_info.csv"
-            if not Path(bulk_rna_broad_file_path).exists():
-                _download(
-                    url="https://figshare.com/ndownloader/files/34989922",
-                    output_file_name="rnaseq_depmap_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # CCLE expression data from DepMap Public 22Q2: https://depmap.org/portal/download/all/
+            bulk_rna_broad_file_path = self._download_metadata("rnaseq_depmap_info.csv")
             self.bulk_rna_broad = pd.read_csv(bulk_rna_broad_file_path, index_col=0)
 
     def _download_proteomics(self) -> None:
-        # Download proteomics data processed by DepMap.Sanger
-        # Source: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
-        proteomics_file_path = Path(settings.cachedir) / "proteomics_info.csv"
-        if not Path(proteomics_file_path).exists():
-            _download(
-                url="https://figshare.com/ndownloader/files/42468393",
-                output_file_name="proteomics_info.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
+        # Proteomics data processed by DepMap.Sanger: https://cellmodelpassports.sanger.ac.uk/downloads (Proteomics)
+        proteomics_file_path = self._download_metadata("proteomics_info.csv")
         self.proteomics = pd.read_csv(proteomics_file_path, index_col=0)
 
     def _download_gdsc(self, gdsc_dataset: Literal[1, 2] = 1) -> None:
         if gdsc_dataset == 1:
-            # Download GDSC drug response data
-            # Source: https://www.cancerrxgene.org/downloads/bulk_download (Drug Screening - IC50s and AUC)
-            # URL: https://cog.sanger.ac.uk/cancerrxgene/GDSC_release8.4/GDSC1_fitted_dose_response_24Jul22.xlsx
-            drug_response_gdsc1_file_path = Path(settings.cachedir) / "gdsc1_info.csv"
-            if not Path(drug_response_gdsc1_file_path).exists():
-                _download(
-                    url="https://figshare.com/ndownloader/files/43757235",
-                    output_file_name="gdsc1_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            # GDSC drug response (IC50s and AUC): https://www.cancerrxgene.org/downloads/bulk_download
+            drug_response_gdsc1_file_path = self._download_metadata("gdsc1_info.csv")
             self.drug_response_gdsc1 = pd.read_csv(drug_response_gdsc1_file_path, index_col=0)
         if gdsc_dataset == 2:
-            drug_response_gdsc2_file_path = Path(settings.cachedir) / "gdsc2_info.csv"
-            if not Path(drug_response_gdsc2_file_path).exists():
-                _download(
-                    url="https://figshare.com/ndownloader/files/43757232",
-                    output_file_name="gdsc2_info.csv",
-                    output_path=settings.cachedir,
-                    block_size=4096,
-                    is_zip=False,
-                )
+            drug_response_gdsc2_file_path = self._download_metadata("gdsc2_info.csv")
             self.drug_response_gdsc2 = pd.read_csv(drug_response_gdsc2_file_path, index_col=0)
 
     def _download_prism(self) -> None:
-        # Download PRISM drug response data
-        # Source: DepMap PRISM Repurposing 19Q4 secondary screen dose response curve parameters
-        drug_response_prism_file_path = Path(settings.cachedir) / "prism_info.csv"
-        if not Path(drug_response_prism_file_path).exists():
-            _download(
-                url="https://figshare.com/ndownloader/files/20237739",
-                output_file_name="prism_info.csv",
-                output_path=settings.cachedir,
-                block_size=4096,
-                is_zip=False,
-            )
-        df = pd.read_csv(drug_response_prism_file_path, index_col=0)[["depmap_id", "name", "ic50", "ec50", "auc"]]
+        # DepMap PRISM Repurposing 19Q4 secondary screen dose response curve parameters
+        drug_response_prism_file_path = self._download_metadata("prism_info.csv")
+        df = pd.read_csv(
+            drug_response_prism_file_path, index_col=0, usecols=["broad_id", "depmap_id", "name", "ic50", "ec50", "auc"]
+        )
         df = df.dropna(subset=["depmap_id", "name"])
         df = df.groupby(["depmap_id", "name"]).mean().reset_index()
         self.drug_response_prism = df
@@ -251,7 +141,7 @@ class CellLine(MetaData):
                 query_id = "stripped_cell_line_name"
                 logger.error(
                     "`stripped_cell_line_name` is used as reference and query identifier to annotate cell line metadata from Cancerrxgene. "
-                    "Ensure that stripped cell line names are available in 'adata.obs.' or use the DepMap as `cell_line_source` to annotate the cell line first."
+                    "Ensure that stripped cell line names are available in 'adata.obs.' or use the DepMap as `cell_line_source` first."
                 )
             if self.cancerxgene is None:
                 self._download_cell_line(cell_line_source="Cancerrxgene")
@@ -568,7 +458,9 @@ class CellLine(MetaData):
             verbosity=verbosity,
         )
 
-        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
+        if adata.obs.index.name is None:
+            adata.obs.index.name = "original_index"
+        old_index_name = adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, query_perturbation])
@@ -635,7 +527,9 @@ class CellLine(MetaData):
             verbosity=verbosity,
         )
 
-        old_index_name = "index" if adata.obs.index.name is None else adata.obs.index.name
+        if adata.obs.index.name is None:
+            adata.obs.index.name = "original_index"
+        old_index_name = adata.obs.index.name
         adata.obs = (
             adata.obs.reset_index()
             .set_index([query_id, "perturbation_lower"])

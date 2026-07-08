@@ -1,6 +1,7 @@
 import numpy.testing as npt
 import pytest
-from pertpy.tools._differential_gene_expression import EdgeR, PyDESeq2
+
+from pertpy.tools._differential_gene_expression import EdgeR
 
 try:
     from rpy2.robjects.packages import importr
@@ -10,6 +11,11 @@ except Exception:  # noqa: BLE001
     r_dependency = None
 
 pytestmark = pytest.mark.skipif(r_dependency is None, reason="Required R package 'edgeR' not available")
+
+from importlib.util import find_spec
+
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
 
 
 def test_edger_simple(test_adata):
@@ -65,6 +71,8 @@ def test_edger_complex(test_adata):
     down_gene = res_df.set_index("variable").loc["gene3", "log_fc"]
     up_gene = res_df.set_index("variable").loc["gene1", "log_fc"]
     assert down_gene < up_gene
+
+    from pertpy.tools._differential_gene_expression import PyDESeq2
 
     method = PyDESeq2(adata=test_adata, design="~condition1+group")
     method.fit()

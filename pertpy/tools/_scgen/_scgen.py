@@ -11,7 +11,6 @@ import scanpy as sc
 from adjustText import adjust_text
 from anndata import AnnData
 from jax import Array
-from lamin_utils import logger
 from scipy import stats
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
@@ -20,6 +19,7 @@ from scvi.model.base import BaseModelClass, JaxTrainingMixin
 from scvi.utils import setup_anndata_dsp
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
 
 from ._scgenvae import JaxSCGENVAE
 from ._utils import balancer, extractor
@@ -243,10 +243,11 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 batch_list[i] = temp
                 batch_ind[i] = temp_ind
             max_batch_ann = batch_list[max_batch_ind]
+            max_batch_mean = np.average(max_batch_ann.X, axis=0)
             for study in batch_list:
-                delta = np.average(max_batch_ann.X, axis=0) - np.average(batch_list[study].X, axis=0)
+                batch_list[study] = batch_list[study].copy()
+                delta = max_batch_mean - np.average(batch_list[study].X, axis=0)
                 batch_list[study].X = delta + batch_list[study].X
-                temp_cell[batch_ind[study]].X = batch_list[study].X
             shared_ct.append(temp_cell)
 
         all_shared_ann = ad.concat(shared_ct, label="concat_batch", index_unique=None)
@@ -258,7 +259,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 obs=all_shared_ann.obs,
             )
             corrected.var_names = adata.var_names.tolist()
-            corrected = corrected[adata.obs_names]
+            corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names
@@ -281,7 +282,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 obs=all_corrected_data.obs,
             )
             corrected.var_names = adata.var_names.tolist()
-            corrected = corrected[adata.obs_names]
+            corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names
@@ -382,8 +383,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         axis_keys: dict[str, str],
         labels: dict[str, str],
         *,
-        gene_list: list[str] = None,
-        top_100_genes: list[str] = None,
+        gene_list: list[str] | None = None,
+        top_100_genes: list[str] | None = None,
         verbose: bool = False,
         legend: bool = True,
         title: str = None,
@@ -452,12 +453,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             y_diff = np.asarray(np.mean(stim_diff.X, axis=0)).ravel()
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
-                logger.info("top_100 DEGs mean: ", r_value_diff**2)
+                logger.info(f"top_100 DEGs mean: {r_value_diff**2}")
         x = np.asarray(np.mean(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.mean(stim.X, axis=0)).ravel()
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         if verbose:
-            logger.info("All genes mean: ", r_value**2)
+            logger.info(
+                f"All genes mean: {r_value**2}",
+            )
         df = pd.DataFrame({axis_keys["x"]: x, axis_keys["y"]: y})
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)
@@ -575,14 +578,14 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             y_diff = np.asarray(np.var(stim_diff.X, axis=0)).ravel()
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
-                logger.info("Top 100 DEGs var: ", r_value_diff**2)
+                logger.info(f"Top 100 DEGs var: {r_value_diff**2}")
         if "y1" in axis_keys:
             real_stim = adata[adata.obs[condition_key] == axis_keys["y1"]]
         x = np.asarray(np.var(ctrl.X, axis=0)).ravel()
         y = np.asarray(np.var(stim.X, axis=0)).ravel()
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         if verbose:
-            logger.info("All genes var: ", r_value**2)
+            logger.info(f"All genes var: {r_value**2}")
         df = pd.DataFrame({axis_keys["x"]: x, axis_keys["y"]: y})
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)

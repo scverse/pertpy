@@ -1,5 +1,11 @@
+from importlib.util import find_spec
+
 import numpy as np
 import pytest
+
+if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
+    pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
+
 from pertpy.tools._differential_gene_expression import AVAILABLE_METHODS
 
 

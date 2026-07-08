@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import anndata as ad
 import numpy as np
 
 
@@ -80,6 +81,7 @@ def balancer(
         index_cls_r = index_cls[rng.choice(len(index_cls), max_number)]
         index_all.append(index_cls_r)
 
-    balanced_data = adata[np.concatenate(index_all)].copy()
+    indices = np.concatenate(index_all)
+    balanced_data = ad.concat([adata[i : i + 1] for i in indices], index_unique="-")
 
     return balanced_data

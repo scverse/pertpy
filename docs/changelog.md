@@ -2,8 +2,145 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## v1.1.1
+
+### 🚀 Features
+
+* mixscale: add continuous perturbation scoring ([#945](https://github.com/scverse/pertpy/pull/945)) @stefanm808
+* Add MiloDE for neighbourhood-level differential expression ([#1001](https://github.com/scverse/pertpy/pull/1001)) @Zethson
+* Add `plot_disp_ests()` for dispersion-estimate visualisation ([#1004](https://github.com/scverse/pertpy/pull/1004)) @LuisHeinzlmeier
+* Add and rename significance thresholds ([#974](https://github.com/scverse/pertpy/pull/974)) @LuisHeinzlmeier
+
+### 🐛 Bug Fixes
+
+* tascCODA: fix no credible effects returned (theta collapse) ([#1017](https://github.com/scverse/pertpy/pull/1017)) @Zethson
+* tascCODA: fix always returning insignificant results ([#1016](https://github.com/scverse/pertpy/pull/1016)) @Zethson
+* PseudobulkSpace: fix all-NaN extra obs with `groups_col` ([#1006](https://github.com/scverse/pertpy/pull/1006)) @Zethson
+* perturbation_space: skip None-keyed layers in `_combine` ([#1000](https://github.com/scverse/pertpy/pull/1000)) @Zethson
+* `plot_effects_barplot()`: remove FutureWarning ([#1013](https://github.com/scverse/pertpy/pull/1013)) @LuisHeinzlmeier
+* coda: fix ImportError ([#1014](https://github.com/scverse/pertpy/pull/1014)) @LuisHeinzlmeier
+
+### 🧰 Maintenance
+
+* perturbation_space: cleanup, safer defaults, kill stale-state bugs ([#994](https://github.com/scverse/pertpy/pull/994)) @Zethson
+* Resolve test-suite warnings ([#1018](https://github.com/scverse/pertpy/pull/1018)) @Zethson
+* docs: refresh DE docstring pseudobulk examples ([#996](https://github.com/scverse/pertpy/pull/996)) @Zethson
+* ci: bump codecov-action to v6 and fail CI on upload error ([#1009](https://github.com/scverse/pertpy/pull/1009)) @timtreis
+
+## v1.1.0
+
+### 🚀 Features
+
+* milo: speed up pydeseq2 da_nhoods ~100x via poscounts size factors ([#992](https://github.com/scverse/pertpy/pull/992)) @Zethson
+* Guide RNA assignment: crispat-matching JAX MAP fit (10–30× faster) ([#987](https://github.com/scverse/pertpy/pull/987)) @Zethson
+* DIALOGUE: from-scratch port of the R reference (PMD + HLM + iterative NNLS) ([#988](https://github.com/scverse/pertpy/pull/988)) @Zethson
+* PyDESeq2: optional apeGLM LFC shrinkage ([#985](https://github.com/scverse/pertpy/pull/985)) @Zethson
+* Add layout option to coda plot_boxplots (#718) ([#932](https://github.com/scverse/pertpy/pull/932)) @emekaokoli19
+
+### 🐛 Bug Fixes
+
+* scCODA: fix run_hmc TypeError; clarify log2-fold-change sign ([#993](https://github.com/scverse/pertpy/pull/993)) @Zethson
+* scCODA/tascCODA: make make_arviz stateless ([#991](https://github.com/scverse/pertpy/pull/991)) @Zethson
+* scCODA: unify covariate index format across get_effect_df / summary / credible_effects ([#989](https://github.com/scverse/pertpy/pull/989)) @Zethson
+* Reject all-zero contrasts in test_contrasts ([#981](https://github.com/scverse/pertpy/pull/981)) @Zethson
+* Fix PseudobulkSpace.compute losing X with anndata main ([#979](https://github.com/scverse/pertpy/pull/979)) @Zethson
+* Fix plot_effects_umap KeyError on Sccoda output (#780) ([#971](https://github.com/scverse/pertpy/pull/971)) @LiudengZhang
+* Fix marker positions: calculate marker positions from DataFrame, not rendered labels ([#970](https://github.com/scverse/pertpy/pull/970)) @kimjune01
+* Fix plot_multicomparison_fc ValueError with default figsize ([#965](https://github.com/scverse/pertpy/pull/965)) @kimjune01
+* Fix minor bugs ([#960](https://github.com/scverse/pertpy/pull/960)) @Zethson
+* Fix `add` and `subtract` ([#959](https://github.com/scverse/pertpy/pull/959)) @Zethson
+
+### 🧰 Maintenance
+
+* Milo cleanup: address #181 ([#986](https://github.com/scverse/pertpy/pull/986)) @Zethson
+* Refresh tools API page ([#983](https://github.com/scverse/pertpy/pull/983)) @Zethson
+* Resolve scgen test warnings ([#982](https://github.com/scverse/pertpy/pull/982)) @Zethson
+* Upgrade R ([#943](https://github.com/scverse/pertpy/pull/943)) @Zethson
+* Use pooch for dataset downloads ([#980](https://github.com/scverse/pertpy/pull/980)) @Zethson
+
+## v1.0.6
+
+### 🚀 Features
+
+* Support Python 3.14 ([#893](https://github.com/scverse/pertpy/pull/893)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Correct `neighbors_key` docstring for `make_nhoods` ([#940](https://github.com/scverse/pertpy/pull/940)) @Zethson
+* Fix augur low frequency cell type behavior ([#938](https://github.com/scverse/pertpy/pull/938)) @Zethson
+* Fix replogle_2022_k562_essential URL ([#917](https://github.com/scverse/pertpy/pull/917)) @Zethson
+* Fix reshaping ([#909](https://github.com/scverse/pertpy/pull/909)) @Zethson
+* fillna(1) spatialfdr ([#913](https://github.com/scverse/pertpy/pull/913)) @ktpolanski
+
+### 🧰 Maintenance
+
+* Mention paper in README ([#935](https://github.com/scverse/pertpy/pull/935)) @Zethson
+
+## v1.0.5
+
+### 🐛 Bug Fixes
+
+* fix use raw & docs build ([#906](https://github.com/scverse/pertpy/pull/906)) @Zethson
+* Add relative abundance warning ([#900](https://github.com/scverse/pertpy/pull/900)) @Zethson
+* Fix PyDESeq2 layer handling in fit() ([#895](https://github.com/scverse/pertpy/pull/895)) @giovp
+
+### 🧰 Maintenance
+
+* Update citation ([#899](https://github.com/scverse/pertpy/pull/899)) @Zethson
+* Update the exampledataset URLs to point to cloudfront ([#898](https://github.com/scverse/pertpy/pull/898)) @grst
+
+## v1.0.4
+
+### 🚀 Features
+
+* Add dataset cache back ([#885](https://github.com/scverse/pertpy/pull/885)) @Zethson
+* switch to template ([#866](https://github.com/scverse/pertpy/pull/866)) @Zethson
+* Move metadata to scverse AWS ([#860](https://github.com/scverse/pertpy/pull/860)) @Zethson
+* Speedup For EDistance-like distances ([#880](https://github.com/scverse/pertpy/pull/880)) @selmanozleyen
+* add `milo-edger` extra ([#874](https://github.com/scverse/pertpy/pull/874)) @mschilli87
+* Add permutation test ([#726](https://github.com/scverse/pertpy/pull/726)) @maltekuehl
+
+### 🐛 Bug Fixes
+
+* Remove cmap default in `GuideAssignment.heatmap` ([#887](https://github.com/scverse/pertpy/pull/887)) @Zethson
+* Adapt fixture usage to newer pytest versions ([#879](https://github.com/scverse/pertpy/pull/879)) @flying-sheep
+* Remove decoupler mention ([#869](https://github.com/scverse/pertpy/pull/869)) @Zethson
+* Unpin R version in CI ([#863](https://github.com/scverse/pertpy/pull/863)) @Zethson
+* Fix harded control key in plot_heatmap ([#862](https://github.com/scverse/pertpy/pull/862)) @Zethson
+
+### 🧰 Maintenance
+
+* fix isort formatting ([#878](https://github.com/scverse/pertpy/pull/878)) @flying-sheep
+
+## v1.0.3
+
+### 🚀 Features
+
+* Move from figshare to scverse AWS S3 ([#848](https://github.com/scverse/pertpy/pull/848)) @Zethson
+* Rename `label_transfer` `column` parameter to `target_column` ([#848](https://github.com/scverse/pertpy/pull/848)) @Zethson
+* Rename `mixscape` `labels` parameter to `pert_key` ([#848](https://github.com/scverse/pertpy/pull/848)) @Zethson
+
+## v1.0.2
+
+### 🐛 Bug Fixes
+
+* Fix Validate 'type' parameter in Tasccoda.load ([#839](https://github.com/scverse/pertpy/pull/839)) @JuanTejedor
+* Partial fixes for make_arviz ([#834](https://github.com/scverse/pertpy/pull/834)) @jpintar
+* Fix setting of `rng_key` in `make_arviz` ([#831](https://github.com/scverse/pertpy/pull/831)) @jpintar
+* Fix GDSC and PRISM annotation warnings ([#835](https://github.com/scverse/pertpy/pull/835)) @Lilly-May
+
+## v1.0.1
+
+### 🚀 Features
+
+* Add support for gamma parameter in MMD distance ([#825](https://github.com/scverse/pertpy/pull/825)) @Zethson
+* Run notebooks in CI ([#815](https://github.com/scverse/pertpy/pull/815)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Fix milo output writing ([#821](https://github.com/scverse/pertpy/pull/821)) @Zethson
 
 ## v1.0.0
 

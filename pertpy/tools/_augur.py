@@ -12,7 +12,6 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from joblib import Parallel, delayed
-from lamin_utils import logger
 from rich.progress import track
 from scipy import sparse, stats
 from sklearn.base import is_classifier, is_regressor
@@ -36,6 +35,8 @@ from statsmodels.api import OLS
 from statsmodels.stats.multitest import fdrcorrection
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
+from pertpy.tools.core import _is_raw_counts
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -87,6 +88,7 @@ class Augur:
         self,
         input: AnnData | pd.DataFrame,
         *,
+        layer: str | None = None,
         meta: pd.DataFrame | None = None,
         label_col: str = "label_col",
         cell_type_col: str = "cell_type_col",
@@ -98,6 +100,7 @@ class Augur:
         Args:
             input: Anndata or matrix containing gene expression values (genes in rows, cells in columns)
                 and optionally meta data about each cell.
+            layer: Layer in AnnData to use for expression data. If None, uses .X
             meta: Optional Pandas DataFrame containing meta data about each cell.
             label_col: column of the meta DataFrame or the Anndata or matrix containing the condition labels for each cell
                 in the cell-by-gene expression matrix
@@ -114,11 +117,11 @@ class Augur:
             >>> import pertpy as pt
             >>> adata = pt.dt.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
-            >>> loaded_data = ag_rfc.load(adata)
+            >>> augur_adata = ag_rfc.load(adata)
         """
         if isinstance(input, AnnData):
-            input.obs = input.obs.rename(columns={cell_type_col: "cell_type", label_col: "label"})
             adata = input
+            obs_renamed = adata.obs.rename(columns={cell_type_col: "cell_type", label_col: "label"})
 
         elif isinstance(input, pd.DataFrame):
             if meta is None:
@@ -130,27 +133,47 @@ class Augur:
 
             label = input[label_col] if meta is None else meta[label_col]
             cell_type = input[cell_type_col] if meta is None else meta[cell_type_col]
-            x = input.drop([label_col, cell_type_col], axis=1) if meta is None else input
-            adata = AnnData(X=x, obs=pd.DataFrame({"cell_type": cell_type, "label": label}))
+            X = input.drop([label_col, cell_type_col], axis=1) if meta is None else input
+            adata = AnnData(X=X, obs=pd.DataFrame({"cell_type": cell_type, "label": label}))
+            obs_renamed = adata.obs
 
-        if len(adata.obs["label"].unique()) < 2:
+        if len(obs_renamed["label"].unique()) < 2:
             raise ValueError("Less than two unique labels in dataset. At least two are needed for the analysis.")
+
+        if isinstance(input, AnnData):
+            final_adata = AnnData(X=adata.X, obs=obs_renamed, var=adata.var, layers=adata.layers)
+        else:
+            final_adata = adata
+
         # dummy variables for categorical data
-        if adata.obs["label"].dtype.name == "category":
-            # filter samples according to label
+        if final_adata.obs["label"].dtype.name == "category":
+            label_encoder = LabelEncoder()
+            final_adata.obs["y_"] = label_encoder.fit_transform(final_adata.obs["label"])
+
             if condition_label is not None and treatment_label is not None:
                 logger.info(f"Filtering samples with {condition_label} and {treatment_label} labels.")
-                adata = ad.concat(
-                    [adata[adata.obs["label"] == condition_label], adata[adata.obs["label"] == treatment_label]]
+                final_adata = ad.concat(
+                    [
+                        final_adata[final_adata.obs["label"] == condition_label],
+                        final_adata[final_adata.obs["label"] == treatment_label],
+                    ]
                 )
-            label_encoder = LabelEncoder()
-            adata.obs["y_"] = label_encoder.fit_transform(adata.obs["label"])
         else:
-            y = adata.obs["label"].to_frame()
+            y = final_adata.obs["label"].to_frame()
             y = y.rename(columns={"label": "y_"})
-            adata.obs = pd.concat([adata.obs, y], axis=1)
+            final_adata.obs = pd.concat([final_adata.obs, y], axis=1)
 
-        return adata
+        if layer is not None:
+            if layer not in final_adata.layers:
+                raise ValueError(f"Layer '{layer}' not found in AnnData object")
+            X = final_adata.layers[layer]
+        else:
+            X = final_adata.X
+
+        if not _is_raw_counts(X):
+            logger.warning("Data does not appear to be raw counts. Augur developers recommend using raw counts.")
+
+        return final_adata
 
     def create_estimator(
         self,
@@ -207,7 +230,12 @@ class Augur:
                 random_state=random_state,
             )
         elif classifier == "logistic_regression_classifier":
-            return LogisticRegression(penalty=penalty, random_state=random_state)
+            # scikit-learn 1.8 deprecated `penalty` in favor of `l1_ratio` (the L1/L2 mix) and `C` (no penalty via C=inf).
+            if penalty in (None, "none"):
+                return LogisticRegression(C=np.inf, random_state=random_state)
+            l1_ratio = {"l2": 0.0, "l1": 1.0, "elasticnet": 0.5}[penalty]
+            solver = "saga" if l1_ratio > 0.0 else "lbfgs"
+            return LogisticRegression(l1_ratio=l1_ratio, solver=solver, random_state=random_state)
         else:
             raise ValueError("Invalid classifier")
 
@@ -520,10 +548,10 @@ class Augur:
         # standardized coefficients with Agresti method
         # cf. https://think-lab.github.io/d/205/#3
         if isinstance(self.estimator, LogisticRegression):
-            for fold, self.estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
+            for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
                 feature_importances["genes"].extend(x.columns.tolist())
                 feature_importances["feature_importances"].extend(
-                    (self.estimator.coef_ * self.estimator.coef_.std()).flatten().tolist()
+                    (estimator.coef_ * estimator.coef_.std()).flatten().tolist()
                 )
                 feature_importances["subsample_idx"].extend(len(x.columns) * [subsample_idx])
                 feature_importances["fold"].extend(len(x.columns) * [fold])
@@ -769,7 +797,8 @@ class Augur:
         adata.obs["augur_score"] = nan
         for cell_type in track(adata.obs["cell_type"].unique(), description="Processing data..."):
             cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
-            if augur_mode in ("default", "permute"):
+
+            if augur_mode in ("default", "permute") and len(cell_type_subsample) >= min_cells:
                 cell_type_subsample = (
                     self.select_highly_variable(cell_type_subsample)
                     if not select_variance_features
@@ -968,7 +997,7 @@ class Augur:
             pd.merge(
                 delta_rnd[["cell_type", "delta_rnd"]], delta[["cell_type", "delta_augur"]], on="cell_type", how="left"
             )
-            .assign(b=lambda x: (x.delta_rnd >= x.delta_augur))
+            .assign(b=lambda x: x.delta_rnd >= x.delta_augur)
             .groupby("cell_type", as_index=False)
             .sum()["b"]
         )
