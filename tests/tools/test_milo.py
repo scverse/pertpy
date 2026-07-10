@@ -696,9 +696,7 @@ def test_annotate_cells_from_nhoods_all_missing_groups(de_nhoods_mdata, milo):
 
 def test_find_nhood_group_markers_unknown_var_names(markers_mdata, milo):
     with pytest.raises(KeyError):
-        milo.find_nhood_group_markers(
-            markers_mdata, sample_col="sample", layer="counts", var_names=["not_a_real_gene"]
-        )
+        milo.find_nhood_group_markers(markers_mdata, sample_col="sample", layer="counts", var_names=["not_a_real_gene"])
 
 
 def test_find_nhood_group_markers_invalid_level(markers_mdata, milo):
