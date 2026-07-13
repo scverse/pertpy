@@ -43,7 +43,6 @@ from scvi.utils import dependencies
 from scvi.utils._docstrings import devices_dsp
 
 if TYPE_CHECKING:
-    from jaxlib.xla_extension import Device
     from numpyro.distributions import Distribution
     from scvi._types import LossRecord, Tensor
 
@@ -438,7 +437,7 @@ class JaxBaseModuleClass(flax.linen.Module):
             raise RuntimeError("Train state is not set. Train for one iteration prior to loading state dict.")
         self.train_state = flax.serialization.from_state_dict(self.train_state, state_dict)
 
-    def to(self, device: Device):
+    def to(self, device: jax.Device):
         """Move module to device."""
         import jax
 
