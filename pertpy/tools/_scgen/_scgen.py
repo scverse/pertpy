@@ -15,12 +15,13 @@ from scipy import stats
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
 from scvi.data.fields import CategoricalObsField, LayerField
-from scvi.model.base import BaseModelClass, JaxTrainingMixin
+from scvi.model.base import BaseModelClass
 from scvi.utils import setup_anndata_dsp
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 
+from ._jax import JaxTrainingMixin
 from ._scgenvae import JaxSCGENVAE
 from ._utils import balancer, extractor
 
@@ -184,7 +185,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         scdl = self._make_data_loader(adata=adata, indices=indices, batch_size=batch_size)
         decoded = []
         for tensors in scdl:
-            _, generative_outputs = self.module.as_bound()(tensors, compute_loss=False)
+            # compute_loss=False makes __call__ return a 2-tuple, not the 3-tuple mypy infers.
+            _, generative_outputs = self.module.as_bound()(tensors, compute_loss=False)  # type: ignore[misc]
             px = generative_outputs["px"]
             decoded.append(px)
 
