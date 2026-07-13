@@ -4,10 +4,9 @@ import flax.linen as nn
 import jax.numpy as jnp
 import numpyro.distributions as dist
 from scvi import REGISTRY_KEYS
-from scvi.module._jaxvae import LossOutput
-from scvi.module.base import JaxBaseModuleClass, flax_configure
 
 from ._base_components import FlaxDecoder, FlaxEncoder
+from ._jax import JaxBaseModuleClass, LossOutput, flax_configure
 
 
 @flax_configure
@@ -57,7 +56,7 @@ class JaxSCGENVAE(JaxBaseModuleClass):
     def required_rngs(self):
         return ("params", "dropout", "z")
 
-    def _get_inference_input(self, tensors: dict[str, jnp.ndarray]):
+    def _get_inference_input(self, tensors: dict[str, jnp.ndarray], **kwargs):
         x = tensors[REGISTRY_KEYS.X_KEY]
 
         input_dict = {"x": x}
@@ -78,6 +77,7 @@ class JaxSCGENVAE(JaxBaseModuleClass):
         self,
         tensors: dict[str, jnp.ndarray],
         inference_outputs: dict[str, jnp.ndarray],
+        **kwargs,
     ):
         # x = tensors[REGISTRY_KEYS.X_KEY]
         z = inference_outputs["z"]
