@@ -823,7 +823,7 @@ class JaxTrainingMixin:
         datasplitter_kwargs
             Additional keyword arguments passed into :class:`~scvi.dataloaders.DataSplitter`.
         plan_kwargs
-            Keyword args for :class:`~pertpy.tools._scgen._jax.JaxTrainingPlan`. Keyword arguments
+            Keyword args for ``JaxTrainingPlan``. Keyword arguments
             passed to `train()` will overwrite values present in `plan_kwargs`, when appropriate.
         **trainer_kwargs
             Other keyword args for :class:`~scvi.train.Trainer`.
