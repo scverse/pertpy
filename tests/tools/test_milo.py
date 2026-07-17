@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
+import scipy.sparse as sp
+from anndata import AnnData
 from mudata import MuData
 
 import pertpy as pt
@@ -439,3 +441,321 @@ def test_add_nhood_expression_nhood_mean_range(add_nhood_expression_mdata, milo)
     nhood_cells = mdata["rna"].obs_names[mdata["rna"].obsm["nhoods"][:, nhood_ix].toarray().ravel() == 1]
     mean_gex = np.array(mdata["rna"][nhood_cells].X.mean(axis=0)).ravel()
     assert nhood_gex == pytest.approx(mean_gex, 0.0001)
+
+
+@pytest.fixture
+def grouped_mdata(de_nhoods_mdata, milo, rng):
+    """Milo object with a neighbourhood graph, synthetic DA results, groups and per-cell annotations."""
+    pytest.importorskip("igraph")
+    mdata = de_nhoods_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    n = mdata["milo"].n_vars
+    n_da = max(2, n // 4)
+    mdata["milo"].var["logFC"] = rng.normal(0.0, 2.0, size=n)
+    fdr = rng.uniform(0.2, 1.0, size=n)
+    fdr[rng.choice(n, size=n_da, replace=False)] = rng.uniform(0.0, 0.05, size=n_da)
+    mdata["milo"].var["SpatialFDR"] = fdr
+    milo.group_nhoods(mdata)
+    milo.annotate_cells_from_nhoods(mdata)
+    return mdata
+
+
+def test_group_nhoods_from_adjacency_filters(milo):
+    pytest.importorskip("igraph")
+    # two triangles ({0,1,2} and {3,4,5}) joined by a single weak bridge (2-3)
+    weights = np.array(
+        [
+            [0, 5, 5, 0, 0, 0],
+            [5, 0, 5, 0, 0, 0],
+            [5, 5, 0, 1, 0, 0],
+            [0, 0, 1, 0, 5, 5],
+            [0, 0, 0, 5, 0, 5],
+            [0, 0, 0, 5, 5, 0],
+        ],
+        dtype=float,
+    )
+    adjacency = sp.csr_matrix(weights)
+    is_da = np.ones(6, dtype=bool)
+
+    # the bridge is sign-discordant, so it is dropped and the triangles form separate groups
+    discordant = pd.DataFrame({"logFC": [2, 2, 2, -2, -2, -2], "SpatialFDR": [0.01] * 6})
+    labels = milo._group_nhoods_from_adjacency(adjacency, discordant, is_da, merge_discord=False)
+    assert labels[0] == labels[1] == labels[2]
+    assert labels[3] == labels[4] == labels[5]
+    assert labels[0] != labels[3]
+
+    # an overlap threshold above the bridge weight also splits the triangles
+    concordant = pd.DataFrame({"logFC": [2, 2, 2, 2, 2, 2], "SpatialFDR": [0.01] * 6})
+    labels_overlap = milo._group_nhoods_from_adjacency(adjacency, concordant, is_da, merge_discord=True, overlap=2)
+    assert labels_overlap[2] != labels_overlap[3]
+
+
+def test_group_nhoods_writes_labels(grouped_mdata):
+    # every neighbourhood is grouped, matching miloR which clusters all nhoods
+    groups = grouped_mdata["milo"].var["nhood_groups"]
+    assert groups.notna().all()
+    assert groups.nunique() >= 1
+
+
+def test_group_nhoods_requires_da_results(da_nhoods_mdata, milo):
+    with pytest.raises(KeyError):
+        milo.group_nhoods(da_nhoods_mdata)
+
+
+def test_annotate_cells_from_nhoods(grouped_mdata):
+    cell_labels = grouped_mdata["rna"].obs["nhood_groups"]
+    nhood_labels = set(grouped_mdata["milo"].var["nhood_groups"].dropna().astype(str))
+    assert cell_labels.notna().any()
+    assert set(cell_labels.dropna().astype(str)) <= nhood_labels
+
+
+@pytest.fixture
+def markers_mdata(de_nhoods_mdata, rng):
+    """Milo object with raw counts and cell-level neighbourhood groups for marker testing."""
+    mdata = de_nhoods_mdata.copy()
+    mdata["rna"].obs["nhood_groups"] = pd.Categorical(rng.choice(["g0", "g1"], size=mdata["rna"].n_obs))
+    return mdata
+
+
+def test_find_nhood_group_markers_two_group(markers_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    df = milo.find_nhood_group_markers(
+        markers_mdata, group_to_compare="g1", baseline="g0", sample_col="sample", layer="counts"
+    )
+    assert {"variable", "log_fc", "p_value", "adj_p_value"}.issubset(df.columns)
+    assert "group" not in df.columns
+    assert len(df) > 0
+    assert df["p_value"].dropna().between(0, 1).all()
+
+
+def test_find_nhood_group_markers_one_vs_rest(markers_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    mdata = markers_mdata.copy()
+    mdata["rna"].obs["nhood_groups"] = pd.Categorical(np.resize(["g0", "g1", "g2"], mdata["rna"].n_obs))
+    df = milo.find_nhood_group_markers(mdata, sample_col="sample", layer="counts")
+    assert "group" in df.columns
+    assert df["group"].nunique() > 1
+
+
+def test_find_nhood_group_markers_invalid_args(markers_mdata, milo):
+    with pytest.raises(ValueError):
+        milo.find_nhood_group_markers(markers_mdata, baseline="g0", sample_col="sample", layer="counts")
+    with pytest.raises(ValueError):
+        milo.find_nhood_group_markers(
+            markers_mdata, group_to_compare="g0", baseline="g0", sample_col="sample", layer="counts"
+        )
+    with pytest.raises(KeyError):
+        milo.find_nhood_group_markers(markers_mdata, nhood_group_key="missing", sample_col="sample", layer="counts")
+
+
+# --- _nhood_subset_mask -------------------------------------------------
+
+
+def test_nhood_subset_mask_boolean(milo):
+    names = np.array([f"nhood_{i}" for i in range(4)])
+    subset = np.array([True, False, True, False])
+    mask = milo._nhood_subset_mask(names, subset)
+    assert mask.dtype == bool
+    np.testing.assert_array_equal(mask, subset)
+
+
+def test_nhood_subset_mask_integer_index(milo):
+    names = np.array([f"nhood_{i}" for i in range(4)])
+    mask = milo._nhood_subset_mask(names, [0, 2])
+    np.testing.assert_array_equal(mask, np.array([True, False, True, False]))
+
+
+def test_nhood_subset_mask_names(milo):
+    names = np.array([f"nhood_{i}" for i in range(4)])
+    mask = milo._nhood_subset_mask(names, ["nhood_0", "nhood_2"])
+    np.testing.assert_array_equal(mask, np.array([True, False, True, False]))
+
+
+def test_nhood_subset_mask_boolean_wrong_length(milo):
+    names = np.array([f"nhood_{i}" for i in range(4)])
+    with pytest.raises(ValueError):
+        milo._nhood_subset_mask(names, np.array([True, False]))
+
+
+# --- group_nhoods --------------------------------------------------------
+
+
+@pytest.fixture
+def abundance_mdata(de_nhoods_mdata, rng):
+    """MuData with synthetic per-nhood DA results (SpatialFDR/logFC) but no nhood graph built yet."""
+    mdata = de_nhoods_mdata.copy()
+    n = mdata["milo"].n_vars
+    n_da = max(2, n // 4)
+    mdata["milo"].var["logFC"] = rng.normal(0.0, 2.0, size=n)
+    fdr = rng.uniform(0.2, 1.0, size=n)
+    fdr[rng.choice(n, size=n_da, replace=False)] = rng.uniform(0.0, 0.05, size=n_da)
+    mdata["milo"].var["SpatialFDR"] = fdr
+    return mdata
+
+
+def test_group_nhoods_missing_nhood_connectivities(abundance_mdata, milo):
+    # build_nhood_graph was never run, so `nhood_connectivities` is absent from varp
+    with pytest.raises(KeyError):
+        milo.group_nhoods(abundance_mdata)
+
+
+def test_group_nhoods_all_fdr_nan(abundance_mdata, milo):
+    mdata = abundance_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    mdata["milo"].var["SpatialFDR"] = np.nan
+    with pytest.raises(ValueError):
+        milo.group_nhoods(mdata)
+
+
+def test_group_nhoods_zero_da_nhoods(abundance_mdata, milo):
+    mdata = abundance_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    with pytest.raises(ValueError):
+        milo.group_nhoods(mdata, da_fdr=0)
+
+
+def test_group_nhoods_subset_boolean(abundance_mdata, milo):
+    pytest.importorskip("igraph")
+    mdata = abundance_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    n = mdata["milo"].n_vars
+    mask = np.zeros(n, dtype=bool)
+    mask[: n // 2] = True
+    milo.group_nhoods(mdata, subset_nhoods=mask)
+    groups = mdata["milo"].var["nhood_groups"]
+    assert groups[mask].notna().all()
+    assert groups[~mask].isna().all()
+
+
+def test_group_nhoods_subset_int_indices(abundance_mdata, milo):
+    pytest.importorskip("igraph")
+    mdata = abundance_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    n = mdata["milo"].n_vars
+    idx = list(range(n // 2))
+    milo.group_nhoods(mdata, subset_nhoods=idx)
+    groups = mdata["milo"].var["nhood_groups"]
+    mask = np.zeros(n, dtype=bool)
+    mask[idx] = True
+    assert groups[mask].notna().all()
+    assert groups[~mask].isna().all()
+
+
+def test_group_nhoods_subset_names(abundance_mdata, milo):
+    pytest.importorskip("igraph")
+    mdata = abundance_mdata.copy()
+    milo.build_nhood_graph(mdata)
+    n = mdata["milo"].n_vars
+    names = list(mdata["milo"].var_names[: n // 2])
+    milo.group_nhoods(mdata, subset_nhoods=names)
+    groups = mdata["milo"].var["nhood_groups"]
+    assert groups.loc[names].notna().all()
+    assert groups.drop(index=names).isna().all()
+
+
+def test_group_nhoods_max_lfc_delta(milo):
+    pytest.importorskip("igraph")
+    # fully-connected graph over 6 nhoods with concordant logFC signs (all positive),
+    # so neither the discordance filter nor the graph topology alone would split it;
+    # only `max_lfc_delta` can prune the cross-magnitude edges into two triangles.
+    weights = np.ones((6, 6)) - np.eye(6)
+    adata = AnnData(np.zeros((1, 6)))
+    adata.var["logFC"] = [2.0, 2.0, 2.0, 20.0, 20.0, 20.0]
+    adata.var["SpatialFDR"] = 0.01
+    adata.varp["nhood_connectivities"] = sp.csr_matrix(weights)
+
+    milo.group_nhoods(adata, max_lfc_delta=None, key_added="groups_no_delta")
+    milo.group_nhoods(adata, max_lfc_delta=1.0, key_added="groups_with_delta")
+
+    no_delta = adata.var["groups_no_delta"]
+    with_delta = adata.var["groups_with_delta"]
+    assert no_delta.iloc[0] == no_delta.iloc[3]
+    assert with_delta.iloc[0] != with_delta.iloc[3]
+
+
+# --- annotate_cells_from_nhoods ------------------------------------------
+
+
+def test_annotate_cells_from_nhoods_missing_groups(de_nhoods_mdata, milo):
+    mdata = de_nhoods_mdata.copy()
+    with pytest.raises(KeyError):
+        milo.annotate_cells_from_nhoods(mdata)
+
+
+def test_annotate_cells_from_nhoods_all_missing_groups(de_nhoods_mdata, milo):
+    mdata = de_nhoods_mdata.copy()
+    mdata["milo"].var["nhood_groups"] = pd.array([pd.NA] * mdata["milo"].n_vars, dtype="object")
+    with pytest.raises(ValueError):
+        milo.annotate_cells_from_nhoods(mdata)
+
+
+# --- find_nhood_group_markers --------------------------------------------
+
+
+def test_find_nhood_group_markers_unknown_var_names(markers_mdata, milo):
+    with pytest.raises(KeyError):
+        milo.find_nhood_group_markers(markers_mdata, sample_col="sample", layer="counts", var_names=["not_a_real_gene"])
+
+
+def test_find_nhood_group_markers_invalid_level(markers_mdata, milo):
+    with pytest.raises(ValueError):
+        milo.find_nhood_group_markers(
+            markers_mdata, group_to_compare="not_a_group", baseline="g0", sample_col="sample", layer="counts"
+        )
+    with pytest.raises(ValueError):
+        milo.find_nhood_group_markers(
+            markers_mdata, group_to_compare="g1", baseline="not_a_group", sample_col="sample", layer="counts"
+        )
+
+
+def test_find_nhood_group_markers_single_group_after_aggregation(markers_mdata, milo):
+    mdata = markers_mdata.copy()
+    mdata["rna"].obs["nhood_groups"] = pd.Categorical(["g0"] * mdata["rna"].n_obs)
+    with pytest.raises(ValueError):
+        milo.find_nhood_group_markers(mdata, sample_col="sample", layer="counts")
+
+
+def test_find_nhood_group_markers_var_names_restriction(markers_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    mdata = markers_mdata.copy()
+    genes = list(mdata["rna"].var_names[:5])
+    df = milo.find_nhood_group_markers(
+        mdata, group_to_compare="g1", baseline="g0", sample_col="sample", layer="counts", var_names=genes
+    )
+    assert set(df["variable"]) <= set(genes)
+    assert len(df) <= len(genes)
+
+
+def test_find_nhood_group_markers_n_top_genes(markers_mdata, milo):
+    if find_spec("pydeseq2") is None:
+        pytest.skip("pydeseq2 not available")
+    mdata = markers_mdata.copy()
+    n_top = 5
+    df = milo.find_nhood_group_markers(
+        mdata, group_to_compare="g1", baseline="g0", sample_col="sample", layer="counts", n_top_genes=n_top
+    )
+    assert df["variable"].nunique() <= n_top
+
+
+def test_find_nhood_group_markers_edger_solver(markers_mdata, milo):
+    try:
+        from rpy2.robjects.packages import importr
+
+        importr("edgeR")
+    except Exception:  # noqa: BLE001
+        pytest.skip("Required R package 'edgeR' not available")
+    df = milo.find_nhood_group_markers(
+        markers_mdata, group_to_compare="g1", baseline="g0", sample_col="sample", layer="counts", solver="edger"
+    )
+    assert {"variable", "log_fc", "p_value", "adj_p_value"}.issubset(df.columns)
+    assert len(df) > 0
+
+
+def test_find_nhood_group_markers_unknown_solver(markers_mdata, milo):
+    with pytest.raises(ValueError):
+        milo.find_nhood_group_markers(
+            markers_mdata, group_to_compare="g1", baseline="g0", sample_col="sample", layer="counts", solver="nope"
+        )

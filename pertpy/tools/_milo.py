@@ -5,7 +5,7 @@ import io
 import random
 import re
 from importlib.util import find_spec
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,13 +20,13 @@ from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
 
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
     from matplotlib.figure import Figure
 
-from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
 from sklearn.metrics.pairwise import euclidean_distances
 
 
@@ -410,7 +410,8 @@ class Milo:
             # Fit NB-GLM
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
             lib_size_filtered = lib_size[keep_smp]
-            count_mat_r = numpy2ri.py2rpy(counts_filtered)
+            with localconverter(ro.default_converter + numpy2ri.converter):
+                count_mat_r = numpy2ri.py2rpy(counts_filtered)
             lib_size_r = FloatVector(lib_size_filtered)
             dge = edgeR.DGEList(counts=count_mat_r, lib_size=lib_size_r)
             dge = edgeR.calcNormFactors(dge, method="TMM")
@@ -1302,6 +1303,77 @@ class Milo:
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_nhood_annotation(  # pragma: no cover # noqa: D417
+        self,
+        mdata: MuData,
+        annotation_key: str = "nhood_groups",
+        *,
+        min_size: int = 10,
+        plot_edges: bool = False,
+        title: str | None = None,
+        palette: str | Sequence[str] | None = None,
+        ax: Axes | None = None,
+        return_fig: bool = False,
+        **kwargs,
+    ) -> Figure | None:
+        """Visualize a categorical neighbourhood annotation on the neighbourhood graph.
+
+        Colours each neighbourhood on the :meth:`build_nhood_graph` embedding by a categorical column in ``mdata["milo"].var``, such as the groups from :meth:`group_nhoods`.
+        For continuous differential-abundance logFC use :meth:`plot_nhood_graph` instead.
+
+        Args:
+            mdata: MuData with :meth:`build_nhood_graph` already run.
+            annotation_key: Categorical column in ``mdata["milo"].var`` to colour by.
+            min_size: Multiplier on ``Nhood_size`` for the node radius.
+            plot_edges: Whether to draw neighbourhood overlap edges.
+            title: Plot title; defaults to ``annotation_key``.
+            palette: Colours for the annotation categories.
+            {common_plot_args}
+            **kwargs: Additional arguments to :func:`scanpy.pl.embedding`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> sc.tl.umap(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.da_nhoods(mdata, design="~label")
+            >>> milo.build_nhood_graph(mdata)
+            >>> milo.group_nhoods(mdata)
+            >>> milo.plot_nhood_annotation(mdata, annotation_key="nhood_groups")
+        """
+        nhood_adata = mdata["milo"].T.copy()
+        if "Nhood_size" not in nhood_adata.obs.columns:
+            raise KeyError('Cannot find "Nhood_size"; please run milo.build_nhood_graph(mdata) first.')
+        if annotation_key not in nhood_adata.obs.columns:
+            raise KeyError(f"Cannot find {annotation_key!r} in mdata['milo'].var.")
+
+        nhood_adata.obs["graph_color"] = nhood_adata.obs[annotation_key].astype("category")
+        fig = sc.pl.embedding(
+            nhood_adata,
+            "X_milo_graph",
+            color="graph_color",
+            size=nhood_adata.obs["Nhood_size"] * min_size,
+            edges=plot_edges,
+            neighbors_key="nhood",
+            sort_order=False,
+            frameon=False,
+            title=title if title is not None else annotation_key,
+            palette=palette,
+            ax=ax,
+            show=False,
+            **kwargs,
+        )
+        if return_fig:
+            return fig
+        plt.show()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_nhood(  # pragma: no cover # noqa: D417
         self,
         mdata: MuData,
@@ -1581,3 +1653,318 @@ class Milo:
             plt.show()
 
         return None
+
+    def _nhood_subset_mask(
+        self,
+        names: np.ndarray,
+        subset: pd.Series | np.ndarray | Sequence[int] | Sequence[str],
+    ) -> np.ndarray:
+        """Resolve ``subset_nhoods`` (boolean mask, integer indices, or neighbourhood names) to a boolean mask over ``names``."""
+        if isinstance(subset, pd.Series | np.ndarray) and np.asarray(subset).dtype == bool:
+            mask = np.asarray(subset, dtype=bool)
+            if mask.shape[0] != len(names):
+                raise ValueError("Boolean `subset_nhoods` must match the number of neighbourhoods.")
+            return mask
+        arr = np.asarray(list(subset))
+        if np.issubdtype(arr.dtype, np.integer):
+            mask = np.zeros(len(names), dtype=bool)
+            mask[arr.astype(int)] = True
+            return mask
+        return np.isin(names.astype(str), arr.astype(str))
+
+    def _group_nhoods_from_adjacency(
+        self,
+        adjacency: spmatrix,
+        da_res: pd.DataFrame,
+        is_da: np.ndarray,
+        *,
+        merge_discord: bool = False,
+        overlap: int = 1,
+        max_lfc_delta: float | None = None,
+    ) -> np.ndarray:
+        """Filter the neighbourhood adjacency graph and cluster it with Louvain.
+
+        Edges are dropped between differentially abundant neighbourhoods with opposing logFC signs (unless ``merge_discord``), below ``overlap`` shared cells, or with an absolute logFC difference above ``max_lfc_delta``.
+
+        Returns:
+            Array of string group labels, one per row of ``da_res``.
+        """
+        if find_spec("igraph") is None:
+            raise ImportError(
+                "`group_nhoods` requires the optional GPL-licensed package 'igraph'. Install it with: pip install igraph"
+            )
+
+        adjacency = adjacency.tocsr() if issparse(adjacency) else csr_matrix(adjacency)
+        edges = adjacency.tocoo()
+        rows, cols, data = edges.row, edges.col, edges.data
+
+        logfc = da_res["logFC"].to_numpy()
+        keep = np.ones(data.shape[0], dtype=bool)
+        if not merge_discord:
+            signs = np.sign(logfc)
+            keep &= ~(is_da[rows] & is_da[cols] & (signs[rows] * signs[cols] < 0))
+        if overlap > 1:
+            keep &= data >= overlap
+        if max_lfc_delta is not None:
+            keep &= np.abs(logfc[rows] - logfc[cols]) <= max_lfc_delta
+
+        n = adjacency.shape[0]
+        pruned = coo_matrix((data[keep], (rows[keep], cols[keep])), shape=(n, n))
+        pruned = (pruned > 0).astype(int).tocsr()
+
+        graph = sc._utils.get_igraph_from_adjacency(pruned, directed=False)
+        return np.array(graph.community_multilevel(weights=None).membership, dtype=str)
+
+    def group_nhoods(
+        self,
+        data: AnnData | MuData,
+        *,
+        feature_key: str = "milo",
+        da_fdr: float = 0.1,
+        overlap: int = 1,
+        max_lfc_delta: float | None = None,
+        merge_discord: bool = False,
+        subset_nhoods: pd.Series | np.ndarray | Sequence[int] | Sequence[str] | None = None,
+        key_added: str = "nhood_groups",
+    ) -> None:
+        """Group differentially abundant neighbourhoods into clusters with Louvain community detection.
+
+        This is a Python re-implementation of miloR's ``groupNhoods``.
+        All neighbourhoods are clustered on the neighbourhood graph in ``.varp["nhood_connectivities"]`` (built by :meth:`build_nhood_graph`) with Louvain community detection.
+        Beforehand, edges between differentially abundant neighbourhoods (``SpatialFDR < da_fdr``) with discordant logFC signs are removed, and edges are optionally filtered by shared-cell overlap and logFC difference.
+        Group labels are written to ``.var[key_added]``, with missing labels only for neighbourhoods excluded by ``subset_nhoods``.
+
+        Requires the optional GPL-licensed ``igraph`` package.
+
+        Args:
+            data: AnnData with Milo results, or the MuData holding modality ``feature_key``.
+            feature_key: Modality to use when ``data`` is a MuData.
+            da_fdr: SpatialFDR threshold below which neighbourhoods are considered differentially abundant.
+            overlap: Minimum number of shared cells for an edge between two neighbourhoods to be kept.
+            max_lfc_delta: If given, drop edges between neighbourhoods whose logFC differs by more than this.
+            merge_discord: If False, drop edges between differentially abundant neighbourhoods with opposite logFC signs.
+            subset_nhoods: Restrict clustering to these neighbourhoods (boolean mask, integer indices, or names).
+            key_added: Column in ``.var`` to store the group labels.
+
+        Returns:
+            Nothing, writes ``.var[key_added]`` in place.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.da_nhoods(mdata, design="~label")
+            >>> milo.build_nhood_graph(mdata)
+            >>> milo.group_nhoods(mdata)
+        """
+        adata = data[feature_key] if isinstance(data, MuData) else data
+        for col in ("SpatialFDR", "logFC"):
+            if col not in adata.var:
+                raise KeyError(f"`adata.var` must contain '{col}'; run `da_nhoods` first.")
+        if "nhood_connectivities" not in adata.varp:
+            raise KeyError("`adata.varp['nhood_connectivities']` is missing; run `build_nhood_graph` first.")
+
+        fdr = adata.var["SpatialFDR"].to_numpy()
+        if np.all(np.isnan(fdr)):
+            raise ValueError("All `SpatialFDR` values are NaN; run `da_nhoods` before grouping.")
+        is_da = fdr < da_fdr
+        if not is_da.any():
+            raise ValueError(f"No differentially abundant neighbourhoods at SpatialFDR < {da_fdr}.")
+
+        names = adata.var_names.to_numpy()
+        mask = (
+            self._nhood_subset_mask(names, subset_nhoods)
+            if subset_nhoods is not None
+            else np.ones(len(names), dtype=bool)
+        )
+
+        labels = self._group_nhoods_from_adjacency(
+            adata.varp["nhood_connectivities"][mask, :][:, mask],
+            adata.var.loc[mask],
+            is_da[mask],
+            merge_discord=merge_discord,
+            overlap=overlap,
+            max_lfc_delta=max_lfc_delta,
+        )
+
+        groups = pd.Series(pd.NA, index=adata.var_names, dtype="object")
+        groups[names[mask]] = labels
+        adata.var[key_added] = pd.Categorical(groups)
+
+    def annotate_cells_from_nhoods(
+        self,
+        data: MuData,
+        *,
+        feature_key: str = "rna",
+        nhood_group_key: str = "nhood_groups",
+        min_nhoods: int = 1,
+        key_added: str = "nhood_groups",
+    ) -> None:
+        """Propagate neighbourhood group labels to individual cells.
+
+        Each cell is assigned the neighbourhood group it belongs to most often across the neighbourhoods it is part of.
+        Cells in fewer than ``min_nhoods`` labelled neighbourhoods receive a missing label.
+
+        Args:
+            data: MuData with the cell modality ``feature_key`` and Milo results in ``data["milo"]``.
+            feature_key: Cell-level modality to annotate.
+            nhood_group_key: Column in ``data["milo"].var`` with neighbourhood group labels, as written by :meth:`group_nhoods`.
+            min_nhoods: Minimum number of labelled neighbourhoods a cell must belong to, to receive a label.
+            key_added: Column in ``data[feature_key].obs`` to store the per-cell labels.
+
+        Returns:
+            Nothing, writes ``data[feature_key].obs[key_added]`` in place.
+        """
+        adata = data[feature_key]
+        nhood_labels = data["milo"].var
+        if nhood_group_key not in nhood_labels:
+            raise KeyError(f"`data['milo'].var['{nhood_group_key}']` is missing; run `group_nhoods` first.")
+
+        labels = nhood_labels[nhood_group_key].to_numpy()
+        categories = pd.unique(pd.Series(labels).dropna())
+        if len(categories) == 0:
+            raise ValueError(f"'{nhood_group_key}' has no non-missing neighbourhood group labels.")
+
+        nhoods = adata.obsm["nhoods"]
+        nhoods = nhoods.tocsr() if issparse(nhoods) else csr_matrix(nhoods)
+
+        counts = np.column_stack([np.asarray(nhoods[:, labels == group].sum(axis=1)).ravel() for group in categories])
+        total = counts.sum(axis=1)
+        assigned = np.asarray(categories, dtype=object)[counts.argmax(axis=1)]
+        assigned[total < max(min_nhoods, 1)] = pd.NA
+        adata.obs[key_added] = pd.Categorical(assigned)
+
+    def find_nhood_group_markers(
+        self,
+        data: AnnData | MuData,
+        *,
+        group_to_compare: str | None = None,
+        baseline: str | None = None,
+        nhood_group_key: str = "nhood_groups",
+        sample_col: str = "sample",
+        covariates: Collection[str] | None = None,
+        feature_key: str = "rna",
+        layer: str | None = None,
+        n_top_genes: int | None = None,
+        var_names: Collection[str] | None = None,
+        solver: Literal["pydeseq2", "edger"] = "pydeseq2",
+    ) -> pd.DataFrame:
+        """Find marker genes of neighbourhood groups with pseudobulk differential expression.
+
+        Cells are aggregated into pseudobulk samples per (``sample_col``, ``nhood_group_key``) combination and tested for differential expression between groups, reusing pertpy's :class:`~pertpy.tools.PyDESeq2` and :class:`~pertpy.tools.EdgeR` methods.
+        With both ``group_to_compare`` and ``baseline`` a single two-group contrast is run, otherwise each group is tested against all others.
+        Neighbourhood group labels are expected at the cell level, as written by :meth:`annotate_cells_from_nhoods`.
+
+        Args:
+            data: AnnData, or the MuData holding the cell modality ``feature_key``.
+            group_to_compare: Group to test in a two-group contrast; must be a level of ``nhood_group_key``.
+            baseline: Reference group in a two-group contrast; must be a level of ``nhood_group_key``.
+            nhood_group_key: Column in ``.obs`` with per-cell neighbourhood group labels; cells with missing labels are dropped.
+            sample_col: Column in ``.obs`` identifying the samples to pseudobulk over.
+            covariates: Additional ``.obs`` columns to include in the design formula.
+            feature_key: Modality to use when ``data`` is a MuData.
+            layer: Layer with raw counts to aggregate; ``X`` is used if None.
+            n_top_genes: If given, restrict testing to this many highly variable genes.
+            var_names: If given, restrict testing to these genes; overrides ``n_top_genes``.
+            solver: Differential expression backend, ``"pydeseq2"`` or ``"edger"``.
+
+        Returns:
+            A :class:`~pandas.DataFrame` with one row per gene and columns ``variable``, ``log_fc``, ``p_value`` and ``adj_p_value``, plus a ``group`` column when testing one-vs-rest.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.bhattacherjee()
+            >>> milo = pt.tl.Milo()
+            >>> mdata = milo.load(adata)
+            >>> sc.pp.neighbors(mdata["rna"])
+            >>> milo.make_nhoods(mdata["rna"])
+            >>> mdata = milo.count_nhoods(mdata, sample_col="orig.ident")
+            >>> milo.da_nhoods(mdata, design="~label")
+            >>> milo.build_nhood_graph(mdata)
+            >>> milo.group_nhoods(mdata)
+            >>> milo.annotate_cells_from_nhoods(mdata)
+            >>> markers = milo.find_nhood_group_markers(mdata, sample_col="orig.ident")
+        """
+        adata = data[feature_key] if isinstance(data, MuData) else data
+        covariates = list(covariates) if covariates is not None else []
+
+        for col in (nhood_group_key, sample_col, *covariates):
+            if col not in adata.obs:
+                raise KeyError(f"'{col}' not found in `adata.obs`.")
+        if var_names is not None:
+            missing = set(var_names) - set(adata.var_names)
+            if missing:
+                raise KeyError(f"`var_names` not in `adata.var_names`: {sorted(missing)}.")
+
+        two_group = group_to_compare is not None or baseline is not None
+        if two_group and (group_to_compare is None or baseline is None):
+            raise ValueError("Provide both `group_to_compare` and `baseline`, or neither for one-vs-rest testing.")
+
+        groups = adata.obs[nhood_group_key].astype("category")
+        adata = adata[groups.notna()]
+        if two_group:
+            levels = groups.cat.categories
+            for name, value in (("group_to_compare", group_to_compare), ("baseline", baseline)):
+                if value not in levels:
+                    raise ValueError(f"`{name}` '{value}' is not a level of '{nhood_group_key}' ({list(levels)}).")
+            if group_to_compare == baseline:
+                raise ValueError("`group_to_compare` and `baseline` must differ.")
+
+        by = list(dict.fromkeys([sample_col, nhood_group_key, *covariates]))
+        pdata = sc.get.aggregate(adata, by=by, func="sum", layer=layer)
+        pdata.X = pdata.layers["sum"]
+        if issparse(pdata.X):
+            pdata.X = pdata.X.toarray()
+        if pdata.obs[nhood_group_key].nunique() < 2:
+            raise ValueError(f"Fewer than two groups in '{nhood_group_key}' after aggregation.")
+
+        if var_names is not None:
+            pdata = pdata[:, list(var_names)].copy()
+        elif n_top_genes:
+            norm = pdata.copy()
+            sc.pp.normalize_total(norm)
+            sc.pp.log1p(norm)
+            sc.pp.highly_variable_genes(norm, n_top_genes=min(n_top_genes, norm.n_vars))
+            pdata = pdata[:, norm.var["highly_variable"].to_numpy()].copy()
+
+        if solver == "pydeseq2":
+            if find_spec("pydeseq2") is None:
+                raise ImportError("The 'pydeseq2' solver requires pydeseq2. Install it with: pip install pydeseq2")
+            from pertpy.tools._differential_gene_expression._pydeseq2 import PyDESeq2
+
+            model_cls: type = PyDESeq2
+        elif solver == "edger":
+            from pertpy.tools._differential_gene_expression._edger import EdgeR
+
+            model_cls = EdgeR
+        else:
+            raise ValueError(f"Unknown solver {solver!r}; use 'pydeseq2' or 'edger'.")
+
+        def _contrast(pbulk: AnnData, column: str, ref: str, alt: str) -> pd.DataFrame:
+            design = "~" + " + ".join([*covariates, column])
+            with contextlib.redirect_stdout(io.StringIO()):
+                model = model_cls(pbulk, design=design)
+                model.fit()
+                res = model.test_contrasts(model.contrast(column=column, baseline=ref, group_to_compare=alt))
+            return res[["variable", "log_fc", "p_value", "adj_p_value"]].reset_index(drop=True)
+
+        if two_group:
+            return _contrast(pdata, nhood_group_key, baseline, group_to_compare)
+
+        results = []
+        for group in pdata.obs[nhood_group_key].cat.categories:
+            recoded = pdata.copy()
+            recoded.obs["nhood_group_ovr"] = pd.Categorical(
+                np.where(recoded.obs[nhood_group_key] == group, str(group), "rest"),
+                categories=["rest", str(group)],
+            )
+            res = _contrast(recoded, "nhood_group_ovr", "rest", str(group))
+            res["group"] = group
+            results.append(res)
+        return pd.concat(results, ignore_index=True)
