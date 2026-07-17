@@ -10,6 +10,7 @@ repos:
       rev: v2.5.3
       hooks:
           - id: biome-format
+            exclude: ^\.cruft\.json$ # inconsistent indentation with cruft - file never to be modified manually.
     - repo: https://github.com/astral-sh/ruff-pre-commit
       rev: v0.15.21
       hooks:
@@ -39,3 +40,8 @@ repos:
             args: [--no-strict-optional, --ignore-missing-imports]
             additional_dependencies:
                 ["types-setuptools", "types-requests", "types-attrs"]
+    - repo: https://github.com/zizmorcore/zizmor-pre-commit
+      rev: v1.24.1
+      hooks:
+          - id: zizmor
+            args: [--no-progress, --fix]

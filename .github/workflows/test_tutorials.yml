@@ -10,6 +10,9 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
+permissions:
+    contents: read
+
 jobs:
     test:
         runs-on: ubuntu-latest
@@ -42,14 +45,15 @@ jobs:
                     ]
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
               with:
                 filter: blob:none
                 fetch-depth: 0
                 submodules: "true"
+                persist-credentials: false
 
             - name: Cache pertpy's metadata folder
-              uses: actions/cache@v4
+              uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
               with:
                 path: cache
                 key: ${{ runner.os }}-pertpy-cache-${{ hashFiles('pertpy/metadata/**') }}
@@ -57,7 +61,7 @@ jobs:
                   ${{ runner.os }}-pertpy-cache
 
             - name: Cache data aka datasets folder
-              uses: actions/cache@v4
+              uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
               with:
                 path: data
                 key: ${{ runner.os }}-pertpy-data
@@ -65,24 +69,24 @@ jobs:
                   ${{ runner.os }}-pertpy-data
 
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
               with:
                   python-version: "3.14"
             - name: Install R
-              uses: r-lib/actions/setup-r@v2
+              uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
               with:
                   r-version: "4.5.3"
                   use-public-rspm: true
 
             - name: Install R dependencies
-              uses: r-lib/actions/setup-r-dependencies@v2
+              uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
               with:
                 packages: |
                   any::statmod
                   bioc::edgeR
 
             - name: Install uv
-              uses: astral-sh/setup-uv@v7
+              uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
               with:
                 enable-cache: true
                 cache-dependency-glob: pyproject.toml
