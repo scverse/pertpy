@@ -12,7 +12,6 @@ import scanpy as sc
 from anndata import AnnData
 from numba import njit, prange
 from rich.progress import track
-from scanpy.get import _get_obs_rep, _set_obs_rep
 from scipy.sparse import csr_matrix, issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -72,9 +71,9 @@ class GuideAssignment:
         layer: str | None = None,
         output_layer: str = "assigned_guides",
     ) -> None:
-        X = _get_obs_rep(adata, layer=layer)
+        X = adata.X if layer is None else adata.layers[layer]
         guide_assignments = self.assign_by_threshold(X, assignment_threshold=assignment_threshold)
-        _set_obs_rep(adata, guide_assignments, layer=output_layer)
+        adata.layers[output_layer] = guide_assignments
 
     @assign_by_threshold.register(np.ndarray)
     def _assign_by_threshold_numpy(self, X: np.ndarray, /, *, assignment_threshold: float) -> np.ndarray:
@@ -143,7 +142,7 @@ class GuideAssignment:
         obs_key: str = "assigned_guide",
         no_grna_assigned_key: str = "Negative",
     ) -> None:
-        X = _get_obs_rep(adata, layer=layer)
+        X = adata.X if layer is None else adata.layers[layer]
         guide_assignments = self.assign_to_max_guide(
             X, var=adata.var, assignment_threshold=assignment_threshold, no_grna_assigned_key=no_grna_assigned_key
         )
@@ -280,7 +279,7 @@ class GuideAssignment:
     ) -> np.ndarray | None:
         if model != "poisson_gauss_mixture":
             raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
-        X = _get_obs_rep(adata, layer=layer)
+        X = adata.X if layer is None else adata.layers[layer]
         result = self._fit_mixture_pg(
             X,
             guide_names=list(adata.var_names),

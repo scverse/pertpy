@@ -1,12 +1,20 @@
 import logging
 import tempfile
+import time
 from pathlib import Path
 from zipfile import ZipFile
 
 import pooch
+import requests
 from rich.progress import Progress, TaskID
 
+logger = logging.getLogger(__name__)
 pooch.get_logger().setLevel(logging.WARNING)
+
+# Transient network failures that are worth retrying.
+# ``urllib.error.URLError`` (e.g. "Connection reset by peer") is a subclass of ``OSError``,
+# while pooch's ``requests``-based downloader raises ``requests.exceptions.RequestException``.
+_TRANSIENT_DOWNLOAD_ERRORS = (OSError, requests.exceptions.RequestException)
 
 
 class _RichProgress:
@@ -62,14 +70,12 @@ def _download(  # pragma: no cover
         overwrite: Whether to overwrite an existing file.
         is_zip: Whether the downloaded archive should be extracted into `output_path`.
         timeout: Per-request timeout in seconds.
-        max_retries: Unused; retained for backwards compatibility.
-        retry_delay: Unused; retained for backwards compatibility.
+        max_retries: Maximum number of retries on transient network errors.
+        retry_delay: Delay in seconds between retries.
 
     Returns:
         The path of the downloaded file, or `output_path` if `is_zip` is True.
     """
-    del max_retries, retry_delay
-
     if output_path is None:
         output_path = tempfile.gettempdir()
     output_path = Path(output_path)
@@ -82,17 +88,33 @@ def _download(  # pragma: no cover
     if overwrite and target.exists():
         target.unlink()
 
-    pooch.retrieve(
-        url=url,
-        known_hash=None,
-        fname=output_file_name,
-        path=str(output_path),
-        downloader=pooch.HTTPDownloader(
-            progressbar=_RichProgress(),
-            chunk_size=block_size,
-            timeout=timeout,
-        ),
-    )
+    for attempt in range(1, max_retries + 1):
+        try:
+            pooch.retrieve(
+                url=url,
+                known_hash=None,
+                fname=output_file_name,
+                path=str(output_path),
+                downloader=pooch.HTTPDownloader(
+                    progressbar=_RichProgress(),
+                    chunk_size=block_size,
+                    timeout=timeout,
+                ),
+            )
+            break
+        except _TRANSIENT_DOWNLOAD_ERRORS as e:
+            if attempt >= max_retries:
+                logger.error("Download of %s failed after %d attempts: %s", url, max_retries, e)
+                raise
+            logger.warning(
+                "Download of %s failed (attempt %d/%d): %s. Retrying in %d seconds...",
+                url,
+                attempt,
+                max_retries,
+                e,
+                retry_delay,
+            )
+            time.sleep(retry_delay)
 
     if is_zip:
         with ZipFile(target, "r") as zip_obj:
