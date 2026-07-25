@@ -10,11 +10,40 @@ import pandas as pd
 import scipy.stats
 import statsmodels
 from anndata import AnnData
+from fast_array_utils.conv import to_dense
+from joblib import delayed
 from pandas.core.api import DataFrame
 from scipy.sparse import diags, issparse
-from tqdm.auto import tqdm
+
+from pertpy._parallel import _MAX_BLOCK_ELEMENTS, _block_slices, _parallelize_with_joblib, _spawn_rngs
 
 from ._base import MethodBase
+
+_RNG_KWARGS = ("rng", "random_state")
+
+
+def _var_block(x, block: slice) -> np.ndarray:
+    """Get a block of variables (columns) as a dense array."""
+    return to_dense(x[:, block])
+
+
+def _run_vectorized_test(test, x0_block: np.ndarray, x1_block: np.ndarray, paired: bool, kwargs: dict) -> dict:
+    """Test a block of variables at once, returning one array of values per metric."""
+    return {
+        "log_fc": np.log2(np.mean(x1_block, axis=0)) - np.log2(np.mean(x0_block, axis=0)),
+        **{
+            metric: np.atleast_1d(np.asarray(value))
+            for metric, value in test(x0_block, x1_block, paired, **kwargs).items()
+        },
+    }
+
+
+def _run_test(test, x0_var: np.ndarray, x1_var: np.ndarray, paired: bool, kwargs: dict) -> dict:
+    """Test a single variable."""
+    return {
+        "log_fc": np.log2(np.mean(x1_var)) - np.log2(np.mean(x0_var)),
+        **test(x0_var, x1_var, paired, **kwargs),
+    }
 
 
 def fdr_correction(
@@ -31,6 +60,10 @@ def fdr_correction(
 
 
 class SimpleComparisonBase(MethodBase):
+    #: Counterpart of :func:`_test` that tests a block of variables at once, which is orders of magnitude faster.
+    #: If None, :func:`_test` is called per variable instead.
+    _test_vectorized: Callable[..., dict[str, np.ndarray]] | None = None
+
     @staticmethod
     @abstractmethod
     def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, float]:
@@ -52,7 +85,7 @@ class SimpleComparisonBase(MethodBase):
         ...
 
     def _compare_single_group(
-        self, baseline_idx: np.ndarray, comparison_idx: np.ndarray, *, paired: bool, **kwargs
+        self, baseline_idx: np.ndarray, comparison_idx: np.ndarray, *, paired: bool, n_jobs: int | None = None, **kwargs
     ) -> DataFrame:
         """Perform a single comparison between two groups.
 
@@ -61,6 +94,7 @@ class SimpleComparisonBase(MethodBase):
             comparison_idx: Numeric indices indicating which observations are in the comparison/treatment group
             paired: Whether to perform a paired test. Note that in the case of a paired test,
                 the indices must be ordered such that paired observations appear at the same position.
+            n_jobs: Number of jobs to distribute the variables over, passed to `joblib.Parallel`.
             **kwargs: kwargs passed to the test function
         """
         if paired:
@@ -69,23 +103,69 @@ class SimpleComparisonBase(MethodBase):
         x0 = self.data[baseline_idx, :]
         x1 = self.data[comparison_idx, :]
 
-        # In the following loop, we are doing a lot of column slicing -- which is significantly
+        # In the following, we are doing a lot of column slicing -- which is significantly
         # more efficient in csc format.
         if issparse(self.data):
             x0 = x0.tocsc()
             x1 = x1.tocsc()
 
-        res: list[dict[str, float]] = []
-        for var in tqdm(self.adata.var_names):
-            tmp_x0 = x0[:, self.adata.var_names == var]
-            tmp_x0 = np.asarray(tmp_x0.todense()).flatten() if issparse(tmp_x0) else tmp_x0.flatten()
-            tmp_x1 = x1[:, self.adata.var_names == var]
-            tmp_x1 = np.asarray(tmp_x1.todense()).flatten() if issparse(tmp_x1) else tmp_x1.flatten()
-            test_result = self._test(tmp_x0, tmp_x1, paired, **kwargs)
-            mean_x0 = np.mean(tmp_x0)
-            mean_x1 = np.mean(tmp_x1)
-            res.append({"variable": var, "log_fc": np.log2(mean_x1) - np.log2(mean_x0), **test_result})
-        return pd.DataFrame(res).sort_values("p_value")
+        res = (
+            self._compare_blockwise(x0, x1, paired=paired, n_jobs=n_jobs, **kwargs)
+            if type(self)._test_vectorized is not None
+            else self._compare_per_variable(x0, x1, paired=paired, n_jobs=n_jobs, **kwargs)
+        )
+        res.insert(0, "variable", self.adata.var_names.to_numpy())
+        return res.sort_values("p_value")
+
+    def _compare_blockwise(self, x0, x1, *, paired: bool, n_jobs: int | None, **kwargs) -> DataFrame:
+        """Test all variables with the vectorized test, in blocks of bounded size."""
+        test = type(self)._test_vectorized
+        blocks = _block_slices(x0.shape[1], max_block_size=_MAX_BLOCK_ELEMENTS // max(x0.shape[0] + x1.shape[0], 1))
+        if not blocks:
+            return pd.DataFrame()
+        # Densifying here rather than in the workers keeps the full matrices from being sent around.
+        if len(blocks) == 1:
+            results = [
+                _run_vectorized_test(test, _var_block(x0, blocks[0]), _var_block(x1, blocks[0]), paired, dict(kwargs))
+            ]
+        else:
+            results = list(
+                _parallelize_with_joblib(
+                    (
+                        delayed(_run_vectorized_test)(
+                            test, _var_block(x0, block), _var_block(x1, block), paired, dict(kwargs)
+                        )
+                        for block in blocks
+                    ),
+                    total=len(blocks),
+                    n_jobs=n_jobs,
+                )
+            )
+        return pd.DataFrame({metric: np.concatenate([res[metric] for res in results]) for metric in results[0]})
+
+    def _compare_per_variable(self, x0, x1, *, paired: bool, n_jobs: int | None, **kwargs) -> DataFrame:
+        """Test one variable at a time, distributing the variables over jobs."""
+        test = type(self)._test
+        n_vars = x0.shape[1]
+        # One stream per variable keeps results independent of n_jobs.
+        rng_kwarg = next((key for key in _RNG_KWARGS if key in kwargs), None)
+        rngs = _spawn_rngs(kwargs[rng_kwarg], n_vars) if rng_kwarg is not None else None
+        var_kwargs = [dict(kwargs)] * n_vars if rngs is None else [{**kwargs, rng_kwarg: rng} for rng in rngs]
+        results = _parallelize_with_joblib(
+            (
+                delayed(_run_test)(
+                    test,
+                    _var_block(x0, slice(i, i + 1)).ravel(),
+                    _var_block(x1, slice(i, i + 1)).ravel(),
+                    paired,
+                    var_kwargs[i],
+                )
+                for i in range(n_vars)
+            ),
+            total=n_vars,
+            n_jobs=n_jobs,
+        )
+        return pd.DataFrame(list(results))
 
     @classmethod
     def compare_groups(
@@ -98,6 +178,7 @@ class SimpleComparisonBase(MethodBase):
         paired_by: str | None = None,
         mask: str | None = None,
         layer: str | None = None,
+        n_jobs: int | None = None,
         fit_kwargs: Mapping = MappingProxyType({}),
         test_kwargs: Mapping = MappingProxyType({}),
     ) -> DataFrame:
@@ -112,6 +193,9 @@ class SimpleComparisonBase(MethodBase):
             paired_by: Column in `adata.obs` to use for pairing. If None, an unpaired test is performed.
             mask: Mask to apply to the data.
             layer: Layer to use for the comparison.
+            n_jobs: Number of jobs to distribute the variables over, passed to `joblib.Parallel`.
+                None means one job, -1 all available cores.
+                `TTest` and `WilcoxonTest` test all variables at once and only use several jobs if the data does not fit into memory in one block.
             fit_kwargs: Unused argument for compatibility with the `MethodBase` interface, do not specify.
             test_kwargs: Additional kwargs passed to the test function.
         """
@@ -148,9 +232,9 @@ class SimpleComparisonBase(MethodBase):
         for group_to_compare in groups_to_compare:
             comparison_idx = _get_idx(column, group_to_compare)
             res_dfs.append(
-                model._compare_single_group(baseline_idx, comparison_idx, paired=paired, **test_kwargs).assign(
-                    comparison=f"{group_to_compare}_vs_{baseline if baseline is not None else 'rest'}"
-                )
+                model._compare_single_group(
+                    baseline_idx, comparison_idx, paired=paired, n_jobs=n_jobs, **test_kwargs
+                ).assign(comparison=f"{group_to_compare}_vs_{baseline if baseline is not None else 'rest'}")
             )
         return fdr_correction(pd.concat(res_dfs))
 
@@ -171,6 +255,20 @@ class WilcoxonTest(SimpleComparisonBase):
             "statistic": test_result.statistic,
         }
 
+    @staticmethod
+    def _test_vectorized(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, np.ndarray]:
+        """Perform an unpaired or paired Wilcoxon/Mann-Whitney-U test for each column of x0 and x1."""
+        test_result = (
+            scipy.stats.wilcoxon(x0, x1, axis=0, **kwargs)
+            if paired
+            else scipy.stats.mannwhitneyu(x0, x1, axis=0, **kwargs)
+        )
+
+        return {
+            "p_value": test_result.pvalue,
+            "statistic": test_result.statistic,
+        }
+
 
 class TTest(SimpleComparisonBase):
     """Perform a unpaired or paired T-test."""
@@ -178,6 +276,20 @@ class TTest(SimpleComparisonBase):
     @staticmethod
     def _test(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, float]:
         test_result = scipy.stats.ttest_rel(x0, x1, **kwargs) if paired else scipy.stats.ttest_ind(x0, x1, **kwargs)
+
+        return {
+            "p_value": test_result.pvalue,
+            "statistic": test_result.statistic,
+        }
+
+    @staticmethod
+    def _test_vectorized(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, np.ndarray]:
+        """Perform an unpaired or paired T-test for each column of x0 and x1."""
+        test_result = (
+            scipy.stats.ttest_rel(x0, x1, axis=0, **kwargs)
+            if paired
+            else scipy.stats.ttest_ind(x0, x1, axis=0, **kwargs)
+        )
 
         return {
             "p_value": test_result.pvalue,
@@ -212,6 +324,7 @@ class PermutationTest(SimpleComparisonBase):
         paired_by: str | None = None,
         mask: str | None = None,
         layer: str | None = None,
+        n_jobs: int | None = None,
         n_permutations: int = 1000,
         test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: (
             np.log2(np.mean(y) + 1e-8) - np.log2(np.mean(x) + 1e-8)
@@ -231,6 +344,9 @@ class PermutationTest(SimpleComparisonBase):
                 If None, an unpaired test is performed.
             mask: Mask to apply to the data.
             layer: Layer to use for the comparison.
+            n_jobs: Number of jobs to distribute the variables over, passed to `joblib.Parallel`.
+                None means one job, -1 all available cores.
+                Permuting is expensive and each variable is permuted independently, so this is the method that benefits the most from several jobs.
             n_permutations: Number of permutations to perform.
             test_statistic: A callable that takes two arrays (x0, x1) and returns a float statistic.
                 Defaults to log2 fold change with pseudocount: log2(mean(x1) + 1e-8) - log2(mean(x0) + 1e-8).
@@ -240,6 +356,7 @@ class PermutationTest(SimpleComparisonBase):
                 The permutation test function is `scipy.stats.permutation_test`.
                 We refer to its documentation for available options.
                 Note that `test_statistic` and `n_permutations` are set by this function and should not be provided here.
+                Passing `rng` makes the result reproducible and independent of `n_jobs`, since each variable is tested with its own stream derived from it.
 
         Examples:
             >>> # Difference in means (log fold change)
@@ -264,6 +381,7 @@ class PermutationTest(SimpleComparisonBase):
             paired_by=paired_by,
             mask=mask,
             layer=layer,
+            n_jobs=n_jobs,
             fit_kwargs=fit_kwargs,
             test_kwargs=enhanced_test_kwargs,
         )
