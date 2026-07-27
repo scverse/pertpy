@@ -159,10 +159,8 @@ git pull --rebase
 to integrate the changes into yours.
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
-One of the hooks type-checks `pertpy` and `tests` with [mypy][].
-It runs against the project environment rather than an isolated one, so that the real types of the dependencies are used.
-This means it cannot run on [pre-commit.ci][] and is instead checked by the `Pre-commit checks` job of the GitHub Actions CI.
-Type hints are optional: mypy only checks functions that carry annotations, so untyped code is left untouched.
+One of the hooks type-checks `pertpy` and `tests` with [mypy][], which the `Pre-commit checks` CI job runs on every pull request.
+Type hints are optional: mypy only checks functions that carry annotations.
 To silence a specific line, append a `# type: ignore[<error-code>]` comment.
 
 Finally, most editors have an _autoformat on save_ feature.
