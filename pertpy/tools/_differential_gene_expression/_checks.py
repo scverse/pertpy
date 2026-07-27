@@ -1,8 +1,9 @@
 import numpy as np
-from scipy.sparse import issparse, spmatrix
+
+from pertpy._types import CSBase
 
 
-def check_is_numeric_matrix(array: np.ndarray | spmatrix) -> None:
+def check_is_numeric_matrix(array: np.ndarray | CSBase) -> None:
     """Check if a matrix is numeric and only contains finite/non-NA values.
 
     Args:
@@ -13,14 +14,14 @@ def check_is_numeric_matrix(array: np.ndarray | spmatrix) -> None:
     """
     if not np.issubdtype(array.dtype, np.number):
         raise ValueError("Counts must be numeric.")
-    if issparse(array):
+    if isinstance(array, CSBase):
         if np.any(~np.isfinite(array.data)):
             raise ValueError("Counts cannot contain negative, NaN or Inf values.")
     elif np.any(~np.isfinite(array)):
         raise ValueError("Counts cannot contain negative, NaN or Inf values.")
 
 
-def check_is_integer_matrix(array: np.ndarray | spmatrix, tolerance: float = 1e-6) -> None:
+def check_is_integer_matrix(array: np.ndarray | CSBase, tolerance: float = 1e-6) -> None:
     """Check if a matrix container integers, or floats that are close to integers.
 
     Args:
@@ -30,10 +31,10 @@ def check_is_integer_matrix(array: np.ndarray | spmatrix, tolerance: float = 1e-
     Raises:
         ValueError: If the matrix contains values that are not close to integers.
     """
-    if issparse(array):
+    if isinstance(array, CSBase):
         if not array.data.dtype.kind == "i" and not np.all(np.abs(array.data - np.round(array.data)) < tolerance):
             raise ValueError("Non-zero elements of the matrix must be close to integer values.")
     elif array.dtype.kind != "i" and not np.all(np.abs(array - np.round(array)) < tolerance):
         raise ValueError("Matrix must be a count matrix.")
-    if (array < 0).sum() > 0:
+    if np.asarray((array < 0).sum()) > 0:
         raise ValueError("Non-zero elements of the matrix must be positive.")

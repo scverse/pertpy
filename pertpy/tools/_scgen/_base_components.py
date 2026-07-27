@@ -6,6 +6,7 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 if TYPE_CHECKING:
+    import jax
     import jaxlib
 
 
@@ -23,7 +24,7 @@ class FlaxEncoder(nn.Module):
     var_eps: float = 1e-4
 
     @nn.compact
-    def __call__(self, x: jnp.ndarray, training: bool | None = None) -> tuple[float, float]:
+    def __call__(self, x: jnp.ndarray, training: bool | None = None) -> tuple[jax.Array, jax.Array]:
         """Forward pass.
 
         Args:

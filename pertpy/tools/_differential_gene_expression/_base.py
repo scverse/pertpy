@@ -4,8 +4,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
 from itertools import zip_longest
 from types import MappingProxyType
+from typing import cast
 
-import adjustText
+import adjustText  # type: ignore[import-untyped]
 import anndata as ad
 import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
@@ -18,6 +19,7 @@ from scverse_misc import Deprecation, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
+from pertpy._types import CSBase, as_dense, as_frame, as_matrix
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
 
@@ -93,10 +95,10 @@ class MethodBase(ABC):
     @_doc_params(common_plot_args=doc_common_plot_args)
     @deprecated_arg(
         "pval_thresh",
-        Deprecation("1.1.0", "Use `padj_threshold`."),
+        cast("Deprecation", Deprecation("1.1.0", "Use `padj_threshold`.")),
     )
-    @deprecated_arg("pvalue_col", Deprecation("1.1.0", "Use `padj_col`."), stacklevel=2)
-    @deprecated_arg("log2fc_thresh", Deprecation("1.1.0", "Use `log2fc_threshold`."), stacklevel=3)
+    @deprecated_arg("pvalue_col", cast("Deprecation", Deprecation("1.1.0", "Use `padj_col`.")), stacklevel=2)
+    @deprecated_arg("log2fc_thresh", cast("Deprecation", Deprecation("1.1.0", "Use `log2fc_threshold`.")), stacklevel=3)
     def plot_volcano(  # pragma: no cover # noqa: D417
         self,
         data: pd.DataFrame | ad.AnnData,
@@ -107,8 +109,8 @@ class MethodBase(ABC):
         padj_col: str = "adj_p_value",
         symbol_col: str = "variable",
         to_label: int | list[str] = 5,
-        s_curve: bool | None = False,
-        colors: list[str] = None,
+        s_curve: bool = False,
+        colors: list[str] | None = None,
         varm_key: str | None = None,
         color_dict: dict[str, list[str]] | None = None,
         shape_dict: dict[str, list[str]] | None = None,
@@ -126,7 +128,7 @@ class MethodBase(ABC):
         log2fc_thresh: float | None = None,
         pval_thresh: float | None = None,
         pvalue_col: str | None = None,
-        **kwargs: int,
+        **kwargs,
     ) -> Figure | None:
         """Creates a volcano plot from a pandas DataFrame or Anndata.
 
@@ -189,7 +191,7 @@ class MethodBase(ABC):
         if colors is None:
             colors = ["gray", "#D62728", "#1F77B4"]
 
-        def _pval_reciprocal(lfc: float) -> float:
+        def _pval_reciprocal(lfc: float | np.ndarray) -> float | np.ndarray:
             """Function for relating -log10(pvalue) and logfoldchange in a reciprocal.
 
             Used for plotting the S-curve
@@ -209,7 +211,7 @@ class MethodBase(ABC):
             log2fc_col: str,
             nlog10_col: str,
             log2fc_threshold: float,
-            padj_threshold: float = None,
+            padj_threshold: float | None = None,
             s_curve: bool = False,
         ) -> str:
             """Map genes to categorize based on log2fc and pvalue.
@@ -242,9 +244,9 @@ class MethodBase(ABC):
             log2fc_col: str,
             nlog10_col: str,
             log2fc_threshold: float,
-            padj_threshold: float = None,
+            padj_threshold: float | None = None,
             s_curve: bool = False,
-            symbol_col: str = None,
+            symbol_col: str = "variable",
         ) -> str:
             """Map genes to categorize based on log2fc and pvalue.
 
@@ -384,7 +386,7 @@ class MethodBase(ABC):
             shape_col = None
 
         # build palette
-        colors = colors[: len(df.color.unique())]
+        colors = cast("list[str]", colors)[: len(df.color.unique())]
 
         # We want plot highlighted genes on top + at bigger size, split dataframe
         df_highlight = None
@@ -494,9 +496,9 @@ class MethodBase(ABC):
         groupby: str,
         pairedby: str,
         *,
-        var_names: Sequence[str] = None,
+        var_names: Sequence[str] | None = None,
         n_top_vars: int = 15,
-        layer: str = None,
+        layer: str | None = None,
         pvalue_col: str = "adj_p_value",
         symbol_col: str = "variable",
         n_cols: int = 4,
@@ -564,26 +566,30 @@ class MethodBase(ABC):
 
         adata = adata[:, var_names]
 
-        if any(adata.obs[[groupby, pairedby]].value_counts() > 1):
+        if any(as_frame(adata.obs)[[groupby, pairedby]].value_counts() > 1):
             logger.info("Performing pseudobulk for paired samples")
             ps = PseudobulkSpace()
             adata = ps.compute(adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum")
 
-        X = adata.layers[layer] if layer is not None else adata.X
+        X = as_matrix(adata.layers[layer] if layer is not None else adata.X)
         with contextlib.suppress(AttributeError):
-            X = X.toarray()
+            X = cast("CSBase", X).toarray()
 
         groupby_cols = [pairedby, groupby]
-        df = adata.obs.loc[:, groupby_cols].join(pd.DataFrame(X, index=adata.obs_names, columns=var_names))
+        df = (
+            as_frame(adata.obs)
+            .loc[:, groupby_cols]
+            .join(pd.DataFrame(as_dense(X), index=adata.obs_names, columns=list(var_names)))
+        )
 
         # remove unpaired samples
         paired_samples = set(df[df[groupby] == groups[0]][pairedby]) & set(df[df[groupby] == groups[1]][pairedby])
         df = df[df[pairedby].isin(paired_samples)]
-        removed_samples = adata.obs[pairedby].nunique() - len(df[pairedby].unique())
+        removed_samples = as_frame(adata.obs)[pairedby].nunique() - len(df[pairedby].unique())
         if removed_samples > 0:
             logger.warning(f"{removed_samples} unpaired samples removed")
 
-        pvalues = results_df.set_index(symbol_col).loc[var_names, pvalue_col].values
+        pvalues = results_df.set_index(symbol_col).loc[list(var_names), pvalue_col].values
         df.reset_index(drop=False, inplace=True)
 
         # transform data for seaborn
@@ -669,7 +675,7 @@ class MethodBase(ABC):
         self,
         results_df: pd.DataFrame,
         *,
-        var_names: Sequence[str] = None,
+        var_names: Sequence[str] | None = None,
         n_top_vars: int = 15,
         padj_threshold: float = 0.01,
         padj_col: str = "adj_p_value",
@@ -870,7 +876,7 @@ class LinearModelBase(MethodBase):
         super().__init__(adata, mask=mask, layer=layer)
         self._check_counts()
 
-        from formulaic_contrasts import FormulaicContrasts
+        from formulaic_contrasts import FormulaicContrasts  # type: ignore[import-untyped]
 
         self.formulaic_contrasts = None
         if isinstance(design, str):
@@ -953,10 +959,11 @@ class LinearModelBase(MethodBase):
         Returns:
             A dataframe with the results.
         """
-        if not isinstance(contrasts, dict):
-            contrasts = {None: contrasts}
+        contrast_map: Mapping[str | None, np.ndarray] = (
+            contrasts if isinstance(contrasts, dict) else {None: as_dense(contrasts)}
+        )
         results = []
-        for name, contrast in contrasts.items():
+        for name, contrast in contrast_map.items():
             if np.allclose(np.asarray(contrast, dtype=float), 0):
                 raise ValueError(
                     f"Contrast {name!r} is all zeros, which yields a meaningless test. "

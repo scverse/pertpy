@@ -1,4 +1,6 @@
 fail_fast: false
+ci:
+    skip: [mypy] # needs the project environment, which pre-commit.ci cannot provide
 default_language_version:
     python: python3
 default_stages:
@@ -33,13 +35,16 @@ repos:
           - id: check-merge-conflict
           - id: no-commit-to-branch
             args: ["--branch=main"]
-    - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v2.3.0
+    - repo: local
       hooks:
           - id: mypy
-            args: [--no-strict-optional, --ignore-missing-imports]
-            additional_dependencies:
-                ["types-setuptools", "types-requests", "types-attrs"]
+            name: mypy
+            entry: uv run --extra dev --extra de --extra tcoda --extra test mypy pertpy tests
+            language: system
+            types: [python]
+            files: ^(pertpy|tests)/
+            require_serial: true
+            pass_filenames: false
     - repo: https://github.com/zizmorcore/zizmor-pre-commit
       rev: v1.27.0
       hooks:

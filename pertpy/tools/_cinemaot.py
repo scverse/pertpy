@@ -1,31 +1,33 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import jax
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 import scipy.stats as ss
-import sklearn.metrics
+import sklearn.metrics  # type: ignore[import-untyped]
+from fast_array_utils.conv import to_dense
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear import linear_problem
 from ott.solvers.linear import sinkhorn, sinkhorn_lr
-from scanpy.plotting import _utils
-from scipy.sparse import issparse
+from scanpy.plotting import _utils  # type: ignore[import-untyped]
 from seaborn import heatmap
-from sklearn.decomposition import FastICA
-from sklearn.linear_model import LinearRegression
-from sklearn.neighbors import NearestNeighbors
+from sklearn.decomposition import FastICA  # type: ignore[import-untyped]
+from sklearn.linear_model import LinearRegression  # type: ignore[import-untyped]
+from sklearn.neighbors import NearestNeighbors  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._types import CSBase, as_dense, as_frame, as_matrix
 
 if TYPE_CHECKING:
     from anndata import AnnData
     from matplotlib.axes import Axes
     from matplotlib.pyplot import Figure
-    from statsmodels.tools.typing import ArrayLike
+    from statsmodels.tools.typing import ArrayLike  # type: ignore[import-untyped]
 
 
 class Cinemaot:
@@ -95,7 +97,7 @@ class Cinemaot:
 
         transformer = FastICA(n_components=dim, random_state=0, whiten="arbitrary-variance")
         X_transformed = np.array(transformer.fit_transform(adata.obsm[use_rep][:, :dim]), dtype=np.float64)
-        groupvec = (adata.obs[pert_key] == control * 1).values  # control
+        groupvec = np.asarray((as_frame(adata.obs)[pert_key] == control * 1).values)  # control
         xi = np.zeros(dim)
         j = 0
         for source_row in X_transformed.T:
@@ -114,7 +116,7 @@ class Cinemaot:
             sklearn.metrics.pairwise_distances(cf1, cf2)
 
         e = smoothness * sum(xi < thres)
-        geom = PointCloud(cf1, cf2, epsilon=e, batch_size=batch_size)
+        geom = PointCloud(jnp.asarray(cf1), jnp.asarray(cf2), epsilon=e, batch_size=batch_size)
 
         if preweight_label is None:
             ot_prob = linear_problem.LinearProblem(geom, a=None, b=None)
@@ -137,7 +139,7 @@ class Cinemaot:
 
             a = a / np.sum(a)
             b[:] = 1 / cf2.shape[0]
-            ot_prob = linear_problem.LinearProblem(geom, a=a, b=b)
+            ot_prob = linear_problem.LinearProblem(geom, a=jnp.asarray(a), b=jnp.asarray(b))
 
         if solver == "LRSinkhorn":
             if rank is None:
@@ -150,13 +152,14 @@ class Cinemaot:
                 / ot_sink.apply(np.ones_like(X_transformed[adata.obs[pert_key] == control, :].T)).T
             )
 
-            X = adata.X.toarray() if issparse(adata.X) else adata.X
+            adata_X = as_matrix(adata.X)
+            X = to_dense(adata_X)
             te2 = (
                 X[adata.obs[pert_key] != control, :]
                 - ot_sink.apply(X[adata.obs[pert_key] == control, :].T).T
                 / ot_sink.apply(np.ones_like(X[adata.obs[pert_key] == control, :].T)).T
             )
-            if issparse(X):
+            if isinstance(adata_X, CSBase):
                 del X
 
             adata.obsm[cf_rep] = cf
@@ -173,17 +176,19 @@ class Cinemaot:
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X_transformed[adata.obs[pert_key] == control, :]
             )
 
-            X = adata.X.toarray() if issparse(adata.X) else adata.X
+            adata_X = as_matrix(adata.X)
+            X = to_dense(adata_X)
 
             te2 = X[adata.obs[pert_key] != control, :] - np.matmul(
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X[adata.obs[pert_key] == control, :]
             )
-            if issparse(X):
+            if isinstance(adata_X, CSBase):
                 del X
 
             adata.obsm[cf_rep] = cf
-            adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = np.matmul(
-                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], adata.obsm[cf_rep][adata.obs[pert_key] == control, :]
+            cf_matrix = as_dense(adata.obsm[cf_rep])
+            cf_matrix[as_frame(adata.obs)[pert_key] != control, :] = np.matmul(
+                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], cf_matrix[as_frame(adata.obs)[pert_key] == control, :]
             )
 
         TE = sc.AnnData(np.array(te2), obs=adata[adata.obs[pert_key] != control, :].obs.copy(), var=adata.var.copy())
@@ -324,14 +329,11 @@ class Cinemaot:
         sc.pp.neighbors(de, use_rep=de_rep)
         sc.tl.leiden(de, resolution=de_resolution, flavor="igraph")
         if use_raw:
-            if issparse(adata.raw.X):
-                df = pd.DataFrame(adata.raw.X.toarray(), columns=adata.raw.var_names, index=adata.raw.obs_names)
-            else:
-                df = pd.DataFrame(adata.raw.X, columns=adata.raw.var_names, index=adata.raw.obs_names)
-        elif issparse(adata.X):
-            df = pd.DataFrame(adata.X.toarray(), columns=adata.var_names, index=adata.obs_names)
+            counts = to_dense(as_matrix(adata.raw.X))
+            df = pd.DataFrame(counts, columns=adata.raw.var_names, index=adata.raw.obs_names)
         else:
-            df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
+            counts = to_dense(as_matrix(adata.X))
+            df = pd.DataFrame(counts, columns=adata.var_names, index=adata.obs_names)
 
         if label_list is None:
             label_list = ["ct"]
@@ -339,7 +341,7 @@ class Cinemaot:
             sc.tl.leiden(adata, resolution=cf_resolution, flavor="igraph")
             df["ct"] = adata.obs["leiden"].astype(str)
         df["ptb"] = "control"
-        df.loc[adata.obs[pert_key] != control, "ptb"] = de.obs["leiden"].astype(str)
+        df.loc[np.asarray(as_frame(adata.obs)[pert_key] != control), "ptb"] = as_frame(de.obs)["leiden"].astype(str)
         label_list.append("ptb")
         df = df.groupby(label_list).sum()
         new_index = df.index.map(lambda x: "_".join(map(str, x)))
@@ -375,7 +377,7 @@ class Cinemaot:
             >>> dim = model.get_dim(adata)
         """
         sk = SinkhornKnopp()
-        data = adata.raw.X.toarray() if issparse(adata.raw.X) else adata.raw.X
+        data = to_dense(as_matrix(adata.raw.X))
         vm = (1e-3 + data + c * data * data) / (1 + c)
         sk.fit(vm)
         wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
@@ -416,10 +418,10 @@ class Cinemaot:
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]
         X_pca2 = adata_.obsm[use_rep][adata_.obs[pert_key] != control, :]
         nbrs = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(X_pca1)
-        mixscape_pca = adata.obsm[use_rep].copy()
+        mixscape_pca = as_dense(adata.obsm[use_rep]).copy()
         mixscapematrix = nbrs.kneighbors_graph(X_pca2).toarray()
-        mixscape_pca[adata_.obs[pert_key] != control, :] = (
-            np.dot(mixscapematrix, mixscape_pca[adata_.obs[pert_key] == control, :]) / k
+        mixscape_pca[as_frame(adata_.obs)[pert_key] != control, :] = (
+            np.dot(mixscapematrix, mixscape_pca[as_frame(adata_.obs)[pert_key] == control, :]) / k
         )
 
         adata_.obsm["X_mpca"] = mixscape_pca
@@ -431,8 +433,9 @@ class Cinemaot:
         ref_label = "noncontrol"
         expr_label = "control"
 
-        adata_.obs["ct"] = ref_label
-        adata_.obs.loc[adata_.obs[pert_key] == control, "ct"] = expr_label
+        obs_ = as_frame(adata_.obs)
+        obs_["ct"] = ref_label
+        obs_.loc[obs_[pert_key] == control, "ct"] = expr_label
         pert_key = "ct"
         z = np.zeros(adata_.shape[0]) + 1
 
@@ -610,20 +613,13 @@ class Cinemaot:
             >>> model = pt.tl.Cinemaot()
             >>> c_effect, s_effect = model.attribution_scatter(adata, pert_key="perturbation", control="No stimulation")
         """
-        cf = adata.obsm[cf_rep]
-        if use_raw:
-            if issparse(adata.X):
-                Y0 = adata.raw.X.toarray()[adata.obs[pert_key] == control, :]
-                Y1 = adata.raw.X.toarray()[adata.obs[pert_key] != control, :]
-            else:
-                Y0 = adata.raw.X[adata.obs[pert_key] == control, :]
-                Y1 = adata.raw.X[adata.obs[pert_key] != control, :]
-        elif issparse(adata.X):
-            Y0 = adata.X.toarray()[adata.obs[pert_key] == control, :]
-            Y1 = adata.X.toarray()[adata.obs[pert_key] != control, :]
-        else:
-            Y0 = adata.X[adata.obs[pert_key] == control, :]
-            Y1 = adata.X[adata.obs[pert_key] != control, :]
+        cf = as_matrix(adata.obsm[cf_rep])
+        obs = as_frame(adata.obs)
+        X = as_matrix(adata.X)
+        source = as_matrix(adata.raw.X) if use_raw else X
+        counts = to_dense(source) if isinstance(X, CSBase) else source
+        Y0 = counts[obs[pert_key] == control, :]
+        Y1 = counts[obs[pert_key] != control, :]
         X0 = cf[adata.obs[pert_key] == control, :]
         X1 = cf[adata.obs[pert_key] != control, :]
         ols0 = LinearRegression()
@@ -656,7 +652,7 @@ class Cinemaot:
         ax: Axes | None = None,
         return_fig: bool = False,
         **kwargs,
-    ) -> Figure | None:
+    ) -> Axes | None:
         """Visualize the CINEMA-OT matching matrix.
 
         Args:
@@ -690,7 +686,7 @@ class Cinemaot:
         """
         adata_ = adata[adata.obs[pert_key] == control]
 
-        df = pd.DataFrame(de.obsm[matching_rep])
+        df = pd.DataFrame(as_dense(de.obsm[matching_rep]))
         if de_label is None:
             de_label = "leiden"
             sc.pp.neighbors(de, use_rep="X_embedding")

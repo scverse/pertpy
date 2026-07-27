@@ -105,7 +105,7 @@ def _parse_jax_device(
     return jax.devices(_accelerator)[device_idx]
 
 
-def flax_configure(cls: nn.Module) -> Callable:
+def flax_configure[ModuleT: nn.Module](cls: type[ModuleT]) -> type[ModuleT]:
     """Decorator to raise an error if a boolean `training` param is missing in the call."""
     original_init = cls.__init__
 
@@ -116,7 +116,7 @@ def flax_configure(cls: nn.Module) -> Callable:
         if not isinstance(self.training, bool):
             raise ValueError("Custom sublclasses must have a training parameter.")
 
-    cls.__init__ = init
+    cls.__init__ = init  # type: ignore[method-assign]
     return cls
 
 

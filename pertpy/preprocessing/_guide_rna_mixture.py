@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 import numpy as np
-import optax
+import optax  # type: ignore[import-untyped]
 from jax.scipy.special import gammaln, logsumexp
 from scipy.special import gammaln as _np_gammaln
 

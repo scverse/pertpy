@@ -1,25 +1,26 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import anndata as ad
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
-from adjustText import adjust_text
+import scanpy as sc  # type: ignore[import-untyped]
+from adjustText import adjust_text  # type: ignore[import-untyped]
 from anndata import AnnData
 from jax import Array
 from scipy import stats
-from scvi import REGISTRY_KEYS
-from scvi.data import AnnDataManager
-from scvi.data.fields import CategoricalObsField, LayerField
-from scvi.model.base import BaseModelClass
-from scvi.utils import setup_anndata_dsp
+from scvi import REGISTRY_KEYS  # type: ignore[import-untyped,import-not-found]
+from scvi.data import AnnDataManager  # type: ignore[import-untyped,import-not-found]
+from scvi.data.fields import CategoricalObsField, LayerField  # type: ignore[import-untyped,import-not-found]
+from scvi.model.base import BaseModelClass  # type: ignore[import-untyped,import-not-found]
+from scvi.utils import setup_anndata_dsp  # type: ignore[import-untyped,import-not-found]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
+from pertpy._types import as_frame, as_matrix
 
 from ._jax import JaxTrainingMixin
 from ._scgenvae import JaxSCGENVAE
@@ -220,7 +221,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         batch_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.BATCH_KEY).original_key
 
         adata_latent = AnnData(latent_all)
-        adata_latent.obs = adata.obs.copy(deep=True)
+        adata_latent.obs = as_frame(adata.obs).copy(deep=True)
         unique_cell_types = np.unique(adata_latent.obs[cell_label_key])
         shared_ct = []
         not_shared_ct = []
@@ -254,42 +255,44 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
 
         all_shared_ann = ad.concat(shared_ct, label="concat_batch", index_unique=None)
         if "concat_batch" in all_shared_ann.obs.columns:
-            del all_shared_ann.obs["concat_batch"]
+            del as_frame(all_shared_ann.obs)["concat_batch"]
         if len(not_shared_ct) < 1:
             corrected = AnnData(
                 np.array(self.module.as_bound().generative(all_shared_ann.X)["px"]),
-                obs=all_shared_ann.obs,
+                obs=as_frame(all_shared_ann.obs),
             )
             corrected.var_names = adata.var_names.tolist()
             corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
-                adata_raw.obs_names = adata.obs_names
+                adata_raw.obs_names = adata.obs_names.tolist()
                 corrected.raw = adata_raw
-            corrected.obsm["latent"] = all_shared_ann.X
+            corrected.obsm["latent"] = as_matrix(all_shared_ann.X)
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
             return corrected
         else:
-            all_not_shared_ann = AnnData.concatenate(*not_shared_ct, batch_key="concat_batch", index_unique=None)
-            all_corrected_data = AnnData.concatenate(
+            all_not_shared_ann = AnnData.concatenate(  # type: ignore[attr-defined]
+                *not_shared_ct, batch_key="concat_batch", index_unique=None
+            )
+            all_corrected_data = AnnData.concatenate(  # type: ignore[attr-defined]
                 all_shared_ann,
                 all_not_shared_ann,
                 batch_key="concat_batch",
                 index_unique=None,
             )
             if "concat_batch" in all_shared_ann.obs.columns:
-                del all_corrected_data.obs["concat_batch"]
+                del as_frame(all_corrected_data.obs)["concat_batch"]
             corrected = AnnData(
                 np.array(self.module.as_bound().generative(all_corrected_data.X)["px"]),
-                obs=all_corrected_data.obs,
+                obs=as_frame(all_corrected_data.obs),
             )
             corrected.var_names = adata.var_names.tolist()
             corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
-                adata_raw.obs_names = adata.obs_names
+                adata_raw.obs_names = adata.obs_names.tolist()
                 corrected.raw = adata_raw
-            corrected.obsm["latent"] = all_corrected_data.X
+            corrected.obsm["latent"] = as_matrix(all_corrected_data.X)
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
 
             return corrected
@@ -368,15 +371,13 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
 
         jit_inference_fn = self.module.get_jit_inference_fn(inference_kwargs={"n_samples": n_samples})
 
-        latent = []
+        latent: list[Array] = []
         for array_dict in scdl:
             out = jit_inference_fn(self.module.rngs, array_dict)
-            z = out["qz"].mean if give_mean else out["z"]
-            latent.append(z)
+            latent.append(cast("Array", out["qz"].mean if give_mean else out["z"]))
         concat_axis = 0 if ((n_samples == 1) or give_mean) else 1
-        latent = jnp.concatenate(latent, axis=concat_axis)  # type: ignore
 
-        return self.module.as_numpy_array(latent)
+        return self.module.as_numpy_array(jnp.concatenate(latent, axis=concat_axis))
 
     def plot_reg_mean_plot(  # pragma: no cover # noqa: D417
         self,
@@ -389,7 +390,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         top_100_genes: list[str] | None = None,
         verbose: bool = False,
         legend: bool = True,
-        title: str = None,
+        title: str | None = None,
         x_coeff: float = 0.30,
         y_coeff: float = 0.8,
         fontsize: float = 14,
@@ -467,7 +468,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)
         if "range" in kwargs:
-            start, stop, step = kwargs.get("range")
+            start, stop, step = kwargs["range"]
             ax.set_xticks(np.arange(start, stop, step))
             ax.set_yticks(np.arange(start, stop, step))
         ax.set_xlabel(labels["x"], fontsize=fontsize)
@@ -511,7 +512,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 fontsize=kwargs.get("textsize", fontsize),
             )
 
-        if save:
+        if isinstance(save, str):
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
@@ -528,10 +529,10 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         axis_keys: dict[str, str],
         labels: dict[str, str],
         *,
-        gene_list: list[str] = None,
-        top_100_genes: list[str] = None,
+        gene_list: list[str] | None = None,
+        top_100_genes: list[str] | None = None,
         legend: bool = True,
-        title: str = None,
+        title: str | None = None,
         verbose: bool = False,
         x_coeff: float = 0.3,
         y_coeff: float = 0.8,
@@ -592,7 +593,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df)
         ax.tick_params(labelsize=fontsize)
         if "range" in kwargs:
-            start, stop, step = kwargs.get("range")
+            start, stop, step = kwargs["range"]
             ax.set_xticks(np.arange(start, stop, step))
             ax.set_yticks(np.arange(start, stop, step))
         # _p1 = plt.scatter(x, y, marker=".", label=f"{axis_keys['x']}-{axis_keys['y']}")
@@ -639,7 +640,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 fontsize=kwargs.get("textsize", fontsize),
             )
 
-        if save:
+        if isinstance(save, str):
             plt.savefig(save, bbox_inches="tight")
         if show:
             plt.show()
@@ -686,8 +687,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         condition_key = scgen.adata_manager.get_state_registry(REGISTRY_KEYS.BATCH_KEY).original_key
         cd = adata[adata.obs[condition_key] == ctrl_key, :]
         stim = adata[adata.obs[condition_key] == stim_key, :]
-        all_latent_cd = scgen.get_latent_representation(cd.X)
-        all_latent_stim = scgen.get_latent_representation(stim.X)
+        all_latent_cd = scgen.get_latent_representation(cd.X)  # type: ignore[arg-type]
+        all_latent_stim = scgen.get_latent_representation(stim.X)  # type: ignore[arg-type]
         dot_cd = np.zeros(len(all_latent_cd))
         dot_sal = np.zeros(len(all_latent_stim))
         for ind, vec in enumerate(all_latent_cd):

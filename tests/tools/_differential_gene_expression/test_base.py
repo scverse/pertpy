@@ -22,7 +22,7 @@ def MockLinearModel():
             pass
 
         def _test_single_contrast(self, contrast: Sequence[float], **kwargs) -> DataFrame:
-            pass
+            return DataFrame()
 
     return _MockLinearModel
 

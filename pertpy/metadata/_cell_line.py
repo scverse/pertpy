@@ -15,6 +15,7 @@ import pandas as pd
 from scipy import stats
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._types import as_dense, as_frame, as_matrix
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -182,7 +183,8 @@ class CellLine(MetaData):
             # Sometimes there is already different cell line information in the AnnData object.
             # To avoid redundant information we will remove duplicate information from metadata after merging.
             adata.obs = (
-                adata.obs.merge(
+                as_frame(adata.obs)
+                .merge(
                     cell_line_meta if fetch is None else cell_line_meta[fetch],
                     left_on=query_id,
                     right_on=reference_id,
@@ -197,7 +199,7 @@ class CellLine(MetaData):
             # which is redundant as they refer to the same information.
             # We will move the reference_id column.
             if query_id != reference_id:
-                del adata.obs[reference_id]
+                del as_frame(adata.obs)[reference_id]
 
         else:
             raise ValueError(
@@ -211,7 +213,7 @@ class CellLine(MetaData):
     def annotate_bulk_rna(
         self,
         adata: AnnData,
-        query_id: str = None,
+        query_id: str | None = None,
         cell_line_source: Literal["broad", "sanger"] = "sanger",
         verbosity: int | str = 5,
         gene_identifier: Literal["gene_name", "gene_ID", "both"] = "gene_ID",
@@ -462,7 +464,8 @@ class CellLine(MetaData):
             adata.obs.index.name = "original_index"
         old_index_name = adata.obs.index.name
         adata.obs = (
-            adata.obs.reset_index()
+            as_frame(adata.obs)
+            .reset_index()
             .set_index([query_id, query_perturbation])
             .assign(ln_ic50_gdsc=gdsc_data.set_index([reference_id, reference_perturbation]).ln_ic50)
             .assign(auc_gdsc=gdsc_data.set_index([reference_id, reference_perturbation]).auc)
@@ -514,7 +517,7 @@ class CellLine(MetaData):
         prism_data = self.drug_response_prism
         # PRISM starts most drug names with a lowercase letter, so we want to make it case-insensitive
         prism_data["name_lower"] = prism_data["name"].str.lower()
-        adata.obs["perturbation_lower"] = adata.obs[query_perturbation].str.lower()
+        adata.obs["perturbation_lower"] = as_frame(adata.obs)[query_perturbation].str.lower()
 
         identifier_num_all = len(adata.obs[query_id].unique())
         not_matched_identifiers = list(set(adata.obs[query_id]) - set(prism_data["depmap_id"]))
@@ -531,7 +534,8 @@ class CellLine(MetaData):
             adata.obs.index.name = "original_index"
         old_index_name = adata.obs.index.name
         adata.obs = (
-            adata.obs.reset_index()
+            as_frame(adata.obs)
+            .reset_index()
             .set_index([query_id, "perturbation_lower"])
             .assign(ic50_prism=prism_data.set_index(["depmap_id", "name"]).ic50)
             .assign(ec50_prism=prism_data.set_index(["depmap_id", "name"]).ec50)
@@ -595,7 +599,7 @@ class CellLine(MetaData):
         )
 
     def _pairwise_correlation(
-        self, mat1: np.array, mat2: np.array, row_name: Iterable, col_name: Iterable
+        self, mat1: np.ndarray, mat2: np.ndarray, row_name: Iterable, col_name: Iterable
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Calculate the row-wise pearson correlation between two matrices.
 
@@ -618,10 +622,10 @@ class CellLine(MetaData):
                     pvals[i, j] = pvals[j, i]
                 else:
                     corr[i, j], pvals[i, j] = stats.pearsonr(mat1[i], mat2[j])
-        corr = pd.DataFrame(corr, index=row_name, columns=col_name)
-        pvals = pd.DataFrame(pvals, index=row_name, columns=col_name)
+        corr_df = pd.DataFrame(corr, index=list(row_name), columns=list(col_name))
+        pvals_df = pd.DataFrame(pvals, index=list(row_name), columns=list(col_name))
 
-        return corr, pvals
+        return corr_df, pvals_df
 
     def correlate(
         self,
@@ -643,35 +647,35 @@ class CellLine(MetaData):
             raise ValueError("The metadata can not be found in adata.obsm")
         if identifier not in adata.obs:
             raise ValueError("The identifier can not be found in adata.obs")
-        if adata.X.shape[1] != adata.obsm[metadata_key].shape[1]:
+        if as_matrix(adata.X).shape[1] != adata.obsm[metadata_key].shape[1]:
             raise ValueError(
                 "Dimensions of adata.X do not match those of metadata. Ensure that they have the same gene list."
             )
         # Raise error if the genes are not the same
-        if (
-            isinstance(adata.obsm[metadata_key], pd.DataFrame)
-            and sum(adata.obsm[metadata_key].columns != adata.var.index.values) > 0
-        ):
+        metadata = adata.obsm[metadata_key]
+        if isinstance(metadata, pd.DataFrame) and sum(metadata.columns != adata.var.index.values) > 0:
             raise ValueError(
                 "Column name of metadata is not the same as the index of `adata.var`. Ensure that the genes are in the same order."
             )
 
         # Divide cell lines into those are present and not present in the metadata
-        overlapped_cl = adata[~adata.obsm[metadata_key].isna().all(axis=1), :]
-        missing_cl = adata[adata.obsm[metadata_key].isna().all(axis=1), :]
+        metadata_df = as_frame(adata.obsm[metadata_key])
+        overlapped_cl = adata[~metadata_df.isna().all(axis=1), :]
+        missing_cl = adata[metadata_df.isna().all(axis=1), :]
 
+        metadata_values = as_frame(overlapped_cl.obsm[metadata_key]).values
         corr, pvals = self._pairwise_correlation(
-            overlapped_cl.X,
-            overlapped_cl.obsm[metadata_key].values,
-            row_name=overlapped_cl.obs[identifier],
-            col_name=overlapped_cl.obs[identifier],
+            as_dense(overlapped_cl.X),
+            metadata_values,
+            row_name=as_frame(overlapped_cl.obs)[identifier],
+            col_name=as_frame(overlapped_cl.obs)[identifier],
         )
         if missing_cl is not None:
             new_corr, new_pvals = self._pairwise_correlation(
-                missing_cl.X,
-                overlapped_cl.obsm[metadata_key].values,
-                row_name=missing_cl.obs[identifier],
-                col_name=overlapped_cl.obs[identifier],
+                as_dense(missing_cl.X),
+                metadata_values,
+                row_name=as_frame(missing_cl.obs)[identifier],
+                col_name=as_frame(overlapped_cl.obs)[identifier],
             )
         else:
             new_corr = new_pvals = None
@@ -721,46 +725,41 @@ class CellLine(MetaData):
                         f"Mean p-value: {np.mean(np.diag(pval)):.4f}",
                     )
                 )
-                plt.scatter(x=adata.obsm[metadata_key], y=adata.X)
+                plt.scatter(x=as_frame(adata.obsm[metadata_key]), y=as_dense(adata.X))
                 plt.xlabel(metadata_key)
                 plt.ylabel("Baseline")
             else:
                 subset_identifier_list = (
                     [subset_identifier] if isinstance(subset_identifier, str | int) else list(subset_identifier)
                 )
+                identifiers = np.asarray(as_frame(adata.obs)[identifier].values)
                 # Convert the valid identifiers to the index list
                 if all(isinstance(id, str) for id in subset_identifier_list):
-                    if set(subset_identifier_list).issubset(adata.obs[identifier].unique()):
-                        subset_identifier_list = np.where(
-                            np.isin(adata.obs[identifier].values, subset_identifier_list)
-                        )[0]
+                    if set(subset_identifier_list).issubset(as_frame(adata.obs)[identifier].unique()):
+                        subset_indices = np.where(np.isin(identifiers, np.asarray(subset_identifier_list)))[0]
                     else:
                         raise ValueError("`Subset_identifier` must be found in adata.obs.`identifier`.")
                 elif all(isinstance(id, int) and 0 <= id < adata.n_obs for id in subset_identifier_list):
-                    pass
+                    subset_indices = np.asarray(subset_identifier_list, dtype=int)
                 elif all(isinstance(id, int) and (id < 0 or id >= adata.n_obs) for id in subset_identifier_list):
                     raise ValueError("`Subset_identifier` out of index.")
                 else:
                     raise ValueError("`Subset_identifier` must contain either all strings or all integers.")
 
                 plt.scatter(
-                    x=adata.obsm[metadata_key].iloc[subset_identifier_list],
-                    y=adata[subset_identifier_list].X,
+                    x=as_frame(adata.obsm[metadata_key]).iloc[subset_indices],
+                    y=as_dense(adata[subset_indices].X),
                 )
                 plt.xlabel(
-                    f"{metadata_key}: {adata.obs[identifier].values[subset_identifier_list[0]]}"
-                    if len(subset_identifier_list) == 1
+                    f"{metadata_key}: {identifiers[subset_indices[0]]}"
+                    if len(subset_indices) == 1
                     else f"{metadata_key}"
                 )
-                plt.ylabel(
-                    f"Baseline: {adata.obs[identifier].values[subset_identifier_list[0]]}"
-                    if len(subset_identifier_list) == 1
-                    else "Baseline"
-                )
+                plt.ylabel(f"Baseline: {identifiers[subset_indices[0]]}" if len(subset_indices) == 1 else "Baseline")
 
                 # Annotate with the correlation coefficient and p-value of the chosen cell lines
-                subset_cor = np.mean(np.diag(corr.iloc[subset_identifier_list, subset_identifier_list]))
-                subset_pval = np.mean(np.diag(pval.iloc[subset_identifier_list, subset_identifier_list]))
+                subset_cor = np.mean(np.diag(corr.iloc[subset_indices, subset_indices].to_numpy()))
+                subset_pval = np.mean(np.diag(pval.iloc[subset_indices, subset_indices].to_numpy()))
                 annotation = "\n".join(
                     (
                         f"Pearson correlation: {subset_cor:.4f}",

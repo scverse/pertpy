@@ -2,11 +2,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import scanpy as sc
-from mudata import MuData
+import scanpy as sc  # type: ignore[import-untyped]
+from mudata import MuData  # type: ignore[import-untyped]
 
 try:
-    import ete4
+    import ete4  # type: ignore[import-untyped]
 except ImportError:
     pytest.skip("ete4 not available", allow_module_level=True)
 

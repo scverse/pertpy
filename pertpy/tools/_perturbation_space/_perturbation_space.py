@@ -10,6 +10,7 @@ from anndata import AnnData
 from scipy.stats import entropy
 
 from pertpy._logger import logger
+from pertpy._types import as_dense, as_frame
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -48,9 +49,12 @@ def _constant_obs_per_group(obs: pd.DataFrame, target_col: str) -> pd.DataFrame:
 
     Columns that vary within any group are dropped so the result can be safely mapped back onto a perturbation-level AnnData.
     """
-    grouped = obs.groupby(target_col, observed=True).agg(
-        lambda values: next(iter(set(values))) if len(set(values)) == 1 else np.nan
-    )
+
+    def _unique_or_nan(values: pd.Series) -> object:
+        unique = set(values)
+        return next(iter(unique)) if len(unique) == 1 else np.nan
+
+    grouped = obs.groupby(target_col, observed=True).agg(_unique_or_nan)
     return grouped.loc[:, ~grouped.isna().any()]
 
 
@@ -175,32 +179,32 @@ class PerturbationSpace:
 
         if layer_key:
             adata.layers[new_layer_key] = _subtract_control_mean(
-                adata.layers[layer_key], control_mask, group_masks, name=new_layer_key
+                as_dense(adata.layers[layer_key]), control_mask, group_masks, name=new_layer_key
             )
 
         if embedding_key:
             adata.obsm[new_embedding_key] = _subtract_control_mean(
-                adata.obsm[embedding_key], control_mask, group_masks, name=new_embedding_key
+                as_dense(adata.obsm[embedding_key]), control_mask, group_masks, name=new_embedding_key
             )
 
         if (not layer_key and not embedding_key) or all_data:
             adata.X = _subtract_control_mean(np.asarray(adata.X), control_mask, group_masks, name="X")
 
         if all_data:
-            for local_layer_key in list(adata.layers.keys()):
+            for local_layer_key in [key for key in adata.layers.keys() if isinstance(key, str)]:  # noqa: SIM118
                 if local_layer_key in {layer_key, new_layer_key}:
                     continue
                 new_key = local_layer_key + "_control_diff"
                 adata.layers[new_key] = _subtract_control_mean(
-                    adata.layers[local_layer_key], control_mask, group_masks, name=new_key
+                    as_dense(adata.layers[local_layer_key]), control_mask, group_masks, name=new_key
                 )
 
-            for local_embedding_key in list(adata.obsm.keys()):
+            for local_embedding_key in [key for key in adata.obsm if isinstance(key, str)]:
                 if local_embedding_key in {embedding_key, new_embedding_key}:
                     continue
                 new_key = local_embedding_key + "_control_diff"
                 adata.obsm[new_key] = _subtract_control_mean(
-                    adata.obsm[local_embedding_key], control_mask, group_masks, name=new_key
+                    as_dense(adata.obsm[local_embedding_key]), control_mask, group_masks, name=new_key
                 )
 
         self.control_diff_computed = True
@@ -212,7 +216,7 @@ class PerturbationSpace:
         adata: AnnData,
         *,
         perturbations: Iterable[str],
-        op: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        op: Callable[[np.ndarray, np.ndarray], None],
         reference_key: str,
         new_pert_name: str,
         ensure_consistency: bool,
@@ -242,7 +246,7 @@ class PerturbationSpace:
         # sc.get.aggregate can leave a `None`-keyed layer behind (the pre-aggregation .X);
         # PseudobulkSpace.compute strips it but defensively re-strip here so callers passing
         # a hand-built AnnData don't crash inside the string ops below.
-        layer_keys = [k for k in adata.layers if isinstance(k, str)]
+        layer_keys = [k for k in adata.layers.keys() if isinstance(k, str)]  # noqa: SIM118
         obsm_keys = [k for k in adata.obsm if isinstance(k, str)]
         rename_back = (
             {
@@ -279,8 +283,8 @@ class PerturbationSpace:
 
         new_perturbation = AnnData(X=new_X)
         new_index = adata.obs_names.append(pd.Index([new_pert_name]))
-        new_perturbation.obs_names = new_index
-        new_perturbation.obs = adata.obs.reindex(new_index)
+        new_perturbation.obs_names = new_index.tolist()
+        new_perturbation.obs = as_frame(adata.obs).reindex(new_index)
 
         for key, value in new_layers.items():
             new_perturbation.layers[key] = value
@@ -425,12 +429,13 @@ class PerturbationSpace:
         if neighbors_key not in adata.uns:
             raise ValueError(f"Key {neighbors_key} not found in adata.uns. Please run `sc.pp.neighbors` first.")
 
-        labels = adata.obs[target_column].astype(str)
+        obs = as_frame(adata.obs)
+        labels = obs[target_column].astype(str)
         target_cells = labels == target_val
 
         connectivities = adata.obsp[adata.uns[neighbors_key]["connectivities_key"]]
         # convert labels to an incidence matrix
-        one_hot_encoded_labels = adata.obs[target_column].astype(str).str.get_dummies()
+        one_hot_encoded_labels = labels.str.get_dummies()
         # convert to distance-weighted neighborhood incidence matrix
         weighted_label_occurence = pd.DataFrame(
             (one_hot_encoded_labels.values.T * connectivities).T,
@@ -439,8 +444,8 @@ class PerturbationSpace:
         )
         # choose best label for each target cell
         best_labels = weighted_label_occurence.drop(target_val, axis=1)[target_cells].idxmax(axis=1)
-        adata.obs[target_column] = labels
-        adata.obs.loc[target_cells, target_column] = best_labels
+        obs[target_column] = labels
+        obs.loc[target_cells, target_column] = best_labels
 
         # calculate uncertainty
         uncertainty = np.zeros(adata.n_obs)
@@ -496,7 +501,7 @@ class PerturbationSpace:
         if layer_key is None and embedding_key is None and "distances" in adata.obsp:
             distances = np.asarray(adata.obsp["distances"])[query_idx]
         else:
-            from sklearn.metrics import pairwise_distances
+            from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
 
             coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
             distances = pairwise_distances(coords[[query_idx]], coords, metric=metric)[0]
@@ -614,8 +619,9 @@ class PerturbationSpace:
         from pertpy.tools._distances._distances import Distance
 
         sep = "\x1f"
-        is_control = (adata.obs[target_col] == reference_key).to_numpy()
-        group = adata.obs[target_col].astype(str).str.cat(adata.obs[dose_col].astype(str), sep=sep)
+        obs = as_frame(adata.obs)
+        is_control = (obs[target_col] == reference_key).to_numpy()
+        group = obs[target_col].astype(str).str.cat(obs[dose_col].astype(str), sep=sep)
         group = group.mask(is_control, reference_key)
         grouped = adata.copy()
         grouped.obs["_dose_group"] = pd.Categorical(group)
@@ -684,7 +690,7 @@ class PerturbationSpace:
         if layer_key is None and embedding_key is None and "distances" in adata.obsp:
             distances = np.asarray(adata.obsp["distances"])
         else:
-            from sklearn.metrics import pairwise_distances
+            from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
 
             coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
             distances = pairwise_distances(coords, metric=metric)

@@ -1,7 +1,7 @@
 import pytest
 
 try:
-    import scvi
+    import scvi  # type: ignore[import-untyped,import-not-found]
 except Exception:  # noqa: BLE001
     pytest.skip("Required R package 'edgeR' not available", allow_module_level=True)
 
@@ -10,7 +10,7 @@ import warnings
 import anndata as ad
 import jax
 import jax.numpy as jnp
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from scvi import REGISTRY_KEYS
 
 import pertpy as pt
@@ -19,7 +19,7 @@ from pertpy.tools._scgen._scgenvae import JaxSCGENVAE
 
 
 def test_scgen():
-    from scvi.data import synthetic_iid
+    from scvi.data import synthetic_iid  # type: ignore[import-untyped,import-not-found]
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Observation names are not unique")

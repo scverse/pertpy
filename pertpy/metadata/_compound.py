@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 
+from pertpy._types import as_frame
+
 from ._look_up import LookUp
 from ._metadata import MetaData
 
@@ -43,11 +45,11 @@ class Compound(MetaData):
         if query_id not in adata.obs.columns:
             raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n Please check again.")
 
-        import pubchempy as pcp
+        import pubchempy as pcp  # type: ignore[import-untyped]
 
         query_dict = {}
         not_matched_identifiers = []
-        for compound in adata.obs[query_id].dropna().astype(str).unique():
+        for compound in as_frame(adata.obs)[query_id].dropna().astype(str).unique():
             if query_id_type == "name":
                 cids = pcp.get_compounds(compound, "name")
                 if len(cids) == 0:  # search did not work
@@ -87,9 +89,10 @@ class Compound(MetaData):
         # Column is converted to float after merging due to unmatches
         # Convert back to integers afterwards
         if query_id_type == "cid":
-            query_df.pubchem_ID = query_df.pubchem_ID.astype("Int64")
+            query_df["pubchem_ID"] = query_df["pubchem_ID"].astype("Int64")
             adata.obs = (
-                adata.obs.merge(
+                as_frame(adata.obs)
+                .merge(
                     query_df,
                     left_on=query_id,
                     right_on="pubchem_ID",
@@ -101,7 +104,8 @@ class Compound(MetaData):
             )
         else:
             adata.obs = (
-                adata.obs.merge(
+                as_frame(adata.obs)
+                .merge(
                     query_df,
                     left_on=query_id,
                     right_index=True,
@@ -111,7 +115,7 @@ class Compound(MetaData):
                 .filter(regex="^(?!.*_fromMeta)")
                 .set_index(adata.obs.index)
             )
-            adata.obs.pubchem_ID = adata.obs.pubchem_ID.astype("Int64")
+            adata.obs["pubchem_ID"] = as_frame(adata.obs)["pubchem_ID"].astype("Int64")
 
         return adata
 

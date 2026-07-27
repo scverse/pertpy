@@ -3,21 +3,22 @@ from __future__ import annotations
 import random
 from collections import defaultdict
 from math import floor, nan
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from anndata import AnnData
+from fast_array_utils.conv import to_dense
 from joblib import Parallel, delayed
 from rich.progress import track
 from scipy import sparse, stats
-from sklearn.base import is_classifier, is_regressor
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
+from sklearn.base import is_classifier, is_regressor  # type: ignore[import-untyped]
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor  # type: ignore[import-untyped]
+from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+from sklearn.metrics import (  # type: ignore[import-untyped]
     accuracy_score,
     explained_variance_score,
     f1_score,
@@ -28,17 +29,20 @@ from sklearn.metrics import (
     roc_auc_score,
     root_mean_squared_error,
 )
-from sklearn.model_selection import StratifiedKFold, cross_validate
-from sklearn.preprocessing import LabelEncoder
-from skmisc.loess import loess
-from statsmodels.api import OLS
-from statsmodels.stats.multitest import fdrcorrection
+from sklearn.model_selection import StratifiedKFold, cross_validate  # type: ignore[import-untyped]
+from sklearn.preprocessing import LabelEncoder  # type: ignore[import-untyped]
+from skmisc.loess import loess  # type: ignore[import-untyped]
+from statsmodels.api import OLS  # type: ignore[import-untyped]
+from statsmodels.stats.multitest import fdrcorrection  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
+from pertpy._types import CSBase, as_frame, as_matrix
 from pertpy.tools.core import _is_raw_counts
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
@@ -121,7 +125,7 @@ class Augur:
         """
         if isinstance(input, AnnData):
             adata = input
-            obs_renamed = adata.obs.rename(columns={cell_type_col: "cell_type", label_col: "label"})
+            obs_renamed = as_frame(adata.obs).rename(columns={cell_type_col: "cell_type", label_col: "label"})
 
         elif isinstance(input, pd.DataFrame):
             if meta is None:
@@ -135,13 +139,18 @@ class Augur:
             cell_type = input[cell_type_col] if meta is None else meta[cell_type_col]
             X = input.drop([label_col, cell_type_col], axis=1) if meta is None else input
             adata = AnnData(X=X, obs=pd.DataFrame({"cell_type": cell_type, "label": label}))
-            obs_renamed = adata.obs
+            obs_renamed = as_frame(adata.obs)
 
         if len(obs_renamed["label"].unique()) < 2:
             raise ValueError("Less than two unique labels in dataset. At least two are needed for the analysis.")
 
         if isinstance(input, AnnData):
-            final_adata = AnnData(X=adata.X, obs=obs_renamed, var=adata.var, layers=adata.layers)
+            final_adata = AnnData(
+                X=adata.X,
+                obs=obs_renamed,
+                var=as_frame(adata.var),
+                layers=cast("Mapping[str, np.ndarray | CSBase]", adata.layers),
+            )
         else:
             final_adata = adata
 
@@ -166,11 +175,11 @@ class Augur:
         if layer is not None:
             if layer not in final_adata.layers:
                 raise ValueError(f"Layer '{layer}' not found in AnnData object")
-            X = final_adata.layers[layer]
+            counts = as_matrix(final_adata.layers[layer])
         else:
-            X = final_adata.X
+            counts = as_matrix(final_adata.X)
 
-        if not _is_raw_counts(X):
+        if not _is_raw_counts(counts):
             logger.warning("Data does not appear to be raw counts. Augur developers recommend using raw counts.")
 
         return final_adata
@@ -283,16 +292,19 @@ class Augur:
             subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
 
         # filter features with 0 variance
-        subsample.var["highly_variable"] = False
-        subsample.var["means"] = np.ravel(subsample.X.mean(axis=0))
+        var = as_frame(subsample.var)
+        var["highly_variable"] = False
+        var["means"] = np.ravel(as_matrix(subsample.X).mean(axis=0))
         # Converting because the Syntax for power for numpy arrays is different -> use sparse Syntax as default
-        if isinstance(subsample.X, np.ndarray):
-            subsample.X = sparse.csc_matrix(subsample.X)
-        subsample.var["var"] = np.ravel(subsample.X.power(2).mean(axis=0) - np.power(subsample.X.mean(axis=0), 2))
+        X = as_matrix(subsample.X)
+        if isinstance(X, np.ndarray):
+            X = sparse.csc_matrix(X)
+            subsample.X = X
+        var["var"] = np.ravel(X.power(2).mean(axis=0) - np.power(X.mean(axis=0), 2))
         # remove all features with 0 variance
-        subsample.var.loc[subsample.var["var"] > 0, "highly_variable"] = True
+        var.loc[var["var"] > 0, "highly_variable"] = True
 
-        return subsample[:, subsample.var["highly_variable"]]
+        return subsample[:, var["highly_variable"]]
 
     def draw_subsample(
         self,
@@ -334,16 +346,17 @@ class Augur:
         if augur_mode == "permute":
             # shuffle labels
             adata = adata.copy()
-            y_columns = [col for col in adata.obs if col.startswith("y_")]
-            adata.obs[y_columns] = adata.obs[y_columns].sample(frac=1, random_state=random_state).values
+            obs = as_frame(adata.obs)
+            y_columns = obs.columns[obs.columns.str.startswith("y_")]
+            obs[y_columns] = obs[y_columns].sample(frac=1, random_state=random_state).values
 
         if augur_mode == "velocity":
             # no feature selection, assuming this has already happenend in calculating velocity
-            features = adata.var_names
+            features = adata.var_names.tolist()
 
         else:
             # randomly sample features from highly variable genes
-            highly_variable_genes = adata.var_names[adata.var["highly_variable"]].tolist()
+            highly_variable_genes = adata.var_names[as_frame(adata.var)["highly_variable"]].tolist()
             features = random.sample(highly_variable_genes, floor(len(highly_variable_genes) * feature_perc))
 
         # randomly sample samples for each label
@@ -519,10 +532,7 @@ class Augur:
             >>> results = ag_rfc.run_cross_validation(subsample=subsample, folds=3, subsample_idx=0, random_state=42, zero_division=0)
         """
         # Pass the dense matrix instead of subsample.to_df(); its arrow-backed string columns make scikit-learn re-validate dtypes on every fold and scorer, while the values (and results) stay identical.
-        x = subsample.X
-        if sparse.issparse(x):
-            x = x.toarray()
-        x = np.asarray(x)
+        x = np.asarray(to_dense(as_matrix(subsample.X)))
         genes = subsample.var_names.tolist()
         n_genes = len(genes)
         y = subsample.obs["y_"]
@@ -671,15 +681,18 @@ class Augur:
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_variance(loaded_data, var_quantile=0.5, filter_negative_residuals=False, span=0.75)
         """
-        adata.var["highly_variable"] = False
-        adata.var["means"] = np.ravel(adata.X.mean(axis=0))
+        var = as_frame(adata.var)
+        var["highly_variable"] = False
+        var["means"] = np.ravel(as_matrix(adata.X).mean(axis=0))
         # Converting because the Syntax for power for numpy arrays is different -> use sparse Syntax as default
-        if isinstance(adata.X, np.ndarray):
-            adata.X = sparse.csc_matrix(adata.X)
-        adata.var["sds"] = np.ravel(np.sqrt(adata.X.power(2).mean(axis=0) - np.power(adata.X.mean(axis=0), 2)))
+        X = as_matrix(adata.X)
+        if isinstance(X, np.ndarray):
+            X = sparse.csc_matrix(X)
+            adata.X = X
+        var["sds"] = np.ravel(np.sqrt(X.power(2).mean(axis=0) - np.power(X.mean(axis=0), 2)))
         # remove all features with 0 variance
-        adata.var.loc[adata.var["sds"] > 0, "highly_variable"] = True
-        cvs = adata.var.loc[adata.var["highly_variable"], "means"] / adata.var.loc[adata.var["highly_variable"], "sds"]
+        var.loc[var["sds"] > 0, "highly_variable"] = True
+        cvs = var.loc[var["highly_variable"], "means"] / var.loc[var["highly_variable"], "sds"]
 
         # clip outliers, get best prediction model, get residuals
         lower = np.quantile(cvs, 0.01)
@@ -687,7 +700,7 @@ class Augur:
         keep = cvs.loc[cvs.between(lower, upper)].index
 
         cv0 = cvs.loc[keep]
-        mean0 = adata.var.loc[keep, "means"]
+        mean0 = var.loc[keep, "means"]
 
         if any(mean0 < 0):
             # if there are negative values, don't bother comparing to log-transformed
@@ -726,7 +739,7 @@ class Augur:
         n_subsamples: int = 50,
         subsample_size: int = 20,
         folds: int = 3,
-        min_cells: int = None,
+        min_cells: int | None = None,
         feature_perc: float = 0.5,
         var_quantile: float = 0.5,
         span: float = 0.75,
@@ -859,8 +872,9 @@ class Augur:
             results["summary_metrics"][cell_type] = self.average_metrics(results[cell_type])
 
             # add scores as observation to anndata
-            mask = adata.obs["cell_type"].str.startswith(cell_type)
-            adata.obs.loc[mask, "augur_score"] = results["summary_metrics"][cell_type]["mean_augur_score"]
+            obs = as_frame(adata.obs)
+            mask = obs["cell_type"].str.startswith(cell_type)
+            obs.loc[mask, "augur_score"] = results["summary_metrics"][cell_type]["mean_augur_score"]
 
             # concatenate feature importances for each subsample cv
             subsample_feature_importances_dicts = [cv["feature_importances"] for cv in results[cell_type]]
@@ -1035,8 +1049,8 @@ class Augur:
         self,
         results: pd.DataFrame,
         *,
-        top_n: int = None,
-        ax: Axes = None,
+        top_n: int | None = None,
+        ax: Axes | None = None,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot scatterplot of differential prioritization.
@@ -1107,7 +1121,7 @@ class Augur:
         *,
         key: str = "augurpy_results",
         top_n: int = 10,
-        ax: Axes = None,
+        ax: Axes | None = None,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot a lollipop plot of the n features with largest feature importances.
@@ -1169,7 +1183,7 @@ class Augur:
         data: dict[str, Any] | AnnData,
         *,
         key: str = "augurpy_results",
-        ax: Axes = None,
+        ax: Axes | None = None,
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot a lollipop plot of the mean augur values.
@@ -1227,7 +1241,7 @@ class Augur:
         results1: dict[str, Any],
         results2: dict[str, Any],
         *,
-        top_n: int = None,
+        top_n: int | None = None,
         return_fig: bool = False,
     ) -> Figure | None:
         """Create scatterplot with two augur results.

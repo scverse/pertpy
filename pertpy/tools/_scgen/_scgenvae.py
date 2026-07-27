@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import flax.linen as nn
 import jax.numpy as jnp
-import numpyro.distributions as dist
-from scvi import REGISTRY_KEYS
+import numpyro.distributions as dist  # type: ignore[import-untyped]
+from scvi import REGISTRY_KEYS  # type: ignore[import-untyped,import-not-found]
 
 from ._base_components import FlaxDecoder, FlaxEncoder
 from ._jax import JaxBaseModuleClass, LossOutput, flax_configure

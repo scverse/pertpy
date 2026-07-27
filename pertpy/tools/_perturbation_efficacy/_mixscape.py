@@ -3,21 +3,22 @@ from __future__ import annotations
 import copy
 import warnings
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 import seaborn as sns
 from pandas.errors import PerformanceWarning
 from scanpy import get
-from scanpy._utils import check_use_raw, sanitize_anndata
-from scanpy.plotting import _utils
+from scanpy._utils import check_use_raw, sanitize_anndata  # type: ignore[import-untyped]
+from scanpy.plotting import _utils  # type: ignore[import-untyped]
 from scipy.sparse import spmatrix
-from sklearn.mixture import GaussianMixture
+from sklearn.mixture import GaussianMixture  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._types import CSBase, as_dense, as_frame, as_matrix
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.colors import Colormap
     from matplotlib.pyplot import Figure
+    from seaborn.axisgrid import FacetGrid
 
 
 class Mixscape(PerturbationEfficacyAnalyzer):
@@ -38,19 +40,19 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         pert_key: str,
         control: str,
         *,
-        new_class_name: str | None = "mixscape_class",
+        new_class_name: str = "mixscape_class",
         layer: str | None = None,
-        min_de_genes: int | None = 5,
-        logfc_threshold: float | None = 0.25,
+        min_de_genes: int = 5,
+        logfc_threshold: float = 0.25,
         de_layer: str | None = None,
-        test_method: str | None = "wilcoxon",
-        iter_num: int | None = 10,
-        scale: bool | None = True,
+        test_method: str = "wilcoxon",
+        iter_num: int = 10,
+        scale: bool = True,
         split_by: str | None = None,
-        pval_cutoff: float | None = 5e-2,
-        perturbation_type: str | None = "KO",
+        pval_cutoff: float = 5e-2,
+        perturbation_type: str = "KO",
         random_state: int | None = 0,
-        copy: bool | None = False,
+        copy: bool = False,
         **gmmkwargs,
     ):
         """Identify perturbed and non-perturbed gRNA expressing cells that accounts for multiple treatments/conditions/chemical perturbations.
@@ -102,12 +104,14 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         if copy:
             adata = adata.copy()
 
+        obs = as_frame(adata.obs)
+        split_masks: list[np.ndarray | pd.Series]
         if split_by is None:
             split_masks = [np.full(adata.n_obs, True, dtype=bool)]
             categories = ["all"]
         else:
-            split_obs = adata.obs[split_by]
-            categories = split_obs.unique()
+            split_obs = obs[split_by]
+            categories = list(split_obs.unique())
             split_masks = [split_obs == category for category in categories]
 
         perturbation_markers = self._get_perturbation_markers(
@@ -125,19 +129,19 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         adata_comp = adata
         if layer is not None:
-            X = adata_comp.layers[layer]
+            X = as_matrix(adata_comp.layers[layer])
         else:
             try:
-                X = adata_comp.layers["X_pert"]
+                X = as_matrix(adata_comp.layers["X_pert"])
             except KeyError:
                 raise KeyError(
                     "No 'X_pert' found in .layers! Please run perturbation_signature first to calculate perturbation signature!"
                 ) from None
 
         # initialize return variables
-        adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
-        adata.obs[new_class_name] = adata.obs[pert_key].astype(str)
-        adata.obs[f"{new_class_name}_global"] = np.empty(
+        obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0
+        obs[new_class_name] = obs[pert_key].astype(str)
+        obs[f"{new_class_name}_global"] = np.empty(
             [
                 adata.n_obs,
             ],
@@ -145,19 +149,19 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         )
         gv_list: dict[str, dict] = {}
 
-        adata.obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
+        obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
             gene_targets = list(set(adata[split_mask].obs[pert_key]).difference([control]))
             for gene in gene_targets:
                 post_prob = 0
-                orig_guide_cells = (adata.obs[pert_key] == gene) & split_mask
+                orig_guide_cells = (obs[pert_key] == gene) & split_mask
                 orig_guide_cells_index = list(orig_guide_cells.index[orig_guide_cells])
-                nt_cells = (adata.obs[pert_key] == control) & split_mask
+                nt_cells = (obs[pert_key] == control) & split_mask
                 all_cells = orig_guide_cells | nt_cells
 
                 if len(perturbation_markers[(category, gene)]) == 0:
-                    adata.obs.loc[orig_guide_cells, new_class_name] = f"{gene} NP"
+                    obs.loc[orig_guide_cells, new_class_name] = f"{gene} NP"
 
                 else:
                     de_genes = perturbation_markers[(category, gene)]
@@ -173,14 +177,14 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
                     converged = False
                     n_iter = 0
-                    old_classes = adata.obs[new_class_name][all_cells]
+                    old_classes = obs[new_class_name][all_cells]
 
                     nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
                     nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)
 
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
-                        guide_cells = (adata.obs[new_class_name] == gene) & split_mask
+                        guide_cells = (obs[new_class_name] == gene) & split_mask
 
                         # get average value for each gene over all selected cells
                         # all cells in current split&Gene minus all NT cells in current split
@@ -191,9 +195,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
                         # project cells onto the perturbation vector
                         if isinstance(dat, spmatrix):
-                            pvec = dat.dot(vec) / np.dot(vec, vec)
+                            pvec = cast("CSBase", dat).dot(vec) / np.dot(vec, vec)
                         else:
-                            pvec = np.dot(dat, vec) / np.dot(vec, vec)
+                            pvec = np.dot(as_dense(dat), vec) / np.dot(vec, vec)
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
 
                         if n_iter == 0:
@@ -224,25 +228,23 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
                         # based on the posterior probability, assign cells to the two classes
                         ko_mask = post_prob > 0.5
-                        adata.obs.loc[np.array(orig_guide_cells_index)[ko_mask], new_class_name] = gene
-                        adata.obs.loc[np.array(orig_guide_cells_index)[~ko_mask], new_class_name] = f"{gene} NP"
+                        obs.loc[np.array(orig_guide_cells_index)[ko_mask], new_class_name] = gene
+                        obs.loc[np.array(orig_guide_cells_index)[~ko_mask], new_class_name] = f"{gene} NP"
 
-                        if sum(adata.obs[new_class_name][split_mask] == gene) < min_de_genes:
-                            adata.obs.loc[guide_cells, new_class_name] = "NP"
+                        if sum(obs[new_class_name][split_mask] == gene) < min_de_genes:
+                            obs.loc[guide_cells, new_class_name] = "NP"
                             converged = True
-                        current_classes = adata.obs[new_class_name][all_cells]
+                        current_classes = obs[new_class_name][all_cells]
                         if (current_classes == old_classes).all():
                             converged = True
                         old_classes = current_classes
 
                         n_iter += 1
 
-                    adata.obs.loc[(adata.obs[new_class_name] == gene) & split_mask, new_class_name] = (
-                        f"{gene} {perturbation_type}"
-                    )
+                    obs.loc[(obs[new_class_name] == gene) & split_mask, new_class_name] = f"{gene} {perturbation_type}"
 
-                adata.obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in adata.obs[new_class_name]]
-                adata.obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
+                obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in obs[new_class_name]]
+                obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
         adata.uns["mixscape"] = gv_list
 
         if copy:
@@ -254,16 +256,16 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         pert_key: str,
         control: str,
         *,
-        mixscape_class_global: str | None = "mixscape_class_global",
+        mixscape_class_global: str = "mixscape_class_global",
         layer: str | None = None,
         n_comps: int | None = 10,
-        min_de_genes: int | None = 5,
-        logfc_threshold: float | None = 0.25,
-        test_method: str | None = "wilcoxon",
+        min_de_genes: int = 5,
+        logfc_threshold: float = 0.25,
+        test_method: str = "wilcoxon",
         split_by: str | None = None,
-        pval_cutoff: float | None = 5e-2,
-        perturbation_type: str | None = "KO",
-        copy: bool | None = False,
+        pval_cutoff: float = 5e-2,
+        perturbation_type: str = "KO",
+        copy: bool = False,
     ):
         """Linear Discriminant Analysis on pooled CRISPR screen data. Requires `pt.tl.mixscape()` to be run first.
 
@@ -301,16 +303,17 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         """
         if copy:
             adata = adata.copy()
-        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis  # type: ignore[import-untyped]
 
         if mixscape_class_global not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
+        split_masks: list[np.ndarray | pd.Series]
         if split_by is None:
             split_masks = [np.full(adata.n_obs, True, dtype=bool)]
             categories = ["all"]
         else:
-            split_obs = adata.obs[split_by]
-            categories = split_obs.unique()
+            split_obs = as_frame(adata.obs)[split_by]
+            categories = list(split_obs.unique())
             split_masks = [split_obs == category for category in categories]
 
         # determine gene sets across all splits/groups through differential gene expression
@@ -329,7 +332,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
         ]
-        X = adata_subset.X - adata_subset.X.mean(0)
+        X = as_matrix(adata_subset.X) - as_matrix(adata_subset.X).mean(0)
         projected_pcs: dict[str, np.ndarray] = {}
         # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
         for _, (key, value) in enumerate(perturbation_markers.items()):
@@ -368,7 +371,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         axis_title_size: int = 8,
         legend_title_size: int = 8,
         legend_text_size: int = 8,
-        legend_bbox_to_anchor: tuple[float, float] = None,
+        legend_bbox_to_anchor: tuple[float, float] | None = None,
         figsize: tuple[float, float] = (25, 25),
         return_fig: bool = False,
     ) -> Figure | None:
@@ -404,7 +407,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         """
         if mixscape_class_global not in adata.obs:
             raise ValueError("Please run the `mixscape` function first.")
-        count = pd.crosstab(index=adata.obs[mixscape_class_global], columns=adata.obs[guide_rna_column])
+        obs = as_frame(adata.obs)
+        count = pd.crosstab(index=obs[mixscape_class_global], columns=obs[guide_rna_column])
         all_cells_percentage = pd.melt(count / count.sum(), ignore_index=False).reset_index()
         KO_cells_percentage = all_cells_percentage[all_cells_percentage[mixscape_class_global] == "KO"]
         KO_cells_percentage = KO_cells_percentage.sort_values("value", ascending=False)
@@ -546,8 +550,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         *,
         mixscape_class: str = "mixscape_class",
         color: str = "orange",
-        palette: dict[str, str] = None,
-        split_by: str = None,
+        palette: dict[str, str] | None = None,
+        split_by: str | None = None,
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
         return_fig: bool = False,
@@ -590,7 +594,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         """
         if "mixscape" not in adata.uns:
             raise ValueError("Please run the `mixscape` function first.")
-        perturbation_score = None
+        perturbation_score: pd.DataFrame | None = None
         for key in adata.uns["mixscape"][target_gene]:
             perturbation_score_temp = adata.uns["mixscape"][target_gene][key]
             perturbation_score_temp["name"] = key
@@ -598,14 +602,17 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                 perturbation_score = copy.deepcopy(perturbation_score_temp)
             else:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
-        perturbation_score["mix"] = adata.obs[mixscape_class][perturbation_score.index]
+        perturbation_score = as_frame(perturbation_score)
+        perturbation_score["mix"] = as_frame(adata.obs)[mixscape_class][perturbation_score.index]
         gd = list(set(perturbation_score[pert_key]).difference({target_gene}))[0]
 
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
             palette = {gd: "#7d7d7d", target_gene: color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
-            top_r = max(plot_dens.get_lines()[cond].get_data()[1].max() for cond in range(len(plot_dens.get_lines())))
+            top_r = max(
+                as_dense(plot_dens.get_lines()[cond].get_data()[1]).max() for cond in range(len(plot_dens.get_lines()))
+            )
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
@@ -647,7 +654,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             if palette is None:
                 palette = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
-            top_r = max(plot_dens.get_lines()[i].get_data()[1].max() for i in range(len(plot_dens.get_lines())))
+            top_r = max(
+                as_dense(plot_dens.get_lines()[i].get_data()[1]).max() for i in range(len(plot_dens.get_lines()))
+            )
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
@@ -723,12 +732,12 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         order: Sequence[str] | None = None,
         multi_panel: bool | None = None,
         xlabel: str = "",
-        ylabel: str | Sequence[str] | None = None,
+        ylabel: str | Sequence[str | None] | None = None,
         rotation: float | None = None,
         ax: Axes | None = None,
         return_fig: bool = False,
         **kwargs,
-    ) -> Axes | Figure | None:
+    ) -> Axes | Figure | FacetGrid | list[Axes] | None:
         """Violin plot using mixscape results.
 
         Requires `pt.tl.mixscape` to be run first.
@@ -765,12 +774,13 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         Preview:
             .. image:: /_static/docstring_previews/mixscape_violin.png
         """
+        mixscape_class_mask: np.ndarray | pd.Series
         if isinstance(target_gene_idents, str):
-            mixscape_class_mask = adata.obs[groupby] == target_gene_idents
+            mixscape_class_mask = as_frame(adata.obs)[groupby] == target_gene_idents
         elif isinstance(target_gene_idents, list):
             mixscape_class_mask = np.full_like(adata.obs[groupby], False, dtype=bool)
             for ident in target_gene_idents:
-                mixscape_class_mask |= adata.obs[groupby] == ident
+                mixscape_class_mask |= as_frame(adata.obs)[groupby] == ident
         adata = adata[mixscape_class_mask]
 
         sanitize_anndata(adata)
@@ -860,7 +870,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                     y=y,
                     data=obs_tidy,
                     order=order,
-                    orient="vertical",
+                    orient="vertical",  # type: ignore[arg-type]
                     density_norm=scale,
                     ax=ax,
                     hue=hue,
@@ -914,7 +924,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         mixscape_class: str = "mixscape_class",
         mixscape_class_global: str = "mixscape_class_global",
         perturbation_type: str | None = "KO",
-        lda_key: str | None = "mixscape_lda",
+        lda_key: str = "mixscape_lda",
         n_components: int | None = None,
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | None = None,
@@ -984,8 +994,8 @@ class MixscapeGaussianMixture(GaussianMixture):
     def __init__(
         self,
         n_components: int,
-        fixed_means: Sequence[float] | None = None,
-        fixed_covariances: Sequence[float] | None = None,
+        fixed_means: Sequence[float | None] | None = None,
+        fixed_covariances: Sequence[float | None] | None = None,
         **kwargs,
     ):
         """Custom Gaussian Mixture Model where means and covariances can be fixed for specific components.
@@ -1000,15 +1010,15 @@ class MixscapeGaussianMixture(GaussianMixture):
         self.fixed_means = fixed_means
         self.fixed_covariances = fixed_covariances
 
-        self.fixed_mean_indices = []
-        self.fixed_mean_values = []
+        self.fixed_mean_indices: list[int] = []
+        self.fixed_mean_values: np.ndarray | list[float] = []
         if fixed_means is not None:
             self.fixed_mean_indices = [i for i, m in enumerate(fixed_means) if m is not None]
             if self.fixed_mean_indices:
                 self.fixed_mean_values = np.array([fixed_means[i] for i in self.fixed_mean_indices])
 
-        self.fixed_cov_indices = []
-        self.fixed_cov_values = []
+        self.fixed_cov_indices: list[int] = []
+        self.fixed_cov_values: np.ndarray | list[float] = []
         if fixed_covariances is not None:
             self.fixed_cov_indices = [i for i, c in enumerate(fixed_covariances) if c is not None]
             if self.fixed_cov_indices:

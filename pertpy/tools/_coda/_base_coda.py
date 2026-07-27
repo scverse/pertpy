@@ -3,22 +3,22 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 import seaborn as sns
-from adjustText import adjust_text
+from adjustText import adjust_text  # type: ignore[import-untyped]
 from anndata import AnnData
 from jax import config, random
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
 from matplotlib.colors import Colormap
-from mudata import MuData
-from numpyro.infer import HMC, MCMC, NUTS, initialization
+from mudata import MuData  # type: ignore[import-untyped]
+from numpyro.infer import HMC, MCMC, NUTS, initialization  # type: ignore[import-untyped]
 from rich import box, print
 from rich.console import Console
 from rich.table import Table
@@ -26,18 +26,22 @@ from scipy.cluster import hierarchy as sp_hierarchy
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
+from pertpy._types import as_dense, as_frame, as_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import numpyro as npy
-    import toytree as tt
-    from ete4 import Tree
+    import numpyro as npy  # type: ignore[import-untyped]
+    import toytree as tt  # type: ignore[import-untyped]
+    from ete4 import Tree  # type: ignore[import-untyped]
     from jax._src.typing import Array
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from seaborn.axisgrid import FacetGrid
 
 config.update("jax_enable_x64", True)
+
+RGBA = tuple[float, float, float, float]
 
 
 class CompositionalModel2(ABC):
@@ -111,7 +115,7 @@ class CompositionalModel2(ABC):
         rather than from ``self.mcmc``, so ``make_arviz`` works on stored MuData objects
         even after the model instance has been reused for other datasets (issue #812).
         """
-        import arviz as az
+        import arviz as az  # type: ignore[import-untyped]
         from numpyro.infer import Predictive
 
         mcmc_state = sample_adata.uns.get("scCODA_params", {}).get("mcmc", {})
@@ -183,10 +187,11 @@ class CompositionalModel2(ABC):
         dtype = "float64"
 
         # Convert count data to float64 (needed for correct inference)
-        sample_adata.X = sample_adata.X.astype(dtype)
+        sample_adata.X = as_matrix(sample_adata.X).astype(dtype)
+        X = as_dense(sample_adata.X)
 
         # Build covariate matrix from R-like formula, save in obsm
-        import patsy
+        import patsy  # type: ignore[import-untyped]
 
         covariate_matrix = patsy.dmatrix(formula, sample_adata.obs)
         covariate_names = covariate_matrix.design_info.column_names[1:]
@@ -197,7 +202,7 @@ class CompositionalModel2(ABC):
         # Invoke instance of the correct model depending on reference cell type
         # Automatic reference selection (dispersion-based)
         if reference_cell_type == "automatic":
-            percent_zero = np.sum(sample_adata.X == 0, axis=0) / sample_adata.X.shape[0]
+            percent_zero = np.sum(X == 0, axis=0) / X.shape[0]
             nonrare_ct = np.where(percent_zero < automatic_reference_absence_threshold)[0]
 
             if len(nonrare_ct) == 0:
@@ -205,7 +210,7 @@ class CompositionalModel2(ABC):
                     "No cell types that have large enough presence! Please increase automatic_reference_absence_threshold"
                 )
 
-            rel_abun = sample_adata.X / np.sum(sample_adata.X, axis=1, keepdims=True)
+            rel_abun = X / np.sum(X, axis=1, keepdims=True)
 
             # select reference
             cell_type_disp = np.var(rel_abun, axis=0) / np.mean(rel_abun, axis=0)
@@ -224,14 +229,14 @@ class CompositionalModel2(ABC):
             raise NameError("Reference index is not a valid cell type name or numerical index!")
 
         # Add pseudocount if zeroes are present.
-        if np.count_nonzero(sample_adata.X) != np.size(sample_adata.X):
+        if np.count_nonzero(X) != np.size(X):
             logger.info("Zero counts encountered in data! Added a pseudocount of 0.5.")
-            sample_adata.X[sample_adata.X == 0] = 0.5
+            X[X == 0] = 0.5
 
-        sample_adata.obsm["sample_counts"] = np.sum(sample_adata.X, axis=1)
+        sample_adata.obsm["sample_counts"] = np.sum(X, axis=1)
 
         # Check for relative abundances
-        if np.allclose(sample_adata.obsm["sample_counts"], 1.0):
+        if np.allclose(as_dense(sample_adata.obsm["sample_counts"]), 1.0):
             warnings.warn(
                 "All samples sum to ~1, suggesting relative abundances were provided. "
                 "scCODA requires absolute cell counts. Results may be meaningless.",
@@ -728,7 +733,7 @@ class CompositionalModel2(ABC):
         model_type: str,
         select_type: str,
         target_fdr: float = 0.05,
-        node_df: pd.DataFrame = None,
+        node_df: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Evaluation of MCMC results for effect parameters. This function is only used within self.summary_prepare.
 
@@ -747,8 +752,9 @@ class CompositionalModel2(ABC):
             pd.DataFrame:  effect DataFrame with inclusion probability, final parameters, expected sample.
         """
         # Data dimensions
-        D = len(effect_df.index.levels[0])
-        K = len(effect_df.index.levels[1])
+        effect_index = cast("pd.MultiIndex", effect_df.index)
+        D = len(effect_index.levels[0])
+        K = len(effect_index.levels[1])
 
         # Effect processing for different models
         # Classic scCODA (spike-and-slab + no tree aggregation)
@@ -805,11 +811,11 @@ class CompositionalModel2(ABC):
 
             # Feature-level effects are just node-level effects time ancestor matrix
             effect_df["final_parameter"] = np.matmul(
-                np.kron(np.eye(D, dtype=int), A), np.array(node_df["final_parameter"])
+                np.kron(np.eye(D, dtype=int), A), np.array(as_frame(node_df)["final_parameter"])
             )
 
         # Get expected sample, log-fold change
-        y_bar = np.mean(np.sum(sample_adata.X, axis=1))
+        y_bar = np.mean(np.sum(as_dense(sample_adata.X), axis=1))
         alpha_par = intercept_df.loc[:, "final_parameter"].astype(float)
         alphas_exp = np.exp(alpha_par)
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
@@ -856,7 +862,7 @@ class CompositionalModel2(ABC):
             p_t = (theta * l_1 / 2) / ((theta * l_1 / 2) + ((1 - theta) * l_0 / 2))
             return 1 / (l_0 - l_1) * np.log(1 / p_t - 1)
 
-        D = len(node_df.index.levels[0])
+        D = len(cast("pd.MultiIndex", node_df.index).levels[0])
 
         # apply inclusion threshold
         deltas = delta(l_0, l_1, theta)
@@ -882,7 +888,7 @@ class CompositionalModel2(ABC):
         intercept_df = intercept_df.rename(columns={"mean": "final_parameter"})
 
         # Get expected sample
-        y_bar = np.mean(np.sum(sample_adata.X, axis=1))
+        y_bar = np.mean(np.sum(as_dense(sample_adata.X), axis=1))
         alphas_exp = np.exp(intercept_df.loc[:, "final_parameter"].astype(float))
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
         intercept_df.loc[:, "expected_sample"] = alpha_sample
@@ -1003,7 +1009,7 @@ class CompositionalModel2(ABC):
 
             if model_type == "tree_agg":
                 table = Table("Nodes", box=box.SQUARE, expand=True, highlight=True)
-                for index in node_df.index.levels[0]:
+                for index in cast("pd.MultiIndex", node_df.index).levels[0]:
                     table.add_row(f"Covariate={index}", end_section=True)
                     table.add_row(
                         node_df.loc[index].to_string(justify="center", float_format=lambda _: f"{_:.2f}"),
@@ -1170,7 +1176,9 @@ class CompositionalModel2(ABC):
         for cov in effect_df.index.get_level_values("Covariate"):
             sample_adata.varm[f"effect_df_{cov}"] = effect_df.loc[cov, :]
 
-    def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
+    def credible_effects(
+        self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float | None = None
+    ) -> pd.Series:
         """Decides which effects of the scCODA model are credible based on an adjustable inclusion probability threshold.
 
         Note: Parameter est_fdr has no effect for spike-and-slab LASSO selection method.
@@ -1292,7 +1300,7 @@ class CompositionalModel2(ABC):
         modality_key: str = "coda",
         palette: str | Colormap | None = cm.tab20,
         show_legend: bool | None = True,
-        level_order: list[str] = None,
+        level_order: list[str] | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
         return_fig: bool = False,
@@ -1327,7 +1335,7 @@ class CompositionalModel2(ABC):
         if isinstance(data, MuData):
             data = data[modality_key]
 
-        ct_names = data.var.index
+        ct_names = as_frame(data.var).index.to_list()
 
         # option to plot one stacked barplot per sample
         if feature_name == "samples":
@@ -1335,10 +1343,10 @@ class CompositionalModel2(ABC):
                 assert set(level_order) == set(data.obs.index), "level order is inconsistent with levels"
                 data = data[level_order]
             self._stackbar(
-                data.X,
-                type_names=data.var.index,
+                as_dense(data.X),
+                type_names=as_frame(data.var).index.to_list(),
                 title="samples",
-                level_names=data.obs.index,
+                level_names=as_frame(data.obs).index.to_list(),
                 figsize=figsize,
                 dpi=dpi,
                 palette=palette,
@@ -1346,19 +1354,22 @@ class CompositionalModel2(ABC):
             )
         else:
             # Order levels
+            obs = as_frame(data.obs)
+            levels: list[str]
             if level_order:
-                assert set(level_order) == set(data.obs[feature_name]), "level order is inconsistent with levels"
+                assert set(level_order) == set(obs[feature_name]), "level order is inconsistent with levels"
                 levels = level_order
-            elif hasattr(data.obs[feature_name], "cat"):
-                levels = data.obs[feature_name].cat.categories.to_list()
+            elif hasattr(obs[feature_name], "cat"):
+                levels = obs[feature_name].cat.categories.to_list()
             else:
-                levels = pd.unique(data.obs[feature_name])
+                levels = pd.unique(obs[feature_name]).tolist()
             n_levels = len(levels)
-            feature_totals = np.zeros([n_levels, data.X.shape[1]])
+            counts = as_dense(data.X)
+            feature_totals = np.zeros([n_levels, counts.shape[1]])
 
             for level in range(n_levels):
-                l_indices = np.where(data.obs[feature_name] == levels[level])
-                feature_totals[level] = np.sum(data.X[l_indices], axis=0)
+                l_indices = np.where(obs[feature_name] == levels[level])
+                feature_totals[level] = np.sum(counts[l_indices], axis=0)
 
             self._stackbar(
                 feature_totals,
@@ -1388,12 +1399,12 @@ class CompositionalModel2(ABC):
         plot_zero_covariate: bool = True,
         plot_zero_cell_type: bool = False,
         palette: str | Colormap | None = cm.tab20,
-        level_order: list[str] = None,
+        level_order: list[str] | None = None,
         args_barplot: dict | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
         return_fig: bool = False,
-    ) -> Figure | None:
+    ) -> Figure | FacetGrid | None:
         """Barplot visualization for effects.
 
         The effect results for each covariate are shown as a group of barplots, with intra--group separation by cell types.
@@ -1449,7 +1460,7 @@ class CompositionalModel2(ABC):
         covariate_names_non_zero = [
             covariate_name
             for covariate_name in covariate_names
-            if data.varm[f"effect_df_{covariate_name}"][parameter].any()
+            if as_frame(data.varm[f"effect_df_{covariate_name}"])[parameter].any()
         ]
         covariate_names_zero = list(set(covariate_names) - set(covariate_names_non_zero))
         if not plot_zero_covariate:
@@ -1457,7 +1468,7 @@ class CompositionalModel2(ABC):
 
         # set up df for plotting
         plot_df = pd.concat(
-            [data.varm[f"effect_df_{covariate_name}"][parameter] for covariate_name in covariate_names],
+            [as_frame(data.varm[f"effect_df_{covariate_name}"])[parameter] for covariate_name in covariate_names],
             axis=1,
         )
         plot_df.columns = covariate_names
@@ -1527,32 +1538,37 @@ class CompositionalModel2(ABC):
         # If not plot as facets, call barplot to plot cell types on the x-axis.
         else:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
+            colors: str | list[RGBA] | None
             if len(covariate_names) == 1:
-                if isinstance(palette, Colormap):
-                    palette = np.array(
-                        [palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]
-                    ).tolist()
+                colors = (
+                    np.array([palette(i % palette.N) for i in range(len(plot_df["Cell Type"].unique()))]).tolist()
+                    if isinstance(palette, Colormap)
+                    else palette
+                )
                 sns.barplot(
                     data=plot_df,
                     x="Cell Type",
                     y="value",
                     hue="x",
-                    palette=palette,
+                    palette=colors,
                     ax=ax,
                 )
                 ax.set_title(covariate_names[0])
             else:
-                if isinstance(palette, Colormap):
-                    palette = np.array([palette(i % palette.N) for i in range(len(covariate_names))]).tolist()
+                colors = (
+                    np.array([palette(i % palette.N) for i in range(len(covariate_names))]).tolist()
+                    if isinstance(palette, Colormap)
+                    else palette
+                )
                 sns.barplot(
                     data=plot_df,
                     x="Cell Type",
                     y="value",
                     hue="Covariate",
-                    palette=palette,
+                    palette=colors,
                     ax=ax,
                 )
-            cell_types = pd.unique(plot_df["Cell Type"])
+            cell_types = as_dense(pd.unique(plot_df["Cell Type"]))
             ax.set_xticks(cell_types)
             ax.set_xticklabels(cell_types, rotation=90)
 
@@ -1577,14 +1593,14 @@ class CompositionalModel2(ABC):
         cell_types: list | None = None,
         args_boxplot: dict | None = None,
         args_swarmplot: dict | None = None,
-        palette: str | Colormap | None = "Blues",
+        palette: str | Colormap | list[RGBA] | None = "Blues",
         show_legend: bool | None = True,
-        level_order: list[str] = None,
+        level_order: list[str] | None = None,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
         layout: Literal["long", "wide"] = "long",
         return_fig: bool = False,
-    ) -> Figure | None:
+    ) -> Figure | FacetGrid | None:
         """Grouped boxplot visualization.
 
          The cell counts for each cell type are shown as a group of boxplots
@@ -1631,35 +1647,39 @@ class CompositionalModel2(ABC):
             args_swarmplot = {}
         if isinstance(data, MuData):
             data = data[modality_key]
-        if isinstance(palette, Colormap):
-            palette = list(palette(range(len(data.obs[feature_name].unique()))))
+        colors: str | list[RGBA] | None = (
+            list(palette(range(len(as_frame(data.obs)[feature_name].unique()))))
+            if isinstance(palette, Colormap)
+            else palette
+        )
         if layout not in {"long", "wide"}:
             raise ValueError("layout must be either 'long' or 'wide'")
 
         # y scale transformations
+        counts = as_dense(data.X)
         if y_scale == "relative":
-            sample_sums = np.sum(data.X, axis=1, keepdims=True)
-            X = data.X / sample_sums
+            sample_sums = np.sum(counts, axis=1, keepdims=True)
+            X = counts / sample_sums
             value_name = "Proportion"
         # add pseudocount 0.5 if using log scale
         elif y_scale == "log":
-            X = data.X.copy()
+            X = counts.copy()
             X[X == 0] = 0.5
             X = np.log(X)
             value_name = "log(count)"
         elif y_scale == "log10":
-            X = data.X.copy()
+            X = counts.copy()
             X[X == 0] = 0.5
             X = np.log(X)
             value_name = "log10(count)"
         elif y_scale == "count":
-            X = data.X
+            X = counts
             value_name = "count"
         else:
             raise ValueError("Invalid y_scale transformation")
 
         count_df = pd.DataFrame(X, columns=data.var.index, index=data.obs.index).merge(
-            data.obs[feature_name], left_index=True, right_index=True
+            as_frame(data.obs)[feature_name], left_index=True, right_index=True
         )
         plot_df = pd.melt(count_df, id_vars=feature_name, var_name="Cell type", value_name=value_name)
         if cell_types is not None:
@@ -1680,7 +1700,7 @@ class CompositionalModel2(ABC):
         # If plot as facets, create a FacetGrid and map boxplot to it.
         if plot_facets:
             if level_order is None:
-                level_order = pd.unique(plot_df[feature_name])
+                level_order = pd.unique(plot_df[feature_name]).tolist()
 
             K = X.shape[1]
 
@@ -1746,7 +1766,7 @@ class CompositionalModel2(ABC):
                 hue=feature_name,
                 data=plot_df,
                 fliersize=1,
-                palette=palette,
+                palette=colors,
                 ax=ax,
                 **args_boxplot,
             )
@@ -1775,9 +1795,9 @@ class CompositionalModel2(ABC):
                     **args_swarmplot,
                 )
 
-            cell_types = pd.unique(plot_df["Cell type"])
-            ax.set_xticks(cell_types)
-            ax.set_xticklabels(cell_types, rotation=90)
+            cell_type_ticks = as_dense(pd.unique(plot_df["Cell type"]))
+            ax.set_xticks(cell_type_ticks)
+            ax.set_xticklabels(cell_type_ticks, rotation=90)
 
             if show_legend:
                 handles, labels = ax.get_legend_handles_labels()
@@ -1809,9 +1829,9 @@ class CompositionalModel2(ABC):
         data: AnnData | MuData,
         *,
         modality_key: str = "coda",
-        abundant_threshold: float | None = 0.9,
-        default_color: str | None = "Grey",
-        abundant_color: str | None = "Red",
+        abundant_threshold: float = 0.9,
+        default_color: str = "Grey",
+        abundant_color: str = "Red",
         label_cell_types: bool = True,
         figsize: tuple[float, float] | None = None,
         dpi: int | None = 100,
@@ -1856,15 +1876,16 @@ class CompositionalModel2(ABC):
         if ax is None:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
 
-        rel_abun = data.X / np.sum(data.X, axis=1, keepdims=True)
+        counts = as_dense(data.X)
+        rel_abun = counts / np.sum(counts, axis=1, keepdims=True)
 
-        percent_zero = np.sum(data.X == 0, axis=0) / data.X.shape[0]
+        percent_zero = np.sum(counts == 0, axis=0) / counts.shape[0]
         nonrare_ct = np.where(percent_zero < 1 - abundant_threshold)[0]
 
         # select reference
         cell_type_disp = np.var(rel_abun, axis=0) / np.mean(rel_abun, axis=0)
 
-        is_abundant = [x in nonrare_ct for x in range(data.X.shape[1])]
+        is_abundant = [x in nonrare_ct for x in range(counts.shape[1])]
 
         # Scatterplot
         plot_df = pd.DataFrame(
@@ -1877,18 +1898,18 @@ class CompositionalModel2(ABC):
         )
 
         if len(np.unique(plot_df["Is abundant"])) > 1:
-            palette = [default_color, abundant_color]
+            colors = [default_color, abundant_color]
         elif np.unique(plot_df["Is abundant"]) == [False]:
-            palette = [default_color]
+            colors = [default_color]
         else:
-            palette = [abundant_color]
+            colors = [abundant_color]
 
         ax = sns.scatterplot(
             data=plot_df,
             x="Presence",
             y="Total dispersion",
             hue="Is abundant",
-            palette=palette,
+            palette=colors,
             ax=ax,
         )
 
@@ -1934,7 +1955,7 @@ class CompositionalModel2(ABC):
         tight_text: bool = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        figsize: tuple[float, float] | None = (None, None),
+        figsize: tuple[float | None, float | None] | None = (None, None),
         dpi: int | None = 100,
         save: str | bool = False,
         return_fig: bool = False,
@@ -1977,7 +1998,13 @@ class CompositionalModel2(ABC):
         """
         try:
             from ete4 import Tree
-            from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
+            from ete4.treeview import (  # type: ignore[import-untyped]
+                CircleFace,
+                NodeStyle,
+                TextFace,
+                TreeStyle,
+                faces,
+            )
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies: `pip install 'pertpy[coda]'`"
@@ -2017,7 +2044,7 @@ class CompositionalModel2(ABC):
         tight_text: bool | None = False,
         show_scale: bool | None = False,
         units: Literal["px", "mm", "in"] | None = "px",
-        figsize: tuple[float, float] | None = (None, None),
+        figsize: tuple[float | None, float | None] | None = (None, None),
         dpi: int | None = 100,
         save: str | bool = False,
         return_fig: bool = False,
@@ -2065,7 +2092,13 @@ class CompositionalModel2(ABC):
         """
         try:
             from ete4 import Tree
-            from ete4.treeview import CircleFace, NodeStyle, TextFace, TreeStyle, faces
+            from ete4.treeview import (  # type: ignore[import-untyped]
+                CircleFace,
+                NodeStyle,
+                TextFace,
+                TreeStyle,
+                faces,
+            )
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies: `pip install 'pertpy[coda]'`"
@@ -2184,7 +2217,7 @@ class CompositionalModel2(ABC):
             plt.subplots_adjust(wspace=0)
 
             if save:
-                plt.savefig(save)
+                plt.savefig(cast("str", save))
             if return_fig:
                 return plt.gcf()
 
@@ -2193,7 +2226,8 @@ class CompositionalModel2(ABC):
                 tree2.render(save, tree_style=tree_style, units=units)
             if return_fig:
                 return tree2, tree_style
-            return tree2.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)
+            width, height = figsize if figsize is not None else (None, None)
+            return tree2.render("%%inline", tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)
 
         return None
 
@@ -2207,8 +2241,8 @@ class CompositionalModel2(ABC):
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
         color_map: Colormap | str | None = None,
-        palette: str | Sequence[str] | Colormap | None = None,
-        ax: Axes = None,
+        palette: str | Sequence[str] | Colormap | dict[str, RGBA] | None = None,
+        ax: Axes | None = None,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -2273,11 +2307,13 @@ class CompositionalModel2(ABC):
         data_coda = mdata[modality_key_2]
         if isinstance(effect_name, str):
             effect_name = [effect_name]
+        effect_names = cast("list[str]", effect_name)
         if isinstance(palette, Colormap):
             palette = {
-                cluster: palette(i % palette.N) for i, cluster in enumerate(data_rna.obs[cluster_key].unique().tolist())
+                cluster: palette(i % palette.N)
+                for i, cluster in enumerate(as_frame(data_rna.obs)[cluster_key].unique().tolist())
             }
-        for _, effect in enumerate(effect_name):
+        for _, effect in enumerate(effect_names):
             effect_df = data_coda.varm[effect]
             effect_col = "Effect" if "Effect" in effect_df.columns else "Final Parameter"
             data_rna.obs[effect] = [effect_df.loc[f"{c}", effect_col] for c in data_rna.obs[cluster_key]]
@@ -2285,12 +2321,12 @@ class CompositionalModel2(ABC):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")
         else:
-            vmin = min(data_rna.obs[effect].min() for _, effect in enumerate(effect_name))
+            vmin = min(as_frame(data_rna.obs)[effect].min() for _, effect in enumerate(effect_names))
         if kwargs.get("vmax"):
             vmax = kwargs["vmax"]
             kwargs.pop("vmax")
         else:
-            vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_name))
+            vmax = max(as_frame(data_rna.obs)[effect].max() for _, effect in enumerate(effect_names))
 
         fig = sc.pl.umap(
             data_rna,
@@ -2397,7 +2433,7 @@ def traverse(df_: pd.DataFrame, a: str, i: int, innerl: bool) -> str:
     Adapted from https://stackoverflow.com/questions/15343338/how-to-convert-a-data-frame-to-tree-structure-object-such-as-dendrogram.
     """
     if i + 1 < df_.shape[1]:
-        a_inner = pd.unique(df_.loc[np.where(df_.iloc[:, i] == a)].iloc[:, i + 1])
+        a_inner = pd.unique(df_.loc[np.where(df_.iloc[:, i] == a)[0]].iloc[:, i + 1])
 
         desc = [traverse(df_, b, i + 1, innerl) for b in a_inner]
         il = a if innerl else ""
@@ -2433,8 +2469,8 @@ def df2newick(df: pd.DataFrame, levels: list[str], inner_label: bool = True) -> 
 
 def get_a_2(
     tree: Tree,
-    leaf_order: list[str] = None,
-    node_order: list[str] = None,
+    leaf_order: list[str] | None = None,
+    node_order: list[str] | None = None,
 ) -> tuple[np.ndarray, int]:
     """Calculate ancestor matrix from a ete4 tree.
 
@@ -2484,9 +2520,8 @@ def get_a_2(
         A_ = A_.loc[leaf_order]
     if node_order is not None:
         A_ = A_[node_order]
-    A_ = np.array(A_)
 
-    return A_, n_nodes
+    return np.array(A_), n_nodes
 
 
 def collapse_singularities_2(tree: Tree) -> Tree:
@@ -2537,11 +2572,11 @@ def linkage_to_newick(
 
 def import_tree(
     data: AnnData | MuData,
-    modality_1: str = None,
-    modality_2: str = None,
-    dendrogram_key: str = None,
-    levels_orig: list[str] = None,
-    levels_agg: list[str] = None,
+    modality_1: str | None = None,
+    modality_2: str | None = None,
+    dendrogram_key: str | None = None,
+    levels_orig: list[str] | None = None,
+    levels_agg: list[str] | None = None,
     add_level_name: bool = True,
     key_added: str = "tree",
 ):
@@ -2665,11 +2700,11 @@ def from_scanpy(
     covariate_obs = list(set(covariate_obs or []) | set(sample_identifier))
 
     if isinstance(sample_identifier, list):
-        adata.obs = adata.obs.copy()
-        adata.obs["scCODA_sample_id"] = adata.obs[sample_identifier].agg("-".join, axis=1)
+        adata.obs = as_frame(adata.obs).copy()
+        adata.obs["scCODA_sample_id"] = as_frame(adata.obs)[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
 
-    groups = adata.obs.value_counts([sample_identifier, cell_type_identifier])
+    groups = as_frame(adata.obs).value_counts([sample_identifier, cell_type_identifier])
     ct_count_data = groups.unstack(level=cell_type_identifier).fillna(0)
     covariate_df_ = pd.DataFrame(index=ct_count_data.index)
 
@@ -2678,13 +2713,13 @@ def from_scanpy(
         covariate_df_ = pd.concat([covariate_df_, covariate_df_uns], axis=1)
 
     if covariate_obs:
-        unique_check = adata.obs.groupby(sample_identifier).nunique()
+        unique_check = as_frame(adata.obs).groupby(sample_identifier).nunique()
         for c in covariate_obs.copy():
             if unique_check[c].max() != 1:
                 logger.warning(f"Covariate {c} has non-unique values for batch! Skipping...")
                 covariate_obs.remove(c)
         if covariate_obs:
-            covariate_df_obs = adata.obs.groupby(sample_identifier).first()[covariate_obs]
+            covariate_df_obs = as_frame(adata.obs).groupby(sample_identifier).first()[covariate_obs]
             covariate_df_ = pd.concat([covariate_df_, covariate_df_obs], axis=1)
 
     if covariate_df is not None:

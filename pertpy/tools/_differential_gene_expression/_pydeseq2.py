@@ -8,9 +8,9 @@ from anndata import AnnData
 from matplotlib.lines import Line2D
 from matplotlib.pyplot import Figure
 from numpy import ndarray
-from pydeseq2.dds import DeseqDataSet
-from pydeseq2.default_inference import DefaultInference
-from pydeseq2.ds import DeseqStats
+from pydeseq2.dds import DeseqDataSet  # type: ignore[import-untyped]
+from pydeseq2.default_inference import DefaultInference  # type: ignore[import-untyped]
+from pydeseq2.ds import DeseqStats  # type: ignore[import-untyped]
 from scipy.sparse import issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -39,7 +39,7 @@ class PyDESeq2(LinearModelBase):
     def _check_counts(self):
         check_is_integer_matrix(self.data)
 
-    def fit(self, **kwargs) -> pd.DataFrame:
+    def fit(self, **kwargs) -> None:
         """Fit dds model using pydeseq2.
 
         Note: this creates its own AnnData object for downstream processing.
@@ -188,7 +188,7 @@ class PyDESeq2(LinearModelBase):
             final_y,
             s=point_size * (20 + 20 * outliers.astype(int)),
             facecolor=np.where(outliers, "none", final_col),
-            edgecolors=np.where(outliers, final_col, "none"),
+            edgecolors=np.where(outliers, final_col, "none").tolist(),
         )
 
         fitted_disp = np.asarray(dds.var["fitted_dispersions"])[sel]

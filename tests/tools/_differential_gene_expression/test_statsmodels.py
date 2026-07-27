@@ -2,7 +2,7 @@ from importlib.util import find_spec
 
 import numpy as np
 import pytest
-import statsmodels.api as sm
+import statsmodels.api as sm  # type: ignore[import-untyped]
 
 if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
     pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")

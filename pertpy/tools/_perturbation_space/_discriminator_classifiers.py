@@ -6,17 +6,18 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import numpy as np
-import optax
+import optax  # type: ignore[import-untyped]
 import pandas as pd
 import scipy
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
 from flax.training import train_state
 from jax import random
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+from sklearn.model_selection import train_test_split  # type: ignore[import-untyped]
+from sklearn.preprocessing import OneHotEncoder  # type: ignore[import-untyped]
 
+from pertpy._types import CSBase, as_dense, as_frame, as_matrix
 from pertpy.tools._perturbation_space._perturbation_space import (
     PerturbationSpace,
     _carry_constant_obs,
@@ -78,13 +79,13 @@ class LRClassifierSpace(PerturbationSpace):
             raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
 
         if layer_key is not None:
-            regression_data = adata.layers[layer_key]
+            regression_data = as_matrix(adata.layers[layer_key])
         elif embedding_key is not None:
-            regression_data = adata.obsm[embedding_key]
+            regression_data = as_matrix(adata.obsm[embedding_key])
         else:
-            regression_data = adata.X
+            regression_data = as_matrix(adata.X)
 
-        regression_labels = adata.obs[target_col]
+        regression_labels = as_frame(adata.obs)[target_col]
         random_state = _sklearn_random_state(random_state)
         regression_model = LogisticRegression(max_iter=max_iter, class_weight="balanced", random_state=random_state)
 
@@ -105,8 +106,8 @@ class LRClassifierSpace(PerturbationSpace):
         pert_adata.obs[target_col] = pd.Categorical(perturbations)
         pert_adata.obs["classifier_score"] = scores
 
-        _carry_constant_obs(pert_adata, adata.obs, target_col)
-        pert_adata.obs[target_col] = pert_adata.obs[target_col].astype("category")
+        _carry_constant_obs(pert_adata, as_frame(adata.obs), target_col)
+        pert_adata.obs[target_col] = as_frame(pert_adata.obs)[target_col].astype("category")
 
         return pert_adata
 
@@ -233,24 +234,24 @@ class JAXDataset:
             label_col: key with the perturbation labels.
             layer_key: key of the layer to be used as data, otherwise .X.
         """
-        self.data = adata.layers[layer_key] if layer_key else adata.X
+        data = as_matrix(adata.layers[layer_key] if layer_key else adata.X)
 
+        labels: np.ndarray
         if target_col in adata.obs.columns:
-            self.labels = adata.obs[target_col].values
+            labels = np.asarray(as_frame(adata.obs)[target_col].values)
         elif target_col in adata.obsm:
-            self.labels = adata.obsm[target_col]
+            labels = as_dense(adata.obsm[target_col])
         else:
             raise ValueError(f"Target column {target_col} not found in obs or obsm")
 
-        self.pert_labels = adata.obs[label_col].values
+        self.pert_labels = as_frame(adata.obs)[label_col].values
 
         # Keep sparse data sparse and densify only the requested batch to avoid materializing the full dense matrix.
-        self.is_sparse = scipy.sparse.issparse(self.data)
-        if self.is_sparse:
-            self.data = self.data.tocsr()
-        else:
-            self.data = jnp.array(np.asarray(self.data), dtype=jnp.float32)
-        self.labels = jnp.array(self.labels, dtype=jnp.float32)
+        self.is_sparse = isinstance(data, CSBase)
+        self.data: CSBase | jax.Array = (
+            data.tocsr() if isinstance(data, CSBase) else jnp.array(np.asarray(data), dtype=jnp.float32)
+        )
+        self.labels = jnp.array(labels, dtype=jnp.float32)
 
     def __len__(self):
         return self.data.shape[0]
@@ -258,10 +259,11 @@ class JAXDataset:
     def get_batch(self, indices: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, list]:
         """Returns a batch of samples and corresponding perturbations applied (labels)."""
         idx = np.asarray(indices)
-        if self.is_sparse:
-            batch_data = jnp.array(to_dense(self.data[idx]), dtype=jnp.float32)
+        data = self.data
+        if isinstance(data, CSBase):
+            batch_data = jnp.array(to_dense(data[idx]), dtype=jnp.float32)
         else:
-            batch_data = self.data[jnp.asarray(idx)]
+            batch_data = data[jnp.asarray(idx)]
         batch_labels = self.labels[jnp.asarray(idx)]
         batch_pert_labels = [self.pert_labels[i] for i in idx]
         return batch_data, batch_labels, batch_pert_labels
@@ -364,9 +366,9 @@ class MLPClassifierSpace(PerturbationSpace):
             hidden_dim = [512]
 
         if embedding_key is not None:
-            work = AnnData(X=adata.obsm[embedding_key])
-            work.obs_names = adata.obs_names
-            work.obs = adata.obs.copy()
+            work = AnnData(X=as_dense(adata.obsm[embedding_key]))
+            work.obs_names = adata.obs_names.tolist()
+            work.obs = as_frame(adata.obs).copy()
             adata = work
             layer_key = None
         else:
@@ -411,7 +413,7 @@ class MLPClassifierSpace(PerturbationSpace):
         state = create_train_state(init_rng, model, (adata.n_vars,), lr)
 
         # Create weighted sampling for class imbalance
-        weights = 1.0 / (1.0 + jnp.sum(train_dataset.labels, axis=1))
+        weights = 1.0 / (1.0 + jnp.sum(jnp.asarray(train_dataset.labels), axis=1))
         weights = weights / jnp.sum(weights)
 
         n_batches_per_epoch = len(train_dataset) // batch_size
@@ -419,7 +421,7 @@ class MLPClassifierSpace(PerturbationSpace):
             len(train_dataset), train_rng, batch_size, max_epochs * n_batches_per_epoch, weights
         )
 
-        best_val_loss = float("inf")
+        best_val_loss: float | jax.Array = float("inf")
         patience_counter = 0
 
         for epoch in range(max_epochs):
@@ -482,10 +484,10 @@ class MLPClassifierSpace(PerturbationSpace):
         aggregated = cell_embeddings.groupby(target_col, observed=True).mean()
 
         pert_adata = AnnData(X=aggregated.to_numpy(dtype=np.float32))
-        pert_adata.obs_names = aggregated.index.astype(str)
+        pert_adata.obs_names = aggregated.index.astype(str).tolist()
         pert_adata.obs[target_col] = pd.Categorical(aggregated.index.astype(str))
 
-        _carry_constant_obs(pert_adata, adata.obs, target_col)
-        pert_adata.obs[target_col] = pert_adata.obs[target_col].astype("category")
+        _carry_constant_obs(pert_adata, as_frame(adata.obs), target_col)
+        pert_adata.obs[target_col] = as_frame(pert_adata.obs)[target_col].astype("category")
 
         return pert_adata

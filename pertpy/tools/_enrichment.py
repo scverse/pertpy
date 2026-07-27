@@ -1,51 +1,52 @@
 from collections import ChainMap
-from collections.abc import Sequence
-from typing import Any, Literal
+from collections.abc import Mapping, Sequence
+from typing import Any, Literal, cast
 
-import blitzgsea
+import blitzgsea  # type: ignore[import-untyped]
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from anndata import AnnData
 from matplotlib.axes import Axes
-from scanpy.plotting import DotPlot
-from scanpy.tools._score_genes import _sparse_nanmean
-from scipy.sparse import issparse
+from scanpy.plotting import DotPlot  # type: ignore[import-untyped]
+from scanpy.tools._score_genes import _sparse_nanmean  # type: ignore[import-untyped]
 from scipy.stats import hypergeom
 from scverse_misc import Deprecation, deprecated_arg
-from statsmodels.stats.multitest import multipletests
+from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._types import CSBase, as_frame, as_matrix
 from pertpy.metadata import Drug
 
 
 def _prepare_targets(
-    targets: dict[str, list[str]] | dict[str, dict[str, list[str]]] = None,
+    targets: Mapping[str, list[str] | dict[str, list[str]]] | None = None,
     nested: bool = False,
-    categories: str | Sequence[str] = None,
+    categories: str | Sequence[str] | None = None,
 ) -> ChainMap | dict:
     if categories is not None:
         categories = [categories] if isinstance(categories, str) else list(categories)
 
+    groups: dict[str, Any]
     if targets is None:
         pt_drug = Drug()
         pt_drug.chembl.set()
-        targets = pt_drug.chembl.dictionary
+        groups = pt_drug.chembl.dictionary
         nested = True
     else:
-        targets = targets.copy()
+        groups = dict(targets)
     if categories is not None:
-        targets = {k: targets[k] for k in categories}  # type: ignore
+        groups = {k: groups[k] for k in categories}
     if nested:
-        targets = dict(ChainMap(*[targets[cat] for cat in targets]))  # type: ignore
+        groups = dict(ChainMap(*[groups[cat] for cat in groups]))
 
-    return targets
+    return groups
 
 
 def _mean(X, names, axis):
     """Helper function to compute a mean of X across an axis, respecting names and possible nans."""
-    if issparse(X):
+    if isinstance(X, CSBase):
         obs_avg = pd.Series(
             np.array(_sparse_nanmean(X, axis=axis)).flatten(),
             index=names,
@@ -59,10 +60,10 @@ class Enrichment:
     def score(
         self,
         adata: AnnData,
-        layer: str = None,
-        targets: dict[str, list[str]] | dict[str, dict[str, list[str]]] = None,
+        layer: str | None = None,
+        targets: dict[str, list[str]] | dict[str, dict[str, list[str]]] | None = None,
         nested: bool = False,
-        categories: Sequence[str] = None,
+        categories: Sequence[str] | None = None,
         method: Literal["mean", "seurat"] = "mean",
         n_bins: int = 25,
         ctrl_size: int = 50,
@@ -95,21 +96,21 @@ class Enrichment:
         Returns:
             An AnnData object with scores.
         """
-        mtx = adata.layers[layer] if layer is not None else adata.X
+        mtx = as_matrix(adata.layers[layer] if layer is not None else adata.X)
 
-        targets = _prepare_targets(targets=targets, nested=nested, categories=categories)  # type: ignore
-        full_targets = targets.copy()
+        target_groups: ChainMap | dict = _prepare_targets(targets=targets, nested=nested, categories=categories)
+        full_targets = target_groups.copy()
 
-        for drug in targets:
-            targets[drug] = np.isin(adata.var_names, targets[drug])
+        for drug in target_groups:
+            target_groups[drug] = np.isin(adata.var_names, target_groups[drug])
 
         # Scoring is done via matrix multiplication of the original cell by gene matrix by a new gene by drug matrix
         # with the entries in the new matrix being the weights of each gene for that group (such as drug)
         # The mean across targets is constant -> prepare weights for that
-        weights = pd.DataFrame(targets, index=adata.var_names)
+        weights = pd.DataFrame(target_groups, index=adata.var_names)
         weights = weights.loc[:, weights.sum() > 0]
         weights = weights / weights.sum()
-        scores = mtx.dot(weights) if issparse(mtx) else np.dot(mtx, weights)
+        scores = mtx.dot(weights) if isinstance(mtx, CSBase) else np.dot(mtx, weights)
 
         if method == "seurat":
             obs_avg = _mean(mtx, names=adata.var_names, axis=0)
@@ -128,10 +129,12 @@ class Enrichment:
             control_gene_weights = pd.DataFrame(control_groups, index=adata.var_names)
             control_gene_weights = control_gene_weights / control_gene_weights.sum()
 
-            control_profiles = mtx.dot(control_gene_weights) if issparse(mtx) else np.dot(mtx, control_gene_weights)
+            control_profiles = (
+                mtx.dot(control_gene_weights) if isinstance(mtx, CSBase) else np.dot(mtx, control_gene_weights)
+            )
             drug_bins = {}
             for drug in weights.columns:
-                bins = np.unique(obs_cut[targets[drug]])
+                bins = np.unique(obs_cut[target_groups[drug]])
                 drug_bins[drug] = np.isin(control_gene_weights.columns, bins)
             drug_weights = pd.DataFrame(drug_bins, index=control_gene_weights.columns)
             drug_weights = drug_weights / drug_weights.sum()
@@ -145,12 +148,12 @@ class Enrichment:
         adata.uns[f"{key_added}_all_genes"] = {"var": pd.DataFrame(columns=["all_genes"]).astype(object)}
 
         for drug in weights.columns:
-            adata.uns[f"{key_added}_genes"]["var"].loc[drug, "genes"] = "|".join(adata.var_names[targets[drug]])
+            adata.uns[f"{key_added}_genes"]["var"].loc[drug, "genes"] = "|".join(adata.var_names[target_groups[drug]])
             adata.uns[f"{key_added}_all_genes"]["var"].loc[drug, "all_genes"] = "|".join(full_targets[drug])
 
     @deprecated_arg(
         "pvals_adj_thresh",
-        Deprecation("1.0.6", "Use `padj_threshold`."),
+        cast("Deprecation", Deprecation("1.0.6", "Use `padj_threshold`.")),
     )
     def hypergeometric(
         self,
@@ -191,17 +194,17 @@ class Enrichment:
             padj_threshold = pvals_adj_thresh
 
         universe = set(adata.var_names)
-        targets = _prepare_targets(targets=targets, nested=nested, categories=categories)  # type: ignore
-        for group in targets:
-            targets[group] = set(targets[group]).intersection(universe)  # type: ignore
+        prepared: ChainMap | dict = _prepare_targets(targets=targets, nested=nested, categories=categories)
+        for group in prepared:
+            prepared[group] = set(prepared[group]).intersection(universe)
         # We remove empty keys since we don't need them
-        targets = {k: v for k, v in targets.items() if v}
+        target_groups = {k: v for k, v in prepared.items() if v}
 
         overrepresentation = {}
         for cluster in adata.uns["rank_genes_groups"]["names"].dtype.names:
             results = pd.DataFrame(
                 1,
-                index=list(targets.keys()),
+                index=list(target_groups.keys()),
                 columns=[
                     "intersection",
                     "gene_group",
@@ -222,8 +225,8 @@ class Enrichment:
             results["pvals"] = results["pvals"].astype(float)
 
             for ind in results.index:
-                gene_group = targets[ind]
-                common = gene_group.intersection(markers)  # type: ignore
+                gene_group = target_groups[ind]
+                common = gene_group.intersection(markers)
                 results.loc[ind, "intersection"] = len(common)
                 results.loc[ind, "gene_group"] = len(gene_group)
                 # need to subtract 1 from the intersection length
@@ -295,11 +298,11 @@ class Enrichment:
         self,
         adata: AnnData,
         *,
-        targets: dict[str, dict[str, list[str]]] = None,
+        targets: dict[str, dict[str, list[str]]] | None = None,
         source: Literal["chembl", "dgidb", "pharmgkb"] = "chembl",
         category_name: str = "interaction_type",
-        categories: Sequence[str] = None,
-        groupby: str = None,
+        categories: Sequence[str] | None = None,
+        groupby: str | None = None,
         key: str = "pertpy_enrichment",
         ax: Axes | None = None,
         return_fig: bool = False,
@@ -370,27 +373,27 @@ class Enrichment:
                 )
         else:
             targets = targets.copy()
+        nested_targets: dict[str, Any] = dict(targets)
         if categories is not None:
-            targets = {k: targets[k] for k in categories}  # type: ignore
+            nested_targets = {k: nested_targets[k] for k in categories}
 
-        for group in targets:
-            targets[group] = list(targets[group].keys())  # type: ignore
+        group_genes: dict[str, list[str]] = {group: list(genes) for group, genes in nested_targets.items()}
 
         var_names: list[str] = []
         var_group_positions: list[tuple[int, int]] = []
         var_group_labels: list[str] = []
         start = 0
 
-        enrichment_score_adata = AnnData(adata.uns[f"{key}_score"], obs=adata.obs)
+        enrichment_score_adata = AnnData(adata.uns[f"{key}_score"], obs=as_frame(adata.obs))
         enrichment_score_adata.var_names = adata.uns[f"{key}_variables"]
 
-        for group in targets:
-            targets[group] = list(  # type: ignore
-                enrichment_score_adata.var_names[np.isin(enrichment_score_adata.var_names, targets[group])]
+        for group in group_genes:
+            group_genes[group] = list(
+                enrichment_score_adata.var_names[np.isin(enrichment_score_adata.var_names, group_genes[group])]
             )
-            if len(targets[group]) == 0:
+            if len(group_genes[group]) == 0:
                 continue
-            var_names = var_names + targets[group]  # type: ignore
+            var_names = var_names + group_genes[group]
             var_group_positions = var_group_positions + [(start, len(var_names) - 1)]
             var_group_labels = var_group_labels + [group]
             start = len(var_names)

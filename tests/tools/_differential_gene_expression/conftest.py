@@ -14,7 +14,7 @@ def test_counts():
     if not PYDESEQ2_AVAILABLE:
         pytest.skip("pydeseq2 not available")
 
-    from pydeseq2.utils import load_example_data
+    from pydeseq2.utils import load_example_data  # type: ignore[import-untyped]
 
     return load_example_data(
         modality="raw_counts",
@@ -28,7 +28,7 @@ def test_metadata():
     if not PYDESEQ2_AVAILABLE:
         pytest.skip("pydeseq2 not available")
 
-    from pydeseq2.utils import load_example_data
+    from pydeseq2.utils import load_example_data  # type: ignore[import-untyped]
 
     return load_example_data(
         modality="metadata",

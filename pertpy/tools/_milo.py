@@ -5,19 +5,21 @@ import io
 import random
 import re
 from importlib.util import find_spec
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 import seaborn as sns
 from anndata import AnnData
-from mudata import MuData
+from fast_array_utils.conv import to_dense
+from mudata import MuData  # type: ignore[import-untyped]
 from scverse_misc import Deprecation, deprecated, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
+from pertpy._types import CSBase, as_frame, as_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
-from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import euclidean_distances  # type: ignore[import-untyped]
 
 
 def _weighted_bh(pvalues: np.ndarray, weights: np.ndarray) -> np.ndarray:
@@ -245,31 +247,27 @@ class Milo:
         """
         if isinstance(data, MuData):
             adata = data[feature_key]
-            is_MuData = True
         if isinstance(data, AnnData):
             adata = data
-            is_MuData = False
         if isinstance(adata, AnnData):
             try:
-                nhoods = adata.obsm["nhoods"]
+                nhoods = as_matrix(adata.obsm["nhoods"])
             except KeyError:
                 logger.error('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
                 raise
         # Make nhood abundance matrix
-        sample_dummies = pd.get_dummies(adata.obs[sample_col])
+        sample_dummies = pd.get_dummies(as_frame(adata.obs)[sample_col])
         all_samples = sample_dummies.columns
-        sample_dummies = csr_matrix(sample_dummies.values)
-        nhood_count_mat = nhoods.T.dot(sample_dummies)
+        nhood_count_mat = csr_matrix(nhoods).T.dot(csr_matrix(sample_dummies.values))
         sample_obs = pd.DataFrame(index=all_samples)
         sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs)
         sample_adata.uns["sample_col"] = sample_col
         # Save nhood index info
-        sample_adata.var["index_cell"] = adata.obs_names[adata.obs["nhood_ixs_refined"] == 1]
-        sample_adata.var["kth_distance"] = adata.obs.loc[
-            adata.obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"
-        ].values
+        obs = as_frame(adata.obs)
+        sample_adata.var["index_cell"] = adata.obs_names[obs["nhood_ixs_refined"] == 1]
+        sample_adata.var["kth_distance"] = obs.loc[obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"].values
 
-        if is_MuData is True:
+        if isinstance(data, MuData):
             data.mod["milo"] = sample_adata
             return data
         else:
@@ -278,10 +276,13 @@ class Milo:
 
     @deprecated_arg(
         "subset_samples",
-        Deprecation(
-            "1.0.7",
-            "subset_samples is buggy in edge cases and will be removed. "
-            "Specify the comparison via `model_contrasts` instead, or subset cells before building the kNN graph.",
+        cast(
+            "Deprecation",
+            Deprecation(
+                "1.0.7",
+                "subset_samples is buggy in edge cases and will be removed. "
+                "Specify the comparison via `model_contrasts` instead, or subset cells before building the kNN graph.",
+            ),
         ),
     )
     def da_nhoods(
@@ -393,10 +394,10 @@ class Milo:
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 
-            import rpy2.robjects as ro
+            import rpy2.robjects as ro  # type: ignore[import-untyped,import-not-found]
             from rpy2.robjects import numpy2ri, pandas2ri
-            from rpy2.robjects.conversion import localconverter
-            from rpy2.robjects.vectors import FloatVector
+            from rpy2.robjects.conversion import localconverter  # type: ignore[import-untyped,import-not-found]
+            from rpy2.robjects.vectors import FloatVector  # type: ignore[import-untyped,import-not-found]
 
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
@@ -427,7 +428,7 @@ class Milo:
                     return(colnames(m))
                 }
                 """
-                from rpy2.robjects.packages import STAP
+                from rpy2.robjects.packages import STAP  # type: ignore[import-untyped,import-not-found]
 
                 get_model_cols = STAP(r_str, "get_model_cols")
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
@@ -469,8 +470,8 @@ class Milo:
 
             import warnings
 
-            from pydeseq2.dds import DeseqDataSet
-            from pydeseq2.ds import DeseqStats
+            from pydeseq2.dds import DeseqDataSet  # type: ignore[import-untyped]
+            from pydeseq2.ds import DeseqStats  # type: ignore[import-untyped]
 
             warnings.filterwarnings("always", message=".*(alpha).*")
 
@@ -599,8 +600,6 @@ class Milo:
             ...     mdata, design="~label", column="label", baseline="control", group_to_compare="treated"
             ... )
         """
-        from scipy.sparse import issparse
-
         try:
             sample_adata = mdata["milo"]
         except KeyError:
@@ -656,7 +655,7 @@ class Milo:
 
             model_cls: type = PyDESeq2
         elif solver == "statsmodels":
-            import statsmodels.api as sm  # type: ignore[no-redef]
+            import statsmodels.api as sm  # type: ignore[no-redef,import-untyped]
 
             from pertpy.tools._differential_gene_expression._statsmodels import Statsmodels
 
@@ -689,8 +688,9 @@ class Milo:
                 failures.setdefault(f"pseudobulk failed ({type(e).__name__})", []).append(int(j))
                 continue
             pdata.X = pdata.layers["sum"]
-            if issparse(pdata.X):
-                pdata.X = pdata.X.toarray()
+            pdata_X = as_matrix(pdata.X)
+            if isinstance(pdata_X, CSBase):
+                pdata.X = pdata_X.toarray()
 
             for cov in covariates:
                 pdata.obs[cov] = pdata.obs[sample_col].map(sample_obs_map[cov]).astype("category")
@@ -739,7 +739,7 @@ class Milo:
             )
 
         # Backfill BH across genes for solvers that did not provide it
-        from statsmodels.stats.multitest import multipletests
+        from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
 
         for j in range(n_nhoods_total):
             if not test_performed[j]:
@@ -1081,16 +1081,16 @@ class Milo:
             sample_adata: Sample-level AnnData.
         """
         weights = 1.0 / np.asarray(sample_adata.var["kth_distance"], dtype=float)
-        adjp = _weighted_bh(sample_adata.var["PValue"].to_numpy(dtype=float), weights)
+        adjp = _weighted_bh(as_frame(sample_adata.var)["PValue"].to_numpy(dtype=float), weights)
         sample_adata.var["SpatialFDR"] = adjp
         # Fill missing values with 1 to avoid downstream NaN complications
         # e.g. https://github.com/scverse/pertpy/issues/912
-        sample_adata.var["SpatialFDR"] = sample_adata.var["SpatialFDR"].fillna(1)
+        sample_adata.var["SpatialFDR"] = as_frame(sample_adata.var)["SpatialFDR"].fillna(1)
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     @deprecated_arg(
         "alpha",
-        Deprecation("1.1.0", "Use `padj_threshold`."),
+        cast("Deprecation", Deprecation("1.1.0", "Use `padj_threshold`.")),
     )
     def plot_nhood_graph(  # pragma: no cover # noqa: D417
         self,
@@ -1265,14 +1265,15 @@ class Milo:
                 "please run milo.build_nhood_graph(mdata) first"
             )
 
-        nhood_adata.obs["graph_color"] = logfc
-        nhood_adata.obs.loc[spatial_fdr > padj_threshold, "graph_color"] = np.nan
-        nhood_adata.obs["abs_logFC"] = logfc.abs()
-        nhood_adata.obs.loc[nhood_adata.obs["abs_logFC"] < min_logFC, "graph_color"] = np.nan
+        nhood_obs = as_frame(nhood_adata.obs)
+        nhood_obs["graph_color"] = logfc
+        nhood_obs.loc[spatial_fdr > padj_threshold, "graph_color"] = np.nan
+        nhood_obs["abs_logFC"] = logfc.abs()
+        nhood_obs.loc[nhood_obs["abs_logFC"] < min_logFC, "graph_color"] = np.nan
 
         # Plotting order - extreme logFC on top
-        nhood_adata.obs.loc[nhood_adata.obs["graph_color"].isna(), "abs_logFC"] = np.nan
-        ordered = nhood_adata.obs.sort_values("abs_logFC", na_position="first").index
+        nhood_obs.loc[nhood_obs["graph_color"].isna(), "abs_logFC"] = np.nan
+        ordered = nhood_obs.sort_values("abs_logFC", na_position="first").index
         nhood_adata = nhood_adata[ordered]
 
         vmax = np.max([nhood_adata.obs["graph_color"].max(), abs(nhood_adata.obs["graph_color"].min())])
@@ -1437,7 +1438,7 @@ class Milo:
     @_doc_params(common_plot_args=doc_common_plot_args)
     @deprecated_arg(
         "alpha",
-        Deprecation("1.1.0", "Use `padj_threshold`."),
+        cast("Deprecation", Deprecation("1.1.0", "Use `padj_threshold`.")),
     )
     def plot_da_beeswarm(  # pragma: no cover # noqa: D417
         self,
@@ -1446,7 +1447,7 @@ class Milo:
         feature_key: str | None = "rna",
         anno_col: str = "nhood_annotation",
         padj_threshold: float = 0.1,
-        subset_nhoods: list[str] = None,
+        subset_nhoods: list[str] | None = None,
         palette: str | Sequence[str] | dict[str, str] | None = None,
         return_fig: bool = False,
         alpha: float | None = None,
@@ -1577,7 +1578,7 @@ class Milo:
         mdata: MuData,
         test_var: str,
         *,
-        subset_nhoods: list[str] = None,
+        subset_nhoods: list[str] | None = None,
         log_counts: bool = False,
         return_fig: bool = False,
         ax=None,
@@ -1674,7 +1675,7 @@ class Milo:
 
     def _group_nhoods_from_adjacency(
         self,
-        adjacency: spmatrix,
+        adjacency: np.ndarray | CSBase,
         da_res: pd.DataFrame,
         is_da: np.ndarray,
         *,
@@ -1694,8 +1695,8 @@ class Milo:
                 "`group_nhoods` requires the optional GPL-licensed package 'igraph'. Install it with: pip install igraph"
             )
 
-        adjacency = adjacency.tocsr() if issparse(adjacency) else csr_matrix(adjacency)
-        edges = adjacency.tocoo()
+        connectivities = adjacency.tocsr() if isinstance(adjacency, CSBase) else csr_matrix(adjacency)
+        edges = connectivities.tocoo()
         rows, cols, data = edges.row, edges.col, edges.data
 
         logfc = da_res["logFC"].to_numpy()
@@ -1708,11 +1709,9 @@ class Milo:
         if max_lfc_delta is not None:
             keep &= np.abs(logfc[rows] - logfc[cols]) <= max_lfc_delta
 
-        n = adjacency.shape[0]
+        n = connectivities.shape[0]
         pruned = coo_matrix((data[keep], (rows[keep], cols[keep])), shape=(n, n))
-        pruned = (pruned > 0).astype(int).tocsr()
-
-        graph = sc._utils.get_igraph_from_adjacency(pruned, directed=False)
+        graph = sc._utils.get_igraph_from_adjacency((pruned > 0).astype(int).tocsr(), directed=False)
         return np.array(graph.community_multilevel(weights=None).membership, dtype=str)
 
     def group_nhoods(
@@ -1784,8 +1783,8 @@ class Milo:
         )
 
         labels = self._group_nhoods_from_adjacency(
-            adata.varp["nhood_connectivities"][mask, :][:, mask],
-            adata.var.loc[mask],
+            as_matrix(adata.varp["nhood_connectivities"])[mask, :][:, mask],
+            as_frame(adata.var).loc[mask],
             is_da[mask],
             merge_discord=merge_discord,
             overlap=overlap,
@@ -1830,8 +1829,8 @@ class Milo:
         if len(categories) == 0:
             raise ValueError(f"'{nhood_group_key}' has no non-missing neighbourhood group labels.")
 
-        nhoods = adata.obsm["nhoods"]
-        nhoods = nhoods.tocsr() if issparse(nhoods) else csr_matrix(nhoods)
+        nhoods = as_matrix(adata.obsm["nhoods"])
+        nhoods = nhoods.tocsr() if isinstance(nhoods, CSBase) else csr_matrix(nhoods)
 
         counts = np.column_stack([np.asarray(nhoods[:, labels == group].sum(axis=1)).ravel() for group in categories])
         total = counts.sum(axis=1)
@@ -1918,10 +1917,8 @@ class Milo:
 
         by = list(dict.fromkeys([sample_col, nhood_group_key, *covariates]))
         pdata = sc.get.aggregate(adata, by=by, func="sum", layer=layer)
-        pdata.X = pdata.layers["sum"]
-        if issparse(pdata.X):
-            pdata.X = pdata.X.toarray()
-        if pdata.obs[nhood_group_key].nunique() < 2:
+        pdata.X = to_dense(as_matrix(pdata.layers["sum"]))
+        if as_frame(pdata.obs)[nhood_group_key].nunique() < 2:
             raise ValueError(f"Fewer than two groups in '{nhood_group_key}' after aggregation.")
 
         if var_names is not None:
@@ -1954,7 +1951,7 @@ class Milo:
                 res = model.test_contrasts(model.contrast(column=column, baseline=ref, group_to_compare=alt))
             return res[["variable", "log_fc", "p_value", "adj_p_value"]].reset_index(drop=True)
 
-        if two_group:
+        if baseline is not None and group_to_compare is not None:
             return _contrast(pdata, nhood_group_key, baseline, group_to_compare)
 
         results = []

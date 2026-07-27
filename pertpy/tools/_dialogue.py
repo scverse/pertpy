@@ -12,21 +12,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import singledispatch
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 import seaborn as sns
-import statsmodels.formula.api as smf
+import statsmodels.formula.api as smf  # type: ignore[import-untyped]
+from fast_array_utils.conv import to_dense
 from scipy import sparse as sp
 from scipy import stats
 from scipy.optimize import nnls
-from sparsecca import multicca_permute, multicca_pmd
-from statsmodels.stats.multitest import multipletests
+from sparsecca import multicca_permute, multicca_pmd  # type: ignore[import-untyped]
+from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._types import CSBase, as_dense, as_frame, as_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -52,9 +54,7 @@ def _pseudobulk_per_sample(
         DataFrame indexed by sample, columns are ``adata.var_names``.
     """
     aggregated = sc.get.aggregate(adata, by=sample_key, func=agg, layer=layer)
-    matrix = aggregated.layers[agg]
-    if sp.issparse(matrix):
-        matrix = matrix.toarray()
+    matrix = to_dense(as_matrix(aggregated.layers[agg]))
     return pd.DataFrame(matrix, index=list(aggregated.obs_names), columns=list(aggregated.var_names))
 
 
@@ -83,7 +83,7 @@ def _column_anova_dense(matrix: np.ndarray, groups: np.ndarray) -> np.ndarray:
 
 
 @_column_anova.register(sp.spmatrix)
-def _column_anova_sparse(matrix: sp.spmatrix, groups: np.ndarray) -> np.ndarray:
+def _column_anova_sparse(matrix: CSBase, groups: np.ndarray) -> np.ndarray:
     return _column_anova_dense(matrix.toarray(), np.asarray(groups))
 
 
@@ -190,7 +190,7 @@ def _partial_spearman_dense(X: np.ndarray, Y: np.ndarray, Z: np.ndarray, *, batc
 
 
 @_partial_spearman.register(sp.spmatrix)
-def _partial_spearman_sparse(X: sp.spmatrix, Y: np.ndarray, Z: np.ndarray, *, batch_size: int = 2048):
+def _partial_spearman_sparse(X: CSBase, Y: np.ndarray, Z: np.ndarray, *, batch_size: int = 2048):
     Ys, design, n, df = _prepare_partial_targets(Y, Z)
     if X.shape[0] != n:
         raise ValueError("X and Y must have the same number of rows")
@@ -304,7 +304,7 @@ def _iterative_nnls(
 
 
 def _hlm_pvalue_per_row(
-    expression: np.ndarray,
+    expression: np.ndarray | pd.DataFrame,
     score: np.ndarray,
     covariates: pd.DataFrame,
     sample_groups: np.ndarray,
@@ -522,7 +522,7 @@ class Dialogue:
             mask = (adata.obs[self.celltype_key] == ct).to_numpy()
             sub = adata[mask].copy()
             ct_views[ct] = sub
-            pcs = sub.obsm[self.feature_space_key][:, : self.n_components]
+            pcs = as_dense(sub.obsm[self.feature_space_key])[:, : self.n_components]
             pb_df = (
                 pd.DataFrame(pcs, columns=[f"PC{i + 1}" for i in range(pcs.shape[1])])
                 .assign(_sample=sub.obs[self.sample_key].astype(str).to_numpy())
@@ -543,8 +543,8 @@ class Dialogue:
         out: dict[str, pd.DataFrame] = {}
         for ct, pb in pseudobulks_full.items():
             view = ct_views[ct]
-            pcs = view.obsm[self.feature_space_key][:, : self.n_components]
-            samples = view.obs[self.sample_key].astype(str).to_numpy()
+            pcs = as_dense(view.obsm[self.feature_space_key])[:, : self.n_components]
+            samples = as_frame(view.obs)[self.sample_key].astype(str).to_numpy()
             counts = pd.Series(samples).value_counts()
             abundant = counts[counts >= self.min_cells_per_sample].index
             row_mask = np.isin(samples, abundant.to_numpy())
@@ -647,7 +647,7 @@ class Dialogue:
     ) -> dict[str, np.ndarray]:
         out = {}
         for ct, scores in cca_scores.items():
-            conf = ct_views[ct].obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+            conf = as_frame(ct_views[ct].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             out[ct] = _residualize(scores, conf)
         return out
 
@@ -690,8 +690,8 @@ class Dialogue:
         out: dict[str, dict[str, dict[str, list[str]]]] = {f"MCP{i + 1}": {} for i in range(self.n_programs)}
         for ct, scores in cca_scores.items():
             view = ct_views[ct]
-            X = view.X  # may be sparse; _partial_spearman dispatches and streams
-            cellQ = view.obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+            X = as_matrix(view.X)  # may be sparse; _partial_spearman dispatches and streams
+            cellQ = as_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             n_genes = view.n_vars
             R, P = _partial_spearman(X, scores, cellQ)
             for program_idx in range(scores.shape[1]):
@@ -765,8 +765,8 @@ class Dialogue:
             ct2_scores = cca_scores[ct2][ct2_cells]
             ct1_samples = ct_views[ct1].obs[self.sample_key].astype(str).to_numpy()[ct1_cells]
             ct2_samples = ct_views[ct2].obs[self.sample_key].astype(str).to_numpy()[ct2_cells]
-            ct1_quality = ct_views[ct1].obs[self.cell_quality_key].to_numpy(dtype=np.float64)[ct1_cells]
-            ct2_quality = ct_views[ct2].obs[self.cell_quality_key].to_numpy(dtype=np.float64)[ct2_cells]
+            ct1_quality = as_frame(ct_views[ct1].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct1_cells]
+            ct2_quality = as_frame(ct_views[ct2].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct2_cells]
             ct1_tme_qc = per_sample_quality[ct2].reindex(ct1_samples).to_numpy()
             ct2_tme_qc = per_sample_quality[ct1].reindex(ct2_samples).to_numpy()
 
@@ -788,7 +788,7 @@ class Dialogue:
                 ct2_genes_to_test = sig2_up + sig2_down
 
                 # ct2's program score vs ct1's pseudobulk expression at ct2's cells (R's p1).
-                ct2_tme_for_ct1_genes = gene_pseudobulks[ct1].loc[ct2_samples, ct1_genes_to_test].to_numpy()
+                ct2_tme_for_ct1_genes = np.asarray(gene_pseudobulks[ct1].loc[list(ct2_samples), ct1_genes_to_test])
                 df_ct1 = self._hlm_block(
                     ct2_scores[:, program_idx],
                     ct2_tme_for_ct1_genes,
@@ -800,7 +800,7 @@ class Dialogue:
                 )
 
                 # ct1's program score vs ct2's pseudobulk expression at ct1's cells (R's p2).
-                ct1_tme_for_ct2_genes = gene_pseudobulks[ct2].loc[ct1_samples, ct2_genes_to_test].to_numpy()
+                ct1_tme_for_ct2_genes = np.asarray(gene_pseudobulks[ct2].loc[list(ct1_samples), ct2_genes_to_test])
                 df_ct2 = self._hlm_block(
                     ct1_scores[:, program_idx],
                     ct1_tme_for_ct2_genes,
@@ -848,7 +848,7 @@ class Dialogue:
         out: dict[str, pd.Series] = {}
         for ct, view in ct_views.items():
             samples = view.obs[self.sample_key].astype(str).to_numpy()
-            quality = view.obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+            quality = as_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             out[ct] = pd.Series(quality).groupby(samples).mean().rename("qcAv")
         return out
 
@@ -1018,12 +1018,12 @@ class Dialogue:
 
         for ct in celltypes:
             view = ct_views[ct]
-            cellQ = view.obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+            cellQ = as_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             nnls_scores[ct] = _residualize(nnls_scores[ct], cellQ)
 
         adata.obsm["X_dialogue"] = self._broadcast_per_celltype(adata, nnls_scores, ct_views, n_cols=self.n_programs)
         for p in range(self.n_programs):
-            adata.obs[f"mcp_{p}"] = adata.obsm["X_dialogue"][:, p]
+            adata.obs[f"mcp_{p}"] = as_dense(adata.obsm["X_dialogue"])[:, p]
 
         pair_refined = self._refined_pair_correlations(adata, nnls_scores, ct_views, celltypes)
 
@@ -1057,7 +1057,7 @@ class Dialogue:
                 for gene_name, row in df.iterrows():
                     if not np.isfinite(row["zscore"]):
                         continue
-                    key = (program, gene_name, bool(row["up"]))
+                    key = (program, str(gene_name), bool(row["up"]))
                     gene_records.setdefault(key, {})[colname] = float(row["zscore"])
 
         if not gene_records:
@@ -1080,9 +1080,14 @@ class Dialogue:
 
         records = []
         for (program, gene, up), partners in gene_records.items():
-            row = {"program": program, "gene": gene, "up": up, "programF": f"{program}.{'up' if up else 'down'}"}
-            row.update({col: partners.get(col, np.nan) for col in partner_cols})
-            records.append(row)
+            record: dict[str, object] = {
+                "program": program,
+                "gene": gene,
+                "up": up,
+                "programF": f"{program}.{'up' if up else 'down'}",
+            }
+            record.update({col: partners.get(col, np.nan) for col in partner_cols})
+            records.append(record)
         df = pd.DataFrame(records)
         df.index = [f"{r['programF']}_{r['gene']}" for _, r in df.iterrows()]
 
@@ -1236,7 +1241,7 @@ class Dialogue:
                 )
             conditions = (labels[0], labels[1])
         scores = adata.obsm["X_dialogue"]
-        obs = adata.obs
+        obs = as_frame(adata.obs)
         program_cols = [f"MCP{p + 1}" for p in range(self.n_programs)]
         z_table = pd.DataFrame(np.nan, index=celltypes, columns=program_cols)
         p_table = pd.DataFrame(np.nan, index=celltypes, columns=program_cols)
@@ -1347,10 +1352,10 @@ class Dialogue:
         if not 0 < fraction < 0.5:
             raise ValueError("fraction must be in (0, 0.5)")
         idx = int(program.replace("MCP", "")) - 1
-        scores = adata.obsm["X_dialogue"][:, idx]
+        scores = as_dense(adata.obsm["X_dialogue"])[:, idx]
         out: dict[str, pd.DataFrame] = {}
         for ct in adata.uns["dialogue"]["cell_type_order"]:
-            mask = (adata.obs[self.celltype_key] == ct).to_numpy() & np.isfinite(scores)
+            mask = (as_frame(adata.obs)[self.celltype_key] == ct).to_numpy() & np.isfinite(scores)
             if mask.sum() < int(2 / fraction):
                 continue
             ct_scores = scores[mask]
@@ -1404,7 +1409,7 @@ class Dialogue:
         score_col = f"mcp_{int(program.replace('MCP', '')) - 1}"
         if score_col not in adata.obs.columns:
             raise RuntimeError(f"{score_col!r} not in adata.obs; run refine_scores(adata) first.")
-        df = adata.obs[[self.celltype_key, score_col, condition_key]].copy()
+        df = as_frame(adata.obs)[[self.celltype_key, score_col, condition_key]].copy()
         if conditions is not None:
             df = df[df[condition_key].isin(conditions)]
         else:
@@ -1461,9 +1466,9 @@ class Dialogue:
         if score_col not in adata.obs.columns:
             raise RuntimeError(f"{score_col!r} not in adata.obs; run refine_scores(adata) first.")
         sample_means = (
-            adata.obs.groupby([self.sample_key, self.celltype_key], observed=True)[score_col].mean().unstack()
+            as_frame(adata.obs).groupby([self.sample_key, self.celltype_key], observed=True)[score_col].mean().unstack()
         )
-        sample_color = adata.obs.groupby(self.sample_key, observed=True)[color].first()
+        sample_color = as_frame(adata.obs).groupby(self.sample_key, observed=True)[color].first()
         df = sample_means.copy()
         df[color] = sample_color
         grid = sns.pairplot(df, hue=color, corner=True)
@@ -1528,7 +1533,7 @@ def _select_dense_gene_columns_dense(X: np.ndarray, var_names, gene_names: list[
 
 
 @_select_dense_gene_columns.register(sp.spmatrix)
-def _select_dense_gene_columns_sparse(X: sp.spmatrix, var_names, gene_names: list[str]) -> np.ndarray:
+def _select_dense_gene_columns_sparse(X: CSBase, var_names, gene_names: list[str]) -> np.ndarray:
     lookup = {g: i for i, g in enumerate(var_names)}
     idx = np.array([lookup[g] for g in gene_names], dtype=np.int64)
     return np.asarray(X.tocsc()[:, idx].toarray(), dtype=np.float64)

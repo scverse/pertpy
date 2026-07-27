@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from anndata import AnnData
-from sklearn.cluster import HDBSCAN, KMeans
+from sklearn.cluster import HDBSCAN, KMeans  # type: ignore[import-untyped]
 
 from pertpy._logger import logger
+from pertpy._types import as_dense, as_frame
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import (
     PerturbationSpace,
@@ -64,8 +65,8 @@ class CentroidSpace(PerturbationSpace):
 
         coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
 
-        groups = adata.obs.groupby(target_col, observed=True)
-        index = list(groups.groups.keys())
+        groups = as_frame(adata.obs).groupby(target_col, observed=True)
+        index = [str(key) for key in groups.groups]
         X = np.empty((len(index), coords.shape[1]), dtype=coords.dtype)
         for pert_index, (_, group_data) in enumerate(groups):
             row_idx = adata.obs_names.get_indexer(group_data.index)
@@ -82,9 +83,9 @@ class CentroidSpace(PerturbationSpace):
             ps_adata.obsm[embedding_key] = X
 
         if keep_obs:
-            _carry_constant_obs(ps_adata, adata.obs, target_col)
+            _carry_constant_obs(ps_adata, as_frame(adata.obs), target_col)
 
-        ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
+        ps_adata.obs[target_col] = as_frame(ps_adata.obs)[target_col].astype("category")
 
         return ps_adata
 
@@ -133,15 +134,15 @@ class PseudobulkSpace(PerturbationSpace):
         if embedding_key is not None:
             if embedding_key not in adata.obsm:
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-            adata_emb = AnnData(X=adata.obsm[embedding_key])
-            adata_emb.obs_names = adata.obs_names
-            adata_emb.obs = adata.obs.copy()
+            adata_emb = AnnData(X=as_dense(adata.obsm[embedding_key]))
+            adata_emb.obs_names = adata.obs_names.tolist()
+            adata_emb.obs = as_frame(adata.obs).copy()
             adata = adata_emb
         else:
             adata = adata.copy()
-        adata.obs[target_col] = adata.obs[target_col].astype("category")
+        adata.obs[target_col] = as_frame(adata.obs)[target_col].astype("category")
         grouping_cols = [target_col] if groups_col is None else [target_col, groups_col]
-        original_obs = adata.obs.copy()
+        original_obs = as_frame(adata.obs).copy()
         ps_adata = sc.get.aggregate(adata, by=grouping_cols, func=mode, layer=layer_key)
 
         if None in ps_adata.layers:
@@ -215,7 +216,7 @@ class DistanceSpace(PerturbationSpace):
         if isinstance(df, tuple):
             df = df[0]
 
-        index = df.index.astype(str)
+        index = df.index.astype(str).tolist()
         matrix = df.to_numpy(dtype=float)
         ps_adata = AnnData(X=matrix)
         ps_adata.obs_names = index
@@ -223,8 +224,8 @@ class DistanceSpace(PerturbationSpace):
         ps_adata.obsp["distances"] = matrix
         ps_adata.obs[target_col] = pd.Categorical(df.index)
 
-        _carry_constant_obs(ps_adata, adata.obs, target_col)
-        ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
+        _carry_constant_obs(ps_adata, as_frame(adata.obs), target_col)
+        ps_adata.obs[target_col] = as_frame(ps_adata.obs)[target_col].astype("category")
 
         return ps_adata
 
@@ -282,11 +283,11 @@ class EmbeddingSpace(PerturbationSpace):
 
         emb_df = emb_df.loc[keep]
         ps_adata = AnnData(X=emb_df.to_numpy(dtype=float))
-        ps_adata.obs_names = keep
+        ps_adata.obs_names = keep.tolist()
         ps_adata.obs[target_col] = pd.Categorical(keep)
 
-        _carry_constant_obs(ps_adata, adata.obs, target_col)
-        ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
+        _carry_constant_obs(ps_adata, as_frame(adata.obs), target_col)
+        ps_adata.obs[target_col] = as_frame(ps_adata.obs)[target_col].astype("category")
 
         return ps_adata
 

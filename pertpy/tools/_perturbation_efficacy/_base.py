@@ -4,13 +4,16 @@ import warnings
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from fast_array_utils.stats import mean, mean_var
 from pandas.errors import PerformanceWarning
-from scanpy.tools._utils import _choose_representation
-from scipy.sparse import csr_array, csr_matrix, issparse, sparray
+from scanpy.tools._utils import _choose_representation  # type: ignore[import-untyped]
+from scipy.sparse import csr_array, csr_matrix, lil_matrix, sparray
+
+from pertpy._types import CSBase, as_dense, as_matrix
 
 if TYPE_CHECKING:
+    import pandas as pd
     from anndata import AnnData
 
 
@@ -92,11 +95,12 @@ class PerturbationEfficacyAnalyzer:
         # pynndescent and the LIL workflow below only support legacy scipy sparse matrices, so a sparse array
         # input is computed on as a csr_matrix and converted back to a sparse array at the end.
         input_is_sparray = isinstance(adata.X, sparray)
-        X = csr_matrix(adata.X) if input_is_sparray else adata.X
+        X = csr_matrix(as_matrix(adata.X)) if input_is_sparray else as_matrix(adata.X)
         adata.layers["X_pert"] = X.copy()
 
         # Work with LIL for efficient indexing but don't store it in AnnData as LIL is not supported anymore
-        X_pert_lil = adata.layers["X_pert"].tolil() if issparse(adata.layers["X_pert"]) else adata.layers["X_pert"]
+        X_pert = as_matrix(adata.layers["X_pert"])
+        X_pert_lil = X_pert.tolil() if isinstance(X_pert, CSBase) else X_pert
 
         control_mask = adata.obs[pert_key] == control
 
@@ -115,13 +119,13 @@ class PerturbationEfficacyAnalyzer:
                 split_obs = adata.obs[split_by]
                 split_masks = [split_obs == cat for cat in split_obs.unique()]
 
-            representation = _choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs)
+            representation = as_matrix(_choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs))
             if isinstance(representation, sparray):
                 representation = csr_matrix(representation)
             if n_dims is not None and n_dims < representation.shape[1]:
                 representation = representation[:, :n_dims]
 
-            from pynndescent import NNDescent
+            from pynndescent import NNDescent  # type: ignore[import-untyped]
 
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
@@ -130,7 +134,10 @@ class PerturbationEfficacyAnalyzer:
                 eps = kwargs.pop("epsilon", 0.1)
                 nn_index = NNDescent(R_control, **kwargs)
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
-                X_control = np.expm1(X[np.asarray(control_mask_split)])
+                X_split_control = X[np.asarray(control_mask_split)]
+                X_control = (
+                    X_split_control.expm1() if isinstance(X_split_control, CSBase) else np.expm1(X_split_control)
+                )
                 n_split = split_mask.sum()
                 n_control = X_control.shape[0]
 
@@ -153,16 +160,16 @@ class PerturbationEfficacyAnalyzer:
                         batch = np.ravel(indices[select])
                         split_batch = split_indices[select]
                         size = size - i
-                        means_batch = X_control[batch]
+                        means_batch = as_dense(X_control[batch])
                         batch_reshaped = means_batch.reshape(size, n_neighbors, -1)
                         means_batch, _ = mean_var(batch_reshaped, axis=1)
                         X_pert_lil[split_batch] = np.log1p(means_batch) - X_pert_lil[split_batch]
 
-        if issparse(X_pert_lil):
+        if isinstance(X_pert_lil, np.ndarray):
+            adata.layers["X_pert"] = X_pert_lil
+        else:
             x_pert = X_pert_lil.tocsr()
             adata.layers["X_pert"] = csr_array(x_pert) if input_is_sparray else x_pert
-        else:
-            adata.layers["X_pert"] = X_pert_lil
 
         if copy:
             return adata
@@ -171,11 +178,11 @@ class PerturbationEfficacyAnalyzer:
         self,
         adata: AnnData,
         *,
-        split_masks: list[np.ndarray],
+        split_masks: list[np.ndarray | pd.Series],
         categories: list[str],
         pert_key: str,
         control: str,
-        layer: str,
+        layer: str | None,
         pval_cutoff: float,
         min_de_genes: float,
         logfc_threshold: float,

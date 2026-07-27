@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 if TYPE_CHECKING:
     import pandas as pd
 
-import pubchempy as pcp
+import pubchempy as pcp  # type: ignore[import-untyped]
 
 
 class LookUp:
@@ -30,7 +30,9 @@ class LookUp:
                 Currently set to None for CompoundMetaData which does not require any DataFrames for transfer.
         """
         self.type = type
-        if type == "cell_line":
+        if type != "compound" and transfer_metadata is None:
+            raise ValueError(f"`transfer_metadata` is required to build a {type!r} lookup.")
+        if type == "cell_line" and transfer_metadata is not None:
             self.cell_line_meta = transfer_metadata[0]
             self.cl_cancer_project_meta = transfer_metadata[1]
             self.gene_annotation = transfer_metadata[2]
@@ -189,7 +191,7 @@ class LookUp:
 
             self.drug_response = drug_response(gdsc1_dict, gdsc2_dict)
 
-        elif type == "moa":
+        elif type == "moa" and transfer_metadata is not None:
             self.moa_meta = transfer_metadata[0]
             moa_annotation = namedtuple(
                 "moa_annotation",
@@ -228,7 +230,7 @@ class LookUp:
             }
             self.compound = compound_annotation(**compound_data)
 
-        elif type == "drug":
+        elif type == "drug" and transfer_metadata is not None:
             self.chembl = transfer_metadata[0]
             self.dgidb = transfer_metadata[1]
             self.pharmgkb = transfer_metadata[2]
@@ -534,7 +536,7 @@ class LookUp:
                     # flatten the target column and remove duplicates
                     not_matched_identifiers = list(set(query_id_list) - chembl_targets)
                 elif query_id_type == "compound":
-                    not_matched_identifiers = list(set(query_id_list) - self.chembl["compounds"])
+                    not_matched_identifiers = list(set(query_id_list) - set(self.chembl["compounds"]))
                 else:
                     raise ValueError(
                         "Gene-disease association is not available in chembl dataset, please try with pharmgkb."
