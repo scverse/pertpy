@@ -271,16 +271,11 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
             return corrected
         else:
-            all_not_shared_ann = AnnData.concatenate(  # type: ignore[attr-defined]
-                *not_shared_ct, batch_key="concat_batch", index_unique=None
+            all_not_shared_ann = ad.concat(not_shared_ct, label="concat_batch", index_unique=None)
+            all_corrected_data = ad.concat(
+                [all_shared_ann, all_not_shared_ann], label="concat_batch", index_unique=None
             )
-            all_corrected_data = AnnData.concatenate(  # type: ignore[attr-defined]
-                all_shared_ann,
-                all_not_shared_ann,
-                batch_key="concat_batch",
-                index_unique=None,
-            )
-            if "concat_batch" in all_shared_ann.obs.columns:
+            if "concat_batch" in all_corrected_data.obs.columns:
                 del as_frame(all_corrected_data.obs)["concat_batch"]
             corrected = AnnData(
                 np.array(self.module.as_bound().generative(all_corrected_data.X)["px"]),
