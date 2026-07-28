@@ -28,7 +28,7 @@ from sparsecca import multicca_permute, multicca_pmd  # type: ignore[import-unty
 from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -54,7 +54,7 @@ def _pseudobulk_per_sample(
         DataFrame indexed by sample, columns are ``adata.var_names``.
     """
     aggregated = sc.get.aggregate(adata, by=sample_key, func=agg, layer=layer)
-    matrix = to_dense(cast_matrix(aggregated.layers[agg]))
+    matrix = to_dense(aggregated.layers[agg])
     return pd.DataFrame(matrix, index=list(aggregated.obs_names), columns=list(aggregated.var_names))
 
 
@@ -544,7 +544,7 @@ class Dialogue:
         for ct, pb in pseudobulks_full.items():
             view = ct_views[ct]
             pcs = cast_dense(view.obsm[self.feature_space_key])[:, : self.n_components]
-            samples = cast_frame(view.obs)[self.sample_key].astype(str).to_numpy()
+            samples = view.obs[self.sample_key].astype(str).to_numpy()
             counts = pd.Series(samples).value_counts()
             abundant = counts[counts >= self.min_cells_per_sample].index
             row_mask = np.isin(samples, abundant.to_numpy())
@@ -690,7 +690,7 @@ class Dialogue:
         out: dict[str, dict[str, dict[str, list[str]]]] = {f"MCP{i + 1}": {} for i in range(self.n_programs)}
         for ct, scores in cca_scores.items():
             view = ct_views[ct]
-            X = cast_matrix(view.X)  # may be sparse; _partial_spearman dispatches and streams
+            X = view.X  # may be sparse; _partial_spearman dispatches and streams
             cellQ = cast_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             n_genes = view.n_vars
             R, P = _partial_spearman(X, scores, cellQ)
@@ -1355,7 +1355,7 @@ class Dialogue:
         scores = cast_dense(adata.obsm["X_dialogue"])[:, idx]
         out: dict[str, pd.DataFrame] = {}
         for ct in adata.uns["dialogue"]["cell_type_order"]:
-            mask = (cast_frame(adata.obs)[self.celltype_key] == ct).to_numpy() & np.isfinite(scores)
+            mask = (adata.obs[self.celltype_key] == ct).to_numpy() & np.isfinite(scores)
             if mask.sum() < int(2 / fraction):
                 continue
             ct_scores = scores[mask]

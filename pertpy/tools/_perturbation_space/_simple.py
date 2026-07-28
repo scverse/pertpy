@@ -9,7 +9,7 @@ from anndata import AnnData
 from sklearn.cluster import HDBSCAN, KMeans  # type: ignore[import-untyped]
 
 from pertpy._logger import logger
-from pertpy._types import cast_dense, cast_frame
+from pertpy._types import cast_frame
 from pertpy.tools._perturbation_space._clustering import ClusteringSpace
 from pertpy.tools._perturbation_space._perturbation_space import (
     PerturbationSpace,
@@ -134,7 +134,7 @@ class PseudobulkSpace(PerturbationSpace):
         if embedding_key is not None:
             if embedding_key not in adata.obsm:
                 raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-            adata_emb = AnnData(X=cast_dense(adata.obsm[embedding_key]))
+            adata_emb = AnnData(X=adata.obsm[embedding_key])
             adata_emb.obs_names = adata.obs_names.tolist()
             adata_emb.obs = cast_frame(adata.obs).copy()
             adata = adata_emb

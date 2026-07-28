@@ -8,7 +8,7 @@ from rich.progress import track
 from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
 from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
 
-from pertpy._types import cast_frame, cast_matrix
+from pertpy._types import cast_matrix
 
 from ._distances import Distance, Metric
 
@@ -158,8 +158,8 @@ class DistanceTest:
                 if group == contrast:
                     continue
                 # Shuffle the labels of the groups
-                mask = cast_frame(adata.obs)[groupby].isin([group, contrast])
-                labels = np.asarray(cast_frame(adata.obs)[groupby].values)[mask]
+                mask = adata.obs[groupby].isin([group, contrast])
+                labels = np.asarray(adata.obs[groupby].values)[mask]
                 rng = np.random.default_rng()
                 shuffled_labels = rng.permutation(labels)
                 idx = shuffled_labels == group
@@ -247,11 +247,11 @@ class DistanceTest:
         # Precompute the pairwise distances
         precomputed_distances = {}
         for group in groups:
-            subset = adata[cast_frame(adata.obs)[groupby].isin([group, contrast])]
+            subset = adata[adata.obs[groupby].isin([group, contrast])]
             if self.layer_key:
-                cells = cast_matrix(subset.layers[self.layer_key]).copy()
+                cells = subset.layers[self.layer_key].copy()
             elif self.obsm_key is not None:
-                cells = cast_matrix(subset.obsm[self.obsm_key]).copy()
+                cells = subset.obsm[self.obsm_key].copy()
             else:
                 raise ValueError("Either `layer_key` or `obsm_key` must be set.")
             pwd = pairwise_distances(cells, cells, metric=self.distance.cell_wise_metric)
@@ -266,8 +266,8 @@ class DistanceTest:
                 if group == contrast:
                     continue
                 # Shuffle the labels of the groups
-                mask = cast_frame(adata.obs)[groupby].isin([group, contrast])
-                labels = np.asarray(cast_frame(adata.obs)[groupby].values)[mask]
+                mask = adata.obs[groupby].isin([group, contrast])
+                labels = np.asarray(adata.obs[groupby].values)[mask]
                 rng = np.random.default_rng()
                 shuffled_labels = rng.permutation(labels)
                 idx = shuffled_labels == group
@@ -282,8 +282,8 @@ class DistanceTest:
         for group in groups:
             if group == contrast:
                 continue
-            mask = cast_frame(adata.obs)[groupby].isin([group, contrast])
-            labels = np.asarray(cast_frame(adata.obs)[groupby].values)[mask]
+            mask = adata.obs[groupby].isin([group, contrast])
+            labels = np.asarray(adata.obs[groupby].values)[mask]
             idx = labels == group
 
             precomputed_distance = precomputed_distances[group]

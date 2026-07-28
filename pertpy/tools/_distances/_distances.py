@@ -401,7 +401,7 @@ class Distance:
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.pairwise(adata, groupby="perturbation")
         """
-        obs = cast_frame(adata.obs)
+        obs = adata.obs
         groups = cast("list[str]", obs[groupby].unique()) if groups is None else groups
         grouping = obs[groupby].copy()
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
@@ -1358,7 +1358,7 @@ class ClassifierClassProjection(AbstractDistance):
 
         Similar to the parent function, the returned dataframe contains only the specified groups.
         """
-        groups = cast("list[str]", cast_frame(adata.obs)[groupby].unique()) if groups is None else groups
+        groups = cast("list[str]", adata.obs[groupby].unique()) if groups is None else groups
         fct = track if show_progressbar else lambda iterable: iterable
 
         X = adata[adata.obs[groupby] != selected_group].X

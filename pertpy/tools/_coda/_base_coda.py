@@ -1335,7 +1335,7 @@ class CompositionalModel2(ABC):
         if isinstance(data, MuData):
             data = data[modality_key]
 
-        ct_names = cast_frame(data.var).index.to_list()
+        ct_names = data.var.index.to_list()
 
         # option to plot one stacked barplot per sample
         if feature_name == "samples":
@@ -1344,9 +1344,9 @@ class CompositionalModel2(ABC):
                 data = data[level_order]
             self._stackbar(
                 cast_dense(data.X),
-                type_names=cast_frame(data.var).index.to_list(),
+                type_names=data.var.index.to_list(),
                 title="samples",
-                level_names=cast_frame(data.obs).index.to_list(),
+                level_names=data.obs.index.to_list(),
                 figsize=figsize,
                 dpi=dpi,
                 palette=palette,
@@ -1648,9 +1648,7 @@ class CompositionalModel2(ABC):
         if isinstance(data, MuData):
             data = data[modality_key]
         colors: str | list[RGBA] | None = (
-            list(palette(range(len(cast_frame(data.obs)[feature_name].unique()))))
-            if isinstance(palette, Colormap)
-            else palette
+            list(palette(range(len(data.obs[feature_name].unique())))) if isinstance(palette, Colormap) else palette
         )
         if layout not in {"long", "wide"}:
             raise ValueError("layout must be either 'long' or 'wide'")
@@ -2310,8 +2308,7 @@ class CompositionalModel2(ABC):
         effect_names = cast("list[str]", effect_name)
         if isinstance(palette, Colormap):
             palette = {
-                cluster: palette(i % palette.N)
-                for i, cluster in enumerate(cast_frame(data_rna.obs)[cluster_key].unique().tolist())
+                cluster: palette(i % palette.N) for i, cluster in enumerate(data_rna.obs[cluster_key].unique().tolist())
             }
         for _, effect in enumerate(effect_names):
             effect_df = data_coda.varm[effect]
@@ -2321,12 +2318,12 @@ class CompositionalModel2(ABC):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")
         else:
-            vmin = min(cast_frame(data_rna.obs)[effect].min() for _, effect in enumerate(effect_names))
+            vmin = min(data_rna.obs[effect].min() for _, effect in enumerate(effect_names))
         if kwargs.get("vmax"):
             vmax = kwargs["vmax"]
             kwargs.pop("vmax")
         else:
-            vmax = max(cast_frame(data_rna.obs)[effect].max() for _, effect in enumerate(effect_names))
+            vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_names))
 
         fig = sc.pl.umap(
             data_rna,

@@ -79,13 +79,13 @@ class LRClassifierSpace(PerturbationSpace):
             raise ValueError(f"Column {target_col!r} does not exist in the .obs attribute.")
 
         if layer_key is not None:
-            regression_data = cast_matrix(adata.layers[layer_key])
+            regression_data = adata.layers[layer_key]
         elif embedding_key is not None:
-            regression_data = cast_matrix(adata.obsm[embedding_key])
+            regression_data = adata.obsm[embedding_key]
         else:
             regression_data = cast_matrix(adata.X)
 
-        regression_labels = cast_frame(adata.obs)[target_col]
+        regression_labels = adata.obs[target_col]
         random_state = _sklearn_random_state(random_state)
         regression_model = LogisticRegression(max_iter=max_iter, class_weight="balanced", random_state=random_state)
 
@@ -234,17 +234,17 @@ class JAXDataset:
             label_col: key with the perturbation labels.
             layer_key: key of the layer to be used as data, otherwise .X.
         """
-        data = cast_matrix(adata.layers[layer_key] if layer_key else adata.X)
+        data = adata.layers[layer_key] if layer_key else adata.X
 
         labels: np.ndarray
         if target_col in adata.obs.columns:
-            labels = np.asarray(cast_frame(adata.obs)[target_col].values)
+            labels = np.asarray(adata.obs[target_col].values)
         elif target_col in adata.obsm:
             labels = cast_dense(adata.obsm[target_col])
         else:
             raise ValueError(f"Target column {target_col} not found in obs or obsm")
 
-        self.pert_labels = cast_frame(adata.obs)[label_col].values
+        self.pert_labels = adata.obs[label_col].values
 
         # Keep sparse data sparse and densify only the requested batch to avoid materializing the full dense matrix.
         self.is_sparse = isinstance(data, CSBase)
@@ -366,7 +366,7 @@ class MLPClassifierSpace(PerturbationSpace):
             hidden_dim = [512]
 
         if embedding_key is not None:
-            work = AnnData(X=cast_dense(adata.obsm[embedding_key]))
+            work = AnnData(X=adata.obsm[embedding_key])
             work.obs_names = adata.obs_names.tolist()
             work.obs = cast_frame(adata.obs).copy()
             adata = work

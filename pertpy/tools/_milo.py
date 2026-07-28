@@ -251,19 +251,19 @@ class Milo:
             adata = data
         if isinstance(adata, AnnData):
             try:
-                nhoods = cast_matrix(adata.obsm["nhoods"])
+                nhoods = adata.obsm["nhoods"]
             except KeyError:
                 logger.error('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
                 raise
         # Make nhood abundance matrix
-        sample_dummies = pd.get_dummies(cast_frame(adata.obs)[sample_col])
+        sample_dummies = pd.get_dummies(adata.obs[sample_col])
         all_samples = sample_dummies.columns
         nhood_count_mat = csr_matrix(nhoods).T.dot(csr_matrix(sample_dummies.values))
         sample_obs = pd.DataFrame(index=all_samples)
         sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs)
         sample_adata.uns["sample_col"] = sample_col
         # Save nhood index info
-        obs = cast_frame(adata.obs)
+        obs = adata.obs
         sample_adata.var["index_cell"] = adata.obs_names[obs["nhood_ixs_refined"] == 1]
         sample_adata.var["kth_distance"] = obs.loc[obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"].values
 
@@ -688,7 +688,7 @@ class Milo:
                 failures.setdefault(f"pseudobulk failed ({type(e).__name__})", []).append(int(j))
                 continue
             pdata.X = pdata.layers["sum"]
-            pdata_X = cast_matrix(pdata.X)
+            pdata_X = pdata.X
             if isinstance(pdata_X, CSBase):
                 pdata.X = pdata_X.toarray()
 
@@ -1829,7 +1829,7 @@ class Milo:
         if len(categories) == 0:
             raise ValueError(f"'{nhood_group_key}' has no non-missing neighbourhood group labels.")
 
-        nhoods = cast_matrix(adata.obsm["nhoods"])
+        nhoods = adata.obsm["nhoods"]
         nhoods = nhoods.tocsr() if isinstance(nhoods, CSBase) else csr_matrix(nhoods)
 
         counts = np.column_stack([np.asarray(nhoods[:, labels == group].sum(axis=1)).ravel() for group in categories])
@@ -1917,8 +1917,8 @@ class Milo:
 
         by = list(dict.fromkeys([sample_col, nhood_group_key, *covariates]))
         pdata = sc.get.aggregate(adata, by=by, func="sum", layer=layer)
-        pdata.X = to_dense(cast_matrix(pdata.layers["sum"]))
-        if cast_frame(pdata.obs)[nhood_group_key].nunique() < 2:
+        pdata.X = to_dense(pdata.layers["sum"])
+        if pdata.obs[nhood_group_key].nunique() < 2:
             raise ValueError(f"Fewer than two groups in '{nhood_group_key}' after aggregation.")
 
         if var_names is not None:

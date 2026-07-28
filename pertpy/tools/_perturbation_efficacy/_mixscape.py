@@ -129,7 +129,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         adata_comp = adata
         if layer is not None:
-            X = cast_matrix(adata_comp.layers[layer])
+            X = adata_comp.layers[layer]
         else:
             try:
                 X = cast_matrix(adata_comp.layers["X_pert"])
@@ -781,7 +781,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         elif isinstance(target_gene_idents, list):
             mixscape_class_mask = np.full_like(adata.obs[groupby], False, dtype=bool)
             for ident in target_gene_idents:
-                mixscape_class_mask |= cast_frame(adata.obs)[groupby] == ident
+                mixscape_class_mask |= adata.obs[groupby] == ident
         adata = adata[mixscape_class_mask]
 
         sanitize_anndata(adata)

@@ -667,15 +667,15 @@ class CellLine(MetaData):
         corr, pvals = self._pairwise_correlation(
             cast_dense(overlapped_cl.X),
             metadata_values,
-            row_name=cast_frame(overlapped_cl.obs)[identifier],
-            col_name=cast_frame(overlapped_cl.obs)[identifier],
+            row_name=overlapped_cl.obs[identifier],
+            col_name=overlapped_cl.obs[identifier],
         )
         if missing_cl is not None:
             new_corr, new_pvals = self._pairwise_correlation(
                 cast_dense(missing_cl.X),
                 metadata_values,
-                row_name=cast_frame(missing_cl.obs)[identifier],
-                col_name=cast_frame(overlapped_cl.obs)[identifier],
+                row_name=missing_cl.obs[identifier],
+                col_name=overlapped_cl.obs[identifier],
             )
         else:
             new_corr = new_pvals = None
@@ -732,10 +732,10 @@ class CellLine(MetaData):
                 subset_identifier_list = (
                     [subset_identifier] if isinstance(subset_identifier, str | int) else list(subset_identifier)
                 )
-                identifiers = np.asarray(cast_frame(adata.obs)[identifier].values)
+                identifiers = np.asarray(adata.obs[identifier].values)
                 # Convert the valid identifiers to the index list
                 if all(isinstance(id, str) for id in subset_identifier_list):
-                    if set(subset_identifier_list).issubset(cast_frame(adata.obs)[identifier].unique()):
+                    if set(subset_identifier_list).issubset(adata.obs[identifier].unique()):
                         subset_indices = np.where(np.isin(identifiers, np.asarray(subset_identifier_list)))[0]
                     else:
                         raise ValueError("`Subset_identifier` must be found in adata.obs.`identifier`.")

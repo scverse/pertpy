@@ -532,7 +532,7 @@ class Augur:
             >>> results = ag_rfc.run_cross_validation(subsample=subsample, folds=3, subsample_idx=0, random_state=42, zero_division=0)
         """
         # Pass the dense matrix instead of subsample.to_df(); its arrow-backed string columns make scikit-learn re-validate dtypes on every fold and scorer, while the values (and results) stay identical.
-        x = np.asarray(to_dense(cast_matrix(subsample.X)))
+        x = np.asarray(to_dense(subsample.X))
         genes = subsample.var_names.tolist()
         n_genes = len(genes)
         y = subsample.obs["y_"]

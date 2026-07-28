@@ -19,7 +19,7 @@ from scverse_misc import Deprecation, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
 
@@ -386,7 +386,7 @@ class MethodBase(ABC):
             shape_col = None
 
         # build palette
-        colors = cast("list[str]", colors)[: len(df.color.unique())]
+        colors = colors[: len(df.color.unique())]
 
         # We want plot highlighted genes on top + at bigger size, split dataframe
         df_highlight = None
@@ -571,7 +571,7 @@ class MethodBase(ABC):
             ps = PseudobulkSpace()
             adata = ps.compute(adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum")
 
-        X = cast_matrix(adata.layers[layer] if layer is not None else adata.X)
+        X = adata.layers[layer] if layer is not None else adata.X
         with contextlib.suppress(AttributeError):
             X = cast("CSBase", X).toarray()
 
@@ -585,7 +585,7 @@ class MethodBase(ABC):
         # remove unpaired samples
         paired_samples = set(df[df[groupby] == groups[0]][pairedby]) & set(df[df[groupby] == groups[1]][pairedby])
         df = df[df[pairedby].isin(paired_samples)]
-        removed_samples = cast_frame(adata.obs)[pairedby].nunique() - len(df[pairedby].unique())
+        removed_samples = adata.obs[pairedby].nunique() - len(df[pairedby].unique())
         if removed_samples > 0:
             logger.warning(f"{removed_samples} unpaired samples removed")
 

@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
 
-from pertpy._types import cast_frame
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace, _resolve_matrix
 
 if TYPE_CHECKING:
@@ -53,7 +52,7 @@ class ClusteringSpace(PerturbationSpace):
         """
         if metrics is None:
             metrics = ["nmi", "ari", "asw"]
-        true_labels = cast_frame(adata.obs)[true_label_col].to_numpy()
+        true_labels = adata.obs[true_label_col].to_numpy()
 
         results: dict[str, float] = {}
         for metric in metrics:
@@ -65,16 +64,14 @@ class ClusteringSpace(PerturbationSpace):
 
                 results["nmi"] = nmi(
                     true_labels=true_labels,
-                    predicted_labels=cast_frame(adata.obs)[cluster_col].to_numpy(),
+                    predicted_labels=adata.obs[cluster_col].to_numpy(),
                     average_method=kwargs["average_method"],
                 )
 
             elif metric == "ari":
                 from pertpy.tools._perturbation_space._metrics import ari
 
-                results["ari"] = ari(
-                    true_labels=true_labels, predicted_labels=cast_frame(adata.obs)[cluster_col].to_numpy()
-                )
+                results["ari"] = ari(true_labels=true_labels, predicted_labels=adata.obs[cluster_col].to_numpy())
 
             elif metric == "asw":
                 from pertpy.tools._perturbation_space._metrics import asw
