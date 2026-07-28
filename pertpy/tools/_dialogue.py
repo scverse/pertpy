@@ -792,11 +792,11 @@ class Dialogue:
                 df_ct1 = self._hlm_block(
                     ct2_scores[:, program_idx],
                     ct2_tme_for_ct1_genes,
-                    ct1_genes_to_test,
-                    sig1_up,
-                    ct2_quality,
-                    ct2_tme_qc,
-                    ct2_samples,
+                    gene_names=ct1_genes_to_test,
+                    up_set=sig1_up,
+                    cell_quality=ct2_quality,
+                    tme_qc=ct2_tme_qc,
+                    sample_groups=ct2_samples,
                 )
 
                 # ct1's program score vs ct2's pseudobulk expression at ct1's cells (R's p2).
@@ -804,11 +804,11 @@ class Dialogue:
                 df_ct2 = self._hlm_block(
                     ct1_scores[:, program_idx],
                     ct1_tme_for_ct2_genes,
-                    ct2_genes_to_test,
-                    sig2_up,
-                    ct1_quality,
-                    ct1_tme_qc,
-                    ct1_samples,
+                    gene_names=ct2_genes_to_test,
+                    up_set=sig2_up,
+                    cell_quality=ct1_quality,
+                    tme_qc=ct1_tme_qc,
+                    sample_groups=ct1_samples,
                 )
 
                 refined_ct1 = self._top_by_zscore(df_ct1, n=self.n_genes_per_signature)
@@ -868,6 +868,7 @@ class Dialogue:
         self,
         score: np.ndarray,
         expression: np.ndarray,
+        *,
         gene_names: list[str],
         up_set: list[str],
         cell_quality: np.ndarray,

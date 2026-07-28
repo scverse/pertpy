@@ -47,18 +47,18 @@ def test_score_with_nested_targets(dummy_adata, enricher):
 
 def test_hypergeometric_basic(dummy_adata, enricher):
     targets = {"group1": ["gene1", "gene2"]}
-    results = enricher.hypergeometric(dummy_adata, targets)
+    results = enricher.hypergeometric(dummy_adata, targets=targets)
     assert isinstance(results, dict)
 
 
 def test_hypergeometric_with_nested_targets(dummy_adata, enricher):
     targets = {"category1": {"group1": ["gene1", "gene2"]}}
-    results = enricher.hypergeometric(dummy_adata, targets, nested=True)
+    results = enricher.hypergeometric(dummy_adata, targets=targets, nested=True)
     assert isinstance(results, dict)
 
 
 @pytest.mark.parametrize("direction", ["up", "down", "both"])
 def test_hypergeometric_with_different_directions(dummy_adata, enricher, direction):
     targets = {"group1": ["gene1", "gene2"]}
-    results = enricher.hypergeometric(dummy_adata, targets, direction=direction)
+    results = enricher.hypergeometric(dummy_adata, targets=targets, direction=direction)
     assert isinstance(results, dict)

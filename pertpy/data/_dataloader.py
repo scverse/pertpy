@@ -52,6 +52,7 @@ class _RichProgress:
 
 def _download(  # pragma: no cover
     url: str,
+    *,
     output_file_name: str | None = None,
     output_path: str | Path | None = None,
     block_size: int = 8192,

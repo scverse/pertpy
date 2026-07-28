@@ -38,6 +38,7 @@ class LRClassifierSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
+        *,
         target_col: str = "perturbation",
         layer_key: str | None = None,
         embedding_key: str | None = None,
@@ -297,6 +298,7 @@ class MLPClassifierSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
+        *,
         target_col: str = "perturbation",
         layer_key: str | None = None,
         embedding_key: str | None = None,

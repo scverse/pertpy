@@ -96,6 +96,7 @@ class PseudobulkSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
+        *,
         target_col: str = "perturbation",
         groups_col: str | None = None,
         layer_key: str | None = None,
@@ -174,6 +175,7 @@ class DistanceSpace(PerturbationSpace):
     def compute(
         self,
         adata: AnnData,
+        *,
         target_col: str = "perturbation",
         metric: Metric = "edistance",
         layer_key: str | None = None,
@@ -317,6 +319,7 @@ class KMeansSpace(ClusteringSpace):
     def compute(
         self,
         adata: AnnData,
+        *,
         layer_key: str | None = None,
         embedding_key: str | None = None,
         cluster_key: str = "k-means",
@@ -362,6 +365,7 @@ class HDBSCANSpace(ClusteringSpace):
     def compute(
         self,
         adata: AnnData,
+        *,
         layer_key: str | None = None,
         embedding_key: str | None = None,
         cluster_key: str = "hdbscan",

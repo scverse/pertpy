@@ -49,6 +49,7 @@ class PerturbationComparison:
         self,
         real: np.ndarray,
         simulated: np.ndarray,
+        *,
         control: np.ndarray | None = None,
         use_simulated_for_knn: bool = False,
         n_neighbors: int = 20,
