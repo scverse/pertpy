@@ -96,7 +96,7 @@ def _download(  # pragma: no cover
                 fname=output_file_name,
                 path=str(output_path),
                 downloader=pooch.HTTPDownloader(
-                    progressbar=_RichProgress(),
+                    progressbar=_RichProgress(description=f"[red]Downloading {output_file_name}"),
                     chunk_size=block_size,
                     timeout=timeout,
                 ),
