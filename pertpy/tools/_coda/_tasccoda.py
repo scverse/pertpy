@@ -43,6 +43,7 @@ class Tasccoda(CompositionalModel2):
     def load(
         self,
         adata: AnnData,
+        *,
         type: Literal["cell_level", "sample_level"],
         cell_type_identifier: str | None = None,
         sample_identifier: str | None = None,
@@ -129,6 +130,7 @@ class Tasccoda(CompositionalModel2):
     def prepare(
         self,
         data: AnnData | MuData,
+        *,
         formula: str,
         reference_cell_type: str = "automatic",
         automatic_reference_absence_threshold: float = 0.05,
@@ -185,7 +187,12 @@ class Tasccoda(CompositionalModel2):
             adata = data[modality_key]
         if isinstance(data, AnnData):
             adata = data
-        adata = super().prepare(adata, formula, reference_cell_type, automatic_reference_absence_threshold)
+        adata = super().prepare(
+            adata,
+            formula=formula,
+            reference_cell_type=reference_cell_type,
+            automatic_reference_absence_threshold=automatic_reference_absence_threshold,
+        )
 
         if tree_key is None:
             raise ValueError("Please specify the key in .uns that contains the tree structure!")
@@ -541,12 +548,12 @@ class Tasccoda(CompositionalModel2):
     def run_nuts(
         self,
         data: AnnData | MuData,
+        *args,
         modality_key: str = "coda",
         num_samples: int = 10000,
         num_warmup: int = 1000,
         rng_key: int = 0,
         copy: bool = False,
-        *args,
         **kwargs,
     ):
         """
@@ -565,7 +572,16 @@ class Tasccoda(CompositionalModel2):
             >>> )
             >>> tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, rng_key=42).
         """  # noqa: D205, D212
-        return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
+        return super().run_nuts(
+            data,
+            *args,
+            modality_key=modality_key,
+            num_samples=num_samples,
+            num_warmup=num_warmup,
+            rng_key=rng_key,
+            copy=copy,
+            **kwargs,
+        )
 
     run_nuts.__doc__ = (CompositionalModel2.run_nuts.__doc__ or "") + (run_nuts.__doc__ or "")
 

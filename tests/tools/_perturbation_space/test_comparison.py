@@ -21,7 +21,7 @@ def test_compare_class(test_data):
 def test_compare_knn(test_data):
     X, Y, C = test_data
     pt_comparison = pt.tl.PerturbationComparison()
-    result = pt_comparison.compare_knn(X, Y, C)
+    result = pt_comparison.compare_knn(X, Y, control=C)
     assert isinstance(result, dict)
     assert "comp" in result
     assert isinstance(result["comp"], float)

@@ -46,6 +46,7 @@ class DistanceTest:
     def __init__(
         self,
         metric: Metric,
+        *,
         n_perms: int = 1000,
         layer_key: str | None = None,
         obsm_key: str | None = None,

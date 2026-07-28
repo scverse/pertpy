@@ -103,6 +103,7 @@ class CompositionalModel2(ABC):
     def _build_arviz_from_adata(
         self,
         sample_adata: AnnData,
+        *,
         dims: dict,
         coords: dict,
         rng_key: int | None,
@@ -165,6 +166,7 @@ class CompositionalModel2(ABC):
     def prepare(
         self,
         sample_adata: AnnData,
+        *,
         formula: str,
         reference_cell_type: str = "automatic",
         automatic_reference_absence_threshold: float = 0.05,
@@ -360,12 +362,12 @@ class CompositionalModel2(ABC):
     def run_nuts(
         self,
         data: AnnData | MuData,
+        *args,
         modality_key: str = "coda",
         num_samples: int = 10000,
         num_warmup: int = 1000,
         rng_key: int = 0,
         copy: bool = False,
-        *args,
         **kwargs,
     ):
         """Run No-U-turn sampling (Hoffman and Gelman, 2014), an efficient version of Hamiltonian Monte Carlo sampling to infer optimal model parameters.
@@ -415,12 +417,12 @@ class CompositionalModel2(ABC):
     def run_hmc(
         self,
         data: AnnData | MuData,
+        *args,
         modality_key: str = "coda",
         num_samples: int = 20000,
         num_warmup: int = 5000,
         rng_key=None,
         copy: bool = False,
-        *args,
         **kwargs,
     ):
         """Run standard Hamiltonian Monte Carlo sampling (Neal, 2011) to infer optimal model parameters.
@@ -730,6 +732,7 @@ class CompositionalModel2(ABC):
         sample_adata: AnnData,
         intercept_df: pd.DataFrame,
         effect_df: pd.DataFrame,
+        *,
         model_type: str,
         select_type: str,
         target_fdr: float = 0.05,
@@ -1229,6 +1232,7 @@ class CompositionalModel2(ABC):
     def _stackbar(  # pragma: no cover
         self,
         y: np.ndarray,
+        *,
         type_names: list[str],
         title: str,
         level_names: list[str],
@@ -2569,6 +2573,7 @@ def linkage_to_newick(
 
 def import_tree(
     data: AnnData | MuData,
+    *,
     modality_1: str | None = None,
     modality_2: str | None = None,
     dendrogram_key: str | None = None,
@@ -2667,6 +2672,7 @@ def import_tree(
 
 def from_scanpy(
     adata: AnnData,
+    *,
     cell_type_identifier: str,
     sample_identifier: str | list[str],
     covariate_uns: str | None = None,

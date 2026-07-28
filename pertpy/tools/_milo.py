@@ -89,6 +89,7 @@ class Milo:
     def make_nhoods(
         self,
         data: AnnData | MuData,
+        *,
         neighbors_key: str | None = None,
         feature_key: str | None = "rna",
         prop: float = 0.1,
@@ -288,6 +289,7 @@ class Milo:
     def da_nhoods(
         self,
         mdata: MuData,
+        *,
         design: str,
         model_contrasts: str | None = None,
         subset_samples: list[str] | None = None,

@@ -53,6 +53,7 @@ class Augur:
     def __init__(
         self,
         estimator: Literal["random_forest_classifier", "random_forest_regressor", "logistic_regression_classifier"],
+        *,
         n_estimators: int = 100,
         max_depth: int | None = None,
         max_features: Literal["auto", "log2", "sqrt"] | int | float = 2,
@@ -910,6 +911,7 @@ class Augur:
         augur_results2: dict[str, Any],
         permuted_results1: dict[str, Any],
         permuted_results2: dict[str, Any],
+        *,
         n_subsamples: int = 50,
         n_permutations: int = 1000,
     ) -> pd.DataFrame:

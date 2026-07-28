@@ -94,6 +94,7 @@ class CellLine(MetaData):
     def annotate(
         self,
         adata: AnnData,
+        *,
         query_id: str = "DepMap_ID",
         reference_id: str = "ModelID",
         fetch: list[str] | None = None,
@@ -213,6 +214,7 @@ class CellLine(MetaData):
     def annotate_bulk_rna(
         self,
         adata: AnnData,
+        *,
         query_id: str | None = None,
         cell_line_source: Literal["broad", "sanger"] = "sanger",
         verbosity: int | str = 5,
@@ -318,6 +320,7 @@ class CellLine(MetaData):
     def annotate_protein_expression(
         self,
         adata: AnnData,
+        *,
         query_id: str = "cell_line_name",
         reference_id: Literal["model_name", "model_id"] = "model_name",
         protein_information: Literal["protein_intensity", "zscore"] = "protein_intensity",
@@ -394,6 +397,7 @@ class CellLine(MetaData):
     def annotate_from_gdsc(
         self,
         adata: AnnData,
+        *,
         query_id: str = "cell_line_name",
         reference_id: Literal["cell_line_name", "sanger_model_id", "cosmic_id"] = "cell_line_name",
         query_perturbation: str = "perturbation",

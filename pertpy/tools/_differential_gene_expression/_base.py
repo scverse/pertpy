@@ -208,6 +208,7 @@ class MethodBase(ABC):
         # TODO join the two mapping functions
         def _map_genes_categories(
             row: pd.Series,
+            *,
             log2fc_col: str,
             nlog10_col: str,
             log2fc_threshold: float,
@@ -241,6 +242,7 @@ class MethodBase(ABC):
 
         def _map_genes_categories_highlight(
             row: pd.Series,
+            *,
             log2fc_col: str,
             nlog10_col: str,
             log2fc_threshold: float,

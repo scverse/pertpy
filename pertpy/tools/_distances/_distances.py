@@ -368,6 +368,7 @@ class Distance:
     def pairwise(
         self,
         adata: AnnData,
+        *,
         groupby: str,
         groups: list[str] | None = None,
         bootstrap: bool = False,
@@ -535,6 +536,7 @@ class Distance:
     def onesided_distances(
         self,
         adata: AnnData,
+        *,
         groupby: str,
         selected_group: str | None = None,
         groups: list[str] | None = None,
@@ -576,11 +578,11 @@ class Distance:
                 raise NotImplementedError("Currently, ClassifierClassProjection does not support bootstrapping.")
             return self.metric_fct.onesided_distances(  # type: ignore
                 adata,
-                groupby,
-                selected_group,
-                groups,
-                show_progressbar,
-                n_jobs,
+                groupby=groupby,
+                selected_group=selected_group,
+                groups=groups,
+                show_progressbar=show_progressbar,
+                n_jobs=n_jobs,
                 **kwargs,
             )
 
@@ -1347,6 +1349,7 @@ class ClassifierClassProjection(AbstractDistance):
     def onesided_distances(
         self,
         adata: AnnData,
+        *,
         groupby: str,
         selected_group: str | None = None,
         groups: list[str] | None = None,

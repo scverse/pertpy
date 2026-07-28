@@ -283,6 +283,7 @@ class JaxBaseModuleClass(flax.linen.Module):
     def __call__(
         self,
         tensors: dict[str, jnp.ndarray],
+        *,
         get_inference_input_kwargs: dict | None = None,
         get_generative_input_kwargs: dict | None = None,
         inference_kwargs: dict | None = None,
@@ -313,12 +314,12 @@ class JaxBaseModuleClass(flax.linen.Module):
         return _generic_forward(
             self,
             tensors,
-            inference_kwargs,
-            generative_kwargs,
-            loss_kwargs,
-            get_inference_input_kwargs,
-            get_generative_input_kwargs,
-            compute_loss,
+            inference_kwargs=inference_kwargs,
+            generative_kwargs=generative_kwargs,
+            loss_kwargs=loss_kwargs,
+            get_inference_input_kwargs=get_inference_input_kwargs,
+            get_generative_input_kwargs=get_generative_input_kwargs,
+            compute_loss=compute_loss,
         )
 
     @abstractmethod
@@ -520,6 +521,7 @@ class JaxBaseModuleClass(flax.linen.Module):
 def _generic_forward(
     module,
     tensors,
+    *,
     inference_kwargs,
     generative_kwargs,
     loss_kwargs,
@@ -786,6 +788,7 @@ class JaxTrainingMixin:
     @devices_dsp.dedent
     def train(
         self,
+        *,
         max_epochs: int | None = None,
         accelerator: str = "auto",
         devices: int | list[int] | str = "auto",

@@ -7,6 +7,7 @@ import numpy as np
 def extractor(
     data,
     cell_type,
+    *,
     condition_key,
     cell_type_key,
     ctrl_key,
@@ -34,7 +35,12 @@ def extractor(
             train_data = anndata.read("./data/train.h5ad")
             test_data = anndata.read("./data/test.h5ad")
             train_data_extracted_list = extractor(
-                train_data, "CD4T", "conditions", "cell_type", "control", "stimulated"
+                train_data,
+                "CD4T",
+                condition_key="conditions",
+                cell_type_key="cell_type",
+                ctrl_key="control",
+                stim_key="stimulated",
             )
     """
     cell_with_both_condition = data[data.obs[cell_type_key] == cell_type]

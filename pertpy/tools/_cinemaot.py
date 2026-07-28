@@ -39,6 +39,7 @@ class Cinemaot:
     def causaleffect(
         self,
         adata: AnnData,
+        *,
         pert_key: str,
         control: str,
         return_matching: bool = False,
@@ -203,6 +204,7 @@ class Cinemaot:
     def causaleffect_weighted(
         self,
         adata: AnnData,
+        *,
         pert_key: str,
         control: str,
         return_matching: bool = False,
@@ -267,8 +269,8 @@ class Cinemaot:
         adata_ = adata[idx].copy()
         TE = self.causaleffect(
             adata_,
-            pert_key,
-            control,
+            pert_key=pert_key,
+            control=control,
             return_matching=return_matching,
             cf_rep=cf_rep,
             use_rep=use_rep,
@@ -286,6 +288,7 @@ class Cinemaot:
         self,
         adata: AnnData,
         de: AnnData,
+        *,
         pert_key: str,
         control: str,
         label_list: list,
@@ -499,6 +502,7 @@ class Cinemaot:
     def synergy(
         self,
         adata: AnnData,
+        *,
         pert_key: str,
         base: str,
         A: str,
@@ -639,11 +643,11 @@ class Cinemaot:
         self,
         adata: AnnData,
         de: AnnData,
+        *,
         pert_key: str,
         control: str,
         de_label: str,
         source_label: str,
-        *,
         matching_rep: str = "ot",
         resolution: float = 0.5,
         normalize: str = "col",

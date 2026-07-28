@@ -118,10 +118,10 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             ctrl_pred = extractor(
                 self.adata,
                 celltype_to_predict,
-                condition_key,
-                cell_type_key,
-                ctrl_key,
-                stim_key,
+                condition_key=condition_key,
+                cell_type_key=cell_type_key,
+                ctrl_key=ctrl_key,
+                stim_key=stim_key,
             )[1]
         else:
             ctrl_pred = adata_to_predict

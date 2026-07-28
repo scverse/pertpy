@@ -60,6 +60,7 @@ class Enrichment:
     def score(
         self,
         adata: AnnData,
+        *,
         layer: str | None = None,
         targets: dict[str, list[str]] | dict[str, dict[str, list[str]]] | None = None,
         nested: bool = False,
@@ -158,6 +159,7 @@ class Enrichment:
     def hypergeometric(
         self,
         adata: AnnData,
+        *,
         targets: dict[str, list[str] | dict[str, list[str]]] | None = None,
         nested: bool = False,
         categories: str | list[str] | None = None,
@@ -246,6 +248,7 @@ class Enrichment:
     def gsea(
         self,
         adata: "AnnData",
+        *,
         targets: dict[str, list[str] | dict[str, list[str]]] | None = None,
         nested: bool = False,
         categories: str | list[str] | None = None,
