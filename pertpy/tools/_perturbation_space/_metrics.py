@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, silhouette_score
+from sklearn.metrics import (  # type: ignore[import-untyped]
+    adjusted_rand_score,
+    normalized_mutual_info_score,
+    silhouette_score,
+)
 
 if TYPE_CHECKING:
     import numpy as np
@@ -50,8 +54,8 @@ def asw(
     pairwise_distances: ArrayLike,
     labels: ArrayLike,
     metric: str = "euclidean",
-    sample_size: int = None,
-    random_state: int = None,
+    sample_size: int | None = None,
+    random_state: int | None = None,
     **kwargs,
 ) -> float:
     """Computes the average-width silhouette score.

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
-from scanpy import settings
+from scanpy import settings  # type: ignore[import-untyped]
 
 from pertpy._logger import logger
 from pertpy.data._dataloader import _download

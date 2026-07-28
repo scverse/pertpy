@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace, _resolve_matrix
 
@@ -20,7 +20,7 @@ class ClusteringSpace(PerturbationSpace):
         adata: AnnData,
         true_label_col: str,
         cluster_col: str,
-        metrics: Iterable[str] = None,
+        metrics: Iterable[str] | None = None,
         *,
         layer_key: str | None = None,
         embedding_key: str | None = None,
@@ -52,7 +52,7 @@ class ClusteringSpace(PerturbationSpace):
         """
         if metrics is None:
             metrics = ["nmi", "ari", "asw"]
-        true_labels = adata.obs[true_label_col]
+        true_labels = adata.obs[true_label_col].to_numpy()
 
         results: dict[str, float] = {}
         for metric in metrics:
@@ -64,14 +64,14 @@ class ClusteringSpace(PerturbationSpace):
 
                 results["nmi"] = nmi(
                     true_labels=true_labels,
-                    predicted_labels=adata.obs[cluster_col],
+                    predicted_labels=adata.obs[cluster_col].to_numpy(),
                     average_method=kwargs["average_method"],
                 )
 
             elif metric == "ari":
                 from pertpy.tools._perturbation_space._metrics import ari
 
-                results["ari"] = ari(true_labels=true_labels, predicted_labels=adata.obs[cluster_col])
+                results["ari"] = ari(true_labels=true_labels, predicted_labels=adata.obs[cluster_col].to_numpy())
 
             elif metric == "asw":
                 from pertpy.tools._perturbation_space._metrics import asw

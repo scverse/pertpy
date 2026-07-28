@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from _pytest.fixtures import fixture
 
 import pertpy as pt

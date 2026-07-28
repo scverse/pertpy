@@ -45,6 +45,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
+    "Typing :: Typed",
 ]
 
 dependencies = [
@@ -65,7 +66,7 @@ dependencies = [
     "blitzgsea",
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
-    "arviz>=1.0.0",
+    "arviz>=1.2.0",
     "pooch",
     "scverse-misc"
 ]
@@ -89,7 +90,14 @@ all = [
     "pertpy[tcoda,de,scgen]"
 ]
 dev = [
+    "joblib-stubs",
+    "mypy",
+    "pandas-stubs",
     "pre-commit",
+    "scipy-stubs",
+    "types-requests",
+    "types-seaborn",
+    "types-tqdm",
 ]
 doc = [
     "docutils>=0.8",

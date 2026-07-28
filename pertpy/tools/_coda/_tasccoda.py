@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import jax.numpy as jnp
 import numpy as np
-import numpyro as npy
-import numpyro.distributions as npd
-import toytree as tt
+import numpyro as npy  # type: ignore[import-untyped]
+import numpyro.distributions as npd  # type: ignore[import-untyped]
+import toytree as tt  # type: ignore[import-untyped]
 from anndata import AnnData
 from jax import config
-from mudata import MuData
+from mudata import MuData  # type: ignore[import-untyped]
 
 from pertpy._logger import logger
+from pertpy._types import cast_matrix
 from pertpy.tools._coda._base_coda import (
     CompositionalModel2,
     collapse_singularities,
@@ -43,14 +44,14 @@ class Tasccoda(CompositionalModel2):
         self,
         adata: AnnData,
         type: Literal["cell_level", "sample_level"],
-        cell_type_identifier: str = None,
-        sample_identifier: str = None,
+        cell_type_identifier: str | None = None,
+        sample_identifier: str | None = None,
         covariate_uns: str | None = None,
         covariate_obs: list[str] | None = None,
         covariate_df: pd.DataFrame | None = None,
-        dendrogram_key: str = None,
-        levels_orig: list[str] = None,
-        levels_agg: list[str] = None,
+        dendrogram_key: str | None = None,
+        levels_orig: list[str] | None = None,
+        levels_agg: list[str] | None = None,
         add_level_name: bool = True,
         key_added: str = "tree",
         modality_key_1: str = "rna",
@@ -98,6 +99,8 @@ class Tasccoda(CompositionalModel2):
             >>> )
         """
         if type == "cell_level":
+            if cell_type_identifier is None or sample_identifier is None:
+                raise ValueError("`cell_type_identifier` and `sample_identifier` are required for `type='cell_level'`.")
             adata_coda = from_scanpy(
                 adata=adata,
                 cell_type_identifier=cell_type_identifier,
@@ -129,8 +132,8 @@ class Tasccoda(CompositionalModel2):
         formula: str,
         reference_cell_type: str = "automatic",
         automatic_reference_absence_threshold: float = 0.05,
-        tree_key: str = None,
-        pen_args: dict = None,
+        tree_key: str | None = None,
+        pen_args: dict | None = None,
         modality_key: str = "coda",
     ) -> AnnData | MuData:
         """Handles data preprocessing, covariate matrix creation, reference selection, and zero count replacement for tascCODA.
@@ -180,17 +183,15 @@ class Tasccoda(CompositionalModel2):
             pen_args = {"lambda_1": 5}
         if isinstance(data, MuData):
             adata = data[modality_key]
-            is_MuData = True
         if isinstance(data, AnnData):
             adata = data
-            is_MuData = False
         adata = super().prepare(adata, formula, reference_cell_type, automatic_reference_absence_threshold)
 
         if tree_key is None:
             raise ValueError("Please specify the key in .uns that contains the tree structure!")
 
         try:
-            import ete4 as ete
+            import ete4 as ete  # type: ignore[import-untyped]
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies as `pip install 'pertpy[tcoda]'`"
@@ -295,7 +296,7 @@ class Tasccoda(CompositionalModel2):
 
         adata.uns["scCODA_params"]["model_type"] = "tree_agg"
         adata.uns["scCODA_params"]["select_type"] = "sslasso"
-        if is_MuData:
+        if isinstance(data, MuData):
             data.mod[modality_key] = adata
             return data
         else:
@@ -327,7 +328,7 @@ class Tasccoda(CompositionalModel2):
             >>> adata = tasccoda.set_init_mcmc_states(rng_key=42, ref_index=[0, 1], sample_adata=mdata["coda"])
         """
         N, D = sample_adata.obsm["covariate_matrix"].shape
-        P = sample_adata.X.shape[1]
+        P = cast_matrix(sample_adata.X).shape[1]
         T = sample_adata.uns["scCODA_params"]["T"]
 
         # Reference nodes must be sorted by index
@@ -392,7 +393,7 @@ class Tasccoda(CompositionalModel2):
         """
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
-        P = sample_adata.X.shape[1]
+        P = cast_matrix(sample_adata.X).shape[1]
         T = sample_adata.uns["scCODA_params"]["T"]
 
         # spike-and-slab LASSO parameters
@@ -400,8 +401,8 @@ class Tasccoda(CompositionalModel2):
         lambda_1 = sample_adata.uns["scCODA_params"]["sslasso_pen_args"]["lambda_1_scaled"]
 
         # Reference nodes must be sorted by index
-        ref_index = jnp.sort(ref_index)
-        num_ref_nodes = len(ref_index)
+        ref_nodes = jnp.sort(ref_index)
+        num_ref_nodes = len(ref_nodes)
 
         # numpyro plates for all dimensions
         covariate_axis = npy.plate("covs", D, dim=-2)
@@ -428,7 +429,7 @@ class Tasccoda(CompositionalModel2):
 
         with node_axis, covariate_axis:
             # Include effect 0 for reference nodes
-            ref_inserts = jnp.array([ref_index[i] - i for i in range(num_ref_nodes)])
+            ref_inserts = jnp.array([ref_nodes[i] - i for i in range(num_ref_nodes)])
             b_tilde = jnp.insert(b_tilde, ref_inserts, jnp.zeros(shape=[D, 1]), axis=-1)
             b_tilde = npy.deterministic("b_tilde", b_tilde)
 
@@ -445,7 +446,7 @@ class Tasccoda(CompositionalModel2):
         # Combine intercepts and effects
         with sample_axis:
             concentrations = npy.deterministic(
-                "concentrations", jnp.nan_to_num(jnp.exp(alpha + jnp.matmul(covariates, beta)), 0.0001)
+                "concentrations", jnp.nan_to_num(jnp.exp(alpha + jnp.matmul(covariates, beta)))
             )
 
         # Calculate DM-distributed counts
@@ -566,7 +567,7 @@ class Tasccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
-    run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
+    run_nuts.__doc__ = (CompositionalModel2.run_nuts.__doc__ or "") + (run_nuts.__doc__ or "")
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
@@ -588,9 +589,11 @@ class Tasccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
-    summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
+    summary.__doc__ = (CompositionalModel2.summary.__doc__ or "") + (summary.__doc__ or "")
 
-    def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
+    def credible_effects(
+        self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float | None = None
+    ) -> pd.Series:
         """
 
         Examples:
@@ -610,7 +613,7 @@ class Tasccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().credible_effects(data, modality_key, est_fdr)
 
-    credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
+    credible_effects.__doc__ = (CompositionalModel2.credible_effects.__doc__ or "") + (credible_effects.__doc__ or "")
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """
@@ -632,4 +635,4 @@ class Tasccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
-    set_fdr.__doc__ = CompositionalModel2.set_fdr.__doc__ + set_fdr.__doc__
+    set_fdr.__doc__ = (CompositionalModel2.set_fdr.__doc__ or "") + (set_fdr.__doc__ or "")

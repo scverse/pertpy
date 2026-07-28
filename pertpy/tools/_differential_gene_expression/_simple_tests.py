@@ -8,7 +8,7 @@ from types import MappingProxyType
 import numpy as np
 import pandas as pd
 import scipy.stats
-import statsmodels
+import statsmodels  # type: ignore[import-untyped]
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
 from joblib import delayed

@@ -1,5 +1,5 @@
 import pytest
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from anndata import AnnData
 from pandas import DataFrame
 

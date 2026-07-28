@@ -8,14 +8,14 @@ from warnings import warn
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 from anndata import AnnData
 from numba import njit, prange
 from rich.progress import track
 from scipy.sparse import csr_matrix, issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSRBase
+from pertpy._types import CSBase, CSRBase, cast_frame, cast_matrix
 from pertpy.preprocessing._guide_rna_mixture import compute_count_thresholds, fit_poisson_gauss_mixture
 
 if TYPE_CHECKING:
@@ -83,7 +83,7 @@ class GuideAssignment:
     @njit(parallel=True)
     def _threshold_sparse_numba(data: np.ndarray, threshold: float) -> np.ndarray:
         out = np.zeros_like(data, dtype=np.int8)
-        for i in prange(data.shape[0]):
+        for i in prange(data.shape[0]):  # type: ignore[attr-defined]
             if data[i] >= threshold:
                 out[i] = 1
         return out
@@ -279,7 +279,7 @@ class GuideAssignment:
     ) -> np.ndarray | None:
         if model != "poisson_gauss_mixture":
             raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
-        X = adata.X if layer is None else adata.layers[layer]
+        X = cast_matrix(adata.X if layer is None else adata.layers[layer])
         result = self._fit_mixture_pg(
             X,
             guide_names=list(adata.var_names),
@@ -391,7 +391,7 @@ class GuideAssignment:
 
     def _fit_mixture_pg(
         self,
-        X: np.ndarray | CSRBase,
+        X: np.ndarray | CSBase,
         *,
         guide_names: list[str],
         n_iter: int,
@@ -404,7 +404,7 @@ class GuideAssignment:
 
         Dispatches the per-guide nonzero extraction and per-guide thresholding on dense vs sparse so that a sparse input never gets densified at full ``[cells, guides]`` size.
         """
-        if issparse(X):
+        if isinstance(X, CSBase):
             X_csc = X.tocsc()
             n_cells, n_guides = X_csc.shape
             if X_csc.data.size and X_csc.data.min() < 0:
@@ -537,7 +537,7 @@ class GuideAssignment:
         *,
         layer: str | None = None,
         order_by: np.ndarray | str | None = None,
-        key_to_save_order: str = None,
+        key_to_save_order: str | None = None,
         return_fig: bool = False,
         **kwargs,
     ) -> Figure | None:
@@ -576,12 +576,12 @@ class GuideAssignment:
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
             >>> ga.plot_heatmap(gdo)
         """
-        data = adata.X if layer is None else adata.layers[layer]
+        data = cast_matrix(adata.X if layer is None else adata.layers[layer])
 
         if order_by is None:
-            if issparse(data):
+            if isinstance(data, CSBase):
                 max_values = data.max(axis=1).toarray().squeeze()
-                data_argmax = data.argmax(axis=1).A.squeeze()
+                data_argmax = np.asarray(data.argmax(axis=1)).squeeze()
                 max_guide_index = np.where(max_values != data.min(axis=1).toarray().squeeze(), data_argmax, -1)
             else:
                 max_guide_index = np.where(
@@ -611,7 +611,7 @@ class GuideAssignment:
                 **kwargs,
             )
         finally:
-            del adata.obs[temp_col_name]
+            del cast_frame(adata.obs)[temp_col_name]
 
         if return_fig:
             return fig

@@ -1,10 +1,11 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy.sparse import issparse
 from scipy.sparse import vstack as sp_vstack
-from sklearn.base import ClassifierMixin
-from sklearn.linear_model import LogisticRegression
+from sklearn.base import ClassifierMixin  # type: ignore[import-untyped]
+from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+
+from pertpy._types import CSBase
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -35,7 +36,7 @@ class PerturbationComparison:
         if clf is None:
             clf = LogisticRegression()
         n_x = real.shape[0]
-        data = sp_vstack((real, control)) if issparse(real) else np.vstack((real, control))
+        data = sp_vstack((real, control)) if isinstance(real, CSBase) else np.vstack((real, control))
         labels = np.concatenate([np.full(real.shape[0], "comp"), np.full(control.shape[0], "ctrl")])
 
         clf.fit(data, labels)
@@ -78,23 +79,22 @@ class PerturbationComparison:
         n_y = simulated.shape[0]
 
         if control is None:
-            index_data = sp_vstack((simulated, real)) if issparse(real) else np.vstack((simulated, real))
+            index_data = sp_vstack((simulated, real)) if isinstance(real, CSBase) else np.vstack((simulated, real))
         else:
             datas = (simulated, real, control) if use_simulated_for_knn else (real, control)
-            index_data = sp_vstack(datas) if issparse(real) else np.vstack(datas)
+            index_data = sp_vstack(datas) if isinstance(real, CSBase) else np.vstack(datas)
 
         y_in_index = use_simulated_for_knn or control is None
-        c_in_index = control is not None
         label_groups = ["comp"]
         labels: NDArray[np.str_] = np.full(index_data.shape[0], "comp")
         if y_in_index:
             labels[:n_y] = "siml"
             label_groups.append("siml")
-        if c_in_index:
+        if control is not None:
             labels[-control.shape[0] :] = "ctrl"
             label_groups.append("ctrl")
 
-        from pynndescent import NNDescent
+        from pynndescent import NNDescent  # type: ignore[import-untyped]
 
         index = NNDescent(
             index_data,

@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-import scanpy as sc
-from mudata import MuData
+import scanpy as sc  # type: ignore[import-untyped]
+from mudata import MuData  # type: ignore[import-untyped]
 from xarray import DataTree
 
 import pertpy as pt

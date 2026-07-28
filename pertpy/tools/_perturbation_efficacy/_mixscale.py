@@ -6,10 +6,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
+from fast_array_utils.conv import to_dense
 from pandas.errors import PerformanceWarning
-from scipy.sparse import issparse, sparray
+from scipy.sparse import sparray
 
+from pertpy._types import CSBase, cast_frame
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
@@ -37,17 +39,17 @@ def _leave_one_out_numerators(matrix: np.ndarray, numerator: np.ndarray, directi
 
 
 @_subset_column_mean.register(sparray)
-def _(matrix, row_mask: np.ndarray) -> np.ndarray:
+def _(matrix: CSBase, row_mask: np.ndarray) -> np.ndarray:  # type: ignore[misc]
     return np.asarray(matrix[row_mask].mean(axis=0)).ravel()
 
 
 @_project.register(sparray)
-def _(matrix, direction: np.ndarray) -> np.ndarray:
+def _(matrix: sparray, direction: np.ndarray) -> np.ndarray:  # type: ignore[misc]
     return np.asarray(matrix @ direction).ravel()
 
 
 @_leave_one_out_numerators.register(sparray)
-def _(matrix, numerator: np.ndarray, direction: np.ndarray) -> np.ndarray:
+def _(matrix: CSBase, numerator: np.ndarray, direction: np.ndarray) -> np.ndarray:  # type: ignore[misc]
     return numerator[:, None] - matrix.multiply(direction[None, :]).toarray()
 
 
@@ -246,7 +248,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
 
         Zero-centering necessarily densifies the (cells x DE-gene) submatrix, exactly as Seurat's `ScaleData` and :meth:`~pertpy.tools.Mixscape.mixscape` do.
         """
-        dat = dat.toarray() if issparse(dat) else np.asarray(dat, dtype=np.float64)
+        dat = to_dense(dat)
         dat = dat.astype(np.float64, copy=False)
         mean = dat.mean(axis=0)
         std = dat.std(axis=0, ddof=1)
@@ -281,7 +283,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
         """
         var_names = set(adata.var_names)
         gene_targets = set(adata.obs[pert_key]).difference([control])
-        nt_cells = adata.obs_names[adata.obs[pert_key] == control]
+        nt_cells = adata.obs_names[np.asarray(adata.obs[pert_key] == control)]
         markers: dict[str, np.ndarray] = {}
 
         for gene in gene_targets:
@@ -308,8 +310,9 @@ class Mixscale(PerturbationEfficacyAnalyzer):
 
                 if fine_mode:
                     pooled: list[str] = []
-                    for guide in adata.obs.loc[guide_cells, fine_mode_labels].unique():
-                        guide_subset = guide_cells[adata.obs.loc[guide_cells, fine_mode_labels] == guide]
+                    guide_labels = cast_frame(adata.obs).loc[guide_cells, fine_mode_labels]
+                    for guide in guide_labels.unique():
+                        guide_subset = guide_cells[guide_labels == guide]
                         for g in self._de_for_pair(
                             adata,
                             guide_subset,

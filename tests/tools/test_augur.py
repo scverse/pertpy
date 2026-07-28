@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 
 import pertpy as pt
 

@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import jax.numpy as jnp
 import numpy as np
-import numpyro as npy
-import numpyro.distributions as npd
+import numpyro as npy  # type: ignore[import-untyped]
+import numpyro.distributions as npd  # type: ignore[import-untyped]
 from anndata import AnnData
 from jax import config
-from mudata import MuData
+from mudata import MuData  # type: ignore[import-untyped]
 
 from pertpy._logger import logger
+from pertpy._types import cast_matrix
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 if TYPE_CHECKING:
@@ -35,8 +36,8 @@ class Sccoda(CompositionalModel2):
         adata: AnnData,
         type: Literal["cell_level", "sample_level"],
         generate_sample_level: bool = True,
-        cell_type_identifier: str = None,
-        sample_identifier: str = None,
+        cell_type_identifier: str | None = None,
+        sample_identifier: str | None = None,
         covariate_uns: str | None = None,
         covariate_obs: list[str] | None = None,
         covariate_df: pd.DataFrame | None = None,
@@ -76,6 +77,10 @@ class Sccoda(CompositionalModel2):
         """
         if type == "cell_level":
             if generate_sample_level:
+                if cell_type_identifier is None or sample_identifier is None:
+                    raise ValueError(
+                        "`cell_type_identifier` and `sample_identifier` are required to generate the sample level."
+                    )
                 adata_coda = from_scanpy(
                     adata=adata,
                     cell_type_identifier=cell_type_identifier,
@@ -139,10 +144,8 @@ class Sccoda(CompositionalModel2):
         """
         if isinstance(data, MuData):
             adata = data[modality_key]
-            is_MuData = True
         if isinstance(data, AnnData):
             adata = data
-            is_MuData = False
         adata = super().prepare(adata, formula, reference_cell_type, automatic_reference_absence_threshold)
         # All parameters that are returned for analysis
         adata.uns["scCODA_params"]["param_names"] = [
@@ -160,7 +163,7 @@ class Sccoda(CompositionalModel2):
         adata.uns["scCODA_params"]["model_type"] = "classic"
         adata.uns["scCODA_params"]["select_type"] = "spikeslab"
 
-        if is_MuData:
+        if isinstance(data, MuData):
             data.mod[modality_key] = adata
             return data
         else:
@@ -192,7 +195,7 @@ class Sccoda(CompositionalModel2):
         """
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
-        P = sample_adata.X.shape[1]
+        P = cast_matrix(sample_adata.X).shape[1]
 
         # Sizes of different parameter matrices
         alpha_size = [P]
@@ -233,7 +236,7 @@ class Sccoda(CompositionalModel2):
         """
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
-        P = sample_adata.X.shape[1]
+        P = cast_matrix(sample_adata.X).shape[1]
 
         # numpyro plates for all dimensions
         covariate_axis = npy.plate("covs", D, dim=-2)
@@ -271,7 +274,7 @@ class Sccoda(CompositionalModel2):
         # Combine intercepts and effects
         with sample_axis:
             concentrations = npy.deterministic(
-                "concentrations", jnp.nan_to_num(jnp.exp(alpha + jnp.matmul(covariates, beta)), 0.0001)
+                "concentrations", jnp.nan_to_num(jnp.exp(alpha + jnp.matmul(covariates, beta)))
             )
 
         # Calculate DM-distributed counts
@@ -386,9 +389,11 @@ class Sccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().run_nuts(data, modality_key, num_samples, num_warmup, rng_key, copy, *args, **kwargs)
 
-    run_nuts.__doc__ = CompositionalModel2.run_nuts.__doc__ + run_nuts.__doc__
+    run_nuts.__doc__ = (CompositionalModel2.run_nuts.__doc__ or "") + (run_nuts.__doc__ or "")
 
-    def credible_effects(self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float = None) -> pd.Series:
+    def credible_effects(
+        self, data: AnnData | MuData, modality_key: str = "coda", est_fdr: float | None = None
+    ) -> pd.Series:
         """
 
         Examples:
@@ -407,7 +412,7 @@ class Sccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().credible_effects(data, modality_key, est_fdr)
 
-    credible_effects.__doc__ = CompositionalModel2.credible_effects.__doc__ + credible_effects.__doc__
+    credible_effects.__doc__ = (CompositionalModel2.credible_effects.__doc__ or "") + (credible_effects.__doc__ or "")
 
     def summary(self, data: AnnData | MuData, extended: bool = False, modality_key: str = "coda", *args, **kwargs):
         """
@@ -428,7 +433,7 @@ class Sccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().summary(data, extended, modality_key, *args, **kwargs)
 
-    summary.__doc__ = CompositionalModel2.summary.__doc__ + summary.__doc__
+    summary.__doc__ = (CompositionalModel2.summary.__doc__ or "") + (summary.__doc__ or "")
 
     def set_fdr(self, data: AnnData | MuData, est_fdr: float, modality_key: str = "coda", *args, **kwargs):
         """
@@ -449,4 +454,4 @@ class Sccoda(CompositionalModel2):
         """  # noqa: D205, D212
         return super().set_fdr(data, est_fdr, modality_key, *args, **kwargs)
 
-    set_fdr.__doc__ = CompositionalModel2.set_fdr.__doc__ + set_fdr.__doc__
+    set_fdr.__doc__ = (CompositionalModel2.set_fdr.__doc__ or "") + (set_fdr.__doc__ or "")

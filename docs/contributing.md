@@ -159,9 +159,14 @@ git pull --rebase
 to integrate the changes into yours.
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
+One of the hooks type-checks `pertpy` and `tests` with [mypy][], which the `Pre-commit checks` CI job runs on every pull request.
+Type hints are optional: mypy only checks functions that carry annotations.
+To silence a specific line, append a `# type: ignore[<error-code>]` comment.
+
 Finally, most editors have an _autoformat on save_ feature.
 Consider enabling this option for [ruff][ruff-editors] and [biome][biome-editors].
 
+[mypy]: https://mypy.readthedocs.io/
 [pre-commit]: https://pre-commit.com/
 [pre-commit.ci]: https://pre-commit.ci/
 [ruff-editors]: https://docs.astral.sh/ruff/integrations/

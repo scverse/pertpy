@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 from zipfile import ZipFile
 
-import pooch
+import pooch  # type: ignore[import-untyped]
 import requests
 from rich.progress import Progress, TaskID
 
@@ -26,21 +26,22 @@ class _RichProgress:
         self._task: TaskID | None = None
         self.total: int | None = None
 
-    def _ensure_started(self) -> None:
-        if self._progress is None:
+    def _ensure_started(self) -> tuple[Progress, TaskID]:
+        if self._progress is None or self._task is None:
             self._progress = Progress(refresh_per_second=3)
             self._progress.start()
             self._task = self._progress.add_task(self._description, total=self.total or None)
+        return self._progress, self._task
 
     def update(self, n: int) -> None:
-        self._ensure_started()
-        if self.total is not None and self._progress.tasks[self._task].total != self.total:
-            self._progress.update(self._task, total=self.total or None)
-        self._progress.update(self._task, advance=n)
+        progress, task = self._ensure_started()
+        if self.total is not None and progress.tasks[task].total != self.total:
+            progress.update(task, total=self.total or None)
+        progress.update(task, advance=n)
 
     def reset(self) -> None:
-        self._ensure_started()
-        self._progress.reset(self._task, total=self.total or None)
+        progress, task = self._ensure_started()
+        progress.reset(task, total=self.total or None)
 
     def close(self) -> None:
         if self._progress is not None:

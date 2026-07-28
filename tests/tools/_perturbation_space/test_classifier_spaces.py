@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-import scanpy as sc
+import scanpy as sc  # type: ignore[import-untyped]
 import scipy.sparse as sp
 from anndata import AnnData
 

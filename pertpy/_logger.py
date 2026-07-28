@@ -314,7 +314,7 @@ class RootLogger(logging.RootLogger):
         msg: str,
         *,
         extra: dict | None = None,
-        time: datetime = None,
+        time: datetime | None = None,
         deep: str | None = None,
     ) -> datetime:
         """Log message with level and return current time.

@@ -1,13 +1,14 @@
 import numpy as np
 import pandas as pd
-import statsmodels
-import statsmodels.api as sm
+import statsmodels  # type: ignore[import-untyped]
+import statsmodels.api as sm  # type: ignore[import-untyped]
 from fast_array_utils.conv import to_dense
 from joblib import delayed, effective_n_jobs
 from scipy.sparse import issparse
 from tqdm.auto import tqdm
 
 from pertpy._parallel import _MAX_BLOCK_ELEMENTS, _block_slices, _parallelize_with_joblib
+from pertpy._types import CSBase
 
 from ._base import LinearModelBase
 from ._checks import check_is_numeric_matrix
@@ -49,10 +50,10 @@ class Statsmodels(LinearModelBase):
         """
         data = self.data
         # Slicing out variables is significantly more efficient in csc format.
-        if issparse(data):
+        if isinstance(data, CSBase):
             data = data.tocsc()
 
-        n_workers = effective_n_jobs(n_jobs)
+        n_workers = effective_n_jobs(n_jobs if n_jobs is not None else 1)
         blocks = _block_slices(
             self.adata.n_vars,
             # Across processes, larger blocks amortize sending the design matrix.
