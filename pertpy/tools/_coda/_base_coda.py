@@ -26,7 +26,7 @@ from scipy.cluster import hierarchy as sp_hierarchy
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import as_dense, as_frame, as_matrix
+from pertpy._types import cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -187,8 +187,8 @@ class CompositionalModel2(ABC):
         dtype = "float64"
 
         # Convert count data to float64 (needed for correct inference)
-        sample_adata.X = as_matrix(sample_adata.X).astype(dtype)
-        X = as_dense(sample_adata.X)
+        sample_adata.X = cast_matrix(sample_adata.X).astype(dtype)
+        X = cast_dense(sample_adata.X)
 
         # Build covariate matrix from R-like formula, save in obsm
         import patsy  # type: ignore[import-untyped]
@@ -236,7 +236,7 @@ class CompositionalModel2(ABC):
         sample_adata.obsm["sample_counts"] = np.sum(X, axis=1)
 
         # Check for relative abundances
-        if np.allclose(as_dense(sample_adata.obsm["sample_counts"]), 1.0):
+        if np.allclose(cast_dense(sample_adata.obsm["sample_counts"]), 1.0):
             warnings.warn(
                 "All samples sum to ~1, suggesting relative abundances were provided. "
                 "scCODA requires absolute cell counts. Results may be meaningless.",
@@ -811,11 +811,11 @@ class CompositionalModel2(ABC):
 
             # Feature-level effects are just node-level effects time ancestor matrix
             effect_df["final_parameter"] = np.matmul(
-                np.kron(np.eye(D, dtype=int), A), np.array(as_frame(node_df)["final_parameter"])
+                np.kron(np.eye(D, dtype=int), A), np.array(cast_frame(node_df)["final_parameter"])
             )
 
         # Get expected sample, log-fold change
-        y_bar = np.mean(np.sum(as_dense(sample_adata.X), axis=1))
+        y_bar = np.mean(np.sum(cast_dense(sample_adata.X), axis=1))
         alpha_par = intercept_df.loc[:, "final_parameter"].astype(float)
         alphas_exp = np.exp(alpha_par)
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
@@ -888,7 +888,7 @@ class CompositionalModel2(ABC):
         intercept_df = intercept_df.rename(columns={"mean": "final_parameter"})
 
         # Get expected sample
-        y_bar = np.mean(np.sum(as_dense(sample_adata.X), axis=1))
+        y_bar = np.mean(np.sum(cast_dense(sample_adata.X), axis=1))
         alphas_exp = np.exp(intercept_df.loc[:, "final_parameter"].astype(float))
         alpha_sample = (alphas_exp / np.sum(alphas_exp) * y_bar).values
         intercept_df.loc[:, "expected_sample"] = alpha_sample
@@ -1335,7 +1335,7 @@ class CompositionalModel2(ABC):
         if isinstance(data, MuData):
             data = data[modality_key]
 
-        ct_names = as_frame(data.var).index.to_list()
+        ct_names = cast_frame(data.var).index.to_list()
 
         # option to plot one stacked barplot per sample
         if feature_name == "samples":
@@ -1343,10 +1343,10 @@ class CompositionalModel2(ABC):
                 assert set(level_order) == set(data.obs.index), "level order is inconsistent with levels"
                 data = data[level_order]
             self._stackbar(
-                as_dense(data.X),
-                type_names=as_frame(data.var).index.to_list(),
+                cast_dense(data.X),
+                type_names=cast_frame(data.var).index.to_list(),
                 title="samples",
-                level_names=as_frame(data.obs).index.to_list(),
+                level_names=cast_frame(data.obs).index.to_list(),
                 figsize=figsize,
                 dpi=dpi,
                 palette=palette,
@@ -1354,7 +1354,7 @@ class CompositionalModel2(ABC):
             )
         else:
             # Order levels
-            obs = as_frame(data.obs)
+            obs = cast_frame(data.obs)
             levels: list[str]
             if level_order:
                 assert set(level_order) == set(obs[feature_name]), "level order is inconsistent with levels"
@@ -1364,7 +1364,7 @@ class CompositionalModel2(ABC):
             else:
                 levels = pd.unique(obs[feature_name]).tolist()
             n_levels = len(levels)
-            counts = as_dense(data.X)
+            counts = cast_dense(data.X)
             feature_totals = np.zeros([n_levels, counts.shape[1]])
 
             for level in range(n_levels):
@@ -1460,7 +1460,7 @@ class CompositionalModel2(ABC):
         covariate_names_non_zero = [
             covariate_name
             for covariate_name in covariate_names
-            if as_frame(data.varm[f"effect_df_{covariate_name}"])[parameter].any()
+            if cast_frame(data.varm[f"effect_df_{covariate_name}"])[parameter].any()
         ]
         covariate_names_zero = list(set(covariate_names) - set(covariate_names_non_zero))
         if not plot_zero_covariate:
@@ -1468,7 +1468,7 @@ class CompositionalModel2(ABC):
 
         # set up df for plotting
         plot_df = pd.concat(
-            [as_frame(data.varm[f"effect_df_{covariate_name}"])[parameter] for covariate_name in covariate_names],
+            [cast_frame(data.varm[f"effect_df_{covariate_name}"])[parameter] for covariate_name in covariate_names],
             axis=1,
         )
         plot_df.columns = covariate_names
@@ -1568,7 +1568,7 @@ class CompositionalModel2(ABC):
                     palette=colors,
                     ax=ax,
                 )
-            cell_types = as_dense(pd.unique(plot_df["Cell Type"]))
+            cell_types = cast_dense(pd.unique(plot_df["Cell Type"]))
             ax.set_xticks(cell_types)
             ax.set_xticklabels(cell_types, rotation=90)
 
@@ -1648,7 +1648,7 @@ class CompositionalModel2(ABC):
         if isinstance(data, MuData):
             data = data[modality_key]
         colors: str | list[RGBA] | None = (
-            list(palette(range(len(as_frame(data.obs)[feature_name].unique()))))
+            list(palette(range(len(cast_frame(data.obs)[feature_name].unique()))))
             if isinstance(palette, Colormap)
             else palette
         )
@@ -1656,7 +1656,7 @@ class CompositionalModel2(ABC):
             raise ValueError("layout must be either 'long' or 'wide'")
 
         # y scale transformations
-        counts = as_dense(data.X)
+        counts = cast_dense(data.X)
         if y_scale == "relative":
             sample_sums = np.sum(counts, axis=1, keepdims=True)
             X = counts / sample_sums
@@ -1679,7 +1679,7 @@ class CompositionalModel2(ABC):
             raise ValueError("Invalid y_scale transformation")
 
         count_df = pd.DataFrame(X, columns=data.var.index, index=data.obs.index).merge(
-            as_frame(data.obs)[feature_name], left_index=True, right_index=True
+            cast_frame(data.obs)[feature_name], left_index=True, right_index=True
         )
         plot_df = pd.melt(count_df, id_vars=feature_name, var_name="Cell type", value_name=value_name)
         if cell_types is not None:
@@ -1795,7 +1795,7 @@ class CompositionalModel2(ABC):
                     **args_swarmplot,
                 )
 
-            cell_type_ticks = as_dense(pd.unique(plot_df["Cell type"]))
+            cell_type_ticks = cast_dense(pd.unique(plot_df["Cell type"]))
             ax.set_xticks(cell_type_ticks)
             ax.set_xticklabels(cell_type_ticks, rotation=90)
 
@@ -1876,7 +1876,7 @@ class CompositionalModel2(ABC):
         if ax is None:
             _, ax = plt.subplots(figsize=figsize, dpi=dpi)
 
-        counts = as_dense(data.X)
+        counts = cast_dense(data.X)
         rel_abun = counts / np.sum(counts, axis=1, keepdims=True)
 
         percent_zero = np.sum(counts == 0, axis=0) / counts.shape[0]
@@ -2311,7 +2311,7 @@ class CompositionalModel2(ABC):
         if isinstance(palette, Colormap):
             palette = {
                 cluster: palette(i % palette.N)
-                for i, cluster in enumerate(as_frame(data_rna.obs)[cluster_key].unique().tolist())
+                for i, cluster in enumerate(cast_frame(data_rna.obs)[cluster_key].unique().tolist())
             }
         for _, effect in enumerate(effect_names):
             effect_df = data_coda.varm[effect]
@@ -2321,12 +2321,12 @@ class CompositionalModel2(ABC):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")
         else:
-            vmin = min(as_frame(data_rna.obs)[effect].min() for _, effect in enumerate(effect_names))
+            vmin = min(cast_frame(data_rna.obs)[effect].min() for _, effect in enumerate(effect_names))
         if kwargs.get("vmax"):
             vmax = kwargs["vmax"]
             kwargs.pop("vmax")
         else:
-            vmax = max(as_frame(data_rna.obs)[effect].max() for _, effect in enumerate(effect_names))
+            vmax = max(cast_frame(data_rna.obs)[effect].max() for _, effect in enumerate(effect_names))
 
         fig = sc.pl.umap(
             data_rna,
@@ -2700,11 +2700,11 @@ def from_scanpy(
     covariate_obs = list(set(covariate_obs or []) | set(sample_identifier))
 
     if isinstance(sample_identifier, list):
-        adata.obs = as_frame(adata.obs).copy()
-        adata.obs["scCODA_sample_id"] = as_frame(adata.obs)[sample_identifier].agg("-".join, axis=1)
+        adata.obs = cast_frame(adata.obs).copy()
+        adata.obs["scCODA_sample_id"] = cast_frame(adata.obs)[sample_identifier].agg("-".join, axis=1)
         sample_identifier = "scCODA_sample_id"
 
-    groups = as_frame(adata.obs).value_counts([sample_identifier, cell_type_identifier])
+    groups = cast_frame(adata.obs).value_counts([sample_identifier, cell_type_identifier])
     ct_count_data = groups.unstack(level=cell_type_identifier).fillna(0)
     covariate_df_ = pd.DataFrame(index=ct_count_data.index)
 
@@ -2713,13 +2713,13 @@ def from_scanpy(
         covariate_df_ = pd.concat([covariate_df_, covariate_df_uns], axis=1)
 
     if covariate_obs:
-        unique_check = as_frame(adata.obs).groupby(sample_identifier).nunique()
+        unique_check = cast_frame(adata.obs).groupby(sample_identifier).nunique()
         for c in covariate_obs.copy():
             if unique_check[c].max() != 1:
                 logger.warning(f"Covariate {c} has non-unique values for batch! Skipping...")
                 covariate_obs.remove(c)
         if covariate_obs:
-            covariate_df_obs = as_frame(adata.obs).groupby(sample_identifier).first()[covariate_obs]
+            covariate_df_obs = cast_frame(adata.obs).groupby(sample_identifier).first()[covariate_obs]
             covariate_df_ = pd.concat([covariate_df_, covariate_df_obs], axis=1)
 
     if covariate_df is not None:

@@ -14,7 +14,7 @@ import scanpy as sc  # type: ignore[import-untyped]
 from scipy import sparse
 
 import pertpy as pt
-from pertpy._types import as_frame
+from pertpy._types import cast_frame
 from pertpy.tools._dialogue import (
     _anova_filter_features,
     _center_scale_winsorize,
@@ -266,7 +266,7 @@ def _preprocess_dialogue_adata(adata: ad.AnnData) -> ad.AnnData:
     """Same preprocessing as the docstrings: PCA, drop a sparse celltype, keep samples with all remaining types."""
     sc.pp.pca(adata, n_comps=15, random_state=0)
     adata = adata[adata.obs["cell.subtypes"] != "CD8+ IL17+"].copy()
-    obs = as_frame(adata.obs)
+    obs = cast_frame(adata.obs)
     isecs = pd.crosstab(obs["cell.subtypes"], obs["sample"])
     keep_pts = list(isecs.loc[:, (isecs > 3).sum(axis=0) == isecs.shape[0]].columns.values)
     adata = adata[adata.obs["sample"].isin(keep_pts), :].copy()

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from pertpy._types import as_frame
+from pertpy._types import cast_frame
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -66,7 +66,7 @@ class Moa(MetaData):
             verbosity=verbosity,
         )
 
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         adata.obs = (
             obs.merge(
                 self.clue,
@@ -82,7 +82,7 @@ class Moa(MetaData):
         # If target column is given, check whether it is one of the targets listed in the metadata
         # If inconsistent, treat this perturbagen as unmatched and overwrite the annotated metadata with NaN
         if target is not None:
-            annotated = as_frame(adata.obs)
+            annotated = cast_frame(adata.obs)
             target_meta = "target" if target != "target" else "target_fromMeta"
             annotated[target_meta] = annotated[target_meta].mask(
                 ~annotated.apply(lambda row: str(row[target]) in str(row[target_meta]), axis=1)
@@ -93,7 +93,7 @@ class Moa(MetaData):
         # If query_id and reference_id have different names, there will be a column for each of them after merging
         # which is redundant as they refer to the same information.
         if query_id != "pert_iname":
-            del as_frame(adata.obs)["pert_iname"]
+            del cast_frame(adata.obs)["pert_iname"]
 
         return adata
 

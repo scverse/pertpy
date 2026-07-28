@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 from pytest import fixture, mark
 
 import pertpy as pt
-from pertpy._types import as_matrix
+from pertpy._types import cast_matrix
 from pertpy.tools._distances._distances import Distance, Metric
 
 actual_distances: tuple[Metric, ...] = (
@@ -64,7 +64,7 @@ def adata(distance: Metric, rng: np.random.Generator) -> AnnData:
 
     adata = adata[:, rng.choice(adata.n_vars, 100, replace=False)].copy()
 
-    X = as_matrix(adata.X)
+    X = cast_matrix(adata.X)
     adata.layers["lognorm"] = X.copy()
     adata.layers["counts"] = np.round(to_dense(X)).astype(int)
     if "X_pca" not in adata.obsm:

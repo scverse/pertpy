@@ -10,7 +10,7 @@ from anndata import AnnData
 from scipy.stats import entropy
 
 from pertpy._logger import logger
-from pertpy._types import as_dense, as_frame
+from pertpy._types import cast_dense, cast_frame
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -179,12 +179,12 @@ class PerturbationSpace:
 
         if layer_key:
             adata.layers[new_layer_key] = _subtract_control_mean(
-                as_dense(adata.layers[layer_key]), control_mask, group_masks, name=new_layer_key
+                cast_dense(adata.layers[layer_key]), control_mask, group_masks, name=new_layer_key
             )
 
         if embedding_key:
             adata.obsm[new_embedding_key] = _subtract_control_mean(
-                as_dense(adata.obsm[embedding_key]), control_mask, group_masks, name=new_embedding_key
+                cast_dense(adata.obsm[embedding_key]), control_mask, group_masks, name=new_embedding_key
             )
 
         if (not layer_key and not embedding_key) or all_data:
@@ -196,7 +196,7 @@ class PerturbationSpace:
                     continue
                 new_key = local_layer_key + "_control_diff"
                 adata.layers[new_key] = _subtract_control_mean(
-                    as_dense(adata.layers[local_layer_key]), control_mask, group_masks, name=new_key
+                    cast_dense(adata.layers[local_layer_key]), control_mask, group_masks, name=new_key
                 )
 
             for local_embedding_key in [key for key in adata.obsm if isinstance(key, str)]:
@@ -204,7 +204,7 @@ class PerturbationSpace:
                     continue
                 new_key = local_embedding_key + "_control_diff"
                 adata.obsm[new_key] = _subtract_control_mean(
-                    as_dense(adata.obsm[local_embedding_key]), control_mask, group_masks, name=new_key
+                    cast_dense(adata.obsm[local_embedding_key]), control_mask, group_masks, name=new_key
                 )
 
         self.control_diff_computed = True
@@ -284,7 +284,7 @@ class PerturbationSpace:
         new_perturbation = AnnData(X=new_X)
         new_index = adata.obs_names.append(pd.Index([new_pert_name]))
         new_perturbation.obs_names = new_index.tolist()
-        new_perturbation.obs = as_frame(adata.obs).reindex(new_index)
+        new_perturbation.obs = cast_frame(adata.obs).reindex(new_index)
 
         for key, value in new_layers.items():
             new_perturbation.layers[key] = value
@@ -429,7 +429,7 @@ class PerturbationSpace:
         if neighbors_key not in adata.uns:
             raise ValueError(f"Key {neighbors_key} not found in adata.uns. Please run `sc.pp.neighbors` first.")
 
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         labels = obs[target_column].astype(str)
         target_cells = labels == target_val
 
@@ -619,7 +619,7 @@ class PerturbationSpace:
         from pertpy.tools._distances._distances import Distance
 
         sep = "\x1f"
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         is_control = (obs[target_col] == reference_key).to_numpy()
         group = obs[target_col].astype(str).str.cat(obs[dose_col].astype(str), sep=sep)
         group = group.mask(is_control, reference_key)

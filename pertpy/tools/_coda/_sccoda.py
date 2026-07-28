@@ -11,7 +11,7 @@ from jax import config
 from mudata import MuData  # type: ignore[import-untyped]
 
 from pertpy._logger import logger
-from pertpy._types import as_matrix
+from pertpy._types import cast_matrix
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 if TYPE_CHECKING:
@@ -195,7 +195,7 @@ class Sccoda(CompositionalModel2):
         """
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
-        P = as_matrix(sample_adata.X).shape[1]
+        P = cast_matrix(sample_adata.X).shape[1]
 
         # Sizes of different parameter matrices
         alpha_size = [P]
@@ -236,7 +236,7 @@ class Sccoda(CompositionalModel2):
         """
         # data dimensions
         N, D = sample_adata.obsm["covariate_matrix"].shape
-        P = as_matrix(sample_adata.X).shape[1]
+        P = cast_matrix(sample_adata.X).shape[1]
 
         # numpyro plates for all dimensions
         covariate_axis = npy.plate("covs", D, dim=-2)

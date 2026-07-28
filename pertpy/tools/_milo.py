@@ -19,7 +19,7 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import CSBase, as_frame, as_matrix
+from pertpy._types import CSBase, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -251,19 +251,19 @@ class Milo:
             adata = data
         if isinstance(adata, AnnData):
             try:
-                nhoods = as_matrix(adata.obsm["nhoods"])
+                nhoods = cast_matrix(adata.obsm["nhoods"])
             except KeyError:
                 logger.error('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
                 raise
         # Make nhood abundance matrix
-        sample_dummies = pd.get_dummies(as_frame(adata.obs)[sample_col])
+        sample_dummies = pd.get_dummies(cast_frame(adata.obs)[sample_col])
         all_samples = sample_dummies.columns
         nhood_count_mat = csr_matrix(nhoods).T.dot(csr_matrix(sample_dummies.values))
         sample_obs = pd.DataFrame(index=all_samples)
         sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs)
         sample_adata.uns["sample_col"] = sample_col
         # Save nhood index info
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         sample_adata.var["index_cell"] = adata.obs_names[obs["nhood_ixs_refined"] == 1]
         sample_adata.var["kth_distance"] = obs.loc[obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"].values
 
@@ -688,7 +688,7 @@ class Milo:
                 failures.setdefault(f"pseudobulk failed ({type(e).__name__})", []).append(int(j))
                 continue
             pdata.X = pdata.layers["sum"]
-            pdata_X = as_matrix(pdata.X)
+            pdata_X = cast_matrix(pdata.X)
             if isinstance(pdata_X, CSBase):
                 pdata.X = pdata_X.toarray()
 
@@ -1081,11 +1081,11 @@ class Milo:
             sample_adata: Sample-level AnnData.
         """
         weights = 1.0 / np.asarray(sample_adata.var["kth_distance"], dtype=float)
-        adjp = _weighted_bh(as_frame(sample_adata.var)["PValue"].to_numpy(dtype=float), weights)
+        adjp = _weighted_bh(cast_frame(sample_adata.var)["PValue"].to_numpy(dtype=float), weights)
         sample_adata.var["SpatialFDR"] = adjp
         # Fill missing values with 1 to avoid downstream NaN complications
         # e.g. https://github.com/scverse/pertpy/issues/912
-        sample_adata.var["SpatialFDR"] = as_frame(sample_adata.var)["SpatialFDR"].fillna(1)
+        sample_adata.var["SpatialFDR"] = cast_frame(sample_adata.var)["SpatialFDR"].fillna(1)
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     @deprecated_arg(
@@ -1265,7 +1265,7 @@ class Milo:
                 "please run milo.build_nhood_graph(mdata) first"
             )
 
-        nhood_obs = as_frame(nhood_adata.obs)
+        nhood_obs = cast_frame(nhood_adata.obs)
         nhood_obs["graph_color"] = logfc
         nhood_obs.loc[spatial_fdr > padj_threshold, "graph_color"] = np.nan
         nhood_obs["abs_logFC"] = logfc.abs()
@@ -1783,8 +1783,8 @@ class Milo:
         )
 
         labels = self._group_nhoods_from_adjacency(
-            as_matrix(adata.varp["nhood_connectivities"])[mask, :][:, mask],
-            as_frame(adata.var).loc[mask],
+            cast_matrix(adata.varp["nhood_connectivities"])[mask, :][:, mask],
+            cast_frame(adata.var).loc[mask],
             is_da[mask],
             merge_discord=merge_discord,
             overlap=overlap,
@@ -1829,7 +1829,7 @@ class Milo:
         if len(categories) == 0:
             raise ValueError(f"'{nhood_group_key}' has no non-missing neighbourhood group labels.")
 
-        nhoods = as_matrix(adata.obsm["nhoods"])
+        nhoods = cast_matrix(adata.obsm["nhoods"])
         nhoods = nhoods.tocsr() if isinstance(nhoods, CSBase) else csr_matrix(nhoods)
 
         counts = np.column_stack([np.asarray(nhoods[:, labels == group].sum(axis=1)).ravel() for group in categories])
@@ -1917,8 +1917,8 @@ class Milo:
 
         by = list(dict.fromkeys([sample_col, nhood_group_key, *covariates]))
         pdata = sc.get.aggregate(adata, by=by, func="sum", layer=layer)
-        pdata.X = to_dense(as_matrix(pdata.layers["sum"]))
-        if as_frame(pdata.obs)[nhood_group_key].nunique() < 2:
+        pdata.X = to_dense(cast_matrix(pdata.layers["sum"]))
+        if cast_frame(pdata.obs)[nhood_group_key].nunique() < 2:
             raise ValueError(f"Fewer than two groups in '{nhood_group_key}' after aggregation.")
 
         if var_names is not None:

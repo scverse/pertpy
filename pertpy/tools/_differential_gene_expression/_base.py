@@ -19,7 +19,7 @@ from scverse_misc import Deprecation, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import CSBase, as_dense, as_frame, as_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
 
@@ -566,26 +566,26 @@ class MethodBase(ABC):
 
         adata = adata[:, var_names]
 
-        if any(as_frame(adata.obs)[[groupby, pairedby]].value_counts() > 1):
+        if any(cast_frame(adata.obs)[[groupby, pairedby]].value_counts() > 1):
             logger.info("Performing pseudobulk for paired samples")
             ps = PseudobulkSpace()
             adata = ps.compute(adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum")
 
-        X = as_matrix(adata.layers[layer] if layer is not None else adata.X)
+        X = cast_matrix(adata.layers[layer] if layer is not None else adata.X)
         with contextlib.suppress(AttributeError):
             X = cast("CSBase", X).toarray()
 
         groupby_cols = [pairedby, groupby]
         df = (
-            as_frame(adata.obs)
+            cast_frame(adata.obs)
             .loc[:, groupby_cols]
-            .join(pd.DataFrame(as_dense(X), index=adata.obs_names, columns=list(var_names)))
+            .join(pd.DataFrame(cast_dense(X), index=adata.obs_names, columns=list(var_names)))
         )
 
         # remove unpaired samples
         paired_samples = set(df[df[groupby] == groups[0]][pairedby]) & set(df[df[groupby] == groups[1]][pairedby])
         df = df[df[pairedby].isin(paired_samples)]
-        removed_samples = as_frame(adata.obs)[pairedby].nunique() - len(df[pairedby].unique())
+        removed_samples = cast_frame(adata.obs)[pairedby].nunique() - len(df[pairedby].unique())
         if removed_samples > 0:
             logger.warning(f"{removed_samples} unpaired samples removed")
 
@@ -960,7 +960,7 @@ class LinearModelBase(MethodBase):
             A dataframe with the results.
         """
         contrast_map: Mapping[str | None, np.ndarray] = (
-            contrasts if isinstance(contrasts, dict) else {None: as_dense(contrasts)}
+            contrasts if isinstance(contrasts, dict) else {None: cast_dense(contrasts)}
         )
         results = []
         for name, contrast in contrast_map.items():

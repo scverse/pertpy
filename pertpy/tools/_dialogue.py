@@ -28,7 +28,7 @@ from sparsecca import multicca_permute, multicca_pmd  # type: ignore[import-unty
 from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, as_dense, as_frame, as_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -54,7 +54,7 @@ def _pseudobulk_per_sample(
         DataFrame indexed by sample, columns are ``adata.var_names``.
     """
     aggregated = sc.get.aggregate(adata, by=sample_key, func=agg, layer=layer)
-    matrix = to_dense(as_matrix(aggregated.layers[agg]))
+    matrix = to_dense(cast_matrix(aggregated.layers[agg]))
     return pd.DataFrame(matrix, index=list(aggregated.obs_names), columns=list(aggregated.var_names))
 
 
@@ -522,7 +522,7 @@ class Dialogue:
             mask = (adata.obs[self.celltype_key] == ct).to_numpy()
             sub = adata[mask].copy()
             ct_views[ct] = sub
-            pcs = as_dense(sub.obsm[self.feature_space_key])[:, : self.n_components]
+            pcs = cast_dense(sub.obsm[self.feature_space_key])[:, : self.n_components]
             pb_df = (
                 pd.DataFrame(pcs, columns=[f"PC{i + 1}" for i in range(pcs.shape[1])])
                 .assign(_sample=sub.obs[self.sample_key].astype(str).to_numpy())
@@ -543,8 +543,8 @@ class Dialogue:
         out: dict[str, pd.DataFrame] = {}
         for ct, pb in pseudobulks_full.items():
             view = ct_views[ct]
-            pcs = as_dense(view.obsm[self.feature_space_key])[:, : self.n_components]
-            samples = as_frame(view.obs)[self.sample_key].astype(str).to_numpy()
+            pcs = cast_dense(view.obsm[self.feature_space_key])[:, : self.n_components]
+            samples = cast_frame(view.obs)[self.sample_key].astype(str).to_numpy()
             counts = pd.Series(samples).value_counts()
             abundant = counts[counts >= self.min_cells_per_sample].index
             row_mask = np.isin(samples, abundant.to_numpy())
@@ -647,7 +647,7 @@ class Dialogue:
     ) -> dict[str, np.ndarray]:
         out = {}
         for ct, scores in cca_scores.items():
-            conf = as_frame(ct_views[ct].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
+            conf = cast_frame(ct_views[ct].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             out[ct] = _residualize(scores, conf)
         return out
 
@@ -690,8 +690,8 @@ class Dialogue:
         out: dict[str, dict[str, dict[str, list[str]]]] = {f"MCP{i + 1}": {} for i in range(self.n_programs)}
         for ct, scores in cca_scores.items():
             view = ct_views[ct]
-            X = as_matrix(view.X)  # may be sparse; _partial_spearman dispatches and streams
-            cellQ = as_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
+            X = cast_matrix(view.X)  # may be sparse; _partial_spearman dispatches and streams
+            cellQ = cast_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             n_genes = view.n_vars
             R, P = _partial_spearman(X, scores, cellQ)
             for program_idx in range(scores.shape[1]):
@@ -765,8 +765,8 @@ class Dialogue:
             ct2_scores = cca_scores[ct2][ct2_cells]
             ct1_samples = ct_views[ct1].obs[self.sample_key].astype(str).to_numpy()[ct1_cells]
             ct2_samples = ct_views[ct2].obs[self.sample_key].astype(str).to_numpy()[ct2_cells]
-            ct1_quality = as_frame(ct_views[ct1].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct1_cells]
-            ct2_quality = as_frame(ct_views[ct2].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct2_cells]
+            ct1_quality = cast_frame(ct_views[ct1].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct1_cells]
+            ct2_quality = cast_frame(ct_views[ct2].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct2_cells]
             ct1_tme_qc = per_sample_quality[ct2].reindex(ct1_samples).to_numpy()
             ct2_tme_qc = per_sample_quality[ct1].reindex(ct2_samples).to_numpy()
 
@@ -848,7 +848,7 @@ class Dialogue:
         out: dict[str, pd.Series] = {}
         for ct, view in ct_views.items():
             samples = view.obs[self.sample_key].astype(str).to_numpy()
-            quality = as_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
+            quality = cast_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             out[ct] = pd.Series(quality).groupby(samples).mean().rename("qcAv")
         return out
 
@@ -1018,12 +1018,12 @@ class Dialogue:
 
         for ct in celltypes:
             view = ct_views[ct]
-            cellQ = as_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
+            cellQ = cast_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
             nnls_scores[ct] = _residualize(nnls_scores[ct], cellQ)
 
         adata.obsm["X_dialogue"] = self._broadcast_per_celltype(adata, nnls_scores, ct_views, n_cols=self.n_programs)
         for p in range(self.n_programs):
-            adata.obs[f"mcp_{p}"] = as_dense(adata.obsm["X_dialogue"])[:, p]
+            adata.obs[f"mcp_{p}"] = cast_dense(adata.obsm["X_dialogue"])[:, p]
 
         pair_refined = self._refined_pair_correlations(adata, nnls_scores, ct_views, celltypes)
 
@@ -1241,7 +1241,7 @@ class Dialogue:
                 )
             conditions = (labels[0], labels[1])
         scores = adata.obsm["X_dialogue"]
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         program_cols = [f"MCP{p + 1}" for p in range(self.n_programs)]
         z_table = pd.DataFrame(np.nan, index=celltypes, columns=program_cols)
         p_table = pd.DataFrame(np.nan, index=celltypes, columns=program_cols)
@@ -1352,10 +1352,10 @@ class Dialogue:
         if not 0 < fraction < 0.5:
             raise ValueError("fraction must be in (0, 0.5)")
         idx = int(program.replace("MCP", "")) - 1
-        scores = as_dense(adata.obsm["X_dialogue"])[:, idx]
+        scores = cast_dense(adata.obsm["X_dialogue"])[:, idx]
         out: dict[str, pd.DataFrame] = {}
         for ct in adata.uns["dialogue"]["cell_type_order"]:
-            mask = (as_frame(adata.obs)[self.celltype_key] == ct).to_numpy() & np.isfinite(scores)
+            mask = (cast_frame(adata.obs)[self.celltype_key] == ct).to_numpy() & np.isfinite(scores)
             if mask.sum() < int(2 / fraction):
                 continue
             ct_scores = scores[mask]
@@ -1409,7 +1409,7 @@ class Dialogue:
         score_col = f"mcp_{int(program.replace('MCP', '')) - 1}"
         if score_col not in adata.obs.columns:
             raise RuntimeError(f"{score_col!r} not in adata.obs; run refine_scores(adata) first.")
-        df = as_frame(adata.obs)[[self.celltype_key, score_col, condition_key]].copy()
+        df = cast_frame(adata.obs)[[self.celltype_key, score_col, condition_key]].copy()
         if conditions is not None:
             df = df[df[condition_key].isin(conditions)]
         else:
@@ -1466,9 +1466,12 @@ class Dialogue:
         if score_col not in adata.obs.columns:
             raise RuntimeError(f"{score_col!r} not in adata.obs; run refine_scores(adata) first.")
         sample_means = (
-            as_frame(adata.obs).groupby([self.sample_key, self.celltype_key], observed=True)[score_col].mean().unstack()
+            cast_frame(adata.obs)
+            .groupby([self.sample_key, self.celltype_key], observed=True)[score_col]
+            .mean()
+            .unstack()
         )
-        sample_color = as_frame(adata.obs).groupby(self.sample_key, observed=True)[color].first()
+        sample_color = cast_frame(adata.obs).groupby(self.sample_key, observed=True)[color].first()
         df = sample_means.copy()
         df[color] = sample_color
         grid = sns.pairplot(df, hue=color, corner=True)

@@ -37,7 +37,7 @@ from statsmodels.stats.multitest import fdrcorrection  # type: ignore[import-unt
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import CSBase, as_frame, as_matrix
+from pertpy._types import CSBase, cast_frame, cast_matrix
 from pertpy.tools.core import _is_raw_counts
 
 if TYPE_CHECKING:
@@ -125,7 +125,7 @@ class Augur:
         """
         if isinstance(input, AnnData):
             adata = input
-            obs_renamed = as_frame(adata.obs).rename(columns={cell_type_col: "cell_type", label_col: "label"})
+            obs_renamed = cast_frame(adata.obs).rename(columns={cell_type_col: "cell_type", label_col: "label"})
 
         elif isinstance(input, pd.DataFrame):
             if meta is None:
@@ -139,7 +139,7 @@ class Augur:
             cell_type = input[cell_type_col] if meta is None else meta[cell_type_col]
             X = input.drop([label_col, cell_type_col], axis=1) if meta is None else input
             adata = AnnData(X=X, obs=pd.DataFrame({"cell_type": cell_type, "label": label}))
-            obs_renamed = as_frame(adata.obs)
+            obs_renamed = cast_frame(adata.obs)
 
         if len(obs_renamed["label"].unique()) < 2:
             raise ValueError("Less than two unique labels in dataset. At least two are needed for the analysis.")
@@ -148,7 +148,7 @@ class Augur:
             final_adata = AnnData(
                 X=adata.X,
                 obs=obs_renamed,
-                var=as_frame(adata.var),
+                var=cast_frame(adata.var),
                 layers=cast("Mapping[str, np.ndarray | CSBase]", adata.layers),
             )
         else:
@@ -175,9 +175,9 @@ class Augur:
         if layer is not None:
             if layer not in final_adata.layers:
                 raise ValueError(f"Layer '{layer}' not found in AnnData object")
-            counts = as_matrix(final_adata.layers[layer])
+            counts = cast_matrix(final_adata.layers[layer])
         else:
-            counts = as_matrix(final_adata.X)
+            counts = cast_matrix(final_adata.X)
 
         if not _is_raw_counts(counts):
             logger.warning("Data does not appear to be raw counts. Augur developers recommend using raw counts.")
@@ -292,11 +292,11 @@ class Augur:
             subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
 
         # filter features with 0 variance
-        var = as_frame(subsample.var)
+        var = cast_frame(subsample.var)
         var["highly_variable"] = False
-        var["means"] = np.ravel(as_matrix(subsample.X).mean(axis=0))
+        var["means"] = np.ravel(cast_matrix(subsample.X).mean(axis=0))
         # Converting because the Syntax for power for numpy arrays is different -> use sparse Syntax as default
-        X = as_matrix(subsample.X)
+        X = cast_matrix(subsample.X)
         if isinstance(X, np.ndarray):
             X = sparse.csc_matrix(X)
             subsample.X = X
@@ -346,7 +346,7 @@ class Augur:
         if augur_mode == "permute":
             # shuffle labels
             adata = adata.copy()
-            obs = as_frame(adata.obs)
+            obs = cast_frame(adata.obs)
             y_columns = obs.columns[obs.columns.str.startswith("y_")]
             obs[y_columns] = obs[y_columns].sample(frac=1, random_state=random_state).values
 
@@ -356,7 +356,7 @@ class Augur:
 
         else:
             # randomly sample features from highly variable genes
-            highly_variable_genes = adata.var_names[as_frame(adata.var)["highly_variable"]].tolist()
+            highly_variable_genes = adata.var_names[cast_frame(adata.var)["highly_variable"]].tolist()
             features = random.sample(highly_variable_genes, floor(len(highly_variable_genes) * feature_perc))
 
         # randomly sample samples for each label
@@ -532,7 +532,7 @@ class Augur:
             >>> results = ag_rfc.run_cross_validation(subsample=subsample, folds=3, subsample_idx=0, random_state=42, zero_division=0)
         """
         # Pass the dense matrix instead of subsample.to_df(); its arrow-backed string columns make scikit-learn re-validate dtypes on every fold and scorer, while the values (and results) stay identical.
-        x = np.asarray(to_dense(as_matrix(subsample.X)))
+        x = np.asarray(to_dense(cast_matrix(subsample.X)))
         genes = subsample.var_names.tolist()
         n_genes = len(genes)
         y = subsample.obs["y_"]
@@ -681,11 +681,11 @@ class Augur:
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_variance(loaded_data, var_quantile=0.5, filter_negative_residuals=False, span=0.75)
         """
-        var = as_frame(adata.var)
+        var = cast_frame(adata.var)
         var["highly_variable"] = False
-        var["means"] = np.ravel(as_matrix(adata.X).mean(axis=0))
+        var["means"] = np.ravel(cast_matrix(adata.X).mean(axis=0))
         # Converting because the Syntax for power for numpy arrays is different -> use sparse Syntax as default
-        X = as_matrix(adata.X)
+        X = cast_matrix(adata.X)
         if isinstance(X, np.ndarray):
             X = sparse.csc_matrix(X)
             adata.X = X
@@ -872,7 +872,7 @@ class Augur:
             results["summary_metrics"][cell_type] = self.average_metrics(results[cell_type])
 
             # add scores as observation to anndata
-            obs = as_frame(adata.obs)
+            obs = cast_frame(adata.obs)
             mask = obs["cell_type"].str.startswith(cell_type)
             obs.loc[mask, "augur_score"] = results["summary_metrics"][cell_type]["mean_augur_score"]
 

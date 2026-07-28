@@ -20,7 +20,7 @@ from scvi.utils import setup_anndata_dsp  # type: ignore[import-untyped,import-n
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import as_frame, as_matrix
+from pertpy._types import cast_frame, cast_matrix
 
 from ._jax import JaxTrainingMixin
 from ._scgenvae import JaxSCGENVAE
@@ -221,7 +221,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         batch_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.BATCH_KEY).original_key
 
         adata_latent = AnnData(latent_all)
-        adata_latent.obs = as_frame(adata.obs).copy(deep=True)
+        adata_latent.obs = cast_frame(adata.obs).copy(deep=True)
         unique_cell_types = np.unique(adata_latent.obs[cell_label_key])
         shared_ct = []
         not_shared_ct = []
@@ -255,11 +255,11 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
 
         all_shared_ann = ad.concat(shared_ct, label="concat_batch", index_unique=None)
         if "concat_batch" in all_shared_ann.obs.columns:
-            del as_frame(all_shared_ann.obs)["concat_batch"]
+            del cast_frame(all_shared_ann.obs)["concat_batch"]
         if len(not_shared_ct) < 1:
             corrected = AnnData(
                 np.array(self.module.as_bound().generative(all_shared_ann.X)["px"]),
-                obs=as_frame(all_shared_ann.obs),
+                obs=cast_frame(all_shared_ann.obs),
             )
             corrected.var_names = adata.var_names.tolist()
             corrected = corrected[adata.obs_names].copy()
@@ -267,7 +267,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names.tolist()
                 corrected.raw = adata_raw
-            corrected.obsm["latent"] = as_matrix(all_shared_ann.X)
+            corrected.obsm["latent"] = cast_matrix(all_shared_ann.X)
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
             return corrected
         else:
@@ -276,10 +276,10 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 [all_shared_ann, all_not_shared_ann], label="concat_batch", index_unique=None
             )
             if "concat_batch" in all_corrected_data.obs.columns:
-                del as_frame(all_corrected_data.obs)["concat_batch"]
+                del cast_frame(all_corrected_data.obs)["concat_batch"]
             corrected = AnnData(
                 np.array(self.module.as_bound().generative(all_corrected_data.X)["px"]),
-                obs=as_frame(all_corrected_data.obs),
+                obs=cast_frame(all_corrected_data.obs),
             )
             corrected.var_names = adata.var_names.tolist()
             corrected = corrected[adata.obs_names].copy()
@@ -287,7 +287,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names.tolist()
                 corrected.raw = adata_raw
-            corrected.obsm["latent"] = as_matrix(all_corrected_data.X)
+            corrected.obsm["latent"] = cast_matrix(all_corrected_data.X)
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
 
             return corrected

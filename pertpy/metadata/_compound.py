@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 
-from pertpy._types import as_frame
+from pertpy._types import cast_frame
 
 from ._look_up import LookUp
 from ._metadata import MetaData
@@ -49,7 +49,7 @@ class Compound(MetaData):
 
         query_dict = {}
         not_matched_identifiers = []
-        for compound in as_frame(adata.obs)[query_id].dropna().astype(str).unique():
+        for compound in cast_frame(adata.obs)[query_id].dropna().astype(str).unique():
             if query_id_type == "name":
                 cids = pcp.get_compounds(compound, "name")
                 if len(cids) == 0:  # search did not work
@@ -91,7 +91,7 @@ class Compound(MetaData):
         if query_id_type == "cid":
             query_df["pubchem_ID"] = query_df["pubchem_ID"].astype("Int64")
             adata.obs = (
-                as_frame(adata.obs)
+                cast_frame(adata.obs)
                 .merge(
                     query_df,
                     left_on=query_id,
@@ -104,7 +104,7 @@ class Compound(MetaData):
             )
         else:
             adata.obs = (
-                as_frame(adata.obs)
+                cast_frame(adata.obs)
                 .merge(
                     query_df,
                     left_on=query_id,
@@ -115,7 +115,7 @@ class Compound(MetaData):
                 .filter(regex="^(?!.*_fromMeta)")
                 .set_index(adata.obs.index)
             )
-            adata.obs["pubchem_ID"] = as_frame(adata.obs)["pubchem_ID"].astype("Int64")
+            adata.obs["pubchem_ID"] = cast_frame(adata.obs)["pubchem_ID"].astype("Int64")
 
         return adata
 

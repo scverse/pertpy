@@ -12,27 +12,28 @@ SpBase = sparse.spmatrix
 RandomStateLike = int | np.random.Generator | np.random.RandomState | None
 
 
-def as_matrix(X: object) -> np.ndarray | CSBase:
-    """Narrow a matrix such as :attr:`~anndata.AnnData.X` to the types pertpy operates on.
+def cast_matrix(X: object) -> np.ndarray | CSBase:
+    """Cast a matrix such as :attr:`~anndata.AnnData.X` to the types pertpy operates on.
 
-    This is a static narrowing without a runtime effect: `AnnData` types its matrices as a union that also
-    includes backed, dask and cupy containers, none of which the functions using this helper accept.
+    `AnnData` types its matrices as a union that also includes backed, dask and cupy containers,
+    none of which the functions using this cast accept.
+    Like every `cast`, this only informs the type checker and does not convert anything at runtime.
     """
     return cast("np.ndarray | CSBase", X)
 
 
-def as_dense(X: object) -> np.ndarray:
-    """Narrow a matrix that the surrounding code only supports as a dense array.
+def cast_dense(X: object) -> np.ndarray:
+    """Cast a matrix that the surrounding code only supports as a dense array.
 
-    This is a static narrowing without a runtime effect, see :func:`as_matrix`.
+    Unlike :func:`fast_array_utils.conv.to_dense`, this does not densify anything, see :func:`cast_matrix`.
     """
     return cast("np.ndarray", X)
 
 
-def as_frame(df: object) -> pd.DataFrame:
-    """Narrow an annotation frame such as :attr:`~anndata.AnnData.obs` to a :class:`~pandas.DataFrame`.
+def cast_frame(df: object) -> pd.DataFrame:
+    """Cast an annotation frame such as :attr:`~anndata.AnnData.obs` to a :class:`~pandas.DataFrame`.
 
-    This is a static narrowing without a runtime effect: `AnnData` also types them as the `Dataset2D` of a
-    lazily read object, which the functions using this helper do not accept.
+    `AnnData` also types them as the `Dataset2D` of a lazily read object, which the functions using this cast
+    do not accept, see :func:`cast_matrix`.
     """
     return cast("pd.DataFrame", df)

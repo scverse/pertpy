@@ -18,7 +18,7 @@ from scipy.sparse import spmatrix
 from sklearn.mixture import GaussianMixture  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, as_dense, as_frame, as_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
@@ -104,7 +104,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         if copy:
             adata = adata.copy()
 
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         split_masks: list[np.ndarray | pd.Series]
         if split_by is None:
             split_masks = [np.full(adata.n_obs, True, dtype=bool)]
@@ -129,10 +129,10 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         adata_comp = adata
         if layer is not None:
-            X = as_matrix(adata_comp.layers[layer])
+            X = cast_matrix(adata_comp.layers[layer])
         else:
             try:
-                X = as_matrix(adata_comp.layers["X_pert"])
+                X = cast_matrix(adata_comp.layers["X_pert"])
             except KeyError:
                 raise KeyError(
                     "No 'X_pert' found in .layers! Please run perturbation_signature first to calculate perturbation signature!"
@@ -197,7 +197,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                         if isinstance(dat, spmatrix):
                             pvec = cast("CSBase", dat).dot(vec) / np.dot(vec, vec)
                         else:
-                            pvec = np.dot(as_dense(dat), vec) / np.dot(vec, vec)
+                            pvec = np.dot(cast_dense(dat), vec) / np.dot(vec, vec)
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
 
                         if n_iter == 0:
@@ -312,7 +312,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             split_masks = [np.full(adata.n_obs, True, dtype=bool)]
             categories = ["all"]
         else:
-            split_obs = as_frame(adata.obs)[split_by]
+            split_obs = cast_frame(adata.obs)[split_by]
             categories = list(split_obs.unique())
             split_masks = [split_obs == category for category in categories]
 
@@ -332,7 +332,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         adata_subset = adata[
             (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
         ]
-        X = as_matrix(adata_subset.X) - as_matrix(adata_subset.X).mean(0)
+        X = cast_matrix(adata_subset.X) - cast_matrix(adata_subset.X).mean(0)
         projected_pcs: dict[str, np.ndarray] = {}
         # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
         for _, (key, value) in enumerate(perturbation_markers.items()):
@@ -407,7 +407,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         """
         if mixscape_class_global not in adata.obs:
             raise ValueError("Please run the `mixscape` function first.")
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         count = pd.crosstab(index=obs[mixscape_class_global], columns=obs[guide_rna_column])
         all_cells_percentage = pd.melt(count / count.sum(), ignore_index=False).reset_index()
         KO_cells_percentage = all_cells_percentage[all_cells_percentage[mixscape_class_global] == "KO"]
@@ -602,8 +602,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                 perturbation_score = copy.deepcopy(perturbation_score_temp)
             else:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
-        perturbation_score = as_frame(perturbation_score)
-        perturbation_score["mix"] = as_frame(adata.obs)[mixscape_class][perturbation_score.index]
+        perturbation_score = cast_frame(perturbation_score)
+        perturbation_score["mix"] = cast_frame(adata.obs)[mixscape_class][perturbation_score.index]
         gd = list(set(perturbation_score[pert_key]).difference({target_gene}))[0]
 
         # If before_mixscape is True, split densities based on original target gene classification
@@ -611,7 +611,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             palette = {gd: "#7d7d7d", target_gene: color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
             top_r = max(
-                as_dense(plot_dens.get_lines()[cond].get_data()[1]).max() for cond in range(len(plot_dens.get_lines()))
+                cast_dense(plot_dens.get_lines()[cond].get_data()[1]).max()
+                for cond in range(len(plot_dens.get_lines()))
             )
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
@@ -655,7 +656,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                 palette = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
             top_r = max(
-                as_dense(plot_dens.get_lines()[i].get_data()[1]).max() for i in range(len(plot_dens.get_lines()))
+                cast_dense(plot_dens.get_lines()[i].get_data()[1]).max() for i in range(len(plot_dens.get_lines()))
             )
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
@@ -776,11 +777,11 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         """
         mixscape_class_mask: np.ndarray | pd.Series
         if isinstance(target_gene_idents, str):
-            mixscape_class_mask = as_frame(adata.obs)[groupby] == target_gene_idents
+            mixscape_class_mask = cast_frame(adata.obs)[groupby] == target_gene_idents
         elif isinstance(target_gene_idents, list):
             mixscape_class_mask = np.full_like(adata.obs[groupby], False, dtype=bool)
             for ident in target_gene_idents:
-                mixscape_class_mask |= as_frame(adata.obs)[groupby] == ident
+                mixscape_class_mask |= cast_frame(adata.obs)[groupby] == ident
         adata = adata[mixscape_class_mask]
 
         sanitize_anndata(adata)

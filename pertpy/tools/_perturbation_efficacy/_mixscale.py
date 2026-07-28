@@ -11,7 +11,7 @@ from fast_array_utils.conv import to_dense
 from pandas.errors import PerformanceWarning
 from scipy.sparse import sparray
 
-from pertpy._types import CSBase, as_frame, as_matrix
+from pertpy._types import CSBase, cast_frame, cast_matrix
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
@@ -248,7 +248,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
 
         Zero-centering necessarily densifies the (cells x DE-gene) submatrix, exactly as Seurat's `ScaleData` and :meth:`~pertpy.tools.Mixscape.mixscape` do.
         """
-        dat = to_dense(as_matrix(dat))
+        dat = to_dense(cast_matrix(dat))
         dat = dat.astype(np.float64, copy=False)
         mean = dat.mean(axis=0)
         std = dat.std(axis=0, ddof=1)
@@ -283,7 +283,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
         """
         var_names = set(adata.var_names)
         gene_targets = set(adata.obs[pert_key]).difference([control])
-        nt_cells = adata.obs_names[np.asarray(as_frame(adata.obs)[pert_key] == control)]
+        nt_cells = adata.obs_names[np.asarray(cast_frame(adata.obs)[pert_key] == control)]
         markers: dict[str, np.ndarray] = {}
 
         for gene in gene_targets:
@@ -310,7 +310,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
 
                 if fine_mode:
                     pooled: list[str] = []
-                    guide_labels = as_frame(adata.obs).loc[guide_cells, fine_mode_labels]
+                    guide_labels = cast_frame(adata.obs).loc[guide_cells, fine_mode_labels]
                     for guide in guide_labels.unique():
                         guide_subset = guide_cells[guide_labels == guide]
                         for g in self._de_for_pair(

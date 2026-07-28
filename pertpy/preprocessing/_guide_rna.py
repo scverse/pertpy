@@ -15,7 +15,7 @@ from rich.progress import track
 from scipy.sparse import csr_matrix, issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, CSRBase, as_frame, as_matrix
+from pertpy._types import CSBase, CSRBase, cast_frame, cast_matrix
 from pertpy.preprocessing._guide_rna_mixture import compute_count_thresholds, fit_poisson_gauss_mixture
 
 if TYPE_CHECKING:
@@ -279,7 +279,7 @@ class GuideAssignment:
     ) -> np.ndarray | None:
         if model != "poisson_gauss_mixture":
             raise ValueError("Model not implemented. Please use 'poisson_gauss_mixture'.")
-        X = as_matrix(adata.X if layer is None else adata.layers[layer])
+        X = cast_matrix(adata.X if layer is None else adata.layers[layer])
         result = self._fit_mixture_pg(
             X,
             guide_names=list(adata.var_names),
@@ -576,7 +576,7 @@ class GuideAssignment:
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)
             >>> ga.plot_heatmap(gdo)
         """
-        data = as_matrix(adata.X if layer is None else adata.layers[layer])
+        data = cast_matrix(adata.X if layer is None else adata.layers[layer])
 
         if order_by is None:
             if isinstance(data, CSBase):
@@ -611,7 +611,7 @@ class GuideAssignment:
                 **kwargs,
             )
         finally:
-            del as_frame(adata.obs)[temp_col_name]
+            del cast_frame(adata.obs)[temp_col_name]
 
         if return_fig:
             return fig

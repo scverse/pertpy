@@ -16,7 +16,7 @@ from scverse_misc import Deprecation, deprecated_arg
 from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, as_frame, as_matrix
+from pertpy._types import CSBase, cast_frame, cast_matrix
 from pertpy.metadata import Drug
 
 
@@ -96,7 +96,7 @@ class Enrichment:
         Returns:
             An AnnData object with scores.
         """
-        mtx = as_matrix(adata.layers[layer] if layer is not None else adata.X)
+        mtx = cast_matrix(adata.layers[layer] if layer is not None else adata.X)
 
         target_groups: ChainMap | dict = _prepare_targets(targets=targets, nested=nested, categories=categories)
         full_targets = target_groups.copy()
@@ -384,7 +384,7 @@ class Enrichment:
         var_group_labels: list[str] = []
         start = 0
 
-        enrichment_score_adata = AnnData(adata.uns[f"{key}_score"], obs=as_frame(adata.obs))
+        enrichment_score_adata = AnnData(adata.uns[f"{key}_score"], obs=cast_frame(adata.obs))
         enrichment_score_adata.var_names = adata.uns[f"{key}_variables"]
 
         for group in group_genes:

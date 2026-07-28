@@ -25,7 +25,7 @@ from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel  # type: igno
 from sklearn.neighbors import KernelDensity  # type: ignore[import-untyped]
 from statsmodels.discrete.discrete_model import NegativeBinomialP  # type: ignore[import-untyped]
 
-from pertpy._types import CSBase, as_dense, as_frame, as_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -401,7 +401,7 @@ class Distance:
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.pairwise(adata, groupby="perturbation")
         """
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         groups = cast("list[str]", obs[groupby].unique()) if groups is None else groups
         grouping = obs[groupby].copy()
         df = pd.DataFrame(index=groups, columns=groups, dtype=float)
@@ -461,7 +461,7 @@ class Distance:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
-            pwd = as_dense(adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"])
+            pwd = cast_dense(adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"])
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
                 for group_y in groups[index_x:]:  # type: ignore
@@ -491,9 +491,9 @@ class Distance:
         else:
             # Standard mode: compute distances directly
             embedding = (
-                as_matrix(adata.layers[self.layer_key])
+                cast_matrix(adata.layers[self.layer_key])
                 if self.layer_key
-                else as_matrix(adata.obsm[cast("str", self.obsm_key)]).copy()
+                else cast_matrix(adata.obsm[cast("str", self.obsm_key)]).copy()
             )
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
@@ -584,7 +584,7 @@ class Distance:
                 **kwargs,
             )
 
-        obs = as_frame(adata.obs)
+        obs = cast_frame(adata.obs)
         groups = cast("list[str]", obs[groupby].unique()) if groups is None else groups
         grouping = obs[groupby].copy()
         df = pd.Series(index=groups, dtype=float)
@@ -631,7 +631,7 @@ class Distance:
             # Precompute the pairwise distances if needed
             if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
-            pwd = as_dense(adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"])
+            pwd = cast_dense(adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"])
             for group_x in fct(groups):
                 idx_x = grouping == group_x
                 group_y = selected_group
@@ -643,7 +643,7 @@ class Distance:
                     sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
                     sub_idx = grouping[idx_x | idx_y] == group_x
                     if not bootstrap:
-                        dist = self.metric_fct.from_precomputed(sub_pwd, as_dense(sub_idx), **kwargs)
+                        dist = self.metric_fct.from_precomputed(sub_pwd, cast_dense(sub_idx), **kwargs)
                         df.loc[group_x] = dist
                     else:
                         bootstrap_output = self._bootstrap_mode_precomputed(
@@ -658,9 +658,9 @@ class Distance:
         else:
             # Standard mode: compute distances directly
             embedding = (
-                as_matrix(adata.layers[self.layer_key])
+                cast_matrix(adata.layers[self.layer_key])
                 if self.layer_key
-                else as_matrix(adata.obsm[cast("str", self.obsm_key)]).copy()
+                else cast_matrix(adata.obsm[cast("str", self.obsm_key)]).copy()
             )
             for group_x in fct(groups):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
@@ -1358,7 +1358,7 @@ class ClassifierClassProjection(AbstractDistance):
 
         Similar to the parent function, the returned dataframe contains only the specified groups.
         """
-        groups = cast("list[str]", as_frame(adata.obs)[groupby].unique()) if groups is None else groups
+        groups = cast("list[str]", cast_frame(adata.obs)[groupby].unique()) if groups is None else groups
         fct = track if show_progressbar else lambda iterable: iterable
 
         X = adata[adata.obs[groupby] != selected_group].X

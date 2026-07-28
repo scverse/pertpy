@@ -21,7 +21,7 @@ from sklearn.linear_model import LinearRegression  # type: ignore[import-untyped
 from sklearn.neighbors import NearestNeighbors  # type: ignore[import-untyped]
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, as_dense, as_frame, as_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from anndata import AnnData
@@ -97,7 +97,7 @@ class Cinemaot:
 
         transformer = FastICA(n_components=dim, random_state=0, whiten="arbitrary-variance")
         X_transformed = np.array(transformer.fit_transform(adata.obsm[use_rep][:, :dim]), dtype=np.float64)
-        groupvec = np.asarray((as_frame(adata.obs)[pert_key] == control * 1).values)  # control
+        groupvec = np.asarray((cast_frame(adata.obs)[pert_key] == control * 1).values)  # control
         xi = np.zeros(dim)
         j = 0
         for source_row in X_transformed.T:
@@ -152,7 +152,7 @@ class Cinemaot:
                 / ot_sink.apply(np.ones_like(X_transformed[adata.obs[pert_key] == control, :].T)).T
             )
 
-            adata_X = as_matrix(adata.X)
+            adata_X = cast_matrix(adata.X)
             X = to_dense(adata_X)
             te2 = (
                 X[adata.obs[pert_key] != control, :]
@@ -176,7 +176,7 @@ class Cinemaot:
                 ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X_transformed[adata.obs[pert_key] == control, :]
             )
 
-            adata_X = as_matrix(adata.X)
+            adata_X = cast_matrix(adata.X)
             X = to_dense(adata_X)
 
             te2 = X[adata.obs[pert_key] != control, :] - np.matmul(
@@ -186,9 +186,9 @@ class Cinemaot:
                 del X
 
             adata.obsm[cf_rep] = cf
-            cf_matrix = as_dense(adata.obsm[cf_rep])
-            cf_matrix[as_frame(adata.obs)[pert_key] != control, :] = np.matmul(
-                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], cf_matrix[as_frame(adata.obs)[pert_key] == control, :]
+            cf_matrix = cast_dense(adata.obsm[cf_rep])
+            cf_matrix[cast_frame(adata.obs)[pert_key] != control, :] = np.matmul(
+                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], cf_matrix[cast_frame(adata.obs)[pert_key] == control, :]
             )
 
         TE = sc.AnnData(np.array(te2), obs=adata[adata.obs[pert_key] != control, :].obs.copy(), var=adata.var.copy())
@@ -329,10 +329,10 @@ class Cinemaot:
         sc.pp.neighbors(de, use_rep=de_rep)
         sc.tl.leiden(de, resolution=de_resolution, flavor="igraph")
         if use_raw:
-            counts = to_dense(as_matrix(adata.raw.X))
+            counts = to_dense(cast_matrix(adata.raw.X))
             df = pd.DataFrame(counts, columns=adata.raw.var_names, index=adata.raw.obs_names)
         else:
-            counts = to_dense(as_matrix(adata.X))
+            counts = to_dense(cast_matrix(adata.X))
             df = pd.DataFrame(counts, columns=adata.var_names, index=adata.obs_names)
 
         if label_list is None:
@@ -341,7 +341,7 @@ class Cinemaot:
             sc.tl.leiden(adata, resolution=cf_resolution, flavor="igraph")
             df["ct"] = adata.obs["leiden"].astype(str)
         df["ptb"] = "control"
-        df.loc[np.asarray(as_frame(adata.obs)[pert_key] != control), "ptb"] = as_frame(de.obs)["leiden"].astype(str)
+        df.loc[np.asarray(cast_frame(adata.obs)[pert_key] != control), "ptb"] = cast_frame(de.obs)["leiden"].astype(str)
         label_list.append("ptb")
         df = df.groupby(label_list).sum()
         new_index = df.index.map(lambda x: "_".join(map(str, x)))
@@ -377,7 +377,7 @@ class Cinemaot:
             >>> dim = model.get_dim(adata)
         """
         sk = SinkhornKnopp()
-        data = to_dense(as_matrix(adata.raw.X))
+        data = to_dense(cast_matrix(adata.raw.X))
         vm = (1e-3 + data + c * data * data) / (1 + c)
         sk.fit(vm)
         wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
@@ -418,10 +418,10 @@ class Cinemaot:
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]
         X_pca2 = adata_.obsm[use_rep][adata_.obs[pert_key] != control, :]
         nbrs = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(X_pca1)
-        mixscape_pca = as_dense(adata.obsm[use_rep]).copy()
+        mixscape_pca = cast_dense(adata.obsm[use_rep]).copy()
         mixscapematrix = nbrs.kneighbors_graph(X_pca2).toarray()
-        mixscape_pca[as_frame(adata_.obs)[pert_key] != control, :] = (
-            np.dot(mixscapematrix, mixscape_pca[as_frame(adata_.obs)[pert_key] == control, :]) / k
+        mixscape_pca[cast_frame(adata_.obs)[pert_key] != control, :] = (
+            np.dot(mixscapematrix, mixscape_pca[cast_frame(adata_.obs)[pert_key] == control, :]) / k
         )
 
         adata_.obsm["X_mpca"] = mixscape_pca
@@ -433,7 +433,7 @@ class Cinemaot:
         ref_label = "noncontrol"
         expr_label = "control"
 
-        obs_ = as_frame(adata_.obs)
+        obs_ = cast_frame(adata_.obs)
         obs_["ct"] = ref_label
         obs_.loc[obs_[pert_key] == control, "ct"] = expr_label
         pert_key = "ct"
@@ -613,10 +613,10 @@ class Cinemaot:
             >>> model = pt.tl.Cinemaot()
             >>> c_effect, s_effect = model.attribution_scatter(adata, pert_key="perturbation", control="No stimulation")
         """
-        cf = as_matrix(adata.obsm[cf_rep])
-        obs = as_frame(adata.obs)
-        X = as_matrix(adata.X)
-        source = as_matrix(adata.raw.X) if use_raw else X
+        cf = cast_matrix(adata.obsm[cf_rep])
+        obs = cast_frame(adata.obs)
+        X = cast_matrix(adata.X)
+        source = cast_matrix(adata.raw.X) if use_raw else X
         counts = to_dense(source) if isinstance(X, CSBase) else source
         Y0 = counts[obs[pert_key] == control, :]
         Y1 = counts[obs[pert_key] != control, :]
@@ -686,7 +686,7 @@ class Cinemaot:
         """
         adata_ = adata[adata.obs[pert_key] == control]
 
-        df = pd.DataFrame(as_dense(de.obsm[matching_rep]))
+        df = pd.DataFrame(cast_dense(de.obsm[matching_rep]))
         if de_label is None:
             de_label = "leiden"
             sc.pp.neighbors(de, use_rep="X_embedding")

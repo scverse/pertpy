@@ -10,7 +10,7 @@ from pandas.errors import PerformanceWarning
 from scanpy.tools._utils import _choose_representation  # type: ignore[import-untyped]
 from scipy.sparse import csr_array, csr_matrix, lil_matrix, sparray
 
-from pertpy._types import CSBase, as_dense, as_matrix
+from pertpy._types import CSBase, cast_dense, cast_matrix
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -95,11 +95,11 @@ class PerturbationEfficacyAnalyzer:
         # pynndescent and the LIL workflow below only support legacy scipy sparse matrices, so a sparse array
         # input is computed on as a csr_matrix and converted back to a sparse array at the end.
         input_is_sparray = isinstance(adata.X, sparray)
-        X = csr_matrix(as_matrix(adata.X)) if input_is_sparray else as_matrix(adata.X)
+        X = csr_matrix(cast_matrix(adata.X)) if input_is_sparray else cast_matrix(adata.X)
         adata.layers["X_pert"] = X.copy()
 
         # Work with LIL for efficient indexing but don't store it in AnnData as LIL is not supported anymore
-        X_pert = as_matrix(adata.layers["X_pert"])
+        X_pert = cast_matrix(adata.layers["X_pert"])
         X_pert_lil = X_pert.tolil() if isinstance(X_pert, CSBase) else X_pert
 
         control_mask = adata.obs[pert_key] == control
@@ -119,7 +119,7 @@ class PerturbationEfficacyAnalyzer:
                 split_obs = adata.obs[split_by]
                 split_masks = [split_obs == cat for cat in split_obs.unique()]
 
-            representation = as_matrix(_choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs))
+            representation = cast_matrix(_choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs))
             if isinstance(representation, sparray):
                 representation = csr_matrix(representation)
             if n_dims is not None and n_dims < representation.shape[1]:
@@ -160,7 +160,7 @@ class PerturbationEfficacyAnalyzer:
                         batch = np.ravel(indices[select])
                         split_batch = split_indices[select]
                         size = size - i
-                        means_batch = as_dense(X_control[batch])
+                        means_batch = cast_dense(X_control[batch])
                         batch_reshaped = means_batch.reshape(size, n_neighbors, -1)
                         means_batch, _ = mean_var(batch_reshaped, axis=1)
                         X_pert_lil[split_batch] = np.log1p(means_batch) - X_pert_lil[split_batch]
