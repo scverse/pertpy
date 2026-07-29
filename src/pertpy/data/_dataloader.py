@@ -16,6 +16,9 @@ pooch.get_logger().setLevel(logging.WARNING)
 # while pooch's ``requests``-based downloader raises ``requests.exceptions.RequestException``.
 _TRANSIENT_DOWNLOAD_ERRORS = (OSError, requests.exceptions.RequestException)
 
+# The longest registered dataset filename is currently 38 characters.
+_FILENAME_FIELD_WIDTH = 45
+
 
 class _RichProgress:
     """Adapter exposing the tqdm-like interface pooch expects, backed by rich.progress."""
@@ -98,7 +101,9 @@ def _download(  # pragma: no cover
                 fname=output_file_name,
                 path=str(output_path),
                 downloader=pooch.HTTPDownloader(
-                    progressbar=_RichProgress(description=f"[red]Downloading {output_file_name}"),
+                    progressbar=_RichProgress(
+                        description=f"[red]Downloading {output_file_name:<{_FILENAME_FIELD_WIDTH}}"
+                    ),
                     chunk_size=block_size,
                     timeout=timeout,
                 ),
