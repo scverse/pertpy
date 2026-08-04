@@ -491,6 +491,116 @@ class MethodBase(ABC):
         return None
 
     @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_ma(  # pragma: no cover # noqa: D417
+        self,
+        results_df: pd.DataFrame,
+        *,
+        mean_col: str | None = None,
+        log2fc_col: str = "log_fc",
+        padj_col: str = "adj_p_value",
+        padj_threshold: float = 0.05,
+        log2fc_threshold: float = 0.0,
+        log_x: bool | None = None,
+        colors: Sequence[str] = ("lightgray", "#D62728"),
+        x_label: str | None = None,
+        y_label: str = "Log2 fold change",
+        figsize: tuple[int, int] = (5, 5),
+        return_fig: bool = False,
+        **kwargs,
+    ) -> Figure | None:
+        """Creates an MA plot of the mean expression against the log2 fold change.
+
+        The pertpy equivalent of edgeR's `plotSmear` and DESeq2's `plotMA`.
+        Every variable is one point, so the plot shows how the fold change depends on expression strength and which variables the test called significant.
+
+        Args:
+            results_df: DataFrame with results from DE analysis.
+            mean_col: Column name of the mean expression.
+                If None, PyDESeq2's `baseMean` and edgeR's `logCPM` are detected automatically.
+            log2fc_col: Column name of log2 Fold-Change values.
+            padj_col: Column name of adjusted p-values.
+            padj_threshold: Variables with an adjusted p-value below this threshold are highlighted as significant.
+            log2fc_threshold: Variables must additionally exceed this absolute log2 fold change to be highlighted.
+                The thresholds are drawn as dashed lines if it is not zero.
+            log_x: Whether to log-scale the x-axis.
+                If None, it is scaled for mean columns on a linear scale such as `baseMean` but not for those already on a log scale such as `logCPM`.
+            colors: Colors for [non-significant, significant] variables.
+            x_label: Label for the x-axis.
+            y_label: Label for the y-axis.
+            figsize: Size of the figure.
+            {common_plot_args}
+            **kwargs: Additional arguments for seaborn.scatterplot.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_ma(res_df)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_ma.png
+        """
+        known_mean_cols = {"baseMean": True, "logCPM": False}
+        if mean_col is None:
+            mean_col = next((col for col in known_mean_cols if col in results_df.columns), None)
+            if mean_col is None:
+                raise ValueError(
+                    f"Could not find a mean expression column in {results_df.columns.tolist()}. "
+                    "PyDESeq2 stores it as 'baseMean' and edgeR as 'logCPM'; pass `mean_col` for other methods."
+                )
+        elif mean_col not in results_df.columns:
+            raise ValueError(f"Column {mean_col!r} does not exist in the results.")
+
+        hues = ["not significant", "significant"]
+        df = results_df.dropna(subset=[mean_col, log2fc_col, padj_col]).copy()
+        df["significance"] = np.where(
+            (df[padj_col] < padj_threshold) & (df[log2fc_col].abs() >= log2fc_threshold), hues[1], hues[0]
+        )
+
+        fig, ax = plt.subplots(figsize=figsize)
+        sns.scatterplot(
+            data=df,
+            x=mean_col,
+            y=log2fc_col,
+            hue="significance",
+            hue_order=hues,
+            palette=list(colors),
+            ax=ax,
+            **kwargs,
+        )
+
+        if log_x is None:
+            log_x = known_mean_cols.get(mean_col, False)
+        if log_x:
+            ax.set_xscale("log")
+
+        ax.axhline(0, c="k", lw=1)
+        if log2fc_threshold:
+            ax.axhline(log2fc_threshold, c="k", lw=1, ls="--")
+            ax.axhline(-log2fc_threshold, c="k", lw=1, ls="--")
+
+        ax.set_xlabel(mean_col if x_label is None else x_label)
+        ax.set_ylabel(y_label)
+        ax.legend(title=None, frameon=False)
+        ax.spines[["top", "right"]].set_visible(False)
+
+        if return_fig:
+            return fig
+        plt.show()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_paired(  # pragma: no cover # noqa: D417
         self,
         adata: ad.AnnData,
