@@ -13,7 +13,7 @@ from pertpy._logger import logger
 from pertpy._types import cast_dense, cast_frame
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
     from pertpy._types import RandomStateLike
     from pertpy.tools._distances._distances import Metric
@@ -44,27 +44,29 @@ def _resolve_matrix(adata: AnnData, *, layer_key: str | None, embedding_key: str
     return np.asarray(adata.X)
 
 
-def _constant_obs_per_group(obs: pd.DataFrame, target_col: str) -> pd.DataFrame:
-    """Collapse ``obs`` to one row per ``target_col`` value, keeping only columns constant within every group.
+def _constant_obs_per_group(obs: pd.DataFrame, group_cols: Sequence[str]) -> pd.DataFrame:
+    """Collapse ``obs`` to one row per ``group_cols`` combination, keeping only columns constant within every group.
 
     Columns that vary within any group are dropped so the result can be safely mapped back onto a perturbation-level AnnData.
     """
-
-    def _unique_or_nan(values: pd.Series) -> object:
-        unique = set(values)
-        return next(iter(unique)) if len(unique) == 1 else np.nan
-
-    grouped = obs.groupby(target_col, observed=True).agg(_unique_or_nan)
-    return grouped.loc[:, ~grouped.isna().any()]
+    grouped = obs.groupby(list(group_cols), observed=True)
+    collapsed = grouped.first().loc[:, grouped.nunique(dropna=False).max() == 1]
+    return collapsed.loc[:, ~collapsed.isna().any()]
 
 
-def _carry_constant_obs(ps_adata: AnnData, source_obs: pd.DataFrame, target_col: str) -> None:
-    """Copy every ``source_obs`` column that is constant within each ``target_col`` group onto ``ps_adata``."""
-    extra = _constant_obs_per_group(source_obs, target_col)
-    for col in extra.columns:
-        if col == target_col:
-            continue
-        ps_adata.obs[col] = ps_adata.obs[target_col].map(extra[col].to_dict())
+def _carry_constant_obs(ps_adata: AnnData, source_obs: pd.DataFrame, group_cols: str | Sequence[str]) -> None:
+    """Copy every ``source_obs`` column that is constant within each ``group_cols`` group onto ``ps_adata``."""
+    cols = [group_cols] if isinstance(group_cols, str) else list(group_cols)
+    extra = _constant_obs_per_group(source_obs, cols)
+    if extra.columns.empty:
+        return
+
+    ps_obs = cast_frame(ps_adata.obs)
+    keys = pd.Index(ps_obs[cols[0]]) if len(cols) == 1 else pd.MultiIndex.from_frame(ps_obs[cols])
+    aligned = extra.reindex(keys)
+    aligned.index = ps_adata.obs_names
+    for col in aligned.columns:
+        ps_adata.obs[col] = aligned[col]
 
 
 def _vector_distance(u: np.ndarray, v: np.ndarray, metric: str) -> float:
