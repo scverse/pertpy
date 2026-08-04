@@ -132,3 +132,14 @@ def test_plot_effects_umap_sccoda(adata):
         cluster_key="cell_label",
     )
     assert effect in mdata["rna"].obs.columns
+    assert mdata["rna"].obs[effect].notna().all()
+
+    sccoda.plot_effects_umap(
+        mdata,
+        modality_key_2="coda",
+        effect_name=effect,
+        cluster_key="cell_label",
+        plot_credible=True,
+    )
+    is_credible = mdata["coda"].varm[effect]["Final Parameter"] != 0
+    assert (mdata["rna"].obs[effect].notna() == mdata["rna"].obs["cell_label"].map(is_credible)).all()
