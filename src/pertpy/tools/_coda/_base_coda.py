@@ -2241,6 +2241,7 @@ class CompositionalModel2(ABC):
         *,
         modality_key_1: str = "rna",
         modality_key_2: str = "coda",
+        plot_credible: bool = False,
         color_map: Colormap | str | None = None,
         palette: str | Sequence[str] | Colormap | dict[str, RGBA] | None = None,
         ax: Axes | None = None,
@@ -2259,6 +2260,8 @@ class CompositionalModel2(ABC):
                          To assign cell types' effects to original cells.
             modality_key_1: Key to the cell-level AnnData in the MuData object.
             modality_key_2: Key to the aggregated sample-level AnnData object in the MuData object.
+            plot_credible: Whether to only color cells whose cell type has a credible effect.
+                           Cells of cell types without a credible effect are shown in the `na_color` of :func:`scanpy.pl.umap` instead of at an effect of zero.
             color_map: The color map to use for plotting.
             palette: The color palette (name) to use for plotting.
             ax: A matplotlib axes object. Only works if plotting a single component.
@@ -2313,20 +2316,27 @@ class CompositionalModel2(ABC):
             palette = {
                 cluster: palette(i % palette.N) for i, cluster in enumerate(data_rna.obs[cluster_key].unique().tolist())
             }
-        for _, effect in enumerate(effect_names):
-            effect_df = data_coda.varm[effect]
-            effect_col = "Effect" if "Effect" in effect_df.columns else "Final Parameter"  # type: ignore[union-attr]
-            data_rna.obs[effect] = [effect_df.loc[f"{c}", effect_col] for c in data_rna.obs[cluster_key]]  # type: ignore[union-attr]
+        for effect in effect_names:
+            effect_df = cast_frame(data_coda.varm[effect])
+            effect_col = "Effect" if "Effect" in effect_df.columns else "Final Parameter"
+            effects = np.array(
+                [effect_df.loc[f"{c}", effect_col] for c in data_rna.obs[cluster_key]],
+                dtype=float,
+            )
+            if plot_credible:
+                effects[effects == 0] = np.nan
+            data_rna.obs[effect] = effects
         if kwargs.get("vmin"):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")
         else:
-            vmin = min(data_rna.obs[effect].min() for _, effect in enumerate(effect_names))
+            vmin = min(data_rna.obs[effect].min() for effect in effect_names)
         if kwargs.get("vmax"):
             vmax = kwargs["vmax"]
             kwargs.pop("vmax")
         else:
-            vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_names))
+            vmax = max(data_rna.obs[effect].max() for effect in effect_names)
+        vmin, vmax = (None if pd.isna(limit) else limit for limit in (vmin, vmax))
 
         fig = sc.pl.umap(
             data_rna,  # type: ignore[arg-type]
