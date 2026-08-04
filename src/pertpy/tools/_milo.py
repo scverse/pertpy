@@ -276,7 +276,7 @@ class Milo:
         cast(
             "Deprecation",
             Deprecation(
-                "1.0.7",
+                "1.1.0",
                 "subset_samples is buggy in edge cases and will be removed. "
                 "Specify the comparison via `model_contrasts` instead, or subset cells before building the kNN graph.",
             ),
@@ -932,7 +932,7 @@ class Milo:
 
     @deprecated(
         Deprecation(
-            "1.0.7", "Use `add_covariate_to_nhoods_obs` instead — the destination is `mdata['milo'].obs`, not `.var`."
+            "1.1.0", "Use `add_covariate_to_nhoods_obs` instead — the destination is `mdata['milo'].obs`, not `.var`."
         )
     )
     def add_covariate_to_nhoods_var(self, mdata: MuData, new_covariates: list[str], feature_key: str | None = "rna"):
