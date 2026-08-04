@@ -42,7 +42,7 @@ def adata() -> AnnData:
 
 @pytest.mark.parametrize("distance", distances)
 def test_distancetest(adata: AnnData, distance: Metric) -> None:
-    etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak")
+    etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", padj_threshold=0.05, correction="holm-sidak")
     tab = etest(adata, groupby="perturbation", contrast="control")
 
     # Well-defined output
