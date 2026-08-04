@@ -8,9 +8,9 @@ from anndata import AnnData
 from matplotlib.lines import Line2D
 from matplotlib.pyplot import Figure
 from numpy import ndarray
-from pydeseq2.dds import DeseqDataSet  # type: ignore[import-untyped]
-from pydeseq2.default_inference import DefaultInference  # type: ignore[import-untyped]
-from pydeseq2.ds import DeseqStats  # type: ignore[import-untyped]
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.default_inference import DefaultInference
+from pydeseq2.ds import DeseqStats
 from scipy.sparse import issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -48,7 +48,7 @@ class PyDESeq2(LinearModelBase):
             **kwargs: Keyword arguments specific to DeseqDataSet(), except for `n_cpus` which will use all available CPUs minus one if the argument is not passed.
         """
         try:
-            usable_cpus = len(os.sched_getaffinity(0))  # type: ignore # os.sched_getaffinity is not available on Windows and macOS
+            usable_cpus = len(os.sched_getaffinity(0))  # os.sched_getaffinity is not available on Windows and macOS
         except AttributeError:
             usable_cpus = os.cpu_count() or 1
 

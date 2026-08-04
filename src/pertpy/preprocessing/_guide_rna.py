@@ -8,7 +8,7 @@ from warnings import warn
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
 from numba import njit, prange
 from rich.progress import track
@@ -614,6 +614,6 @@ class GuideAssignment:
             del cast_frame(adata.obs)[temp_col_name]
 
         if return_fig:
-            return fig
+            return fig  # type: ignore[return-value]
         plt.show()
         return None

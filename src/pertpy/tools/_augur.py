@@ -9,16 +9,16 @@ import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
 from joblib import Parallel, delayed
 from rich.progress import track
 from scipy import sparse, stats
-from sklearn.base import is_classifier, is_regressor  # type: ignore[import-untyped]
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor  # type: ignore[import-untyped]
-from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
-from sklearn.metrics import (  # type: ignore[import-untyped]
+from sklearn.base import is_classifier, is_regressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
     accuracy_score,
     explained_variance_score,
     f1_score,
@@ -29,11 +29,11 @@ from sklearn.metrics import (  # type: ignore[import-untyped]
     roc_auc_score,
     root_mean_squared_error,
 )
-from sklearn.model_selection import StratifiedKFold, cross_validate  # type: ignore[import-untyped]
-from sklearn.preprocessing import LabelEncoder  # type: ignore[import-untyped]
-from skmisc.loess import loess  # type: ignore[import-untyped]
-from statsmodels.api import OLS  # type: ignore[import-untyped]
-from statsmodels.stats.multitest import fdrcorrection  # type: ignore[import-untyped]
+from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.preprocessing import LabelEncoder
+from skmisc.loess import loess
+from statsmodels.api import OLS
+from statsmodels.stats.multitest import fdrcorrection
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
@@ -279,18 +279,18 @@ class Augur:
             label_subsamples = []
             y_encodings = adata.obs["y_"].unique()
             label_subsamples = [
-                sc.pp.subsample(
+                sc.pp.sample(
                     adata[adata.obs["y_"] == code, features],
-                    n_obs=subsample_size,
+                    n=subsample_size,
                     copy=True,
-                    random_state=random_state,
+                    rng=random_state,
                 )
                 for code in y_encodings
             ]
 
             subsample = ad.concat([*label_subsamples], index_unique=None)
         else:
-            subsample = sc.pp.subsample(adata[:, features], n_obs=subsample_size, copy=True, random_state=random_state)
+            subsample = sc.pp.sample(adata[:, features], n=subsample_size, copy=True, rng=random_state)
 
         # filter features with 0 variance
         var = cast_frame(subsample.var)
@@ -538,7 +538,7 @@ class Augur:
         n_genes = len(genes)
         y = subsample.obs["y_"]
         scorer = self.set_scorer(multiclass=len(y.unique()) > 2, zero_division=zero_division)
-        folds = StratifiedKFold(n_splits=folds, random_state=random_state, shuffle=True)
+        folds = StratifiedKFold(n_splits=folds, random_state=random_state, shuffle=True)  # type: ignore[assignment]
 
         results = cross_validate(
             estimator=self.estimator,

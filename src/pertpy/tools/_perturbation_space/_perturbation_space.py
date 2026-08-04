@@ -501,7 +501,7 @@ class PerturbationSpace:
         if layer_key is None and embedding_key is None and "distances" in adata.obsp:
             distances = np.asarray(adata.obsp["distances"])[query_idx]
         else:
-            from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
+            from sklearn.metrics import pairwise_distances
 
             coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
             distances = pairwise_distances(coords[[query_idx]], coords, metric=metric)[0]
@@ -690,7 +690,7 @@ class PerturbationSpace:
         if layer_key is None and embedding_key is None and "distances" in adata.obsp:
             distances = np.asarray(adata.obsp["distances"])
         else:
-            from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
+            from sklearn.metrics import pairwise_distances
 
             coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
             distances = pairwise_distances(coords, metric=metric)

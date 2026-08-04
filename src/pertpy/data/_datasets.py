@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
-from mudata import MuData  # type: ignore[import-untyped]
+from mudata import MuData
 from scanpy import settings
 
 from pertpy.data._dataloader import _download

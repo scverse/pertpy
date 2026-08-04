@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.sparse import vstack as sp_vstack
-from sklearn.base import ClassifierMixin  # type: ignore[import-untyped]
-from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+from sklearn.base import ClassifierMixin
+from sklearn.linear_model import LogisticRegression
 
 from pertpy._types import CSBase
 
@@ -39,7 +39,7 @@ class PerturbationComparison:
         data = sp_vstack((real, control)) if isinstance(real, CSBase) else np.vstack((real, control))
         labels = np.concatenate([np.full(real.shape[0], "comp"), np.full(control.shape[0], "ctrl")])
 
-        clf.fit(data, labels)
+        clf.fit(data, labels)  # type: ignore[attr-defined]
         norm_score = clf.score(simulated, np.full(simulated.shape[0], "comp")) / clf.score(real, labels[:n_x])
         norm_score = min(1.0, norm_score)
 
@@ -95,7 +95,7 @@ class PerturbationComparison:
             labels[-control.shape[0] :] = "ctrl"
             label_groups.append("ctrl")
 
-        from pynndescent import NNDescent  # type: ignore[import-untyped]
+        from pynndescent import NNDescent
 
         index = NNDescent(
             index_data,

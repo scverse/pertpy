@@ -1,5 +1,5 @@
 import pytest
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
 from pandas import DataFrame
 
@@ -35,7 +35,7 @@ count_distances = ["nb_ll"]
 @pytest.fixture
 def adata() -> AnnData:
     adata = pt.dt.distance_example()
-    adata = sc.pp.subsample(adata, 0.1, copy=True)
+    adata = sc.pp.sample(adata, 0.1, copy=True, rng=0)
 
     return adata
 

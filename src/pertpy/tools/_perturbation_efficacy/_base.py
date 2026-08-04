@@ -4,13 +4,13 @@ import warnings
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from fast_array_utils.stats import mean, mean_var
 from pandas.errors import PerformanceWarning
-from scanpy.tools._utils import _choose_representation  # type: ignore[import-untyped]
+from scanpy.tools._utils import _choose_representation
 from scipy.sparse import csr_array, csr_matrix, lil_matrix, sparray
 
-from pertpy._types import CSBase, cast_dense, cast_matrix
+from pertpy._types import CSBase, RankGenesMethod, cast_dense, cast_matrix
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -125,7 +125,7 @@ class PerturbationEfficacyAnalyzer:
             if n_dims is not None and n_dims < representation.shape[1]:
                 representation = representation[:, :n_dims]
 
-            from pynndescent import NNDescent  # type: ignore[import-untyped]
+            from pynndescent import NNDescent
 
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
@@ -186,7 +186,7 @@ class PerturbationEfficacyAnalyzer:
         pval_cutoff: float,
         min_de_genes: float,
         logfc_threshold: float,
-        test_method: str,
+        test_method: RankGenesMethod,
     ) -> dict[tuple, np.ndarray]:
         """Determine gene sets across all splits/groups through differential gene expression.
 
@@ -205,7 +205,7 @@ class PerturbationEfficacyAnalyzer:
         Returns:
             Set of column indices.
         """
-        perturbation_markers: dict[tuple, np.ndarray] = {}  # type: ignore
+        perturbation_markers: dict[tuple, np.ndarray] = {}
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
             # get gene sets for each split

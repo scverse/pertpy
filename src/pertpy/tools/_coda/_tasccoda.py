@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import jax.numpy as jnp
 import numpy as np
-import numpyro as npy  # type: ignore[import-untyped]
-import numpyro.distributions as npd  # type: ignore[import-untyped]
-import toytree as tt  # type: ignore[import-untyped]
+import numpyro as npy
+import numpyro.distributions as npd
+import toytree as tt
 from anndata import AnnData
 from jax import config
-from mudata import MuData  # type: ignore[import-untyped]
+from mudata import MuData
 
 from pertpy._logger import logger
 from pertpy._types import cast_matrix
@@ -187,8 +187,8 @@ class Tasccoda(CompositionalModel2):
             adata = data[modality_key]
         if isinstance(data, AnnData):
             adata = data
-        adata = super().prepare(
-            adata,
+        adata = super()._prepare(
+            adata,  # type: ignore[arg-type]
             formula=formula,
             reference_cell_type=reference_cell_type,
             automatic_reference_absence_threshold=automatic_reference_absence_threshold,
@@ -198,7 +198,7 @@ class Tasccoda(CompositionalModel2):
             raise ValueError("Please specify the key in .uns that contains the tree structure!")
 
         try:
-            import ete4 as ete  # type: ignore[import-untyped]
+            import ete4 as ete
         except ImportError:
             raise ImportError(
                 "To use tasccoda please install additional dependencies as `pip install 'pertpy[tcoda]'`"
@@ -215,7 +215,7 @@ class Tasccoda(CompositionalModel2):
             adata.uns["scCODA_params"]["T"] = T
 
             # Bring names of nodes back in order, they might have been scrambled during collapse_singularities
-            node_names = [n.name for n in phy_tree.idx_dict.values()][1:]
+            node_names = [n.name for n in phy_tree][1:]
             node_names.reverse()
             adata.uns["scCODA_params"]["node_names"] = node_names
 
@@ -227,14 +227,14 @@ class Tasccoda(CompositionalModel2):
 
             ref_node_index = adata.uns["scCODA_params"]["reference_index"]
             # Ancestors of reference are a reference, too!
-            refs = [p.idx for p in phy_tree.idx_dict[ref_node_index].get_ancestors()][:-1]
+            refs = [p.idx for p in phy_tree[ref_node_index].get_ancestors()][:-1]
             refs = [ref_node_index] + refs
             adata.uns["scCODA_params"]["reference_index"] = refs
             adata.uns["scCODA_params"]["reference_leaf"] = ref_node_index
 
             # number of leaves for each internal node (important for aggregation penalty lambda_1)
             if "node_leaves" not in pen_args:
-                node_leaves = [len(n.leaves()) for n in phy_tree.idx_dict.values()]
+                node_leaves = [len(n.leaves()) for n in phy_tree]  # type: ignore[attr-defined]
                 node_leaves.reverse()
                 pen_args["node_leaves"] = np.delete(np.array(node_leaves[:-1]), refs)
 
@@ -304,12 +304,12 @@ class Tasccoda(CompositionalModel2):
         adata.uns["scCODA_params"]["model_type"] = "tree_agg"
         adata.uns["scCODA_params"]["select_type"] = "sslasso"
         if isinstance(data, MuData):
-            data.mod[modality_key] = adata
+            data.mod[modality_key] = adata  # type: ignore[index]
             return data
         else:
             return adata
 
-    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:  # type: ignore
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:
         """Sets initial MCMC state values for tascCODA model.
 
         Args:
@@ -378,7 +378,7 @@ class Tasccoda(CompositionalModel2):
 
         return sample_adata
 
-    def model(  # type: ignore
+    def model(
         self,
         counts: np.ndarray,
         covariates: np.ndarray,
@@ -461,7 +461,7 @@ class Tasccoda(CompositionalModel2):
 
         return predictions
 
-    def make_arviz(  # type: ignore
+    def make_arviz(
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
@@ -537,7 +537,7 @@ class Tasccoda(CompositionalModel2):
         }
 
         return self._build_arviz_from_adata(
-            sample_adata,
+            sample_adata,  # type: ignore[arg-type]
             dims=dims,
             coords=coords,
             rng_key=rng_key,

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 
 import pertpy as pt
 
@@ -18,7 +18,7 @@ ag_rfr = pt.tl.Augur("random_forest_regressor", random_state=42)
 @pytest.fixture
 def adata():
     adata = pt.dt.sc_sim_augur()
-    adata = sc.pp.subsample(adata, n_obs=200, copy=True, random_state=10)
+    adata = sc.pp.sample(adata, n=200, copy=True, rng=10)
 
     return adata
 
@@ -44,7 +44,8 @@ def test_random_forest_classifier(adata):
 
     assert results["CellTypeA"][2]["subsample_idx"] == 2
     assert "augur_score" in h_adata.obs.columns
-    assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.634920, 0.933484, 0.902494])
+    scores = results["summary_metrics"].loc["mean_augur_score"]
+    assert np.allclose([scores["CellTypeA"], scores["CellTypeB"], scores["CellTypeC"]], [0.581066, 0.819728, 0.868859])
     assert "feature_importances" in results
     assert len(set(results["summary_metrics"]["CellTypeA"])) == len(results["summary_metrics"]["CellTypeA"]) - 1
 
@@ -58,7 +59,8 @@ def test_logistic_regression_classifier(adata):
     )
 
     assert "augur_score" in h_adata.obs.columns
-    assert np.allclose(results["summary_metrics"].loc["mean_augur_score"].tolist(), [0.691232, 0.955404, 0.972789])
+    scores = results["summary_metrics"].loc["mean_augur_score"]
+    assert np.allclose([scores["CellTypeA"], scores["CellTypeB"], scores["CellTypeC"]], [0.679516, 0.940287, 0.974679])
     assert "feature_importances" in results
 
 
@@ -75,14 +77,14 @@ def test_classifier(adata):
     """Test run cross validation with classifier."""
     adata = ag_rfc.load(adata)
     sc.pp.highly_variable_genes(adata)
-    adata_subsampled = sc.pp.subsample(adata, n_obs=100, random_state=42, copy=True)
+    adata_subsampled = sc.pp.sample(adata, n=100, rng=42, copy=True)
 
     cv = ag_rfc.run_cross_validation(adata_subsampled, subsample_idx=1, folds=3, random_state=42, zero_division=0)
-    auc = 0.786412
+    auc = 0.713771
     assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
     cv = ag_lrc.run_cross_validation(adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
-    auc = 0.978673
+    auc = 0.965965
     assert any([isclose(cv["mean_auc"], auc, abs_tol=10**-3)])
 
 
@@ -90,8 +92,8 @@ def test_regressor(adata):
     """Test run cross validation with regressor."""
     adata = ag_rfc.load(adata)
     cv = ag_rfr.run_cross_validation(adata, subsample_idx=1, folds=3, random_state=42, zero_division=0)
-    ccc = 0.168800
-    r2 = 0.149887
+    ccc = 0.171253
+    r2 = 0.150028
     assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10**-5), isclose(cv["mean_r2"], r2, abs_tol=10**-5)])
 
 
@@ -137,7 +139,7 @@ def test_subsample(adata):
         categorical=True,
         random_state=42,
     )
-    assert len(velocity_subsample.var_names) == 5505 and len(velocity_subsample.obs_names) == 40
+    assert len(velocity_subsample.var_names) == 6080 and len(velocity_subsample.obs_names) == 40
 
 
 def test_select_variance(adata):
@@ -147,14 +149,14 @@ def test_select_variance(adata):
     adata_cell_type = adata[adata.obs["cell_type"] == "CellTypeA"].copy()
     ad = ag_rfc.select_variance(adata_cell_type, var_quantile=0.5, span=0.3, filter_negative_residuals=False)
 
-    assert len(ad.var.index[ad.var["highly_variable"]]) == 3672
+    assert len(ad.var.index[ad.var["highly_variable"]]) == 3727
 
 
 def test_differential_prioritization():
     """Test differential prioritization run."""
     # Requires the full dataset or it fails because of a lack of statistical power
     adata = pt.dt.sc_sim_augur()
-    adata = sc.pp.subsample(adata, n_obs=500, copy=True, random_state=10)
+    adata = sc.pp.sample(adata, n=500, copy=True, rng=10)
     ag = pt.tl.Augur("logistic_regression_classifier", random_state=42)
     adata = ag.load(adata)
 

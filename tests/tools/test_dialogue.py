@@ -10,7 +10,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pytest
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from scipy import sparse
 
 import pertpy as pt

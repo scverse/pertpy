@@ -17,15 +17,15 @@ from typing import TYPE_CHECKING, cast
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 import seaborn as sns
-import statsmodels.formula.api as smf  # type: ignore[import-untyped]
+import statsmodels.formula.api as smf
 from fast_array_utils.conv import to_dense
 from scipy import sparse as sp
 from scipy import stats
 from scipy.optimize import nnls
-from sparsecca import multicca_permute, multicca_pmd  # type: ignore[import-untyped]
-from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
+from sparsecca import multicca_permute, multicca_pmd
+from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import CSBase, cast_dense, cast_frame
@@ -53,7 +53,7 @@ def _pseudobulk_per_sample(
     Returns:
         DataFrame indexed by sample, columns are ``adata.var_names``.
     """
-    aggregated = sc.get.aggregate(adata, by=sample_key, func=agg, layer=layer)
+    aggregated = sc.get.aggregate(adata, by=sample_key, func=agg, layer=layer)  # type: ignore[arg-type]
     matrix = to_dense(aggregated.layers[agg])
     return pd.DataFrame(matrix, index=list(aggregated.obs_names), columns=list(aggregated.var_names))
 
@@ -475,8 +475,8 @@ class Dialogue:
         cca_correlations_R, cca_correlations_P = self._cca_correlations(matrices, weights, celltypes)
 
         cca_scores = {
-            ct: ct_views[ct].obsm[self.feature_space_key][:, : self.n_components][
-                :, _retained_indices(pb_full, ws_dict[ct])
+            ct: ct_views[ct].obsm[self.feature_space_key][:, : self.n_components][  # type: ignore[call-overload, index]
+                :, _retained_indices(pb_full, ws_dict[ct])  # type: ignore[index]
             ]
             @ ws_dict[ct].to_numpy()
             for ct, pb_full in pseudobulks_full.items()
@@ -573,7 +573,7 @@ class Dialogue:
         n_samples = matrices[0].shape[0]
         penalties = multicca_permute(
             matrices,
-            penalties=float(np.sqrt(n_samples) / 2.0),
+            penalties=float(np.sqrt(n_samples) / 2.0),  # type: ignore[arg-type]
             nperms=10,
             niter=50,
             standardize=True,
@@ -1157,7 +1157,7 @@ class Dialogue:
         W = state["weights"][ct]
         idx_names = state["weights_index"][ct]
         kept = [int(name[2:]) - 1 for name in idx_names]
-        pcs = view.obsm[self.feature_space_key][:, : self.n_components][:, kept]
+        pcs = view.obsm[self.feature_space_key][:, : self.n_components][:, kept]  # type: ignore[call-overload, index]
         return np.asarray(pcs, dtype=np.float64) @ W
 
     @staticmethod
@@ -1258,12 +1258,12 @@ class Dialogue:
             covariates = pd.DataFrame({self.cell_quality_key: sub_obs[self.cell_quality_key].to_numpy()[keep]})
             sample_groups = sub_obs[self.sample_key].astype(str).to_numpy()[keep]
             for program_idx, program in enumerate(program_cols):
-                y = sub_scores[keep, program_idx]
-                if not np.isfinite(y).any():
+                y = sub_scores[keep, program_idx]  # type: ignore[call-overload, index]
+                if not np.isfinite(y).any():  # type: ignore[arg-type]
                     continue
                 df_one = _hlm_pvalue_per_row(
                     np.asarray(x[None, :]),
-                    y,
+                    y,  # type: ignore[arg-type]
                     covariates,
                     sample_groups,
                 )

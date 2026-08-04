@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-from sklearn.metrics import (  # type: ignore[import-untyped]
+from sklearn.metrics import (
     adjusted_rand_score,
     normalized_mutual_info_score,
     silhouette_score,

@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
-from sklearn.cluster import HDBSCAN, KMeans  # type: ignore[import-untyped]
+from sklearn.cluster import HDBSCAN, KMeans
 
 from pertpy._logger import logger
 from pertpy._types import cast_frame
@@ -159,12 +159,12 @@ class PseudobulkSpace(PerturbationSpace):
             if len(grouping_cols) == 1:
                 index = pd.Index(ps_adata.obs[grouping_cols[0]])
             else:
-                index = pd.MultiIndex.from_frame(ps_adata.obs[grouping_cols])
+                index = pd.MultiIndex.from_frame(ps_adata.obs[grouping_cols])  # type: ignore[arg-type]
             grouped = grouped.reindex(index)
             grouped.index = ps_adata.obs.index
-            ps_adata.obs = pd.concat([ps_adata.obs, grouped], axis=1)
+            ps_adata.obs = pd.concat([ps_adata.obs, grouped], axis=1)  # type: ignore[call-overload]
 
-        ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")
+        ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")  # type: ignore[assignment]
 
         return ps_adata
 

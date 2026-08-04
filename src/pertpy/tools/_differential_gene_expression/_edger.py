@@ -25,13 +25,13 @@ class EdgeR(LinearModelBase):
             **kwargs: Keyword arguments specific to glmQLFit()
         """
         try:
-            from rpy2 import robjects as ro  # type: ignore[import-untyped,import-not-found]
-            from rpy2.robjects import numpy2ri, pandas2ri  # type: ignore[import-untyped,import-not-found]
-            from rpy2.robjects.conversion import (  # type: ignore[import-untyped,import-not-found]
+            from rpy2 import robjects as ro
+            from rpy2.robjects import numpy2ri, pandas2ri
+            from rpy2.robjects.conversion import (
                 get_conversion,
                 localconverter,
             )
-            from rpy2.robjects.packages import importr  # type: ignore[import-untyped,import-not-found]
+            from rpy2.robjects.packages import importr
 
         except ImportError:
             raise ImportError("edger requires rpy2 to be installed.") from None
@@ -85,13 +85,13 @@ class EdgeR(LinearModelBase):
         #  Fix mask for .fit()
 
         try:
-            from rpy2 import robjects as ro  # type: ignore[import-untyped,import-not-found]
-            from rpy2.robjects import numpy2ri, pandas2ri  # type: ignore[import-untyped,import-not-found]
-            from rpy2.robjects.conversion import (  # type: ignore[import-untyped,import-not-found]
+            from rpy2 import robjects as ro
+            from rpy2.robjects import numpy2ri, pandas2ri
+            from rpy2.robjects.conversion import (
                 get_conversion,
                 localconverter,
             )
-            from rpy2.robjects.packages import importr  # type: ignore[import-untyped,import-not-found]
+            from rpy2.robjects.packages import importr
 
         except ImportError:
             raise ImportError("edger requires rpy2 to be installed.") from None

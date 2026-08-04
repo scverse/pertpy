@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-import scanpy as sc  # type: ignore[import-untyped]
-from mudata import MuData  # type: ignore[import-untyped]
+import scanpy as sc
+from mudata import MuData
 from xarray import DataTree
 
 import pertpy as pt
@@ -18,7 +18,7 @@ sccoda = pt.tl.Sccoda()
 @pytest.fixture
 def adata():
     cells = pt.dt.haber_2017_regions()
-    cells = sc.pp.subsample(cells, 0.1, copy=True)
+    cells = sc.pp.sample(cells, 0.1, copy=True, rng=0)
 
     return cells
 

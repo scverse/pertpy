@@ -245,7 +245,7 @@ from typing import Optional
 
 # sys.stdout inside jupyter doesn't have reconfigure
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(errors="backslashreplace")  # type: ignore
+    sys.stdout.reconfigure(errors="backslashreplace")
 
 
 HINT = 15
@@ -350,32 +350,32 @@ class RootLogger(logging.RootLogger):
     def warning(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
         return self.log(WARNING, msg, time=time, deep=deep, extra=extra)
 
-    def important(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
+    def important(self, msg, *, time=None, deep=None, extra=None) -> datetime:
         return self.log(IMPORTANT, msg, time=time, deep=deep, extra=extra)
 
-    def important_hint(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
+    def important_hint(self, msg, *, time=None, deep=None, extra=None) -> datetime:
         return self.log(IMPORTANT_HINT, msg, time=time, deep=deep, extra=extra)
 
-    def success(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
+    def success(self, msg, *, time=None, deep=None, extra=None) -> datetime:
         return self.log(SUCCESS, msg, time=time, deep=deep, extra=extra)
 
     def info(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
         return self.log(INFO, msg, time=time, deep=deep, extra=extra)
 
-    def save(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
+    def save(self, msg, *, time=None, deep=None, extra=None) -> datetime:
         return self.log(SAVE, msg, time=time, deep=deep, extra=extra)
 
-    def hint(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
+    def hint(self, msg, *, time=None, deep=None, extra=None) -> datetime:
         return self.log(HINT, msg, time=time, deep=deep, extra=extra)
 
     def debug(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
         return self.log(DEBUG, msg, time=time, deep=deep, extra=extra)
 
-    def print(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
+    def print(self, msg, *, time=None, deep=None, extra=None) -> datetime:
         return self.log(PRINT, msg, time=time, deep=deep, extra=extra)
 
     # backward compat
-    def download(self, msg, *, time=None, deep=None, extra=None) -> datetime:  # type: ignore
+    def download(self, msg, *, time=None, deep=None, extra=None) -> datetime:
         return self.log(SAVE, msg, time=time, deep=deep, extra=extra)
 
 

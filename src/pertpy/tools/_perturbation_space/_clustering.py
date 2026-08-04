@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
+from sklearn.metrics import pairwise_distances
 
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace, _resolve_matrix
 

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 if TYPE_CHECKING:
     import pandas as pd
 
-import pubchempy as pcp  # type: ignore[import-untyped]
+import pubchempy as pcp
 
 
 class LookUp:
@@ -503,8 +503,8 @@ class LookUp:
                         not_matched_identifiers.append(compound)
                 else:
                     try:
-                        pcp.Compound.from_cid(compound)
-                    except pcp.BadRequestError:
+                        pcp.Compound.from_cid(int(compound))
+                    except (pcp.BadRequestError, ValueError):
                         not_matched_identifiers.append(compound)
 
             logger.info(f"{len(not_matched_identifiers)} compounds are not found in the metadata.")

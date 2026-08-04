@@ -8,17 +8,17 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 import seaborn as sns
 from pandas.errors import PerformanceWarning
 from scanpy import get
-from scanpy._utils import check_use_raw, sanitize_anndata  # type: ignore[import-untyped]
-from scanpy.plotting import _utils  # type: ignore[import-untyped]
+from scanpy._utils import check_use_raw, sanitize_anndata
+from scanpy.plotting import _utils
 from scipy.sparse import spmatrix
-from sklearn.mixture import GaussianMixture  # type: ignore[import-untyped]
+from sklearn.mixture import GaussianMixture
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
+from pertpy._types import CSBase, RankGenesMethod, cast_dense, cast_frame, cast_matrix
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         min_de_genes: int = 5,
         logfc_threshold: float = 0.25,
         de_layer: str | None = None,
-        test_method: str = "wilcoxon",
+        test_method: RankGenesMethod = "wilcoxon",
         iter_num: int = 10,
         scale: bool = True,
         split_by: str | None = None,
@@ -167,7 +167,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
-                    dat = X[np.asarray(all_cells)][:, de_genes_indices]
+                    dat = X[np.asarray(all_cells)][:, de_genes_indices]  # type: ignore[call-overload, index]
                     if scale:
                         with warnings.catch_warnings():
                             warnings.filterwarnings(
@@ -180,7 +180,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                     old_classes = obs[new_class_name][all_cells]
 
                     nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
-                    nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)
+                    nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)  # type: ignore[arg-type]
 
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
@@ -190,7 +190,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
                         guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
-                        guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)
+                        guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)  # type: ignore[arg-type]
                         vec = guide_cells_mean - nt_cells_mean
 
                         # project cells onto the perturbation vector
@@ -261,7 +261,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         n_comps: int | None = 10,
         min_de_genes: int = 5,
         logfc_threshold: float = 0.25,
-        test_method: str = "wilcoxon",
+        test_method: RankGenesMethod = "wilcoxon",
         split_by: str | None = None,
         pval_cutoff: float = 5e-2,
         perturbation_type: str = "KO",
@@ -303,7 +303,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         """
         if copy:
             adata = adata.copy()
-        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis  # type: ignore[import-untyped]
+        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
         if mixscape_class_global not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
@@ -476,8 +476,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         control: str = "NT",
         *,
         layer: str | None = None,
-        method: str | None = "wilcoxon",
+        method: RankGenesMethod | None = "wilcoxon",
         subsample_number: int | None = 900,
+        random_state: int = 0,
         vmin: float | None = -2,
         vmax: float | None = 2,
         return_fig: bool = False,
@@ -493,6 +494,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             layer: Key from `adata.layers` whose value will be used to perform tests on.
             method: The default method is 'wilcoxon', see `method` parameter in `scanpy.tl.rank_genes_groups` for more options.
             subsample_number: Subsample to this number of observations.
+            random_state: Seed for the subsampling.
             vmin: The value representing the lower limit of the color scale. Values smaller than vmin are plotted with the same color as vmin.
             vmax: The value representing the upper limit of the color scale. Values larger than vmax are plotted with the same color as vmax.
             {common_plot_args}
@@ -523,7 +525,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             warnings.simplefilter("ignore", UserWarning)
             sc.tl.rank_genes_groups(adata_subset, layer=layer, groupby=pert_key, method=method)
             sc.pp.scale(adata_subset, max_value=vmax)
-        sc.pp.subsample(adata_subset, n_obs=subsample_number)
+        sc.pp.sample(adata_subset, n=subsample_number, rng=random_state)
 
         fig = sc.pl.rank_genes_groups_heatmap(
             adata_subset,
@@ -986,7 +988,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         )
 
         if return_fig:
-            return fig
+            return fig  # type: ignore[return-value]
         plt.show()
         return None
 

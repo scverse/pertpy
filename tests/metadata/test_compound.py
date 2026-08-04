@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
-from pubchempy import PubChemHTTPError  # type: ignore[import-untyped]
+from pubchempy import PubChemHTTPError
 from scipy import sparse
 
 import pertpy as pt

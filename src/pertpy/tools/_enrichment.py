@@ -2,18 +2,18 @@ from collections import ChainMap
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal, cast
 
-import blitzgsea  # type: ignore[import-untyped]
+import blitzgsea
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
 from matplotlib.axes import Axes
-from scanpy.plotting import DotPlot  # type: ignore[import-untyped]
-from scanpy.tools._score_genes import _sparse_nanmean  # type: ignore[import-untyped]
+from scanpy.plotting import DotPlot
+from scanpy.tools._score_genes import _sparse_nanmean
 from scipy.stats import hypergeom
 from scverse_misc import Deprecation, deprecated_arg
-from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
+from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import CSBase, cast_frame, cast_matrix
@@ -409,16 +409,16 @@ class Enrichment:
 
         fig = sc.pl.dotplot(
             enrichment_score_adata,
-            groupby=groupby,
+            groupby=groupby,  # type: ignore[arg-type]
             swap_axes=True,
-            ax=ax,
+            ax=ax,  # type: ignore[arg-type]
             show=False,
-            **plot_args,
+            **plot_args,  # type: ignore[arg-type]
             **kwargs,
         )
 
         if return_fig:
-            return fig
+            return fig  # type: ignore[return-value]
         plt.show()
         return None
 

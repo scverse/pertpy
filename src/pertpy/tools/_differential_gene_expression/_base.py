@@ -6,7 +6,7 @@ from itertools import zip_longest
 from types import MappingProxyType
 from typing import cast
 
-import adjustText  # type: ignore[import-untyped]
+import adjustText
 import anndata as ad
 import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
@@ -878,7 +878,7 @@ class LinearModelBase(MethodBase):
         super().__init__(adata, mask=mask, layer=layer)
         self._check_counts()
 
-        from formulaic_contrasts import FormulaicContrasts  # type: ignore[import-untyped]
+        from formulaic_contrasts import FormulaicContrasts
 
         self.formulaic_contrasts = None
         if isinstance(design, str):

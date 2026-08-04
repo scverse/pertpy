@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-import statsmodels  # type: ignore[import-untyped]
-import statsmodels.api as sm  # type: ignore[import-untyped]
+import statsmodels
+import statsmodels.api as sm
 from fast_array_utils.conv import to_dense
 from joblib import delayed, effective_n_jobs
 from scipy.sparse import issparse

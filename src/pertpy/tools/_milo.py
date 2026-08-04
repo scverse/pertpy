@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, cast
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 import seaborn as sns
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
-from mudata import MuData  # type: ignore[import-untyped]
+from mudata import MuData
 from scverse_misc import Deprecation, deprecated, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
-from sklearn.metrics.pairwise import euclidean_distances  # type: ignore[import-untyped]
+from sklearn.metrics.pairwise import euclidean_distances
 
 
 def _weighted_bh(pvalues: np.ndarray, weights: np.ndarray) -> np.ndarray:
@@ -82,7 +82,7 @@ class Milo:
             >>> mdata = milo.load(adata)
 
         """
-        mdata = MuData({feature_key: input, "milo": AnnData()})
+        mdata = MuData({feature_key: input, "milo": AnnData()})  # type: ignore[dict-item]
 
         return mdata
 
@@ -153,7 +153,7 @@ class Milo:
                 logger.warning("Using X_pca as default embedding")
                 use_rep = "X_pca"
             try:
-                knn_graph = adata.obsp["connectivities"].copy()
+                knn_graph = adata.obsp["connectivities"].copy()  # type: ignore[union-attr]
             except KeyError:
                 logger.error('No "connectivities" slot in adata.obsp -- please run scanpy.pp.neighbors(adata) first')
                 raise
@@ -163,7 +163,7 @@ class Milo:
             except KeyError:
                 logger.warning("Using X_pca as default embedding")
                 use_rep = "X_pca"
-            knn_graph = adata.obsp[neighbors_key + "_connectivities"].copy()
+            knn_graph = adata.obsp[neighbors_key + "_connectivities"].copy()  # type: ignore[union-attr]
 
         X_dimred = adata.obsm[use_rep]
         n_ixs = int(np.round(adata.n_obs * prop))
@@ -174,21 +174,17 @@ class Milo:
         ixs_nn = knn_graph[random_vertices, :]
         non_zero_rows = ixs_nn.nonzero()[0]
         non_zero_cols = ixs_nn.nonzero()[1]
-        refined_vertices = np.empty(
-            shape=[
-                len(random_vertices),
-            ]
-        )
+        refined_vertices = np.empty(len(random_vertices), dtype=np.int64)
 
         for i in range(len(random_vertices)):
-            nh_pos = np.median(X_dimred[non_zero_cols[non_zero_rows == i], :], 0).reshape(-1, 1)
+            nh_pos = np.median(X_dimred[non_zero_cols[non_zero_rows == i], :], 0).reshape(-1, 1)  # type: ignore[arg-type]
             nn_ixs = non_zero_cols[non_zero_rows == i]
             # Find closest real point (amongst nearest neighbors)
             dists = euclidean_distances(X_dimred[non_zero_cols[non_zero_rows == i], :], nh_pos.T)
             # Update vertex index
             refined_vertices[i] = nn_ixs[dists.argmin()]
 
-        refined_vertices = np.unique(refined_vertices.astype("int"))
+        refined_vertices = np.unique(refined_vertices)
         refined_vertices.sort()
 
         nhoods = knn_graph[:, refined_vertices]
@@ -197,18 +193,18 @@ class Milo:
         # Add ixs to adata
         adata.obs["nhood_ixs_random"] = adata.obs_names.isin(adata.obs_names[random_vertices])
         adata.obs["nhood_ixs_refined"] = adata.obs_names.isin(adata.obs_names[refined_vertices])
-        adata.obs["nhood_ixs_refined"] = adata.obs["nhood_ixs_refined"].astype("int")
-        adata.obs["nhood_ixs_random"] = adata.obs["nhood_ixs_random"].astype("int")
+        adata.obs["nhood_ixs_refined"] = adata.obs["nhood_ixs_refined"].astype("int")  # type: ignore[assignment]
+        adata.obs["nhood_ixs_random"] = adata.obs["nhood_ixs_random"].astype("int")  # type: ignore[assignment]
         adata.uns["nhood_neighbors_key"] = neighbors_key
         # Store distance to K-th nearest neighbor (used for spatial FDR correction)
         knn_dists = adata.obsp["distances"] if neighbors_key is None else adata.obsp[neighbors_key + "_distances"]
 
         nhood_ixs = adata.obs["nhood_ixs_refined"] == 1
         dist_mat = knn_dists[np.asarray(nhood_ixs), :]
-        k_distances = dist_mat.max(1).toarray().ravel()
+        k_distances = dist_mat.max(1).toarray().ravel()  # type: ignore[arg-type, union-attr]
         adata.obs["nhood_kth_distance"] = 0
-        adata.obs["nhood_kth_distance"] = adata.obs["nhood_kth_distance"].astype(float)
-        adata.obs.loc[adata.obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"] = k_distances
+        adata.obs["nhood_kth_distance"] = adata.obs["nhood_kth_distance"].astype(float)  # type: ignore[assignment]
+        adata.obs.loc[adata.obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"] = k_distances  # type: ignore[union-attr]
 
         if copy:
             return adata
@@ -257,22 +253,22 @@ class Milo:
                 logger.error('Cannot find "nhoods" slot in adata.obsm -- please run milopy.make_nhoods(adata)')
                 raise
         # Make nhood abundance matrix
-        sample_dummies = pd.get_dummies(adata.obs[sample_col])
+        sample_dummies = pd.get_dummies(adata.obs[sample_col])  # type: ignore[arg-type]
         all_samples = sample_dummies.columns
-        nhood_count_mat = csr_matrix(nhoods).T.dot(csr_matrix(sample_dummies.values))
+        nhood_count_mat = csr_matrix(nhoods).T.dot(csr_matrix(sample_dummies.values))  # type: ignore[arg-type]
         sample_obs = pd.DataFrame(index=all_samples)
         sample_adata = AnnData(X=nhood_count_mat.T, obs=sample_obs)
         sample_adata.uns["sample_col"] = sample_col
         # Save nhood index info
         obs = adata.obs
-        sample_adata.var["index_cell"] = adata.obs_names[obs["nhood_ixs_refined"] == 1]
-        sample_adata.var["kth_distance"] = obs.loc[obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"].values
+        sample_adata.var["index_cell"] = adata.obs_names[obs["nhood_ixs_refined"] == 1]  # type: ignore[index]
+        sample_adata.var["kth_distance"] = obs.loc[obs["nhood_ixs_refined"] == 1, "nhood_kth_distance"].values  # type: ignore[index, union-attr]
 
         if isinstance(data, MuData):
-            data.mod["milo"] = sample_adata
+            data.mod["milo"] = sample_adata  # type: ignore[index]
             return data
         else:
-            milo_mdata = MuData({feature_key: adata, "milo": sample_adata})
+            milo_mdata = MuData({feature_key: adata, "milo": sample_adata})  # type: ignore[dict-item]
             return milo_mdata
 
     @deprecated_arg(
@@ -347,7 +343,7 @@ class Milo:
         # Add covariates used for testing to sample_adata.var
         sample_col = sample_adata.uns["sample_col"]
         try:
-            sample_obs = adata.obs[covariates + [sample_col]].drop_duplicates()
+            sample_obs = adata.obs[covariates + [sample_col]].drop_duplicates()  # type: ignore[union-attr]
         except KeyError:
             missing_cov = [x for x in covariates if x not in sample_adata.obs.columns]
             logger.warning("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
@@ -375,7 +371,7 @@ class Milo:
             )
             raise
         # Get count matrix
-        count_mat = sample_adata.X.T.toarray()
+        count_mat = sample_adata.X.T.toarray()  # type: ignore[union-attr]
         lib_size = count_mat.sum(0)
 
         # Filter out samples with zero counts
@@ -396,10 +392,10 @@ class Milo:
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 
-            import rpy2.robjects as ro  # type: ignore[import-untyped,import-not-found]
+            import rpy2.robjects as ro
             from rpy2.robjects import numpy2ri, pandas2ri
-            from rpy2.robjects.conversion import localconverter  # type: ignore[import-untyped,import-not-found]
-            from rpy2.robjects.vectors import FloatVector  # type: ignore[import-untyped,import-not-found]
+            from rpy2.robjects.conversion import localconverter
+            from rpy2.robjects.vectors import FloatVector
 
             # Define model matrix
             if not add_intercept or model_contrasts is not None:
@@ -430,7 +426,7 @@ class Milo:
                     return(colnames(m))
                 }
                 """
-                from rpy2.robjects.packages import STAP  # type: ignore[import-untyped,import-not-found]
+                from rpy2.robjects.packages import STAP
 
                 get_model_cols = STAP(r_str, "get_model_cols")
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
@@ -472,8 +468,8 @@ class Milo:
 
             import warnings
 
-            from pydeseq2.dds import DeseqDataSet  # type: ignore[import-untyped]
-            from pydeseq2.ds import DeseqStats  # type: ignore[import-untyped]
+            from pydeseq2.dds import DeseqDataSet
+            from pydeseq2.ds import DeseqStats
 
             warnings.filterwarnings("always", message=".*(alpha).*")
 
@@ -540,12 +536,12 @@ class Milo:
 
             res = res[["logCPM", "logFC", "PValue", "FDR"]]
 
-        res.index = sample_adata.var_names[keep_nhoods]  # type: ignore
+        res.index = sample_adata.var_names[keep_nhoods]
         if any(col in sample_adata.var.columns for col in res.columns):
-            sample_adata.var = sample_adata.var.drop(res.columns, axis=1)
-        sample_adata.var = pd.concat([sample_adata.var, res], axis=1)
+            sample_adata.var = sample_adata.var.drop(res.columns, axis=1)  # type: ignore[union-attr]
+        sample_adata.var = pd.concat([sample_adata.var, res], axis=1)  # type: ignore[call-overload]
 
-        self._graph_spatial_fdr(sample_adata)
+        self._graph_spatial_fdr(sample_adata)  # type: ignore[arg-type]
 
     def de_nhoods(
         self,
@@ -624,7 +620,7 @@ class Milo:
         if missing:
             raise KeyError(f"Columns {missing!r} not found in mdata[{feature_key!r}].obs.")
 
-        sample_obs_map = adata.obs[[sample_col, *covariates]].drop_duplicates().set_index(sample_col)
+        sample_obs_map = adata.obs[[sample_col, *covariates]].drop_duplicates().set_index(sample_col)  # type: ignore[union-attr]
         if not sample_obs_map.index.is_unique:
             raise AssertionError(
                 f"Each sample must map to a single covariate value; got duplicates for samples "
@@ -633,9 +629,9 @@ class Milo:
 
         nhoods = adata.obsm["nhoods"]
         if not issparse(nhoods):
-            nhoods = csr_matrix(nhoods)
-        nhoods_csc = nhoods.tocsc()
-        n_nhoods_total = nhoods.shape[1]
+            nhoods = csr_matrix(nhoods)  # type: ignore[arg-type]
+        nhoods_csc = nhoods.tocsc()  # type: ignore[attr-defined]
+        n_nhoods_total = nhoods.shape[1]  # type: ignore[attr-defined]
 
         nhood_ix = np.arange(n_nhoods_total) if subset_nhoods is None else np.asarray(subset_nhoods, dtype=int)
 
@@ -657,7 +653,7 @@ class Milo:
 
             model_cls: type = PyDESeq2
         elif solver == "statsmodels":
-            import statsmodels.api as sm  # type: ignore[no-redef,import-untyped]
+            import statsmodels.api as sm  # type: ignore[no-redef]
 
             from pertpy.tools._differential_gene_expression._statsmodels import Statsmodels
 
@@ -685,7 +681,7 @@ class Milo:
             sub = sub[sub.obs[sample_col].isin(kept_samples)].copy()
 
             try:
-                pdata = sc.get.aggregate(sub, by=sample_col, func="sum", layer=layer)
+                pdata = sc.get.aggregate(sub, by=sample_col, func="sum", layer=layer)  # type: ignore[arg-type]
             except Exception as e:  # noqa: BLE001
                 failures.setdefault(f"pseudobulk failed ({type(e).__name__})", []).append(int(j))
                 continue
@@ -697,7 +693,7 @@ class Milo:
             for cov in covariates:
                 pdata.obs[cov] = pdata.obs[sample_col].map(sample_obs_map[cov]).astype("category")
 
-            gene_mask = np.asarray(pdata.X.sum(axis=0)).ravel() >= min_count
+            gene_mask = np.asarray(pdata.X.sum(axis=0)).ravel() >= min_count  # type: ignore[union-attr]
             if gene_mask.sum() < 2:
                 continue
             pdata = pdata[:, gene_mask].copy()
@@ -741,7 +737,7 @@ class Milo:
             )
 
         # Backfill BH across genes for solvers that did not provide it
-        from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
+        from statsmodels.stats.multitest import multipletests
 
         for j in range(n_nhoods_total):
             if not test_performed[j]:
@@ -819,8 +815,8 @@ class Milo:
                 "adata.obs[anno_col] is not of categorical type - please use milopy.utils.annotate_nhoods_continuous for continuous variables"
             )
 
-        anno_dummies = pd.get_dummies(adata.obs[anno_col])
-        anno_count = adata.obsm["nhoods"].T.dot(csr_matrix(anno_dummies.values))
+        anno_dummies = pd.get_dummies(adata.obs[anno_col])  # type: ignore[arg-type]
+        anno_count = adata.obsm["nhoods"].T.dot(csr_matrix(anno_dummies.values))  # type: ignore[call-overload, type-var, union-attr]
         anno_count_dense = anno_count.toarray()
         anno_sum = anno_count_dense.sum(1)
         anno_frac = np.divide(anno_count_dense, anno_sum[:, np.newaxis])
@@ -869,9 +865,9 @@ class Milo:
                 "adata.obs[anno_col] is not of continuous type - please use milopy.utils.annotate_nhoods for categorical variables"
             )
 
-        anno_val = adata.obsm["nhoods"].T.dot(csr_matrix(adata.obs[anno_col]).T)
+        anno_val = adata.obsm["nhoods"].T.dot(csr_matrix(adata.obs[anno_col]).T)  # type: ignore[call-overload, type-var, union-attr]
 
-        mean_anno_val = anno_val.toarray() / np.array(adata.obsm["nhoods"].T.sum(1))
+        mean_anno_val = anno_val.toarray() / np.array(adata.obsm["nhoods"].T.sum(1))  # type: ignore[arg-type, call-arg, union-attr]
 
         mdata["milo"].var[f"nhood_{anno_col}"] = mean_anno_val
 
@@ -913,7 +909,7 @@ class Milo:
             set(sample_adata.obs.columns[sample_adata.obs.columns != sample_col].tolist() + new_covariates)
         )
         try:
-            sample_obs = adata.obs[covariates + [sample_col]].drop_duplicates()
+            sample_obs = adata.obs[covariates + [sample_col]].drop_duplicates()  # type: ignore[union-attr]
         except KeyError:
             missing_cov = [covar for covar in covariates if covar not in sample_adata.obs.columns]
             logger.error("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
@@ -971,11 +967,11 @@ class Milo:
         # # Add embedding positions
         mdata["milo"].varm["X_milo_graph"] = adata[adata.obs["nhood_ixs_refined"] == 1].obsm[basis]
         # Add nhood size
-        mdata["milo"].var["Nhood_size"] = np.array(adata.obsm["nhoods"].sum(0)).flatten()
+        mdata["milo"].var["Nhood_size"] = np.array(adata.obsm["nhoods"].sum(0)).flatten()  # type: ignore[arg-type, call-arg, union-attr]
         # Add adjacency graph
-        mdata["milo"].varp["nhood_connectivities"] = adata.obsm["nhoods"].T.dot(adata.obsm["nhoods"])
-        mdata["milo"].varp["nhood_connectivities"].setdiag(0)
-        mdata["milo"].varp["nhood_connectivities"].eliminate_zeros()
+        mdata["milo"].varp["nhood_connectivities"] = adata.obsm["nhoods"].T.dot(adata.obsm["nhoods"])  # type: ignore[arg-type, type-var, union-attr]
+        mdata["milo"].varp["nhood_connectivities"].setdiag(0)  # type: ignore[union-attr]
+        mdata["milo"].varp["nhood_connectivities"].eliminate_zeros()  # type: ignore[union-attr]
         mdata["milo"].uns["nhood"] = {
             "connectivities_key": "nhood_connectivities",
             "distances_key": "",
@@ -1023,8 +1019,8 @@ class Milo:
             expr_id = "expr_" + layer
 
         # Aggregate over nhoods -- taking the mean
-        nhoods_X = X.T.dot(adata.obsm["nhoods"])
-        nhoods_X = csr_matrix(nhoods_X / adata.obsm["nhoods"].toarray().sum(0))
+        nhoods_X = X.T.dot(adata.obsm["nhoods"])  # type: ignore[arg-type, type-var, union-attr]
+        nhoods_X = csr_matrix(nhoods_X / adata.obsm["nhoods"].toarray().sum(0))  # type: ignore[operator, union-attr]
         sample_adata.varm[expr_id] = nhoods_X.T
 
     def _setup_rpy2(
@@ -1145,7 +1141,7 @@ class Milo:
         if alpha is not None:
             padj_threshold = alpha
 
-        nhood_adata = mdata["milo"].T.copy()
+        nhood_adata = mdata["milo"].T.copy()  # type: ignore[union-attr]
         return self._render_nhood_graph(
             nhood_adata,
             logfc=nhood_adata.obs["logFC"],
@@ -1225,7 +1221,7 @@ class Milo:
         if g.empty:
             raise KeyError(f"Gene {gene!r} not found in de_results['variable'].")
         g = g.set_index("nhood")
-        nhood_adata = mdata["milo"].T.copy()
+        nhood_adata = mdata["milo"].T.copy()  # type: ignore[union-attr]
         logfc = g["log_fc"].reindex(nhood_adata.obs_names).to_numpy(dtype=float)
         spatial_fdr = g["pval_corrected_across_nhoods"].reindex(nhood_adata.obs_names).to_numpy(dtype=float)
         return self._render_nhood_graph(
@@ -1286,7 +1282,7 @@ class Milo:
             "X_milo_graph",
             color="graph_color",
             cmap="RdBu_r",
-            size=nhood_adata.obs["Nhood_size"] * min_size,
+            size=nhood_adata.obs["Nhood_size"] * min_size,  # type: ignore[arg-type]
             edges=plot_edges,
             neighbors_key="nhood",
             sort_order=False,
@@ -1297,11 +1293,12 @@ class Milo:
             color_map=color_map,
             palette=palette,
             ax=ax,
+            return_fig=return_fig,
             show=False,
             **kwargs,
         )
         if return_fig:
-            return fig
+            return fig  # type: ignore[return-value]
         plt.show()
         return None
 
@@ -1349,7 +1346,7 @@ class Milo:
             >>> milo.group_nhoods(mdata)
             >>> milo.plot_nhood_annotation(mdata, annotation_key="nhood_groups")
         """
-        nhood_adata = mdata["milo"].T.copy()
+        nhood_adata = mdata["milo"].T.copy()  # type: ignore[union-attr]
         if "Nhood_size" not in nhood_adata.obs.columns:
             raise KeyError('Cannot find "Nhood_size"; please run milo.build_nhood_graph(mdata) first.')
         if annotation_key not in nhood_adata.obs.columns:
@@ -1368,11 +1365,12 @@ class Milo:
             title=title if title is not None else annotation_key,
             palette=palette,
             ax=ax,
+            return_fig=return_fig,
             show=False,
             **kwargs,
         )
         if return_fig:
-            return fig
+            return fig  # type: ignore[return-value]
         plt.show()
         return None
 
@@ -1417,9 +1415,9 @@ class Milo:
         Preview:
             .. image:: /_static/docstring_previews/milo_nhood.png
         """
-        mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()
+        mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()  # type: ignore[union-attr]
         fig = sc.pl.embedding(
-            mdata[feature_key],
+            mdata[feature_key],  # type: ignore[arg-type]
             basis,
             color="Nhood",
             size=30,
@@ -1433,7 +1431,7 @@ class Milo:
         )
 
         if return_fig:
-            return fig
+            return fig  # type: ignore[return-value]
         plt.show()
         return None
 
@@ -1490,7 +1488,7 @@ class Milo:
             padj_threshold = alpha
 
         try:
-            nhood_adata = mdata["milo"].T.copy()
+            nhood_adata = mdata["milo"].T.copy()  # type: ignore[union-attr]
         except KeyError:
             raise RuntimeError(
                 "mdata should be a MuData object with two slots: feature_key and 'milo'. Run 'milopy.count_nhoods(adata)' first."
@@ -1599,7 +1597,7 @@ class Milo:
             If `return_fig` is `True`, returns the figure, otherwise `None`.
         """
         try:
-            nhood_adata = mdata["milo"].T.copy()
+            nhood_adata = mdata["milo"].T.copy()  # type: ignore[union-attr]
         except KeyError:
             raise RuntimeError(
                 "mdata should be a MuData object with two slots: feature_key and 'milo'. Run milopy.count_nhoods(mdata) first"
@@ -1832,7 +1830,7 @@ class Milo:
             raise ValueError(f"'{nhood_group_key}' has no non-missing neighbourhood group labels.")
 
         nhoods = adata.obsm["nhoods"]
-        nhoods = nhoods.tocsr() if isinstance(nhoods, CSBase) else csr_matrix(nhoods)
+        nhoods = nhoods.tocsr() if isinstance(nhoods, CSBase) else csr_matrix(nhoods)  # type: ignore[arg-type]
 
         counts = np.column_stack([np.asarray(nhoods[:, labels == group].sum(axis=1)).ravel() for group in categories])
         total = counts.sum(axis=1)
@@ -1918,7 +1916,7 @@ class Milo:
                 raise ValueError("`group_to_compare` and `baseline` must differ.")
 
         by = list(dict.fromkeys([sample_col, nhood_group_key, *covariates]))
-        pdata = sc.get.aggregate(adata, by=by, func="sum", layer=layer)
+        pdata = sc.get.aggregate(adata, by=by, func="sum", layer=layer)  # type: ignore[arg-type]
         pdata.X = to_dense(pdata.layers["sum"])
         if pdata.obs[nhood_group_key].nunique() < 2:
             raise ValueError(f"Fewer than two groups in '{nhood_group_key}' after aggregation.")

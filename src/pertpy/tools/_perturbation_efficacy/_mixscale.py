@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from fast_array_utils.conv import to_dense
 from pandas.errors import PerformanceWarning
 from scipy.sparse import sparray
 
-from pertpy._types import CSBase, cast_frame
+from pertpy._types import CSBase, RankGenesMethod, cast_frame
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
         max_de_genes: int = 100,
         logfc_threshold: float = 0.25,
         de_layer: str | None = None,
-        test_method: str = "wilcoxon",
+        test_method: RankGenesMethod = "wilcoxon",
         scale: bool = True,
         split_by: str | None = None,
         pval_cutoff: float = 5e-2,
@@ -202,20 +202,20 @@ class Mixscale(PerturbationEfficacyAnalyzer):
                     continue
 
                 de_indices = [var_loc[g] for g in de_genes]
-                dat = X[all_mask][:, de_indices].astype(np.float64)
+                dat = X[all_mask][:, de_indices].astype(np.float64)  # type: ignore[call-overload, index, union-attr]
                 if scale:
                     dat = self._scale_features(dat)
 
-                vec = _subset_column_mean(dat, guide_in_dat) - _subset_column_mean(dat, nt_in_dat)
+                vec = _subset_column_mean(dat, guide_in_dat) - _subset_column_mean(dat, nt_in_dat)  # type: ignore[arg-type]
                 vec_norm_sq = float(vec @ vec)
                 if not vec_norm_sq > 0:
                     continue
 
-                numerator = _project(dat, vec)
+                numerator = _project(dat, vec)  # type: ignore[arg-type]
                 pvec = numerator / vec_norm_sq
                 vec_sq = vec * vec
                 with np.errstate(divide="ignore", invalid="ignore"):
-                    loo = _leave_one_out_numerators(dat, numerator, vec) / (vec_norm_sq - vec_sq[None, :])
+                    loo = _leave_one_out_numerators(dat, numerator, vec) / (vec_norm_sq - vec_sq[None, :])  # type: ignore[arg-type]
 
                 nt_pvec = pvec[nt_in_dat]
                 std_nt = nt_pvec.std(ddof=1)
@@ -264,7 +264,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
         pert_key: str,
         control: str,
         de_layer: str | None,
-        test_method: str,
+        test_method: RankGenesMethod,
         logfc_threshold: float,
         pval_cutoff: float,
         min_de_genes: int,
@@ -351,7 +351,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
         reference_cells,
         *,
         de_layer: str | None,
-        test_method: str,
+        test_method: RankGenesMethod,
         logfc_threshold: float,
         pval_cutoff: float,
     ) -> np.ndarray:

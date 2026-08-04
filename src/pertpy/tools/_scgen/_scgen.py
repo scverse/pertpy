@@ -7,16 +7,16 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
-from adjustText import adjust_text  # type: ignore[import-untyped]
+import scanpy as sc
+from adjustText import adjust_text
 from anndata import AnnData
 from jax import Array
 from scipy import stats
-from scvi import REGISTRY_KEYS  # type: ignore[import-untyped,import-not-found]
-from scvi.data import AnnDataManager  # type: ignore[import-untyped,import-not-found]
-from scvi.data.fields import CategoricalObsField, LayerField  # type: ignore[import-untyped,import-not-found]
-from scvi.model.base import BaseModelClass  # type: ignore[import-untyped,import-not-found]
-from scvi.utils import setup_anndata_dsp  # type: ignore[import-untyped,import-not-found]
+from scvi import REGISTRY_KEYS
+from scvi.data import AnnDataManager
+from scvi.data.fields import CategoricalObsField, LayerField
+from scvi.model.base import BaseModelClass
+from scvi.utils import setup_anndata_dsp
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger

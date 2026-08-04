@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import jax.numpy as jnp
 import numpy as np
-import numpyro as npy  # type: ignore[import-untyped]
-import numpyro.distributions as npd  # type: ignore[import-untyped]
+import numpyro as npy
+import numpyro.distributions as npd
 from anndata import AnnData
 from jax import config
-from mudata import MuData  # type: ignore[import-untyped]
+from mudata import MuData
 
 from pertpy._logger import logger
 from pertpy._types import cast_matrix
@@ -148,8 +148,8 @@ class Sccoda(CompositionalModel2):
             adata = data[modality_key]
         if isinstance(data, AnnData):
             adata = data
-        adata = super().prepare(
-            adata,
+        adata = super()._prepare(
+            adata,  # type: ignore[arg-type]
             formula=formula,
             reference_cell_type=reference_cell_type,
             automatic_reference_absence_threshold=automatic_reference_absence_threshold,
@@ -171,12 +171,12 @@ class Sccoda(CompositionalModel2):
         adata.uns["scCODA_params"]["select_type"] = "spikeslab"
 
         if isinstance(data, MuData):
-            data.mod[modality_key] = adata
+            data.mod[modality_key] = adata  # type: ignore[index]
             return data
         else:
             return adata
 
-    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:  # type: ignore
+    def set_init_mcmc_states(self, rng_key: None, ref_index: np.ndarray, sample_adata: AnnData) -> AnnData:
         """Sets initial MCMC state values for scCODA model.
 
         Args:
@@ -221,7 +221,7 @@ class Sccoda(CompositionalModel2):
 
         return sample_adata
 
-    def model(  # type: ignore
+    def model(
         self,
         counts: np.ndarray,
         covariates: np.ndarray,
@@ -274,7 +274,8 @@ class Sccoda(CompositionalModel2):
             # Add 0 effect reference feature
             with covariate_axis:
                 beta_full = jnp.concatenate(
-                    (beta_raw[:, :ref_index], jnp.zeros(shape=[D, 1]), beta_raw[:, ref_index:]), axis=-1
+                    (beta_raw[:, :ref_index], jnp.zeros(shape=[D, 1]), beta_raw[:, ref_index:]),  # type: ignore[index]
+                    axis=-1,
                 )
                 beta = npy.deterministic("beta", beta_full)
 
@@ -289,7 +290,7 @@ class Sccoda(CompositionalModel2):
 
         return predictions
 
-    def make_arviz(  # type: ignore
+    def make_arviz(
         self,
         data: AnnData | MuData,
         modality_key: str = "coda",
@@ -360,7 +361,7 @@ class Sccoda(CompositionalModel2):
         }
 
         return self._build_arviz_from_adata(
-            sample_adata,
+            sample_adata,  # type: ignore[arg-type]
             dims=dims,
             coords=coords,
             rng_key=rng_key,

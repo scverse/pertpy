@@ -6,16 +6,16 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import numpy as np
-import optax  # type: ignore[import-untyped]
+import optax
 import pandas as pd
 import scipy
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
 from flax.training import train_state
 from jax import random
-from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
-from sklearn.model_selection import train_test_split  # type: ignore[import-untyped]
-from sklearn.preprocessing import OneHotEncoder  # type: ignore[import-untyped]
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
 
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 from pertpy.tools._perturbation_space._perturbation_space import (
@@ -205,7 +205,7 @@ def val_step(state: TrainState, batch: tuple[jnp.ndarray, jnp.ndarray]) -> float
 
     y_indices = jnp.argmax(y, axis=1)
     loss = optax.softmax_cross_entropy_with_integer_labels(logits, y_indices).mean()
-    return loss
+    return loss  # type: ignore[return-value]
 
 
 @jax.jit

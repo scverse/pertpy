@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from _pytest.fixtures import fixture
 
 import pertpy as pt
@@ -12,7 +12,7 @@ CWD = Path(__file__).parent.resolve()
 @fixture
 def adata():
     adata = pt.dt.cinemaot_example()
-    adata = sc.pp.subsample(adata, 0.1, copy=True)
+    adata = sc.pp.sample(adata, 0.1, copy=True, rng=0)
 
     return adata
 

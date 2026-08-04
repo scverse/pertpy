@@ -65,7 +65,7 @@ class FlaxDecoder(nn.Module):
     training: bool | None = None
 
     @nn.compact
-    def __call__(self, x: jnp.ndarray, training: bool | None = None) -> jnp.ndarray:  # type: ignore
+    def __call__(self, x: jnp.ndarray, training: bool | None = None) -> jnp.ndarray:
         """Forward pass.
 
         Args:
@@ -90,6 +90,6 @@ class FlaxDecoder(nn.Module):
                 x = nn.LayerNorm(x)  # type: ignore
             x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x) if self.dropout_rate > 0 else x
 
-        x = nn.Dense(self.n_output)(x)  # type: ignore
+        x = nn.Dense(self.n_output)(x)
 
         return x

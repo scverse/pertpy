@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
-from scanpy import settings  # type: ignore[import-untyped]
+from scanpy import settings
 
 from pertpy.data._dataloader import _download
 
