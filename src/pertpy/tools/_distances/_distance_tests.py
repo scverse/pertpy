@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
 from rich.progress import track
+from scverse_misc import Deprecation, deprecated_arg
 from sklearn.metrics import pairwise_distances
 from statsmodels.stats.multitest import multipletests
 
@@ -32,9 +33,10 @@ class DistanceTest:
         obsm_key: Name of embedding in adata.obsm to use.
                   Mutually exclusive with 'counts_layer_key'.
                   Defaults to None, but is set to "X_pca" if not set explicitly internally.
-        alpha: Significance level.
+        padj_threshold: Significance level, applied to the raw p-values and to the p-values after multiple testing correction.
         correction: Multiple testing correction method.
         cell_wise_metric: Metric to use between single cells.
+        alpha: Deprecated and will be removed in a future release. Use `padj_threshold`.
 
     Examples:
         >>> import pertpy as pt
@@ -43,6 +45,10 @@ class DistanceTest:
         >>> tab = distance_test(adata, groupby="perturbation", contrast="control")
     """
 
+    @deprecated_arg(  # type: ignore[misc]
+        "alpha",
+        cast("Deprecation", Deprecation("1.1.2", "Use `padj_threshold`.")),
+    )
     def __init__(
         self,
         metric: Metric,
@@ -50,10 +56,14 @@ class DistanceTest:
         n_perms: int = 1000,
         layer_key: str | None = None,
         obsm_key: str | None = None,
-        alpha: float = 0.05,
+        padj_threshold: float = 0.05,
         correction: str = "holm-sidak",
         cell_wise_metric=None,
+        alpha: float | None = None,
     ):
+        if alpha is not None:
+            padj_threshold = alpha
+
         self.metric = metric
         self.n_perms = n_perms
 
@@ -66,7 +76,7 @@ class DistanceTest:
             obsm_key = "X_pca"
         self.layer_key = layer_key
         self.obsm_key = obsm_key
-        self.alpha = alpha
+        self.padj_threshold = padj_threshold
         self.correction = correction
         self.cell_wise_metric = (
             cell_wise_metric if cell_wise_metric else Distance(self.metric, obsm_key=self.obsm_key).cell_wise_metric
@@ -190,14 +200,16 @@ class DistanceTest:
         pvalues = n_failures / self.n_perms
 
         # Apply multiple testing correction
-        significant_adj, pvalue_adj, _, _ = multipletests(pvalues.values, alpha=self.alpha, method=self.correction)
+        significant_adj, pvalue_adj, _, _ = multipletests(
+            pvalues.values, alpha=self.padj_threshold, method=self.correction
+        )
 
         # Aggregate results
         tab = pd.DataFrame(
             {
                 "distance": df["distance"],
                 "pvalue": pvalues,
-                "significant": pvalues < self.alpha,
+                "significant": pvalues < self.padj_threshold,
                 "pvalue_adj": pvalue_adj,
                 "significant_adj": significant_adj,
             },
@@ -302,14 +314,16 @@ class DistanceTest:
         pvalues = n_failures / self.n_perms
 
         # Apply multiple testing correction
-        significant_adj, pvalue_adj, _, _ = multipletests(pvalues.values, alpha=self.alpha, method=self.correction)
+        significant_adj, pvalue_adj, _, _ = multipletests(
+            pvalues.values, alpha=self.padj_threshold, method=self.correction
+        )
 
         # Aggregate results
         tab = pd.DataFrame(
             {
                 "distance": df["distance"],
                 "pvalue": pvalues,
-                "significant": pvalues < self.alpha,
+                "significant": pvalues < self.padj_threshold,
                 "pvalue_adj": pvalue_adj,
                 "significant_adj": significant_adj,
             },
