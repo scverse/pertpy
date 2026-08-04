@@ -51,6 +51,7 @@ classifiers = [
 dependencies = [
     "requests",
     "rich",
+    "anndata",
     "scanpy",
     "mudata",
     "scikit-misc",
@@ -129,6 +130,10 @@ test = [
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+# The annotations pertpy is type checked against only exist on anndata main; drop once 0.14 is released.
+[tool.uv.sources]
+anndata = { git = "https://github.com/scverse/anndata.git", branch = "main" }
 
 [tool.hatch.version]
 source = "vcs"
@@ -295,6 +300,45 @@ convention = "google"
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
+
+[tool.mypy]
+mypy_path = [ "src" ]
+warn_redundant_casts = true
+warn_unused_ignores = true
+# Installed, but shipping no `py.typed` marker:
+# infer types from their source instead of falling back to `Any`.
+[[tool.mypy.overrides]]
+module = [
+    "adjustText.*",
+    "arviz.*",
+    "blitzgsea.*",
+    "ete4.*",
+    "formulaic_contrasts.*",
+    "mudata.*",
+    "numpyro.*",
+    "optax.*",
+    "patsy.*",
+    "pooch.*",
+    "pubchempy",
+    "pydeseq2.*",
+    "pynndescent.*",
+    "scanpy.*",
+    "sklearn.*",
+    "skmisc.*",
+    "sparsecca.*",
+    "toytree.*",
+]
+follow_untyped_imports = true
+# Dependencies that ship no type information (absent or `Incomplete` annotations),
+# or whose source mypy cannot follow.
+[[tool.mypy.overrides]]
+module = [
+    "rpy2.*",
+    "scvi.*",
+    # `statsmodels.api` re-exports through `from .__init__ import test`.
+    "statsmodels.*",
+]
+ignore_missing_imports = true
 
 [tool.cruft]
 skip = [

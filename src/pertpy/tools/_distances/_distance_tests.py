@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 from rich.progress import track
-from sklearn.metrics import pairwise_distances  # type: ignore[import-untyped]
-from statsmodels.stats.multitest import multipletests  # type: ignore[import-untyped]
+from sklearn.metrics import pairwise_distances
+from statsmodels.stats.multitest import multipletests
 
 from pertpy._types import cast_matrix
 
@@ -250,9 +250,9 @@ class DistanceTest:
         for group in groups:
             subset = adata[adata.obs[groupby].isin([group, contrast])]
             if self.layer_key:
-                cells = subset.layers[self.layer_key].copy()
+                cells = subset.layers[self.layer_key].copy()  # type: ignore[union-attr]
             elif self.obsm_key is not None:
-                cells = subset.obsm[self.obsm_key].copy()
+                cells = subset.obsm[self.obsm_key].copy()  # type: ignore[union-attr]
             else:
                 raise ValueError("Either `layer_key` or `obsm_key` must be set.")
             pwd = pairwise_distances(cells, cells, metric=self.distance.cell_wise_metric)

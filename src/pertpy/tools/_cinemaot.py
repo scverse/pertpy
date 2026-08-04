@@ -7,18 +7,18 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 import scipy.stats as ss
-import sklearn.metrics  # type: ignore[import-untyped]
+import sklearn.metrics
 from fast_array_utils.conv import to_dense
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear import linear_problem
 from ott.solvers.linear import sinkhorn, sinkhorn_lr
-from scanpy.plotting import _utils  # type: ignore[import-untyped]
+from scanpy.plotting import _utils
 from seaborn import heatmap
-from sklearn.decomposition import FastICA  # type: ignore[import-untyped]
-from sklearn.linear_model import LinearRegression  # type: ignore[import-untyped]
-from sklearn.neighbors import NearestNeighbors  # type: ignore[import-untyped]
+from sklearn.decomposition import FastICA
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import NearestNeighbors
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from anndata import AnnData
     from matplotlib.axes import Axes
     from matplotlib.pyplot import Figure
-    from statsmodels.tools.typing import ArrayLike  # type: ignore[import-untyped]
+    from statsmodels.tools.typing import ArrayLike
 
 
 class Cinemaot:
@@ -164,9 +164,9 @@ class Cinemaot:
                 del X
 
             adata.obsm[cf_rep] = cf
-            adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = (
-                ot_sink.apply(adata.obsm[cf_rep][adata.obs[pert_key] == control, :].T).T
-                / ot_sink.apply(np.ones_like(adata.obsm[cf_rep][adata.obs[pert_key] == control, :].T)).T
+            adata.obsm[cf_rep][adata.obs[pert_key] != control, :] = (  # type: ignore[index]
+                ot_sink.apply(adata.obsm[cf_rep][adata.obs[pert_key] == control, :].T).T  # type: ignore[index, union-attr]
+                / ot_sink.apply(np.ones_like(adata.obsm[cf_rep][adata.obs[pert_key] == control, :].T)).T  # type: ignore[index, union-attr]
             )
 
         else:
@@ -219,6 +219,7 @@ class Cinemaot:
         eps: float = 1e-3,
         solver: str = "Sinkhorn",
         resolution: float = 1.0,
+        random_state: int = 0,
     ):
         """The resampling CINEMA-OT algorithm that allows tackling the differential abundance in an unsupervised manner.
 
@@ -239,6 +240,7 @@ class Cinemaot:
             eps: Tolerate error of the optimal transport.
             solver: Either "Sinkhorn" or "LRSinkhorn". The ott-jax solver used.
             resolution: the clustering resolution used in the sampling phase.
+            random_state: Seed for the subsampling performed in the sampling phase.
 
         Returns:
             Returns an anndata object that contains the single-cell level treatment effect as de.X and the
@@ -264,7 +266,13 @@ class Cinemaot:
         adata.obs_names_make_unique()
 
         idx = self._get_weightidx(
-            adata, pert_key=pert_key, control=control, k=k, use_rep=use_rep, resolution=resolution
+            adata,
+            pert_key=pert_key,
+            control=control,
+            k=k,
+            use_rep=use_rep,
+            resolution=resolution,
+            random_state=random_state,
         )
         adata_ = adata[idx].copy()
         TE = self.causaleffect(
@@ -332,6 +340,8 @@ class Cinemaot:
         sc.pp.neighbors(de, use_rep=de_rep)
         sc.tl.leiden(de, resolution=de_resolution, flavor="igraph")
         if use_raw:
+            if adata.raw is None:
+                raise ValueError("`use_raw=True` requires `adata.raw` to be set.")
             counts = to_dense(adata.raw.X)
             df = pd.DataFrame(counts, columns=adata.raw.var_names, index=adata.raw.obs_names)
         else:
@@ -379,6 +389,8 @@ class Cinemaot:
             >>> model = pt.tl.Cinemaot()
             >>> dim = model.get_dim(adata)
         """
+        if adata.raw is None:
+            raise ValueError("`get_dim` requires `adata.raw` to be set.")
         sk = SinkhornKnopp()
         data = to_dense(adata.raw.X)
         vm = (1e-3 + data + c * data * data) / (1 + c)
@@ -397,6 +409,7 @@ class Cinemaot:
         use_rep: str = "X_pca",
         k: int = 20,
         resolution: float = 1.0,
+        random_state: int = 0,
     ):
         """Generating the resampled indices that balances covariates across treatment conditions.
 
@@ -407,6 +420,7 @@ class Cinemaot:
             use_rep: the embedding used to give a upper bound for the estimated rank.
             k: the number of neighbors used in the k-NN matching phase.
             resolution: the clustering resolution used in the sampling phase.
+            random_state: Seed for the subsampling performed in the sampling phase.
 
         Returns:
             Returns the indices.
@@ -418,8 +432,8 @@ class Cinemaot:
             >>> idx = model._get_weightidx(adata, pert_key="perturbation", control="No stimulation")
         """
         adata_ = adata.copy()
-        X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]
-        X_pca2 = adata_.obsm[use_rep][adata_.obs[pert_key] != control, :]
+        X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]  # type: ignore[index]
+        X_pca2 = adata_.obsm[use_rep][adata_.obs[pert_key] != control, :]  # type: ignore[index]
         nbrs = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(X_pca1)
         mixscape_pca = cast_dense(adata.obsm[use_rep]).copy()
         mixscapematrix = nbrs.kneighbors_graph(X_pca2).toarray()
@@ -452,20 +466,22 @@ class Cinemaot:
                     / adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].shape[0]
                 )
                 if j == 0:
-                    idx = sc.pp.subsample(
+                    idx = sc.pp.sample(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)],
-                        n_obs=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)].shape[0],
+                        n=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)].shape[0],
                         copy=True,
+                        rng=random_state,
                     ).obs.index
                     idx = idx.append(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)].obs.index
                     )
                     j = j + 1
                 else:
-                    idx_tmp = sc.pp.subsample(
+                    idx_tmp = sc.pp.sample(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)],
-                        n_obs=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)].shape[0],
+                        n=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)].shape[0],
                         copy=True,
+                        rng=random_state,
                     ).obs.index
                     idx_tmp = idx_tmp.append(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)].obs.index
@@ -477,20 +493,22 @@ class Cinemaot:
                     / adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)].shape[0]
                 )
                 if j == 0:
-                    idx = sc.pp.subsample(
+                    idx = sc.pp.sample(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)],
-                        n_obs=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].shape[0],
+                        n=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].shape[0],
                         copy=True,
+                        rng=random_state,
                     ).obs.index
                     idx = idx.append(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].obs.index
                     )
                     j = j + 1
                 else:
-                    idx_tmp = sc.pp.subsample(
+                    idx_tmp = sc.pp.sample(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == expr_label)],
-                        n_obs=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].shape[0],
+                        n=adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].shape[0],
                         copy=True,
+                        rng=random_state,
                     ).obs.index
                     idx_tmp = idx_tmp.append(
                         adata_[(adata_.obs["leiden"] == i) & (adata_.obs[pert_key] == ref_label)].obs.index
@@ -620,12 +638,14 @@ class Cinemaot:
         cf = adata.obsm[cf_rep]
         obs = adata.obs
         X = cast_matrix(adata.X)
-        source = adata.raw.X if use_raw else X
+        if use_raw and adata.raw is None:
+            raise ValueError("`use_raw=True` requires `adata.raw` to be set.")
+        source = adata.raw.X if use_raw and adata.raw is not None else X
         counts = to_dense(source) if isinstance(X, CSBase) else source
-        Y0 = counts[obs[pert_key] == control, :]
-        Y1 = counts[obs[pert_key] != control, :]
-        X0 = cf[adata.obs[pert_key] == control, :]
-        X1 = cf[adata.obs[pert_key] != control, :]
+        Y0 = counts[obs[pert_key] == control, :]  # type: ignore[index]
+        Y1 = counts[obs[pert_key] != control, :]  # type: ignore[index]
+        X0 = cf[adata.obs[pert_key] == control, :]  # type: ignore[index]
+        X1 = cf[adata.obs[pert_key] != control, :]  # type: ignore[index]
         ols0 = LinearRegression()
         ols0.fit(X0, Y0)
         ols1 = LinearRegression()

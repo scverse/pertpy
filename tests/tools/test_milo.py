@@ -3,10 +3,10 @@ from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 import pytest
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 import scipy.sparse as sp
 from anndata import AnnData
-from mudata import MuData  # type: ignore[import-untyped]
+from mudata import MuData
 
 import pertpy as pt
 
@@ -17,7 +17,7 @@ def solver(request):
 
     if solver_name == "edger":
         try:
-            from rpy2.robjects.packages import importr  # type: ignore[import-untyped,import-not-found]
+            from rpy2.robjects.packages import importr
 
             importr("edgeR")
         except Exception:  # noqa: BLE001

@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 from zipfile import ZipFile
 
-import pooch  # type: ignore[import-untyped]
+import pooch
 import requests
 from rich.progress import Progress, TaskID
 

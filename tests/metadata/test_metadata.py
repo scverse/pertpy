@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from scanpy import settings  # type: ignore[import-untyped]
+from scanpy import settings
 
 from pertpy.metadata._metadata import MetaData
 

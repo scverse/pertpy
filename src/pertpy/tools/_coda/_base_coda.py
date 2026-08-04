@@ -9,16 +9,16 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 import seaborn as sns
-from adjustText import adjust_text  # type: ignore[import-untyped]
+from adjustText import adjust_text
 from anndata import AnnData
 from jax import config, random
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
 from matplotlib.colors import Colormap
-from mudata import MuData  # type: ignore[import-untyped]
-from numpyro.infer import HMC, MCMC, NUTS, initialization  # type: ignore[import-untyped]
+from mudata import MuData
+from numpyro.infer import HMC, MCMC, NUTS, initialization
 from rich import box, print
 from rich.console import Console
 from rich.table import Table
@@ -31,9 +31,9 @@ from pertpy._types import cast_dense, cast_frame, cast_matrix
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import numpyro as npy  # type: ignore[import-untyped]
-    import toytree as tt  # type: ignore[import-untyped]
-    from ete4 import Tree  # type: ignore[import-untyped]
+    import numpyro as npy
+    import toytree as tt
+    from ete4 import Tree
     from jax._src.typing import Array
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
@@ -116,7 +116,7 @@ class CompositionalModel2(ABC):
         rather than from ``self.mcmc``, so ``make_arviz`` works on stored MuData objects
         even after the model instance has been reused for other datasets (issue #812).
         """
-        import arviz as az  # type: ignore[import-untyped]
+        import arviz as az
         from numpyro.infer import Predictive
 
         mcmc_state = sample_adata.uns.get("scCODA_params", {}).get("mcmc", {})
@@ -163,7 +163,7 @@ class CompositionalModel2(ABC):
 
         return az.from_dict(groups, coords=coords, dims=dims)
 
-    def prepare(
+    def _prepare(
         self,
         sample_adata: AnnData,
         *,
@@ -193,9 +193,9 @@ class CompositionalModel2(ABC):
         X = cast_dense(sample_adata.X)
 
         # Build covariate matrix from R-like formula, save in obsm
-        import patsy  # type: ignore[import-untyped]
+        import patsy
 
-        covariate_matrix = patsy.dmatrix(formula, sample_adata.obs)
+        covariate_matrix = patsy.dmatrix(formula, sample_adata.obs)  # type: ignore[attr-defined]
         covariate_names = covariate_matrix.design_info.column_names[1:]
         sample_adata.obsm["covariate_matrix"] = np.array(covariate_matrix[:, 1:]).astype(dtype)
 
@@ -251,9 +251,9 @@ class CompositionalModel2(ABC):
             row_len_covariate_matrix = sample_adata.obsm["covariate_matrix"].shape[0]
             row_len_sample_adata = sample_adata.X.shape[0]
             raise ValueError(f"Wrong input dimensions X[{row_len_covariate_matrix},:] != y[{row_len_sample_adata},:]")
-        if covariate_matrix.shape[0] != len(sample_adata.obsm["sample_counts"]):
+        if covariate_matrix.shape[0] != len(sample_adata.obsm["sample_counts"]):  # type: ignore[arg-type]
             covariate_matrix = sample_adata.obsm["covariate_matrix"]
-            len_sample_counts = len(sample_adata.obsm["sample_counts"])
+            len_sample_counts = len(sample_adata.obsm["sample_counts"])  # type: ignore[arg-type]
             raise ValueError(f"Wrong input dimensions X[{covariate_matrix},:] != n_total[{len_sample_counts}]")
 
         # Save important model parameters in uns
@@ -404,7 +404,8 @@ class CompositionalModel2(ABC):
             rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata
         )
         init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
-        nuts_kernel = NUTS(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
+        kwargs.setdefault("init_strategy", initialization.init_to_value(values=init_params))
+        nuts_kernel = NUTS(self.model, *args, **kwargs)
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
         sample_adata.uns["scCODA_params"]["mcmc"]["num_warmup"] = num_warmup
@@ -470,7 +471,8 @@ class CompositionalModel2(ABC):
             rng_key, sample_adata.uns["scCODA_params"]["reference_index"], sample_adata
         )
         init_params = sample_adata.uns["scCODA_params"]["mcmc"]["init_params"]
-        hmc_kernel = HMC(self.model, *args, init_strategy=initialization.init_to_value(values=init_params), **kwargs)
+        kwargs.setdefault("init_strategy", initialization.init_to_value(values=init_params))
+        hmc_kernel = HMC(self.model, *args, **kwargs)
 
         # Save important parameters in `sample_adata.uns`
         sample_adata.uns["scCODA_params"]["mcmc"]["num_samples"] = num_samples
@@ -482,7 +484,7 @@ class CompositionalModel2(ABC):
         )
 
     def summary_prepare(
-        self, sample_adata: AnnData, est_fdr: float = 0.05, *args, **kwargs
+        self, sample_adata: AnnData, est_fdr: float = 0.05, **kwargs
     ) -> tuple[pd.DataFrame, pd.DataFrame] | tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Generates summary dataframes for intercepts, effects and node-level effect (if using tree aggregation).
 
@@ -491,7 +493,6 @@ class CompositionalModel2(ABC):
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             est_fdr: Desired FDR value.
-            args: Passed to ``az.summary``
             kwargs: Passed to ``az.summary``
 
         Returns:
@@ -558,7 +559,6 @@ class CompositionalModel2(ABC):
             data=arviz_data,
             var_names=var_names,
             kind="stats",
-            *args,  # noqa: B026
             **kwargs,
         )
         summ = summ.convert_dtypes(dtype_backend="numpy_nullable").infer_objects()
@@ -629,7 +629,6 @@ class CompositionalModel2(ABC):
                 kind="stats",
                 var_names=["b_raw_sel"],
                 skipna=True,
-                *args,  # noqa: B026
                 **kwargs,
             )
             summary_sel = summary_sel.convert_dtypes(dtype_backend="numpy_nullable").infer_objects()
@@ -712,7 +711,7 @@ class CompositionalModel2(ABC):
         if model_type == "tree_agg":
             node_df = node_df.loc[
                 :, ["final_parameter", "median", hdis[0], hdis[1], "sd", "delta", "significant"]
-            ].copy()  # type: ignore
+            ].copy()
             node_df = node_df.rename(
                 columns=dict(
                     zip(
@@ -720,8 +719,8 @@ class CompositionalModel2(ABC):
                         ["Final Parameter", "Median", hdis_new[0], hdis_new[1], "SD", "Delta", "Is credible"],
                         strict=False,
                     )
-                )  # type: ignore
-            )  # type: ignore
+                )
+            )
 
             return intercept_df, effect_df, node_df
         else:
@@ -950,7 +949,7 @@ class CompositionalModel2(ABC):
                 node_df = sample_adata.uns["scCODA_params"]["node_df"]
 
         # Get number of samples, cell types
-        data_dims = sample_adata.X.shape
+        data_dims = sample_adata.X.shape  # type: ignore[union-attr]
 
         console = Console()
         table = Table(title="Compositional Analysis summary", box=box.SQUARE, expand=True, highlight=True)
@@ -1067,7 +1066,7 @@ class CompositionalModel2(ABC):
         if isinstance(data, AnnData):
             sample_adata = data
 
-        return sample_adata.varm["intercept_df"]
+        return sample_adata.varm["intercept_df"]  # type: ignore[return-value]
 
     def get_effect_df(self, data: AnnData | MuData, modality_key: str = "coda") -> pd.DataFrame:
         """Get effect dataframe as printed in the extended summary.
@@ -2000,7 +1999,7 @@ class CompositionalModel2(ABC):
         """
         try:
             from ete4 import Tree
-            from ete4.treeview import (  # type: ignore[import-untyped]
+            from ete4.treeview import (
                 CircleFace,
                 NodeStyle,
                 TextFace,
@@ -2094,7 +2093,7 @@ class CompositionalModel2(ABC):
         """
         try:
             from ete4 import Tree
-            from ete4.treeview import (  # type: ignore[import-untyped]
+            from ete4.treeview import (
                 CircleFace,
                 NodeStyle,
                 TextFace,
@@ -2316,8 +2315,8 @@ class CompositionalModel2(ABC):
             }
         for _, effect in enumerate(effect_names):
             effect_df = data_coda.varm[effect]
-            effect_col = "Effect" if "Effect" in effect_df.columns else "Final Parameter"
-            data_rna.obs[effect] = [effect_df.loc[f"{c}", effect_col] for c in data_rna.obs[cluster_key]]
+            effect_col = "Effect" if "Effect" in effect_df.columns else "Final Parameter"  # type: ignore[union-attr]
+            data_rna.obs[effect] = [effect_df.loc[f"{c}", effect_col] for c in data_rna.obs[cluster_key]]  # type: ignore[union-attr]
         if kwargs.get("vmin"):
             vmin = kwargs["vmin"]
             kwargs.pop("vmin")
@@ -2330,7 +2329,7 @@ class CompositionalModel2(ABC):
             vmax = max(data_rna.obs[effect].max() for _, effect in enumerate(effect_names))
 
         fig = sc.pl.umap(
-            data_rna,
+            data_rna,  # type: ignore[arg-type]
             color=effect_name,
             vmax=vmax,
             vmin=vmin,
@@ -2343,7 +2342,7 @@ class CompositionalModel2(ABC):
         )
 
         if return_fig:
-            return fig
+            return fig  # type: ignore[return-value]
         plt.show()
 
         return None
@@ -2371,12 +2370,12 @@ def get_a(
     A_ = np.zeros((n_tips, n_nodes))
 
     for i in np.arange(n_nodes):
-        leaves_i = list(set(tree.get_node_descendant_idxs(i)) & set(np.arange(n_tips)))
+        leaves_i = list(set(tree.get_node_descendant_idxs(i)) & set(np.arange(n_tips)))  # type: ignore[attr-defined]
         A_[leaves_i, i] = 1
 
     # collapsed trees may have scrambled leaves.
     # Therefore, we permute the rows of A such that they are in the original order. Columns (nodes) stay permuted.
-    scrambled_leaves = list(tree.get_node_values("idx_orig", True, True)[-n_tips:])
+    scrambled_leaves = list(tree.get_node_values("idx_orig", True, True)[-n_tips:])  # type: ignore[attr-defined]
     scrambled_leaves.reverse()
     if scrambled_leaves[0] == "":
         scrambled_leaves = list(np.arange(0, n_tips, 1))
@@ -2412,18 +2411,18 @@ def collapse_singularities(tree: tt.core.ToyTree) -> tt.core.ToyTree:
     # _coords.update() scrambles the idx of leaves. Therefore, keep track of it here
     tree_new = tree.copy()
     for node in tree_new.treenode.traverse():
-        node.add_prop("idx_orig", node.idx)
+        node.add_prop("idx_orig", node.idx)  # type: ignore[attr-defined]
 
     for n in nodes_to_delete:
-        node = tree_new.idx_dict[n]
-        node.delete()
+        node = tree_new[n]
+        node.delete()  # type: ignore[attr-defined]
 
-    tree_new._coords.update()
+    tree_new._coords.update()  # type: ignore[attr-defined]
 
     # remove node artifacts
-    for k in list(tree_new.idx_dict):
+    for k in list(tree_new._idx_dict):
         if k >= tree_new.nnodes:
-            tree_new.idx_dict.pop(k)
+            tree_new._idx_dict.pop(k)
 
     return tree_new
 
@@ -2643,7 +2642,7 @@ def import_tree(
                 n.name = str(node_id)
                 node_id += 1
     elif levels_orig is not None:
-        newick = df2newick(data_1.obs.reset_index(), levels=levels_orig)
+        newick = df2newick(data_1.obs.reset_index(), levels=levels_orig)  # type: ignore[union-attr]
         tree = ete.Tree(newick, parser=8)
 
         if add_level_name:
@@ -2652,7 +2651,7 @@ def import_tree(
                     dist = n.get_distance(n, tree, topological=True)
                     n.name = f"{levels_orig[int(dist) - 1]}_{n.name}"
     elif levels_agg is not None:
-        newick = df2newick(data_2.var.reset_index(), levels=levels_agg)
+        newick = df2newick(data_2.var.reset_index(), levels=levels_agg)  # type: ignore[union-attr]
         tree = ete.Tree(newick, parser=8)
         if add_level_name:
             for n in tree.descendants():

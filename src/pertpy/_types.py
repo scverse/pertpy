@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,8 @@ CSCBase = sparse.csc_matrix
 SpBase = sparse.spmatrix
 
 RandomStateLike = int | np.random.Generator | np.random.RandomState | None
+
+RankGenesMethod = Literal["logreg", "t-test", "wilcoxon", "t-test_overestim_var"]
 
 
 def cast_matrix(X: object) -> np.ndarray | CSBase:

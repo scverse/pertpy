@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
 from pandas import DataFrame, Series
@@ -58,9 +58,9 @@ def adata(distance: Metric, rng: np.random.Generator) -> AnnData:
     adata = pt.dt.distance_example()
     if distance not in no_subsample_distances:
         if distance in low_subsample_distances:
-            adata = sc.pp.subsample(adata, 0.1, copy=True)
+            adata = sc.pp.sample(adata, 0.1, copy=True, rng=0)
         else:
-            adata = sc.pp.subsample(adata, 0.001, copy=True)
+            adata = sc.pp.sample(adata, 0.001, copy=True, rng=0)
 
     adata = adata[:, rng.choice(adata.n_vars, 100, replace=False)].copy()
 

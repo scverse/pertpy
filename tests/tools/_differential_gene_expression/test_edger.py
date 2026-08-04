@@ -4,7 +4,7 @@ import pytest
 from pertpy.tools._differential_gene_expression import EdgeR
 
 try:
-    from rpy2.robjects.packages import importr  # type: ignore[import-untyped,import-not-found]
+    from rpy2.robjects.packages import importr
 
     r_dependency = importr("edgeR")
 except Exception:  # noqa: BLE001

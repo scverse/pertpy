@@ -19,11 +19,11 @@ from rich.progress import track
 from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
 from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
-from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
-from sklearn.metrics import pairwise_distances, r2_score  # type: ignore[import-untyped]
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel  # type: ignore[import-untyped]
-from sklearn.neighbors import KernelDensity  # type: ignore[import-untyped]
-from statsmodels.discrete.discrete_model import NegativeBinomialP  # type: ignore[import-untyped]
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import pairwise_distances, r2_score
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+from sklearn.neighbors import KernelDensity
+from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
@@ -433,7 +433,7 @@ class Distance:
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
                 dense_cells_x = dense_embedding[np.asarray(idx_x)]
-                for group_y in groups[index_x:]:  # type: ignore
+                for group_y in groups[index_x:]:
                     if group_x == group_y:
                         df_between.loc[group_x, group_y] = 0.0
                     else:
@@ -465,7 +465,7 @@ class Distance:
             pwd = cast_dense(adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"])
             for index_x, group_x in enumerate(fct(groups)):
                 idx_x = grouping == group_x
-                for group_y in groups[index_x:]:  # type: ignore
+                for group_y in groups[index_x:]:
                     # subset the pairwise distance matrix to the two groups
                     idx_y = grouping == group_y
                     sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
@@ -498,7 +498,7 @@ class Distance:
             )
             for index_x, group_x in enumerate(fct(groups)):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
-                for group_y in groups[index_x:]:  # type: ignore
+                for group_y in groups[index_x:]:
                     cells_y = embedding[np.asarray(grouping == group_y)].copy()
                     if not bootstrap:
                         # By distance axiom, the distance between a group and itself is 0
@@ -711,7 +711,7 @@ class Distance:
             >>> distance = pt.tools.Distance(metric="edistance")
             >>> distance.precompute_distances(adata)
         """
-        cells = adata.layers[self.layer_key] if self.layer_key else adata.obsm[cast("str", self.obsm_key)].copy()
+        cells = adata.layers[self.layer_key] if self.layer_key else adata.obsm[cast("str", self.obsm_key)].copy()  # type: ignore[union-attr]
         pwd = pairwise_distances(cells, cells, metric=self.cell_wise_metric, n_jobs=n_jobs)
         adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"] = pwd
 
@@ -737,7 +737,7 @@ class Distance:
         if mode == "simple":
             pass  # nothing to be done
         elif mode == "scaled":
-            from sklearn.preprocessing import MinMaxScaler  # type: ignore[import-untyped]
+            from sklearn.preprocessing import MinMaxScaler
 
             scaler = MinMaxScaler().fit(np.vstack((pert, ctrl)) if fit_to_pert_and_ctrl else ctrl)
             pred = scaler.transform(pred)

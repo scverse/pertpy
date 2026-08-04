@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-import scanpy as sc  # type: ignore[import-untyped]
+import scanpy as sc
 from anndata import AnnData
 
 import pertpy as pt

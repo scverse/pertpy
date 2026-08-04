@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="scvi._settings")
 warnings.filterwarnings("ignore", message="Environment variable.*redefined by R")
 warnings.filterwarnings("ignore", message="Transforming to str index.", category=ImplicitModificationWarning)
 
-import mudata  # type: ignore[import-untyped]
+import mudata
 
 mudata.set_options(pull_on_update=False)
 

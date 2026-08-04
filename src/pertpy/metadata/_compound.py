@@ -45,7 +45,7 @@ class Compound(MetaData):
         if query_id not in adata.obs.columns:
             raise ValueError(f"The requested query_id {query_id} is not in `adata.obs`.\n Please check again.")
 
-        import pubchempy as pcp  # type: ignore[import-untyped]
+        import pubchempy as pcp
 
         query_dict = {}
         not_matched_identifiers = []
