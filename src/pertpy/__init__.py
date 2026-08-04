@@ -15,7 +15,9 @@ warnings.filterwarnings("ignore", message="Transforming to str index.", category
 
 import mudata
 
-mudata.set_options(pull_on_update=False)
+# Opts into what mudata 0.4 made the default and dropped the option for.
+if hasattr(mudata, "set_options"):
+    mudata.set_options(pull_on_update=False)
 
 from . import data as dt
 from . import metadata as md
