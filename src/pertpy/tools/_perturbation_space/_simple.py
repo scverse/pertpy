@@ -105,6 +105,9 @@ class PseudobulkSpace(PerturbationSpace):
     ) -> AnnData:
         """Determines pseudobulks of an AnnData object.
 
+        Only `.obs` columns that have a single unique value within each group are carried over to the pseudobulk `.obs`.
+        Columns that vary within a group, such as per-cell quality metrics, are dropped instead of being represented by an arbitrary cell's value.
+
         Args:
             adata: Anndata object of size cells x genes
             target_col: `.obs` column that stores the label of the perturbation applied to each cell.
@@ -152,17 +155,7 @@ class PseudobulkSpace(PerturbationSpace):
         if mode in ps_adata.layers:
             ps_adata.X = ps_adata.layers[mode]
 
-        missing_cols = [col for col in original_obs.columns if col not in ps_adata.obs.columns]
-
-        if missing_cols:
-            grouped = original_obs.groupby(grouping_cols, observed=False)[missing_cols].first()
-            if len(grouping_cols) == 1:
-                index = pd.Index(ps_adata.obs[grouping_cols[0]])
-            else:
-                index = pd.MultiIndex.from_frame(ps_adata.obs[grouping_cols])  # type: ignore[arg-type]
-            grouped = grouped.reindex(index)
-            grouped.index = ps_adata.obs.index
-            ps_adata.obs = pd.concat([ps_adata.obs, grouped], axis=1)  # type: ignore[call-overload]
+        _carry_constant_obs(ps_adata, original_obs, grouping_cols)
 
         ps_adata.obs[target_col] = ps_adata.obs[target_col].astype("category")  # type: ignore[assignment]
 
