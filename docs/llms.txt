@@ -1,0 +1,57 @@
+# pertpy
+
+> Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
+> It covers metadata annotation, guide RNA assignment, perturbation efficacy, compositional analysis, differential gene expression, perturbation distances, perturbation spaces, and response prediction on AnnData and MuData objects.
+
+Pertpy is imported as `import pertpy as pt` and exposes four modules:
+`pt.dt` (datasets), `pt.pp` (preprocessing), `pt.tl` (tools) and `pt.md` (metadata annotation).
+Tools are classes that operate on an AnnData or MuData object, so a typical call is `pt.tl.Milo()` followed by methods on the returned object.
+
+Every page listed below is also available as Markdown by requesting it with the `Accept: text/markdown` header.
+
+## Start here
+
+- [Installation](https://pertpy.readthedocs.io/en/stable/installation.html): pip and conda-forge installation, including the `de`, `tcoda` and `scgen` extras that individual tools require.
+- [API reference](https://pertpy.readthedocs.io/en/stable/api.html): entry point to all four modules.
+- [Tutorials](https://pertpy.readthedocs.io/en/stable/tutorials.html): executable notebooks for every tool.
+- [Use cases](https://pertpy.readthedocs.io/en/stable/usecases.html): end-to-end reanalyses of published perturbation studies.
+
+## Tools by task
+
+- [Differential gene expression](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#differential-gene-expression): `pt.tl.PyDESeq2`, `pt.tl.EdgeR`, `pt.tl.WilcoxonTest`, `pt.tl.TTest`, `pt.tl.PermutationTest` and `pt.tl.Statsmodels` behind one interface that supports complex designs and contrasts.
+- [Perturbation assignment and efficacy](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#pooled-crispr-screens): `pt.tl.Mixscape` for binary perturbed/non-perturbed calls and `pt.tl.Mixscale` for continuous perturbation scores in pooled CRISPR screens.
+- [Differential abundance without labeled groups](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#compositional-analysis): `pt.tl.Milo` tests differential abundance on k-nearest-neighbor graph neighborhoods.
+- [Compositional analysis with labeled groups](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#compositional-analysis): `pt.tl.Sccoda` and `pt.tl.Tasccoda` model cell type composition with Bayesian hierarchical models.
+- [Multicellular programs](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#multicellular-programs-dialogue): `pt.tl.Dialogue` identifies latent programs coordinated across cell types.
+- [Enrichment](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#enrichment): `pt.tl.Enrichment` scores pathway and drug target gene sets, including drug2cell.
+- [Perturbation distances and permutation tests](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#distances-and-permutation-tests): `pt.tl.Distance` computes metrics such as edistance, MMD and Wasserstein between perturbation groups, `pt.tl.DistanceTest` turns them into permutation tests.
+- [Perturbation spaces](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#perturbation-space): `pt.tl.PseudobulkSpace`, `pt.tl.CentroidSpace`, `pt.tl.DistanceSpace`, `pt.tl.EmbeddingSpace` and the classifier and clustering spaces summarize all cells of a perturbation into one observation.
+- [Cell type prioritization](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#rank-perturbations-augur): `pt.tl.Augur` ranks cell types by how strongly they respond to a perturbation.
+- [Response prediction](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#gene-expression-prediction-with-scgen): `pt.tl.Scgen` predicts cell-type-specific responses to a perturbation.
+- [Causal effect analysis](https://pertpy.readthedocs.io/en/stable/api/tools_index.html#causal-perturbation-analysis-with-cinema-ot): `pt.tl.Cinemaot` separates confounding variation from perturbation effects to obtain counterfactual cell pairs.
+
+## Data and metadata
+
+- [Datasets](https://pertpy.readthedocs.io/en/stable/api/datasets_index.html): `pt.dt` downloads harmonized perturbation datasets such as `norman_2019`, `papalexi_2021`, `replogle_2022_k562_essential` and `srivatsan_2020_sciplex3`.
+- [Preprocessing](https://pertpy.readthedocs.io/en/stable/api/preprocessing_index.html): guide RNA assignment for pooled CRISPR screens.
+- [Metadata annotation](https://pertpy.readthedocs.io/en/stable/api/metadata_index.html): `pt.md.CellLine`, `pt.md.Compound`, `pt.md.Drug` and `pt.md.Moa` annotate cell lines, compounds and mechanisms of action from public databases.
+
+## Tutorials
+
+- [Guide RNA assignment](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/guide_rna_assignment.html)
+- [Perturbation efficacy with Mixscape and Mixscale](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/perturbation_efficacy.html)
+- [Differential gene expression](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/differential_gene_expression.html)
+- [Differential abundance with Milo](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/milo.html)
+- [Compositional analysis with scCODA](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/sccoda.html)
+- [Perturbation distances](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/distances.html)
+- [Perturbation spaces](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/perturbation_space.html)
+- [Cell type prioritization with Augur](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/augur.html)
+- [Metadata annotation](https://pertpy.readthedocs.io/en/stable/tutorials/notebooks/metadata_annotation.html)
+
+## Project
+
+- [Source code](https://github.com/scverse/pertpy)
+- [Publication](https://doi.org/10.1038/s41592-025-02909-7): Heumos et al., Pertpy: an end-to-end framework for perturbation analysis, Nature Methods 2025.
+- [Changelog](https://pertpy.readthedocs.io/en/stable/changelog.html)
+- [Contributing](https://pertpy.readthedocs.io/en/stable/contributing.html)
+- [Forum](https://discourse.scverse.org/c/ecosystem/pertpy/46)

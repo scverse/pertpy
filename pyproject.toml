@@ -28,6 +28,25 @@ maintainers = [
 urls.Documentation = "https://pertpy.readthedocs.io"
 urls.Source = "https://github.com/scverse/pertpy"
 urls.Home-page = "https://github.com/scverse/pertpy"
+urls.Issues = "https://github.com/scverse/pertpy/issues"
+urls.Changelog = "https://pertpy.readthedocs.io/en/stable/changelog.html"
+urls.Forum = "https://discourse.scverse.org/c/ecosystem/pertpy/46"
+urls.Publication = "https://doi.org/10.1038/s41592-025-02909-7"
+
+keywords = [
+    "single-cell",
+    "perturbation",
+    "scverse",
+    "bioinformatics",
+    "computational-biology",
+    "scRNA-seq",
+    "CRISPR",
+    "Perturb-seq",
+    "differential-expression",
+    "differential-abundance",
+    "compositional-analysis",
+    "anndata",
+]
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",

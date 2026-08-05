@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # mypy: ignore-errors
 
+import os
 import sys
 from datetime import datetime
 from importlib.metadata import metadata
@@ -41,11 +42,17 @@ extensions = [
     "sphinx_tabs.tabs",
     "sphinx_issues",
     "sphinxcontrib.bibtex",
+    "sphinxext.opengraph",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-ogp_site_url = "https://pertpy.readthedocs.io/en/latest/"
-ogp_image = "https://pertpy.readthedocs.io/en/latest/_static/pertpy_logo.png"
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "https://pertpy.readthedocs.io/en/stable/")
+
+ogp_site_url = html_baseurl
+ogp_site_name = "pertpy"
+ogp_image = "_static/pertpy_logo.png"
+ogp_enable_meta_description = True
+ogp_social_cards = {"enable": False}
 
 # nbsphinx specific settings
 exclude_patterns = [
@@ -104,6 +111,7 @@ html_logo = "_static/pertpy_logo.svg"
 html_theme_options = {}
 
 html_static_path = ["_static"]
+html_extra_path = ["llms.txt"]
 html_css_files = ["css/overwrite.css", "css/sphinx_gallery.css"]
 html_show_sphinx = False
 
