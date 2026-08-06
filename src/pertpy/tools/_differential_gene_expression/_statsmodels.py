@@ -72,6 +72,7 @@ class Statsmodels(LinearModelBase):
             )
             for model in block_models
         ]
+        self._fitted = True
 
     def _test_single_contrast(self, contrast, **kwargs) -> pd.DataFrame:
         res = []

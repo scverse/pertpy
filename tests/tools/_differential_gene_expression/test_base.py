@@ -9,7 +9,7 @@ from pandas.core.api import DataFrame
 if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
     pytestmark = pytest.mark.skip(reason="formulaic_contrasts and formulaic not available")
 
-from pertpy.tools._differential_gene_expression import LinearModelBase
+from pertpy.tools._differential_gene_expression import LinearModelBase, TTest
 
 
 @pytest.fixture
@@ -99,6 +99,52 @@ def test_test_contrasts_rejects_zero_contrast(MockLinearModel, test_adata_minima
         mod.test_contrasts(np.zeros(2))
     with pytest.raises(ValueError, match="'interaction'"):
         mod.test_contrasts({"interaction": np.zeros(2)})
+
+
+def test_repr(MockLinearModel, test_adata_minimal):
+    mod = MockLinearModel(test_adata_minimal, "~ condition + donor")
+    assert repr(mod).splitlines() == [
+        "_MockLinearModel",
+        "    Data          80 obs × 2 vars",
+        "    Layer         X",
+        "    Design        1 + condition + donor",
+        "    Variables     condition, donor",
+        "    Coefficients  Intercept, condition[T.B], donor[T.D1], donor[T.D2], donor[T.D3]",
+        "    Fitted        no",
+    ]
+
+
+def test_repr_custom_design(MockLinearModel, test_adata_minimal):
+    mod = MockLinearModel(test_adata_minimal, np.ones((test_adata_minimal.n_obs, 1)))
+    assert repr(mod).splitlines() == [
+        "_MockLinearModel",
+        "    Data    80 obs × 2 vars",
+        "    Layer   X",
+        "    Design  custom matrix (80 × 1)",
+        "    Fitted  no",
+    ]
+
+
+def test_repr_without_design(test_adata_minimal):
+    assert repr(TTest(test_adata_minimal)).splitlines() == [
+        "TTest",
+        "    Data   80 obs × 2 vars",
+        "    Layer  X",
+    ]
+
+
+def test_repr_truncates_many_coefficients(MockLinearModel, test_adata_minimal):
+    mod = MockLinearModel(test_adata_minimal, "~ 0 + pairing")
+    assert "… (40 in total)" in repr(mod)
+
+
+def test_repr_html(MockLinearModel, test_adata_minimal):
+    html = MockLinearModel(test_adata_minimal, "~ C(donor, contr.treatment(base='D2'))")._repr_html_()
+    assert html.startswith("<div") and html.endswith("</div>")
+    assert ">_MockLinearModel</div>" in html
+    assert ">80 obs × 2 vars</td>" in html
+    assert "base=&#x27;D2&#x27;" in html
+    assert "base='D2'" not in html
 
 
 def test_plot_multicomparison_fc_many_genes(MockLinearModel, test_adata_minimal):

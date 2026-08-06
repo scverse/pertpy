@@ -47,6 +47,19 @@ res_df = edgr.test_contrasts(
 )
 ```
 
+Inspecting a model summarizes the input data, the design and whether the model has been fitted, rendered as HTML in Jupyter:
+
+```text
+>>> edgr
+EdgeR
+    Data          1,525 obs × 27,085 vars
+    Layer         X
+    Design        1 + Efficacy + Treatment
+    Variables     Efficacy, Treatment
+    Coefficients  Intercept, Efficacy[T.PD], Efficacy[T.PR], Efficacy[T.SD], Treatment[T.Chemo]
+    Fitted        yes
+```
+
 See [differential gene expression tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/differential_gene_expression.html).
 
 ## Pooled CRISPR screens
