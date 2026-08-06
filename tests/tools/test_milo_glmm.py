@@ -5,6 +5,7 @@ import pytest
 from pertpy.tools._milo_glmm import (
     between_within_df,
     fit_nb_glmm,
+    fit_nb_glmm_nhoods,
     has_separation,
     parse_random_effects,
     random_effect_matrices,
@@ -66,6 +67,23 @@ def test_fit_nb_glmm_survives_an_unfactorisable_variance(monkeypatch):
     assert not fit.converged
     assert np.isnan(fit.beta).all()
     assert np.isnan(fit.se).all()
+
+
+def test_fit_nb_glmm_nhoods_reports_separated_neighbourhoods():
+    """A separated neighbourhood has no finite estimate, so it is NaN rather than a huge fold change."""
+    condition = np.tile([0.0, 1.0], 10)
+    X = np.column_stack([np.ones(20), condition])
+    Z = [("donor", pd.get_dummies(pd.Categorical(np.repeat(np.arange(5), 4))).to_numpy(dtype=float))]
+    rng = np.random.default_rng(0)
+
+    counts = np.vstack([rng.poisson(30, 20).astype(float), np.where(condition == 0, 0.0, 20.0)])
+    res = fit_nb_glmm_nhoods(counts, X, Z, np.zeros(20))
+
+    assert res.loc[0, "Converged"]
+    assert np.isfinite(res.loc[0, "logFC"])
+    assert not res.loc[1, "Converged"]
+    for column in ("logFC", "SE", "tvalue", "PValue", "donor_variance"):
+        assert np.isnan(res.loc[1, column])
 
 
 def test_has_separation():
