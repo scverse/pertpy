@@ -54,6 +54,7 @@ class GLMMFit(NamedTuple):
 
     beta: np.ndarray
     se: np.ndarray
+    covariance: np.ndarray
     sigma: np.ndarray
     dispersion: float
     loglik: float
@@ -102,13 +103,15 @@ def has_separation(y: np.ndarray, X: np.ndarray) -> bool:
     )
 
 
-def between_within_df(X: np.ndarray, random_effects: Sequence[tuple[str, np.ndarray]]) -> int:
-    """Degrees of freedom for the t-test on the last fixed effect, following the between-within rule.
+def between_within_df(
+    X: np.ndarray, random_effects: Sequence[tuple[str, np.ndarray]], contrast: np.ndarray | None = None
+) -> int:
+    """Degrees of freedom for the t-test on ``contrast``, following the between-within rule.
 
-    A coefficient that is constant within every level of a random intercept is only informed by as many independent units as there are levels, so testing it against the number of samples treats repeated measurements as independent and is anti-conservative.
+    A contrast that is constant within every level of a random intercept is only informed by as many independent units as there are levels, so testing it against the number of samples treats repeated measurements as independent and is anti-conservative.
     """
     n, p = X.shape
-    tested = X[:, -1]
+    tested = X[:, -1] if contrast is None else X @ contrast
     between = [
         Z.shape[1]
         for _, Z in random_effects
@@ -182,6 +185,7 @@ def _fit_nb_glmm(
         return GLMMFit(
             beta=np.full(X.shape[1], np.nan),
             se=np.full(X.shape[1], np.nan),
+            covariance=np.full((X.shape[1], X.shape[1]), np.nan),
             sigma=np.full(len(matrices), np.nan),
             dispersion=np.nan,
             loglik=np.nan,
@@ -273,9 +277,6 @@ def _fit_nb_glmm_core(
 
     warm_start = None
     if dispersion is None:
-        # The fixed effects only estimate absorbs part of the random effect variance, so refine it once the
-        # neighbourhood has been fitted with its random effects. The refit also spends degrees of freedom on
-        # the random effects, so the residuals are smaller than a fixed effects only fit would leave.
         dispersion = _dispersion_from_means(y, _poisson_means(y, X, offset), residual_df)
         beta, sigma, u, fitted_mean, _, fitted_df = pseudo_likelihood(dispersion)
         dispersion = _dispersion_from_means(y, fitted_mean, max(n - p - fitted_df, 1.0))
@@ -289,7 +290,8 @@ def _fit_nb_glmm_core(
     V = sum((s * m for s, m in zip(sigma, zz, strict=True)), np.diag(1.0 / weights))
     chol = cho_factor(V, lower=True)
     xtvx = X.T @ cho_solve(chol, X)
-    se = np.sqrt(np.maximum(np.diag(np.linalg.pinv(xtvx)), 0))
+    covariance = np.linalg.pinv(xtvx)
+    se = np.sqrt(np.maximum(np.diag(covariance), 0))
 
     resid = working - X @ beta
     logdet = 2.0 * float(np.sum(np.log(np.abs(np.diag(chol[0])))))
@@ -298,7 +300,13 @@ def _fit_nb_glmm_core(
         loglik -= 0.5 * np.linalg.slogdet(xtvx)[1]
 
     return GLMMFit(
-        beta=beta, se=se, sigma=sigma, dispersion=float(dispersion), loglik=float(loglik), converged=converged
+        beta=beta,
+        se=se,
+        covariance=covariance,
+        sigma=sigma,
+        dispersion=float(dispersion),
+        loglik=float(loglik),
+        converged=converged,
     )
 
 
@@ -308,19 +316,23 @@ def fit_nb_glmm_nhoods(
     random_effects: Sequence[tuple[str, np.ndarray]],
     offset: np.ndarray,
     *,
+    contrast: np.ndarray | None = None,
     reml: bool = True,
     max_iter: int = 50,
     tol: float = 1e-5,
 ) -> pd.DataFrame:
     """Fit :func:`fit_nb_glmm` to every neighbourhood and assemble the results like R Milo does.
 
-    The reported log fold change is the last column of the fixed effects model matrix, matching the coefficient that the edgeR solver tests.
+    The reported log fold change is ``contrast`` applied to the fixed effects, defaulting to the last column of the model matrix, which is the coefficient the edgeR solver tests.
     Its p-value comes from a t-test whose degrees of freedom follow :func:`between_within_df`.
     """
     library_size = counts.sum(axis=0)
     logcpm = np.log2(np.mean(counts / np.where(library_size > 0, library_size, 1), axis=1) * 1e6 + 1e-12)
 
-    df = between_within_df(X, random_effects)
+    weights = np.zeros(X.shape[1]) if contrast is None else np.asarray(contrast, dtype=float)
+    if contrast is None:
+        weights[-1] = 1.0
+    df = between_within_df(X, random_effects, weights)
     matrices = [Z for _, Z in random_effects]
     zz = [Z @ Z.T for Z in matrices]
     records = []
@@ -342,11 +354,13 @@ def fit_nb_glmm_nhoods(
             continue
 
         fit = _fit_nb_glmm(y, X, matrices, zz, offset, dispersion=None, reml=reml, max_iter=max_iter, tol=tol)
-        t_value = fit.beta[-1] / fit.se[-1] if fit.se[-1] > 0 else np.nan
+        estimate = float(weights @ fit.beta)
+        standard_error = float(np.sqrt(max(weights @ fit.covariance @ weights, 0)))
+        t_value = estimate / standard_error if standard_error > 0 else np.nan
         records.append(
             {
-                "logFC": fit.beta[-1],
-                "SE": fit.se[-1],
+                "logFC": estimate,
+                "SE": standard_error,
                 "tvalue": t_value,
                 "PValue": 2 * stats.t.sf(abs(t_value), df),
                 **{f"{name}_variance": value for (name, _), value in zip(random_effects, fit.sigma, strict=True)},

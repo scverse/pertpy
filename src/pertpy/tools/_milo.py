@@ -33,6 +33,23 @@ from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
 from sklearn.metrics.pairwise import euclidean_distances
 
 
+def _contrast_vector(columns: list[str], model_contrasts: str) -> np.ndarray:
+    """Turn an R style contrast such as ``conditionB-conditionA`` into weights over formulaic design columns.
+
+    Formulaic names a coefficient ``condition[T.B]`` where R names it ``conditionB``, so the columns are matched on their R spelling.
+    """
+    r_names = {column.replace("[T.", "").replace("[", "").replace("]", ""): column for column in columns}
+    weights = pd.Series(0.0, index=columns)
+    for sign, term in re.findall(r"([+-]?)\s*([^+-]+)", model_contrasts):
+        name = term.strip()
+        if name not in r_names:
+            raise ValueError(
+                f"Contrast term {name!r} does not match any coefficient of the design. Available: {sorted(r_names)}."
+            )
+        weights[r_names[name]] += -1.0 if sign == "-" else 1.0
+    return weights.to_numpy()
+
+
 def _weighted_bh(pvalues: np.ndarray, weights: np.ndarray) -> np.ndarray:
     """Density-weighted Benjamini-Hochberg adjustment (Cydar/Milo style).
 
@@ -292,10 +309,10 @@ class Milo:
         subset_samples: list[str] | None = None,
         add_intercept: bool = True,
         feature_key: str | None = "rna",
-        solver: Literal["edger", "pydeseq2"] = "pydeseq2",
         reml: bool = True,
         max_iter: int = 50,
         tol: float = 1e-5,
+        solver: Literal["edger", "pydeseq2"] = "pydeseq2",
     ):
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
 
@@ -312,17 +329,13 @@ class Milo:
             add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula.
                 When model_contrasts is specified, this is set to False by default.
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
-            solver: The solver to fit the model to.
+            reml: Whether a mixed model estimates its variance components by restricted maximum likelihood rather than maximum likelihood.
+            max_iter: Maximum number of iterations of a mixed model fit.
+            tol: Convergence tolerance of a mixed model fit.
+            solver: The solver to fit the model to, ignored for a mixed model.
                 The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
                 The "pydeseq2" requires pydeseq2 to be installed.
                 It is still very comparable to the "edger" solver but might be a bit slower.
-                Ignored when the design contains random intercepts.
-            reml: Whether to estimate the variance components by restricted maximum likelihood rather than maximum likelihood.
-                Only used when the design contains random intercepts.
-            max_iter: Maximum number of iterations of the mixed model fit.
-                Only used when the design contains random intercepts.
-            tol: Convergence tolerance of the mixed model fit.
-                Only used when the design contains random intercepts.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
@@ -330,6 +343,7 @@ class Milo:
             - `PValue` stores the p-value for the QLF test before multiple testing correction
             - `SpatialFDR` stores the p-value adjusted for multiple testing to limit the false discovery rate,
                 calculated with weighted Benjamini-Hochberg procedure
+
             For a mixed model, `SE`, `tvalue`, one `<variable>_variance` per random intercept, `Dispersion`,
             `Logliklihood` and `Converged` are added as well.
 
@@ -407,17 +421,15 @@ class Milo:
         keep_nhoods = count_mat[:, keep_smp].sum(1) > 0
 
         if random_effects:
-            if model_contrasts is not None:
-                raise ValueError(
-                    "model_contrasts is not supported for mixed models. The last coefficient of the fixed effects is tested."
+            if find_spec("formulaic_contrasts") is None:
+                raise ImportError(
+                    "formulaic-contrasts is required for mixed models. Install with: pip install pertpy[de]"
                 )
-            if find_spec("formulaic") is None:
-                raise ImportError("formulaic is required for mixed models. Install with: pip install pertpy[de]")
-            from formulaic import model_matrix
+            from formulaic_contrasts import FormulaicContrasts
 
             design_df_filtered = design_df[keep_smp]
-            fixed = fixed_design if add_intercept else fixed_design + " + 0"
-            design_matrix = model_matrix(fixed, design_df_filtered)
+            fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
+            design_matrix = FormulaicContrasts(design_df_filtered, fixed).design_matrix
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
             lib_size_filtered = lib_size[keep_smp]
 
@@ -426,6 +438,9 @@ class Milo:
                 np.asarray(design_matrix, dtype=float),
                 random_effect_matrices(design_df_filtered, random_effects),
                 np.log(lib_size_filtered),
+                contrast=_contrast_vector(list(design_matrix.columns), model_contrasts)
+                if model_contrasts is not None
+                else None,
                 reml=reml,
                 max_iter=max_iter,
                 tol=tol,
@@ -590,8 +605,6 @@ class Milo:
             res = res[["logCPM", "logFC", "PValue", "FDR"]]
 
         res.index = sample_adata.var_names[keep_nhoods]
-        # Solvers report different columns, so clear the ones the previous run wrote instead of leaving a
-        # mixture of both behind.
         written = [*res.columns, "SpatialFDR"]
         stale = [
             col

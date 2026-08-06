@@ -216,7 +216,7 @@ def test_da_nhoods_default_contrast(da_nhoods_mdata, milo, solver):
     assert np.corrcoef(contr_results["logFC"], default_results["logFC"])[0, 1] > 0.99
 
 
-@pytest.mark.skipif(find_spec("formulaic") is None, reason="formulaic not available")
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
 def test_da_nhoods_glmm(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     milo.da_nhoods(mdata, design="~ condition + (1 | replicate)")
@@ -235,7 +235,7 @@ def test_da_nhoods_glmm(da_nhoods_mdata, milo):
     )
 
 
-@pytest.mark.skipif(find_spec("formulaic") is None, reason="formulaic not available")
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
 def test_da_nhoods_switching_between_models_replaces_results(da_nhoods_mdata, milo):
     """Solvers report different columns, so a second run must not leave a mixture of both behind."""
     mdata = da_nhoods_mdata.copy()
@@ -251,11 +251,26 @@ def test_da_nhoods_switching_between_models_replaces_results(da_nhoods_mdata, mi
     assert var["PValue"].notna().any()
 
 
-@pytest.mark.skipif(find_spec("formulaic") is None, reason="formulaic not available")
-def test_da_nhoods_glmm_rejects_contrasts(da_nhoods_mdata, milo):
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
+def test_da_nhoods_glmm_contrasts(da_nhoods_mdata, milo):
+    """A contrast between the two levels reproduces the coefficient tested by default."""
     mdata = da_nhoods_mdata.copy()
-    with pytest.raises(ValueError, match="model_contrasts is not supported"):
-        milo.da_nhoods(mdata, design="~ condition + (1 | replicate)", model_contrasts="a-b")
+    milo.da_nhoods(mdata, design="~ condition + (1 | replicate)")
+    default = mdata["milo"].var[["logFC", "PValue"]].copy()
+
+    milo.da_nhoods(
+        mdata,
+        design="~ condition + (1 | replicate)",
+        model_contrasts="conditionConditionB-conditionConditionA",
+    )
+    contrasted = mdata["milo"].var[["logFC", "PValue"]].copy()
+
+    fitted = default["logFC"].notna() & contrasted["logFC"].notna()
+    assert fitted.any()
+    np.testing.assert_allclose(default.loc[fitted, "logFC"], contrasted.loc[fitted, "logFC"], atol=1e-6)
+
+    with pytest.raises(ValueError, match="does not match any coefficient"):
+        milo.da_nhoods(mdata, design="~ condition + (1 | replicate)", model_contrasts="nonsense")
 
 
 @pytest.fixture

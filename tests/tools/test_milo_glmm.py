@@ -81,11 +81,9 @@ def test_between_within_df():
     Z = [("donor", pd.get_dummies(pd.Categorical(donor)).to_numpy(dtype=float))]
     intercept = np.ones(160)
 
-    # A condition that is a property of the donor is only informed by the 20 donors.
     between = np.column_stack([intercept, np.repeat(np.tile([0.0, 1.0], 10), 8)])
     assert between_within_df(between, Z) == 18
 
-    # A condition that varies inside every donor is informed by the samples.
     within = np.column_stack([intercept, np.tile([0.0, 1.0], 80)])
     assert between_within_df(within, Z) == 139
 
