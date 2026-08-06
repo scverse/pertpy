@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.linalg import cho_factor, cho_solve
-from scipy.optimize import brentq
+from scipy.optimize import brentq, minimize_scalar
+from scipy.special import gammaln
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -55,6 +56,7 @@ class GLMMFit(NamedTuple):
     beta: np.ndarray
     se: np.ndarray
     covariance: np.ndarray
+    fitted: np.ndarray
     sigma: np.ndarray
     dispersion: float
     loglik: float
@@ -87,6 +89,45 @@ def _dispersion_from_means(y: np.ndarray, mu: np.ndarray, df: float) -> float:
     while pearson(upper) > 0 and upper < 1e6:
         upper *= 10
     return float(brentq(pearson, 0.0, upper)) if pearson(upper) <= 0 else 1e6
+
+
+def _adjusted_profile_dispersion(
+    y: np.ndarray,
+    mu: np.ndarray,
+    X: np.ndarray,
+    matrices: Sequence[np.ndarray],
+    sigma: np.ndarray,
+) -> float:
+    """Dispersion maximising the Cox-Reid adjusted profile likelihood at the fitted means.
+
+    Profiling out the coefficients biases the dispersion downwards by an amount that depends on how many of them there are, which is why a moment estimator drifts with the size of the design.
+    Subtracting half the log determinant of the information of the coefficients removes that drift, and the information is the penalised one of the mixed model so that the random effects count for as much as they were shrunk towards zero.
+    """
+    design = np.column_stack([X, *matrices])
+    penalty = np.zeros(design.shape[1])
+    start = X.shape[1]
+    for matrix, variance in zip(matrices, sigma, strict=True):
+        penalty[start : start + matrix.shape[1]] = 1.0 / max(float(variance), 1e-8)
+        start += matrix.shape[1]
+
+    def negative_adjusted_loglik(log_dispersion: float) -> float:
+        dispersion = float(np.exp(log_dispersion))
+        size = 1.0 / dispersion
+        loglik = float(
+            np.sum(
+                gammaln(y + size)
+                - gammaln(size)
+                - gammaln(y + 1)
+                + size * np.log(size / (size + mu))
+                + y * np.log(np.maximum(mu, 1e-12) / (size + mu))
+            )
+        )
+        weights = mu / (1.0 + dispersion * mu)
+        sign, logdet = np.linalg.slogdet(design.T @ (design * weights[:, None]) + np.diag(penalty))
+        return -(loglik - 0.5 * logdet) if sign > 0 else np.inf
+
+    best = minimize_scalar(negative_adjusted_loglik, bounds=(np.log(1e-6), np.log(1e3)), method="bounded")
+    return float(np.exp(best.x))
 
 
 def has_separation(y: np.ndarray, X: np.ndarray) -> bool:
@@ -186,6 +227,7 @@ def _fit_nb_glmm(
             beta=np.full(X.shape[1], np.nan),
             se=np.full(X.shape[1], np.nan),
             covariance=np.full((X.shape[1], X.shape[1]), np.nan),
+            fitted=np.full(len(y), np.nan),
             sigma=np.full(len(matrices), np.nan),
             dispersion=np.nan,
             loglik=np.nan,
@@ -212,7 +254,7 @@ def _fit_nb_glmm_core(
 
     def pseudo_likelihood(
         dispersion: float, start_from: tuple | None = None
-    ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray], np.ndarray, bool, float]:
+    ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray], np.ndarray, bool]:
         size = np.inf if dispersion <= 0 else 1.0 / dispersion
         if start_from is None:
             beta, *_ = np.linalg.lstsq(X, np.log(y + 1) - offset, rcond=None)
@@ -272,17 +314,21 @@ def _fit_nb_glmm_core(
                 break
 
         eta = offset + X @ beta + sum((Z @ u_k for Z, u_k in zip(matrices, u, strict=True)), np.zeros(n))
-        fitted = float(sum(s * np.trace(Z.T @ b) for s, Z, b in zip(sigma, matrices, p_z, strict=True)))
-        return beta, sigma, u, np.exp(np.clip(eta, -30, 30)), converged, fitted
+        return beta, sigma, u, np.exp(np.clip(eta, -30, 30)), converged
 
     warm_start = None
     if dispersion is None:
         dispersion = _dispersion_from_means(y, _poisson_means(y, X, offset), residual_df)
-        beta, sigma, u, fitted_mean, _, fitted_df = pseudo_likelihood(dispersion)
-        dispersion = _dispersion_from_means(y, fitted_mean, max(n - p - fitted_df, 1.0))
-        warm_start = (beta, sigma, u)
+        for _ in range(4):
+            beta, sigma, u, fitted_mean, _ = pseudo_likelihood(dispersion, warm_start)
+            warm_start = (beta, sigma, u)
+            refined = _adjusted_profile_dispersion(y, fitted_mean, X, matrices, sigma)
+            if abs(np.log1p(refined) - np.log1p(dispersion)) < 1e-3:
+                dispersion = refined
+                break
+            dispersion = refined
 
-    beta, sigma, u, mu, converged, _ = pseudo_likelihood(dispersion, warm_start)
+    beta, sigma, u, mu, converged = pseudo_likelihood(dispersion, warm_start)
 
     size = np.inf if dispersion <= 0 else 1.0 / dispersion
     weights = np.maximum(mu if np.isinf(size) else mu / (1.0 + mu / size), 1e-8)
@@ -303,6 +349,7 @@ def _fit_nb_glmm_core(
         beta=beta,
         se=se,
         covariance=covariance,
+        fitted=mu,
         sigma=sigma,
         dispersion=float(dispersion),
         loglik=float(loglik),

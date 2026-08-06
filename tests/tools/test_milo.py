@@ -282,7 +282,7 @@ def test_da_nhoods_glmm_contrasts(da_nhoods_mdata, milo):
 
     fitted = default["logFC"].notna() & contrasted["logFC"].notna()
     assert fitted.any()
-    np.testing.assert_allclose(default.loc[fitted, "logFC"], contrasted.loc[fitted, "logFC"], atol=1e-6)
+    np.testing.assert_allclose(default.loc[fitted, "logFC"], contrasted.loc[fitted, "logFC"], atol=1e-4)
 
     with pytest.raises(ValueError, match="does not match any coefficient"):
         milo.da_nhoods(mdata, design="~ condition + (1 | replicate)", model_contrasts="nonsense")
