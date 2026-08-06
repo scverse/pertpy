@@ -160,6 +160,9 @@ mdata["rna"].obs["Status"] = (
 )
 milo.da_nhoods(mdata, design="~Status")
 
+# Repeated measurements of the same donor are accounted for with a random intercept
+milo.da_nhoods(mdata, design="~ Status + (1 | patient_id)")
+
 # Group differentially abundant neighbourhoods and find their marker genes
 milo.build_nhood_graph(mdata)
 milo.group_nhoods(mdata)

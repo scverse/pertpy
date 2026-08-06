@@ -313,6 +313,7 @@ module = [
     "arviz.*",
     "blitzgsea.*",
     "ete4.*",
+    "formulaic.*",
     "formulaic_contrasts.*",
     "mudata.*",
     "numpyro.*",

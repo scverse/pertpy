@@ -20,6 +20,7 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 from pertpy._types import CSBase, cast_frame, cast_matrix
+from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, parse_random_effects, random_effect_matrices
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -292,13 +293,19 @@ class Milo:
         add_intercept: bool = True,
         feature_key: str | None = "rna",
         solver: Literal["edger", "pydeseq2"] = "pydeseq2",
+        reml: bool = True,
+        max_iter: int = 50,
+        tol: float = 1e-5,
     ):
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
+
+        A random intercept in the design switches to a negative binomial mixed model, which accounts for repeated measurements of the same donor, batch or timepoint instead of treating every sample as independent.
 
         Args:
             mdata: MuData object
             design: Formula for the test, following glm syntax from R (e.g. '~ condition').
                     Terms should be columns in `milo_mdata[feature_key].obs`.
+                    Random intercepts follow the `(1 | variable)` syntax of R Milo (e.g. '~ condition + (1 | donor)') and fit a mixed model.
             model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl").
                              If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group.
             subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test.
@@ -309,6 +316,13 @@ class Milo:
                 The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
                 The "pydeseq2" requires pydeseq2 to be installed.
                 It is still very comparable to the "edger" solver but might be a bit slower.
+                Ignored when the design contains random intercepts.
+            reml: Whether to estimate the variance components by restricted maximum likelihood rather than maximum likelihood.
+                Only used when the design contains random intercepts.
+            max_iter: Maximum number of iterations of the mixed model fit.
+                Only used when the design contains random intercepts.
+            tol: Convergence tolerance of the mixed model fit.
+                Only used when the design contains random intercepts.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
@@ -316,6 +330,8 @@ class Milo:
             - `PValue` stores the p-value for the QLF test before multiple testing correction
             - `SpatialFDR` stores the p-value adjusted for multiple testing to limit the false discovery rate,
                 calculated with weighted Benjamini-Hochberg procedure
+            For a mixed model, `SE`, `tvalue`, one `<variable>_variance` per random intercept, `Dispersion`,
+            `Logliklihood` and `Converged` are added as well.
 
         Examples:
             >>> import pertpy as pt
@@ -338,7 +354,9 @@ class Milo:
             raise
         adata = mdata[feature_key]
 
-        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", design.lstrip("~ ")))]
+        fixed_design, random_effects = parse_random_effects(design)
+        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", fixed_design.lstrip("~ ")))]
+        covariates = [x for x in covariates if x not in {"", "0", "1"}] + random_effects
 
         # Add covariates used for testing to sample_adata.var
         sample_col = sample_adata.uns["sample_col"]
@@ -388,7 +406,42 @@ class Milo:
         # Filter out nhoods with zero counts (they can appear after sample filtering)
         keep_nhoods = count_mat[:, keep_smp].sum(1) > 0
 
-        if solver == "edger":
+        if random_effects:
+            if model_contrasts is not None:
+                raise ValueError(
+                    "model_contrasts is not supported for mixed models. The last coefficient of the fixed effects is tested."
+                )
+            if find_spec("formulaic") is None:
+                raise ImportError("formulaic is required for mixed models. Install with: pip install pertpy[de]")
+            from formulaic import model_matrix
+
+            design_df_filtered = design_df[keep_smp]
+            fixed = fixed_design if add_intercept else fixed_design + " + 0"
+            design_matrix = model_matrix(fixed, design_df_filtered)
+            counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
+            lib_size_filtered = lib_size[keep_smp]
+
+            res = fit_nb_glmm_nhoods(
+                counts_filtered,
+                np.asarray(design_matrix, dtype=float),
+                random_effect_matrices(design_df_filtered, random_effects),
+                np.log(lib_size_filtered),
+                reml=reml,
+                max_iter=max_iter,
+                tol=tol,
+            )
+            fitted = res["logFC"].notna()
+            if separated := int((~fitted).sum()):
+                logger.warning(
+                    f"{separated} out of {len(res)} neighbourhoods have a group without any cells, so their fold change "
+                    "is not identifiable and is reported as NaN."
+                )
+            if not_converged := int((~res["Converged"] & fitted).sum()):
+                logger.warning(
+                    f"{not_converged} out of {int(fitted.sum())} fitted neighbourhoods did not converge; "
+                    "consider increasing `max_iter`."
+                )
+        elif solver == "edger":
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 

@@ -216,6 +216,32 @@ def test_da_nhoods_default_contrast(da_nhoods_mdata, milo, solver):
     assert np.corrcoef(contr_results["logFC"], default_results["logFC"])[0, 1] > 0.99
 
 
+@pytest.mark.skipif(find_spec("formulaic") is None, reason="formulaic not available")
+def test_da_nhoods_glmm(da_nhoods_mdata, milo):
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~ condition + (1 | replicate)")
+    var = mdata["milo"].var
+
+    for column in ("logFC", "SE", "tvalue", "PValue", "replicate_variance", "Converged", "SpatialFDR"):
+        assert column in var.columns
+
+    fitted = var["logFC"].notna()
+    assert fitted.any()
+    assert var.loc[fitted, "Converged"].mean() > 0.9
+    assert var.loc[fitted, "PValue"].between(0, 1).all()
+    assert (var.loc[fitted, "replicate_variance"] >= 0).all()
+    assert np.all(np.round(var.loc[fitted, "PValue"], 10) <= np.round(var.loc[fitted, "SpatialFDR"], 10)), (
+        "FDR is higher than uncorrected P-values"
+    )
+
+
+@pytest.mark.skipif(find_spec("formulaic") is None, reason="formulaic not available")
+def test_da_nhoods_glmm_rejects_contrasts(da_nhoods_mdata, milo):
+    mdata = da_nhoods_mdata.copy()
+    with pytest.raises(ValueError, match="model_contrasts is not supported"):
+        milo.da_nhoods(mdata, design="~ condition + (1 | replicate)", model_contrasts="a-b")
+
+
 @pytest.fixture
 def annotate_nhoods_mdata(adata, milo):
     adata = adata.copy()
