@@ -15,10 +15,11 @@ from pertpy.tools._milo_glmm import (
 @pytest.mark.parametrize(
     "design,expected",
     [
-        ("~ condition + (1 | donor)", ("~ condition", ["donor"])),
-        ("~condition+(1|donor)+age", ("~condition+age", ["donor"])),
-        ("~ (1 | donor)", ("~ 1", ["donor"])),
-        ("~ condition + (1 | donor) + (1 | batch)", ("~ condition", ["donor", "batch"])),
+        ("~ condition + (1 | donor)", ("~ condition", [("1", "donor")])),
+        ("~condition+(1|donor)+age", ("~condition+age", [("1", "donor")])),
+        ("~ (1 | donor)", ("~ 1", [("1", "donor")])),
+        ("~ condition + (1 | donor) + (1 | batch)", ("~ condition", [("1", "donor"), ("1", "batch")])),
+        ("~ condition + (condition | donor)", ("~ condition", [("condition", "donor")])),
         ("~ condition", ("~ condition", [])),
     ],
 )
@@ -28,12 +29,12 @@ def test_parse_random_effects(design, expected):
 
 def test_parse_random_effects_rejects_invalid_syntax():
     with pytest.raises(ValueError, match="invalid formula for random effects"):
-        parse_random_effects("~ condition + (donor | condition)")
+        parse_random_effects("~ condition | donor")
 
 
 def test_random_effect_matrices_are_indicators():
     obs = pd.DataFrame({"donor": ["A", "B", "A", "C"]})
-    (name, Z), *rest = random_effect_matrices(obs, ["donor"])
+    (name, Z), *rest = random_effect_matrices(obs, [("1", "donor")])
 
     assert not rest
     assert name == "donor"
@@ -41,13 +42,24 @@ def test_random_effect_matrices_are_indicators():
     assert np.array_equal(Z.sum(axis=1), np.ones(4))
 
     with pytest.raises(ValueError, match="not a column"):
-        random_effect_matrices(obs, ["missing"])
+        random_effect_matrices(obs, [("1", "missing")])
 
 
 def test_random_effect_matrices_rejects_single_level():
     obs = pd.DataFrame({"batch": ["A"] * 10})
     with pytest.raises(ValueError, match="single level"):
-        random_effect_matrices(obs, ["batch"])
+        random_effect_matrices(obs, [("1", "batch")])
+
+
+def test_random_effect_matrices_build_slopes():
+    obs = pd.DataFrame({"donor": ["A", "B", "A", "B"], "dose": [0.0, 1.0, 2.0, 3.0], "arm": ["x", "y", "x", "y"]})
+
+    numeric = random_effect_matrices(obs, [("dose", "donor")])
+    assert [name for name, _ in numeric] == ["donor", "donor_dose"]
+    assert np.array_equal(numeric[1][1].sum(axis=1), obs["dose"].to_numpy())
+
+    categorical = random_effect_matrices(obs, [("arm", "donor")])
+    assert [name for name, _ in categorical] == ["donor", "donor_arm_y"]
 
 
 def test_fit_nb_glmm_survives_an_unfactorisable_variance(monkeypatch):

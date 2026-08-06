@@ -13,41 +13,55 @@ from scipy.special import gammaln
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-_RANDOM_EFFECT = re.compile(r"\(\s*1\s*\|\s*([^)]+?)\s*\)")
+_RANDOM_EFFECT = re.compile(r"\(\s*([^)|]+?)\s*\|\s*([^)]+?)\s*\)")
 
 
-def parse_random_effects(design: str) -> tuple[str, list[str]]:
-    """Split a formula into its fixed effects part and the variables entering as random intercepts.
+def parse_random_effects(design: str) -> tuple[str, list[tuple[str, str]]]:
+    """Split a formula into its fixed effects part and its random effect terms.
 
-    Random intercepts follow the ``(1 | variable)`` syntax of lme4 and R Milo.
+    Random effects follow the ``(1 | group)`` syntax of lme4 and R Milo, and ``(variable | group)`` additionally lets the effect of that variable vary between groups.
 
     Returns:
-        The formula with the random effect terms removed and the random intercept variables.
+        The formula with the random effect terms removed, and one ``(slope, group)`` pair per term where the slope is ``"1"`` for a plain random intercept.
     """
     if re.search(r"\|", _RANDOM_EFFECT.sub("", design)):
-        raise ValueError(f"{design!r} is an invalid formula for random effects. Use the '(1 | variable)' format.")
+        raise ValueError(f"{design!r} is an invalid formula for random effects. Use the '(1 | group)' format.")
 
-    random_effects = [match.group(1).strip() for match in _RANDOM_EFFECT.finditer(design)]
+    terms = [(match.group(1).strip(), match.group(2).strip()) for match in _RANDOM_EFFECT.finditer(design)]
     fixed = _RANDOM_EFFECT.sub("", design)
     fixed = re.sub(r"\+\s*(?=\+|$)", "", fixed).strip().rstrip("+").strip()
     if fixed in {"", "~"}:
         fixed = "~ 1"
-    return fixed, random_effects
+    return fixed, terms
 
 
-def random_effect_matrices(obs: pd.DataFrame, random_effects: Sequence[str]) -> list[tuple[str, np.ndarray]]:
-    """Build one indicator matrix of shape samples x levels per random intercept variable."""
-    matrices = []
-    for variable in random_effects:
-        if variable not in obs.columns:
-            raise ValueError(f"Random effect variable {variable!r} is not a column of the sample metadata.")
-        dummies = pd.get_dummies(obs[variable].astype("category"), drop_first=False)
-        if dummies.shape[1] < 2:
+def random_effect_matrices(obs: pd.DataFrame, terms: Sequence[tuple[str, str]]) -> list[tuple[str, np.ndarray]]:
+    """Build one indicator matrix of shape samples x levels per random effect.
+
+    A random intercept contributes the indicator of its group.
+    A random slope contributes that indicator scaled by the variable whose effect varies, which carries its own variance, so the intercept and the slope of a group vary independently rather than being allowed to covary.
+    """
+    built: list[tuple[str, np.ndarray]] = []
+    for slope, group in terms:
+        if group not in obs.columns:
+            raise ValueError(f"Random effect group {group!r} is not a column of the sample metadata.")
+        indicator = pd.get_dummies(obs[group].astype("category"), drop_first=False).to_numpy(dtype=float)
+        if indicator.shape[1] < 2:
             raise ValueError(
-                f"Random effect variable {variable!r} has a single level, which cannot be told apart from the intercept."
+                f"Random effect group {group!r} has a single level, which cannot be told apart from the intercept."
             )
-        matrices.append((variable, dummies.to_numpy(dtype=float)))
-    return matrices
+        if not any(name == group for name, _ in built):
+            built.append((group, indicator))
+        if slope != "1":
+            if slope not in obs.columns:
+                raise ValueError(f"Random slope variable {slope!r} is not a column of the sample metadata.")
+            values = pd.to_numeric(obs[slope], errors="coerce")
+            if values.notna().all():
+                built.append((f"{group}_{slope}", indicator * values.to_numpy(dtype=float)[:, None]))
+                continue
+            for level, column in pd.get_dummies(obs[slope].astype("category"), drop_first=True).items():
+                built.append((f"{group}_{slope}_{level}", indicator * column.to_numpy(dtype=float)[:, None]))
+    return built
 
 
 class GLMMFit(NamedTuple):

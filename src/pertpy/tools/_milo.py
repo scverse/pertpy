@@ -316,13 +316,14 @@ class Milo:
     ):
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
 
-        A random intercept in the design switches to a negative binomial mixed model, which accounts for repeated measurements of the same donor, batch or timepoint instead of treating every sample as independent.
+        A random effect in the design switches to a negative binomial mixed model, which accounts for repeated measurements of the same donor, batch or timepoint instead of treating every sample as independent.
 
         Args:
             mdata: MuData object
             design: Formula for the test, following glm syntax from R (e.g. '~ condition').
                     Terms should be columns in `milo_mdata[feature_key].obs`.
-                    Random intercepts follow the `(1 | variable)` syntax of R Milo (e.g. '~ condition + (1 | donor)') and fit a mixed model.
+                    Random effects follow the `(1 | group)` syntax of R Milo (e.g. '~ condition + (1 | donor)') and fit a mixed model.
+                    `(variable | group)` additionally lets the effect of that variable vary between groups, whose variance is estimated separately from the intercept's.
             model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl").
                              If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group.
             subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test.
@@ -370,7 +371,12 @@ class Milo:
 
         fixed_design, random_effects = parse_random_effects(design)
         covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", fixed_design.lstrip("~ ")))]
-        covariates = [x for x in covariates if x not in {"", "0", "1"}] + random_effects
+        covariates = list(
+            dict.fromkeys(
+                [x for x in covariates if x not in {"", "0", "1"}]
+                + [name for term in random_effects for name in term if name != "1"]
+            )
+        )
 
         # Add covariates used for testing to sample_adata.var
         sample_col = sample_adata.uns["sample_col"]
