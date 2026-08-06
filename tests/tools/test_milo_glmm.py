@@ -2,7 +2,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pertpy.tools._milo_glmm import fit_nb_glmm, has_separation, parse_random_effects, random_effect_matrices
+from pertpy.tools._milo_glmm import (
+    between_within_df,
+    fit_nb_glmm,
+    has_separation,
+    parse_random_effects,
+    random_effect_matrices,
+)
 
 
 @pytest.mark.parametrize(
@@ -43,6 +49,20 @@ def test_has_separation():
     assert not has_separation(np.array([1.0, 2, 3, 4, 5, 6]), X)
     assert has_separation(np.array([0.0, 0, 0, 4, 5, 6]), X)
     assert has_separation(np.zeros(6), X)
+
+
+def test_between_within_df():
+    donor = np.repeat(np.arange(20), 8)
+    Z = [("donor", pd.get_dummies(pd.Categorical(donor)).to_numpy(dtype=float))]
+    intercept = np.ones(160)
+
+    # A condition that is a property of the donor is only informed by the 20 donors.
+    between = np.column_stack([intercept, np.repeat(np.tile([0.0, 1.0], 10), 8)])
+    assert between_within_df(between, Z) == 18
+
+    # A condition that varies inside every donor is informed by the samples.
+    within = np.column_stack([intercept, np.tile([0.0, 1.0], 80)])
+    assert between_within_df(within, Z) == 139
 
 
 @pytest.fixture

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, NamedTuple
 import numpy as np
 import pandas as pd
 from scipy import stats
+from scipy.linalg import cho_factor, cho_solve
 from scipy.optimize import brentq
 
 if TYPE_CHECKING:
@@ -97,6 +98,23 @@ def has_separation(y: np.ndarray, X: np.ndarray) -> bool:
     )
 
 
+def between_within_df(X: np.ndarray, random_effects: Sequence[tuple[str, np.ndarray]]) -> int:
+    """Degrees of freedom for the t-test on the last fixed effect, following the between-within rule.
+
+    A coefficient that is constant within every level of a random intercept is only informed by as many independent units as there are levels, so testing it against the number of samples treats repeated measurements as independent and is anti-conservative.
+    """
+    n, p = X.shape
+    tested = X[:, -1]
+    between = [
+        Z.shape[1]
+        for _, Z in random_effects
+        if all(np.ptp(tested[mask]) == 0 for mask in (Z[:, level] != 0 for level in range(Z.shape[1])) if mask.any())
+    ]
+    if between:
+        return max(min(between) - p, 1)
+    return max(n - sum(Z.shape[1] for _, Z in random_effects) - p + 1, 1)
+
+
 def fit_nb_glmm(
     y: np.ndarray,
     X: np.ndarray,
@@ -124,7 +142,8 @@ def fit_nb_glmm(
     """
     y = np.asarray(y, dtype=float)
     n, p = X.shape
-    zz = [Z @ Z.T for _, Z in random_effects]
+    matrices = [Z for _, Z in random_effects]
+    zz = [Z @ Z.T for Z in matrices]
     residual_df = max(n - p, 1)
 
     def pseudo_likelihood(dispersion: float) -> tuple[np.ndarray, np.ndarray, list[np.ndarray], np.ndarray, bool]:
@@ -132,33 +151,49 @@ def fit_nb_glmm(
         beta, *_ = np.linalg.lstsq(X, np.log(y + 1) - offset, rcond=None)
         start = np.log(y + 1) - offset - X @ beta
         sigma = np.full(len(random_effects), max(float(start @ start) / residual_df, 1e-3))
-        u = [np.zeros(Z.shape[1]) for _, Z in random_effects]
+        u = [np.zeros(Z.shape[1]) for Z in matrices]
         converged = False
 
         for _ in range(max_iter):
-            eta = offset + X @ beta + sum((Z @ u_k for (_, Z), u_k in zip(random_effects, u, strict=True)), np.zeros(n))
+            eta = offset + X @ beta + sum((Z @ u_k for Z, u_k in zip(matrices, u, strict=True)), np.zeros(n))
             mu = np.exp(np.clip(eta, -30, 30))
             weights = np.maximum(mu if np.isinf(size) else mu / (1.0 + mu / size), 1e-8)
             working = eta - offset + (y - mu) / mu
 
             V = sum((s * m for s, m in zip(sigma, zz, strict=True)), np.diag(1.0 / weights))
-            V_inv = np.linalg.pinv(V)
-            xtvx_inv = np.linalg.pinv(X.T @ V_inv @ X)
-            new_beta = xtvx_inv @ X.T @ V_inv @ working
-            projection = V_inv - V_inv @ X @ xtvx_inv @ X.T @ V_inv if reml else V_inv
+            chol = cho_factor(V, lower=True)
+
+            solved = cho_solve(chol, np.column_stack([X, *matrices]))
+            v_inv_x = solved[:, :p]
+
+            xtvx_inv = np.linalg.pinv(X.T @ v_inv_x)
+            new_beta = xtvx_inv @ (v_inv_x.T @ working)
 
             resid = working - X @ new_beta
-            new_u = [s * (Z.T @ (V_inv @ resid)) for s, (_, Z) in zip(sigma, random_effects, strict=True)]
+            v_inv_resid = cho_solve(chol, resid)
+            new_u = [s * (Z.T @ v_inv_resid) for s, Z in zip(sigma, matrices, strict=True)]
 
-            projected = projection @ resid
-            moments = [projection @ m for m in zz]
+            stacked = np.column_stack([v_inv_resid, solved[:, p:]])
+            if reml:
+                stacked = stacked - v_inv_x @ (xtvx_inv @ (X.T @ stacked))
+            projected = stacked[:, 0]
+            p_z = np.split(stacked[:, 1:], np.cumsum([Z.shape[1] for Z in matrices])[:-1], axis=1)
+
             score = np.array(
                 [
-                    -0.5 * np.trace(m) + 0.5 * float(projected @ zz_k @ projected)
-                    for m, zz_k in zip(moments, zz, strict=True)
+                    -0.5 * float(np.sum(b * Z)) + 0.5 * float((Z.T @ projected) @ (Z.T @ projected))
+                    for b, Z in zip(p_z, matrices, strict=True)
                 ]
             )
-            information = np.array([[0.5 * float(np.sum(a * b.T)) for b in moments] for a in moments])
+            information = np.array(
+                [
+                    [
+                        0.5 * float(np.sum((Z_k.T @ b_l) * (Z_l.T @ b_k).T))
+                        for b_l, Z_l in zip(p_z, matrices, strict=True)
+                    ]
+                    for b_k, Z_k in zip(p_z, matrices, strict=True)
+                ]
+            )
             new_sigma = np.maximum(sigma + np.linalg.pinv(information) @ score, 1e-8)
 
             delta = max(np.max(np.abs(new_beta - beta)), np.max(np.abs(new_sigma - sigma)))
@@ -167,7 +202,7 @@ def fit_nb_glmm(
                 converged = True
                 break
 
-        eta = offset + X @ beta + sum((Z @ u_k for (_, Z), u_k in zip(random_effects, u, strict=True)), np.zeros(n))
+        eta = offset + X @ beta + sum((Z @ u_k for Z, u_k in zip(matrices, u, strict=True)), np.zeros(n))
         return beta, sigma, u, np.exp(np.clip(eta, -30, 30)), converged
 
     if dispersion is None:
@@ -183,14 +218,15 @@ def fit_nb_glmm(
     weights = np.maximum(mu if np.isinf(size) else mu / (1.0 + mu / size), 1e-8)
     working = np.log(mu) - offset + (y - mu) / mu
     V = sum((s * m for s, m in zip(sigma, zz, strict=True)), np.diag(1.0 / weights))
-    V_inv = np.linalg.pinv(V)
-    se = np.sqrt(np.maximum(np.diag(np.linalg.pinv(X.T @ V_inv @ X)), 0))
+    chol = cho_factor(V, lower=True)
+    xtvx = X.T @ cho_solve(chol, X)
+    se = np.sqrt(np.maximum(np.diag(np.linalg.pinv(xtvx)), 0))
 
     resid = working - X @ beta
-    sign, logdet = np.linalg.slogdet(V)
-    loglik = -0.5 * (logdet + float(resid @ V_inv @ resid) + n * np.log(2 * np.pi)) if sign > 0 else np.nan
-    if reml and sign > 0:
-        loglik -= 0.5 * np.linalg.slogdet(X.T @ V_inv @ X)[1]
+    logdet = 2.0 * float(np.sum(np.log(np.abs(np.diag(chol[0])))))
+    loglik = -0.5 * (logdet + float(resid @ cho_solve(chol, resid)) + n * np.log(2 * np.pi))
+    if reml:
+        loglik -= 0.5 * np.linalg.slogdet(xtvx)[1]
 
     return GLMMFit(
         beta=beta, se=se, sigma=sigma, dispersion=float(dispersion), loglik=float(loglik), converged=converged
@@ -210,11 +246,12 @@ def fit_nb_glmm_nhoods(
     """Fit :func:`fit_nb_glmm` to every neighbourhood and assemble the results like R Milo does.
 
     The reported log fold change is the last column of the fixed effects model matrix, matching the coefficient that the edgeR solver tests.
+    Its p-value comes from a t-test whose degrees of freedom follow :func:`between_within_df`.
     """
     library_size = counts.sum(axis=0)
     logcpm = np.log2(np.mean(counts / np.where(library_size > 0, library_size, 1), axis=1) * 1e6 + 1e-12)
 
-    df = max(counts.shape[1] - X.shape[1], 1)
+    df = between_within_df(X, random_effects)
     records = []
     for nhood in range(counts.shape[0]):
         y = counts[nhood].astype(float)
