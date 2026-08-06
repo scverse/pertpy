@@ -105,6 +105,38 @@ def test_fit_nb_glmm_ignores_random_effect_when_absent(repeated_measures):
     assert fit.sigma[0] < 0.1
 
 
+def test_fit_nb_glmm_two_random_effects():
+    """Two crossed random intercepts each recover their own variance component."""
+    rng = np.random.default_rng(5)
+    n_donor, n_batch, per_donor = 20, 10, 10
+    n = n_donor * per_donor
+    donor = np.repeat(np.arange(n_donor), per_donor)
+    batch = np.tile(np.arange(n_batch), n // n_batch)
+    condition = np.tile([0.0, 1.0], n // 2)
+    X = np.column_stack([np.ones(n), condition])
+    Z = [
+        ("donor", pd.get_dummies(pd.Categorical(donor)).to_numpy(dtype=float)),
+        ("batch", pd.get_dummies(pd.Categorical(batch)).to_numpy(dtype=float)),
+    ]
+
+    donor_var, batch_var = 0.5, 0.8
+    estimates = []
+    for _ in range(10):
+        u_donor = rng.normal(0, np.sqrt(donor_var), n_donor)
+        u_batch = rng.normal(0, np.sqrt(batch_var), n_batch)
+        mu = np.exp(3.0 + 1.0 * condition + u_donor[donor] + u_batch[batch])
+        y = rng.negative_binomial(8, 8 / (8 + mu)).astype(float)
+        fit = fit_nb_glmm(y, X, Z, np.zeros(n))
+        assert fit.converged
+        assert fit.sigma.shape == (2,)
+        estimates.append(np.concatenate([fit.sigma, fit.beta[1:]]))
+
+    mean = np.mean(estimates, axis=0)
+    assert mean[0] == pytest.approx(donor_var, abs=0.3)
+    assert mean[1] == pytest.approx(batch_var, abs=0.3)
+    assert mean[2] == pytest.approx(1.0, abs=0.2)
+
+
 def test_fit_nb_glmm_offset_shifts_intercept_only(repeated_measures):
     y, X, Z = repeated_measures
     offset = np.full(len(y), np.log(2.0))

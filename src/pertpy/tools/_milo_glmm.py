@@ -140,18 +140,48 @@ def fit_nb_glmm(
         max_iter: Maximum number of pseudo-likelihood iterations.
         tol: Convergence tolerance on the fixed effects and variance components.
     """
+    matrices = [Z for _, Z in random_effects]
+    return _fit_nb_glmm(
+        y,
+        X,
+        matrices,
+        [Z @ Z.T for Z in matrices],
+        offset,
+        dispersion=dispersion,
+        reml=reml,
+        max_iter=max_iter,
+        tol=tol,
+    )
+
+
+def _fit_nb_glmm(
+    y: np.ndarray,
+    X: np.ndarray,
+    matrices: Sequence[np.ndarray],
+    zz: Sequence[np.ndarray],
+    offset: np.ndarray,
+    *,
+    dispersion: float | None,
+    reml: bool,
+    max_iter: int,
+    tol: float,
+) -> GLMMFit:
+    """Fit one neighbourhood, reusing the outer products of the random effect matrices across neighbourhoods."""
     y = np.asarray(y, dtype=float)
     n, p = X.shape
-    matrices = [Z for _, Z in random_effects]
-    zz = [Z @ Z.T for Z in matrices]
     residual_df = max(n - p, 1)
 
-    def pseudo_likelihood(dispersion: float) -> tuple[np.ndarray, np.ndarray, list[np.ndarray], np.ndarray, bool]:
+    def pseudo_likelihood(
+        dispersion: float, start_from: tuple | None = None
+    ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray], np.ndarray, bool]:
         size = np.inf if dispersion <= 0 else 1.0 / dispersion
-        beta, *_ = np.linalg.lstsq(X, np.log(y + 1) - offset, rcond=None)
-        start = np.log(y + 1) - offset - X @ beta
-        sigma = np.full(len(random_effects), max(float(start @ start) / residual_df, 1e-3))
-        u = [np.zeros(Z.shape[1]) for Z in matrices]
+        if start_from is None:
+            beta, *_ = np.linalg.lstsq(X, np.log(y + 1) - offset, rcond=None)
+            start = np.log(y + 1) - offset - X @ beta
+            sigma = np.full(len(matrices), max(float(start @ start) / residual_df, 1e-3))
+            u = [np.zeros(Z.shape[1]) for Z in matrices]
+        else:
+            beta, sigma, u = start_from
         converged = False
 
         for _ in range(max_iter):
@@ -205,14 +235,16 @@ def fit_nb_glmm(
         eta = offset + X @ beta + sum((Z @ u_k for Z, u_k in zip(matrices, u, strict=True)), np.zeros(n))
         return beta, sigma, u, np.exp(np.clip(eta, -30, 30)), converged
 
+    warm_start = None
     if dispersion is None:
         # The fixed effects only estimate absorbs part of the random effect variance, so refine it once the
         # neighbourhood has been fitted with its random effects.
         dispersion = _dispersion_from_means(y, _poisson_means(y, X, offset), residual_df)
-        _, _, _, fitted_mean, _ = pseudo_likelihood(dispersion)
+        beta, sigma, u, fitted_mean, _ = pseudo_likelihood(dispersion)
         dispersion = _dispersion_from_means(y, fitted_mean, residual_df)
+        warm_start = (beta, sigma, u)
 
-    beta, sigma, u, mu, converged = pseudo_likelihood(dispersion)
+    beta, sigma, u, mu, converged = pseudo_likelihood(dispersion, warm_start)
 
     size = np.inf if dispersion <= 0 else 1.0 / dispersion
     weights = np.maximum(mu if np.isinf(size) else mu / (1.0 + mu / size), 1e-8)
@@ -252,6 +284,8 @@ def fit_nb_glmm_nhoods(
     logcpm = np.log2(np.mean(counts / np.where(library_size > 0, library_size, 1), axis=1) * 1e6 + 1e-12)
 
     df = between_within_df(X, random_effects)
+    matrices = [Z for _, Z in random_effects]
+    zz = [Z @ Z.T for Z in matrices]
     records = []
     for nhood in range(counts.shape[0]):
         y = counts[nhood].astype(float)
@@ -270,7 +304,7 @@ def fit_nb_glmm_nhoods(
             )
             continue
 
-        fit = fit_nb_glmm(y, X, random_effects, offset, reml=reml, max_iter=max_iter, tol=tol)
+        fit = _fit_nb_glmm(y, X, matrices, zz, offset, dispersion=None, reml=reml, max_iter=max_iter, tol=tol)
         t_value = fit.beta[-1] / fit.se[-1] if fit.se[-1] > 0 else np.nan
         records.append(
             {
