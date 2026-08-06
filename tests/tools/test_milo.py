@@ -236,6 +236,37 @@ def test_da_nhoods_glmm(da_nhoods_mdata, milo):
 
 
 @pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
+def test_da_nhoods_glmm_subset_samples(da_nhoods_mdata, milo):
+    """The design frame is subset once, so passing a sample subset must not subset it twice."""
+    mdata = da_nhoods_mdata.copy()
+    subset = list(mdata["milo"].obs_names)[:4]
+
+    with pytest.warns(FutureWarning, match="subset_samples"):
+        milo.da_nhoods(mdata, design="~ condition + (1 | replicate)", subset_samples=subset)
+
+    var = mdata["milo"].var
+    fitted = var["logFC"].notna()
+    assert fitted.any()
+    assert var.loc[fitted, "PValue"].between(0, 1).all()
+
+
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
+def test_da_nhoods_glmm_two_random_effects(da_nhoods_mdata, milo):
+    mdata = da_nhoods_mdata.copy()
+    # A batch that is a property of the replicate, so it is constant within a sample as a covariate must be.
+    mdata["rna"].obs["batch"] = np.where(mdata["rna"].obs["replicate"] == "R1", "B1", "B2")
+
+    milo.da_nhoods(mdata, design="~ condition + (1 | replicate) + (1 | batch)")
+    var = mdata["milo"].var
+
+    assert "replicate_variance" in var.columns
+    assert "batch_variance" in var.columns
+    fitted = var["logFC"].notna()
+    assert fitted.any()
+    assert var.loc[fitted, "PValue"].between(0, 1).all()
+
+
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
 def test_da_nhoods_switching_between_models_replaces_results(da_nhoods_mdata, milo):
     """Solvers report different columns, so a second run must not leave a mixture of both behind."""
     mdata = da_nhoods_mdata.copy()

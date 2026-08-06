@@ -412,13 +412,14 @@ class Milo:
         # Subset samples
         if subset_samples is not None:
             keep_smp = keep_smp & sample_adata.obs_names.isin(subset_samples)
-            design_df = design_df[keep_smp]
-            for i, e in enumerate(design_df.columns):
-                if design_df.dtypes[i].name == "category":
-                    design_df[e] = design_df[e].cat.remove_unused_categories()
 
         # Filter out nhoods with zero counts (they can appear after sample filtering)
         keep_nhoods = count_mat[:, keep_smp].sum(1) > 0
+
+        design_df = design_df[keep_smp].copy()
+        for column in design_df.columns:
+            if isinstance(design_df[column].dtype, pd.CategoricalDtype):
+                design_df[column] = design_df[column].cat.remove_unused_categories()
 
         if random_effects:
             if find_spec("formulaic_contrasts") is None:
@@ -427,16 +428,15 @@ class Milo:
                 )
             from formulaic_contrasts import FormulaicContrasts
 
-            design_df_filtered = design_df[keep_smp]
             fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
-            design_matrix = FormulaicContrasts(design_df_filtered, fixed).design_matrix
+            design_matrix = FormulaicContrasts(design_df, fixed).design_matrix
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
             lib_size_filtered = lib_size[keep_smp]
 
             res = fit_nb_glmm_nhoods(
                 counts_filtered,
                 np.asarray(design_matrix, dtype=float),
-                random_effect_matrices(design_df_filtered, random_effects),
+                random_effect_matrices(design_df, random_effects),
                 np.log(lib_size_filtered),
                 contrast=_contrast_vector(list(design_matrix.columns), model_contrasts)
                 if model_contrasts is not None
@@ -542,7 +542,7 @@ class Milo:
             warnings.filterwarnings("always", message=".*(alpha).*")
 
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
-            design_df_filtered = design_df.iloc[keep_smp].copy()
+            design_df_filtered = design_df.copy()
 
             design_df_filtered = design_df_filtered.astype(
                 dict.fromkeys(design_df_filtered.select_dtypes(exclude=["number"]).columns, "category")
