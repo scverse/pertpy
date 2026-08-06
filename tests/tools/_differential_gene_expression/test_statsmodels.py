@@ -16,7 +16,9 @@ def test_statsmodels(test_adata, kwargs):
     from pertpy.tools._differential_gene_expression import Statsmodels
 
     method = Statsmodels(adata=test_adata, design="~condition")
+    assert not method.is_fitted
     method.fit(**kwargs)
+    assert method.is_fitted
     res_df = method.test_contrasts(np.array([0, 1]))
     # Check that the result has the correct number of rows
     assert len(res_df) == test_adata.n_vars

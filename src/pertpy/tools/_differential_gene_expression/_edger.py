@@ -68,6 +68,7 @@ class EdgeR(LinearModelBase):
 
         ro.globalenv["fit"] = fit
         self.fit = fit
+        self._fitted = True
 
     def _test_single_contrast(self, contrast: Sequence[float], **kwargs) -> pd.DataFrame:  # noqa: D417
         """Conduct test for each contrast and return a data frame.

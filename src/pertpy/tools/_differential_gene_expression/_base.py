@@ -2,6 +2,7 @@ import contextlib
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
+from html import escape
 from itertools import zip_longest
 from types import MappingProxyType
 from typing import cast
@@ -22,6 +23,28 @@ from pertpy._logger import logger
 from pertpy._types import CSBase, cast_dense, cast_frame
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
+
+# Colors are expressed relative to the surrounding text so that the summary renders on light and dark themes alike.
+# The table styles undo the borders, zebra stripes and centering that notebook frontends apply to rendered tables.
+_HTML_CONTAINER_STYLE = (
+    "display: inline-block; padding: 8px 12px; border: 1px solid rgba(128, 128, 128, 0.4); border-radius: 4px;"
+    " font-family: var(--jp-code-font-family, monospace); font-size: 0.85em; line-height: 1.6;"
+)
+_HTML_TITLE_STYLE = "font-weight: 600; font-size: 1.15em;"
+_HTML_DESCRIPTION_STYLE = "opacity: 0.8; margin-bottom: 6px;"
+_HTML_TABLE_STYLE = "border: none; border-collapse: collapse; margin: 0; font: inherit; background: none;"
+_HTML_ROW_STYLE = "border: none; background: none;"
+_HTML_NAME_STYLE = (
+    "border: none; padding: 0 12px 0 0; text-align: left; vertical-align: top; white-space: nowrap; opacity: 0.8;"
+)
+_HTML_VALUE_STYLE = "border: none; padding: 0; text-align: left; vertical-align: top;"
+
+
+def _format_names(names: Sequence[str], max_shown: int = 8) -> str:
+    """Join names into a single line, truncating overly long lists."""
+    if len(names) <= max_shown:
+        return ", ".join(names)
+    return f"{', '.join(names[:max_shown])}, … ({len(names)} in total)"
 
 
 class MethodBase(ABC):
@@ -48,6 +71,34 @@ class MethodBase(ABC):
             return self.adata.X
         else:
             return self.adata.layers[self.layer]
+
+    def _summary(self) -> dict[str, str]:
+        """Get the fields shown by the text and HTML representations."""
+        return {
+            "Data": f"{self.adata.n_obs:,} obs × {self.adata.n_vars:,} vars",
+            "Layer": self.layer if self.layer is not None else "X",
+        }
+
+    def __repr__(self) -> str:
+        summary = self._summary()
+        width = max(map(len, summary), default=0)
+        return "\n".join([type(self).__name__, *(f"    {name:<{width}}  {value}" for name, value in summary.items())])
+
+    def _repr_html_(self) -> str:
+        description = (type(self).__doc__ or "").strip().split("\n")[0]
+        description_html = f'<div style="{_HTML_DESCRIPTION_STYLE}">{escape(description)}</div>' if description else ""
+        rows = "".join(
+            f'<tr style="{_HTML_ROW_STYLE}"><td style="{_HTML_NAME_STYLE}">{escape(name)}</td>'
+            f'<td style="{_HTML_VALUE_STYLE}">{escape(value)}</td></tr>'
+            for name, value in self._summary().items()
+        )
+        return (
+            f'<div style="{_HTML_CONTAINER_STYLE}">'
+            f'<div style="{_HTML_TITLE_STYLE}">{escape(type(self).__name__)}</div>'
+            f"{description_html}"
+            f'<table style="{_HTML_TABLE_STYLE}"><tbody>{rows}</tbody></table>'
+            "</div>"
+        )
 
     @classmethod
     @abstractmethod
@@ -886,6 +937,7 @@ class LinearModelBase(MethodBase):
             self.design = self.formulaic_contrasts.design_matrix
         else:
             self.design = design
+        self._fitted = False
 
     @classmethod
     def compare_groups(
@@ -929,6 +981,23 @@ class LinearModelBase(MethodBase):
             ) from None
         else:
             return self.formulaic_contrasts.variables
+
+    @property
+    def is_fitted(self) -> bool:
+        """Whether `fit` has been called on this model."""
+        return self._fitted
+
+    def _summary(self) -> dict[str, str]:
+        summary = super()._summary()
+        if self.formulaic_contrasts is None:
+            summary["Design"] = f"custom matrix ({self.design.shape[0]:,} × {self.design.shape[1]:,})"
+        else:
+            summary["Design"] = str(self.design.model_spec.formula)
+            summary["Variables"] = _format_names(sorted(self.variables))
+        if hasattr(self.design, "columns"):
+            summary["Coefficients"] = _format_names([str(column) for column in self.design.columns])
+        summary["Fitted"] = "yes" if self.is_fitted else "no"
+        return summary
 
     @abstractmethod
     def _check_counts(self):

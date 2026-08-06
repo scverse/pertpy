@@ -70,6 +70,7 @@ class PyDESeq2(LinearModelBase):
 
         dds.deseq2()
         self.dds = dds
+        self._fitted = True
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_disp_ests(  # pragma: no cover # noqa: D417
@@ -122,7 +123,7 @@ class PyDESeq2(LinearModelBase):
         Preview:
             .. image:: /_static/docstring_previews/de_disp_ests.png
         """
-        if not hasattr(self, "dds"):
+        if not self.is_fitted:
             raise ValueError("Model not fitted yet. Call .fit() first.")
 
         dds = self.dds
