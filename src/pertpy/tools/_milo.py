@@ -20,6 +20,7 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 from pertpy._types import CSBase, cast_frame, cast_matrix
+from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, parse_random_effects, random_effect_matrices
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -30,6 +31,23 @@ if TYPE_CHECKING:
 
 from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
 from sklearn.metrics.pairwise import euclidean_distances
+
+
+def _contrast_vector(columns: list[str], model_contrasts: str) -> np.ndarray:
+    """Turn an R style contrast such as ``conditionB-conditionA`` into weights over formulaic design columns.
+
+    Formulaic names a coefficient ``condition[T.B]`` where R names it ``conditionB``, so the columns are matched on their R spelling.
+    """
+    r_names = {column.replace("[T.", "").replace("[", "").replace("]", ""): column for column in columns}
+    weights = pd.Series(0.0, index=columns)
+    for sign, term in re.findall(r"([+-]?)\s*([^+-]+)", model_contrasts):
+        name = term.strip()
+        if name not in r_names:
+            raise ValueError(
+                f"Contrast term {name!r} does not match any coefficient of the design. Available: {sorted(r_names)}."
+            )
+        weights[r_names[name]] += -1.0 if sign == "-" else 1.0
+    return weights.to_numpy()
 
 
 def _weighted_bh(pvalues: np.ndarray, weights: np.ndarray) -> np.ndarray:
@@ -291,21 +309,30 @@ class Milo:
         subset_samples: list[str] | None = None,
         add_intercept: bool = True,
         feature_key: str | None = "rna",
+        reml: bool = True,
+        max_iter: int = 50,
+        tol: float = 1e-5,
         solver: Literal["edger", "pydeseq2"] = "pydeseq2",
     ):
         """Performs differential abundance testing on neighbourhoods using QLF test implementation as implemented in edgeR.
+
+        A random intercept in the design switches to a negative binomial mixed model, which accounts for repeated measurements of the same donor, batch or timepoint instead of treating every sample as independent.
 
         Args:
             mdata: MuData object
             design: Formula for the test, following glm syntax from R (e.g. '~ condition').
                     Terms should be columns in `milo_mdata[feature_key].obs`.
+                    Random intercepts follow the `(1 | variable)` syntax of R Milo (e.g. '~ condition + (1 | donor)') and fit a mixed model.
             model_contrasts: A string vector that defines the contrasts used to perform DA testing, following glm syntax from R (e.g. "conditionDisease - conditionControl").
                              If no contrast is specified (default), then the last categorical level in condition of interest is used as the test group.
             subset_samples: subset of samples (obs in `milo_mdata['milo']`) to use for the test.
             add_intercept: whether to include an intercept in the model. If False, this is equivalent to adding + 0 in the design formula.
                 When model_contrasts is specified, this is set to False by default.
             feature_key: If input data is MuData, specify key to cell-level AnnData object.
-            solver: The solver to fit the model to.
+            reml: Whether a mixed model estimates its variance components by restricted maximum likelihood rather than maximum likelihood.
+            max_iter: Maximum number of iterations of a mixed model fit.
+            tol: Convergence tolerance of a mixed model fit.
+            solver: The solver to fit the model to, ignored for a mixed model.
                 The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
                 The "pydeseq2" requires pydeseq2 to be installed.
                 It is still very comparable to the "edger" solver but might be a bit slower.
@@ -316,6 +343,9 @@ class Milo:
             - `PValue` stores the p-value for the QLF test before multiple testing correction
             - `SpatialFDR` stores the p-value adjusted for multiple testing to limit the false discovery rate,
                 calculated with weighted Benjamini-Hochberg procedure
+
+            For a mixed model, `SE`, `tvalue`, one `<variable>_variance` per random intercept, `Dispersion`,
+            `Logliklihood` and `Converged` are added as well.
 
         Examples:
             >>> import pertpy as pt
@@ -338,7 +368,9 @@ class Milo:
             raise
         adata = mdata[feature_key]
 
-        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", design.lstrip("~ ")))]
+        fixed_design, random_effects = parse_random_effects(design)
+        covariates = [x.strip(" ") for x in set(re.split("\\+|\\*", fixed_design.lstrip("~ ")))]
+        covariates = [x for x in covariates if x not in {"", "0", "1"}] + random_effects
 
         # Add covariates used for testing to sample_adata.var
         sample_col = sample_adata.uns["sample_col"]
@@ -380,15 +412,51 @@ class Milo:
         # Subset samples
         if subset_samples is not None:
             keep_smp = keep_smp & sample_adata.obs_names.isin(subset_samples)
-            design_df = design_df[keep_smp]
-            for i, e in enumerate(design_df.columns):
-                if design_df.dtypes[i].name == "category":
-                    design_df[e] = design_df[e].cat.remove_unused_categories()
 
         # Filter out nhoods with zero counts (they can appear after sample filtering)
         keep_nhoods = count_mat[:, keep_smp].sum(1) > 0
 
-        if solver == "edger":
+        design_df = design_df[keep_smp].copy()
+        for column in design_df.columns:
+            if isinstance(design_df[column].dtype, pd.CategoricalDtype):
+                design_df[column] = design_df[column].cat.remove_unused_categories()
+
+        if random_effects:
+            if find_spec("formulaic_contrasts") is None:
+                raise ImportError(
+                    "formulaic-contrasts is required for mixed models. Install with: pip install pertpy[de]"
+                )
+            from formulaic_contrasts import FormulaicContrasts
+
+            fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
+            design_matrix = FormulaicContrasts(design_df, fixed).design_matrix
+            counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
+            lib_size_filtered = lib_size[keep_smp]
+
+            res = fit_nb_glmm_nhoods(
+                counts_filtered,
+                np.asarray(design_matrix, dtype=float),
+                random_effect_matrices(design_df, random_effects),
+                np.log(lib_size_filtered),
+                contrast=_contrast_vector(list(design_matrix.columns), model_contrasts)
+                if model_contrasts is not None
+                else None,
+                reml=reml,
+                max_iter=max_iter,
+                tol=tol,
+            )
+            fitted = res["logFC"].notna()
+            if separated := int((~fitted).sum()):
+                logger.warning(
+                    f"{separated} out of {len(res)} neighbourhoods have a group without any cells, so their fold change "
+                    "is not identifiable and is reported as NaN."
+                )
+            if not_converged := int((~res["Converged"] & fitted).sum()):
+                logger.warning(
+                    f"{not_converged} out of {int(fitted.sum())} fitted neighbourhoods did not converge; "
+                    "consider increasing `max_iter`."
+                )
+        elif solver == "edger":
             # Set up rpy2 to run edgeR
             edgeR, limma, stats, base = self._setup_rpy2()
 
@@ -474,7 +542,7 @@ class Milo:
             warnings.filterwarnings("always", message=".*(alpha).*")
 
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
-            design_df_filtered = design_df.iloc[keep_smp].copy()
+            design_df_filtered = design_df.copy()
 
             design_df_filtered = design_df_filtered.astype(
                 dict.fromkeys(design_df_filtered.select_dtypes(exclude=["number"]).columns, "category")
@@ -537,9 +605,16 @@ class Milo:
             res = res[["logCPM", "logFC", "PValue", "FDR"]]
 
         res.index = sample_adata.var_names[keep_nhoods]
-        if any(col in sample_adata.var.columns for col in res.columns):
-            sample_adata.var = sample_adata.var.drop(res.columns, axis=1)  # type: ignore[union-attr]
+        written = [*res.columns, "SpatialFDR"]
+        stale = [
+            col
+            for col in dict.fromkeys([*sample_adata.uns.get("da_nhoods_columns", []), *written])
+            if col in sample_adata.var.columns
+        ]
+        if stale:
+            sample_adata.var = sample_adata.var.drop(columns=stale)  # type: ignore[union-attr]
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)  # type: ignore[call-overload]
+        sample_adata.uns["da_nhoods_columns"] = written
 
         self._graph_spatial_fdr(sample_adata)  # type: ignore[arg-type]
 
@@ -613,6 +688,12 @@ class Milo:
                 raise KeyError(
                     "sample_col not found in mdata['milo'].uns -- run count_nhoods() first or pass `sample_col`."
                 )
+
+        if parse_random_effects(design)[1]:
+            raise ValueError(
+                "Random effects are not supported by de_nhoods, which fits one model per gene and neighbourhood. "
+                "Use da_nhoods for a mixed model of cell abundance, or drop the random effect term to test expression."
+            )
 
         covariates = [c.strip() for c in re.split(r"\+|\*|:", design.lstrip("~ "))]
         covariates = [c for c in covariates if c and c not in {"0", "1"}]

@@ -216,6 +216,89 @@ def test_da_nhoods_default_contrast(da_nhoods_mdata, milo, solver):
     assert np.corrcoef(contr_results["logFC"], default_results["logFC"])[0, 1] > 0.99
 
 
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
+def test_da_nhoods_glmm(da_nhoods_mdata, milo):
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~ condition + (1 | replicate)")
+    var = mdata["milo"].var
+
+    for column in ("logFC", "SE", "tvalue", "PValue", "replicate_variance", "Converged", "SpatialFDR"):
+        assert column in var.columns
+
+    fitted = var["logFC"].notna()
+    assert fitted.any()
+    assert var.loc[fitted, "Converged"].mean() > 0.9
+    assert var.loc[fitted, "PValue"].between(0, 1).all()
+    assert (var.loc[fitted, "replicate_variance"] >= 0).all()
+    assert np.all(np.round(var.loc[fitted, "PValue"], 10) <= np.round(var.loc[fitted, "SpatialFDR"], 10)), (
+        "FDR is higher than uncorrected P-values"
+    )
+
+
+def test_de_nhoods_rejects_random_effects(da_nhoods_mdata, milo):
+    with pytest.raises(ValueError, match="not supported by de_nhoods"):
+        milo.de_nhoods(
+            da_nhoods_mdata,
+            design="~ condition + (1 | replicate)",
+            column="condition",
+            baseline="ConditionA",
+            group_to_compare="ConditionB",
+        )
+
+
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
+def test_da_nhoods_glmm_subset_samples(da_nhoods_mdata, milo):
+    """The design frame is subset once, so passing a sample subset must not subset it twice."""
+    mdata = da_nhoods_mdata.copy()
+    subset = list(mdata["milo"].obs_names)[:4]
+
+    with pytest.warns(FutureWarning, match="subset_samples"):
+        milo.da_nhoods(mdata, design="~ condition + (1 | replicate)", subset_samples=subset)
+
+    var = mdata["milo"].var
+    fitted = var["logFC"].notna()
+    assert fitted.any()
+    assert var.loc[fitted, "PValue"].between(0, 1).all()
+
+
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
+def test_da_nhoods_switching_between_models_replaces_results(da_nhoods_mdata, milo):
+    """Solvers report different columns, so a second run must not leave a mixture of both behind."""
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~ condition + (1 | replicate)")
+    assert "replicate_variance" in mdata["milo"].var.columns
+
+    milo.da_nhoods(mdata, design="~condition", solver="pydeseq2")
+    var = mdata["milo"].var
+
+    for column in ("replicate_variance", "SE", "tvalue", "Converged", "Logliklihood"):
+        assert column not in var.columns
+    assert "FDR" in var.columns
+    assert var["PValue"].notna().any()
+
+
+@pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
+def test_da_nhoods_glmm_contrasts(da_nhoods_mdata, milo):
+    """A contrast between the two levels reproduces the coefficient tested by default."""
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~ condition + (1 | replicate)")
+    default = mdata["milo"].var[["logFC", "PValue"]].copy()
+
+    milo.da_nhoods(
+        mdata,
+        design="~ condition + (1 | replicate)",
+        model_contrasts="conditionConditionB-conditionConditionA",
+    )
+    contrasted = mdata["milo"].var[["logFC", "PValue"]].copy()
+
+    fitted = default["logFC"].notna() & contrasted["logFC"].notna()
+    assert fitted.any()
+    np.testing.assert_allclose(default.loc[fitted, "logFC"], contrasted.loc[fitted, "logFC"], atol=1e-4)
+
+    with pytest.raises(ValueError, match="does not match any coefficient"):
+        milo.da_nhoods(mdata, design="~ condition + (1 | replicate)", model_contrasts="nonsense")
+
+
 @pytest.fixture
 def annotate_nhoods_mdata(adata, milo):
     adata = adata.copy()
