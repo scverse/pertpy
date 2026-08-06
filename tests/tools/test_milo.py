@@ -235,6 +235,17 @@ def test_da_nhoods_glmm(da_nhoods_mdata, milo):
     )
 
 
+def test_de_nhoods_rejects_random_effects(da_nhoods_mdata, milo):
+    with pytest.raises(ValueError, match="not supported by de_nhoods"):
+        milo.de_nhoods(
+            da_nhoods_mdata,
+            design="~ condition + (1 | replicate)",
+            column="condition",
+            baseline="ConditionA",
+            group_to_compare="ConditionB",
+        )
+
+
 @pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
 def test_da_nhoods_glmm_subset_samples(da_nhoods_mdata, milo):
     """The design frame is subset once, so passing a sample subset must not subset it twice."""

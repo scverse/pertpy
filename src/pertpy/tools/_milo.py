@@ -695,6 +695,12 @@ class Milo:
                     "sample_col not found in mdata['milo'].uns -- run count_nhoods() first or pass `sample_col`."
                 )
 
+        if parse_random_effects(design)[1]:
+            raise ValueError(
+                "Random effects are not supported by de_nhoods, which fits one model per gene and neighbourhood. "
+                "Use da_nhoods for a mixed model of cell abundance, or drop the random effect term to test expression."
+            )
+
         covariates = [c.strip() for c in re.split(r"\+|\*|:", design.lstrip("~ "))]
         covariates = [c for c in covariates if c and c not in {"0", "1"}]
         missing = [c for c in covariates + [sample_col] if c not in adata.obs.columns]
