@@ -236,6 +236,22 @@ def test_da_nhoods_glmm(da_nhoods_mdata, milo):
 
 
 @pytest.mark.skipif(find_spec("formulaic") is None, reason="formulaic not available")
+def test_da_nhoods_switching_between_models_replaces_results(da_nhoods_mdata, milo):
+    """Solvers report different columns, so a second run must not leave a mixture of both behind."""
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~ condition + (1 | replicate)")
+    assert "replicate_variance" in mdata["milo"].var.columns
+
+    milo.da_nhoods(mdata, design="~condition", solver="pydeseq2")
+    var = mdata["milo"].var
+
+    for column in ("replicate_variance", "SE", "tvalue", "Converged", "Logliklihood"):
+        assert column not in var.columns
+    assert "FDR" in var.columns
+    assert var["PValue"].notna().any()
+
+
+@pytest.mark.skipif(find_spec("formulaic") is None, reason="formulaic not available")
 def test_da_nhoods_glmm_rejects_contrasts(da_nhoods_mdata, milo):
     mdata = da_nhoods_mdata.copy()
     with pytest.raises(ValueError, match="model_contrasts is not supported"):

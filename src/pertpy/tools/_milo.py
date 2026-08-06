@@ -590,9 +590,18 @@ class Milo:
             res = res[["logCPM", "logFC", "PValue", "FDR"]]
 
         res.index = sample_adata.var_names[keep_nhoods]
-        if any(col in sample_adata.var.columns for col in res.columns):
-            sample_adata.var = sample_adata.var.drop(res.columns, axis=1)  # type: ignore[union-attr]
+        # Solvers report different columns, so clear the ones the previous run wrote instead of leaving a
+        # mixture of both behind.
+        written = [*res.columns, "SpatialFDR"]
+        stale = [
+            col
+            for col in dict.fromkeys([*sample_adata.uns.get("da_nhoods_columns", []), *written])
+            if col in sample_adata.var.columns
+        ]
+        if stale:
+            sample_adata.var = sample_adata.var.drop(columns=stale)  # type: ignore[union-attr]
         sample_adata.var = pd.concat([sample_adata.var, res], axis=1)  # type: ignore[call-overload]
+        sample_adata.uns["da_nhoods_columns"] = written
 
         self._graph_spatial_fdr(sample_adata)  # type: ignore[arg-type]
 

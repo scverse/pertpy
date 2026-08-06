@@ -41,6 +41,10 @@ def random_effect_matrices(obs: pd.DataFrame, random_effects: Sequence[str]) -> 
         if variable not in obs.columns:
             raise ValueError(f"Random effect variable {variable!r} is not a column of the sample metadata.")
         dummies = pd.get_dummies(obs[variable].astype("category"), drop_first=False)
+        if dummies.shape[1] < 2:
+            raise ValueError(
+                f"Random effect variable {variable!r} has a single level, which cannot be told apart from the intercept."
+            )
         matrices.append((variable, dummies.to_numpy(dtype=float)))
     return matrices
 
@@ -155,6 +159,37 @@ def fit_nb_glmm(
 
 
 def _fit_nb_glmm(
+    y: np.ndarray,
+    X: np.ndarray,
+    matrices: Sequence[np.ndarray],
+    zz: Sequence[np.ndarray],
+    offset: np.ndarray,
+    *,
+    dispersion: float | None,
+    reml: bool,
+    max_iter: int,
+    tol: float,
+) -> GLMMFit:
+    """Fit one neighbourhood, reporting a neighbourhood whose variance matrix cannot be factorised as not converged.
+
+    One pathological neighbourhood should not abort a run over thousands of them.
+    """
+    try:
+        return _fit_nb_glmm_core(
+            y, X, matrices, zz, offset, dispersion=dispersion, reml=reml, max_iter=max_iter, tol=tol
+        )
+    except np.linalg.LinAlgError:
+        return GLMMFit(
+            beta=np.full(X.shape[1], np.nan),
+            se=np.full(X.shape[1], np.nan),
+            sigma=np.full(len(matrices), np.nan),
+            dispersion=np.nan,
+            loglik=np.nan,
+            converged=False,
+        )
+
+
+def _fit_nb_glmm_core(
     y: np.ndarray,
     X: np.ndarray,
     matrices: Sequence[np.ndarray],
