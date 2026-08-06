@@ -69,7 +69,7 @@ def _poisson_means(y: np.ndarray, X: np.ndarray, offset: np.ndarray) -> np.ndarr
     return mu
 
 
-def _dispersion_from_means(y: np.ndarray, mu: np.ndarray, df: int) -> float:
+def _dispersion_from_means(y: np.ndarray, mu: np.ndarray, df: float) -> float:
     """Solve for the dispersion at which the negative binomial Pearson statistic equals its degrees of freedom."""
     squared_error = (y - mu) ** 2
 
@@ -173,7 +173,7 @@ def _fit_nb_glmm(
 
     def pseudo_likelihood(
         dispersion: float, start_from: tuple | None = None
-    ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray], np.ndarray, bool]:
+    ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray], np.ndarray, bool, float]:
         size = np.inf if dispersion <= 0 else 1.0 / dispersion
         if start_from is None:
             beta, *_ = np.linalg.lstsq(X, np.log(y + 1) - offset, rcond=None)
@@ -233,18 +233,20 @@ def _fit_nb_glmm(
                 break
 
         eta = offset + X @ beta + sum((Z @ u_k for Z, u_k in zip(matrices, u, strict=True)), np.zeros(n))
-        return beta, sigma, u, np.exp(np.clip(eta, -30, 30)), converged
+        fitted = float(sum(s * np.trace(Z.T @ b) for s, Z, b in zip(sigma, matrices, p_z, strict=True)))
+        return beta, sigma, u, np.exp(np.clip(eta, -30, 30)), converged, fitted
 
     warm_start = None
     if dispersion is None:
         # The fixed effects only estimate absorbs part of the random effect variance, so refine it once the
-        # neighbourhood has been fitted with its random effects.
+        # neighbourhood has been fitted with its random effects. The refit also spends degrees of freedom on
+        # the random effects, so the residuals are smaller than a fixed effects only fit would leave.
         dispersion = _dispersion_from_means(y, _poisson_means(y, X, offset), residual_df)
-        beta, sigma, u, fitted_mean, _ = pseudo_likelihood(dispersion)
-        dispersion = _dispersion_from_means(y, fitted_mean, residual_df)
+        beta, sigma, u, fitted_mean, _, fitted_df = pseudo_likelihood(dispersion)
+        dispersion = _dispersion_from_means(y, fitted_mean, max(n - p - fitted_df, 1.0))
         warm_start = (beta, sigma, u)
 
-    beta, sigma, u, mu, converged = pseudo_likelihood(dispersion, warm_start)
+    beta, sigma, u, mu, converged, _ = pseudo_likelihood(dispersion, warm_start)
 
     size = np.inf if dispersion <= 0 else 1.0 / dispersion
     weights = np.maximum(mu if np.isinf(size) else mu / (1.0 + mu / size), 1e-8)
