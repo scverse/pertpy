@@ -108,6 +108,7 @@ class EdgeR(LinearModelBase):
         with localconverter(get_conversion() + numpy2ri.converter) as cv:
             contrast_vec_r = cv.py2rpy(np.asarray(contrast))
         ro.globalenv["contrast_vec"] = contrast_vec_r
+        ro.globalenv["fit"] = self.fit        
 
         # Test contrast with R
         ro.r(
