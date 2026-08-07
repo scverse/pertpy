@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.2.0
+
+### 🚀 Features
+
+* Rework perturbation spaces around a perturbation-level API ([#1032](https://github.com/scverse/pertpy/pull/1032)) @Zethson
+* Milo: add mixed models to differential abundance testing ([#1069](https://github.com/scverse/pertpy/pull/1069)) @Zethson
+* Milo: add neighbourhood grouping ([#801](https://github.com/scverse/pertpy/pull/801)) @MaximilianNuber, @Zethson
+* Add `plot_ma()` for DGE results ([#1066](https://github.com/scverse/pertpy/pull/1066)) @Zethson
+* Add `plot_credible` option to `plot_effects_umap()` ([#1063](https://github.com/scverse/pertpy/pull/1063)) @Zethson
+* Add text and HTML representations to DE model classes ([#1070](https://github.com/scverse/pertpy/pull/1070)) @Zethson
+* Rename `DistanceTest` `alpha` to `padj_threshold` ([#1062](https://github.com/scverse/pertpy/pull/1062)) @Zethson
+* Vectorize and parallelize the DE methods that support it ([#1051](https://github.com/scverse/pertpy/pull/1051)) @Zethson
+* Speed up Augur `predict()` ([#1043](https://github.com/scverse/pertpy/pull/1043)) @Zethson
+* Show output filename in download progress ([#1056](https://github.com/scverse/pertpy/pull/1056)) @corkang
+
+### 🐛 Bug Fixes
+
+* scGen: vendor JAX backend to support scvi-tools 1.5.0 ([#1042](https://github.com/scverse/pertpy/pull/1042)) @Zethson,
+* scGen: make the JAX implementation reproduce the PyTorch one ([#1028](https://github.com/scverse/pertpy/pull/1028)) @Zethson
+* Fix import of removed scanpy `_get_obs_rep`/`_set_obs_rep` ([#1050](https://github.com/scverse/pertpy/pull/1050)) @Zethson
+* pseudobulk: only transfer constant obs columns ([#1061](https://github.com/scverse/pertpy/pull/1061)) @Zethson
+* Correct the version of the Milo deprecations ([#1064](https://github.com/scverse/pertpy/pull/1064)) @Zethson
+
+### 🧰 Maintenance
+
+* Adopt the src layout, VCS versioning and supply chain pinning ([#1057](https://github.com/scverse/pertpy/pull/1057)) @Zethson
+* Type check pertpy and tests with mypy ([#1053](https://github.com/scverse/pertpy/pull/1053)) @Zethson
+* Adopt anndata's mypy configuration ([#1060](https://github.com/scverse/pertpy/pull/1060)) @Zethson
+* Deduplicate metadata download boilerplate ([#1027](https://github.com/scverse/pertpy/pull/1027)) @Zethson,
+* Align dataset download progress ([#1059](https://github.com/scverse/pertpy/pull/1059)) @corkang
+* Add discoverability metadata ([#1067](https://github.com/scverse/pertpy/pull/1067)) @Zethson
+* Update template to v0.8.0 ([#1045](https://github.com/scverse/pertpy/pull/1045)) @scverse-bot, @Zethson
+* Bump tutorials submodule ([#1040](https://github.com/scverse/pertpy/pull/1040), [#1065](https://github.com/scverse/pertpy/pull/1065)) @Zethson
+
 ## v1.1.1
 
 ### 🚀 Features
