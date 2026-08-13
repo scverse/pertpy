@@ -761,8 +761,8 @@ class CompositionalModel2(ABC):
         # Effect processing for different models
         # Classic scCODA (spike-and-slab + no tree aggregation)
         if model_type == "classic" and select_type == "spikeslab":
-            beta_inc_prob = []
-            beta_nonzero_mean = []
+            beta_inc_prob: list[float] = []
+            beta_nonzero_mean: list[float] = []
 
             # Get MCMC samples for parameter "beta"
             beta_raw = np.array(sample_adata.uns["scCODA_params"]["mcmc"]["samples"]["beta"])

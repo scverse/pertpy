@@ -5,7 +5,7 @@ import io
 import random
 import re
 from importlib.util import find_spec
-from typing import TYPE_CHECKING, Any, Literal, Optional, cast
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -291,13 +291,10 @@ class Milo:
 
     @deprecated_arg(
         "subset_samples",
-        cast(
-            "Deprecation",
-            Deprecation(
-                "1.1.0",
-                "subset_samples is buggy in edge cases and will be removed. "
-                "Specify the comparison via `model_contrasts` instead, or subset cells before building the kNN graph.",
-            ),
+        Deprecation(
+            "1.1.0",
+            "subset_samples is buggy in edge cases and will be removed. "
+            "Specify the comparison via `model_contrasts` instead, or subset cells before building the kNN graph.",
         ),
     )
     def da_nhoods(
@@ -1169,7 +1166,7 @@ class Milo:
     @_doc_params(common_plot_args=doc_common_plot_args)
     @deprecated_arg(
         "alpha",
-        cast("Deprecation", Deprecation("1.1.0", "Use `padj_threshold`.")),
+        Deprecation("1.1.0", "Use `padj_threshold`."),
     )
     def plot_nhood_graph(  # pragma: no cover # noqa: D417
         self,
@@ -1519,7 +1516,7 @@ class Milo:
     @_doc_params(common_plot_args=doc_common_plot_args)
     @deprecated_arg(
         "alpha",
-        cast("Deprecation", Deprecation("1.1.0", "Use `padj_threshold`.")),
+        Deprecation("1.1.0", "Use `padj_threshold`."),
     )
     def plot_da_beeswarm(  # pragma: no cover # noqa: D417
         self,

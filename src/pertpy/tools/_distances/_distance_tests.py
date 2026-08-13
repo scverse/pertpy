@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ class DistanceTest:
 
     @deprecated_arg(  # type: ignore[misc]
         "alpha",
-        cast("Deprecation", Deprecation("1.1.2", "Use `padj_threshold`.")),
+        Deprecation("1.1.2", "Use `padj_threshold`."),
     )
     def __init__(
         self,
