@@ -1589,13 +1589,17 @@ class Milo:
                 "Unable to find 'logFC' in mdata.uns['nhood_adata'].obs. Run 'core.da_nhoods(adata)' first."
             ) from None
 
-        sorted_annos = (
-            nhood_adata.obs[[anno_col, "logFC"]].groupby(anno_col).median().sort_values("logFC", ascending=True).index
-        )
-
         anno_df = nhood_adata.obs[[anno_col, "logFC", "SpatialFDR"]].copy()
         anno_df["is_signif"] = anno_df["SpatialFDR"] < padj_threshold
         anno_df = anno_df[anno_df[anno_col] != "nan"]
+
+        sorted_annos = (
+            anno_df[[anno_col, "logFC"]]
+            .groupby(anno_col, observed=True)
+            .median()
+            .sort_values("logFC", ascending=True)
+            .index
+        )
 
         try:
             obs_col = nhood_adata.uns["annotation_obs"]

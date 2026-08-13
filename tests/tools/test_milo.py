@@ -433,6 +433,30 @@ def test_plot_de_nhood_graph(de_nhoods_mdata, milo):
         milo.plot_de_nhood_graph(mdata, de, gene="not_a_real_gene")
 
 
+def test_plot_da_beeswarm_skips_unused_categories(da_nhoods_mdata, milo, solver):
+    """Cell types without a neighbourhood must not be drawn as empty rows."""
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    matplotlib.use("Agg")
+    plt.close("all")
+    mdata = da_nhoods_mdata.copy()
+    cell_type = mdata["rna"].obs["louvain"].astype(str).astype("category")
+    mdata["rna"].obs["cell_type"] = cell_type.cat.add_categories(["Unobserved"])
+    milo.da_nhoods(mdata, design="~condition", solver=solver)
+    milo.annotate_nhoods(mdata, anno_col="cell_type")
+
+    annotation = mdata["milo"].var["nhood_annotation"]
+    mdata["milo"].var["nhood_annotation"] = annotation.cat.add_categories(["nan"]).where(
+        np.arange(len(annotation)) > 0, "nan"
+    )
+
+    fig = milo.plot_da_beeswarm(mdata, return_fig=True)
+    labels = [label.get_text() for label in fig.axes[0].get_yticklabels()]
+
+    assert set(labels) == set(mdata["milo"].var["nhood_annotation"].astype(str)) - {"nan"}
+
+
 def test_de_nhoods_statsmodels_runs(de_nhoods_mdata, milo):
     mdata = de_nhoods_mdata.copy()
     de = milo.de_nhoods(
