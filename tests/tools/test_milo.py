@@ -184,6 +184,21 @@ def test_da_nhoods_non_unique_covariate(da_nhoods_mdata, milo):
         milo.da_nhoods(mdata, design="~phase")
 
 
+@pytest.fixture
+def unreplicated_mdata(adata, milo):
+    adata = adata.copy()
+    milo.make_nhoods(adata)
+    rng = np.random.default_rng(seed=42)
+    adata.obs["condition"] = rng.choice(["ConditionA", "ConditionB"], size=adata.n_obs)
+    adata.obs["sample"] = adata.obs["condition"].map({"ConditionA": "S1", "ConditionB": "S2"})
+    return milo.count_nhoods(adata, sample_col="sample")
+
+
+def test_da_nhoods_without_replication(unreplicated_mdata, milo, solver):
+    with pytest.raises(ValueError, match="residual degrees of freedom"):
+        milo.da_nhoods(unreplicated_mdata, design="~condition", solver=solver)
+
+
 def test_da_nhoods_pvalues(da_nhoods_mdata, milo, solver):
     mdata = da_nhoods_mdata.copy()
     milo.da_nhoods(mdata, design="~condition", solver=solver)
