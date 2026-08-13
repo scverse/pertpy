@@ -1,6 +1,6 @@
 from collections import ChainMap
 from collections.abc import Mapping, Sequence
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 import blitzgsea
 import matplotlib.pyplot as plt
@@ -154,7 +154,7 @@ class Enrichment:
 
     @deprecated_arg(
         "pvals_adj_thresh",
-        cast("Deprecation", Deprecation("1.0.6", "Use `padj_threshold`.")),
+        Deprecation("1.0.6", "Use `padj_threshold`."),
     )
     def hypergeometric(
         self,

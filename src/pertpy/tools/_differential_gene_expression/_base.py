@@ -144,12 +144,9 @@ class MethodBase(ABC):
         ...
 
     @_doc_params(common_plot_args=doc_common_plot_args)
-    @deprecated_arg(
-        "pval_thresh",
-        cast("Deprecation", Deprecation("1.1.0", "Use `padj_threshold`.")),
-    )
-    @deprecated_arg("pvalue_col", cast("Deprecation", Deprecation("1.1.0", "Use `padj_col`.")), stacklevel=2)
-    @deprecated_arg("log2fc_thresh", cast("Deprecation", Deprecation("1.1.0", "Use `log2fc_threshold`.")), stacklevel=3)
+    @deprecated_arg("pval_thresh", Deprecation("1.1.0", "Use `padj_threshold`."))
+    @deprecated_arg("pvalue_col", Deprecation("1.1.0", "Use `padj_col`."), stacklevel=2)
+    @deprecated_arg("log2fc_thresh", Deprecation("1.1.0", "Use `log2fc_threshold`."), stacklevel=3)
     def plot_volcano(  # pragma: no cover # noqa: D417
         self,
         data: pd.DataFrame | ad.AnnData,
