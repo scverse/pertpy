@@ -4,7 +4,7 @@
 import os
 import sys
 from datetime import datetime
-from importlib.metadata import metadata
+from importlib.metadata import metadata, version as _version
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -140,7 +140,11 @@ intersphinx_mapping = {
     "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
     "annbatch": ("https://annbatch.readthedocs.io/en/stable/", None),
     "torch": ("https://docs.pytorch.org/docs/main", None),
-    "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
+    # lightning.ai serves no objects.inv: Lightning-AI/pytorch-lightning#21915
+    "pytorch_lightning": (
+        "https://lightning.ai/docs/pytorch/stable/",
+        (f"https://pytorch-lightning.readthedocs.io/en/{_version('pytorch-lightning')}/pytorch/objects.inv", None),
+    ),
 }
 nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
