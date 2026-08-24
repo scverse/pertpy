@@ -9,7 +9,6 @@ from numba import NumbaDeprecationWarning
 warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 warnings.filterwarnings("ignore", category=SyntaxWarning)
-warnings.filterwarnings("ignore", category=UserWarning, module="scvi._settings")
 warnings.filterwarnings("ignore", message="Environment variable.*redefined by R")
 warnings.filterwarnings("ignore", message="Transforming to str index.", category=ImplicitModificationWarning)
 

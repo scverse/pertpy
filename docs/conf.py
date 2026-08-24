@@ -4,7 +4,7 @@
 import os
 import sys
 from datetime import datetime
-from importlib.metadata import metadata, version as _version
+from importlib.metadata import metadata
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -137,14 +137,7 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
     "xarray": ("https://docs.xarray.dev/en/stable/", None),
-    "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
     "annbatch": ("https://annbatch.readthedocs.io/en/stable/", None),
-    "torch": ("https://docs.pytorch.org/docs/main", None),
-    # lightning.ai serves no objects.inv: Lightning-AI/pytorch-lightning#21915
-    "pytorch_lightning": (
-        "https://lightning.ai/docs/pytorch/stable/",
-        (f"https://pytorch-lightning.readthedocs.io/en/{_version('pytorch-lightning')}/pytorch/objects.inv", None),
-    ),
 }
 nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
@@ -155,7 +148,6 @@ nitpick_ignore = [
     ("py:class", "The requested data."),
     ("py:class", "Model with loaded state dictionaries."),
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
-    ("py:class", "scvi.train._config.KwargsConfig"),
     ("py:data", "typing.Union"),
 ]
 qualname_overrides = {

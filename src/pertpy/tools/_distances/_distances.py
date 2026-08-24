@@ -177,7 +177,6 @@ class Distance:
     - "wasserstein": Wasserstein distance (Earth Mover's Distance)
         Wasserstein distance between the cells of two groups. Uses an
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
-        This is the only metric that requires ``pip install 'pertpy[jax]'``.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
     - "sym_kldiv": symmetrized Kullback–Leibler divergence distance.

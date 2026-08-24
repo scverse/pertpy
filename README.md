@@ -37,6 +37,16 @@ or [conda-forge]:
 conda install -c conda-forge pertpy
 ```
 
+### JAX backed tools
+
+```console
+pip install 'pertpy[jax]'
+```
+
+Required by scCODA, CINEMA-OT, scGen, `MLPClassifierSpace`, the `"wasserstein"` distance metric and the mixture model of `GuideAssignment`.
+tascCODA pulls it in via `pertpy[tcoda]`.
+Everything else works without it.
+
 ### Differential gene expression
 
 If you want to use the differential gene expression interface, please install pertpy by running:

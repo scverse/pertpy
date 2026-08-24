@@ -45,9 +45,7 @@ RGBA = tuple[float, float, float, float]
 def _enable_x64() -> None:
     """Switch JAX to double precision, which scCODA-type models need for stable inference.
 
-    JAX only exposes this as a process-wide flag, so it is set from the inference entry points
-    instead of at import time to avoid changing the numerics of unrelated JAX code on
-    ``import pertpy``.
+    The flag is process wide, so it is set here rather than at import time.
     """
     config.update("jax_enable_x64", True)
 

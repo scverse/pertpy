@@ -1,16 +1,30 @@
 from __future__ import annotations
 
+from typing import NamedTuple
+
 import flax.linen as nn
 import jax.numpy as jnp
 import numpyro.distributions as dist
-from scvi import REGISTRY_KEYS
 
 from ._base_components import FlaxDecoder, FlaxEncoder
-from ._jax import JaxBaseModuleClass, LossOutput, flax_configure
 
 
-@flax_configure
-class JaxSCGENVAE(JaxBaseModuleClass):
+class LossOutput(NamedTuple):
+    """``reconstruction_loss`` and ``kl_local`` are per cell, ``loss`` is the scalar to differentiate."""
+
+    loss: jnp.ndarray
+    reconstruction_loss: jnp.ndarray
+    kl_local: jnp.ndarray
+    n_obs_minibatch: int
+
+
+class JaxSCGENVAE(nn.Module):
+    """Gaussian VAE used by scGen.
+
+    ``training`` is a module attribute so that ``setup`` can pass it to the encoder and decoder.
+    Use ``module.clone(training=False)`` for evaluation.
+    """
+
     n_input: int
     n_hidden: int = 800
     n_latent: int = 10
@@ -53,14 +67,8 @@ class JaxSCGENVAE(JaxBaseModuleClass):
         )
 
     @property
-    def required_rngs(self):
+    def required_rngs(self) -> tuple[str, ...]:
         return ("params", "dropout", "z")
-
-    def _get_inference_input(self, tensors: dict[str, jnp.ndarray], **kwargs):
-        x = tensors[REGISTRY_KEYS.X_KEY]
-
-        input_dict = {"x": x}
-        return input_dict
 
     def inference(self, x: jnp.ndarray, n_samples: int = 1) -> dict:
         mean, var = self.encoder(x)
@@ -73,30 +81,18 @@ class JaxSCGENVAE(JaxBaseModuleClass):
 
         return {"qz": qz, "z": z}
 
-    def _get_generative_input(
-        self,
-        tensors: dict[str, jnp.ndarray],
-        inference_outputs: dict[str, jnp.ndarray],
-        **kwargs,
-    ):
-        # x = tensors[REGISTRY_KEYS.X_KEY]
-        z = inference_outputs["z"]
-        # batch_index = tensors[REGISTRY_KEYS.BATCH_KEY]
-
-        input_dict = {
-            # x=x,
-            "z": z,
-            # batch_index=batch_index,
-        }
-        return input_dict
-
-    # def generative(self, x, z, batch_index) -> dict:
-    def generative(self, z) -> dict:
+    def generative(self, z: jnp.ndarray) -> dict:
         px = self.decoder(z)
         return {"px": px}
 
-    def loss(self, tensors, inference_outputs, generative_outputs):
-        x = tensors[REGISTRY_KEYS.X_KEY]
+    def __call__(self, x: jnp.ndarray, n_samples: int = 1, compute_loss: bool = True):
+        inference_outputs = self.inference(x, n_samples=n_samples)
+        generative_outputs = self.generative(inference_outputs["z"])
+        if not compute_loss:
+            return inference_outputs, generative_outputs
+        return inference_outputs, generative_outputs, self.loss(x, inference_outputs, generative_outputs)
+
+    def loss(self, x: jnp.ndarray, inference_outputs: dict, generative_outputs: dict) -> LossOutput:
         px = generative_outputs["px"]
         qz = inference_outputs["qz"]
 
@@ -114,22 +110,5 @@ class JaxSCGENVAE(JaxBaseModuleClass):
             n_obs_minibatch=x.shape[0],
         )
 
-    def sample(
-        self,
-        tensors,
-        n_samples=1,
-    ):
-        inference_kwargs = {"n_samples": n_samples}
-        (
-            inference_outputs,
-            generative_outputs,
-        ) = self.forward(
-            tensors,
-            inference_kwargs=inference_kwargs,
-            compute_loss=False,
-        )
-        px = dist.Normal(generative_outputs["px"], 1).sample()
-        return px
-
-    def get_reconstruction_loss(self, x, px):
+    def get_reconstruction_loss(self, x: jnp.ndarray, px: jnp.ndarray) -> jnp.ndarray:
         return jnp.sum((x - px) ** 2, axis=-1)

@@ -25,6 +25,7 @@ _JAX_BACKED = {
     "Cinemaot": ("pertpy.tools._cinemaot", "Cinemaot"),
     "Sccoda": ("pertpy.tools._coda._sccoda", "Sccoda"),
     "MLPClassifierSpace": ("pertpy.tools._perturbation_space._mlp_classifier", "MLPClassifierSpace"),
+    "Scgen": ("pertpy.tools._scgen", "Scgen"),
 }
 
 
@@ -46,16 +47,6 @@ def __getattr__(name: str):
     elif name in ["EdgeR", "PermutationTest", "PyDESeq2", "Statsmodels", "TTest", "WilcoxonTest"]:
         module = import_module("pertpy.tools._differential_gene_expression")
         return getattr(module, name)
-    elif name == "Scgen":
-        with jax_import(name):
-            try:
-                return import_module("pertpy.tools._scgen").Scgen
-            except ImportError as error:
-                if (error.name or "").split(".")[0] != "scvi":
-                    raise
-                raise ImportError(
-                    "Scgen requires scvi-tools to be installed. Please install with: pip install 'pertpy[scgen]'"
-                ) from error
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

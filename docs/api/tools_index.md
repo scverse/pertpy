@@ -4,6 +4,10 @@
 
 # Tools
 
+:::{note}
+{class}`~pertpy.tools.Sccoda`, {class}`~pertpy.tools.Tasccoda`, {class}`~pertpy.tools.Cinemaot`, {class}`~pertpy.tools.Scgen`, {class}`~pertpy.tools.MLPClassifierSpace` and the `"wasserstein"` metric of {class}`~pertpy.tools.Distance` need the JAX extra: `pip install 'pertpy[jax]'`, see [installation](../installation.md).
+:::
+
 ## Differential gene expression
 
 Differential gene expression involves the quantitative comparison of gene expression levels between two or more groups,

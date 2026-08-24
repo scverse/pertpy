@@ -108,10 +108,7 @@ de = [
 milo-edger = [
     "rpy2"
 ]
-scgen = [
-    "pertpy[jax]",
-    "scvi-tools",
-]
+scgen = ["pertpy[jax]"]
 all = [
     "pertpy[jax,tcoda,de,scgen]"
 ]
@@ -359,7 +356,6 @@ follow_untyped_imports = true
 [[tool.mypy.overrides]]
 module = [
     "rpy2.*",
-    "scvi.*",
     # `statsmodels.api` re-exports through `from .__init__ import test`.
     "statsmodels.*",
 ]
