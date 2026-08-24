@@ -7,7 +7,6 @@ import numpy as np
 import numpyro as npy
 import numpyro.distributions as npd
 from anndata import AnnData
-from jax import config
 from mudata import MuData
 
 from pertpy._logger import logger
@@ -17,8 +16,6 @@ from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 if TYPE_CHECKING:
     import pandas as pd
     from xarray import DataTree
-
-config.update("jax_enable_x64", True)
 
 
 class Sccoda(CompositionalModel2):

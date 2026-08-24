@@ -75,10 +75,6 @@ dependencies = [
     "mudata",
     "scikit-misc",
     "adjusttext",
-    "ott-jax",
-    "numpyro",
-    "funsor",
-    "flax",
     "sparsecca",
     "openpyxl",
     "pubchempy",
@@ -92,7 +88,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+jax = [
+    "ott-jax",
+    "numpyro",
+    "flax",
+    "optax",
+]
 tcoda = [
+    "pertpy[jax]",
     "toytree>=3.0",
     "ete4",
     "pyqt6"
@@ -105,9 +108,12 @@ de = [
 milo-edger = [
     "rpy2"
 ]
-scgen = ["scvi-tools[jax]"]
+scgen = [
+    "pertpy[jax]",
+    "scvi-tools",
+]
 all = [
-    "pertpy[tcoda,de,scgen]"
+    "pertpy[jax,tcoda,de,scgen]"
 ]
 dev = [
     "joblib-stubs",
@@ -161,7 +167,7 @@ source = "vcs"
 packages = ["src/pertpy"]
 
 [tool.hatch.envs.hatch-test]
-features = ["test", "tcoda", "de", "scgen"]
+features = ["test", "jax", "tcoda", "de", "scgen"]
 overrides.matrix.deps.env-vars = [
     { if = ["pre"], key = "UV_PRERELEASE", value = "allow" },
 ]

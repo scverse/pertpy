@@ -27,6 +27,17 @@ conda install -c conda-forge pertpy
 
 ### Additional dependency groups
 
+#### JAX backed tools
+
+A plain `pip install pertpy` deliberately ships without a deep learning runtime, so the tools that are built on JAX are an opt-in extra:
+
+```console
+pip install 'pertpy[jax]'
+```
+
+This extra is required by {class}`~pertpy.tools.Sccoda`, {class}`~pertpy.tools.Tasccoda`, {class}`~pertpy.tools.Cinemaot`, {class}`~pertpy.tools.MLPClassifierSpace`, the `"wasserstein"` metric of {class}`~pertpy.tools.Distance`, and {meth}`~pertpy.preprocessing.GuideAssignment.assign_mixture_model`.
+Everything else, including {class}`~pertpy.tools.Milo`, {class}`~pertpy.tools.Augur`, {class}`~pertpy.tools.Mixscape` and all remaining distance metrics, works without it.
+
 #### Differential gene expression interface
 
 The DGE interface of pertpy requires additional dependencies that can be installed by running:
@@ -62,7 +73,7 @@ BiocManager::install("statmod")
 
 #### tascCODA
 
-TascCODA requires an additional set of dependencies (ete4, pyqt6, and toytree) that can be installed by running:
+TascCODA requires an additional set of dependencies (ete4, pyqt6, and toytree) on top of the JAX extra, all of which are installed by running:
 
 ```console
 pip install pertpy[tcoda]

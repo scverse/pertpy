@@ -4,16 +4,10 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple, cast
 
-import jax
-import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from fast_array_utils.conv import to_dense
 from numba import jit, prange
-from ott.geometry.geometry import Geometry
-from ott.geometry.pointcloud import PointCloud
-from ott.problems.linear.linear_problem import LinearProblem
-from ott.solvers.linear.sinkhorn import Sinkhorn
 from pandas import Series
 from rich.progress import track
 from scipy.spatial.distance import cosine, mahalanobis
@@ -25,12 +19,14 @@ from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 from sklearn.neighbors import KernelDensity
 from statsmodels.discrete.discrete_model import NegativeBinomialP
 
+from pertpy._jax import jax_import
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from anndata import AnnData
+    from ott.geometry.geometry import Geometry
 
 
 @jit(nopython=True, cache=True)
@@ -181,6 +177,7 @@ class Distance:
     - "wasserstein": Wasserstein distance (Earth Mover's Distance)
         Wasserstein distance between the cells of two groups. Uses an
         OTT-JAX implementation of the Sinkhorn algorithm to compute the distance.
+        This is the only metric that requires ``pip install 'pertpy[jax]'``.
         For more information on the optimal transport solver, see
         `Cuturi et al. (2013) <https://proceedings.neurips.cc/paper/2013/file/af21d0c97db2e27e13572cbf59eb343d-Paper.pdf>`__.
     - "sym_kldiv": symmetrized Kullback–Leibler divergence distance.
@@ -980,20 +977,31 @@ class WassersteinDistance(AbstractDistance):
     def __init__(self) -> None:
         super().__init__()
         self.accepts_precomputed = False
+        with jax_import("The 'wasserstein' distance metric"):
+            import jax
+            from ott.solvers.linear.sinkhorn import Sinkhorn
         self.solver = jax.jit(Sinkhorn())
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        import jax.numpy as jnp
+        from ott.geometry.pointcloud import PointCloud
+
         X = np.asarray(X, dtype=np.float64)
         Y = np.asarray(Y, dtype=np.float64)
         geom = PointCloud(jnp.asarray(X), jnp.asarray(Y))
         return self.solve_ot_problem(geom, **kwargs)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+        import jax.numpy as jnp
+        from ott.geometry.geometry import Geometry
+
         P = np.asarray(P, dtype=np.float64)
         geom = Geometry(cost_matrix=jnp.asarray(P[idx, :][:, ~idx]))
         return self.solve_ot_problem(geom, **kwargs)
 
     def solve_ot_problem(self, geom: Geometry, **kwargs):
+        from ott.problems.linear.linear_problem import LinearProblem
+
         ot_prob = LinearProblem(geom)
         ot = self.solver(ot_prob, **kwargs)
         cost = float(ot.reg_ot_cost)
