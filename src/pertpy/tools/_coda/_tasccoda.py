@@ -8,7 +8,6 @@ import numpyro as npy
 import numpyro.distributions as npd
 import toytree as tt
 from anndata import AnnData
-from jax import config
 from mudata import MuData
 
 from pertpy._logger import logger
@@ -26,8 +25,6 @@ from pertpy.tools._coda._base_coda import (
 if TYPE_CHECKING:
     import pandas as pd
     from xarray import DataTree
-
-config.update("jax_enable_x64", True)
 
 
 class Tasccoda(CompositionalModel2):

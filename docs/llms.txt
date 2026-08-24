@@ -11,7 +11,7 @@ Every page listed below is also available as Markdown by requesting it with the 
 
 ## Start here
 
-- [Installation](https://pertpy.readthedocs.io/en/stable/installation.html): pip and conda-forge installation, including the `de`, `tcoda` and `scgen` extras that individual tools require.
+- [Installation](https://pertpy.readthedocs.io/en/stable/installation.html): pip and conda-forge installation, including the `jax`, `de`, `tcoda` and `scgen` extras that individual tools require.
 - [API reference](https://pertpy.readthedocs.io/en/stable/api.html): entry point to all four modules.
 - [Tutorials](https://pertpy.readthedocs.io/en/stable/tutorials.html): executable notebooks for every tool.
 - [Use cases](https://pertpy.readthedocs.io/en/stable/usecases.html): end-to-end reanalyses of published perturbation studies.

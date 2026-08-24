@@ -39,9 +39,15 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
     from seaborn.axisgrid import FacetGrid
 
-config.update("jax_enable_x64", True)
-
 RGBA = tuple[float, float, float, float]
+
+
+def _enable_x64() -> None:
+    """Switch JAX to double precision, which scCODA-type models need for stable inference.
+
+    The flag is process wide, so it is set here rather than at import time.
+    """
+    config.update("jax_enable_x64", True)
 
 
 class CompositionalModel2(ABC):
@@ -118,6 +124,8 @@ class CompositionalModel2(ABC):
         """
         import arviz as az
         from numpyro.infer import Predictive
+
+        _enable_x64()
 
         mcmc_state = sample_adata.uns.get("scCODA_params", {}).get("mcmc", {})
         if "samples" not in mcmc_state:
@@ -385,6 +393,8 @@ class CompositionalModel2(ABC):
         Returns:
             Calls `self.__run_mcmc`
         """
+        _enable_x64()
+
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]
@@ -447,6 +457,8 @@ class CompositionalModel2(ABC):
             >>> mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
             >>> sccoda.run_hmc(mdata, num_warmup=100, num_samples=1000)
         """
+        _enable_x64()
+
         if isinstance(data, MuData):
             try:
                 sample_adata = data[modality_key]

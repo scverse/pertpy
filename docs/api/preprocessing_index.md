@@ -17,6 +17,11 @@ pertpy provides a simple function to assign guides based on thresholds and a Gau
     preprocessing.GuideAssignment
 ```
 
+:::{note}
+{meth}`~pertpy.preprocessing.GuideAssignment.assign_mixture_model` needs the JAX extra: `pip install 'pertpy[jax]'`, see [installation](../installation.md).
+The threshold based methods work without it.
+:::
+
 Example implementation:
 
 ```python

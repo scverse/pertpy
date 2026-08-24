@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import anndata as ad
+import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,20 +13,16 @@ import pandas as pd
 import scanpy as sc
 from adjustText import adjust_text
 from anndata import AnnData
-from jax import Array
+from fast_array_utils.conv import to_dense
+from flax import serialization
 from scipy import stats
-from scvi import REGISTRY_KEYS
-from scvi.data import AnnDataManager
-from scvi.data.fields import CategoricalObsField, LayerField
-from scvi.model.base import BaseModelClass
-from scvi.utils import setup_anndata_dsp
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import cast_frame, cast_matrix
+from pertpy._types import cast_dense, cast_frame, cast_matrix
 
-from ._jax import JaxTrainingMixin
 from ._scgenvae import JaxSCGENVAE
+from ._train import DEFAULT_EPS, DEFAULT_LR, DEFAULT_WEIGHT_DECAY, train_module
 from ._utils import balancer, extractor
 
 if TYPE_CHECKING:
@@ -33,9 +32,16 @@ if TYPE_CHECKING:
 
 font = {"family": "Arial", "size": 14}
 
+SETUP_KEY = "_scgen_setup"
 
-class Scgen(JaxTrainingMixin, BaseModelClass):
-    """Jax Implementation of scGen model for batch removal and perturbation prediction."""
+
+class Scgen:
+    """JAX implementation of scGen for batch removal and perturbation prediction.
+
+    The latent space supports vector arithmetic: the difference between the latent means of a
+    stimulated and a control population, added to unperturbed cells of another cell type, predicts
+    that cell type's response.
+    """
 
     def __init__(
         self,
@@ -46,21 +52,294 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         dropout_rate: float = 0.2,
         **model_kwargs,
     ):
-        super().__init__(adata)
+        """Initialise the model.
 
-        self.module = JaxSCGENVAE(
-            n_input=self.summary_stats.n_vars,
-            n_hidden=n_hidden,
-            n_latent=n_latent,
-            n_layers=n_layers,
-            dropout_rate=dropout_rate,
+        Args:
+            adata: AnnData that :meth:`~pertpy.tools.Scgen.setup_anndata` has been run on.
+            n_hidden: Width of every hidden layer.
+            n_latent: Dimensionality of the latent space.
+            n_layers: Number of hidden layers in the encoder and in the decoder.
+            dropout_rate: Dropout applied to every hidden layer.
+            **model_kwargs: Passed to :class:`~pertpy.tools._scgen._scgenvae.JaxSCGENVAE`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
+        """
+        if SETUP_KEY not in adata.uns:
+            raise ValueError("Please run `Scgen.setup_anndata` on this AnnData before initializing the model.")
+
+        self.adata = adata
+        self._setup: dict[str, Any] = dict(adata.uns[SETUP_KEY])
+        self.init_params_ = {
+            "n_hidden": n_hidden,
+            "n_latent": n_latent,
+            "n_layers": n_layers,
+            "dropout_rate": dropout_rate,
             **model_kwargs,
+        }
+        self.module = JaxSCGENVAE(n_input=adata.n_vars, **self.init_params_)
+        self._eval_module = self.module.clone(training=False)
+        self.params: Any = None
+        self.model_state: Any = None
+        self.history: dict[str, list[float]] = {}
+        self.is_trained_ = False
+
+    def __repr__(self) -> str:
+        params = self.init_params_
+        return (
+            f"Scgen model with n_hidden: {params['n_hidden']}, n_latent: {params['n_latent']}, "
+            f"n_layers: {params['n_layers']}, dropout_rate: {params['dropout_rate']}"
         )
-        self._model_summary_string = (
-            f"Scgen Model with the following params: \nn_hidden: {n_hidden}, n_latent: {n_latent}, n_layers: {n_layers}, dropout_rate: "
-            f"{dropout_rate}"
+
+    @classmethod
+    def setup_anndata(
+        cls,
+        adata: AnnData,
+        batch_key: str | None = None,
+        labels_key: str | None = None,
+        layer: str | None = None,
+    ) -> None:
+        """Register the fields that scGen reads from ``adata``.
+
+        scGen expects log-normalized expression in ``adata.X`` or in ``layer``.
+
+        Args:
+            adata: AnnData to register. Modified in place.
+            batch_key: ``adata.obs`` column holding the condition or batch.
+                If `None`, a constant column is added, which leaves nothing for
+                :meth:`~pertpy.tools.Scgen.batch_removal` to correct.
+            labels_key: ``adata.obs`` column holding the cell type.
+                If `None`, a constant column is added.
+            layer: ``adata.layers`` key holding the expression to model.
+                If `None`, ``adata.X`` is used.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+        """
+        for name, key in (("batch_key", batch_key), ("labels_key", labels_key)):
+            if key is not None and key not in adata.obs:
+                raise KeyError(f"{name} {key!r} was not found in adata.obs.")
+        if layer is not None and layer not in adata.layers:
+            raise KeyError(f"layer {layer!r} was not found in adata.layers.")
+
+        if batch_key is None:
+            batch_key = "_scgen_batch"
+            adata.obs[batch_key] = pd.Categorical(np.zeros(adata.n_obs, dtype=np.int64))
+        if labels_key is None:
+            labels_key = "_scgen_labels"
+            adata.obs[labels_key] = pd.Categorical(np.zeros(adata.n_obs, dtype=np.int64))
+
+        adata.uns[SETUP_KEY] = {"batch_key": batch_key, "labels_key": labels_key, "layer": layer}
+
+    @property
+    def batch_key(self) -> str:
+        """``adata.obs`` column holding the condition or batch."""
+        return self._setup["batch_key"]
+
+    @property
+    def labels_key(self) -> str:
+        """``adata.obs`` column holding the cell type."""
+        return self._setup["labels_key"]
+
+    @property
+    def is_trained(self) -> bool:
+        """Whether :meth:`~pertpy.tools.Scgen.train` has been run."""
+        return self.is_trained_
+
+    def _check_if_trained(self) -> None:
+        if not self.is_trained_:
+            raise RuntimeError("Please train the model first.")
+
+    def _validate_anndata(self, adata: AnnData | None = None) -> AnnData:
+        if adata is None:
+            return self.adata
+        if list(adata.var_names) != list(self.adata.var_names):
+            raise ValueError("adata has different var_names than the AnnData the model was initialized with.")
+        for key in (self.batch_key, self.labels_key):
+            if key not in adata.obs:
+                raise KeyError(f"{key!r} was not found in adata.obs.")
+        return adata
+
+    def _get_x(self, adata: AnnData) -> np.ndarray:
+        layer = self._setup["layer"]
+        x = adata.layers[layer] if layer is not None else adata.X
+        return np.asarray(to_dense(x), dtype=np.float32)
+
+    @property
+    def _variables(self) -> dict[str, Any]:
+        self._check_if_trained()
+        return {"params": self.params, **self.model_state}
+
+    def train(
+        self,
+        *,
+        max_epochs: int | None = None,
+        batch_size: int = 128,
+        train_size: float = 0.9,
+        validation_size: float | None = None,
+        shuffle_set_split: bool = True,
+        early_stopping: bool = False,
+        early_stopping_patience: int = 45,
+        early_stopping_min_delta: float = 0.0,
+        lr: float = DEFAULT_LR,
+        weight_decay: float = DEFAULT_WEIGHT_DECAY,
+        eps: float = DEFAULT_EPS,
+        max_norm: float | None = None,
+        seed: int = 0,
+    ) -> None:
+        """Train the model.
+
+        Args:
+            max_epochs: Passes over the training set.
+                Defaults to ``min(round((20000 / n_cells) * 400), 400)``.
+            batch_size: Minibatch size.
+            train_size: Fraction of cells used for training.
+            validation_size: Fraction of cells used for validation.
+                Defaults to everything not used for training.
+            shuffle_set_split: Whether to shuffle before splitting rather than splitting sequentially.
+            early_stopping: Whether to stop once the validation loss stops improving.
+            early_stopping_patience: Epochs without improvement before stopping.
+            early_stopping_min_delta: Minimum improvement that counts as progress.
+            lr: Adam learning rate.
+            weight_decay: Decoupled weight decay.
+            eps: Adam epsilon.
+            max_norm: Global gradient norm to clip to.
+            seed: Seed for the split, the minibatch shuffling and the model initialization.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+        """
+        state, history = train_module(
+            self.module,
+            self._get_x(self.adata),
+            max_epochs=max_epochs,
+            batch_size=batch_size,
+            train_size=train_size,
+            validation_size=validation_size,
+            shuffle_set_split=shuffle_set_split,
+            early_stopping=early_stopping,
+            early_stopping_patience=early_stopping_patience,
+            early_stopping_min_delta=early_stopping_min_delta,
+            lr=lr,
+            weight_decay=weight_decay,
+            eps=eps,
+            max_norm=max_norm,
+            seed=seed,
         )
-        self.init_params_ = self._get_init_params(locals())
+        self.params = state.params
+        self.model_state = state.state
+        self.history = history
+        self.is_trained_ = True
+
+    def _encode(self, x: np.ndarray, *, give_mean: bool, n_samples: int, key: jnp.ndarray) -> jnp.ndarray:
+        out = cast(
+            "dict[str, Any]",
+            self._eval_module.apply(
+                self._variables, jnp.asarray(x), n_samples=n_samples, method="inference", rngs={"z": key}
+            ),
+        )
+        return out["qz"].mean if give_mean else out["z"]
+
+    def _decode(self, z: object) -> np.ndarray:
+        out = cast(
+            "dict[str, Any]", self._eval_module.apply(self._variables, jnp.asarray(cast_dense(z)), method="generative")
+        )
+        return np.asarray(out["px"])
+
+    def get_latent_representation(
+        self,
+        adata: AnnData | np.ndarray | None = None,
+        indices: Sequence[int] | None = None,
+        give_mean: bool = True,
+        n_samples: int = 1,
+        batch_size: int = 1024,
+        *,
+        seed: int = 0,
+    ) -> np.ndarray:
+        """Return the latent representation for each cell.
+
+        Args:
+            adata: AnnData with the same variables as the AnnData the model was initialized with.
+                If `None`, that AnnData is used.
+                A dense expression matrix is also accepted.
+            indices: Indices of cells to use. If `None`, all cells are used.
+            give_mean: Whether to return the mean of the latent distribution rather than a sample.
+            n_samples: Number of latent samples to draw when ``give_mean`` is `False`.
+            batch_size: Minibatch size used while encoding.
+            seed: Seed for the latent sampling.
+
+        Returns:
+            Low-dimensional representation for each cell.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> latent_X = model.get_latent_representation()
+        """
+        self._check_if_trained()
+
+        if adata is None or isinstance(adata, AnnData):
+            x = self._get_x(self._validate_anndata(adata))
+        else:
+            x = np.asarray(to_dense(adata), dtype=np.float32)
+        if indices is not None:
+            x = x[np.asarray(indices)]
+
+        key = jax.random.PRNGKey(seed)
+        latent = []
+        for start in range(0, x.shape[0], batch_size):
+            key, z_key = jax.random.split(key)
+            latent.append(
+                self._encode(x[start : start + batch_size], give_mean=give_mean, n_samples=n_samples, key=z_key)
+            )
+        concat_axis = 0 if ((n_samples == 1) or give_mean) else 1
+
+        return np.asarray(jnp.concatenate(latent, axis=concat_axis))
+
+    def get_decoded_expression(
+        self,
+        adata: AnnData | None = None,
+        indices: Sequence[int] | None = None,
+        batch_size: int = 1024,
+        *,
+        seed: int = 0,
+    ) -> np.ndarray:
+        """Get decoded expression.
+
+        Args:
+            adata: AnnData with the same variables as the AnnData the model was initialized with.
+                If `None`, that AnnData is used.
+            indices: Indices of cells to use. If `None`, all cells are used.
+            batch_size: Minibatch size used while decoding.
+            seed: Seed for the latent sampling.
+
+        Returns:
+            Decoded expression for each cell.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> data = pt.dt.kang_2018()
+            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
+            >>> model = pt.tl.Scgen(data)
+            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
+            >>> decoded_X = model.get_decoded_expression()
+        """
+        self._check_if_trained()
+
+        latent = self.get_latent_representation(adata, indices=indices, batch_size=batch_size, seed=seed)
+        return self._decode(latent)
 
     def predict(
         self,
@@ -93,8 +372,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             >>> pred, delta = model.predict(ctrl_key="ctrl", stim_key="stim", celltype_to_predict="CD4 T cells")
         """
         # use keys registered from `setup_anndata()`
-        cell_type_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.LABELS_KEY).original_key
-        condition_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.BATCH_KEY).original_key
+        cell_type_key = self.labels_key
+        condition_key = self.batch_key
 
         if restrict_arithmetic_to == "all":
             ctrl_x = self.adata[self.adata.obs[condition_key] == ctrl_key, :]
@@ -141,7 +420,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         latent_cd = self.get_latent_representation(ctrl_pred)
 
         stim_pred = delta + latent_cd
-        predicted_cells = self.module.as_bound().generative(stim_pred)["px"]
+        predicted_cells = self._decode(stim_pred)
 
         predicted_adata = AnnData(
             X=np.array(predicted_cells),
@@ -153,45 +432,6 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
 
     def _avg_vector(self, adata):
         return np.mean(self.get_latent_representation(adata), axis=0)
-
-    def get_decoded_expression(
-        self,
-        adata: AnnData | None = None,
-        indices: Sequence[int] | None = None,
-        batch_size: int | None = None,
-    ) -> Array:
-        """Get decoded expression.
-
-        Args:
-            adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
-                   AnnData object used to initialize the model.
-            indices: Indices of cells in adata to use. If `None`, all cells are used.
-            batch_size: Minibatch size for data loading into model. Defaults to `scvi.settings.batch_size`.
-
-        Returns:
-            Decoded expression for each cell
-
-        Examples:
-            >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
-            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
-            >>> model = pt.tl.Scgen(data)
-            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
-            >>> decoded_X = model.get_decoded_expression()
-        """
-        if self.is_trained_ is False:
-            raise RuntimeError("Please train the model first.")
-
-        adata = self._validate_anndata(adata)
-        scdl = self._make_data_loader(adata=adata, indices=indices, batch_size=batch_size)
-        decoded = []
-        for tensors in scdl:
-            # compute_loss=False makes __call__ return a 2-tuple, not the 3-tuple mypy infers.
-            _, generative_outputs = self.module.as_bound()(tensors, compute_loss=False)  # type: ignore[misc]
-            px = generative_outputs["px"]
-            decoded.append(px)
-
-        return jnp.concatenate(decoded)
 
     def batch_removal(self, adata: AnnData | None = None) -> AnnData:
         """Removes batch effects.
@@ -217,8 +457,8 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         adata = self._validate_anndata(adata)
         latent_all = self.get_latent_representation(adata)
         # use keys registered from `setup_anndata()`
-        cell_label_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.LABELS_KEY).original_key
-        batch_key = self.adata_manager.get_state_registry(REGISTRY_KEYS.BATCH_KEY).original_key
+        cell_label_key = self.labels_key
+        batch_key = self.batch_key
 
         adata_latent = AnnData(latent_all)
         adata_latent.obs = cast_frame(adata.obs).copy(deep=True)
@@ -258,7 +498,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             del cast_frame(all_shared_ann.obs)["concat_batch"]
         if len(not_shared_ct) < 1:
             corrected = AnnData(
-                np.array(self.module.as_bound().generative(all_shared_ann.X)["px"]),
+                self._decode(all_shared_ann.X),
                 obs=cast_frame(all_shared_ann.obs),
             )
             corrected.var_names = adata.var_names.tolist()
@@ -278,7 +518,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
             if "concat_batch" in all_corrected_data.obs.columns:
                 del cast_frame(all_corrected_data.obs)["concat_batch"]
             corrected = AnnData(
-                np.array(self.module.as_bound().generative(all_corrected_data.X)["px"]),
+                self._decode(all_corrected_data.X),
                 obs=cast_frame(all_corrected_data.obs),
             )
             corrected.var_names = adata.var_names.tolist()
@@ -292,87 +532,80 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
 
             return corrected
 
-    @classmethod
-    @setup_anndata_dsp.dedent
-    def setup_anndata(
-        cls,
-        adata: AnnData,
-        batch_key: str | None = None,
-        labels_key: str | None = None,
-        **kwargs,
-    ):
-        """%(summary)s.
-
-        scGen expects the expression data to come from `adata.X`
-
-        %(param_batch_key)s
-        %(param_labels_key)s
-
-        Examples:
-            >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
-            >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
-        """
-        setup_method_args = cls._get_setup_method_args(**locals())
-        anndata_fields = [
-            LayerField(REGISTRY_KEYS.X_KEY, None, is_count_data=False),
-            CategoricalObsField(REGISTRY_KEYS.BATCH_KEY, batch_key),
-            CategoricalObsField(REGISTRY_KEYS.LABELS_KEY, labels_key),
-        ]
-        adata_manager = AnnDataManager(fields=anndata_fields, setup_method_args=setup_method_args)
-        adata_manager.register_fields(adata, **kwargs)
-        cls.register_manager(adata_manager)
-
-    def to_device(self, device):
-        pass
-
-    @property
-    def device(self):
-        return self.module.device
-
-    def get_latent_representation(
-        self,
-        adata: AnnData | None = None,
-        indices: Sequence[int] | None = None,
-        give_mean: bool = True,
-        n_samples: int = 1,
-        batch_size: int | None = None,
-    ) -> np.ndarray:
-        """Return the latent representation for each cell.
+    def save(self, dir_path: str | Path, *, overwrite: bool = False, save_anndata: bool = False) -> None:
+        """Save the trained model to a directory.
 
         Args:
-            adata: AnnData object with equivalent structure to initial AnnData. If `None`, defaults to the
-                   AnnData object used to initialize the model.
-            indices: Indices of cells in adata to use. If `None`, all cells are used.
-            batch_size: Minibatch size for data loading into model. Defaults to `scvi.settings.batch_size`.
-            give_mean: Whether to return the mean
-            n_samples: The number of samples to use.
-
-        Returns:
-            Low-dimensional representation for each cell
+            dir_path: Directory to write to.
+            overwrite: Whether to overwrite an existing directory.
+            save_anndata: Whether to also write the AnnData the model was trained on.
 
         Examples:
             >>> import pertpy as pt
             >>> data = pt.dt.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
-            >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
-            >>> latent_X = model.get_latent_representation()
+            >>> model.train(max_epochs=10)
+            >>> model.save("scgen_model")
         """
-        self._check_if_trained(warn=False)
+        self._check_if_trained()
 
-        adata = self._validate_anndata(adata)
-        scdl = self._make_data_loader(adata=adata, indices=indices, batch_size=batch_size, iter_ndarray=True)
+        path = Path(dir_path)
+        if path.exists() and not overwrite:
+            raise FileExistsError(f"{path} already exists. Pass overwrite=True to replace it.")
+        path.mkdir(parents=True, exist_ok=True)
 
-        jit_inference_fn = self.module.get_jit_inference_fn(inference_kwargs={"n_samples": n_samples})
+        weights = {"params": self.params, "model_state": self.model_state}
+        (path / "model.msgpack").write_bytes(serialization.msgpack_serialize(jax.device_get(weights)))
+        (path / "attr.json").write_text(
+            json.dumps(
+                {
+                    "init_params": self.init_params_,
+                    "setup": self._setup,
+                    "var_names": list(self.adata.var_names),
+                    "history": self.history,
+                }
+            )
+        )
+        if save_anndata:
+            self.adata.write(path / "adata.h5ad")
 
-        latent: list[Array] = []
-        for array_dict in scdl:
-            out = jit_inference_fn(self.module.rngs, array_dict)
-            latent.append(cast("Array", out["qz"].mean if give_mean else out["z"]))
-        concat_axis = 0 if ((n_samples == 1) or give_mean) else 1
+    @classmethod
+    def load(cls, dir_path: str | Path, adata: AnnData | None = None) -> Scgen:
+        """Load a model saved with :meth:`~pertpy.tools.Scgen.save`.
 
-        return self.module.as_numpy_array(jnp.concatenate(latent, axis=concat_axis))
+        Args:
+            dir_path: Directory written by :meth:`~pertpy.tools.Scgen.save`.
+            adata: AnnData to attach to the model.
+                Required unless the model was saved with ``save_anndata=True``.
+
+        Returns:
+            The loaded model.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> model = pt.tl.Scgen.load("scgen_model")
+        """
+        path = Path(dir_path)
+        attrs = json.loads((path / "attr.json").read_text())
+
+        if adata is None:
+            adata_path = path / "adata.h5ad"
+            if not adata_path.exists():
+                raise ValueError("This model was saved without its AnnData. Please pass `adata`.")
+            adata = ad.read_h5ad(adata_path)
+        if list(adata.var_names) != attrs["var_names"]:
+            raise ValueError("adata has different var_names than the AnnData the model was trained on.")
+
+        adata.uns[SETUP_KEY] = attrs["setup"]
+        model = cls(adata, **attrs["init_params"])
+
+        weights = serialization.msgpack_restore((path / "model.msgpack").read_bytes())
+        model.params = weights["params"]
+        model.model_state = weights["model_state"]
+        model.history = attrs["history"]
+        model.is_trained_ = True
+        return model
 
     def plot_reg_mean_plot(  # pragma: no cover # noqa: D417
         self,
@@ -679,7 +912,7 @@ class Scgen(JaxTrainingMixin, BaseModelClass):
         """
         plt.close("all")
         adata = scgen._validate_anndata(adata)
-        condition_key = scgen.adata_manager.get_state_registry(REGISTRY_KEYS.BATCH_KEY).original_key
+        condition_key = scgen.batch_key
         cd = adata[adata.obs[condition_key] == ctrl_key, :]
         stim = adata[adata.obs[condition_key] == stim_key, :]
         all_latent_cd = scgen.get_latent_representation(cd.X)  # type: ignore[arg-type]

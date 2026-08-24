@@ -15,8 +15,8 @@ from rich.progress import track
 from scipy.sparse import csr_matrix, issparse
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._jax import jax_import
 from pertpy._types import CSBase, CSRBase, cast_frame, cast_matrix
-from pertpy.preprocessing._guide_rna_mixture import compute_count_thresholds, fit_poisson_gauss_mixture
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Figure
@@ -404,6 +404,9 @@ class GuideAssignment:
 
         Dispatches the per-guide nonzero extraction and per-guide thresholding on dense vs sparse so that a sparse input never gets densified at full ``[cells, guides]`` size.
         """
+        with jax_import("assign_mixture_model"):
+            from pertpy.preprocessing._guide_rna_mixture import compute_count_thresholds, fit_poisson_gauss_mixture
+
         if isinstance(X, CSBase):
             X_csc = X.tocsc()
             n_cells, n_guides = X_csc.shape
