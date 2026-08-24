@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.3.0
+
+### 🚀 Features
+
+* Make JAX optional and reimplement scGen without scvi-tools ([#1084](https://github.com/scverse/pertpy/pull/1084)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Raise a clear error when a `da_nhoods` design has no residual degrees of freedom ([#1077](https://github.com/scverse/pertpy/pull/1077)) @Zethson
+* Drop empty annotation rows from `plot_da_beeswarm()` ([#1078](https://github.com/scverse/pertpy/pull/1078)) @Zethson
+* Keep permutation p-values aligned with their group labels in `DistanceTest` ([#1079](https://github.com/scverse/pertpy/pull/1079)) @Zethson
+* Ensure right fit object is in R scope ([#1073](https://github.com/scverse/pertpy/pull/1073)) @sagar87, @Zethson
+
+### 🧰 Maintenance
+
+* Read the Lightning intersphinx inventory from Read the Docs ([#1083](https://github.com/scverse/pertpy/pull/1083)) @Zethson
+
 ## v1.2.0
 
 ### 🚀 Features
