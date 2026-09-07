@@ -9,12 +9,12 @@ default_stages:
 minimum_pre_commit_version: 2.16.0
 repos:
     - repo: https://github.com/biomejs/pre-commit
-      rev: 3a0c6458e3d46fb8d931600cd3970f2053768ce3 # frozen: v2.5.9
+      rev: 055c65a8144b42a1f56908484127aec0c614fb85 # frozen: v2.5.10
       hooks:
           - id: biome-format
             exclude: ^\.cruft\.json$ # inconsistent indentation with cruft - file never to be modified manually.
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: 65dbdb59d2f2d9c3bdc343c566821ad3319ddaa3 # frozen: v0.16.3
+      rev: aab412d509121cb5f7533134b7e67f9fab59c682 # frozen: v0.16.4
       hooks:
           - id: ruff-check
             args: [--fix, --exit-non-zero-on-fix, --unsafe-fixes]
