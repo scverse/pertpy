@@ -69,3 +69,34 @@ def test_distancetest(adata: AnnData, distance: Metric) -> None:
     assert tab["pvalue"].max() <= 1
     assert tab["pvalue_adj"].min() >= 0
     assert tab["pvalue_adj"].max() <= 1
+
+
+@pytest.mark.parametrize("distance", ["euclidean", "edistance"])
+@pytest.mark.parametrize("outlier", [False, True])
+def test_distancetest_all_tied_permutations(distance, outlier):
+    # Every balanced assignment has the same statistic, including the nonconstant case.
+    x = np.ones((8, 3))
+    if outlier:
+        x[-1, 0] = 9
+    adata = AnnData(
+        x,
+        obs=pd.DataFrame(
+            {"group": ["control"] * 4 + ["treated"] * 4},
+            index=[str(i) for i in range(8)],
+        ),
+    )
+    adata.obsm["X_test"] = x.copy()
+    result = pt.tl.DistanceTest(distance, n_perms=100, obsm_key="X_test")(
+        adata, groupby="group", contrast="control", show_progressbar=False
+    )
+    assert result.loc["treated", "pvalue"] == 1.0
+    assert result.loc["treated", "pvalue_adj"] == 1.0
+    assert not result.loc["treated", "significant_adj"]
+    assert result.loc["control", "pvalue"] == 1.0
+
+
+@pytest.mark.parametrize("null,expected", [([2.0, 2.0, 1.0, 1.0], 0.5), ([3.0] * 4, 1.0), ([1.0] * 4, 0.25)])
+def test_permutation_pvalues_inclusive_tail(null, expected):
+    observed = DataFrame({"distance": [2.0]}, index=["treated"])
+    results = [DataFrame({"distance": [value]}, index=["treated"]) for value in null]
+    assert _permutation_pvalues(results, observed, len(null))["treated"] == expected

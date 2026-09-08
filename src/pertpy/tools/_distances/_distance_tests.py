@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 
 
 def _permutation_pvalues(results: list[pd.DataFrame], df: pd.DataFrame, n_perms: int) -> pd.Series:
-    """Fraction of permutations that reached a larger distance than the observed one, per group of `df`."""
-    comparison_results = pd.concat([r["distance"] - df["distance"] for r in results], axis=1) > 0
+    """Fraction of permutations that reached an equal or larger distance than the observed one, per group of `df`."""
+    comparison_results = pd.concat([r["distance"] - df["distance"] for r in results], axis=1) >= 0
     n_failures = comparison_results.sum(axis=1).clip(lower=1).reindex(df.index)
 
     return n_failures / n_perms
