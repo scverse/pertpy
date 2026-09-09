@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from scipy.optimize import curve_fit
+from scipy.special import expit
 from scipy.stats import entropy
 
 from pertpy._logger import logger
@@ -81,6 +83,16 @@ def _vector_distance(u: np.ndarray, v: np.ndarray, metric: str) -> float:
             return float("nan")
         return 1.0 - float(np.corrcoef(u, v)[0, 1])
     raise ValueError(f"Unknown metric {metric!r}. Choose from 'euclidean', 'cosine', 'pearson'.")
+
+
+def _four_parameter_logistic(
+    dose: np.ndarray, e0: float, emax: float, log_midpoint: float, hill_coefficient: float
+) -> np.ndarray:
+    """Evaluate a four-parameter Hill curve with a positive Hill coefficient."""
+    log_dose = np.full_like(dose, -np.inf, dtype=float)
+    np.log(dose, out=log_dose, where=dose > 0)
+    fraction = expit(hill_coefficient * (log_dose - log_midpoint))
+    return e0 + (emax - e0) * fraction
 
 
 def _subtract_control_mean(
@@ -647,6 +659,147 @@ class PerturbationSpace:
             with contextlib.suppress(ValueError, TypeError):
                 result["dose"] = pd.to_numeric(result["dose"])
         return result.sort_values(["perturbation", "dose"]).reset_index(drop=True)
+
+    def fit_dose_response(
+        self,
+        data: pd.DataFrame,
+        *,
+        perturbation_col: str = "perturbation",
+        dose_col: str = "dose",
+        response_col: str = "distance",
+        response_type: Literal["effect", "inhibition"] = "effect",
+    ) -> pd.DataFrame:
+        """Fit a four-parameter Hill curve for each perturbation.
+
+        ``data`` can be the output of :meth:`dose_response` or a table containing another scalar assay response.
+        ``response_type`` names the fitted midpoint according to the meaning of that response: ``"effect"`` returns
+        ``ec50``, while ``"inhibition"`` returns ``ic50``. It does not perform biological or control normalization.
+        Dose values must represent concentrations for the EC50 or IC50 terminology to apply.
+
+        Args:
+            data: Tidy table containing perturbation, dose and response columns.
+            perturbation_col: Column identifying the perturbation.
+            dose_col: Column containing non-negative numeric doses.
+            response_col: Column containing the scalar response to fit.
+            response_type: Whether the response represents an effect or inhibition.
+
+        Returns:
+            One row per perturbation with the fitted zero-dose response (``e0``), asymptotic response (``emax``),
+            Hill coefficient, EC50 or IC50, its approximate standard error, R-squared and whether the midpoint lies
+            within the tested positive-dose range.
+
+        Notes:
+            Responses are rescaled internally for numerical stability; ``e0`` and ``emax`` retain the input units.
+            The standard error uses a local linear approximation. It is NaN, with a warning, if the parameter
+            covariance is non-finite or numerically rank deficient, or there are no residual degrees of freedom.
+            Parameters are retained for inspection. A small standard error, high R-squared or an in-range midpoint
+            does not establish that the doses capture both plateaus or that the Hill model is appropriate.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> import scanpy as sc
+            >>> adata = pt.dt.srivatsan_2020_sciplex2()
+            >>> adata = adata[adata.obs["dose_value"].notna()].copy()
+            >>> adata.obs["dose_value"] = adata.obs["dose_value"].astype(float)
+            >>> adata.obs["perturbation"] = adata.obs["perturbation"].astype(str)
+            >>> adata.obs.loc[adata.obs["dose_value"] == 0, "perturbation"] = "zero_dose"
+            >>> sc.pp.normalize_total(adata, target_sum=1e4)
+            >>> sc.pp.log1p(adata)
+            >>> sc.pp.pca(adata)
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> responses = ps.dose_response(
+            ...     adata, dose_col="dose_value", reference_key="zero_dose", embedding_key="X_pca"
+            ... )
+            >>> fits = ps.fit_dose_response(responses)
+        """
+        required = {perturbation_col, dose_col, response_col}
+        missing = required.difference(data.columns)
+        if missing:
+            raise ValueError(f"Columns {sorted(missing)} do not exist in the input data.")
+        if response_type not in {"effect", "inhibition"}:
+            raise ValueError("response_type must be either 'effect' or 'inhibition'.")
+
+        fit_data = data[[perturbation_col, dose_col, response_col]].copy()
+        if fit_data[perturbation_col].isna().any():
+            raise ValueError("Perturbation labels must not be missing.")
+        fit_data[dose_col] = pd.to_numeric(fit_data[dose_col], errors="raise")
+        fit_data[response_col] = pd.to_numeric(fit_data[response_col], errors="raise")
+        if (fit_data[dose_col] < 0).any():
+            raise ValueError("Dose values must be non-negative.")
+
+        midpoint_col = "ec50" if response_type == "effect" else "ic50"
+        records: list[dict[str, object]] = []
+        for perturbation, group in fit_data.groupby(perturbation_col, observed=True, sort=True):
+            doses = group[dose_col].to_numpy(dtype=float)
+            responses = group[response_col].to_numpy(dtype=float)
+            if np.unique(doses).size < 4:
+                raise ValueError(f"Perturbation {perturbation!r} needs at least four distinct dose values.")
+            response_offset = float(np.min(responses))
+            response_scale = float(np.ptp(responses))
+            if response_scale == 0:
+                raise ValueError(
+                    f"Perturbation {perturbation!r} has a constant response, so a Hill curve cannot be fit."
+                )
+
+            responses = (responses - response_offset) / response_scale
+            mean_response = (
+                group.groupby(dose_col, sort=True, observed=True)[response_col].mean() - response_offset
+            ) / response_scale
+            e0_guess = float(mean_response.iloc[0])
+            emax_guess = float(mean_response.iloc[-1])
+            halfway = (e0_guess + emax_guess) / 2
+            positive_response = mean_response[mean_response.index > 0]
+            midpoint_guess = float((positive_response - halfway).abs().idxmin())
+
+            parameters, covariance = curve_fit(
+                _four_parameter_logistic,
+                doses,
+                responses,
+                p0=(e0_guess, emax_guess, np.log(midpoint_guess), 1.0),
+                bounds=((-np.inf, -np.inf, -np.inf, np.finfo(float).eps), np.inf),
+                absolute_sigma=True,
+                maxfev=20_000,
+            )
+
+            e0, emax, log_midpoint, hill_coefficient = parameters
+            midpoint = float(np.exp(log_midpoint))
+            fitted = _four_parameter_logistic(doses, *parameters)
+            residual_sum_squares = float(np.sum((responses - fitted) ** 2))
+            total_sum_squares = float(np.sum((responses - responses.mean()) ** 2))
+            positive_doses = doses[doses > 0]
+
+            # Check conditioning before scaling covariance by residual variance, which may be zero.
+            degrees_of_freedom = len(responses) - len(parameters)
+            if (
+                degrees_of_freedom <= 0
+                or not np.isfinite(covariance).all()
+                or np.linalg.matrix_rank(covariance) < len(parameters)
+            ):
+                midpoint_standard_error = np.nan
+                warnings.warn(
+                    f"Cannot estimate the {midpoint_col.upper()} standard error for perturbation {perturbation!r}. "
+                    "Inspect the dose range and fitted curve before interpreting the estimate.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+            else:
+                residual_variance = residual_sum_squares / degrees_of_freedom
+                midpoint_standard_error = midpoint * np.sqrt(float(covariance[2, 2]) * residual_variance)
+
+            records.append(
+                {
+                    perturbation_col: perturbation,
+                    "e0": float(e0 * response_scale + response_offset),
+                    "emax": float(emax * response_scale + response_offset),
+                    "hill_coefficient": float(hill_coefficient),
+                    midpoint_col: midpoint,
+                    f"{midpoint_col}_standard_error": float(midpoint_standard_error),
+                    "r_squared": 1 - residual_sum_squares / total_sum_squares,
+                    "midpoint_in_range": bool(positive_doses.min() < midpoint < positive_doses.max()),
+                }
+            )
+
+        return pd.DataFrame.from_records(records)
 
     def plot_similarity(  # pragma: no cover
         self,
