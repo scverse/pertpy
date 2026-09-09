@@ -375,7 +375,7 @@ class PerturbationEvaluator:
         rows = []
         for group, positions in target_groups.items():
             observed = real_matrix[positions]
-            observed = observed.toarray() if sparse.issparse(observed) else observed
+            observed = observed if isinstance(observed, np.ndarray) else observed.toarray()
             observed = np.asarray(observed, dtype=np.float64)
             control_group = (*group[:-1], self.control)
             reference, reference_source = None, "unavailable"
@@ -389,7 +389,7 @@ class PerturbationEvaluator:
                 genes = feature_sets[group]
                 if isinstance(genes, str) or len(genes) == 0 or len(set(genes)) != len(genes):
                     raise ValueError("Feature sets must be nonempty sequences of distinct gene identifiers.")
-                indices = features.get_indexer(genes)
+                indices = features.get_indexer(pd.Index(genes))
                 if (indices < 0).any():
                     raise ValueError("Selected genes are absent from the measurement feature space.")
                 scopes["selected"] = indices
@@ -403,7 +403,7 @@ class PerturbationEvaluator:
             for model, (candidate, status) in candidates.items():
                 predicted = None
                 if candidate is not None:
-                    predicted = candidate.toarray() if sparse.issparse(candidate) else candidate
+                    predicted = candidate if isinstance(candidate, np.ndarray) else candidate.toarray()
                     predicted = np.asarray(predicted, dtype=np.float64)
                 for scope, indices in scopes.items():
                     values = (
