@@ -8,6 +8,24 @@
 {class}`~pertpy.tools.Sccoda`, {class}`~pertpy.tools.Tasccoda`, {class}`~pertpy.tools.Cinemaot`, {class}`~pertpy.tools.Scgen`, {class}`~pertpy.tools.MLPClassifierSpace` and the `"wasserstein"` metric of {class}`~pertpy.tools.Distance` need the JAX extra: `pip install 'pertpy[jax]'`, see [installation](../installation.md).
 :::
 
+## Perturbation prediction evaluation
+
+Compare held-out predictions with training-only baselines, preserving unavailable
+scores and checking declared cell membership and feature alignment.
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.PerturbationEvaluator
+```
+
+```{toctree}
+:maxdepth: 1
+
+../perturbation_evaluation
+```
+
 ## Differential gene expression
 
 Differential gene expression involves the quantitative comparison of gene expression levels between two or more groups,
