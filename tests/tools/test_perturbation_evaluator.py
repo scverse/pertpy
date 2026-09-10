@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 import pytest
-from anndata import AnnData
+from anndata import AnnData, read_h5ad
 from scipy import sparse
 from scipy.spatial.distance import cdist, pdist
 
@@ -309,3 +309,151 @@ def test_float32_control_reduction_matches_independent_float64(storage):
     )
     expected = np.mean(values.astype(np.float64).mean(axis=0) ** 2)
     np.testing.assert_allclose(value(scores, "baseline:control_mean", "mse").value, expected, rtol=1e-14)
+
+
+@pytest.mark.parametrize("empty_axis", ["observations", "features"])
+def test_empty_measurements_cannot_produce_a_scorecard(experiment, empty_axis):
+    evaluator, train, truth = experiment
+    empty = truth[:0].copy() if empty_axis == "observations" else truth[:, :0].copy()
+    with pytest.raises(ValueError, match="observations and features"):
+        evaluator.evaluate(empty, {}, train=train)
+
+
+def test_context_cannot_reuse_the_intervention_column():
+    with pytest.raises(ValueError, match="must be different"):
+        pt.tl.PerturbationEvaluator("condition", "ctrl", context_key="condition")
+
+
+def test_backed_predictions_require_explicit_materialization(experiment, tmp_path):
+    evaluator, train, truth = experiment
+    path = tmp_path / "predictions.h5ad"
+    truth.write_h5ad(path)
+    backed = read_h5ad(path, backed="r")
+    try:
+        with pytest.raises(TypeError, match="in-memory"):
+            evaluator.evaluate(truth, {"model": backed}, train=train, baselines=(), metrics=("mse",))
+    finally:
+        backed.file.close()
+
+
+def test_complex_measurements_are_not_silently_cast_to_real(experiment):
+    evaluator, train, truth = experiment
+    predicted = truth.copy()
+    predicted.X = predicted.X.astype(complex) + 1j
+    with pytest.raises(ValueError, match="real numeric"):
+        evaluator.evaluate(truth, {"model": predicted}, train=train, baselines=(), metrics=("mse",))
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"holdout": ["A"], "strategy": "random_cells"}, "split strategy"),
+        ({"holdout": []}, "nonempty sequence"),
+        ({"holdout": "A"}, "nonempty sequence"),
+        ({"holdout": ["A", "A"]}, "distinct labels"),
+        ({"holdout": ["absent"]}, "must occur"),
+        ({"holdout": ["ctrl"]}, "control cannot"),
+        ({"holdout": ["A"], "strategy": "context"}, "requires context_key"),
+        ({"holdout": ["A"], "strategy": "combination"}, "at least two"),
+    ],
+)
+def test_invalid_holdout_cannot_silently_change_the_split_unit(kwargs, message):
+    adata = cells([[0], [1], [2]], ["ctrl", "A", "B"], "cell")
+    evaluator = pt.tl.PerturbationEvaluator("condition", "ctrl")
+    original = adata.copy()
+    with pytest.raises(ValueError, match=message):
+        evaluator.split(adata, **kwargs)
+    np.testing.assert_array_equal(adata.X, original.X)
+    pd.testing.assert_frame_equal(adata.obs, original.obs)
+    assert "pertpy_evaluation_split" not in adata.uns
+
+
+def test_context_holdout_cannot_remove_every_training_cell():
+    adata = cells([[0], [1]], ["ctrl", "A"], "cell", contexts=["only", "only"])
+    evaluator = pt.tl.PerturbationEvaluator("condition", "ctrl", context_key="cell_type")
+    with pytest.raises(ValueError, match="partitions must be nonempty"):
+        evaluator.split(adata, holdout=["only"], strategy="context")
+
+
+@pytest.mark.parametrize("name", ["baseline:control_mean", "baseline:custom", "", 1])
+def test_model_names_cannot_impersonate_a_baseline(experiment, name):
+    evaluator, train, truth = experiment
+    with pytest.raises(ValueError, match="Model names"):
+        evaluator.evaluate(truth, {name: truth.copy()}, train=train, metrics=("mse",))
+
+
+def test_evaluation_requires_a_candidate_and_perturbed_truth(experiment):
+    evaluator, train, truth = experiment
+    with pytest.raises(ValueError, match="prediction or baseline"):
+        evaluator.evaluate(truth, {}, train=train, baselines=())
+    controls_only = truth.copy()
+    controls_only.obs["condition"] = "ctrl"
+    with pytest.raises(ValueError, match="no perturbed test groups"):
+        evaluator.evaluate(controls_only, {}, train=train)
+
+
+@pytest.mark.parametrize(
+    ("selected", "message"),
+    [
+        ({"A+B": ["g0"]}, "test-group tuples"),
+        ({("absent",): ["g0"]}, "test-group tuples"),
+        ({("A+B",): "g0"}, "sequences of distinct gene"),
+        ({("A+B",): []}, "sequences of distinct gene"),
+        ({("A+B",): ["g0", "g0"]}, "sequences of distinct gene"),
+    ],
+)
+def test_invalid_selected_scope_cannot_change_gene_weighting(experiment, selected, message):
+    evaluator, train, truth = experiment
+    with pytest.raises(ValueError, match=message):
+        evaluator.evaluate(truth, {}, train=train, feature_sets=selected, metrics=("mse",))
+
+
+def test_overflowed_additive_prediction_stays_unavailable():
+    # Every input is finite, but adding two component effects exceeds float64.
+    train = cells([[0, 0], [1e308, 0], [1e308, 0]], ["ctrl", "A", "B"], "train")
+    truth = cells([[1, 0]], ["A+B"], "test")
+    with np.errstate(over="ignore", invalid="ignore"):
+        scores = pt.tl.PerturbationEvaluator("condition", "ctrl").evaluate(
+            truth, {}, train=train, components={"A+B": ["A", "B"]}, metrics=("mse",)
+        )
+    unavailable = value(scores, "baseline:additive", "mse")
+    assert unavailable.status == "nonfinite_baseline"
+    assert np.isnan(unavailable.value)
+    assert unavailable.n_predicted == 0
+    available = value(scores, "baseline:control_mean", "mse")
+    assert available.status == "ok"
+    assert available.value == pytest.approx(0.5)
+
+
+def test_overflowed_delta_cannot_be_ranked_as_a_real_effect():
+    train = cells([[-1e308, 0]], ["ctrl"], "train")
+    truth = cells([[1e308, 1]], ["A+B"], "test")
+    predicted = truth.copy()
+    with np.errstate(over="ignore", invalid="ignore"):
+        scores = pt.tl.PerturbationEvaluator("condition", "ctrl").evaluate(
+            truth,
+            {"model": predicted},
+            train=train,
+            baselines=(),
+            metrics=("mse", "delta_pearson", "direction_accuracy", "top_k_overlap"),
+        )
+    assert value(scores, "model", "mse").value == 0
+    undefined = scores[scores.metric != "mse"]
+    assert undefined.status.eq("nonfinite_result").all()
+    assert undefined.value.isna().all()
+
+
+def test_overflowed_distance_does_not_hide_a_finite_correlation():
+    train = cells([[0, 0]], ["ctrl"], "train")
+    truth = cells([[1e308, -1e308]], ["A+B"], "test")
+    predicted = cells([[-1e308, 1e308]], ["A+B"], "pred")
+    with np.errstate(over="ignore", invalid="ignore"):
+        scores = pt.tl.PerturbationEvaluator("condition", "ctrl").evaluate(
+            truth, {"model": predicted}, train=train, baselines=(), metrics=("mse", "delta_pearson")
+        )
+    unavailable = value(scores, "model", "mse")
+    assert unavailable.status == "nonfinite_result"
+    assert np.isnan(unavailable.value)
+    correlation = value(scores, "model", "delta_pearson")
+    assert correlation.status == "ok"
+    assert correlation.value == pytest.approx(-1)
