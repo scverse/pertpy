@@ -46,9 +46,7 @@ pdata = ps.compute(
 
 edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
 edgr.fit()
-res_df = edgr.test_contrasts(
-    edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
-)
+res_df = edgr.test_contrasts(edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo"))
 ```
 
 Inspecting a model summarizes the input data, the design and whether the model has been fitted, rendered as HTML in Jupyter:
@@ -172,9 +170,7 @@ mdata = milo.load(adata)
 sc.pp.neighbors(mdata["rna"], use_rep="X_scVI", n_neighbors=150, n_pcs=10)
 milo.make_nhoods(mdata["rna"], prop=0.1)
 mdata = milo.count_nhoods(mdata, sample_col="patient_id")
-mdata["rna"].obs["Status"] = (
-    mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
-)
+mdata["rna"].obs["Status"] = mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
 milo.da_nhoods(mdata, design="~Status")
 
 # Repeated measurements of the same donor are accounted for with a random intercept
@@ -233,9 +229,7 @@ sccoda_data = sccoda.prepare(
 )
 sccoda.run_nuts(sccoda_data, modality_key="coda_salm")
 sccoda.summary(sccoda_data, modality_key="coda_salm")
-sccoda.plot_effects_barplot(
-    sccoda_data, modality_key="coda_salm", parameter="Final Parameter"
-)
+sccoda.plot_effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Final Parameter")
 ```
 
 See [sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda.html), [extended sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda_extended.html) and [tasccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/tasccoda.html).
@@ -346,9 +340,7 @@ ps_adata = ps.compute_control_diff(
 )
 ps_adata = ps_adata[ps_adata.obs["perturbation"] != "control"].copy()
 
-query_profile = -ps_adata[
-    ps_adata.obs["perturbation"] == "p-sgCREB1-2"
-].to_df().iloc[0]
+query_profile = -ps_adata[ps_adata.obs["perturbation"] == "p-sgCREB1-2"].to_df().iloc[0]
 up_genes = query_profile[query_profile > 0].nlargest(20).index.tolist()
 down_genes = query_profile[query_profile < 0].nsmallest(20).index.tolist()
 
@@ -469,18 +461,14 @@ import pertpy as pt
 
 train = pt.dt.kang_2018()
 
-train_new = train[
-    ~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))
-]
+train_new = train[~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))]
 train_new = train_new.copy()
 
 pt.tl.Scgen.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
 scgen = pt.tl.Scgen(train_new)
 scgen.train(max_epochs=100, batch_size=32)
 
-pred, delta = scgen.predict(
-    ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T"
-)
+pred, delta = scgen.predict(ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T")
 pred.obs["condition"] = "pred"
 ```
 
