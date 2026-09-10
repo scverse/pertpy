@@ -552,4 +552,55 @@ ds_adata = ds.compute(mdata["rna"], target_col="gene_target", metric="edistance"
 similar = ds.nearest_perturbations(ds_adata, "IFNGR2", target_col="gene_target")
 ```
 
-See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html).
+### Dose-response curve fitting
+
+`PerturbationSpace.dose_response` calculates a scalar distance from control for every perturbation and dose.
+`PerturbationSpace.fit_dose_response` fits a four-parameter Hill curve to these values and reports the EC50 for this transcriptomic-distance response:
+
+```python
+import pertpy as pt
+import scanpy as sc
+
+adata = pt.dt.srivatsan_2020_sciplex2()
+adata = adata[adata.obs["dose_value"].notna()].copy()
+adata.obs["dose_value"] = adata.obs["dose_value"].astype(float)
+adata.obs["perturbation"] = adata.obs["perturbation"].astype(str)
+adata.obs.loc[adata.obs["dose_value"] == 0, "perturbation"] = "zero_dose"
+sc.pp.normalize_total(adata, target_sum=1e4)
+sc.pp.log1p(adata)
+sc.pp.pca(adata)
+ps = pt.tl.PseudobulkSpace()
+
+responses = ps.dose_response(
+    adata,
+    dose_col="dose_value",
+    reference_key="zero_dose",
+    embedding_key="X_pca",
+)
+fits = ps.fit_dose_response(responses)
+```
+
+This example pools the assigned zero-dose samples as the reference and excludes cells without a dose assignment.
+The existing `control` label in this dataset includes [cells without an assigned sample](https://github.com/sanderlab/scPerturb/blob/master/dataset_processing/scripts/SrivatsanTrapnell2020.py#L55-L56); it is not used as the reference here.
+Doses retain the dataset's recorded units; verify their mapping to physical concentrations before comparing potency between compounds.
+
+The same fitter accepts other scalar assay responses.
+For example, an independently measured and control-normalized viability response can be labelled as inhibition to obtain IC50 rather than EC50 output:
+
+```python
+fits = ps.fit_dose_response(
+    assay_responses,
+    response_col="viability",
+    response_type="inhibition",
+)
+```
+
+`response_type` only determines how the fitted midpoint is interpreted and named; the fitter does not perform biological or control normalization.
+Internal numerical rescaling does not change the output response units.
+EC50 and IC50 are relative midpoints between the fitted `e0` and `emax`.
+Check `r_squared`, the reported standard error and `midpoint_in_range` before interpreting a fit; a midpoint outside the measured positive-dose range is an extrapolation.
+If the uncertainty cannot be estimated numerically, a warning is emitted and the standard error is `NaN`; the fitted parameters remain available for inspection.
+The standard error is a local approximation. Even a small error, high R-squared and an in-range midpoint can be misleading when the doses do not constrain both plateaus; inspect the measured responses and fitted curve.
+The terminology assumes that `dose` represents a concentration, and this first implementation fits a four-parameter curve without automatically selecting fixed-top or fixed-bottom alternatives.
+
+See the [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html#dose-response) for plotting the measured dose responses and fitted Hill curves together.
