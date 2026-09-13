@@ -88,7 +88,7 @@ def _vector_distance(u: np.ndarray, v: np.ndarray, metric: str) -> float:
 def _four_parameter_logistic(
     dose: np.ndarray, e0: float, emax: float, log_midpoint: float, hill_coefficient: float
 ) -> np.ndarray:
-    """Evaluate a four-parameter Hill curve with a positive Hill coefficient."""
+    """Calculate predicted responses at the given doses from four-parameter Hill curve parameters."""
     log_dose = np.full_like(dose, -np.inf, dtype=float)
     np.log(dose, out=log_dose, where=dose > 0)
     fraction = expit(hill_coefficient * (log_dose - log_midpoint))
@@ -662,55 +662,60 @@ class PerturbationSpace:
 
     def fit_dose_response(
         self,
+        adata: AnnData,
         data: pd.DataFrame,
         *,
         perturbation_col: str = "perturbation",
         dose_col: str = "dose",
         response_col: str = "distance",
         response_type: Literal["effect", "inhibition"] = "effect",
-    ) -> pd.DataFrame:
+        key_added: str = "dose_response",
+    ) -> None:
         """Fit a four-parameter Hill curve for each perturbation.
 
         ``data`` can be the output of :meth:`dose_response` or a table containing another scalar assay response.
-        ``response_type`` names the fitted midpoint according to the meaning of that response: ``"effect"`` returns
-        ``ec50``, while ``"inhibition"`` returns ``ic50``. It does not perform biological or control normalization.
+        ``response_type`` names the fitted midpoint according to the meaning of that response: ``"effect"`` reports
+        ``ec50``, while ``"inhibition"`` reports ``ic50``.
+        It does not perform biological or control normalization.
         Dose values must represent concentrations for the EC50 or IC50 terminology to apply.
 
         Args:
+            adata: AnnData to store the fit results in.
             data: Tidy table containing perturbation, dose and response columns.
             perturbation_col: Column identifying the perturbation.
             dose_col: Column containing non-negative numeric doses.
             response_col: Column containing the scalar response to fit.
             response_type: Whether the response represents an effect or inhibition.
+            key_added: Key in `.uns` for the fit results and parameters.
 
         Returns:
-            One row per perturbation with the fitted zero-dose response (``e0``), asymptotic response (``emax``),
-            Hill coefficient, EC50 or IC50, its approximate standard error, R-squared and whether the midpoint lies
-            within the tested positive-dose range.
+            Updates `.uns[key_added]` with a ``fits`` table and a ``params`` dictionary.
+            The table contains one row per perturbation with the fitted zero-dose response (``e0``), asymptotic
+            response (``emax``), Hill coefficient, EC50 or IC50, its approximate standard error, R-squared and
+            whether the midpoint lies within the tested positive-dose range.
 
         Notes:
+            Fits are stored in `.uns` because they describe groups of observations, not individual cells or genes.
+            EC50 and IC50 are relative midpoints between the fitted ``e0`` and ``emax``.
             Responses are rescaled internally for numerical stability; ``e0`` and ``emax`` retain the input units.
             The standard error uses a local linear approximation. It is NaN, with a warning, if the parameter
             covariance is non-finite or numerically rank deficient, or there are no residual degrees of freedom.
-            Parameters are retained for inspection. A small standard error, high R-squared or an in-range midpoint
+            Parameters are retained for inspection.
+            A small standard error, high R-squared or an in-range midpoint
             does not establish that the doses capture both plateaus or that the Hill model is appropriate.
 
         Examples:
+            A minimal example with a simulated response:
+
             >>> import pertpy as pt
-            >>> import scanpy as sc
-            >>> adata = pt.dt.srivatsan_2020_sciplex2()
-            >>> adata = adata[adata.obs["dose_value"].notna()].copy()
-            >>> adata.obs["dose_value"] = adata.obs["dose_value"].astype(float)
-            >>> adata.obs["perturbation"] = adata.obs["perturbation"].astype(str)
-            >>> adata.obs.loc[adata.obs["dose_value"] == 0, "perturbation"] = "zero_dose"
-            >>> sc.pp.normalize_total(adata, target_sum=1e4)
-            >>> sc.pp.log1p(adata)
-            >>> sc.pp.pca(adata)
-            >>> ps = pt.tl.PseudobulkSpace()
-            >>> responses = ps.dose_response(
-            ...     adata, dose_col="dose_value", reference_key="zero_dose", embedding_key="X_pca"
-            ... )
-            >>> fits = ps.fit_dose_response(responses)
+            >>> import pandas as pd
+            >>> from anndata import AnnData
+            >>> adata = AnnData(obs=pd.DataFrame(index=["drug"]))
+            >>> doses = pd.Series([0, 1, 3, 10, 30, 100])
+            >>> responses = pd.DataFrame({"dose": doses, "distance": doses / (10 + doses)})
+            >>> responses["perturbation"] = "drug"
+            >>> pt.tl.PseudobulkSpace().fit_dose_response(adata, responses)
+            >>> fits = adata.uns["dose_response"]["fits"]
         """
         required = {perturbation_col, dose_col, response_col}
         missing = required.difference(data.columns)
@@ -799,7 +804,15 @@ class PerturbationSpace:
                 }
             )
 
-        return pd.DataFrame.from_records(records)
+        adata.uns[key_added] = {
+            "fits": pd.DataFrame.from_records(records),
+            "params": {
+                "perturbation_col": perturbation_col,
+                "dose_col": dose_col,
+                "response_col": response_col,
+                "response_type": response_type,
+            },
+        }
 
     def plot_similarity(  # pragma: no cover
         self,
