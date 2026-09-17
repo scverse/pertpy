@@ -1,0 +1,113 @@
+cff-version: 1.2.0
+message: If you use pertpy in your research, please cite the article below.
+title: pertpy
+abstract: >-
+  Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
+  It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating
+  perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic
+  modifications, drug treatments, and environmental changes.
+type: software
+license: Apache-2.0
+repository-code: https://github.com/scverse/pertpy
+url: https://pertpy.readthedocs.io
+keywords:
+  - single-cell
+  - perturbation
+  - scverse
+  - bioinformatics
+  - computational-biology
+  - scRNA-seq
+  - CRISPR
+  - Perturb-seq
+authors:
+  - family-names: Heumos
+    given-names: Lukas
+  - family-names: May
+    given-names: Lilly
+  - family-names: Peidli
+    given-names: Stefan
+  - family-names: Ostner
+    given-names: Johannes
+  - family-names: Sturm
+    given-names: Gregor
+  - family-names: Dann
+    given-names: Emma
+  - family-names: Ji
+    given-names: Yuge
+  - family-names: Zhang
+    given-names: Xinyue
+  - family-names: Wu
+    given-names: Xichen
+  - family-names: Green
+    given-names: Tessa
+  - family-names: Schumacher
+    given-names: Antonia
+preferred-citation:
+  type: article
+  title: "Pertpy: an end-to-end framework for perturbation analysis"
+  journal: Nature Methods
+  year: 2025
+  doi: 10.1038/s41592-025-02909-7
+  url: https://doi.org/10.1038/s41592-025-02909-7
+  issn: 1548-7105
+  publisher:
+    name: Springer Nature
+  authors:
+    - family-names: Heumos
+      given-names: Lukas
+    - family-names: Ji
+      given-names: Yuge
+    - family-names: May
+      given-names: Lilly
+    - family-names: Green
+      given-names: Tessa D.
+    - family-names: Peidli
+      given-names: Stefan
+    - family-names: Zhang
+      given-names: Xinyue
+    - family-names: Wu
+      given-names: Xichen
+    - family-names: Ostner
+      given-names: Johannes
+    - family-names: Schumacher
+      given-names: Antonia
+    - family-names: Hrovatin
+      given-names: Karin
+    - family-names: Müller
+      given-names: Michaela
+    - family-names: Chong
+      given-names: Faye
+    - family-names: Sturm
+      given-names: Gregor
+    - family-names: Tejada
+      given-names: Alejandro
+    - family-names: Dann
+      given-names: Emma
+    - family-names: Dong
+      given-names: Mingze
+    - family-names: Pinto
+      given-names: Gonçalo
+    - family-names: Bahrami
+      given-names: Mojtaba
+    - family-names: Gold
+      given-names: Ilan
+    - family-names: Rybakov
+      given-names: Sergei
+    - family-names: Namsaraeva
+      given-names: Altana
+    - family-names: Moinfar
+      given-names: Amir Ali
+    - family-names: Zheng
+      given-names: Zihe
+    - family-names: Roellin
+      given-names: Eljas
+    - family-names: Mekki
+      given-names: Isra
+    - family-names: Sander
+      given-names: Chris
+    - family-names: Lotfollahi
+      given-names: Mohammad
+    - family-names: Schiller
+      given-names: Herbert B.
+    - family-names: Theis
+      given-names: Fabian J.

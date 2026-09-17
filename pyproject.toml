@@ -1,13 +1,13 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
 name = "pertpy"
-version = "1.1.1"
+dynamic = ["version"]
 description = "Perturbation Analysis in the scverse ecosystem."
 readme = "README.md"
-requires-python = ">=3.12,<3.15"
+requires-python = ">=3.12"
 license = {file = "LICENSE"}
 authors = [
     {name = "Lukas Heumos"},
@@ -28,6 +28,25 @@ maintainers = [
 urls.Documentation = "https://pertpy.readthedocs.io"
 urls.Source = "https://github.com/scverse/pertpy"
 urls.Home-page = "https://github.com/scverse/pertpy"
+urls.Issues = "https://github.com/scverse/pertpy/issues"
+urls.Changelog = "https://pertpy.readthedocs.io/en/stable/changelog.html"
+urls.Forum = "https://discourse.scverse.org/c/ecosystem/pertpy/46"
+urls.Publication = "https://doi.org/10.1038/s41592-025-02909-7"
+
+keywords = [
+    "single-cell",
+    "perturbation",
+    "scverse",
+    "bioinformatics",
+    "computational-biology",
+    "scRNA-seq",
+    "CRISPR",
+    "Perturb-seq",
+    "differential-expression",
+    "differential-abundance",
+    "compositional-analysis",
+    "anndata",
+]
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
@@ -45,19 +64,17 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
+    "Typing :: Typed",
 ]
 
 dependencies = [
     "requests",
     "rich",
+    "anndata",
     "scanpy",
     "mudata",
     "scikit-misc",
     "adjusttext",
-    "ott-jax",
-    "numpyro",
-    "funsor",
-    "flax",
     "sparsecca",
     "openpyxl",
     "pubchempy",
@@ -65,13 +82,20 @@ dependencies = [
     "blitzgsea",
     "scikit-learn>=1.4",
     "fast-array-utils[accel,sparse]",
-    "arviz>=1.0.0",
+    "arviz>=1.2.0",
     "pooch",
     "scverse-misc"
 ]
 
 [project.optional-dependencies]
+jax = [
+    "ott-jax",
+    "numpyro",
+    "flax",
+    "optax",
+]
 tcoda = [
+    "pertpy[jax]",
     "toytree>=3.0",
     "ete4",
     "pyqt6"
@@ -84,13 +108,20 @@ de = [
 milo-edger = [
     "rpy2"
 ]
-scgen = ["scvi-tools[jax]"]
+scgen = ["pertpy[jax]"]
 gpu = ["jax[cuda12]>=0.10"]
 all = [
-    "pertpy[tcoda,de,scgen]"
+    "pertpy[jax,tcoda,de,scgen]"
 ]
 dev = [
+    "joblib-stubs",
+    "mypy",
+    "pandas-stubs",
     "pre-commit",
+    "scipy-stubs",
+    "types-requests",
+    "types-seaborn",
+    "types-tqdm",
 ]
 doc = [
     "docutils>=0.8",
@@ -120,14 +151,21 @@ test = [
     "leidenalg"
 ]
 
-[tool.hatch.version]
-source = "vcs"
-
 [tool.hatch.metadata]
 allow-direct-references = true
 
+# The annotations pertpy is type checked against only exist on anndata main; drop once 0.14 is released.
+[tool.uv.sources]
+anndata = { git = "https://github.com/scverse/anndata.git", branch = "main" }
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pertpy"]
+
 [tool.hatch.envs.hatch-test]
-features = ["test", "tcoda", "de", "scgen"]
+features = ["test", "jax", "tcoda", "de", "scgen"]
 overrides.matrix.deps.env-vars = [
     { if = ["pre"], key = "UV_PRERELEASE", value = "allow" },
 ]
@@ -146,6 +184,9 @@ patch = [ "subprocess" ]
 omit = [
     "**/test_*.py",
 ]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
 
 [tool.pytest.ini_options]
 testpaths = "tests"
@@ -282,6 +323,44 @@ convention = "google"
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
+
+[tool.mypy]
+mypy_path = [ "src" ]
+warn_redundant_casts = true
+warn_unused_ignores = true
+# Installed, but shipping no `py.typed` marker:
+# infer types from their source instead of falling back to `Any`.
+[[tool.mypy.overrides]]
+module = [
+    "adjustText.*",
+    "arviz.*",
+    "blitzgsea.*",
+    "ete4.*",
+    "formulaic_contrasts.*",
+    "mudata.*",
+    "numpyro.*",
+    "optax.*",
+    "patsy.*",
+    "pooch.*",
+    "pubchempy",
+    "pydeseq2.*",
+    "pynndescent.*",
+    "scanpy.*",
+    "sklearn.*",
+    "skmisc.*",
+    "sparsecca.*",
+    "toytree.*",
+]
+follow_untyped_imports = true
+# Dependencies that ship no type information (absent or `Incomplete` annotations),
+# or whose source mypy cannot follow.
+[[tool.mypy.overrides]]
+module = [
+    "rpy2.*",
+    # `statsmodels.api` re-exports through `from .__init__ import test`.
+    "statsmodels.*",
+]
+ignore_missing_imports = true
 
 [tool.cruft]
 skip = [

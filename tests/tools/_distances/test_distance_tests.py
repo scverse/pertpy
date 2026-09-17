@@ -1,9 +1,12 @@
+import numpy as np
+import pandas as pd
 import pytest
 import scanpy as sc
 from anndata import AnnData
 from pandas import DataFrame
 
 import pertpy as pt
+from pertpy.tools._distances._distance_tests import _permutation_pvalues
 from pertpy.tools._distances._distances import Metric
 
 distances: tuple[Metric, ...] = (
@@ -35,14 +38,26 @@ count_distances = ["nb_ll"]
 @pytest.fixture
 def adata() -> AnnData:
     adata = pt.dt.distance_example()
-    adata = sc.pp.subsample(adata, 0.1, copy=True)
+    adata = sc.pp.sample(adata, 0.1, copy=True, rng=0)
 
     return adata
 
 
+def test_permutation_pvalues_follow_group_labels() -> None:
+    """The permutations are stored in alphabetical order while the observed distances keep the order of appearance."""
+    index = pd.Index(["control", "zeta", "alpha"])
+    df = DataFrame({"distance": [np.nan, 10.0, 0.1]}, index=index)
+    results = [DataFrame({"distance": [np.nan, 0.5, 0.2]}, index=index).sort_index() for _ in range(4)]
+
+    pvalues = _permutation_pvalues(results, df, 4)
+
+    assert pvalues["zeta"] == 0.25
+    assert pvalues["alpha"] == 1.0
+
+
 @pytest.mark.parametrize("distance", distances)
 def test_distancetest(adata: AnnData, distance: Metric) -> None:
-    etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", alpha=0.05, correction="holm-sidak")
+    etest = pt.tl.DistanceTest(distance, n_perms=10, obsm_key="X_pca", padj_threshold=0.05, correction="holm-sidak")
     tab = etest(adata, groupby="perturbation", contrast="control")
 
     # Well-defined output

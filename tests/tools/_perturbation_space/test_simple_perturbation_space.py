@@ -131,6 +131,34 @@ def test_pseudobulk_preserves_extra_obs_with_and_without_groups_col(rng):
         assert row.Efficacy == efficacy_per_patient[row.Patient]
 
 
+def test_pseudobulk_only_transfers_constant_obs(rng):
+    """Regression test for https://github.com/scverse/pertpy/issues/1023.
+
+    Obs columns that take more than one value within a group must not be represented by an arbitrary cell's value.
+    """
+    obs = pd.DataFrame(
+        {
+            "perturbation": pd.Categorical(["control"] * 4 + ["target1"] * 4),
+            "replicate": pd.Categorical(["R0", "R1"] * 4),
+            "condition": pd.Categorical(["untreated"] * 4 + ["treated"] * 4, categories=["untreated", "treated"]),
+            "n_counts": rng.integers(100, 200, size=8),
+        }
+    )
+    adata = AnnData(X=rng.poisson(5, size=(8, 5)).astype(float), obs=obs)
+
+    ps = pt.tl.PseudobulkSpace()
+    pdata = ps.compute(adata, target_col="perturbation", mode="sum")
+
+    assert "n_counts" not in pdata.obs
+    assert "replicate" not in pdata.obs
+    assert pdata.obs["condition"].tolist() == ["untreated", "treated"]
+    assert pdata.obs["condition"].dtype == adata.obs["condition"].dtype
+
+    pdata_grouped = ps.compute(adata, target_col="perturbation", groups_col="replicate", mode="sum")
+
+    assert "n_counts" not in pdata_grouped.obs
+
+
 def test_centroid_umap_response():
     X = np.zeros((10, 5))
 

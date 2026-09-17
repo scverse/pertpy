@@ -1,0 +1,1202 @@
+import contextlib
+import math
+from abc import ABC, abstractmethod
+from collections.abc import Iterable, Mapping, Sequence
+from html import escape
+from itertools import zip_longest
+from types import MappingProxyType
+from typing import cast
+
+import adjustText
+import anndata as ad
+import matplotlib.patheffects as PathEffects
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib.pyplot import Figure
+from matplotlib.ticker import MaxNLocator
+from scverse_misc import Deprecation, deprecated_arg
+
+from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._logger import logger
+from pertpy._types import CSBase, cast_dense, cast_frame
+from pertpy.tools import PseudobulkSpace
+from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
+
+# Colors are expressed relative to the surrounding text so that the summary renders on light and dark themes alike.
+# The table styles undo the borders, zebra stripes and centering that notebook frontends apply to rendered tables.
+_HTML_CONTAINER_STYLE = (
+    "display: inline-block; padding: 8px 12px; border: 1px solid rgba(128, 128, 128, 0.4); border-radius: 4px;"
+    " font-family: var(--jp-code-font-family, monospace); font-size: 0.85em; line-height: 1.6;"
+)
+_HTML_TITLE_STYLE = "font-weight: 600; font-size: 1.15em;"
+_HTML_DESCRIPTION_STYLE = "opacity: 0.8; margin-bottom: 6px;"
+_HTML_TABLE_STYLE = "border: none; border-collapse: collapse; margin: 0; font: inherit; background: none;"
+_HTML_ROW_STYLE = "border: none; background: none;"
+_HTML_NAME_STYLE = (
+    "border: none; padding: 0 12px 0 0; text-align: left; vertical-align: top; white-space: nowrap; opacity: 0.8;"
+)
+_HTML_VALUE_STYLE = "border: none; padding: 0; text-align: left; vertical-align: top;"
+
+
+def _format_names(names: Sequence[str], max_shown: int = 8) -> str:
+    """Join names into a single line, truncating overly long lists."""
+    if len(names) <= max_shown:
+        return ", ".join(names)
+    return f"{', '.join(names[:max_shown])}, … ({len(names)} in total)"
+
+
+class MethodBase(ABC):
+    def __init__(self, adata, *, mask=None, layer=None, **kwargs):
+        """Initialize the method.
+
+        Args:
+            adata: AnnData object, usually pseudobulked.
+            mask: A column in `adata.var` that contains a boolean mask with selected features.
+            layer: Layer to use in fit(). If None, use the X array.
+            **kwargs: Keyword arguments specific to the method implementation.
+        """
+        self.adata = adata
+        if mask is not None:
+            self.adata = self.adata[:, self.adata.var[mask]]
+
+        self.layer = layer
+        check_is_numeric_matrix(self.data)
+
+    @property
+    def data(self):
+        """Get the data matrix from anndata this object was initalized with (X or layer)."""
+        if self.layer is None:
+            return self.adata.X
+        else:
+            return self.adata.layers[self.layer]
+
+    def _summary(self) -> dict[str, str]:
+        """Get the fields shown by the text and HTML representations."""
+        return {
+            "Data": f"{self.adata.n_obs:,} obs × {self.adata.n_vars:,} vars",
+            "Layer": self.layer if self.layer is not None else "X",
+        }
+
+    def __repr__(self) -> str:
+        summary = self._summary()
+        width = max(map(len, summary), default=0)
+        return "\n".join([type(self).__name__, *(f"    {name:<{width}}  {value}" for name, value in summary.items())])
+
+    def _repr_html_(self) -> str:
+        description = (type(self).__doc__ or "").strip().split("\n")[0]
+        description_html = f'<div style="{_HTML_DESCRIPTION_STYLE}">{escape(description)}</div>' if description else ""
+        rows = "".join(
+            f'<tr style="{_HTML_ROW_STYLE}"><td style="{_HTML_NAME_STYLE}">{escape(name)}</td>'
+            f'<td style="{_HTML_VALUE_STYLE}">{escape(value)}</td></tr>'
+            for name, value in self._summary().items()
+        )
+        return (
+            f'<div style="{_HTML_CONTAINER_STYLE}">'
+            f'<div style="{_HTML_TITLE_STYLE}">{escape(type(self).__name__)}</div>'
+            f"{description_html}"
+            f'<table style="{_HTML_TABLE_STYLE}"><tbody>{rows}</tbody></table>'
+            "</div>"
+        )
+
+    @classmethod
+    @abstractmethod
+    def compare_groups(
+        cls,
+        adata,
+        column,
+        baseline,
+        groups_to_compare,
+        *,
+        paired_by=None,
+        mask=None,
+        layer=None,
+        fit_kwargs=MappingProxyType({}),
+        test_kwargs=MappingProxyType({}),
+    ):
+        """Compare between groups in a specified column.
+
+        Args:
+            adata: AnnData object.
+            column: column in obs that contains the grouping information.
+            baseline: baseline value (one category from variable).
+            groups_to_compare: One or multiple categories from variable to compare against baseline.
+            paired_by: Column from `obs` that contains information about paired sample (e.g. subject_id).
+            mask: Subset anndata by a boolean mask stored in this column in `.obs` before making any tests.
+            layer: Use this layer instead of `.X`.
+            fit_kwargs: Additional fit options.
+            test_kwargs: Additional test options.
+
+        Returns:
+            Pandas dataframe with results ordered by significance. If multiple comparisons were performed this is indicated in an additional column.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
+        """
+        ...
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    @deprecated_arg("pval_thresh", Deprecation("1.1.0", "Use `padj_threshold`."))
+    @deprecated_arg("pvalue_col", Deprecation("1.1.0", "Use `padj_col`."), stacklevel=2)
+    @deprecated_arg("log2fc_thresh", Deprecation("1.1.0", "Use `log2fc_threshold`."), stacklevel=3)
+    def plot_volcano(  # pragma: no cover # noqa: D417
+        self,
+        data: pd.DataFrame | ad.AnnData,
+        *,
+        log2fc_threshold: float = 0.75,
+        padj_threshold: float = 0.05,
+        log2fc_col: str = "log_fc",
+        padj_col: str = "adj_p_value",
+        symbol_col: str = "variable",
+        to_label: int | list[str] = 5,
+        s_curve: bool = False,
+        colors: list[str] | None = None,
+        varm_key: str | None = None,
+        color_dict: dict[str, list[str]] | None = None,
+        shape_dict: dict[str, list[str]] | None = None,
+        size_col: str | None = None,
+        fontsize: int = 10,
+        top_right_frame: bool = False,
+        figsize: tuple[int, int] = (5, 5),
+        legend_pos: tuple[float, float] = (1.6, 1),
+        point_sizes: tuple[int, int] = (15, 150),
+        shapes: list[str] | None = None,
+        shape_order: list[str] | None = None,
+        x_label: str | None = None,
+        y_label: str | None = None,
+        return_fig: bool = False,
+        log2fc_thresh: float | None = None,
+        pval_thresh: float | None = None,
+        pvalue_col: str | None = None,
+        **kwargs,
+    ) -> Figure | None:
+        """Creates a volcano plot from a pandas DataFrame or Anndata.
+
+        Args:
+            data: DataFrame or Anndata to plot.
+            log2fc_threshold: Threshold for log2 fold change significance.
+            padj_threshold: Adjusted p-values for significance.
+            log2fc_col: Column name of log2 Fold-Change values.
+            padj_col: Column name of adjusted p-values.
+            symbol_col: Column name of gene IDs.
+            varm_key: Key in Anndata.varm slot to use for plotting if an Anndata object was passed.
+            size_col: Column name to size points by.
+            point_sizes: Lower and upper bounds of point sizes.
+            to_label: Number of top genes or list of genes to label.
+            s_curve: Whether to use a reciprocal threshold for up and down gene determination.
+            color_dict: Dictionary for coloring dots by categories.
+            shape_dict: Dictionary for shaping dots by categories.
+            fontsize: Size of gene labels.
+            colors: Colors for [non-DE, up, down] genes. Defaults to ['gray', '#D62728', '#1F77B4'].
+            top_right_frame: Whether to show the top and right frame of the plot.
+            figsize: Size of the figure.
+            legend_pos: Position of the legend as determined by matplotlib.
+            shapes: List of matplotlib marker ids.
+            shape_order: Order of categories for shapes.
+            x_label: Label for the x-axis.
+            y_label: Label for the y-axis.
+            log2fc_thresh: Deprecated and will be removed in a future release. Use `log2fc_threshold`.
+            pval_thresh: Deprecated and will be removed in a future release. Use `padj_threshold`.
+            pvalue_col: Deprecated and will be removed in a future release. Use `padj_col`.
+            {common_plot_args}
+            **kwargs: Additional arguments for seaborn.scatterplot.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_volcano(res_df, log2fc_threshold=0)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_volcano.png
+        """
+        if pvalue_col is not None:
+            padj_col = pvalue_col
+        if pval_thresh is not None:
+            padj_threshold = pval_thresh
+        if log2fc_thresh is not None:
+            log2fc_threshold = log2fc_thresh
+
+        if colors is None:
+            colors = ["gray", "#D62728", "#1F77B4"]
+
+        def _pval_reciprocal(lfc: float | np.ndarray) -> float | np.ndarray:
+            """Function for relating -log10(pvalue) and logfoldchange in a reciprocal.
+
+            Used for plotting the S-curve
+            """
+            return padj_threshold / (lfc - log2fc_threshold)
+
+        def _map_shape(symbol: str) -> str:
+            if shape_dict is not None:
+                for k in shape_dict:
+                    if shape_dict[k] is not None and symbol in shape_dict[k]:
+                        return k
+            return "other"
+
+        # TODO join the two mapping functions
+        def _map_genes_categories(
+            row: pd.Series,
+            *,
+            log2fc_col: str,
+            nlog10_col: str,
+            log2fc_threshold: float,
+            padj_threshold: float | None = None,
+            s_curve: bool = False,
+        ) -> str:
+            """Map genes to categorize based on log2fc and pvalue.
+
+            These categories are used for coloring the dots.
+            Used when no color_dict is passed, sets up/down/nonsignificant.
+            """
+            log2fc = row[log2fc_col]
+            nlog10 = row[nlog10_col]
+
+            if s_curve:
+                # S-curve condition for Up or Down categorization
+                reciprocal_thresh = _pval_reciprocal(abs(log2fc))
+                if log2fc > log2fc_threshold and nlog10 > reciprocal_thresh:
+                    return "Up"
+                elif log2fc < -log2fc_threshold and nlog10 > reciprocal_thresh:
+                    return "Down"
+                else:
+                    return "not DE"
+            # Standard condition for Up or Down categorization
+            elif log2fc > log2fc_threshold and nlog10 > padj_threshold:
+                return "Up"
+            elif log2fc < -log2fc_threshold and nlog10 > padj_threshold:
+                return "Down"
+            else:
+                return "not DE"
+
+        def _map_genes_categories_highlight(
+            row: pd.Series,
+            *,
+            log2fc_col: str,
+            nlog10_col: str,
+            log2fc_threshold: float,
+            padj_threshold: float | None = None,
+            s_curve: bool = False,
+            symbol_col: str = "variable",
+        ) -> str:
+            """Map genes to categorize based on log2fc and pvalue.
+
+            These categories are used for coloring the dots.
+            Used when color_dict is passed, sets DE / not DE for background and user supplied highlight genes.
+            """
+            log2fc = row[log2fc_col]
+            nlog10 = row[nlog10_col]
+            symbol = row[symbol_col]
+
+            if color_dict is not None:
+                for k in color_dict:
+                    if symbol in color_dict[k]:
+                        return k
+
+            if s_curve:
+                # Use S-curve condition for filtering DE
+                if nlog10 > _pval_reciprocal(abs(log2fc)) and abs(log2fc) > log2fc_threshold:
+                    return "DE"
+                return "not DE"
+            else:
+                # Use standard condition for filtering DE
+                if abs(log2fc) < log2fc_threshold or nlog10 < padj_threshold:
+                    return "not DE"
+                return "DE"
+
+        if isinstance(data, ad.AnnData):
+            if varm_key is None:
+                raise ValueError("Please pass a .varm key to use for plotting")
+
+            raise NotImplementedError("Anndata not implemented yet")  # TODO: Implement this
+            df = data.varm[varm_key].copy()
+
+        df = data.copy(deep=True)
+
+        # clean and replace 0s as they would lead to -inf
+        if df[[log2fc_col, padj_col]].isnull().values.any():
+            print("NaNs encountered, dropping rows with NaNs")
+            df = df.dropna(subset=[log2fc_col, padj_col])
+
+        if df[padj_col].min() == 0:
+            print("0s encountered for p value, replacing with 1e-323")
+            df.loc[df[padj_col] == 0, padj_col] = 1e-323
+
+        # convert p value threshold to nlog10
+        padj_threshold = -np.log10(padj_threshold)
+        # make nlog10 column
+        df["nlog10"] = -np.log10(df[padj_col])
+        y_max = df["nlog10"].max() + 1
+        # make a column to pick top genes
+        df["top_genes"] = df["nlog10"] * df[log2fc_col]
+
+        # Label everything with assigned color / shape
+        if shape_dict or color_dict:
+            combined_labels = []
+            if isinstance(shape_dict, dict):
+                combined_labels.extend([item for sublist in shape_dict.values() for item in sublist])
+            if isinstance(color_dict, dict):
+                combined_labels.extend([item for sublist in color_dict.values() for item in sublist])
+            label_df = df[df[symbol_col].isin(combined_labels)]
+
+        # Label top n_gens
+        elif isinstance(to_label, int):
+            label_df = pd.concat(
+                (
+                    df.sort_values("top_genes")[-to_label:],
+                    df.sort_values("top_genes")[0:to_label],
+                )
+            )
+
+        # assume that a list of genes was passed to label
+        else:
+            label_df = df[df[symbol_col].isin(to_label)]
+
+        # By default mode colors by up/down if no dict is passed
+
+        if color_dict is None:
+            df["color"] = df.apply(
+                lambda row: _map_genes_categories(
+                    row,
+                    log2fc_col=log2fc_col,
+                    nlog10_col="nlog10",
+                    log2fc_threshold=log2fc_threshold,
+                    padj_threshold=padj_threshold,
+                    s_curve=s_curve,
+                ),
+                axis=1,
+            )
+
+            # order of colors
+            hues = ["not DE", "Up", "Down"][: len(df.color.unique())]
+
+        else:
+            df["color"] = df.apply(
+                lambda row: _map_genes_categories_highlight(
+                    row,
+                    log2fc_col=log2fc_col,
+                    nlog10_col="nlog10",
+                    log2fc_threshold=log2fc_threshold,
+                    padj_threshold=padj_threshold,
+                    symbol_col=symbol_col,
+                    s_curve=s_curve,
+                ),
+                axis=1,
+            )
+
+            user_added_cats = [x for x in df.color.unique() if x not in ["DE", "not DE"]]
+            hues = ["DE", "not DE"] + user_added_cats
+
+            # order of colors
+            hues = hues[: len(df.color.unique())]
+            colors = [
+                "dimgrey",
+                "lightgrey",
+                "tab:blue",
+                "tab:orange",
+                "tab:green",
+                "tab:red",
+                "tab:purple",
+                "tab:brown",
+                "tab:pink",
+                "tab:olive",
+                "tab:cyan",
+            ]
+
+        # coloring if dictionary passed, subtle background + highlight
+        # map shapes if dictionary exists
+        if shape_dict is not None:
+            df["shape"] = df[symbol_col].map(_map_shape)
+            user_added_cats = [x for x in df["shape"].unique() if x != "other"]
+            shape_order = ["other"] + user_added_cats
+            if shapes is None:
+                shapes = ["o", "^", "s", "X", "*", "d"]
+            shapes = shapes[: len(df["shape"].unique())]
+            shape_col = "shape"
+        else:
+            shape_col = None
+
+        # build palette
+        colors = colors[: len(df.color.unique())]
+
+        # We want plot highlighted genes on top + at bigger size, split dataframe
+        df_highlight = None
+        if shape_dict or color_dict:
+            label_genes = label_df[symbol_col].unique()
+            df_highlight = df[df[symbol_col].isin(label_genes)]
+            df = df[~df[symbol_col].isin(label_genes)]
+
+        plt.figure(figsize=figsize)
+        # Plot non-highlighted genes
+        ax = sns.scatterplot(
+            data=df,
+            x=log2fc_col,
+            y="nlog10",
+            hue="color",
+            hue_order=hues,
+            palette=colors,
+            size=size_col,
+            sizes=point_sizes,
+            style=shape_col,
+            style_order=shape_order,
+            markers=shapes,
+            **kwargs,
+        )
+        # Plot highlighted genes
+        if df_highlight is not None:
+            ax = sns.scatterplot(
+                data=df_highlight,
+                x=log2fc_col,
+                y="nlog10",
+                hue="color",
+                hue_order=hues,
+                palette=colors,
+                size=size_col,
+                sizes=point_sizes,
+                style=shape_col,
+                style_order=shape_order,
+                markers=shapes,
+                legend=False,
+                edgecolor="black",
+                linewidth=1,
+                **kwargs,
+            )
+
+        # plot vertical and horizontal lines
+        if s_curve:
+            x = np.arange((log2fc_threshold + 0.000001), y_max, 0.01)
+            y = _pval_reciprocal(x)
+            ax.plot(x, y, zorder=1, c="k", lw=2, ls="--")
+            ax.plot(-x, y, zorder=1, c="k", lw=2, ls="--")
+
+        else:
+            ax.axhline(padj_threshold, zorder=1, c="k", lw=2, ls="--")
+            ax.axvline(log2fc_threshold, zorder=1, c="k", lw=2, ls="--")
+            ax.axvline(log2fc_threshold * -1, zorder=1, c="k", lw=2, ls="--")
+        plt.ylim(0, y_max)
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        # make labels
+        texts = []
+        for i in range(len(label_df)):
+            txt = plt.text(
+                x=label_df.iloc[i][log2fc_col],
+                y=label_df.iloc[i].nlog10,
+                s=label_df.iloc[i][symbol_col],
+                fontsize=fontsize,
+            )
+
+            txt.set_path_effects([PathEffects.withStroke(linewidth=3, foreground="w")])
+            texts.append(txt)
+
+        adjustText.adjust_text(texts, arrowprops={"arrowstyle": "-", "color": "k", "zorder": 5})
+
+        # make things pretty
+        for axis in ["bottom", "left", "top", "right"]:
+            ax.spines[axis].set_linewidth(2)
+
+        if not top_right_frame:
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+        ax.tick_params(width=2)
+        plt.xticks(size=11, fontsize=10)
+        plt.yticks(size=11)
+
+        # Set default axis titles
+        if x_label is None:
+            x_label = log2fc_col
+        if y_label is None:
+            y_label = f"-$log_{{10}}$ {padj_col}"
+
+        plt.xlabel(x_label, size=15)
+        plt.ylabel(y_label, size=15)
+
+        plt.legend(loc=1, bbox_to_anchor=legend_pos, frameon=False)
+
+        if return_fig:
+            return plt.gcf()
+        plt.show()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_ma(  # pragma: no cover # noqa: D417
+        self,
+        results_df: pd.DataFrame,
+        *,
+        mean_col: str | None = None,
+        log2fc_col: str = "log_fc",
+        padj_col: str = "adj_p_value",
+        padj_threshold: float = 0.05,
+        log2fc_threshold: float = 0.0,
+        log_x: bool | None = None,
+        colors: Sequence[str] = ("lightgray", "#D62728"),
+        x_label: str | None = None,
+        y_label: str = "Log2 fold change",
+        figsize: tuple[int, int] = (5, 5),
+        return_fig: bool = False,
+        **kwargs,
+    ) -> Figure | None:
+        """Creates an MA plot of the mean expression against the log2 fold change.
+
+        The pertpy equivalent of edgeR's `plotSmear` and DESeq2's `plotMA`.
+        Every variable is one point, so the plot shows how the fold change depends on expression strength and which variables the test called significant.
+
+        Args:
+            results_df: DataFrame with results from DE analysis.
+            mean_col: Column name of the mean expression.
+                If None, PyDESeq2's `baseMean` and edgeR's `logCPM` are detected automatically.
+            log2fc_col: Column name of log2 Fold-Change values.
+            padj_col: Column name of adjusted p-values.
+            padj_threshold: Variables with an adjusted p-value below this threshold are highlighted as significant.
+            log2fc_threshold: Variables must additionally exceed this absolute log2 fold change to be highlighted.
+                The thresholds are drawn as dashed lines if it is not zero.
+            log_x: Whether to log-scale the x-axis.
+                If None, it is scaled for mean columns on a linear scale such as `baseMean` but not for those already on a log scale such as `logCPM`.
+            colors: Colors for [non-significant, significant] variables.
+            x_label: Label for the x-axis.
+            y_label: Label for the y-axis.
+            figsize: Size of the figure.
+            {common_plot_args}
+            **kwargs: Additional arguments for seaborn.scatterplot.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_ma(res_df)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_ma.png
+        """
+        known_mean_cols = {"baseMean": True, "logCPM": False}
+        if mean_col is None:
+            mean_col = next((col for col in known_mean_cols if col in results_df.columns), None)
+            if mean_col is None:
+                raise ValueError(
+                    f"Could not find a mean expression column in {results_df.columns.tolist()}. "
+                    "PyDESeq2 stores it as 'baseMean' and edgeR as 'logCPM'; pass `mean_col` for other methods."
+                )
+        elif mean_col not in results_df.columns:
+            raise ValueError(f"Column {mean_col!r} does not exist in the results.")
+
+        hues = ["not significant", "significant"]
+        df = results_df.dropna(subset=[mean_col, log2fc_col, padj_col]).copy()
+        df["significance"] = np.where(
+            (df[padj_col] < padj_threshold) & (df[log2fc_col].abs() >= log2fc_threshold), hues[1], hues[0]
+        )
+
+        fig, ax = plt.subplots(figsize=figsize)
+        sns.scatterplot(
+            data=df,
+            x=mean_col,
+            y=log2fc_col,
+            hue="significance",
+            hue_order=hues,
+            palette=list(colors),
+            ax=ax,
+            **kwargs,
+        )
+
+        if log_x is None:
+            log_x = known_mean_cols.get(mean_col, False)
+        if log_x:
+            ax.set_xscale("log")
+
+        ax.axhline(0, c="k", lw=1)
+        if log2fc_threshold:
+            ax.axhline(log2fc_threshold, c="k", lw=1, ls="--")
+            ax.axhline(-log2fc_threshold, c="k", lw=1, ls="--")
+
+        ax.set_xlabel(mean_col if x_label is None else x_label)
+        ax.set_ylabel(y_label)
+        ax.legend(title=None, frameon=False)
+        ax.spines[["top", "right"]].set_visible(False)
+
+        if return_fig:
+            return fig
+        plt.show()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_paired(  # pragma: no cover # noqa: D417
+        self,
+        adata: ad.AnnData,
+        results_df: pd.DataFrame,
+        groupby: str,
+        pairedby: str,
+        *,
+        var_names: Sequence[str] | None = None,
+        n_top_vars: int = 15,
+        layer: str | None = None,
+        pvalue_col: str = "adj_p_value",
+        symbol_col: str = "variable",
+        n_cols: int = 4,
+        panel_size: tuple[int, int] = (5, 5),
+        show_legend: bool = True,
+        size: int = 10,
+        y_label: str = "expression",
+        pvalue_template=lambda x: f"p={x:.2e}",
+        boxplot_properties=None,
+        palette=None,
+        return_fig: bool = False,
+    ) -> Figure | None:
+        """Creates a pairwise expression plot from a Pandas DataFrame or Anndata.
+
+        Visualizes a panel of paired scatterplots per variable.
+
+        Args:
+            adata: AnnData object, can be pseudobulked.
+            results_df: DataFrame with results from a differential expression test.
+            groupby: .obs column containing the grouping. Must contain exactly two different values.
+            pairedby: .obs column containing the pairing (e.g. "patient_id"). If None, an independent t-test is performed.
+            var_names: Variables to plot.
+            n_top_vars: Number of top variables to plot.
+            layer: Layer to use for plotting.
+            pvalue_col: Column name of the p values.
+            symbol_col: Column name of gene IDs.
+            n_cols: Number of columns in the plot.
+            panel_size: Size of each panel.
+            show_legend: Whether to show the legend.
+            size: Size of the points.
+            y_label: Label for the y-axis.
+            pvalue_template: Template for the p-value string displayed in the title of each panel.
+            boxplot_properties: Additional properties for the boxplot, passed to seaborn.boxplot.
+            palette: Color palette for the line- and stripplot.
+            {common_plot_args}
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_paired(pdata, results_df=res_df, n_top_vars=8, groupby="Treatment", pairedby="Efficacy")
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_paired_expression.png
+        """
+        if boxplot_properties is None:
+            boxplot_properties = {}
+        groups = adata.obs[groupby].unique()
+        if len(groups) != 2:
+            raise ValueError("The number of groups in the group_by column must be exactly 2 to enable paired testing")
+
+        if var_names is None:
+            var_names = results_df.head(n_top_vars)[symbol_col].tolist()
+
+        adata = adata[:, var_names]
+
+        if any(cast_frame(adata.obs)[[groupby, pairedby]].value_counts() > 1):
+            logger.info("Performing pseudobulk for paired samples")
+            ps = PseudobulkSpace()
+            adata = ps.compute(adata, target_col=groupby, groups_col=pairedby, layer_key=layer, mode="sum")
+
+        X = adata.layers[layer] if layer is not None else adata.X
+        with contextlib.suppress(AttributeError):
+            X = cast("CSBase", X).toarray()
+
+        groupby_cols = [pairedby, groupby]
+        df = (
+            cast_frame(adata.obs)
+            .loc[:, groupby_cols]
+            .join(pd.DataFrame(cast_dense(X), index=adata.obs_names, columns=list(var_names)))
+        )
+
+        # remove unpaired samples
+        paired_samples = set(df[df[groupby] == groups[0]][pairedby]) & set(df[df[groupby] == groups[1]][pairedby])
+        df = df[df[pairedby].isin(paired_samples)]
+        removed_samples = adata.obs[pairedby].nunique() - len(df[pairedby].unique())
+        if removed_samples > 0:
+            logger.warning(f"{removed_samples} unpaired samples removed")
+
+        pvalues = results_df.set_index(symbol_col).loc[list(var_names), pvalue_col].values
+        df.reset_index(drop=False, inplace=True)
+
+        # transform data for seaborn
+        df_melt = df.melt(
+            id_vars=groupby_cols,
+            var_name="var",
+            value_name="val",
+        )
+
+        n_panels = len(var_names)
+        nrows = math.ceil(n_panels / n_cols)
+        ncols = min(n_cols, n_panels)
+
+        fig, axes = plt.subplots(
+            nrows,
+            ncols,
+            figsize=(ncols * panel_size[0], nrows * panel_size[1]),
+            tight_layout=True,
+            squeeze=False,
+        )
+        axes = axes.flatten()
+        for i, (var, ax) in enumerate(zip_longest(var_names, axes)):
+            if var is not None:
+                sns.boxplot(
+                    x=groupby,
+                    data=df_melt.loc[df_melt["var"] == var],
+                    y="val",
+                    ax=ax,
+                    color="white",
+                    fliersize=0,
+                    **boxplot_properties,
+                )
+                if pairedby is not None:
+                    sns.lineplot(
+                        x=groupby,
+                        data=df_melt.loc[df_melt["var"] == var],
+                        y="val",
+                        ax=ax,
+                        hue=pairedby,
+                        legend=False,
+                        errorbar=None,
+                        palette=palette,
+                    )
+                jitter = 0 if pairedby else True
+                sns.stripplot(
+                    x=groupby,
+                    data=df_melt.loc[df_melt["var"] == var],
+                    y="val",
+                    ax=ax,
+                    hue=pairedby,
+                    jitter=jitter,
+                    size=size,
+                    linewidth=1,
+                    palette=palette,
+                )
+
+                ax.set_xlabel("")
+                ax.tick_params(
+                    axis="x",
+                    labelsize=15,
+                )
+                ax.legend().set_visible(False)
+                ax.set_ylabel(y_label)
+                ax.set_title(f"{var}\n{pvalue_template(pvalues[i])}")
+            else:
+                ax.set_visible(False)
+        fig.tight_layout()
+
+        if show_legend is True:
+            axes[n_panels - 1].legend().set_visible(True)
+            axes[n_panels - 1].legend(
+                bbox_to_anchor=(0.5, -0.1), loc="upper center", ncol=adata.obs[pairedby].nunique()
+            )
+
+        plt.tight_layout()
+        if return_fig:
+            return plt.gcf()
+        plt.show()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_fold_change(  # pragma: no cover # noqa: D417
+        self,
+        results_df: pd.DataFrame,
+        *,
+        var_names: Sequence[str] | None = None,
+        n_top_vars: int = 15,
+        padj_threshold: float = 0.01,
+        padj_col: str = "adj_p_value",
+        log2fc_col: str = "log_fc",
+        symbol_col: str = "variable",
+        y_label: str = "Log2 fold change",
+        figsize: tuple[int, int] = (10, 5),
+        return_fig: bool = False,
+        **barplot_kwargs,
+    ) -> Figure | None:
+        """Plot a metric from the results as a bar chart, optionally with additional information about paired samples in a scatter plot.
+
+        Args:
+            results_df: DataFrame with results from DE analysis.
+            var_names: Variables to plot. If None, the top n_top_vars variables based on the log2 fold change are plotted.
+            n_top_vars: Number of top variables to plot. The top and bottom n_top_vars variables are plotted, respectively.
+            padj_threshold: Only variables with adjusted p-values below this threshold are included in the plot.
+            padj_col: Column name of adjusted p-values.
+            log2fc_col: Column name of log2 Fold-Change values.
+            symbol_col: Column name of gene IDs.
+            y_label: Label for the y-axis.
+            figsize: Size of the figure.
+            {common_plot_args}
+            **barplot_kwargs: Additional arguments for seaborn.barplot.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> edgr.fit()
+            >>> res_df = edgr.test_contrasts(
+            ...     edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
+            ... )
+            >>> edgr.plot_fold_change(res_df)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_fold_change.png
+        """
+        results_df = results_df[results_df[padj_col] < padj_threshold]
+        if var_names is None:
+            var_names = results_df.sort_values(log2fc_col, ascending=False).head(n_top_vars)[symbol_col].tolist()
+            var_names += results_df.sort_values(log2fc_col, ascending=True).head(n_top_vars)[symbol_col].tolist()
+            assert len(var_names) == 2 * n_top_vars
+
+        df = results_df[results_df[symbol_col].isin(var_names)].copy()
+        df.sort_values(log2fc_col, ascending=False, inplace=True)
+
+        plt.figure(figsize=figsize)
+        sns.barplot(
+            x=symbol_col,
+            y=log2fc_col,
+            data=df,
+            palette="RdBu",
+            legend=False,
+            **barplot_kwargs,
+        )
+        plt.xticks(rotation=90)
+        plt.xlabel("")
+        plt.ylabel(y_label)
+
+        if return_fig:
+            return plt.gcf()
+        plt.show()
+        return None
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_multicomparison_fc(  # pragma: no cover # noqa: D417
+        self,
+        results_df: pd.DataFrame,
+        *,
+        n_top_vars=15,
+        contrast_col: str = "contrast",
+        log2fc_col: str = "log_fc",
+        pvalue_col: str = "adj_p_value",
+        symbol_col: str = "variable",
+        marker_size: int = 100,
+        figsize: tuple[int, int] = (10, 2),
+        x_label: str = "Contrast",
+        y_label: str = "Gene",
+        return_fig: bool = False,
+        **heatmap_kwargs,
+    ) -> Figure | None:
+        """Plot a matrix of log2 fold changes from the results.
+
+        Args:
+            results_df: DataFrame with results from DE analysis.
+            n_top_vars: Number of top variables to plot per group.
+            contrast_col: Column in results_df containing information about the contrast.
+            log2fc_col: Column in results_df containing the log2 fold change.
+            pvalue_col: Column in results_df containing the p-value. Can be used to switch between adjusted and unadjusted p-values.
+            symbol_col: Column in results_df containing the gene symbol.
+            marker_size: Size of the biggest marker for significant variables.
+            figsize: Size of the figure.
+            x_label: Label for the x-axis.
+            y_label: Label for the y-axis.
+            {common_plot_args}
+            **heatmap_kwargs: Additional arguments for seaborn.heatmap.
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> # Example with EdgeR
+            >>> import pertpy as pt
+            >>> adata = pt.dt.zhang_2021()
+            >>> adata.layers["counts"] = adata.X.copy()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
+            >>> edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
+            >>> res_df = edgr.compare_groups(pdata, column="Efficacy", baseline="SD", groups_to_compare=["PR", "PD"])
+            >>> edgr.plot_multicomparison_fc(res_df)
+
+        Preview:
+            .. image:: /_static/docstring_previews/de_multicomparison_fc.png
+        """
+        groups = results_df[contrast_col].unique().tolist()
+
+        results_df["abs_log_fc"] = results_df[log2fc_col].abs()
+
+        def _get_significance(p_val):
+            if p_val < 0.001:
+                return "< 0.001"
+            elif p_val < 0.01:
+                return "< 0.01"
+            elif p_val < 0.1:
+                return "< 0.1"
+            else:
+                return "n.s."
+
+        results_df["significance"] = results_df[pvalue_col].apply(_get_significance)
+
+        var_names = []
+        for group in groups:
+            var_names += (
+                results_df[results_df[contrast_col] == group]
+                .sort_values("abs_log_fc", ascending=False)
+                .head(n_top_vars)[symbol_col]
+                .tolist()
+            )
+
+        results_df = results_df[results_df[symbol_col].isin(var_names)]
+        df = results_df.pivot(index=contrast_col, columns=symbol_col, values=log2fc_col)[var_names]
+
+        plt.figure(figsize=figsize)
+        sns.heatmap(df, **heatmap_kwargs, cmap="coolwarm", center=0, cbar_kws={"label": "Log2 fold change"})
+
+        _size = {"< 0.001": marker_size, "< 0.01": math.floor(marker_size / 2), "< 0.1": math.floor(marker_size / 4)}
+        # Calculate locations directly from DataFrame instead of extracting from rendered plot (fixes #755)
+        # Seaborn places cell centers at 0.5, 1.5, 2.5, etc.
+        # NOTE: This assumes a non-clustered heatmap. If using clustermap, coordinates would need reordering.
+        x_locs = np.arange(len(df.columns)) + 0.5
+        x_labels = df.columns.tolist()
+        y_locs = np.arange(len(df.index)) + 0.5
+        y_labels = df.index.tolist()
+
+        for _i, row in results_df.iterrows():
+            if row["significance"] != "n.s.":
+                plt.scatter(
+                    x=x_locs[x_labels.index(row[symbol_col])],
+                    y=y_locs[y_labels.index(row[contrast_col])],
+                    s=_size[row["significance"]],
+                    marker="*",
+                    c="white",
+                )
+
+        plt.scatter([], [], s=marker_size, marker="*", c="black", label="< 0.001")
+        plt.scatter([], [], s=math.floor(marker_size / 2), marker="*", c="black", label="< 0.01")
+        plt.scatter([], [], s=math.floor(marker_size / 4), marker="*", c="black", label="< 0.1")
+        plt.legend(title="Significance", bbox_to_anchor=(1.2, -0.05))
+
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+
+        if return_fig:
+            return plt.gcf()
+        plt.show()
+        return None
+
+
+class LinearModelBase(MethodBase):
+    def __init__(self, adata, design, *, mask=None, layer=None, **kwargs):
+        """Initialize the method.
+
+        Args:
+            adata: AnnData object, usually pseudobulked.
+            design: Model design. Can be either a design matrix, a formulaic formula.Formulaic formula in the format 'x + z' or '~x+z'.
+            mask: A column in adata.var that contains a boolean mask with selected features.
+            layer: Layer to use in fit(). If None, use the X array.
+            **kwargs: Keyword arguments specific to the method implementation.
+        """
+        super().__init__(adata, mask=mask, layer=layer)
+        self._check_counts()
+
+        from formulaic_contrasts import FormulaicContrasts
+
+        self.formulaic_contrasts = None
+        if isinstance(design, str):
+            self.formulaic_contrasts = FormulaicContrasts(adata.obs, design)
+            self.design = self.formulaic_contrasts.design_matrix
+        else:
+            self.design = design
+        self._fitted = False
+
+    @classmethod
+    def compare_groups(
+        cls,
+        adata: ad.AnnData,
+        column: str,
+        baseline: str,
+        groups_to_compare: str | Iterable[str],
+        *,
+        paired_by: str | None = None,
+        mask: pd.Series | None = None,
+        layer: str | None = None,
+        fit_kwargs=MappingProxyType({}),
+        test_kwargs=MappingProxyType({}),
+    ):
+        design = f"~{column}"
+        if paired_by is not None:
+            design += f"+{paired_by}"
+        if isinstance(groups_to_compare, str):
+            groups_to_compare = [groups_to_compare]
+        model = cls(adata, design=design, mask=mask, layer=layer)
+
+        model.fit(**fit_kwargs)
+
+        de_res = model.test_contrasts(
+            {
+                group_to_compare: model.contrast(column=column, baseline=baseline, group_to_compare=group_to_compare)
+                for group_to_compare in groups_to_compare
+            },
+            **test_kwargs,
+        )
+
+        return de_res
+
+    @property
+    def variables(self):
+        """Get the names of the variables used in the model definition."""
+        if self.formulaic_contrasts is None:
+            raise ValueError(
+                "Retrieving variables is only possible if the model was initialized using a formula."
+            ) from None
+        else:
+            return self.formulaic_contrasts.variables
+
+    @property
+    def is_fitted(self) -> bool:
+        """Whether `fit` has been called on this model."""
+        return self._fitted
+
+    def _summary(self) -> dict[str, str]:
+        summary = super()._summary()
+        if self.formulaic_contrasts is None:
+            summary["Design"] = f"custom matrix ({self.design.shape[0]:,} × {self.design.shape[1]:,})"
+        else:
+            summary["Design"] = str(self.design.model_spec.formula)
+            summary["Variables"] = _format_names(sorted(self.variables))
+        if hasattr(self.design, "columns"):
+            summary["Coefficients"] = _format_names([str(column) for column in self.design.columns])
+        summary["Fitted"] = "yes" if self.is_fitted else "no"
+        return summary
+
+    @abstractmethod
+    def _check_counts(self):
+        """Check that counts are valid for the specific method.
+
+        Raises:
+            ValueError: if the data matrix does not comply with the expectations.
+        """
+        ...
+
+    @abstractmethod
+    def fit(self, **kwargs):
+        """Fit the model.
+
+        Args:
+            **kwargs: Additional arguments for fitting the specific method.
+        """
+        ...
+
+    @abstractmethod
+    def _test_single_contrast(self, contrast, **kwargs): ...
+
+    def test_contrasts(self, contrasts: np.ndarray | Mapping[str | None, np.ndarray], **kwargs):
+        """Perform a comparison as specified in a contrast vector.
+
+        Args:
+            contrasts: Either a numeric contrast vector, or a dictionary of numeric contrast vectors.
+            **kwargs: passed to the respective implementation.
+
+        Returns:
+            A dataframe with the results.
+        """
+        contrast_map: Mapping[str | None, np.ndarray] = (
+            contrasts if isinstance(contrasts, dict) else {None: cast_dense(contrasts)}
+        )
+        results = []
+        for name, contrast in contrast_map.items():
+            if np.allclose(np.asarray(contrast, dtype=float), 0):
+                raise ValueError(
+                    f"Contrast {name!r} is all zeros, which yields a meaningless test. "
+                    "This typically happens when the contrast lies in the null space of the design matrix — "
+                    "for example, requesting an interaction contrast from a model fit without the interaction term. "
+                    "Refit the model with a design that spans the contrast (e.g. add `factor_a * factor_b`)."
+                )
+            results.append(self._test_single_contrast(contrast, **kwargs).assign(contrast=name))
+
+        results_df = pd.concat(results)
+
+        return results_df
+
+    def test_reduced(self, modelB):
+        """Test against a reduced model.
+
+        Args:
+            modelB: the reduced model against which to test.
+
+        Example:
+            >>> import pertpy as pt
+            >>> modelA = Model().fit()
+            >>> modelB = Model().fit()
+            >>> modelA.test_reduced(modelB)
+        """
+        raise NotImplementedError
+
+    def cond(self, **kwargs):
+        """Get a contrast vector representing a specific condition.
+
+        Args:
+            **kwargs: column/value pairs.
+
+        Returns:
+            A contrast vector that aligns to the columns of the design matrix.
+        """
+        if self.formulaic_contrasts is None:
+            raise RuntimeError(
+                "Building contrasts with `cond` only works if you specified the model using a formulaic formula. Please manually provide a contrast vector."
+            )
+        return self.formulaic_contrasts.cond(**kwargs)
+
+    def contrast(self, *args, **kwargs):  # noqa: D417
+        """Build a simple contrast for pairwise comparisons.
+
+        Args:
+            column: column in adata.obs to test on.
+            baseline: baseline category (denominator).
+            group_to_compare: category to compare against baseline (nominator).
+
+        Returns:
+            Numeric contrast vector.
+        """
+        if self.formulaic_contrasts is None:
+            raise RuntimeError(
+                "Building contrasts with `cond` only works if you specified the model using a formulaic formula. Please manually provide a contrast vector."
+            )
+        return self.formulaic_contrasts.contrast(*args, **kwargs)

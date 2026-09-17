@@ -32,8 +32,7 @@ def adata() -> AnnData:
     var_data = {"gene_name": [f"gene{i}" for i in range(1, NUM_GENES + 1)]}
     var = pd.DataFrame(var_data).set_index("gene_name", drop=False).rename_axis("index")
 
-    X = sparse.csr_matrix(X)
-    adata = anndata.AnnData(X=X, obs=obs, var=var)
+    adata = anndata.AnnData(X=sparse.csr_matrix(X), obs=obs, var=var)
 
     return adata
 

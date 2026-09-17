@@ -27,6 +27,16 @@ conda install -c conda-forge pertpy
 
 ### Additional dependency groups
 
+#### JAX backed tools
+
+```console
+pip install 'pertpy[jax]'
+```
+
+Required by {class}`~pertpy.tools.Sccoda`, {class}`~pertpy.tools.Cinemaot`, {class}`~pertpy.tools.Scgen`, {class}`~pertpy.tools.MLPClassifierSpace`, the `"wasserstein"` metric of {class}`~pertpy.tools.Distance` and {meth}`~pertpy.preprocessing.GuideAssignment.assign_mixture_model`.
+{class}`~pertpy.tools.Tasccoda` pulls it in via `pertpy[tcoda]`.
+Everything else works without it.
+
 #### Differential gene expression interface
 
 The DGE interface of pertpy requires additional dependencies that can be installed by running:

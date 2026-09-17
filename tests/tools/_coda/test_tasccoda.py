@@ -21,7 +21,7 @@ tasccoda = pt.tl.Tasccoda()
 @pytest.fixture
 def smillie_adata():
     smillie_adata = pt.dt.tasccoda_example()
-    smillie_adata = sc.pp.subsample(smillie_adata, 0.1, copy=True)
+    smillie_adata = sc.pp.sample(smillie_adata, 0.1, copy=True, rng=0)
 
     return smillie_adata
 
@@ -55,7 +55,7 @@ def test_prepare(smillie_adata):
     assert "covariate_matrix" in mdata["coda"].obsm
     assert "sample_counts" in mdata["coda"].obsm
     assert isinstance(mdata["coda"].obsm["sample_counts"], np.ndarray)
-    assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 8
+    assert np.sum(mdata["coda"].obsm["covariate_matrix"]) == 5
     assert mdata["coda"].uns["scCODA_params"]["sslasso_pen_args"]["theta"] == 0.5
 
 

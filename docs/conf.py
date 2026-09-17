@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # mypy: ignore-errors
 
+import os
 import sys
 from datetime import datetime
 from importlib.metadata import metadata
@@ -41,11 +42,17 @@ extensions = [
     "sphinx_tabs.tabs",
     "sphinx_issues",
     "sphinxcontrib.bibtex",
+    "sphinxext.opengraph",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-ogp_site_url = "https://pertpy.readthedocs.io/en/latest/"
-ogp_image = "https://pertpy.readthedocs.io/en/latest/_static/pertpy_logo.png"
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "https://pertpy.readthedocs.io/en/stable/")
+
+ogp_site_url = html_baseurl
+ogp_site_name = "pertpy"
+ogp_image = "_static/pertpy_logo.png"
+ogp_enable_meta_description = True
+ogp_social_cards = {"enable": False}
 
 # nbsphinx specific settings
 exclude_patterns = [
@@ -104,6 +111,7 @@ html_logo = "_static/pertpy_logo.svg"
 html_theme_options = {}
 
 html_static_path = ["_static"]
+html_extra_path = ["llms.txt"]
 html_css_files = ["css/overwrite.css", "css/sphinx_gallery.css"]
 html_show_sphinx = False
 
@@ -119,6 +127,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
+    "seaborn": ("https://seaborn.pydata.org/", None),
     "pyro": ("https://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),
     "flax": ("https://flax.readthedocs.io/en/latest/", None),
@@ -128,9 +137,7 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
     "xarray": ("https://docs.xarray.dev/en/stable/", None),
-    "scvi-tools": ("https://docs.scvi-tools.org/en/stable/", None),
-    "torch": ("https://docs.pytorch.org/docs/main", None),
-    "pytorch_lightning": ("https://lightning.ai/docs/pytorch/stable/", None),
+    "annbatch": ("https://annbatch.readthedocs.io/en/stable/", None),
 }
 nitpick_ignore = [
     ("py:class", "ete4.core.tree.Tree"),
@@ -141,7 +148,6 @@ nitpick_ignore = [
     ("py:class", "The requested data."),
     ("py:class", "Model with loaded state dictionaries."),
     ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
-    ("py:class", "scvi.train._config.KwargsConfig"),
     ("py:data", "typing.Union"),
 ]
 qualname_overrides = {

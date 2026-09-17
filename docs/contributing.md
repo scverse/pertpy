@@ -159,9 +159,14 @@ git pull --rebase
 to integrate the changes into yours.
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
+One of the hooks type-checks `pertpy` and `tests` with [mypy][], which the `Pre-commit checks` CI job runs on every pull request.
+Type hints are optional: mypy only checks functions that carry annotations.
+To silence a specific line, append a `# type: ignore[<error-code>]` comment.
+
 Finally, most editors have an _autoformat on save_ feature.
 Consider enabling this option for [ruff][ruff-editors] and [biome][biome-editors].
 
+[mypy]: https://mypy.readthedocs.io/
 [pre-commit]: https://pre-commit.com/
 [pre-commit.ci]: https://pre-commit.ci/
 [ruff-editors]: https://docs.astral.sh/ruff/integrations/
@@ -235,8 +240,8 @@ This means that local testing via hatch and remote testing on CI tests against t
 
 ### Updating the version number
 
-Before making a release, you need to update the version number in the `pyproject.toml` file.
-Please adhere to [Semantic Versioning][semver], in brief
+The version number is derived from the git tags by [hatch-vcs][], so there is nothing to edit in `pyproject.toml`.
+Choose the tag according to [Semantic Versioning][semver], in brief
 
 > Given a version number MAJOR.MINOR.PATCH, increment the:
 >
@@ -246,12 +251,12 @@ Please adhere to [Semantic Versioning][semver], in brief
 >
 > Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
 
-Once you are done, commit and push your changes and navigate to the "Releases" page of this project on GitHub.
-Specify `vX.X.X` as a tag name and create a release.
+Navigate to the "Releases" page of this project on GitHub, specify `X.X.X` as a tag name and create a release.
 For more information, see [managing GitHub releases][].
 This will automatically create a git tag and trigger a Github workflow that creates a release on [PyPI][].
 
 [semver]: https://semver.org/
+[hatch-vcs]: https://pypi.org/project/hatch-vcs/
 [managing GitHub releases]: https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
 [pypi]: https://pypi.org/
 
