@@ -280,10 +280,10 @@ class CompositionalModel2(ABC):
         sample_adata: AnnData,
         kernel: npy.infer.mcmc.MCMCKernel,
         rng_key: Array,
+        *args,
         copy: bool = False,
         num_chains: int = 1,
         chain_method: str = "vectorized",
-        *args,
         **kwargs,
     ):
         """Background function that executes any numpyro MCMC algorithm and processes its results.
