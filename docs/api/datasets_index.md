@@ -7,9 +7,6 @@
 pertpy provides access to several curated single-cell datasets spanning several types of perturbations.
 Many of the datasets originate from [scperturb](http://projects.sanderlab.org/scperturb/) {cite}`Peidli2024`.
 
-They are accessed through `pt.ds`.
-The legacy `pt.dt` accessor remains available as an alias.
-
 ```{eval-rst}
 .. autosummary::
     :toctree: data
