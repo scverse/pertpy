@@ -553,3 +553,20 @@ similar = ds.nearest_perturbations(ds_adata, "IFNGR2", target_col="gene_target")
 ```
 
 See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html).
+
+### Dose-response curve fitting
+
+{meth}`~pertpy.tools.PseudobulkSpace.dose_response` calculates a scalar distance from control for each perturbation and dose.
+{meth}`~pertpy.tools.PseudobulkSpace.fit_dose_response` fits a four-parameter Hill curve and stores the results in AnnData.
+For preprocessed `adata` with `perturbation` and `dose` columns, a `control` group and a PCA representation:
+
+```python
+import pertpy as pt
+
+ps = pt.tl.PseudobulkSpace()
+responses = ps.dose_response(adata, embedding_key="X_pca")
+ps.fit_dose_response(adata, responses)
+fits = adata.uns["dose_response"]["fits"]
+```
+
+For an inhibitory assay response, use `response_col` to select the measurement column and `response_type="inhibition"` to report IC50 instead of EC50.

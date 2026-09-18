@@ -66,19 +66,198 @@ def test_evaluate_combinations(rng):
     np.testing.assert_allclose(result.loc["A+B", "distance"], 0.0, atol=1e-6)
 
 
-def test_dose_response(rng):
+@pytest.mark.parametrize("categorical_doses", [False, True])
+def test_dose_response(rng, categorical_doses):
     groups, doses = [], []
     for pert in ["control", "drug"]:
-        for dose in [0.0] if pert == "control" else [1.0, 10.0, 100.0]:
+        for dose in [0.0] if pert == "control" else [0.1, 1.0, 3.0, 10.0, 30.0, 100.0]:
             groups += [pert] * 15
             doses += [dose] * 15
     groups = np.array(groups)
     doses = np.array(doses, dtype=float)
-    X = rng.normal(0, 0.3, (len(groups), 8))
-    X[groups == "drug"] += (doses[groups == "drug"] / 10.0)[:, None]
+    # Match background cells across doses so sampling noise does not change the known curve.
+    X = np.tile(rng.normal(0, 0.3, (15, 8)), (len(groups) // 15, 1))
+    drug_doses = doses[groups == "drug"]
+    X[groups == "drug"] += (5 * drug_doses**1.2 / (10**1.2 + drug_doses**1.2))[:, None]
     adata = AnnData(X, obs=pd.DataFrame({"perturbation": groups, "dose": doses}))
+    if categorical_doses:
+        adata.obs["dose"] = pd.Categorical(adata.obs["dose"].astype(str))
     sc.pp.pca(adata, n_comps=5)
 
     curves = pt.tl.PseudobulkSpace().dose_response(adata, dose_col="dose", metric="euclidean", embedding_key="X_pca")
     drug = curves[curves["perturbation"] == "drug"].sort_values("dose")
     assert drug["distance"].is_monotonic_increasing
+
+    pt.tl.PseudobulkSpace().fit_dose_response(adata, curves)
+    fits = adata.uns["dose_response"]["fits"]
+    assert fits.loc[0, "ec50"] == pytest.approx(10, rel=1e-4)
+    assert fits.loc[0, "r_squared"] > 0.99
+    assert fits.loc[0, "midpoint_in_range"]
+
+
+@pytest.mark.parametrize(
+    ("response_type", "e0", "emax", "midpoint", "midpoint_col"),
+    [("effect", 0.1, 1.8, 3.0, "ec50"), ("inhibition", 1.0, 0.05, 8.0, "ic50")],
+)
+@pytest.mark.parametrize("response_scale", [1e-8, 1.0, 1e8])
+def test_fit_dose_response(*, adata, response_type, e0, emax, midpoint, midpoint_col, response_scale):
+    e0, emax = e0 * response_scale, emax * response_scale
+    doses = np.array([0.0, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0])
+    hill_coefficient = 1.4
+    fraction = doses**hill_coefficient / (midpoint**hill_coefficient + doses**hill_coefficient)
+    first = pd.DataFrame(
+        {
+            "compound": "drug_a",
+            "concentration": doses,
+            "response": e0 + (emax - e0) * fraction,
+        }
+    )
+    second_midpoint = midpoint * 2
+    second_fraction = doses**hill_coefficient / (second_midpoint**hill_coefficient + doses**hill_coefficient)
+    second = first.assign(compound="drug_b", response=e0 + (emax - e0) * second_fraction)
+    data = pd.concat([first, second], ignore_index=True)
+
+    pt.tl.PseudobulkSpace().fit_dose_response(
+        adata,
+        data,
+        perturbation_col="compound",
+        dose_col="concentration",
+        response_col="response",
+        response_type=response_type,
+    )
+    fits = adata.uns["dose_response"]["fits"].set_index("compound")
+
+    assert midpoint_col in fits
+    assert f"{midpoint_col}_standard_error" in fits
+    assert {"e0", "emax", "hill_coefficient", "r_squared", "midpoint_in_range"} <= set(fits)
+    assert fits.loc["drug_a", "e0"] == pytest.approx(e0, rel=1e-6, abs=0)
+    assert fits.loc["drug_a", "emax"] == pytest.approx(emax, rel=1e-6, abs=0)
+    assert fits.loc["drug_a", "hill_coefficient"] == pytest.approx(hill_coefficient)
+    assert fits.loc["drug_a", midpoint_col] == pytest.approx(midpoint)
+    assert fits.loc["drug_b", midpoint_col] == pytest.approx(second_midpoint)
+    assert fits.loc["drug_a", "r_squared"] == pytest.approx(1)
+    assert np.isfinite(fits[f"{midpoint_col}_standard_error"]).all()
+
+
+@pytest.mark.parametrize("response_scale", [1.0, 100.0])
+def test_fit_dose_response_rank_deficient(adata, response_scale):
+    doses = np.array([0.0, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0])
+    responses = doses / (10 + doses) + np.random.default_rng(2026).normal(0, 0.025, len(doses))
+    complete = pd.DataFrame({"perturbation": "complete", "dose": doses, "distance": response_scale * responses})
+    limited = complete.loc[complete["dose"] <= 3].assign(perturbation="limited")
+
+    with pytest.warns(UserWarning, match="Cannot estimate.*'limited'"):
+        pt.tl.PseudobulkSpace().fit_dose_response(adata, pd.concat([complete, limited]))
+    fits = adata.uns["dose_response"]["fits"].set_index("perturbation")
+
+    assert fits.loc["complete", "ec50"] == pytest.approx(10, rel=0.1)
+    assert np.isfinite(fits.loc["complete", "ec50_standard_error"])
+    # A high R-squared and an in-range midpoint do not expose this poorly determined curve.
+    assert fits.loc["limited", "r_squared"] > 0.98
+    assert fits.loc["limited", "midpoint_in_range"]
+    assert np.isfinite(fits.loc["limited", "ec50"])
+    assert np.isnan(fits.loc["limited", "ec50_standard_error"])
+
+
+@pytest.mark.parametrize("response_scale", [1e-8, 1.0, 1e8])
+def test_fit_dose_response_standard_error(adata, response_scale):
+    doses = np.array([0.0, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0])
+    responses = doses / (10 + doses) + np.random.default_rng(2026).normal(0, 0.025, len(doses))
+    responses *= response_scale
+    data = pd.DataFrame({"perturbation": "drug", "dose": doses, "distance": responses})
+    pt.tl.PseudobulkSpace().fit_dose_response(adata, data)
+    fit = adata.uns["dose_response"]["fits"].iloc[0]
+
+    # Independent derivatives with respect to EC50 itself, rather than the fitted log(EC50).
+    midpoint, slope = fit["ec50"], fit["hill_coefficient"]
+    fraction = doses**slope / (midpoint**slope + doses**slope)
+    log_ratio = np.zeros_like(doses)
+    np.log(doses / midpoint, out=log_ratio, where=doses > 0)
+    sensitivity = (fit["emax"] - fit["e0"]) * fraction * (1 - fraction)
+    jacobian = np.column_stack((1 - fraction, fraction, -slope * sensitivity / midpoint, sensitivity * log_ratio))
+    residuals = responses - (fit["e0"] + (fit["emax"] - fit["e0"]) * fraction)
+    variance = np.sum(residuals**2) / (len(doses) - 4)
+    expected_error = np.sqrt(np.linalg.inv(jacobian.T @ jacobian)[2, 2] * variance)
+    assert fit["ec50_standard_error"] == pytest.approx(expected_error, rel=1e-4)
+
+
+def test_fit_dose_response_insufficient_dof(adata):
+    doses = np.array([0.0, 1.0, 10.0, 100.0])
+    data = pd.DataFrame({"perturbation": "drug", "dose": doses, "distance": doses / (10 + doses)})
+    with pytest.warns(UserWarning, match="Cannot estimate.*'drug'"):
+        pt.tl.PseudobulkSpace().fit_dose_response(adata, data)
+    fit = adata.uns["dose_response"]["fits"].iloc[0]
+    assert fit["ec50"] == pytest.approx(10)
+    assert np.isnan(fit["ec50_standard_error"])
+
+
+def test_fit_dose_response_storage(adata, tmp_path):
+    doses = np.array([0.0, 0.1, 1.0, 3.0, 10.0, 30.0, 100.0])
+    data = pd.DataFrame({"perturbation": "drug", "dose": doses, "distance": doses / (10 + doses)})
+    original_obs, original_data = adata.obs.copy(), data.copy()
+    original_x = adata.X.copy()
+    adata.uns["other_result"] = {"value": 1}
+
+    result = pt.tl.PseudobulkSpace().fit_dose_response(adata, data, key_added="hill")
+
+    assert result is None
+    assert "dose_response" not in adata.uns
+    assert adata.uns["other_result"] == {"value": 1}
+    pd.testing.assert_frame_equal(adata.obs, original_obs)
+    pd.testing.assert_frame_equal(data, original_data)
+    np.testing.assert_array_equal(adata.X, original_x)
+    assert adata.uns["hill"]["params"] == {
+        "perturbation_col": "perturbation",
+        "dose_col": "dose",
+        "response_col": "distance",
+        "response_type": "effect",
+    }
+
+    path = tmp_path / "fits.h5ad"
+    adata.write_h5ad(path)
+    restored = sc.read_h5ad(path)
+    pd.testing.assert_frame_equal(restored.uns["hill"]["fits"], adata.uns["hill"]["fits"])
+    assert restored.uns["hill"]["params"] == adata.uns["hill"]["params"]
+
+    pt.tl.PseudobulkSpace().fit_dose_response(adata, data, response_type="inhibition", key_added="hill")
+    assert "ic50" in adata.uns["hill"]["fits"]
+    assert "ec50" not in adata.uns["hill"]["fits"]
+
+
+@pytest.mark.parametrize(
+    ("data", "kwargs", "match"),
+    [
+        (pd.DataFrame(), {}, "Columns"),
+        (
+            pd.DataFrame(
+                {"perturbation": ["drug", "drug", None, "drug"], "dose": [0, 1, 2, 3], "distance": [0, 1, 2, 3]}
+            ),
+            {},
+            "Perturbation labels",
+        ),
+        (
+            pd.DataFrame({"perturbation": ["drug"] * 4, "dose": [-1, 1, 2, 3], "distance": [0, 1, 2, 3]}),
+            {},
+            "non-negative",
+        ),
+        (
+            pd.DataFrame({"perturbation": ["drug"] * 3, "dose": [0, 1, 2], "distance": [0, 1, 2]}),
+            {},
+            "four distinct",
+        ),
+        (
+            pd.DataFrame({"perturbation": ["drug"] * 4, "dose": [0, 1, 2, 3], "distance": [1, 1, 1, 1]}),
+            {},
+            "constant response",
+        ),
+        (
+            pd.DataFrame({"perturbation": ["drug"] * 4, "dose": [0, 1, 2, 3], "distance": [0, 1, 2, 3]}),
+            {"response_type": "unknown"},
+            "response_type",
+        ),
+    ],
+)
+def test_fit_dose_response_validation(adata, data, kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        pt.tl.PseudobulkSpace().fit_dose_response(adata, data, **kwargs)
+    assert "dose_response" not in adata.uns
