@@ -113,7 +113,7 @@ class Milo:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
 
@@ -167,7 +167,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -270,7 +270,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -368,7 +368,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -684,7 +684,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -893,7 +893,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -947,7 +947,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -989,7 +989,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1056,7 +1056,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1093,7 +1093,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1224,7 +1224,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1298,7 +1298,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1436,7 +1436,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1506,7 +1506,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1573,7 +1573,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1857,7 +1857,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1984,7 +1984,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])

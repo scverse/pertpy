@@ -54,7 +54,7 @@ class LRClassifierSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.norman_2019()
+            >>> adata = pt.ds.norman_2019()
             >>> rcs = pt.tl.LRClassifierSpace()
             >>> pert_embeddings = rcs.compute(adata, embedding_key="X_pca", target_col="perturbation_name")
         """

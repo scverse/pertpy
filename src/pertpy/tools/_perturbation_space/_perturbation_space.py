@@ -155,7 +155,7 @@ class PerturbationSpace:
             Example usage with PseudobulkSpace:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> diff_adata = ps.compute_control_diff(mdata["rna"], target_col="gene_target", reference_key="NT")
         """
@@ -325,7 +325,7 @@ class PerturbationSpace:
             Example usage with PseudobulkSpace:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
             >>> new_perturbation = ps.add(ps_adata, perturbations=["ATF2", "CD86"], reference_key="NT")
@@ -372,7 +372,7 @@ class PerturbationSpace:
             Example usage with PseudobulkSpace:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target", groups_col="gene_target")
             >>> new_perturbation = ps.subtract(ps_adata, reference_key="ATF2", perturbations=["BRD4", "CUL3"])
@@ -485,7 +485,7 @@ class PerturbationSpace:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.norman_2019()
+            >>> adata = pt.ds.norman_2019()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(adata, target_col="perturbation_name")
             >>> neighbors = ps.nearest_perturbations(ps_adata, "CBL+CNN1", target_col="perturbation_name")
@@ -540,7 +540,7 @@ class PerturbationSpace:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.norman_2019()
+            >>> adata = pt.ds.norman_2019()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(adata, target_col="perturbation_name")
             >>> scores = ps.evaluate_combinations(ps_adata, target_col="perturbation_name", reference_key="control")
@@ -611,7 +611,7 @@ class PerturbationSpace:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.srivatsan_2020_sciplex2()
+            >>> adata = pt.ds.srivatsan_2020_sciplex2()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> curves = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
         """
@@ -677,7 +677,7 @@ class PerturbationSpace:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.norman_2019()
+            >>> adata = pt.ds.norman_2019()
             >>> ds = pt.tl.DistanceSpace()
             >>> ds_adata = ds.compute(adata, target_col="perturbation_name", metric="edistance")
             >>> ds.plot_similarity(ds_adata, target_col="perturbation_name")

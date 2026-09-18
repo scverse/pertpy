@@ -207,7 +207,7 @@ class Distance:
 
     Examples:
         >>> import pertpy as pt
-        >>> adata = pt.dt.distance_example()
+        >>> adata = pt.ds.distance_example()
         >>> Distance = pt.tools.Distance(metric="edistance")
         >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
         >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -310,7 +310,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example()
+            >>> adata = pt.ds.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
             >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -347,7 +347,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example()
+            >>> adata = pt.ds.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> X = adata.obsm["X_pca"][adata.obs["perturbation"] == "p-sgCREB1-2"]
             >>> Y = adata.obsm["X_pca"][adata.obs["perturbation"] == "control"]
@@ -394,7 +394,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example()
+            >>> adata = pt.ds.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.pairwise(adata, groupby="perturbation")
         """
@@ -565,7 +565,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example()
+            >>> adata = pt.ds.distance_example()
             >>> Distance = pt.tools.Distance(metric="edistance")
             >>> pairwise_df = Distance.onesided_distances(adata, groupby="perturbation", selected_group="control")
         """
@@ -703,7 +703,7 @@ class Distance:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.distance_example()
+            >>> adata = pt.ds.distance_example()
             >>> distance = pt.tools.Distance(metric="edistance")
             >>> distance.precompute_distances(adata)
         """

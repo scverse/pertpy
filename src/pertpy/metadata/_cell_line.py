@@ -121,7 +121,7 @@ class CellLine(MetaData):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> adata.obs["cell_line_name"] = "MCF7"
             >>> pt_metadata = pt.md.CellLine()
             >>> adata_annotated = pt_metadata.annotate(adata=adata,
@@ -239,7 +239,7 @@ class CellLine(MetaData):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> adata.obs["cell_line_name"] = "MCF7"
             >>> pt_metadata = pt.md.CellLine()
             >>> adata_annotated = pt_metadata.annotate(
@@ -346,7 +346,7 @@ class CellLine(MetaData):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> adata.obs["cell_line_name"] = "MCF7"
             >>> pt_metadata = pt.md.CellLine()
             >>> adata_annotated = pt_metadata.annotate(
@@ -430,7 +430,7 @@ class CellLine(MetaData):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.mcfarland_2020()
+            >>> adata = pt.ds.mcfarland_2020()
             >>> pt_metadata = pt.md.CellLine()
             >>> pt_metadata.annotate_from_gdsc(adata, query_id="cell_line")
         """
@@ -505,7 +505,7 @@ class CellLine(MetaData):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.mcfarland_2020()
+            >>> adata = pt.ds.mcfarland_2020()
             >>> pt_metadata = pt.md.CellLine()
             >>> pt_metadata.annotate_from_prism(adata, query_id="DepMap_ID")
         """

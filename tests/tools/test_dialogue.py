@@ -291,7 +291,7 @@ def _new_dialogue() -> pt.tl.Dialogue:
 @pytest.fixture(scope="module")
 def fitted_dialogue() -> ad.AnnData:
     """Run the full pipeline once on ``dialogue_example`` and share the result across every end-to-end test."""
-    adata = _preprocess_dialogue_adata(pt.dt.dialogue_example())
+    adata = _preprocess_dialogue_adata(pt.ds.dialogue_example())
     dl = _new_dialogue()
     dl.fit_programs(adata)
     dl.test_celltype_pairs(adata)
@@ -349,7 +349,7 @@ def test_full_pipeline_refined_signatures_have_content(fitted_dialogue):
 
 def test_dense_matches_sparse_full_pipeline():
     """The whole pipeline on dense and sparse ``adata.X`` must produce identical refined scores and weights."""
-    raw = _preprocess_dialogue_adata(pt.dt.dialogue_example())
+    raw = _preprocess_dialogue_adata(pt.ds.dialogue_example())
     dense = raw.copy()
     sparse_ad = raw.copy()
     sparse_ad.X = sparse.csr_matrix(sparse_ad.X)
@@ -367,7 +367,7 @@ def test_dense_matches_sparse_full_pipeline():
 
 
 def test_fit_programs_raises_on_too_few_shared_samples():
-    raw = _preprocess_dialogue_adata(pt.dt.dialogue_example())
+    raw = _preprocess_dialogue_adata(pt.ds.dialogue_example())
     keep = list(raw.obs["sample"].cat.categories[:2])
     a = raw[raw.obs["sample"].isin(keep)].copy()
     a.obs["sample"] = a.obs["sample"].astype("category").cat.remove_unused_categories()

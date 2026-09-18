@@ -65,7 +65,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",
@@ -131,7 +131,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",
@@ -186,7 +186,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",
@@ -311,7 +311,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",
@@ -383,7 +383,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",
@@ -414,7 +414,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",
@@ -435,7 +435,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",
@@ -456,7 +456,7 @@ class Sccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells,
             >>>                     type="cell_level",

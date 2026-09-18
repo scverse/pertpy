@@ -32,7 +32,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.zhang_2021()
+adata = pt.ds.zhang_2021()
 adata.layers["counts"] = adata.X.copy()
 
 ps = pt.tl.PseudobulkSpace()
@@ -91,7 +91,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-mdata = pt.dt.papalexi_2021()
+mdata = pt.ds.papalexi_2021()
 ms = pt.tl.Mixscape()
 ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
 ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
@@ -120,7 +120,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-mdata = pt.dt.papalexi_2021()
+mdata = pt.ds.papalexi_2021()
 ms = pt.tl.Mixscale()
 ms.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
 ms.mixscale(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -160,7 +160,7 @@ Example implementation:
 import pertpy as pt
 import scanpy as sc
 
-adata = pt.dt.stephenson_2021_subsampled()
+adata = pt.ds.stephenson_2021_subsampled()
 adata.obs["COVID_severity"] = adata.obs["Status_on_day_collection_summary"].copy()
 adata.obs[["patient_id", "COVID_severity"]].drop_duplicates()
 adata = adata[adata.obs["Status"] != "LPS"].copy()
@@ -207,7 +207,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-haber_cells = pt.dt.haber_2017_regions()
+haber_cells = pt.ds.haber_2017_regions()
 sccoda = pt.tl.Sccoda()
 sccoda_data = sccoda.load(
     haber_cells,
@@ -264,7 +264,7 @@ Example implementation:
 import pertpy as pt
 import scanpy as sc
 
-adata = pt.dt.dialogue_example()
+adata = pt.ds.dialogue_example()
 sc.pp.pca(adata)
 
 dl = pt.tl.Dialogue(
@@ -326,7 +326,7 @@ The up and down sets should represent genes differentially expressed in the quer
 The following example aggregates the cell-level `distance_example()` data and subtracts its control profile:
 
 ```python
-cell_adata = pt.dt.distance_example()
+cell_adata = pt.ds.distance_example()
 ps = pt.tl.PseudobulkSpace()
 ps_adata = ps.compute(
     cell_adata,
@@ -388,7 +388,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.distance_example()
+adata = pt.ds.distance_example()
 
 # Pairwise distances
 distance = pt.tl.Distance(metric="edistance", obsm_key="X_pca")
@@ -422,7 +422,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.sc_sim_augur()
+adata = pt.ds.sc_sim_augur()
 ag = pt.tl.Augur(estimator="random_forest_classifier")
 adata = ag.load(adata)
 adata, results = ag.predict(adata)
@@ -459,7 +459,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-train = pt.dt.kang_2018()
+train = pt.ds.kang_2018()
 
 train_new = train[~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))]
 train_new = train_new.copy()
@@ -494,7 +494,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.cinemaot_example()
+adata = pt.ds.cinemaot_example()
 
 model = pt.tl.Cinemaot()
 de = model.causaleffect(
@@ -540,7 +540,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-mdata = pt.dt.papalexi_2021()
+mdata = pt.ds.papalexi_2021()
 
 # Summarize each perturbation into one observation
 ps = pt.tl.PseudobulkSpace()

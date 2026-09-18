@@ -134,7 +134,7 @@ class MethodBase(ABC):
         Examples:
             >>> # Example with EdgeR
             >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
+            >>> adata = pt.ds.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
@@ -215,7 +215,7 @@ class MethodBase(ABC):
         Examples:
             >>> # Example with EdgeR
             >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
+            >>> adata = pt.ds.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
@@ -585,7 +585,7 @@ class MethodBase(ABC):
         Examples:
             >>> # Example with EdgeR
             >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
+            >>> adata = pt.ds.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
@@ -701,7 +701,7 @@ class MethodBase(ABC):
         Examples:
             >>> # Example with EdgeR
             >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
+            >>> adata = pt.ds.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
@@ -867,7 +867,7 @@ class MethodBase(ABC):
         Examples:
             >>> # Example with EdgeR
             >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
+            >>> adata = pt.ds.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")
@@ -947,7 +947,7 @@ class MethodBase(ABC):
         Examples:
             >>> # Example with EdgeR
             >>> import pertpy as pt
-            >>> adata = pt.dt.zhang_2021()
+            >>> adata = pt.ds.zhang_2021()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> pdata = ps.compute(adata, target_col="Patient", groups_col="Cluster", layer_key="counts", mode="sum")

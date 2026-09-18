@@ -55,7 +55,7 @@ def adata(distance: Metric, rng: np.random.Generator) -> AnnData:
     }
     no_subsample_distances = {"mahalanobis"}  # mahalanobis only works on the full data without subsampling
 
-    adata = pt.dt.distance_example()
+    adata = pt.ds.distance_example()
     if distance not in no_subsample_distances:
         if distance in low_subsample_distances:
             adata = sc.pp.sample(adata, 0.1, copy=True, rng=0)

@@ -96,7 +96,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             Calcutate perturbation signature for each cell in the dataset:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -295,7 +295,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             Use LDA dimensionality reduction to visualize the perturbation effects:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -396,7 +396,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -505,7 +505,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -585,7 +585,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             Visualizing the perturbation scores for the cells in a dataset:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -766,7 +766,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -953,7 +953,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")

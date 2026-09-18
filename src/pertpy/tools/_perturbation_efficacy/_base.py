@@ -80,7 +80,7 @@ class PerturbationEfficacyAnalyzer:
             Calcutate perturbation signature for each cell in the dataset:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
         """

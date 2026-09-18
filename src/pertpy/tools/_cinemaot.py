@@ -83,7 +83,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_example()
+            >>> adata = pt.ds.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
             >>> out_adata = model.causaleffect(
             >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True,
@@ -249,7 +249,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_example()
+            >>> adata = pt.ds.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
             >>> ad, de = model.causaleffect_weighted(
             >>>              adata, pert_key="perturbation", control="No stimulation", return_matching=True,
@@ -329,7 +329,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_example()
+            >>> adata = pt.ds.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
             >>> de = model.causaleffect(
             >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True, thres=0.5,
@@ -385,7 +385,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_example()
+            >>> adata = pt.ds.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
             >>> dim = model.get_dim(adata)
         """
@@ -427,7 +427,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_example()
+            >>> adata = pt.ds.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
             >>> idx = model._get_weightidx(adata, pert_key="perturbation", control="No stimulation")
         """
@@ -555,7 +555,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.dong_2023()
+            >>> adata = pt.ds.dong_2023()
             >>> sc.pp.pca(adata)
             >>> model = pt.tl.Cinemaot()
             >>> combo = model.synergy(adata, pert_key='perturbation', base='No stimulation', A='IFNb', B='IFNg',
@@ -631,7 +631,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_example()
+            >>> adata = pt.ds.cinemaot_example()
             >>> model = pt.tl.Cinemaot()
             >>> c_effect, s_effect = model.attribution_scatter(adata, pert_key="perturbation", control="No stimulation")
         """
@@ -700,7 +700,7 @@ class Cinemaot:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.cinemaot_example()
+            >>> adata = pt.ds.cinemaot_example()
             >>> cot = pt.tl.Cinemaot()
             >>> de = cot.causaleffect(
             >>>         adata, pert_key="perturbation", control="No stimulation", return_matching=True,
