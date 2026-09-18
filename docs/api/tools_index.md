@@ -326,7 +326,7 @@ The up and down sets should represent genes differentially expressed in the quer
 The following example aggregates the cell-level `distance_example()` data and subtracts its control profile:
 
 ```python
-cell_adata = pt.dt.distance_example()
+cell_adata = pt.ds.distance_example()
 ps = pt.tl.PseudobulkSpace()
 ps_adata = ps.compute(
     cell_adata,
