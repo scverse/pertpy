@@ -111,7 +111,7 @@ class PyDESeq2(LinearModelBase):
         Examples:
             >>> import pertpy as pt
             >>> import decoupler as dc
-            >>> adata = pt.dt.zhang_2021()
+            >>> adata = pt.ds.zhang_2021()
             >>> adata = adata[adata.obs["Origin"] == "t", :].copy()
             >>> adata.layers["counts"] = adata.X.copy()
             >>> pdata = dc.pp.pseudobulk(adata, sample_col="Patient", groups_col="Cluster", layer="counts", mode="sum")

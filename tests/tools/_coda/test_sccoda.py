@@ -17,7 +17,7 @@ sccoda = pt.tl.Sccoda()
 
 @pytest.fixture
 def adata():
-    cells = pt.dt.haber_2017_regions()
+    cells = pt.ds.haber_2017_regions()
     cells = sc.pp.sample(cells, 0.1, copy=True, rng=0)
 
     return cells

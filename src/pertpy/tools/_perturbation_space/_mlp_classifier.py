@@ -257,7 +257,7 @@ class MLPClassifierSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.norman_2019()
+            >>> adata = pt.ds.norman_2019()
             >>> dcs = pt.tl.MLPClassifierSpace()
             >>> pert_embeddings = dcs.compute(adata, target_col="perturbation_name")
         """

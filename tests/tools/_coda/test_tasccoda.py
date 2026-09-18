@@ -20,7 +20,7 @@ tasccoda = pt.tl.Tasccoda()
 
 @pytest.fixture
 def smillie_adata():
-    smillie_adata = pt.dt.tasccoda_example()
+    smillie_adata = pt.ds.tasccoda_example()
     smillie_adata = sc.pp.sample(smillie_adata, 0.1, copy=True, rng=0)
 
     return smillie_adata

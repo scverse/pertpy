@@ -37,7 +37,7 @@ count_distances = ["nb_ll"]
 
 @pytest.fixture
 def adata() -> AnnData:
-    adata = pt.dt.distance_example()
+    adata = pt.ds.distance_example()
     adata = sc.pp.sample(adata, 0.1, copy=True, rng=0)
 
     return adata

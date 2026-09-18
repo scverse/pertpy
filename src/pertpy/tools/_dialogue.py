@@ -441,7 +441,7 @@ class Dialogue:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> sc.pp.pca(adata)
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
@@ -733,7 +733,7 @@ class Dialogue:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> sc.pp.pca(adata)
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
@@ -928,7 +928,7 @@ class Dialogue:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> sc.pp.pca(adata)
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
@@ -1220,7 +1220,7 @@ class Dialogue:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> sc.pp.pca(adata)
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
@@ -1297,7 +1297,7 @@ class Dialogue:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> sc.pp.pca(adata)
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
@@ -1340,7 +1340,7 @@ class Dialogue:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> sc.pp.pca(adata)
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
@@ -1397,7 +1397,7 @@ class Dialogue:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
             >>> dl.test_celltype_pairs(adata)
@@ -1453,7 +1453,7 @@ class Dialogue:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.dialogue_example()
+            >>> adata = pt.ds.dialogue_example()
             >>> dl = pt.tl.Dialogue(celltype_key="cell.subtypes", sample_key="sample", n_programs=3)
             >>> dl.fit_programs(adata)
             >>> dl.test_celltype_pairs(adata)

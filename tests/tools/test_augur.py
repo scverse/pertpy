@@ -17,7 +17,7 @@ ag_rfr = pt.tl.Augur("random_forest_regressor", random_state=42)
 
 @pytest.fixture
 def adata():
-    adata = pt.dt.sc_sim_augur()
+    adata = pt.ds.sc_sim_augur()
     adata = sc.pp.sample(adata, n=200, copy=True, rng=10)
 
     return adata
@@ -155,7 +155,7 @@ def test_select_variance(adata):
 def test_differential_prioritization():
     """Test differential prioritization run."""
     # Requires the full dataset or it fails because of a lack of statistical power
-    adata = pt.dt.sc_sim_augur()
+    adata = pt.ds.sc_sim_augur()
     adata = sc.pp.sample(adata, n=500, copy=True, rng=10)
     ag = pt.tl.Augur("logistic_regression_classifier", random_state=42)
     adata = ag.load(adata)
