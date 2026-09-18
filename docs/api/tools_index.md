@@ -46,9 +46,7 @@ pdata = ps.compute(
 
 edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
 edgr.fit()
-res_df = edgr.test_contrasts(
-    edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
-)
+res_df = edgr.test_contrasts(edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo"))
 ```
 
 Inspecting a model summarizes the input data, the design and whether the model has been fitted, rendered as HTML in Jupyter:
@@ -172,9 +170,7 @@ mdata = milo.load(adata)
 sc.pp.neighbors(mdata["rna"], use_rep="X_scVI", n_neighbors=150, n_pcs=10)
 milo.make_nhoods(mdata["rna"], prop=0.1)
 mdata = milo.count_nhoods(mdata, sample_col="patient_id")
-mdata["rna"].obs["Status"] = (
-    mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
-)
+mdata["rna"].obs["Status"] = mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
 milo.da_nhoods(mdata, design="~Status")
 
 # Repeated measurements of the same donor are accounted for with a random intercept
@@ -233,9 +229,7 @@ sccoda_data = sccoda.prepare(
 )
 sccoda.run_nuts(sccoda_data, modality_key="coda_salm")
 sccoda.summary(sccoda_data, modality_key="coda_salm")
-sccoda.plot_effects_barplot(
-    sccoda_data, modality_key="coda_salm", parameter="Final Parameter"
-)
+sccoda.plot_effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Final Parameter")
 ```
 
 See [sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda.html), [extended sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda_extended.html) and [tasccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/tasccoda.html).
@@ -299,6 +293,7 @@ Enrichment tests for single-cell data assess whether specific biological pathway
 aiding in the identification of functional characteristics and cellular states.
 While pathway enrichment is a well-studied and commonly applied approach in single-cell RNA-seq, other data sources such as genes targeted by drugs can also be enriched.
 Drug2cell performs such enrichment tests and is available in pertpy {cite}`Kanemaru2023`.
+The same enrichment interface can also score CMap-style signature reversal on perturbation-level data, ranking perturbations that most strongly oppose a query signature.
 
 ```{eval-rst}
 .. autosummary::
@@ -318,6 +313,53 @@ adata = sc.datasets.pbmc3k_processed()
 pt_enricher = pt.tl.Enrichment()
 pt_enricher.score(adata)
 ```
+
+#### Signature reversal
+
+`Enrichment.signature_reversal` computes a raw [weighted connectivity score (WTCS)](https://clue.io/connectopedia/cmap_algorithms) and stores both connectivity and its negative, the reversal score, in `adata.obs`.
+Higher reversal scores indicate stronger transcriptional opposition to the query.
+This is not a normalized CMap score: it does not compute NCS, tau, p-values, or false-discovery rates.
+
+The input matrix must contain finite, signed perturbation effects relative to appropriate matched controls, such as z-scores, log-fold changes, or control-subtracted expression.
+Do not use raw or pseudobulk mean expression directly.
+The up and down sets should represent genes differentially expressed in the query state relative to its reference.
+The following example aggregates the cell-level `distance_example()` data and subtracts its control profile:
+
+```python
+cell_adata = pt.dt.distance_example()
+ps = pt.tl.PseudobulkSpace()
+ps_adata = ps.compute(
+    cell_adata,
+    target_col="perturbation",
+    mode="mean",
+)
+ps_adata = ps.compute_control_diff(
+    ps_adata,
+    target_col="perturbation",
+    reference_key="control",
+)
+ps_adata = ps_adata[ps_adata.obs["perturbation"] != "control"].copy()
+
+query_profile = -ps_adata[ps_adata.obs["perturbation"] == "p-sgCREB1-2"].to_df().iloc[0]
+up_genes = query_profile[query_profile > 0].nlargest(20).index.tolist()
+down_genes = query_profile[query_profile < 0].nsmallest(20).index.tolist()
+
+enr = pt.tl.Enrichment()
+enr.signature_reversal(
+    ps_adata,
+    up_genes=up_genes,
+    down_genes=down_genes,
+)
+```
+
+To keep this example self-contained, its query is the opposite of one observed CRISPR perturbation signature.
+In a real analysis, use an independently derived disease or state signature.
+The [CMap query guidance](https://clue.io/connectopedia/how_to_construct_cmap_queries) recommends approximately 10 to 200 genes per query.
+A signed query can also be supplied, but only the sign of each value determines whether a gene belongs to the up or down set.
+
+A high reversal score is a hypothesis for follow-up, not evidence of therapeutic efficacy or safety.
+In particular, a perturbation can score highly by suppressing a compensatory or protective stress response.
+Results should therefore be interpreted together with biological context and orthogonal phenotypic, viability, and toxicity measurements.
 
 See [enrichment tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/enrichment.html).
 
@@ -419,18 +461,14 @@ import pertpy as pt
 
 train = pt.ds.kang_2018()
 
-train_new = train[
-    ~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))
-]
+train_new = train[~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))]
 train_new = train_new.copy()
 
 pt.tl.Scgen.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
 scgen = pt.tl.Scgen(train_new)
 scgen.train(max_epochs=100, batch_size=32)
 
-pred, delta = scgen.predict(
-    ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T"
-)
+pred, delta = scgen.predict(ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T")
 pred.obs["condition"] = "pred"
 ```
 
