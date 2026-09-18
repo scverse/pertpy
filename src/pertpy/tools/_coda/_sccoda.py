@@ -283,7 +283,9 @@ class Sccoda(CompositionalModel2):
             )
 
         # Calculate DM-distributed counts
-        predictions = npy.sample("counts", npd.DirichletMultinomial(concentrations, n_total), obs=counts)
+        predictions = npy.sample(
+            "counts", npd.DirichletMultinomial(concentrations, n_total, validate_args=False), obs=counts
+        )
 
         return predictions
 
