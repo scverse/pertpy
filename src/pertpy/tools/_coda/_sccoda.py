@@ -283,7 +283,10 @@ class Sccoda(CompositionalModel2):
             )
 
         # Calculate DM-distributed counts
-        predictions = npy.sample("counts", npd.DirichletMultinomial(concentrations, n_total), obs=counts)
+        # Pseudocounts of 0.5 leave `counts` outside the discrete support, which the well-defined log-prob tolerates but validation does not.
+        predictions = npy.sample(
+            "counts", npd.DirichletMultinomial(concentrations, n_total, validate_args=False), obs=counts
+        )
 
         return predictions
 

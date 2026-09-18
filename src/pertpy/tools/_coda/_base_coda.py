@@ -137,7 +137,8 @@ class CompositionalModel2(ABC):
         predict_kwargs = {
             "counts": None,
             "covariates": jnp.array(sample_adata.obsm["covariate_matrix"], dtype="float64"),
-            "n_total": jnp.array(sample_adata.obsm["sample_counts"], dtype="float64"),
+            # Sampling needs a whole number of trials, unlike the log-prob, which tolerates the 0.5 pseudocounts.
+            "n_total": jnp.array(np.rint(cast_dense(sample_adata.obsm["sample_counts"])), dtype="float64"),
             "ref_index": jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
             "sample_adata": sample_adata,
         }
