@@ -109,6 +109,7 @@ milo-edger = [
     "rpy2"
 ]
 scgen = ["pertpy[jax]"]
+gpu = ["jax[cuda12]>=0.10"]
 all = [
     "pertpy[jax,tcoda,de,scgen]"
 ]
