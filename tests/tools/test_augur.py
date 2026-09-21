@@ -2,8 +2,10 @@ from math import isclose
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import scanpy as sc
+from anndata import AnnData
 
 import pertpy as pt
 
@@ -95,6 +97,23 @@ def test_regressor(adata):
     ccc = 0.171253
     r2 = 0.150028
     assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10**-5), isclose(cv["mean_r2"], r2, abs_tol=10**-5)])
+
+
+def test_regressor_scorer_with_more_than_two_labels():
+    """Regressors get regression scorers even when the target has more than two values (#655)."""
+    scorer = ag_rfr.set_scorer(multiclass=True, zero_division=0)
+    assert set(scorer) == {"augur_score", "r2", "ccc", "neg_mean_squared_error", "explained_variance"}
+
+
+def test_regressor_cross_validation_with_four_timepoints():
+    """A regressor on four numeric timepoints must not request class probabilities (#655)."""
+    rng = np.random.default_rng(0)
+    y = np.repeat([0.0, 1.0, 2.0, 3.0], 15)
+    x = rng.poisson(2 + y[:, None] * (np.arange(30) < 5)).astype(float)
+    adata = AnnData(x, obs=pd.DataFrame({"y_": y}, index=[f"c{i}" for i in range(len(y))]))
+    cv = ag_rfr.run_cross_validation(adata, subsample_idx=0, folds=3, random_state=42, zero_division=0)
+    assert np.isfinite(cv["mean_ccc"])
+    assert "mean_auc" not in cv
 
 
 def test_subsample(adata):
