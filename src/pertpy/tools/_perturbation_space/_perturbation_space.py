@@ -12,11 +12,14 @@ from scipy.optimize import curve_fit
 from scipy.special import expit
 from scipy.stats import entropy
 
+from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 from pertpy._types import cast_dense, cast_frame
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
+
+    from matplotlib.figure import Figure
 
     from pertpy._types import RandomStateLike
     from pertpy.tools._distances._distances import Metric
@@ -670,12 +673,12 @@ class PerturbationSpace:
             dose_col: `.obs` column with the (numeric) dose.
             reference_key: Control perturbation all doses are compared against.
             metric: Distance metric passed to :class:`~pertpy.tools.Distance`.
-            layer_key: Layer to compute distances from.
+            layer_key: Layer to compute distances and mean expression from.
             embedding_key: `.obsm` embedding to compute distances from.
             kwargs: Passed to :meth:`~pertpy.tools.Distance.onesided_distances`.
 
         Returns:
-            AnnData with one observation per non-reference (perturbation, dose) group, holding the group mean in ``X`` and the ``distance`` in `.obs`.
+            AnnData with one observation per non-reference (perturbation, dose) group, holding the mean expression in ``X`` and the ``distance`` in `.obs`.
 
         Examples:
             >>> import pertpy as pt
@@ -705,7 +708,7 @@ class PerturbationSpace:
 
         treated = grouped[~is_control].copy()
         treated.obs["_dose_group"] = treated.obs["_dose_group"].cat.remove_unused_categories()
-        dose_adata = sc.get.aggregate(treated, by="_dose_group", func="mean", layer=layer_key, obsm=embedding_key)
+        dose_adata = sc.get.aggregate(treated, by="_dose_group", func="mean", layer=layer_key)
         dose_adata.X = dose_adata.layers.pop("mean")
         _carry_constant_obs(dose_adata, cast_frame(treated.obs), "_dose_group")
         dose_obs = cast_frame(dose_adata.obs)
@@ -722,11 +725,11 @@ class PerturbationSpace:
     def fit_dose_response(
         self,
         adata: AnnData,
+        response: str = "distance",
         *,
         target_col: str = "perturbation",
         dose_col: str = "dose",
-        response_col: str = "distance",
-        key_added: str = "hill",
+        key_added: str | None = None,
     ) -> None:
         """Fit a four-parameter Hill curve for each perturbation.
 
@@ -734,10 +737,10 @@ class PerturbationSpace:
 
         Args:
             adata: AnnData with one observation per dose or replicate, such as the output of :meth:`dose_response`.
+            response: `.obs` column or gene in ``var_names`` to fit.
             target_col: `.obs` column identifying the perturbation.
             dose_col: `.obs` column containing non-negative numeric doses.
-            response_col: `.obs` column containing the scalar response to fit.
-            key_added: Prefix of the `.obs` columns the results are written to.
+            key_added: Prefix of the `.obs` columns the results are written to. Defaults to ``response``.
 
         Returns:
             Adds the fitted response and the per-perturbation ``e0``, ``emax``, ``slope``, ``ec50``, ``ec50_se``, ``r_squared`` and ``ec50_in_range`` to `.obs`, prefixed with ``key_added``.
@@ -748,18 +751,16 @@ class PerturbationSpace:
             >>> ps = pt.tl.PseudobulkSpace()
             >>> dose_adata = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
             >>> ps.fit_dose_response(dose_adata, dose_col="dose_value")
+            >>> ps.fit_dose_response(dose_adata, "CDKN1A", dose_col="dose_value")
         """
-        obs = cast_frame(adata.obs)
-        missing = {target_col, dose_col, response_col}.difference(obs.columns)
-        if missing:
-            raise ValueError(f"Columns {sorted(missing)} do not exist in the .obs attribute.")
-        doses = obs[dose_col].to_numpy(dtype=float)
-        responses = obs[response_col].to_numpy(dtype=float)
+        data = sc.get.obs_df(adata, keys=[target_col, dose_col, response])
+        doses = data[dose_col].to_numpy(dtype=float)
+        responses = data[response].to_numpy(dtype=float)
         if (doses < 0).any():
             raise ValueError("Dose values must be non-negative.")
 
-        labels = obs[target_col].to_numpy()
-        fitted = np.full(len(obs), np.nan)
+        labels = data[target_col].to_numpy()
+        fitted = np.full(len(data), np.nan)
         records: dict[object, dict[str, float | bool]] = {}
         for perturbation in pd.unique(labels):
             mask = labels == perturbation
@@ -784,10 +785,87 @@ class PerturbationSpace:
                     )
             records[perturbation] = fit
 
+        prefix = response if key_added is None else key_added
         fits = pd.DataFrame.from_dict(records, orient="index")
-        adata.obs[f"{key_added}_fitted"] = fitted
+        adata.obs[f"{prefix}_fitted"] = fitted
         for col in fits.columns:
-            adata.obs[f"{key_added}_{col}"] = fits[col].reindex(labels).to_numpy()
+            adata.obs[f"{prefix}_{col}"] = fits[col].reindex(labels).to_numpy()
+
+    @_doc_params(common_plot_args=doc_common_plot_args)
+    def plot_dose_response(  # pragma: no cover # noqa: D417
+        self,
+        adata: AnnData,
+        response: str = "distance",
+        *,
+        target_col: str = "perturbation",
+        dose_col: str = "dose",
+        key_added: str | None = None,
+        perturbations: Sequence[str] | None = None,
+        ncols: int = 4,
+        return_fig: bool = False,
+    ) -> Figure | None:
+        """Plot the measured responses and fitted Hill curves of each perturbation.
+
+        Args:
+            adata: AnnData with one observation per dose or replicate, such as the output of :meth:`dose_response`.
+            response: `.obs` column or gene in ``var_names`` to plot.
+            target_col: `.obs` column identifying the perturbation.
+            dose_col: `.obs` column containing the doses.
+            key_added: Prefix passed to :meth:`fit_dose_response`. Defaults to ``response``.
+            perturbations: Perturbations to plot. Defaults to all.
+            ncols: Number of panels per row.
+            {common_plot_args}
+
+        Returns:
+            If `return_fig` is `True`, returns the figure, otherwise `None`.
+
+        Examples:
+            >>> import pertpy as pt
+            >>> adata = pt.ds.srivatsan_2020_sciplex2()
+            >>> ps = pt.tl.PseudobulkSpace()
+            >>> dose_adata = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
+            >>> ps.fit_dose_response(dose_adata, dose_col="dose_value")
+            >>> ps.plot_dose_response(dose_adata, dose_col="dose_value")
+
+        Preview:
+            .. image:: /_static/docstring_previews/dose_response.png
+        """
+        import matplotlib.pyplot as plt
+
+        prefix = response if key_added is None else key_added
+        data = sc.get.obs_df(adata, keys=[target_col, dose_col, response])
+        obs = cast_frame(adata.obs)
+        labels = list(pd.unique(data[target_col]) if perturbations is None else perturbations)
+        ncols = min(ncols, len(labels))
+        nrows = -(-len(labels) // ncols)
+        fig, axes = plt.subplots(nrows, ncols, figsize=(3.5 * ncols, 3 * nrows), squeeze=False, layout="constrained")
+        for ax, label in zip(axes.flat, labels, strict=False):
+            mask = (data[target_col] == label).to_numpy()
+            doses = data.loc[mask, dose_col].to_numpy(dtype=float)
+            ax.scatter(doses, data.loc[mask, response], zorder=3)
+            if f"{prefix}_ec50" in obs and np.isfinite((fit := obs.loc[mask].iloc[0])[f"{prefix}_ec50"]):
+                grid = np.geomspace(doses[doses > 0].min(), doses.max(), 200)
+                curve = _four_parameter_logistic(
+                    grid,
+                    fit[f"{prefix}_e0"],
+                    fit[f"{prefix}_emax"],
+                    np.log(fit[f"{prefix}_ec50"]),
+                    fit[f"{prefix}_slope"],
+                )
+                ax.plot(grid, curve, color="tab:orange")
+                if fit[f"{prefix}_ec50_in_range"]:
+                    ax.axvline(fit[f"{prefix}_ec50"], color="0.5", linestyle=":")
+            lowest = doses[doses > 0].min()
+            ax.set_xscale("symlog", linthresh=lowest)
+            ax.set_xlim(0 if (doses == 0).any() else lowest / 2, doses.max() * 2)
+            ax.set(title=str(label), xlabel=dose_col, ylabel=response)
+        for ax in axes.flat[len(labels) :]:
+            ax.set_visible(False)
+
+        if return_fig:
+            return fig
+        plt.show()
+        return None
 
     def plot_similarity(  # pragma: no cover
         self,

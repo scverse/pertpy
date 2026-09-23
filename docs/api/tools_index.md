@@ -556,8 +556,8 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
 
 ### Dose-response curve fitting
 
-{meth}`~pertpy.tools.PseudobulkSpace.dose_response` returns an AnnData with one observation per perturbation and dose, holding its distance from control in `.obs`.
-{meth}`~pertpy.tools.PseudobulkSpace.fit_dose_response` fits a four-parameter Hill curve per perturbation and stores EC50 and the other curve parameters in `.obs`.
+{meth}`~pertpy.tools.PseudobulkSpace.dose_response` returns an AnnData with one observation per perturbation and dose, holding the mean expression in `X` and the distance from control in `.obs`.
+{meth}`~pertpy.tools.PseudobulkSpace.fit_dose_response` fits a four-parameter Hill curve per perturbation to the distance or any gene and stores EC50 and the other curve parameters in `.obs`.
 For preprocessed `adata` with `perturbation` and `dose` columns, a `control` group and a PCA representation:
 
 ```python
@@ -566,6 +566,7 @@ import pertpy as pt
 ps = pt.tl.PseudobulkSpace()
 dose_adata = ps.dose_response(adata, embedding_key="X_pca")
 ps.fit_dose_response(dose_adata)
+ps.plot_dose_response(dose_adata)
 ```
 
 Assay measurements such as viability can be fit the same way from an AnnData whose `.obs` holds perturbation, dose and response columns.
