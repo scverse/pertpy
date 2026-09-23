@@ -569,7 +569,7 @@ See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutori
 ### Dose-response curve fitting
 
 {meth}`~pertpy.tools.PseudobulkSpace.dose_response` calculates a scalar distance from control for each perturbation and dose.
-{meth}`~pertpy.tools.PseudobulkSpace.fit_dose_response` fits a four-parameter Hill curve and stores the results in AnnData.
+{meth}`~pertpy.tools.PseudobulkSpace.fit_dose_response` fits a four-parameter Hill curve per perturbation and returns EC50 estimates.
 For preprocessed `adata` with `perturbation` and `dose` columns, a `control` group and a PCA representation:
 
 ```python
@@ -577,8 +577,7 @@ import pertpy as pt
 
 ps = pt.tl.PseudobulkSpace()
 responses = ps.dose_response(adata, embedding_key="X_pca")
-ps.fit_dose_response(adata, responses)
-fits = adata.uns["dose_response"]["fits"]
+fits = ps.fit_dose_response(responses)
 ```
 
-For an inhibitory assay response, use `response_col` to select the measurement column and `response_type="inhibition"` to report IC50 instead of EC50.
+`fit_dose_response` also accepts any tidy table of scalar assay responses via `response_col`.
