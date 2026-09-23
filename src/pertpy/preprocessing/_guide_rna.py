@@ -122,7 +122,7 @@ class GuideAssignment:
             Each cell is assigned to the most expressed gRNA if it has at least 5 counts.
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_to_max_guide(gdo, assignment_threshold=5)
@@ -248,7 +248,7 @@ class GuideAssignment:
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_mixture_model(gdo)
@@ -573,7 +573,7 @@ class GuideAssignment:
             visualized using a heatmap.
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> gdo = mdata.mod["gdo"]
             >>> ga = pt.pp.GuideAssignment()
             >>> ga.assign_by_threshold(gdo, assignment_threshold=5)

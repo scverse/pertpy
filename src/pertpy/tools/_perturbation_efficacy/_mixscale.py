@@ -133,7 +133,7 @@ class Mixscale(PerturbationEfficacyAnalyzer):
             Compute continuous perturbation scores:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ms = pt.tl.Mixscale()
             >>> ms.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms.mixscale(mdata["rna"], "gene_target", "NT", layer="X_pert")

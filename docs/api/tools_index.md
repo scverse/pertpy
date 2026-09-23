@@ -32,7 +32,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.zhang_2021()
+adata = pt.ds.zhang_2021()
 adata.layers["counts"] = adata.X.copy()
 
 ps = pt.tl.PseudobulkSpace()
@@ -46,9 +46,7 @@ pdata = ps.compute(
 
 edgr = pt.tl.EdgeR(pdata, design="~Efficacy+Treatment")
 edgr.fit()
-res_df = edgr.test_contrasts(
-    edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo")
-)
+res_df = edgr.test_contrasts(edgr.contrast(column="Treatment", baseline="Chemo", group_to_compare="Anti-PD-L1+Chemo"))
 ```
 
 Inspecting a model summarizes the input data, the design and whether the model has been fitted, rendered as HTML in Jupyter:
@@ -93,7 +91,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-mdata = pt.dt.papalexi_2021()
+mdata = pt.ds.papalexi_2021()
 ms = pt.tl.Mixscape()
 ms.perturbation_signature(mdata["rna"], "perturbation", "NT", "replicate")
 ms.mixscape(adata=mdata["rna"], control="NT", labels="gene_target", layer="X_pert")
@@ -122,7 +120,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-mdata = pt.dt.papalexi_2021()
+mdata = pt.ds.papalexi_2021()
 ms = pt.tl.Mixscale()
 ms.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
 ms.mixscale(mdata["rna"], "gene_target", "NT", layer="X_pert")
@@ -162,7 +160,7 @@ Example implementation:
 import pertpy as pt
 import scanpy as sc
 
-adata = pt.dt.stephenson_2021_subsampled()
+adata = pt.ds.stephenson_2021_subsampled()
 adata.obs["COVID_severity"] = adata.obs["Status_on_day_collection_summary"].copy()
 adata.obs[["patient_id", "COVID_severity"]].drop_duplicates()
 adata = adata[adata.obs["Status"] != "LPS"].copy()
@@ -172,9 +170,7 @@ mdata = milo.load(adata)
 sc.pp.neighbors(mdata["rna"], use_rep="X_scVI", n_neighbors=150, n_pcs=10)
 milo.make_nhoods(mdata["rna"], prop=0.1)
 mdata = milo.count_nhoods(mdata, sample_col="patient_id")
-mdata["rna"].obs["Status"] = (
-    mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
-)
+mdata["rna"].obs["Status"] = mdata["rna"].obs["Status"].cat.reorder_categories(["Healthy", "Covid"])
 milo.da_nhoods(mdata, design="~Status")
 
 # Repeated measurements of the same donor are accounted for with a random intercept
@@ -211,7 +207,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-haber_cells = pt.dt.haber_2017_regions()
+haber_cells = pt.ds.haber_2017_regions()
 sccoda = pt.tl.Sccoda()
 sccoda_data = sccoda.load(
     haber_cells,
@@ -233,9 +229,7 @@ sccoda_data = sccoda.prepare(
 )
 sccoda.run_nuts(sccoda_data, modality_key="coda_salm")
 sccoda.summary(sccoda_data, modality_key="coda_salm")
-sccoda.plot_effects_barplot(
-    sccoda_data, modality_key="coda_salm", parameter="Final Parameter"
-)
+sccoda.plot_effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Final Parameter")
 ```
 
 See [sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda.html), [extended sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda_extended.html) and [tasccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/tasccoda.html).
@@ -270,7 +264,7 @@ Example implementation:
 import pertpy as pt
 import scanpy as sc
 
-adata = pt.dt.dialogue_example()
+adata = pt.ds.dialogue_example()
 sc.pp.pca(adata)
 
 dl = pt.tl.Dialogue(
@@ -332,7 +326,7 @@ The up and down sets should represent genes differentially expressed in the quer
 The following example aggregates the cell-level `distance_example()` data and subtracts its control profile:
 
 ```python
-cell_adata = pt.dt.distance_example()
+cell_adata = pt.ds.distance_example()
 ps = pt.tl.PseudobulkSpace()
 ps_adata = ps.compute(
     cell_adata,
@@ -346,9 +340,7 @@ ps_adata = ps.compute_control_diff(
 )
 ps_adata = ps_adata[ps_adata.obs["perturbation"] != "control"].copy()
 
-query_profile = -ps_adata[
-    ps_adata.obs["perturbation"] == "p-sgCREB1-2"
-].to_df().iloc[0]
+query_profile = -ps_adata[ps_adata.obs["perturbation"] == "p-sgCREB1-2"].to_df().iloc[0]
 up_genes = query_profile[query_profile > 0].nlargest(20).index.tolist()
 down_genes = query_profile[query_profile < 0].nsmallest(20).index.tolist()
 
@@ -396,7 +388,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.distance_example()
+adata = pt.ds.distance_example()
 
 # Pairwise distances
 distance = pt.tl.Distance(metric="edistance", obsm_key="X_pca")
@@ -430,7 +422,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.sc_sim_augur()
+adata = pt.ds.sc_sim_augur()
 ag = pt.tl.Augur(estimator="random_forest_classifier")
 adata = ag.load(adata)
 adata, results = ag.predict(adata)
@@ -467,20 +459,16 @@ Example implementation:
 ```python
 import pertpy as pt
 
-train = pt.dt.kang_2018()
+train = pt.ds.kang_2018()
 
-train_new = train[
-    ~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))
-]
+train_new = train[~((train.obs["cell_type"] == "CD4T") & (train.obs["condition"] == "stimulated"))]
 train_new = train_new.copy()
 
 pt.tl.Scgen.setup_anndata(train_new, batch_key="condition", labels_key="cell_type")
 scgen = pt.tl.Scgen(train_new)
 scgen.train(max_epochs=100, batch_size=32)
 
-pred, delta = scgen.predict(
-    ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T"
-)
+pred, delta = scgen.predict(ctrl_key="control", stim_key="stimulated", celltype_to_predict="CD4T")
 pred.obs["condition"] = "pred"
 ```
 
@@ -506,7 +494,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-adata = pt.dt.cinemaot_example()
+adata = pt.ds.cinemaot_example()
 
 model = pt.tl.Cinemaot()
 de = model.causaleffect(
@@ -552,7 +540,7 @@ Example implementation:
 ```python
 import pertpy as pt
 
-mdata = pt.dt.papalexi_2021()
+mdata = pt.ds.papalexi_2021()
 
 # Summarize each perturbation into one observation
 ps = pt.tl.PseudobulkSpace()

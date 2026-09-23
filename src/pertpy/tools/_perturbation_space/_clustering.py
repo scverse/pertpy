@@ -43,7 +43,7 @@ class ClusteringSpace(PerturbationSpace):
             Example usage with KMeansSpace:
 
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> kmeans = pt.tl.KMeansSpace()
             >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
             >>> results = kmeans.evaluate_clustering(

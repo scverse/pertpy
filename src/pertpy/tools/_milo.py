@@ -20,7 +20,7 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 from pertpy._types import CSBase, cast_frame, cast_matrix
-from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, parse_random_effects, random_effect_matrices
+from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, log_cpm, parse_random_effects, random_effect_matrices
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -30,24 +30,28 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
     from numpy.typing import ArrayLike
 
+from scipy.linalg import null_space
 from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
+from scipy.stats import chi2, false_discovery_control, rankdata
 from sklearn.metrics.pairwise import euclidean_distances
 
 
-def _contrast_vector(columns: list[str], model_contrasts: str) -> np.ndarray:
+def _contrast_vector(columns: list[str], model_contrasts: str, reference_levels: Collection[str] = ()) -> np.ndarray:
     """Turn an R style contrast such as ``conditionB-conditionA`` into weights over formulaic design columns.
 
     Formulaic names a coefficient ``condition[T.B]`` where R names it ``conditionB``, so the columns are matched on their R spelling.
+    A term naming a reference level in ``reference_levels`` has no coefficient under treatment coding and weighs zero.
     """
     r_names = {column.replace("[T.", "").replace("[", "").replace("]", ""): column for column in columns}
     weights = pd.Series(0.0, index=columns)
     for sign, term in re.findall(r"([+-]?)\s*([^+-]+)", model_contrasts):
         name = term.strip()
-        if name not in r_names:
+        if name in r_names:
+            weights[r_names[name]] += -1.0 if sign == "-" else 1.0
+        elif name not in reference_levels:
             raise ValueError(
                 f"Contrast term {name!r} does not match any coefficient of the design. Available: {sorted(r_names)}."
             )
-        weights[r_names[name]] += -1.0 if sign == "-" else 1.0
     return weights.to_numpy()
 
 
@@ -94,6 +98,76 @@ def _weighted_bh(pvalues: np.ndarray, weights: np.ndarray) -> np.ndarray:
     return out
 
 
+def _tmm_factors(
+    counts: np.ndarray, lib_size: np.ndarray, *, log_ratio_trim: float = 0.3, sum_trim: float = 0.05
+) -> np.ndarray:
+    """TMM normalisation factors of a features x samples count matrix, ported from ``calcNormFactors`` of edgeR."""
+    counts = np.asarray(counts, dtype=float)
+    counts = counts[(counts > 0).any(axis=1)]
+    lib_size = np.asarray(lib_size, dtype=float)
+    n_samples = counts.shape[1]
+    if counts.shape[0] == 0 or n_samples == 1:
+        return np.ones(n_samples)
+
+    upper_quartiles = np.quantile(counts, 0.75, axis=0) / lib_size
+    if np.median(upper_quartiles) < 1e-20:
+        ref = int(np.argmax(np.sqrt(counts).sum(axis=0)))
+    else:
+        ref = int(np.argmin(np.abs(upper_quartiles - upper_quartiles.mean())))
+
+    factors = np.ones(n_samples)
+    for i in range(n_samples):
+        with np.errstate(divide="ignore", invalid="ignore"):
+            obs, reference = counts[:, i] / lib_size[i], counts[:, ref] / lib_size[ref]
+            log_ratio = np.log2(obs / reference)
+            abs_expr = (np.log2(obs) + np.log2(reference)) / 2
+            variance = (lib_size[i] - counts[:, i]) / lib_size[i] / counts[:, i]
+            variance += (lib_size[ref] - counts[:, ref]) / lib_size[ref] / counts[:, ref]
+        finite = np.isfinite(log_ratio) & np.isfinite(abs_expr)
+        log_ratio, abs_expr, variance = log_ratio[finite], abs_expr[finite], variance[finite]
+        if log_ratio.size == 0 or np.max(np.abs(log_ratio)) < 1e-6:
+            continue
+        n = log_ratio.size
+        lo_ratio, lo_expr = np.floor(n * log_ratio_trim) + 1, np.floor(n * sum_trim) + 1
+        rank_ratio, rank_expr = rankdata(log_ratio), rankdata(abs_expr)
+        keep = (rank_ratio >= lo_ratio) & (rank_ratio <= n + 1 - lo_ratio)
+        keep &= (rank_expr >= lo_expr) & (rank_expr <= n + 1 - lo_expr)
+        with np.errstate(invalid="ignore"):
+            log_factor = np.sum(log_ratio[keep] / variance[keep]) / np.sum(1 / variance[keep])
+        factors[i] = 2 ** np.nan_to_num(log_factor)
+    return factors / np.exp(np.mean(np.log(factors)))
+
+
+def _nb_lrt(
+    counts: np.ndarray,
+    lib_size: np.ndarray,
+    design: np.ndarray,
+    contrast: np.ndarray,
+    dispersions: np.ndarray,
+    *,
+    prior_count: float = 0.125,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Log2 fold change of ``contrast`` and its negative binomial likelihood ratio test p-value for every neighbourhood.
+
+    Like the test of edgeR in R Milo and unlike a Wald test, a likelihood ratio test keeps its power in neighbourhoods that a group barely populates.
+    The fits therefore drop the floor of 0.5 that pydeseq2 puts on fitted means, which would cap the fold change in exactly those neighbourhoods.
+    As in edgeR, the fold change comes from a refit with ``prior_count`` added in proportion to the library sizes, which keeps it finite when a group has no cells.
+    """
+    from pydeseq2.utils import irls_solver, nb_nll
+
+    reduced = design @ null_space(contrast[None, :])
+    prior = prior_count * lib_size / lib_size.mean()
+    logfc = np.empty(len(counts))
+    statistic = np.empty(len(counts))
+    for i, (y, dispersion) in enumerate(zip(counts, dispersions, strict=True)):
+        _, mu_full, *_ = irls_solver(y, lib_size, design, dispersion, min_mu=1e-6)
+        _, mu_reduced, *_ = irls_solver(y, lib_size, reduced, dispersion, min_mu=1e-6)
+        statistic[i] = 2 * (nb_nll(y, mu_reduced, dispersion) - nb_nll(y, mu_full, dispersion))
+        shrunk, *_ = irls_solver(y + prior, lib_size + 2 * prior, design, dispersion, min_mu=1e-6)
+        logfc[i] = contrast @ shrunk / np.log(2)
+    return logfc, chi2.sf(np.maximum(statistic, 0), df=1)
+
+
 class Milo:
     """Python implementation of Milo."""
 
@@ -113,7 +187,7 @@ class Milo:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
 
@@ -153,7 +227,8 @@ class Milo:
             Otherwise:
 
             nhoods: :class:`scipy.sparse.csr_matrix` in `adata.obsm['nhoods']`.
-            A binary matrix of cell to neighbourhood assignments. Neighbourhoods in the columns are ordered by the order of the index cell in adata.obs_names
+            A binary matrix of cell to neighbourhood assignments, in which every index cell belongs to its own neighbourhood.
+            Neighbourhoods in the columns are ordered by the order of the index cell in adata.obs_names
 
             nhood_ixs_refined: pandas.Series in `adata.obs['nhood_ixs_refined']`.
             A boolean indicating whether a cell is an index for a neighbourhood
@@ -167,7 +242,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -223,6 +298,7 @@ class Milo:
         refined_vertices = np.unique(refined_vertices)
         refined_vertices.sort()
 
+        knn_graph.setdiag(1)  # type: ignore[union-attr]
         nhoods = knn_graph[:, refined_vertices]
         adata.obsm["nhoods"] = nhoods
 
@@ -270,7 +346,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -351,9 +427,9 @@ class Milo:
             max_iter: Maximum number of iterations of a mixed model fit.
             tol: Convergence tolerance of a mixed model fit.
             solver: The solver to fit the model to, ignored for a mixed model.
-                The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
-                The "pydeseq2" requires pydeseq2 to be installed.
-                It is still very comparable to the "edger" solver but might be a bit slower.
+                The "edger" solver requires R, rpy2 and edgeR to be installed and reproduces the R implementation.
+                The "pydeseq2" solver requires pydeseq2 but not R.
+                It normalises like R Milo, estimates the dispersions with pydeseq2 and tests with a likelihood ratio test, which comes close to the quasi-likelihood F-test of edgeR without reproducing it exactly.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
@@ -368,7 +444,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -439,6 +515,11 @@ class Milo:
             if isinstance(design_df[column].dtype, pd.CategoricalDtype):
                 design_df[column] = design_df[column].cat.remove_unused_categories()
 
+        fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
+        reference_levels = {
+            f"{column}{design_df[column].astype('category').cat.categories[0]}"
+            for column in design_df.select_dtypes(exclude="number").columns
+        }
         if random_effects:
             if find_spec("formulaic_contrasts") is None:
                 raise ImportError(
@@ -446,7 +527,6 @@ class Milo:
                 )
             from formulaic_contrasts import FormulaicContrasts
 
-            fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
             design_matrix = FormulaicContrasts(design_df, fixed).design_matrix
             _check_residual_df(design_matrix, design)
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
@@ -457,7 +537,7 @@ class Milo:
                 np.asarray(design_matrix, dtype=float),
                 random_effect_matrices(design_df, random_effects),
                 np.log(lib_size_filtered),
-                contrast=_contrast_vector(list(design_matrix.columns), model_contrasts)
+                contrast=_contrast_vector(list(design_matrix.columns), model_contrasts, reference_levels)
                 if model_contrasts is not None
                 else None,
                 reml=reml,
@@ -485,12 +565,10 @@ class Milo:
             from rpy2.robjects.vectors import FloatVector
 
             # Define model matrix
-            if not add_intercept or model_contrasts is not None:
-                design = design + " + 0"
             design_df = design_df.astype(dict.fromkeys(design_df.select_dtypes(exclude=["number"]).columns, "category"))
             with localconverter(ro.default_converter + pandas2ri.converter):
                 design_r = pandas2ri.py2rpy(design_df)
-            formula_r = stats.formula(design)
+            formula_r = stats.formula(fixed)
             model = stats.model_matrix(object=formula_r, data=design_r)
             model_np = np.array(model)
             _check_residual_df(model_np, design)
@@ -504,7 +582,7 @@ class Milo:
             dge = edgeR.DGEList(counts=count_mat_r, lib_size=lib_size_r)
             dge = edgeR.calcNormFactors(dge, method="TMM")
             dge = edgeR.estimateDisp(dge, model)
-            fit = edgeR.glmQLFit(dge, model, robust=True)
+            fit = edgeR.glmQLFit(dge, model, robust=True, legacy=True)
             # Test
             n_coef = model_np.shape[1]
             if model_contrasts is not None:
@@ -518,7 +596,7 @@ class Milo:
 
                 get_model_cols = STAP(r_str, "get_model_cols")
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
-                    model_mat_cols = get_model_cols.get_model_cols(design_df, design)
+                    model_mat_cols = get_model_cols.get_model_cols(design_df, fixed)
                 with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
                     model_df = pandas2ri.rpy2py(model)
                 model_df = pd.DataFrame(model_df)
@@ -554,76 +632,56 @@ class Milo:
             if find_spec("pydeseq2") is None:
                 raise ImportError("pydeseq2 is required but not installed. Install with: pip install pydeseq2")
 
-            import warnings
-
             from pydeseq2.dds import DeseqDataSet
-            from pydeseq2.ds import DeseqStats
-
-            warnings.filterwarnings("always", message=".*(alpha).*")
 
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
+            lib_size_filtered = lib_size[keep_smp]
             design_df_filtered = design_df.copy()
 
             design_df_filtered = design_df_filtered.astype(
                 dict.fromkeys(design_df_filtered.select_dtypes(exclude=["number"]).columns, "category")
             )
 
-            design_clean = design if design.startswith("~") else f"~{design}"
-
             dds = DeseqDataSet(
                 counts=pd.DataFrame(counts_filtered.T, index=design_df_filtered.index),
                 metadata=design_df_filtered,
-                design=design_clean,
-                refit_cooks=True,
-                size_factors_fit_type="poscounts",
+                design=fixed if fixed.startswith("~") else f"~{fixed}",
             )
 
-            _check_residual_df(dds.obsm["design_matrix"], design)  # type: ignore[arg-type]
-            dds.deseq2()
+            design_matrix = cast_frame(dds.obsm["design_matrix"])
+            _check_residual_df(design_matrix, design)
 
-            if model_contrasts is not None and "-" in model_contrasts:
-                if "(" in model_contrasts or "+" in model_contrasts.split("-")[1]:
-                    raise ValueError(
-                        f"Complex contrasts like '{model_contrasts}' are not supported by pydeseq2. "
-                        "Use simple pairwise contrasts (e.g., 'GroupA-GroupB') or switch to solver='edger'."
-                    )
+            effective_lib_size = lib_size_filtered * _tmm_factors(counts_filtered, lib_size_filtered)
+            size_factors = effective_lib_size / np.exp(np.mean(np.log(effective_lib_size)))
+            normed_counts = counts_filtered.T / size_factors[:, None]
+            dds.obs["size_factors"] = size_factors
+            dds.layers["normed_counts"] = normed_counts
+            dds.var["_normed_means"] = normed_counts.mean(axis=0)
+            dds.fit_genewise_dispersions()
+            dds.fit_dispersion_trend()
+            dds.fit_dispersion_prior()
+            dds.fit_MAP_dispersions()
 
-                parts = model_contrasts.split("-")
-                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
-                group1 = parts[0].replace(factor_name, "").strip()
-                group2 = parts[1].replace(factor_name, "").strip()
-                if factor_name not in design_df_filtered.columns:
-                    raise ValueError(
-                        f"Contrast factor {factor_name!r} is not a column of the design dataframe. "
-                        f"Available columns: {list(design_df_filtered.columns)}."
-                    )
-                if not isinstance(design_df_filtered[factor_name].dtype, pd.CategoricalDtype):
-                    design_df_filtered[factor_name] = design_df_filtered[factor_name].astype("category")
-                available_levels = list(design_df_filtered[factor_name].cat.categories)
-                missing = [g for g in (group1, group2) if g not in available_levels]
-                if missing:
-                    raise ValueError(
-                        f"Contrast levels {missing!r} not found in factor {factor_name!r}. "
-                        f"Available levels: {available_levels}. "
-                        f"Contrasts must follow the form '{factor_name}<level_a>-{factor_name}<level_b>' "
-                        "with both levels present in the data."
-                    )
-                stat_res = DeseqStats(dds, contrast=[factor_name, group1, group2])
-            else:
-                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
-                if not isinstance(design_df_filtered[factor_name], pd.CategoricalDtype):
-                    design_df_filtered[factor_name] = design_df_filtered[factor_name].astype("category")
-                categories = design_df_filtered[factor_name].cat.categories
-                stat_res = DeseqStats(dds, contrast=[factor_name, categories[-1], categories[0]])
-
-            stat_res.summary()
-            res = stat_res.results_df
-
-            res = res.rename(
-                columns={"baseMean": "logCPM", "log2FoldChange": "logFC", "pvalue": "PValue", "padj": "FDR"}
+            contrast = (
+                _contrast_vector(list(design_matrix.columns), model_contrasts, reference_levels)
+                if model_contrasts is not None
+                else np.eye(design_matrix.shape[1])[-1]
             )
-
-            res = res[["logCPM", "logFC", "PValue", "FDR"]]
+            logfc, pvalues = _nb_lrt(
+                counts_filtered,
+                effective_lib_size,
+                design_matrix.to_numpy(dtype=float),
+                contrast,
+                cast_frame(dds.var)["dispersions"].to_numpy(),
+            )
+            res = pd.DataFrame(
+                {
+                    "logFC": logfc,
+                    "logCPM": log_cpm(counts_filtered),
+                    "PValue": pvalues,
+                    "FDR": false_discovery_control(pvalues),
+                }
+            )
 
         res.index = sample_adata.var_names[keep_nhoods]
         written = [*res.columns, "SpatialFDR"]
@@ -684,7 +742,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -893,7 +951,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -947,7 +1005,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -989,7 +1047,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1056,7 +1114,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1093,7 +1151,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1224,7 +1282,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1298,7 +1356,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1436,7 +1494,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1506,7 +1564,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1573,7 +1631,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1857,7 +1915,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])
@@ -1984,7 +2042,7 @@ class Milo:
         Examples:
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> milo = pt.tl.Milo()
             >>> mdata = milo.load(adata)
             >>> sc.pp.neighbors(mdata["rna"])

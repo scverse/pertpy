@@ -88,7 +88,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -167,7 +167,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -319,7 +319,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -454,7 +454,9 @@ class Tasccoda(CompositionalModel2):
             )
 
         # Calculate DM-distributed counts
-        predictions = npy.sample("counts", npd.DirichletMultinomial(concentrations, n_total), obs=counts)
+        predictions = npy.sample(
+            "counts", npd.DirichletMultinomial(concentrations, n_total, validate_args=False), obs=counts
+        )
 
         return predictions
 
@@ -480,7 +482,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -557,7 +559,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -587,7 +589,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -611,7 +613,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -633,7 +635,7 @@ class Tasccoda(CompositionalModel2):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",

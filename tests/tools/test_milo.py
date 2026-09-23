@@ -9,6 +9,7 @@ from anndata import AnnData
 from mudata import MuData
 
 import pertpy as pt
+from pertpy.tools._milo import _nb_lrt, _tmm_factors
 
 
 @pytest.fixture(params=["edger", "pydeseq2"])
@@ -68,6 +69,13 @@ def test_make_nhoods_sizes(adata, milo):
     knn_graph = adata.obsp["connectivities"]
     knn_graph[knn_graph != 0] = 1
     assert knn_graph.sum(0).min() <= adata.obsm["nhoods"].sum(0).min()
+
+
+def test_make_nhoods_contains_index_cells(adata, milo):
+    adata = adata.copy()
+    milo.make_nhoods(adata)
+    index_cells = np.flatnonzero(adata.obs["nhood_ixs_refined"] == 1)
+    assert np.all(np.asarray(adata.obsm["nhoods"][index_cells, np.arange(len(index_cells))]) == 1)
 
 
 def test_make_nhoods_neighbors_key(adata, milo):
@@ -227,8 +235,122 @@ def test_da_nhoods_default_contrast(da_nhoods_mdata, milo, solver):
     milo.da_nhoods(mdata, design="~condition", model_contrasts="conditionConditionB-conditionConditionA", solver=solver)
     contr_results = mdata["milo"].var.copy()
 
-    assert np.corrcoef(contr_results["SpatialFDR"], default_results["SpatialFDR"])[0, 1] > 0.99
+    assert np.corrcoef(contr_results["PValue"], default_results["PValue"])[0, 1] > 0.99
     assert np.corrcoef(contr_results["logFC"], default_results["logFC"])[0, 1] > 0.99
+
+
+def test_da_nhoods_pydeseq2_reproduces_edger(da_nhoods_mdata, milo):
+    pytest.importorskip("rpy2")
+    try:
+        from rpy2.robjects.packages import importr
+
+        importr("edgeR")
+    except Exception:  # noqa: BLE001
+        pytest.skip("Required R package 'edgeR' not available")
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~condition", solver="edger")
+    edger = mdata["milo"].var[["logFC", "PValue"]].copy()
+    milo.da_nhoods(mdata, design="~condition", solver="pydeseq2")
+    pydeseq2 = mdata["milo"].var[["logFC", "PValue"]]
+
+    assert np.corrcoef(edger["logFC"], pydeseq2["logFC"])[0, 1] > 0.99
+    assert edger["PValue"].corr(pydeseq2["PValue"], method="spearman") > 0.9
+
+
+def test_tmm_factors_match_edger():
+    counts = np.array(
+        [
+            [10, 12, 30, 0],
+            [0, 3, 5, 8],
+            [25, 20, 18, 40],
+            [7, 0, 2, 9],
+            [100, 80, 120, 95],
+            [3, 6, 0, 1],
+            [45, 50, 38, 60],
+            [0, 0, 4, 2],
+            [15, 22, 17, 13],
+            [60, 30, 75, 55],
+            [8, 11, 9, 0],
+            [33, 27, 41, 36],
+            [0, 0, 0, 0],
+        ]
+    )
+    # calcNormFactors(counts, lib.size=..., method="TMM") of edgeR 4.8.2
+    np.testing.assert_allclose(
+        _tmm_factors(counts, counts.sum(0)),
+        [0.977957934816150, 1.193511265666823, 0.941900259756086, 0.909595673308097],
+    )
+    np.testing.assert_allclose(
+        _tmm_factors(counts, counts.sum(0) * np.array([1, 2, 1, 3])),
+        [1.588354120588916, 0.759830740837740, 1.529790909716994, 0.541631270583240],
+    )
+
+
+def test_nb_lrt_keeps_power_when_a_group_has_no_cells():
+    """A Wald test loses its power when a group has no cells, the likelihood ratio test that R Milo relies on does not."""
+    counts = np.array([[0, 0, 0, 0, 12, 15, 9, 14]], dtype=float)
+    design = np.column_stack([np.ones(8), np.repeat([0.0, 1.0], 4)])
+    logfc, pvalues = _nb_lrt(counts, np.full(8, 1000.0), design, np.array([0.0, 1.0]), np.array([0.1]))
+
+    assert pvalues[0] < 1e-3
+    assert 3 < logfc[0] < 10
+
+
+@pytest.fixture
+def three_condition_mdata(adata, milo):
+    adata = adata.copy()
+    milo.make_nhoods(adata)
+    rng = np.random.default_rng(seed=42)
+    conditions = ["ConditionA", "ConditionB", "ConditionC"]
+    adata.obs["condition"] = rng.choice(conditions, size=adata.n_obs)
+    da_cells = adata.obs["louvain"] == "1"
+    adata.obs.loc[da_cells, "condition"] = rng.choice(conditions, size=da_cells.sum(), p=[0.1, 0.8, 0.1])
+    adata.obs["replicate"] = rng.choice(["R1", "R2", "R3"], size=adata.n_obs)
+    adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
+    return milo.count_nhoods(adata, sample_col="sample")
+
+
+def test_da_nhoods_contrast_of_single_coefficient(three_condition_mdata, milo, solver):
+    """A contrast naming a single coefficient tests that coefficient instead of the last level of the design."""
+    mdata = three_condition_mdata
+    index_cells = mdata["milo"].var["index_cell"]
+    enriched = (mdata["rna"].obs.loc[index_cells, "louvain"] == "1").to_numpy()
+
+    milo.da_nhoods(mdata, design="~replicate+condition", model_contrasts="conditionConditionB", solver=solver)
+    b_vs_a = mdata["milo"].var["logFC"].to_numpy()
+    milo.da_nhoods(mdata, design="~replicate+condition", model_contrasts="conditionConditionC", solver=solver)
+    c_vs_a = mdata["milo"].var["logFC"].to_numpy()
+
+    assert np.nanmean(b_vs_a[enriched]) > 1
+    assert np.nanmean(b_vs_a[enriched]) > np.nanmean(c_vs_a[enriched]) + 1
+
+
+def test_da_nhoods_contrast_against_reference_level(three_condition_mdata, milo):
+    """The reference level has no coefficient, so subtracting it leaves the contrast unchanged."""
+    mdata = three_condition_mdata
+    milo.da_nhoods(mdata, design="~replicate+condition", model_contrasts="conditionConditionB", solver="pydeseq2")
+    coefficient = mdata["milo"].var["logFC"].to_numpy()
+    milo.da_nhoods(
+        mdata,
+        design="~replicate+condition",
+        model_contrasts="conditionConditionB-conditionConditionA",
+        solver="pydeseq2",
+    )
+    np.testing.assert_allclose(mdata["milo"].var["logFC"].to_numpy(), coefficient)
+
+
+def test_da_nhoods_continuous_covariate_per_unit(da_nhoods_mdata, milo, solver):
+    """The log fold change of a continuous covariate is per unit, so rescaling the covariate rescales it."""
+    mdata = da_nhoods_mdata.copy()
+    obs = mdata["rna"].obs
+    obs["dose"] = (obs["condition"] == "ConditionB") + obs["replicate"].str[1].astype(float) / 10
+
+    milo.da_nhoods(mdata, design="~dose", solver=solver)
+    per_unit = mdata["milo"].var["logFC"].to_numpy()
+    obs["dose"] *= 10
+    milo.da_nhoods(mdata, design="~dose", solver=solver)
+
+    np.testing.assert_allclose(mdata["milo"].var["logFC"].to_numpy() * 10, per_unit, rtol=1e-3, atol=1e-3)
 
 
 @pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")

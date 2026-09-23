@@ -137,7 +137,7 @@ class CompositionalModel2(ABC):
         predict_kwargs = {
             "counts": None,
             "covariates": jnp.array(sample_adata.obsm["covariate_matrix"], dtype="float64"),
-            "n_total": jnp.array(sample_adata.obsm["sample_counts"], dtype="float64"),
+            "n_total": jnp.rint(jnp.array(sample_adata.obsm["sample_counts"], dtype="float64")),
             "ref_index": jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
             "sample_adata": sample_adata,
         }
@@ -450,7 +450,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -544,7 +544,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -921,7 +921,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -1061,7 +1061,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -1092,7 +1092,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -1130,7 +1130,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -1338,7 +1338,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -1445,7 +1445,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -1647,7 +1647,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -1872,7 +1872,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> haber_cells = pt.dt.haber_2017_regions()
+            >>> haber_cells = pt.ds.haber_2017_regions()
             >>> sccoda = pt.tl.Sccoda()
             >>> mdata = sccoda.load(haber_cells, type="cell_level", generate_sample_level=True, cell_type_identifier="cell_label", \
                 sample_identifier="batch", covariate_obs=["condition"])
@@ -1993,7 +1993,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -2087,7 +2087,7 @@ class CompositionalModel2(ABC):
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.tasccoda_example()
+            >>> adata = pt.ds.tasccoda_example()
             >>> tasccoda = pt.tl.Tasccoda()
             >>> mdata = tasccoda.load(
             >>>     adata, type="sample_level",
@@ -2287,7 +2287,7 @@ class CompositionalModel2(ABC):
             >>> import pertpy as pt
             >>> import scanpy as sc
             >>> import schist
-            >>> adata = pt.dt.haber_2017_regions()
+            >>> adata = pt.ds.haber_2017_regions()
             >>> sc.pp.neighbors(adata)
             >>> schist.inference.nested_model(adata, n_init=100, random_seed=5678)
             >>> tasccoda_model = pt.tl.Tasccoda()

@@ -120,7 +120,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> augur_adata = ag_rfc.load(adata)
         """
@@ -264,7 +264,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_highly_variable(loaded_data)
@@ -336,7 +336,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_highly_variable(loaded_data)
@@ -403,7 +403,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_highly_variable(loaded_data)
@@ -471,6 +471,14 @@ class Augur:
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> scorer = ag_rfc.set_scorer(True, 0)
         """
+        if is_regressor(self.estimator):
+            return {
+                "augur_score": make_scorer(self.ccc_score),
+                "r2": make_scorer(r2_score),
+                "ccc": make_scorer(self.ccc_score),
+                "neg_mean_squared_error": make_scorer(root_mean_squared_error),
+                "explained_variance": make_scorer(explained_variance_score),
+            }
         if multiclass:
             return {
                 "augur_score": make_scorer(roc_auc_score, multi_class="ovo", response_method="predict_proba"),
@@ -480,24 +488,14 @@ class Augur:
                 "f1": make_scorer(f1_score, average="macro"),
                 "recall": make_scorer(recall_score, average="macro"),
             }
-        return (
-            {
-                "augur_score": make_scorer(roc_auc_score, response_method="predict_proba"),
-                "auc": make_scorer(roc_auc_score, response_method="predict_proba"),
-                "accuracy": make_scorer(accuracy_score),
-                "precision": make_scorer(precision_score, average="binary", zero_division=zero_division),
-                "f1": make_scorer(f1_score, average="binary"),
-                "recall": make_scorer(recall_score, average="binary"),
-            }
-            if isinstance(self.estimator, RandomForestClassifier | LogisticRegression)
-            else {
-                "augur_score": make_scorer(self.ccc_score),
-                "r2": make_scorer(r2_score),
-                "ccc": make_scorer(self.ccc_score),
-                "neg_mean_squared_error": make_scorer(root_mean_squared_error),
-                "explained_variance": make_scorer(explained_variance_score),
-            }
-        )
+        return {
+            "augur_score": make_scorer(roc_auc_score, response_method="predict_proba"),
+            "auc": make_scorer(roc_auc_score, response_method="predict_proba"),
+            "accuracy": make_scorer(accuracy_score),
+            "precision": make_scorer(precision_score, average="binary", zero_division=zero_division),
+            "f1": make_scorer(f1_score, average="binary"),
+            "recall": make_scorer(recall_score, average="binary"),
+        }
 
     def run_cross_validation(
         self,
@@ -524,7 +522,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_highly_variable(loaded_data)
@@ -605,7 +603,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_highly_variable(loaded_data)
@@ -677,7 +675,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> ag_rfc.select_variance(loaded_data, var_quantile=0.5, filter_negative_residuals=False, span=0.75)
@@ -787,7 +785,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)
@@ -933,7 +931,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
 
             >>> data_15 = ag_rfc.load(adata, condition_label="Maintenance_Cocaine", treatment_label="withdraw_15d_Cocaine")
@@ -1068,7 +1066,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.bhattacherjee()
+            >>> adata = pt.ds.bhattacherjee()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
 
             >>> data_15 = ag_rfc.load(adata, condition_label="Maintenance_Cocaine", treatment_label="withdraw_15d_Cocaine")
@@ -1140,7 +1138,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> v_adata, v_results = ag_rfc.predict(
@@ -1201,7 +1199,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> v_adata, v_results = ag_rfc.predict(
@@ -1259,7 +1257,7 @@ class Augur:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.sc_sim_augur()
+            >>> adata = pt.ds.sc_sim_augur()
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> loaded_data = ag_rfc.load(adata)
             >>> h_adata, h_results = ag_rfc.predict(loaded_data, subsample_size=20, n_threads=4)

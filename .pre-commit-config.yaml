@@ -9,12 +9,12 @@ default_stages:
 minimum_pre_commit_version: 2.16.0
 repos:
     - repo: https://github.com/biomejs/pre-commit
-      rev: 3a0c6458e3d46fb8d931600cd3970f2053768ce3 # frozen: v2.5.9
+      rev: 742ab683a70977bd4648797d799ddd6b5496ae87 # frozen: v2.5.13
       hooks:
           - id: biome-format
             exclude: ^\.cruft\.json$ # inconsistent indentation with cruft - file never to be modified manually.
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: 65dbdb59d2f2d9c3bdc343c566821ad3319ddaa3 # frozen: v0.16.3
+      rev: e8f7d69b957a30acb2c875078d5fd012de24b64c # frozen: v0.16.7
       hooks:
           - id: ruff-check
             args: [--fix, --exit-non-zero-on-fix, --unsafe-fixes]
@@ -44,7 +44,7 @@ repos:
             require_serial: true
             pass_filenames: false
     - repo: https://github.com/zizmorcore/zizmor-pre-commit
-      rev: 451b56af716f9f0d0c2b816503a3fd0cf8b036fa # frozen: v1.29.0
+      rev: fa412071e4f5d44d44f9e365f4676f9df92456a2 # frozen: v1.30.1
       hooks:
           - id: zizmor
             args: [--no-progress, --fix]

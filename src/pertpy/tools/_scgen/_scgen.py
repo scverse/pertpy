@@ -64,7 +64,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
         """
@@ -118,7 +118,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
         """
         for name, key in (("batch_key", batch_key), ("labels_key", labels_key)):
@@ -213,7 +213,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
@@ -282,7 +282,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
@@ -330,7 +330,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
@@ -365,7 +365,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
@@ -448,7 +448,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)
@@ -542,7 +542,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> model = pt.tl.Scgen(data)
             >>> model.train(max_epochs=10)
@@ -653,7 +653,7 @@ class Scgen:
 
         Examples:
             >>> import pertpy as pt
-            >>> data = pt.dt.kang_2018()
+            >>> data = pt.ds.kang_2018()
             >>> pt.tl.Scgen.setup_anndata(data, batch_key="label", labels_key="cell_type")
             >>> scg = pt.tl.Scgen(data)
             >>> scg.train(max_epochs=10, batch_size=64, early_stopping=True, early_stopping_patience=5)

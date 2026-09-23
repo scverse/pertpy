@@ -18,6 +18,7 @@ import mudata
 if hasattr(mudata, "set_options"):
     mudata.set_options(pull_on_update=False)
 
+from . import data as ds
 from . import data as dt
 from . import metadata as md
 from . import plot as pl

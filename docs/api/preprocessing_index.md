@@ -28,7 +28,7 @@ Example implementation:
 import pertpy as pt
 import scanpy as sc
 
-mdata = pt.dt.papalexi_2021()
+mdata = pt.ds.papalexi_2021()
 gdo = mdata.mod["gdo"]
 gdo.layers["counts"] = gdo.X.copy()
 sc.pp.log1p(gdo)

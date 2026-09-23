@@ -53,7 +53,7 @@ class CentroidSpace(PerturbationSpace):
 
             >>> import pertpy as pt
             >>> import scanpy as sc
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> sc.pp.pca(mdata["rna"])
             >>> sc.pp.neighbors(mdata["rna"])
             >>> sc.tl.umap(mdata["rna"])
@@ -122,7 +122,7 @@ class PseudobulkSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> ps_adata = ps.compute(mdata["rna"], target_col="gene_target")
         """
@@ -195,7 +195,7 @@ class DistanceSpace(PerturbationSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> ds = pt.tl.DistanceSpace()
             >>> ds_adata = ds.compute(mdata["rna"], target_col="gene_target", metric="edistance", embedding_key="X_pca")
         """
@@ -250,7 +250,7 @@ class EmbeddingSpace(PerturbationSpace):
         Examples:
             >>> import pertpy as pt
             >>> import pandas as pd
-            >>> adata = pt.dt.norman_2019()
+            >>> adata = pt.ds.norman_2019()
             >>> gene_embedding = pd.DataFrame(...)  # index: perturbation names, values: embedding
             >>> es = pt.tl.EmbeddingSpace()
             >>> es_adata = es.compute(adata, gene_embedding, target_col="perturbation_name")
@@ -337,7 +337,7 @@ class KMeansSpace(ClusteringSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> kmeans = pt.tl.KMeansSpace()
             >>> kmeans_adata = kmeans.compute(mdata["rna"], n_clusters=26)
         """
@@ -385,7 +385,7 @@ class HDBSCANSpace(ClusteringSpace):
 
         Examples:
             >>> import pertpy as pt
-            >>> mdata = pt.dt.papalexi_2021()
+            >>> mdata = pt.ds.papalexi_2021()
             >>> hdbscan = pt.tl.HDBSCANSpace()
             >>> hdbscan_adata = hdbscan.compute(mdata["rna"])
         """
