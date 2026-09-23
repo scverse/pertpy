@@ -9,6 +9,7 @@ from anndata import AnnData
 from mudata import MuData
 
 import pertpy as pt
+from pertpy.tools._milo import _nb_lrt, _tmm_factors
 
 
 @pytest.fixture(params=["edger", "pydeseq2"])
@@ -234,8 +235,65 @@ def test_da_nhoods_default_contrast(da_nhoods_mdata, milo, solver):
     milo.da_nhoods(mdata, design="~condition", model_contrasts="conditionConditionB-conditionConditionA", solver=solver)
     contr_results = mdata["milo"].var.copy()
 
-    assert np.corrcoef(contr_results["SpatialFDR"], default_results["SpatialFDR"])[0, 1] > 0.99
+    assert np.corrcoef(contr_results["PValue"], default_results["PValue"])[0, 1] > 0.99
     assert np.corrcoef(contr_results["logFC"], default_results["logFC"])[0, 1] > 0.99
+
+
+def test_da_nhoods_pydeseq2_reproduces_edger(da_nhoods_mdata, milo):
+    pytest.importorskip("rpy2")
+    try:
+        from rpy2.robjects.packages import importr
+
+        importr("edgeR")
+    except Exception:  # noqa: BLE001
+        pytest.skip("Required R package 'edgeR' not available")
+    mdata = da_nhoods_mdata.copy()
+    milo.da_nhoods(mdata, design="~condition", solver="edger")
+    edger = mdata["milo"].var[["logFC", "PValue"]].copy()
+    milo.da_nhoods(mdata, design="~condition", solver="pydeseq2")
+    pydeseq2 = mdata["milo"].var[["logFC", "PValue"]]
+
+    assert np.corrcoef(edger["logFC"], pydeseq2["logFC"])[0, 1] > 0.99
+    assert edger["PValue"].corr(pydeseq2["PValue"], method="spearman") > 0.9
+
+
+def test_tmm_factors_match_edger():
+    counts = np.array(
+        [
+            [10, 12, 30, 0],
+            [0, 3, 5, 8],
+            [25, 20, 18, 40],
+            [7, 0, 2, 9],
+            [100, 80, 120, 95],
+            [3, 6, 0, 1],
+            [45, 50, 38, 60],
+            [0, 0, 4, 2],
+            [15, 22, 17, 13],
+            [60, 30, 75, 55],
+            [8, 11, 9, 0],
+            [33, 27, 41, 36],
+            [0, 0, 0, 0],
+        ]
+    )
+    # calcNormFactors(counts, lib.size=..., method="TMM") of edgeR 4.8.2
+    np.testing.assert_allclose(
+        _tmm_factors(counts, counts.sum(0)),
+        [0.977957934816150, 1.193511265666823, 0.941900259756086, 0.909595673308097],
+    )
+    np.testing.assert_allclose(
+        _tmm_factors(counts, counts.sum(0) * np.array([1, 2, 1, 3])),
+        [1.588354120588916, 0.759830740837740, 1.529790909716994, 0.541631270583240],
+    )
+
+
+def test_nb_lrt_keeps_power_when_a_group_has_no_cells():
+    """A Wald test loses its power when a group has no cells, the likelihood ratio test that R Milo relies on does not."""
+    counts = np.array([[0, 0, 0, 0, 12, 15, 9, 14]], dtype=float)
+    design = np.column_stack([np.ones(8), np.repeat([0.0, 1.0], 4)])
+    logfc, pvalues = _nb_lrt(counts, np.full(8, 1000.0), design, np.array([0.0, 1.0]), np.array([0.1]))
+
+    assert pvalues[0] < 1e-3
+    assert 3 < logfc[0] < 10
 
 
 @pytest.fixture

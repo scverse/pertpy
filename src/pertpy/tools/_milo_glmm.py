@@ -357,6 +357,12 @@ def _fit_nb_glmm_core(
     )
 
 
+def log_cpm(counts: np.ndarray) -> np.ndarray:
+    """Log2 of the mean counts per million of every neighbourhood across samples."""
+    library_size = counts.sum(axis=0)
+    return np.log2(np.mean(counts / np.where(library_size > 0, library_size, 1), axis=1) * 1e6 + 1e-12)
+
+
 def fit_nb_glmm_nhoods(
     counts: np.ndarray,
     X: np.ndarray,
@@ -373,8 +379,7 @@ def fit_nb_glmm_nhoods(
     The reported log fold change is ``contrast`` applied to the fixed effects, defaulting to the last column of the model matrix, which is the coefficient the edgeR solver tests.
     Its p-value comes from a t-test whose degrees of freedom follow :func:`between_within_df`.
     """
-    library_size = counts.sum(axis=0)
-    logcpm = np.log2(np.mean(counts / np.where(library_size > 0, library_size, 1), axis=1) * 1e6 + 1e-12)
+    logcpm = log_cpm(counts)
 
     weights = np.zeros(X.shape[1]) if contrast is None else np.asarray(contrast, dtype=float)
     if contrast is None:
