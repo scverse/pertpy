@@ -153,7 +153,8 @@ class Milo:
             Otherwise:
 
             nhoods: :class:`scipy.sparse.csr_matrix` in `adata.obsm['nhoods']`.
-            A binary matrix of cell to neighbourhood assignments. Neighbourhoods in the columns are ordered by the order of the index cell in adata.obs_names
+            A binary matrix of cell to neighbourhood assignments, in which every index cell belongs to its own neighbourhood.
+            Neighbourhoods in the columns are ordered by the order of the index cell in adata.obs_names
 
             nhood_ixs_refined: pandas.Series in `adata.obs['nhood_ixs_refined']`.
             A boolean indicating whether a cell is an index for a neighbourhood
@@ -223,6 +224,7 @@ class Milo:
         refined_vertices = np.unique(refined_vertices)
         refined_vertices.sort()
 
+        knn_graph.setdiag(1)  # type: ignore[union-attr, operator]
         nhoods = knn_graph[:, refined_vertices]
         adata.obsm["nhoods"] = nhoods
 
@@ -351,9 +353,9 @@ class Milo:
             max_iter: Maximum number of iterations of a mixed model fit.
             tol: Convergence tolerance of a mixed model fit.
             solver: The solver to fit the model to, ignored for a mixed model.
-                The "edger" solver requires R, rpy2 and edgeR to be installed and is the closest to the R implementation.
+                The "edger" solver requires R, rpy2 and edgeR to be installed and reproduces the R implementation.
                 The "pydeseq2" requires pydeseq2 to be installed.
-                It is still very comparable to the "edger" solver but might be a bit slower.
+                It uses the Wald test of DESeq2 instead of the quasi-likelihood F-test of edgeR, so its results are close to but not identical with those of R Milo.
 
         Returns:
             None, modifies `milo_mdata['milo']` in place, adding the results of the DA test to `.var`:
@@ -439,6 +441,7 @@ class Milo:
             if isinstance(design_df[column].dtype, pd.CategoricalDtype):
                 design_df[column] = design_df[column].cat.remove_unused_categories()
 
+        fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
         if random_effects:
             if find_spec("formulaic_contrasts") is None:
                 raise ImportError(
@@ -446,7 +449,6 @@ class Milo:
                 )
             from formulaic_contrasts import FormulaicContrasts
 
-            fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
             design_matrix = FormulaicContrasts(design_df, fixed).design_matrix
             _check_residual_df(design_matrix, design)
             counts_filtered = count_mat[np.ix_(keep_nhoods, keep_smp)]
@@ -485,12 +487,10 @@ class Milo:
             from rpy2.robjects.vectors import FloatVector
 
             # Define model matrix
-            if not add_intercept or model_contrasts is not None:
-                design = design + " + 0"
             design_df = design_df.astype(dict.fromkeys(design_df.select_dtypes(exclude=["number"]).columns, "category"))
             with localconverter(ro.default_converter + pandas2ri.converter):
                 design_r = pandas2ri.py2rpy(design_df)
-            formula_r = stats.formula(design)
+            formula_r = stats.formula(fixed)
             model = stats.model_matrix(object=formula_r, data=design_r)
             model_np = np.array(model)
             _check_residual_df(model_np, design)
@@ -504,7 +504,7 @@ class Milo:
             dge = edgeR.DGEList(counts=count_mat_r, lib_size=lib_size_r)
             dge = edgeR.calcNormFactors(dge, method="TMM")
             dge = edgeR.estimateDisp(dge, model)
-            fit = edgeR.glmQLFit(dge, model, robust=True)
+            fit = edgeR.glmQLFit(dge, model, robust=True, legacy=True)
             # Test
             n_coef = model_np.shape[1]
             if model_contrasts is not None:
@@ -518,7 +518,7 @@ class Milo:
 
                 get_model_cols = STAP(r_str, "get_model_cols")
                 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
-                    model_mat_cols = get_model_cols.get_model_cols(design_df, design)
+                    model_mat_cols = get_model_cols.get_model_cols(design_df, fixed)
                 with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
                     model_df = pandas2ri.rpy2py(model)
                 model_df = pd.DataFrame(model_df)
@@ -568,54 +568,24 @@ class Milo:
                 dict.fromkeys(design_df_filtered.select_dtypes(exclude=["number"]).columns, "category")
             )
 
-            design_clean = design if design.startswith("~") else f"~{design}"
-
             dds = DeseqDataSet(
                 counts=pd.DataFrame(counts_filtered.T, index=design_df_filtered.index),
                 metadata=design_df_filtered,
-                design=design_clean,
+                design=fixed if fixed.startswith("~") else f"~{fixed}",
                 refit_cooks=True,
                 size_factors_fit_type="poscounts",
             )
 
-            _check_residual_df(dds.obsm["design_matrix"], design)  # type: ignore[arg-type]
+            design_matrix = cast_frame(dds.obsm["design_matrix"])
+            _check_residual_df(design_matrix, design)
             dds.deseq2()
 
-            if model_contrasts is not None and "-" in model_contrasts:
-                if "(" in model_contrasts or "+" in model_contrasts.split("-")[1]:
-                    raise ValueError(
-                        f"Complex contrasts like '{model_contrasts}' are not supported by pydeseq2. "
-                        "Use simple pairwise contrasts (e.g., 'GroupA-GroupB') or switch to solver='edger'."
-                    )
-
-                parts = model_contrasts.split("-")
-                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
-                group1 = parts[0].replace(factor_name, "").strip()
-                group2 = parts[1].replace(factor_name, "").strip()
-                if factor_name not in design_df_filtered.columns:
-                    raise ValueError(
-                        f"Contrast factor {factor_name!r} is not a column of the design dataframe. "
-                        f"Available columns: {list(design_df_filtered.columns)}."
-                    )
-                if not isinstance(design_df_filtered[factor_name].dtype, pd.CategoricalDtype):
-                    design_df_filtered[factor_name] = design_df_filtered[factor_name].astype("category")
-                available_levels = list(design_df_filtered[factor_name].cat.categories)
-                missing = [g for g in (group1, group2) if g not in available_levels]
-                if missing:
-                    raise ValueError(
-                        f"Contrast levels {missing!r} not found in factor {factor_name!r}. "
-                        f"Available levels: {available_levels}. "
-                        f"Contrasts must follow the form '{factor_name}<level_a>-{factor_name}<level_b>' "
-                        "with both levels present in the data."
-                    )
-                stat_res = DeseqStats(dds, contrast=[factor_name, group1, group2])
-            else:
-                factor_name = design_clean.replace("~", "").split("+")[-1].strip()
-                if not isinstance(design_df_filtered[factor_name], pd.CategoricalDtype):
-                    design_df_filtered[factor_name] = design_df_filtered[factor_name].astype("category")
-                categories = design_df_filtered[factor_name].cat.categories
-                stat_res = DeseqStats(dds, contrast=[factor_name, categories[-1], categories[0]])
-
+            contrast = (
+                _contrast_vector(list(design_matrix.columns), model_contrasts)
+                if model_contrasts is not None
+                else np.eye(design_matrix.shape[1])[-1]
+            )
+            stat_res = DeseqStats(dds, contrast=contrast)
             stat_res.summary()
             res = stat_res.results_df
 

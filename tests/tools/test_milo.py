@@ -70,6 +70,13 @@ def test_make_nhoods_sizes(adata, milo):
     assert knn_graph.sum(0).min() <= adata.obsm["nhoods"].sum(0).min()
 
 
+def test_make_nhoods_contains_index_cells(adata, milo):
+    adata = adata.copy()
+    milo.make_nhoods(adata)
+    index_cells = np.flatnonzero(adata.obs["nhood_ixs_refined"] == 1)
+    assert np.all(np.asarray(adata.obsm["nhoods"][index_cells, np.arange(len(index_cells))]) == 1)
+
+
 def test_make_nhoods_neighbors_key(adata, milo):
     adata = adata.copy()
     k = adata.uns["neighbors"]["params"]["n_neighbors"]
@@ -229,6 +236,49 @@ def test_da_nhoods_default_contrast(da_nhoods_mdata, milo, solver):
 
     assert np.corrcoef(contr_results["SpatialFDR"], default_results["SpatialFDR"])[0, 1] > 0.99
     assert np.corrcoef(contr_results["logFC"], default_results["logFC"])[0, 1] > 0.99
+
+
+@pytest.fixture
+def three_condition_mdata(adata, milo):
+    adata = adata.copy()
+    milo.make_nhoods(adata)
+    rng = np.random.default_rng(seed=42)
+    conditions = ["ConditionA", "ConditionB", "ConditionC"]
+    adata.obs["condition"] = rng.choice(conditions, size=adata.n_obs)
+    da_cells = adata.obs["louvain"] == "1"
+    adata.obs.loc[da_cells, "condition"] = rng.choice(conditions, size=da_cells.sum(), p=[0.1, 0.8, 0.1])
+    adata.obs["replicate"] = rng.choice(["R1", "R2", "R3"], size=adata.n_obs)
+    adata.obs["sample"] = adata.obs["replicate"] + adata.obs["condition"]
+    return milo.count_nhoods(adata, sample_col="sample")
+
+
+def test_da_nhoods_contrast_of_single_coefficient(three_condition_mdata, milo, solver):
+    """A contrast naming a single coefficient tests that coefficient instead of the last level of the design."""
+    mdata = three_condition_mdata
+    index_cells = mdata["milo"].var["index_cell"]
+    enriched = (mdata["rna"].obs.loc[index_cells, "louvain"] == "1").to_numpy()
+
+    milo.da_nhoods(mdata, design="~replicate+condition", model_contrasts="conditionConditionB", solver=solver)
+    b_vs_a = mdata["milo"].var["logFC"].to_numpy()
+    milo.da_nhoods(mdata, design="~replicate+condition", model_contrasts="conditionConditionC", solver=solver)
+    c_vs_a = mdata["milo"].var["logFC"].to_numpy()
+
+    assert np.nanmean(b_vs_a[enriched]) > 1
+    assert np.nanmean(b_vs_a[enriched]) > np.nanmean(c_vs_a[enriched]) + 1
+
+
+def test_da_nhoods_continuous_covariate_per_unit(da_nhoods_mdata, milo, solver):
+    """The log fold change of a continuous covariate is per unit, so rescaling the covariate rescales it."""
+    mdata = da_nhoods_mdata.copy()
+    obs = mdata["rna"].obs
+    obs["dose"] = (obs["condition"] == "ConditionB") + obs["replicate"].str[1].astype(float) / 10
+
+    milo.da_nhoods(mdata, design="~dose", solver=solver)
+    per_unit = mdata["milo"].var["logFC"].to_numpy()
+    obs["dose"] *= 10
+    milo.da_nhoods(mdata, design="~dose", solver=solver)
+
+    np.testing.assert_allclose(mdata["milo"].var["logFC"].to_numpy() * 10, per_unit, rtol=1e-3, atol=1e-3)
 
 
 @pytest.mark.skipif(find_spec("formulaic_contrasts") is None, reason="formulaic-contrasts not available")
