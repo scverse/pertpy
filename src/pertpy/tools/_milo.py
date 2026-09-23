@@ -224,7 +224,7 @@ class Milo:
         refined_vertices = np.unique(refined_vertices)
         refined_vertices.sort()
 
-        knn_graph.setdiag(1)  # type: ignore[union-attr, operator]
+        knn_graph.setdiag(1)  # type: ignore[union-attr]
         nhoods = knn_graph[:, refined_vertices]
         adata.obsm["nhoods"] = nhoods
 
