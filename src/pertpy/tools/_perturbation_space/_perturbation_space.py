@@ -764,8 +764,6 @@ class PerturbationSpace:
         missing = {target_col, dose_col, response_col}.difference(obs.columns)
         if missing:
             raise ValueError(f"Columns {sorted(missing)} do not exist in the .obs attribute.")
-        if obs[target_col].isna().any():
-            raise ValueError("Perturbation labels must not be missing.")
         doses = obs[dose_col].to_numpy(dtype=float)
         responses = obs[response_col].to_numpy(dtype=float)
         if (doses < 0).any():
