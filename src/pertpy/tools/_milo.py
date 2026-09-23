@@ -34,20 +34,22 @@ from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
 from sklearn.metrics.pairwise import euclidean_distances
 
 
-def _contrast_vector(columns: list[str], model_contrasts: str) -> np.ndarray:
+def _contrast_vector(columns: list[str], model_contrasts: str, reference_levels: Collection[str] = ()) -> np.ndarray:
     """Turn an R style contrast such as ``conditionB-conditionA`` into weights over formulaic design columns.
 
     Formulaic names a coefficient ``condition[T.B]`` where R names it ``conditionB``, so the columns are matched on their R spelling.
+    A term naming a reference level in ``reference_levels`` has no coefficient under treatment coding and weighs zero.
     """
     r_names = {column.replace("[T.", "").replace("[", "").replace("]", ""): column for column in columns}
     weights = pd.Series(0.0, index=columns)
     for sign, term in re.findall(r"([+-]?)\s*([^+-]+)", model_contrasts):
         name = term.strip()
-        if name not in r_names:
+        if name in r_names:
+            weights[r_names[name]] += -1.0 if sign == "-" else 1.0
+        elif name not in reference_levels:
             raise ValueError(
                 f"Contrast term {name!r} does not match any coefficient of the design. Available: {sorted(r_names)}."
             )
-        weights[r_names[name]] += -1.0 if sign == "-" else 1.0
     return weights.to_numpy()
 
 
@@ -442,6 +444,10 @@ class Milo:
                 design_df[column] = design_df[column].cat.remove_unused_categories()
 
         fixed = fixed_design if add_intercept and model_contrasts is None else fixed_design + " + 0"
+        reference_levels = {
+            f"{column}{design_df[column].astype('category').cat.categories[0]}"
+            for column in design_df.select_dtypes(exclude="number").columns
+        }
         if random_effects:
             if find_spec("formulaic_contrasts") is None:
                 raise ImportError(
@@ -459,7 +465,7 @@ class Milo:
                 np.asarray(design_matrix, dtype=float),
                 random_effect_matrices(design_df, random_effects),
                 np.log(lib_size_filtered),
-                contrast=_contrast_vector(list(design_matrix.columns), model_contrasts)
+                contrast=_contrast_vector(list(design_matrix.columns), model_contrasts, reference_levels)
                 if model_contrasts is not None
                 else None,
                 reml=reml,
@@ -581,7 +587,7 @@ class Milo:
             dds.deseq2()
 
             contrast = (
-                _contrast_vector(list(design_matrix.columns), model_contrasts)
+                _contrast_vector(list(design_matrix.columns), model_contrasts, reference_levels)
                 if model_contrasts is not None
                 else np.eye(design_matrix.shape[1])[-1]
             )

@@ -267,6 +267,20 @@ def test_da_nhoods_contrast_of_single_coefficient(three_condition_mdata, milo, s
     assert np.nanmean(b_vs_a[enriched]) > np.nanmean(c_vs_a[enriched]) + 1
 
 
+def test_da_nhoods_contrast_against_reference_level(three_condition_mdata, milo):
+    """The reference level has no coefficient, so subtracting it leaves the contrast unchanged."""
+    mdata = three_condition_mdata
+    milo.da_nhoods(mdata, design="~replicate+condition", model_contrasts="conditionConditionB", solver="pydeseq2")
+    coefficient = mdata["milo"].var["logFC"].to_numpy()
+    milo.da_nhoods(
+        mdata,
+        design="~replicate+condition",
+        model_contrasts="conditionConditionB-conditionConditionA",
+        solver="pydeseq2",
+    )
+    np.testing.assert_allclose(mdata["milo"].var["logFC"].to_numpy(), coefficient)
+
+
 def test_da_nhoods_continuous_covariate_per_unit(da_nhoods_mdata, milo, solver):
     """The log fold change of a continuous covariate is per unit, so rescaling the covariate rescales it."""
     mdata = da_nhoods_mdata.copy()
