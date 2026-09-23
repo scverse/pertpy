@@ -675,9 +675,7 @@ class PerturbationSpace:
             kwargs: Passed to :meth:`~pertpy.tools.Distance.onesided_distances`.
 
         Returns:
-            AnnData with one observation per (perturbation, dose) group other than ``reference_key``, sorted by perturbation then dose.
-            ``X`` holds the group mean of the chosen representation.
-            `.obs` holds the ``distance`` and every `.obs` column that is constant within each group, including ``target_col`` and ``dose_col``.
+            AnnData with one observation per non-reference (perturbation, dose) group, holding the group mean in ``X`` and the ``distance`` in `.obs`.
 
         Examples:
             >>> import pertpy as pt
@@ -732,26 +730,17 @@ class PerturbationSpace:
     ) -> None:
         """Fit a four-parameter Hill curve for each perturbation.
 
-        ``adata`` holds one observation per perturbation and dose or per replicate, such as the output of :meth:`dose_response` or assay measurements stored in `.obs`.
-        It does not perform biological or control normalization.
-        Perturbations whose curve cannot be fit are reported with a warning and NaN parameters.
+        Perturbations whose curve cannot be fit get a warning and NaN parameters.
 
         Args:
-            adata: AnnData with perturbation, dose and response columns in `.obs`.
+            adata: AnnData with one observation per dose or replicate, such as the output of :meth:`dose_response`.
             target_col: `.obs` column identifying the perturbation.
             dose_col: `.obs` column containing non-negative numeric doses.
             response_col: `.obs` column containing the scalar response to fit.
             key_added: Prefix of the `.obs` columns the results are written to.
 
         Returns:
-            Adds ``{key_added}_fitted`` with the fitted response of every observation to `.obs`.
-            Also adds the per-perturbation parameters, repeated across each perturbation's observations: the fitted response at zero dose (``_e0``), the asymptotic response (``_emax``), the Hill slope (``_slope``), ``_ec50``, its approximate standard error (``_ec50_se``), R-squared (``_r_squared``) and whether EC50 lies within the tested positive-dose range (``_ec50_in_range``).
-
-        Notes:
-            EC50 is the relative midpoint between the fitted ``e0`` and ``emax``.
-            :meth:`dose_response` does not return the reference group, so ``e0`` is extrapolated below the lowest tested dose unless ``adata`` contains zero doses.
-            The standard error uses a local linear approximation and is NaN, with a warning, if the parameters are not identifiable from the data.
-            A small standard error, high R-squared or an in-range EC50 does not establish that the doses capture both plateaus.
+            Adds the fitted response and the per-perturbation ``e0``, ``emax``, ``slope``, ``ec50``, ``ec50_se``, ``r_squared`` and ``ec50_in_range`` to `.obs`, prefixed with ``key_added``.
 
         Examples:
             >>> import pertpy as pt
