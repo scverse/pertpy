@@ -5,6 +5,7 @@ import scanpy as sc
 from anndata import AnnData
 
 import pertpy as pt
+from pertpy._types import cast_frame
 
 
 @pytest.fixture
@@ -79,19 +80,33 @@ def test_dose_response(rng, categorical_doses):
     X = np.tile(rng.normal(0, 0.3, (15, 8)), (len(groups) // 15, 1))
     drug_doses = doses[groups == "drug"]
     X[groups == "drug"] += (5 * drug_doses**1.2 / (10**1.2 + drug_doses**1.2))[:, None]
-    adata = AnnData(X, obs=pd.DataFrame({"perturbation": groups, "dose": doses}))
+    adata = AnnData(X, obs=pd.DataFrame({"perturbation": groups, "dose": doses, "line": "A549"}))
     if categorical_doses:
         adata.obs["dose"] = pd.Categorical(adata.obs["dose"].astype(str))
     sc.pp.pca(adata, n_comps=5)
 
-    curves = pt.tl.PseudobulkSpace().dose_response(adata, dose_col="dose", metric="euclidean", embedding_key="X_pca")
-    drug = curves[curves["perturbation"] == "drug"].sort_values("dose")
-    assert drug["distance"].is_monotonic_increasing
+    ps = pt.tl.PseudobulkSpace()
+    dose_adata = ps.dose_response(adata, dose_col="dose", metric="euclidean", embedding_key="X_pca")
+    assert dose_adata.shape == (6, 5)
+    assert dose_adata.obs["dose"].tolist() == [0.1, 1.0, 3.0, 10.0, 30.0, 100.0]
+    assert (dose_adata.obs["line"] == "A549").all()
+    assert dose_adata.obs["distance"].is_monotonic_increasing
 
-    fits = pt.tl.PseudobulkSpace().fit_dose_response(curves)
-    assert fits.loc[0, "ec50"] == pytest.approx(10, rel=1e-4)
-    assert fits.loc[0, "r_squared"] > 0.99
-    assert fits.loc[0, "midpoint_in_range"]
+    ps.fit_dose_response(dose_adata)
+    assert dose_adata.obs["hill_ec50"].iloc[0] == pytest.approx(10, rel=1e-4)
+    assert dose_adata.obs["hill_r_squared"].iloc[0] > 0.99
+    assert dose_adata.obs["hill_ec50_in_range"].all()
+    np.testing.assert_allclose(dose_adata.obs["hill_fitted"], dose_adata.obs["distance"], rtol=1e-3)
+
+
+def _assay(data: pd.DataFrame) -> AnnData:
+    return AnnData(obs=data.reset_index(drop=True).rename(index=str))
+
+
+def _fits(adata: AnnData, target_col: str = "perturbation") -> pd.DataFrame:
+    obs = cast_frame(adata.obs)
+    cols = [col for col in obs.columns.astype(str) if col.startswith("hill_") and col != "hill_fitted"]
+    return obs.drop_duplicates(target_col).set_index(target_col)[cols]
 
 
 @pytest.mark.parametrize(("e0", "emax", "midpoint"), [(0.1, 1.8, 3.0), (1.0, 0.05, 8.0)])
@@ -99,30 +114,32 @@ def test_dose_response(rng, categorical_doses):
 def test_fit_dose_response(e0, emax, midpoint, response_scale):
     e0, emax = e0 * response_scale, emax * response_scale
     doses = np.array([0.0, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0])
-    hill_coefficient = 1.4
+    slope = 1.4
 
     def hill(ec50):
-        return e0 + (emax - e0) * doses**hill_coefficient / (ec50**hill_coefficient + doses**hill_coefficient)
+        return e0 + (emax - e0) * doses**slope / (ec50**slope + doses**slope)
 
-    data = pd.concat(
-        [
-            pd.DataFrame({"compound": "drug_a", "concentration": doses, "response": hill(midpoint)}),
-            pd.DataFrame({"compound": "drug_b", "concentration": doses, "response": hill(2 * midpoint)}),
-        ]
+    adata = _assay(
+        pd.concat(
+            [
+                pd.DataFrame({"compound": "drug_a", "concentration": doses, "response": hill(midpoint)}),
+                pd.DataFrame({"compound": "drug_b", "concentration": doses, "response": hill(2 * midpoint)}),
+            ]
+        )
     )
-    fits = (
-        pt.tl.PseudobulkSpace()
-        .fit_dose_response(data, perturbation_col="compound", dose_col="concentration", response_col="response")
-        .set_index("compound")
+    pt.tl.PseudobulkSpace().fit_dose_response(
+        adata, target_col="compound", dose_col="concentration", response_col="response"
     )
+    fits = _fits(adata, "compound")
 
-    assert fits.loc["drug_a", "e0"] == pytest.approx(e0, rel=1e-6, abs=0)
-    assert fits.loc["drug_a", "emax"] == pytest.approx(emax, rel=1e-6, abs=0)
-    assert fits.loc["drug_a", "hill_coefficient"] == pytest.approx(hill_coefficient)
-    assert fits.loc["drug_a", "ec50"] == pytest.approx(midpoint)
-    assert fits.loc["drug_b", "ec50"] == pytest.approx(2 * midpoint)
-    assert fits.loc["drug_a", "r_squared"] == pytest.approx(1)
-    assert np.isfinite(fits["ec50_standard_error"]).all()
+    assert fits.loc["drug_a", "hill_e0"] == pytest.approx(e0, rel=1e-6, abs=0)
+    assert fits.loc["drug_a", "hill_emax"] == pytest.approx(emax, rel=1e-6, abs=0)
+    assert fits.loc["drug_a", "hill_slope"] == pytest.approx(slope)
+    assert fits.loc["drug_a", "hill_ec50"] == pytest.approx(midpoint)
+    assert fits.loc["drug_b", "hill_ec50"] == pytest.approx(2 * midpoint)
+    assert fits.loc["drug_a", "hill_r_squared"] == pytest.approx(1)
+    assert np.isfinite(fits["hill_ec50_se"]).all()
+    np.testing.assert_allclose(adata.obs["hill_fitted"], adata.obs["response"], rtol=1e-6)
 
 
 @pytest.mark.parametrize("response_scale", [1.0, 100.0])
@@ -131,18 +148,19 @@ def test_fit_dose_response_rank_deficient(response_scale):
     responses = doses / (10 + doses) + np.random.default_rng(2026).normal(0, 0.025, len(doses))
     complete = pd.DataFrame({"perturbation": "complete", "dose": doses, "distance": response_scale * responses})
     limited = complete.loc[complete["dose"] <= 3].assign(perturbation="limited")
+    adata = _assay(pd.concat([complete, limited]))
 
     with pytest.warns(UserWarning, match="Cannot estimate.*'limited'"):
-        fits = pt.tl.PseudobulkSpace().fit_dose_response(pd.concat([complete, limited]))
-    fits = fits.set_index("perturbation")
+        pt.tl.PseudobulkSpace().fit_dose_response(adata)
+    fits = _fits(adata)
 
-    assert fits.loc["complete", "ec50"] == pytest.approx(10, rel=0.1)
-    assert np.isfinite(fits.loc["complete", "ec50_standard_error"])
+    assert fits.loc["complete", "hill_ec50"] == pytest.approx(10, rel=0.1)
+    assert np.isfinite(fits.loc["complete", "hill_ec50_se"])
     # A high R-squared and an in-range midpoint do not expose this poorly determined curve.
-    assert fits.loc["limited", "r_squared"] > 0.98
-    assert fits.loc["limited", "midpoint_in_range"]
-    assert np.isfinite(fits.loc["limited", "ec50"])
-    assert np.isnan(fits.loc["limited", "ec50_standard_error"])
+    assert fits.loc["limited", "hill_r_squared"] > 0.98
+    assert fits.loc["limited", "hill_ec50_in_range"]
+    assert np.isfinite(fits.loc["limited", "hill_ec50"])
+    assert np.isnan(fits.loc["limited", "hill_ec50_se"])
 
 
 @pytest.mark.parametrize("response_scale", [1e-8, 1.0, 1e8])
@@ -150,29 +168,31 @@ def test_fit_dose_response_standard_error(response_scale):
     doses = np.array([0.0, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0])
     responses = doses / (10 + doses) + np.random.default_rng(2026).normal(0, 0.025, len(doses))
     responses *= response_scale
-    data = pd.DataFrame({"perturbation": "drug", "dose": doses, "distance": responses})
-    fit = pt.tl.PseudobulkSpace().fit_dose_response(data).iloc[0]
+    adata = _assay(pd.DataFrame({"perturbation": "drug", "dose": doses, "distance": responses}))
+    pt.tl.PseudobulkSpace().fit_dose_response(adata)
+    fit = _fits(adata).iloc[0]
 
     # Independent derivatives with respect to EC50 itself, rather than the fitted log(EC50).
-    midpoint, slope = fit["ec50"], fit["hill_coefficient"]
+    midpoint, slope = fit["hill_ec50"], fit["hill_slope"]
     fraction = doses**slope / (midpoint**slope + doses**slope)
     log_ratio = np.zeros_like(doses)
     np.log(doses / midpoint, out=log_ratio, where=doses > 0)
-    sensitivity = (fit["emax"] - fit["e0"]) * fraction * (1 - fraction)
+    sensitivity = (fit["hill_emax"] - fit["hill_e0"]) * fraction * (1 - fraction)
     jacobian = np.column_stack((1 - fraction, fraction, -slope * sensitivity / midpoint, sensitivity * log_ratio))
-    residuals = responses - (fit["e0"] + (fit["emax"] - fit["e0"]) * fraction)
+    residuals = responses - (fit["hill_e0"] + (fit["hill_emax"] - fit["hill_e0"]) * fraction)
     variance = np.sum(residuals**2) / (len(doses) - 4)
     expected_error = np.sqrt(np.linalg.inv(jacobian.T @ jacobian)[2, 2] * variance)
-    assert fit["ec50_standard_error"] == pytest.approx(expected_error, rel=1e-4)
+    assert fit["hill_ec50_se"] == pytest.approx(expected_error, rel=1e-4)
 
 
 def test_fit_dose_response_insufficient_dof():
     doses = np.array([0.0, 1.0, 10.0, 100.0])
-    data = pd.DataFrame({"perturbation": "drug", "dose": doses, "distance": doses / (10 + doses)})
+    adata = _assay(pd.DataFrame({"perturbation": "drug", "dose": doses, "distance": doses / (10 + doses)}))
     with pytest.warns(UserWarning, match="Cannot estimate.*'drug'"):
-        fit = pt.tl.PseudobulkSpace().fit_dose_response(data).iloc[0]
-    assert fit["ec50"] == pytest.approx(10)
-    assert np.isnan(fit["ec50_standard_error"])
+        pt.tl.PseudobulkSpace().fit_dose_response(adata)
+    fit = _fits(adata).iloc[0]
+    assert fit["hill_ec50"] == pytest.approx(10)
+    assert np.isnan(fit["hill_ec50_se"])
 
 
 @pytest.mark.parametrize(
@@ -181,24 +201,28 @@ def test_fit_dose_response_insufficient_dof():
 )
 def test_fit_dose_response_unfittable(doses, responses, match):
     good_doses = np.array([0.0, 0.1, 1.0, 3.0, 10.0, 30.0, 100.0])
-    data = pd.concat(
-        [
-            pd.DataFrame({"perturbation": "good", "dose": good_doses, "distance": good_doses / (10 + good_doses)}),
-            pd.DataFrame({"perturbation": "bad", "dose": doses, "distance": responses}),
-        ]
+    adata = _assay(
+        pd.concat(
+            [
+                pd.DataFrame({"perturbation": "good", "dose": good_doses, "distance": good_doses / (10 + good_doses)}),
+                pd.DataFrame({"perturbation": "bad", "dose": doses, "distance": responses}),
+            ]
+        )
     )
     with pytest.warns(UserWarning, match=f"'bad'.*{match}"):
-        fits = pt.tl.PseudobulkSpace().fit_dose_response(data).set_index("perturbation")
+        pt.tl.PseudobulkSpace().fit_dose_response(adata)
+    fits = _fits(adata)
 
-    assert fits.loc["good", "ec50"] == pytest.approx(10)
-    assert fits.loc["bad"].drop("midpoint_in_range").isna().all()
-    assert not fits.loc["bad", "midpoint_in_range"]
+    assert fits.loc["good", "hill_ec50"] == pytest.approx(10)
+    assert fits.loc["bad"].drop("hill_ec50_in_range").isna().all()
+    assert not fits.loc["bad", "hill_ec50_in_range"]
+    assert adata.obs.loc[adata.obs["perturbation"] == "bad", "hill_fitted"].isna().all()
 
 
 @pytest.mark.parametrize(
     ("data", "match"),
     [
-        (pd.DataFrame(), "Columns"),
+        (pd.DataFrame({"perturbation": ["drug"] * 4, "dose": [0, 1, 2, 3]}), "Columns"),
         (
             pd.DataFrame(
                 {"perturbation": ["drug", "drug", None, "drug"], "dose": [0, 1, 2, 3], "distance": [0, 1, 2, 3]}
@@ -210,4 +234,4 @@ def test_fit_dose_response_unfittable(doses, responses, match):
 )
 def test_fit_dose_response_validation(data, match):
     with pytest.raises(ValueError, match=match):
-        pt.tl.PseudobulkSpace().fit_dose_response(data)
+        pt.tl.PseudobulkSpace().fit_dose_response(_assay(data))

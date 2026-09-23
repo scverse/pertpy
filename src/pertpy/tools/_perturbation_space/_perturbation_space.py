@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
+import scanpy as sc
 from anndata import AnnData
 from scipy.optimize import curve_fit
 from scipy.special import expit
@@ -142,11 +143,11 @@ def _fit_hill(doses: np.ndarray, responses: np.ndarray) -> dict[str, float | boo
     return {
         "e0": float(e0 * response_scale + response_offset),
         "emax": float(emax * response_scale + response_offset),
-        "hill_coefficient": float(hill_coefficient),
+        "slope": float(hill_coefficient),
         "ec50": midpoint,
-        "ec50_standard_error": float(midpoint_standard_error),
+        "ec50_se": float(midpoint_standard_error),
         "r_squared": 1 - residual_sum_squares / total_sum_squares,
-        "midpoint_in_range": bool(positive_doses.min() < midpoint < positive_doses.max()),
+        "ec50_in_range": bool(positive_doses.min() < midpoint < positive_doses.max()),
     }
 
 
@@ -657,7 +658,7 @@ class PerturbationSpace:
         layer_key: str | None = None,
         embedding_key: str | None = None,
         **kwargs,
-    ) -> pd.DataFrame:
+    ) -> AnnData:
         """Quantify the effect size of each perturbation as a function of dose.
 
         For every (perturbation, dose) group the statistical distance to ``reference_key`` is computed in the chosen representation using :class:`~pertpy.tools.Distance`.
@@ -674,13 +675,15 @@ class PerturbationSpace:
             kwargs: Passed to :meth:`~pertpy.tools.Distance.onesided_distances`.
 
         Returns:
-            Tidy DataFrame with ``perturbation``, ``dose`` and ``distance`` columns, sorted by perturbation then dose.
+            AnnData with one observation per (perturbation, dose) group other than ``reference_key``, sorted by perturbation then dose.
+            ``X`` holds the group mean of the chosen representation.
+            `.obs` holds the ``distance`` and every `.obs` column that is constant within each group, including ``target_col`` and ``dose_col``.
 
         Examples:
             >>> import pertpy as pt
             >>> adata = pt.dt.srivatsan_2020_sciplex2()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> curves = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
+            >>> dose_adata = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
         """
         for col in (target_col, dose_col):
             if col not in adata.obs:
@@ -702,45 +705,51 @@ class PerturbationSpace:
         if isinstance(dists, tuple):
             dists = dists[0]
 
-        records = []
-        for label, value in dists.items():
-            if label == reference_key:
-                continue
-            perturbation, _, dose = str(label).partition(sep)
-            records.append({"perturbation": perturbation, "dose": dose, "distance": float(value)})
-        result = pd.DataFrame.from_records(records)
+        treated = grouped[~is_control].copy()
+        treated.obs["_dose_group"] = treated.obs["_dose_group"].cat.remove_unused_categories()
+        dose_adata = sc.get.aggregate(treated, by="_dose_group", func="mean", layer=layer_key, obsm=embedding_key)
+        dose_adata.X = dose_adata.layers.pop("mean")
+        _carry_constant_obs(dose_adata, cast_frame(treated.obs), "_dose_group")
+        dose_obs = cast_frame(dose_adata.obs)
+        dose_adata.obs["distance"] = dists.reindex(dose_obs["_dose_group"].astype(str)).to_numpy(dtype=float)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with contextlib.suppress(ValueError, TypeError):
-                result["dose"] = pd.to_numeric(result["dose"])
-        return result.sort_values(["perturbation", "dose"]).reset_index(drop=True)
+                dose_adata.obs[dose_col] = pd.to_numeric(dose_obs[dose_col].astype(str))
+        dose_adata.obs = cast_frame(dose_adata.obs).drop(columns="_dose_group")
+        dose_adata.obs_names = dose_adata.obs_names.str.replace(sep, "_")
+        order = cast_frame(dose_adata.obs).sort_values([target_col, dose_col]).index
+        return dose_adata[order].copy()
 
     def fit_dose_response(
         self,
-        data: pd.DataFrame,
+        adata: AnnData,
         *,
-        perturbation_col: str = "perturbation",
+        target_col: str = "perturbation",
         dose_col: str = "dose",
         response_col: str = "distance",
-    ) -> pd.DataFrame:
+        key_added: str = "hill",
+    ) -> None:
         """Fit a four-parameter Hill curve for each perturbation.
 
-        ``data`` can be the output of :meth:`dose_response` or a table containing another scalar assay response.
+        ``adata`` holds one observation per perturbation and dose or per replicate, such as the output of :meth:`dose_response` or assay measurements stored in `.obs`.
         It does not perform biological or control normalization.
         Perturbations whose curve cannot be fit are reported with a warning and NaN parameters.
 
         Args:
-            data: Tidy table containing perturbation, dose and response columns.
-            perturbation_col: Column identifying the perturbation.
-            dose_col: Column containing non-negative numeric doses.
-            response_col: Column containing the scalar response to fit.
+            adata: AnnData with perturbation, dose and response columns in `.obs`.
+            target_col: `.obs` column identifying the perturbation.
+            dose_col: `.obs` column containing non-negative numeric doses.
+            response_col: `.obs` column containing the scalar response to fit.
+            key_added: Prefix of the `.obs` columns the results are written to.
 
         Returns:
-            DataFrame with one row per perturbation containing the fitted response at zero dose (``e0``), the asymptotic response (``emax``), the Hill coefficient, ``ec50``, its approximate standard error, R-squared and whether ``ec50`` lies within the tested positive-dose range.
+            Adds ``{key_added}_fitted`` with the fitted response of every observation to `.obs`.
+            Also adds the per-perturbation parameters, repeated across each perturbation's observations: the fitted response at zero dose (``_e0``), the asymptotic response (``_emax``), the Hill slope (``_slope``), ``_ec50``, its approximate standard error (``_ec50_se``), R-squared (``_r_squared``) and whether EC50 lies within the tested positive-dose range (``_ec50_in_range``).
 
         Notes:
             EC50 is the relative midpoint between the fitted ``e0`` and ``emax``.
-            :meth:`dose_response` does not return the reference group, so ``e0`` is extrapolated below the lowest tested dose unless ``data`` contains zero doses.
+            :meth:`dose_response` does not return the reference group, so ``e0`` is extrapolated below the lowest tested dose unless ``adata`` contains zero doses.
             The standard error uses a local linear approximation and is NaN, with a warning, if the parameters are not identifiable from the data.
             A small standard error, high R-squared or an in-range EC50 does not establish that the doses capture both plateaus.
 
@@ -748,44 +757,50 @@ class PerturbationSpace:
             >>> import pertpy as pt
             >>> adata = pt.dt.srivatsan_2020_sciplex2()
             >>> ps = pt.tl.PseudobulkSpace()
-            >>> responses = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
-            >>> fits = ps.fit_dose_response(responses)
+            >>> dose_adata = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
+            >>> ps.fit_dose_response(dose_adata, dose_col="dose_value")
         """
-        missing = {perturbation_col, dose_col, response_col}.difference(data.columns)
+        obs = cast_frame(adata.obs)
+        missing = {target_col, dose_col, response_col}.difference(obs.columns)
         if missing:
-            raise ValueError(f"Columns {sorted(missing)} do not exist in the input data.")
-        fit_data = data[[perturbation_col, dose_col, response_col]].copy()
-        if fit_data[perturbation_col].isna().any():
+            raise ValueError(f"Columns {sorted(missing)} do not exist in the .obs attribute.")
+        if obs[target_col].isna().any():
             raise ValueError("Perturbation labels must not be missing.")
-        fit_data[dose_col] = pd.to_numeric(fit_data[dose_col], errors="raise")
-        fit_data[response_col] = pd.to_numeric(fit_data[response_col], errors="raise")
-        if (fit_data[dose_col] < 0).any():
+        doses = obs[dose_col].to_numpy(dtype=float)
+        responses = obs[response_col].to_numpy(dtype=float)
+        if (doses < 0).any():
             raise ValueError("Dose values must be non-negative.")
 
-        records: list[dict[str, object]] = []
-        for perturbation, group in fit_data.groupby(perturbation_col, observed=True, sort=True):
-            doses = group[dose_col].to_numpy(dtype=float)
-            responses = group[response_col].to_numpy(dtype=float)
+        labels = obs[target_col].to_numpy()
+        fitted = np.full(len(obs), np.nan)
+        records: dict[object, dict[str, float | bool]] = {}
+        for perturbation in pd.unique(labels):
+            mask = labels == perturbation
             try:
-                fit = _fit_hill(doses, responses)
+                fit = _fit_hill(doses[mask], responses[mask])
             except (ValueError, RuntimeError) as e:
                 warnings.warn(
                     f"Cannot fit a Hill curve for perturbation {perturbation!r}: {e}", UserWarning, stacklevel=2
                 )
-                fit = dict.fromkeys(
-                    ("e0", "emax", "hill_coefficient", "ec50", "ec50_standard_error", "r_squared"), np.nan
+                fit = dict.fromkeys(("e0", "emax", "slope", "ec50", "ec50_se", "r_squared"), np.nan)
+                fit["ec50_in_range"] = False
+            else:
+                fitted[mask] = _four_parameter_logistic(
+                    doses[mask], fit["e0"], fit["emax"], np.log(fit["ec50"]), fit["slope"]
                 )
-                fit["midpoint_in_range"] = False
-            if np.isnan(fit["ec50_standard_error"]) and np.isfinite(fit["ec50"]):
-                warnings.warn(
-                    f"Cannot estimate the EC50 standard error for perturbation {perturbation!r}. "
-                    "Inspect the dose range and fitted curve before interpreting the estimate.",
-                    UserWarning,
-                    stacklevel=2,
-                )
-            records.append({perturbation_col: perturbation, **fit})
+                if np.isnan(fit["ec50_se"]):
+                    warnings.warn(
+                        f"Cannot estimate the EC50 standard error for perturbation {perturbation!r}. "
+                        "Inspect the dose range and fitted curve before interpreting the estimate.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+            records[perturbation] = fit
 
-        return pd.DataFrame.from_records(records)
+        fits = pd.DataFrame.from_dict(records, orient="index")
+        adata.obs[f"{key_added}_fitted"] = fitted
+        for col in fits.columns:
+            adata.obs[f"{key_added}_{col}"] = fits[col].reindex(labels).to_numpy()
 
     def plot_similarity(  # pragma: no cover
         self,
