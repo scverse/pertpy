@@ -744,7 +744,7 @@ class PerturbationSpace:
 
         Examples:
             >>> import pertpy as pt
-            >>> adata = pt.dt.srivatsan_2020_sciplex2()
+            >>> adata = pt.ds.srivatsan_2020_sciplex2()
             >>> ps = pt.tl.PseudobulkSpace()
             >>> dose_adata = ps.dose_response(adata, dose_col="dose_value", embedding_key="X_pca")
             >>> ps.fit_dose_response(dose_adata, dose_col="dose_value")
