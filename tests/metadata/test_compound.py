@@ -42,17 +42,16 @@ def adata() -> AnnData:
 
 def test_compound_annotation(adata):
     retries = 3
-    attempt = 0
-    while attempt < retries:
+    for attempt in range(retries):
         try:
-            pt_compound.annotate_compounds(adata=adata, query_id="perturbation")
-            assert len(adata.obs.columns) == 5
-            pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
-            assert pubchemid == list(adata.obs["pubchem_ID"])
-            return
-        except PubChemHTTPError:
+            annotated = pt_compound.annotate_compounds(adata=adata, query_id="perturbation", copy=True)
+            break
+        # pubchempy turns PubChem 404s into empty results, which surface as a ValueError for no matches
+        except (PubChemHTTPError, ValueError) as e:
             if attempt == retries - 1:
-                # Should fail but it fails too often so we just let it pass
-                return
+                pytest.skip(f"PubChem unavailable: {e}")
             time.sleep(10)
-            attempt += 1
+
+    assert len(annotated.obs.columns) == 5
+    pubchemid = [5328779, 9796068, 16124208, 5280343] * NUM_CELLS_PER_ID
+    assert pubchemid == list(annotated.obs["pubchem_ID"])
