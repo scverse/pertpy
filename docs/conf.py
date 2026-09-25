@@ -118,7 +118,7 @@ html_show_sphinx = False
 add_module_names = False
 autodoc_mock_imports = ["ete4"]
 intersphinx_mapping = {
-    "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
+    "anndata": ("https://anndata.scverse.org/en/stable/", None),
     "decoupler": ("https://decoupler.readthedocs.io/en/latest/", None),
     "mudata": ("https://mudata.readthedocs.io/stable/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
@@ -126,7 +126,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
+    "scanpy": ("https://scanpy.scverse.org/en/stable/", None),
     "seaborn": ("https://seaborn.pydata.org/", None),
     "pyro": ("https://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),

@@ -9,7 +9,7 @@ abstract: >-
 type: software
 license: Apache-2.0
 repository-code: https://github.com/scverse/pertpy
-url: https://pertpy.readthedocs.io
+url: https://pertpy.scverse.org/
 keywords:
   - single-cell
   - perturbation

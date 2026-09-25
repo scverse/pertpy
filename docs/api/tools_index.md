@@ -62,7 +62,7 @@ EdgeR
     Fitted        yes
 ```
 
-See [differential gene expression tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/differential_gene_expression.html).
+See {doc}`/tutorials/notebooks/differential_gene_expression` tutorial.
 
 ## Pooled CRISPR screens
 
@@ -99,7 +99,7 @@ ms.lda(adata=mdata["rna"], labels="gene_target", layer="X_pert", control="NT")
 ms.plot_lda(adata=mdata["rna"], control="NT")
 ```
 
-See [perturbation efficacy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_efficacy.html).
+See {doc}`/tutorials/notebooks/perturbation_efficacy` tutorial.
 
 ### Perturbation scoring - Mixscale
 
@@ -126,7 +126,7 @@ ms.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicat
 ms.mixscale(mdata["rna"], "gene_target", "NT", layer="X_pert")
 ```
 
-See [perturbation efficacy tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_efficacy.html).
+See {doc}`/tutorials/notebooks/perturbation_efficacy` tutorial.
 
 ## Compositional analysis
 
@@ -182,7 +182,7 @@ milo.group_nhoods(mdata)
 milo.annotate_cells_from_nhoods(mdata)
 ```
 
-See [milo tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/milo.html).
+See {doc}`/tutorials/notebooks/milo` tutorial.
 
 ### With labeled groups - scCODA and tascCODA
 
@@ -232,7 +232,7 @@ sccoda.summary(sccoda_data, modality_key="coda_salm")
 sccoda.plot_effects_barplot(sccoda_data, modality_key="coda_salm", parameter="Final Parameter")
 ```
 
-See [sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda.html), [extended sccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/sccoda_extended.html) and [tasccoda tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/tasccoda.html).
+See {doc}`/tutorials/notebooks/sccoda`, {doc}`/tutorials/notebooks/sccoda_extended`, and {doc}`/tutorials/notebooks/tasccoda` tutorials.
 
 ## Multicellular and gene programs
 
@@ -285,7 +285,7 @@ dl.get_program_genes(adata, program="MCP1", celltype="CD8+ IELs")
 dl.test_phenotype_association(adata, condition_key="path_str")
 ```
 
-See [DIALOGUE tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/dialogue.html).
+See {doc}`/tutorials/notebooks/dialogue` tutorial.
 
 ### Enrichment
 
@@ -361,7 +361,7 @@ A high reversal score is a hypothesis for follow-up, not evidence of therapeutic
 In particular, a perturbation can score highly by suppressing a compensatory or protective stress response.
 Results should therefore be interpreted together with biological context and orthogonal phenotypic, viability, and toxicity measurements.
 
-See [enrichment tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/enrichment.html).
+See {doc}`/tutorials/notebooks/enrichment` tutorial.
 
 ## Distances and permutation tests
 
@@ -399,8 +399,7 @@ etest = pt.tl.DistanceTest("edistance", n_perms=1000, obsm_key="X_pca")
 tab = etest(adata, groupby="perturbation", contrast="control")
 ```
 
-See [distance tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distances.html)
-and [distance tests tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/distance_tests.html).
+See {doc}`/tutorials/notebooks/distances` and {doc}`/tutorials/notebooks/distance_tests` tutorials.
 
 ## Response prediction
 
@@ -431,7 +430,7 @@ adata, results = ag.predict(adata)
 results["summary_metrics"]
 ```
 
-See [augur tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/augur.html).
+See {doc}`/tutorials/notebooks/augur` tutorial.
 
 ```{eval-rst}
 .. autosummary::
@@ -472,7 +471,7 @@ pred, delta = scgen.predict(ctrl_key="control", stim_key="stimulated", celltype_
 pred.obs["condition"] = "pred"
 ```
 
-See [scgen tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/scgen_perturbation_prediction.html).
+See {doc}`/tutorials/notebooks/scgen_perturbation_prediction` tutorial.
 
 ### Causal perturbation analysis with CINEMA-OT
 
@@ -510,7 +509,7 @@ de = model.causaleffect(
 )
 ```
 
-See [CINEMA-OT tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/cinemaot.html).
+See {doc}`/tutorials/notebooks/cinemaot` tutorial.
 
 ## Perturbation space
 
@@ -552,7 +551,7 @@ ds_adata = ds.compute(mdata["rna"], target_col="gene_target", metric="edistance"
 similar = ds.nearest_perturbations(ds_adata, "IFNGR2", target_col="gene_target")
 ```
 
-See [perturbation space tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/perturbation_space.html).
+See {doc}`/tutorials/notebooks/perturbation_space` tutorial.
 
 ### Dose-response curve fitting
 
