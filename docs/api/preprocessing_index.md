@@ -39,4 +39,4 @@ ga.assign_by_threshold(gdo, 5, layer="counts", output_layer="assigned_guides")
 ga.plot_heatmap(gdo, layer="assigned_guides")
 ```
 
-See [guide assignment tutorial](https://pertpy.readthedocs.io/en/latest/tutorials/notebooks/guide_rna_assignment.html).
+See {doc}`/tutorials/notebooks/guide_rna_assignment` tutorial.

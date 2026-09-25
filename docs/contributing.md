@@ -5,11 +5,10 @@ We assume that you are already familiar with git and with making pull requests o
 
 For more extensive tutorials, that also cover the absolute basics,
 please refer to other resources such as the [pyopensci tutorials][],
-the [scientific Python tutorials][], or the [scanpy developer guide][].
+the [scientific Python tutorials][], or the {doc}`scanpy developer guide <scanpy:dev/index>`.
 
 [pyopensci tutorials]: https://www.pyopensci.org/learn.html
 [scientific Python tutorials]: https://learn.scientific-python.org/development/tutorials/
-[scanpy developer guide]: https://scanpy.readthedocs.io/en/latest/dev/index.html
 
 :::{tip} The *hatch* project manager
 

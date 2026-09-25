@@ -25,11 +25,11 @@ authors = [
 maintainers = [
     {name = "Lukas Heumos", email = "lukas.heumos@posteo.net"},
 ]
-urls.Documentation = "https://pertpy.readthedocs.io"
+urls.Documentation = "https://pertpy.scverse.org/"
 urls.Source = "https://github.com/scverse/pertpy"
 urls.Home-page = "https://github.com/scverse/pertpy"
 urls.Issues = "https://github.com/scverse/pertpy/issues"
-urls.Changelog = "https://pertpy.readthedocs.io/en/stable/changelog.html"
+urls.Changelog = "https://pertpy.scverse.org/page/changelog.html"
 urls.Forum = "https://discourse.scverse.org/c/ecosystem/pertpy/46"
 urls.Publication = "https://doi.org/10.1038/s41592-025-02909-7"
 

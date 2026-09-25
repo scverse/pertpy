@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/github/license/scverse/pertpy)](https://opensource.org/licenses/Apache2.0)
 [![PyPI](https://img.shields.io/pypi/v/pertpy.svg)](https://pypi.org/project/pertpy/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pertpy)](https://pypi.org/project/pertpy)
-[![Read the Docs](https://img.shields.io/readthedocs/pertpy/latest.svg?label=Read%20the%20Docs)](https://pertpy.readthedocs.io/)
+[![Read the Docs](https://img.shields.io/readthedocs/pertpy/latest.svg?label=Read%20the%20Docs)](https://pertpy.scverse.org/)
 [![Test](https://github.com/scverse/pertpy/actions/workflows/test.yml/badge.svg)](https://github.com/scverse/pertpy/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
@@ -18,7 +18,7 @@ Please read our associated manuscript ["Pertpy: an end-to-end framework for pert
 
 ## Documentation
 
-Please read the [documentation](https://pertpy.readthedocs.io/en/latest) for installation instructions, tutorials, use cases, and more.
+Please read the [documentation](https://pertpy.scverse.org/) for installation instructions, tutorials, use cases, and more.
 
 ## Installation
 
@@ -99,7 +99,7 @@ pip install rpy2
 
 [pip]: https://pip.pypa.io/
 [pypi]: https://pypi.org/
-[api]: https://pertpy.readthedocs.io/en/latest/api.html
+[api]: https://pertpy.scverse.org/page/api.html
 [conda-forge]: https://anaconda.org/conda-forge/pertpy
 [//]: # "numfocus-fiscal-sponsor-attribution"
 
