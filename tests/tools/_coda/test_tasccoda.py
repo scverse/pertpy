@@ -83,6 +83,26 @@ def test_run_nuts(smillie_adata):
     assert mdata["coda"].varm["effect_df_Health[T.Non-inflamed]"].shape == (51, 7)
 
 
+def test_run_nuts_multichain(smillie_adata):
+    # The vectorized multi-chain knob lives in the shared base class, so tascCODA benefits too.
+    mdata = tasccoda.load(
+        smillie_adata,
+        type="sample_level",
+        levels_agg=["Major_l1", "Major_l2", "Major_l3", "Major_l4", "Cluster"],
+        key_added="lineage",
+        add_level_name=True,
+    )
+    mdata = tasccoda.prepare(
+        mdata, formula="Health", reference_cell_type="automatic", tree_key="lineage", pen_args={"phi": 0}
+    )
+    tasccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, num_chains=2)
+    assert mdata["coda"].uns["scCODA_params"]["mcmc"]["num_chains"] == 2
+    assert "effect_df_Health[T.Inflamed]" in mdata["coda"].varm
+    # summary(extended=True) formats the acceptance rate, which is a per-chain array when
+    # num_chains > 1; guards against the array-vs-scalar format TypeError.
+    tasccoda.summary(mdata, extended=True)
+
+
 def test_theta_fixed_not_collapsed(smillie_adata):
     """Regression test for #1015.
 

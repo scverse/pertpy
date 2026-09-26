@@ -280,8 +280,10 @@ class CompositionalModel2(ABC):
         sample_adata: AnnData,
         kernel: npy.infer.mcmc.MCMCKernel,
         rng_key: Array,
-        copy: bool = False,
         *args,
+        copy: bool = False,
+        num_chains: int = 1,
+        chain_method: str = "vectorized",
         **kwargs,
     ):
         """Background function that executes any numpyro MCMC algorithm and processes its results.
@@ -291,6 +293,10 @@ class CompositionalModel2(ABC):
             kernel: A `numpyro.infer.mcmc.MCMCKernel` object
             rng_key: The rng state used. If None, a random state will be selected
             copy: Return a copy instead of writing to adata.
+            num_chains: Number of MCMC chains to run.
+            chain_method: How numpyro runs the chains (see ``numpyro.infer.MCMC``). The default
+                ``"vectorized"`` samples all chains on a single device, so ``num_chains`` > 1 does
+                not require additional host devices.
             args: Passed to `numpyro.infer.mcmc.MCMC`
             kwargs: Passed to `numpyro.infer.mcmc.MCMC`
 
@@ -312,8 +318,9 @@ class CompositionalModel2(ABC):
         numpyro_covariates = jnp.array(sample_adata.obsm["covariate_matrix"], dtype=dtype)
         numpyro_n_total = jnp.array(sample_adata.obsm["sample_counts"], dtype=dtype)
 
-        # Create mcmc attribute and run inference
-        self.mcmc = MCMC(kernel, *args, **kwargs)
+        # Create mcmc attribute and run inference.
+        # Default to on-device vectorized chains so num_chains > 1 needs no extra host devices.
+        self.mcmc = MCMC(kernel, *args, num_chains=num_chains, chain_method=chain_method, **kwargs)
         self.mcmc.run(
             rng_key,
             numpyro_counts,
@@ -324,10 +331,12 @@ class CompositionalModel2(ABC):
             extra_fields=extra_fields,
         )
 
-        acc_rate = np.array(self.mcmc.last_state.mean_accept_prob)
+        # Average across chains: `mean_accept_prob` is an array (one entry per chain) when
+        # num_chains > 1, which would make the scalar comparisons below ambiguous.
+        acc_rate = float(np.mean(self.mcmc.last_state.mean_accept_prob))
         if acc_rate < 0.6:
             logger.warning(
-                f"Acceptance rate unusually low ({acc_rate} < 0.5)! Results might be incorrect! "
+                f"Acceptance rate unusually low ({acc_rate} < 0.6)! Results might be incorrect! "
                 f"Please check feasibility of results and re-run the sampling step with a different rng_key if necessary."
             )
         if acc_rate > 0.95:
@@ -374,6 +383,8 @@ class CompositionalModel2(ABC):
         modality_key: str = "coda",
         num_samples: int = 10000,
         num_warmup: int = 1000,
+        num_chains: int = 1,
+        chain_method: str = "vectorized",
         rng_key: int = 0,
         copy: bool = False,
         **kwargs,
@@ -385,6 +396,9 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use.
             num_samples: Number of sampled values after burn-in.
             num_warmup: Number of burn-in (warmup) samples.
+            num_chains: Number of MCMC chains to run. Chains are sampled on a single device via
+                vectorization (see ``chain_method``), so values > 1 do not require additional host devices.
+            chain_method: How numpyro runs the chains; see ``numpyro.infer.MCMC``. Defaults to ``"vectorized"``.
             rng_key: The rng state used.
             copy: Return a copy instead of writing to adata.
             *args: Additional args passed to numpyro NUTS
@@ -422,7 +436,14 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["algorithm"] = "NUTS"
 
         return self.__run_mcmc(
-            sample_adata, nuts_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key_array, copy=copy
+            sample_adata,
+            nuts_kernel,
+            num_samples=num_samples,
+            num_warmup=num_warmup,
+            num_chains=num_chains,
+            chain_method=chain_method,
+            rng_key=rng_key_array,
+            copy=copy,
         )
 
     def run_hmc(
@@ -432,6 +453,8 @@ class CompositionalModel2(ABC):
         modality_key: str = "coda",
         num_samples: int = 20000,
         num_warmup: int = 5000,
+        num_chains: int = 1,
+        chain_method: str = "vectorized",
         rng_key=None,
         copy: bool = False,
         **kwargs,
@@ -443,6 +466,9 @@ class CompositionalModel2(ABC):
             modality_key: If data is a MuData object, specify which modality to use.
             num_samples: Number of sampled values after burn-in.
             num_warmup: Number of burn-in (warmup) samples.
+            num_chains: Number of MCMC chains to run. Chains are sampled on a single device via
+                vectorization (see ``chain_method``), so values > 1 do not require additional host devices.
+            chain_method: How numpyro runs the chains; see ``numpyro.infer.MCMC``. Defaults to ``"vectorized"``.
             rng_key: The rng state used. If None, a random state will be selected.
             copy: Return a copy instead of writing to adata.
             *args: Additional args passed to numpyro HMC
@@ -492,7 +518,14 @@ class CompositionalModel2(ABC):
         sample_adata.uns["scCODA_params"]["mcmc"]["algorithm"] = "HMC"
 
         return self.__run_mcmc(
-            sample_adata, hmc_kernel, num_samples=num_samples, num_warmup=num_warmup, rng_key=rng_key_array, copy=copy
+            sample_adata,
+            hmc_kernel,
+            num_samples=num_samples,
+            num_warmup=num_warmup,
+            num_chains=num_chains,
+            chain_method=chain_method,
+            rng_key=rng_key_array,
+            copy=copy,
         )
 
     def summary_prepare(
@@ -987,7 +1020,9 @@ class CompositionalModel2(ABC):
             table.add_row(
                 "Acceptance rate",
                 "{ar:.1f}%".format(
-                    ar=(100 * sample_adata.uns["scCODA_params"]["mcmc"]["acceptance_rate"]),
+                    # Average across chains: `acceptance_rate` is a per-chain array when
+                    # num_chains > 1, which a scalar format spec cannot render.
+                    ar=(100 * float(np.mean(sample_adata.uns["scCODA_params"]["mcmc"]["acceptance_rate"]))),
                 ),
             )
         console.print(table)
