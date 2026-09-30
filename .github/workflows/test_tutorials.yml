@@ -73,20 +73,20 @@ jobs:
               with:
                   python-version: "3.14"
             - name: Install R
-              uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
+              uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
               with:
                   r-version: "4.5.3"
                   use-public-rspm: true
 
             - name: Install R dependencies
-              uses: r-lib/actions/setup-r-dependencies@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
+              uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
               with:
                 packages: |
                   any::statmod
                   bioc::edgeR
 
             - name: Install uv
-              uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+              uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
                 enable-cache: true
                 cache-dependency-glob: pyproject.toml
