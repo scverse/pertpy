@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from fast_array_utils.conv import to_dense
 from scipy import sparse
 from scipy.optimize import curve_fit
 from scipy.special import expit
@@ -15,7 +16,7 @@ from scipy.stats import entropy
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import cast_dense, cast_frame, cast_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -33,7 +34,7 @@ def _sklearn_random_state(random_state: RandomStateLike) -> int | np.random.Rand
     return random_state
 
 
-def _resolve_matrix(adata: AnnData, *, layer_key: str | None, embedding_key: str | None) -> np.ndarray:
+def _resolve_matrix(adata: AnnData, *, layer_key: str | None, embedding_key: str | None) -> np.ndarray | CSBase:
     """Pick the cell-by-feature matrix from a layer, an obsm embedding, or ``.X``.
 
     Layer wins over embedding; both default back to ``.X``; passing both raises.
@@ -43,12 +44,14 @@ def _resolve_matrix(adata: AnnData, *, layer_key: str | None, embedding_key: str
     if layer_key is not None:
         if layer_key not in adata.layers:
             raise ValueError(f"Layer {layer_key!r} does not exist in the .layers attribute.")
-        return np.asarray(adata.layers[layer_key])
-    if embedding_key is not None:
+        matrix = adata.layers[layer_key]
+    elif embedding_key is not None:
         if embedding_key not in adata.obsm:
             raise ValueError(f"Embedding {embedding_key!r} does not exist in the .obsm attribute.")
-        return np.asarray(adata.obsm[embedding_key])
-    return np.asarray(adata.X)
+        matrix = adata.obsm[embedding_key]
+    else:
+        matrix = adata.X
+    return cast_matrix(matrix) if sparse.issparse(matrix) else np.asarray(matrix)
 
 
 def _constant_obs_per_group(obs: pd.DataFrame, group_cols: Sequence[str]) -> pd.DataFrame:
@@ -253,7 +256,7 @@ class PerturbationSpace:
 
         if layer_key:
             adata.layers[new_layer_key] = _subtract_control_mean(
-                cast_dense(adata.layers[layer_key]), control_mask, group_masks, name=new_layer_key
+                to_dense(adata.layers[layer_key]), control_mask, group_masks, name=new_layer_key
             )
 
         if embedding_key:
@@ -262,7 +265,7 @@ class PerturbationSpace:
             )
 
         if (not layer_key and not embedding_key) or all_data:
-            adata.X = _subtract_control_mean(np.asarray(adata.X), control_mask, group_masks, name="X")
+            adata.X = _subtract_control_mean(to_dense(adata.X), control_mask, group_masks, name="X")
 
         if all_data:
             for local_layer_key in [key for key in adata.layers.keys() if isinstance(key, str)]:  # noqa: SIM118
@@ -270,7 +273,7 @@ class PerturbationSpace:
                     continue
                 new_key = local_layer_key + "_control_diff"
                 adata.layers[new_key] = _subtract_control_mean(
-                    cast_dense(adata.layers[local_layer_key]), control_mask, group_masks, name=new_key
+                    to_dense(adata.layers[local_layer_key]), control_mask, group_masks, name=new_key
                 )
 
             for local_embedding_key in [key for key in adata.obsm if isinstance(key, str)]:

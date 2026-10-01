@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from fast_array_utils.conv import to_dense
 from sklearn.cluster import HDBSCAN, KMeans
 
 from pertpy._logger import logger
@@ -69,7 +70,7 @@ class CentroidSpace(PerturbationSpace):
         index = [str(key) for key in groups]
         X = np.empty((len(index), coords.shape[1]), dtype=coords.dtype)
         for pert_index, row_idx in enumerate(groups.values()):
-            points = coords[row_idx]
+            points = to_dense(coords[row_idx])
             centroid = points.mean(axis=0)
             closest = np.argmin(np.linalg.norm(points - centroid, axis=1))
             X[pert_index, :] = points[closest]
