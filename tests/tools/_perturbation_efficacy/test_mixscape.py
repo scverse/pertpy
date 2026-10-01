@@ -26,6 +26,17 @@ def test_mixscape(adata):
     assert sum(ko_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
 
 
+def test_mixscape_sparse_without_scaling_matches_dense(adata):
+    adata.layers["X_pert"] = adata.X.toarray()
+    dense = pt.tl.Mixscape().mixscape(
+        adata=adata, pert_key="gene_target", control="NT", test_method="t-test", scale=False, copy=True
+    )
+    adata.layers["X_pert"] = adata.X
+    pt.tl.Mixscape().mixscape(adata=adata, pert_key="gene_target", control="NT", test_method="t-test", scale=False)
+
+    pd.testing.assert_frame_equal(adata.obs, dense.obs)
+
+
 def test_perturbation_signature(adata):
     mixscape_identifier = pt.tl.Mixscape()
     mixscape_identifier.perturbation_signature(adata, pert_key="label", control="control")
