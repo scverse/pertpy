@@ -520,7 +520,7 @@ class CellLine(MetaData):
             self._download_prism()
         prism_data = self.drug_response_prism
         # PRISM starts most drug names with a lowercase letter, so we want to make it case-insensitive
-        prism_data["name_lower"] = prism_data["name"].str.lower()
+        prism_data = prism_data.assign(name=prism_data["name"].str.lower())
         adata.obs["perturbation_lower"] = cast_frame(adata.obs)[query_perturbation].str.lower()
 
         identifier_num_all = len(adata.obs[query_id].unique())
