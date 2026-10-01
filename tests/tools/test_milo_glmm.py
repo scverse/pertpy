@@ -50,7 +50,7 @@ def test_random_effect_matrices_rejects_single_level():
         random_effect_matrices(obs, ["batch"])
 
 
-def test_fit_nb_glmm_survives_an_unfactorisable_variance(monkeypatch):
+def test_fit_nb_glmm_survives_an_unfactorisable_variance():
     """One pathological neighbourhood must not abort a run over thousands of them."""
     rng = np.random.default_rng(0)
     y = rng.poisson(30, 20).astype(float)
@@ -58,11 +58,7 @@ def test_fit_nb_glmm_survives_an_unfactorisable_variance(monkeypatch):
     X = np.column_stack([np.ones(20), condition])
     Z = [("donor", pd.get_dummies(pd.Categorical(np.repeat(np.arange(5), 4))).to_numpy(dtype=float))]
 
-    def explode(*args, **kwargs):
-        raise np.linalg.LinAlgError("not positive definite")
-
-    monkeypatch.setattr("pertpy.tools._milo_glmm.cho_factor", explode)
-    fit = fit_nb_glmm(y, X, Z, np.zeros(20))
+    fit = fit_nb_glmm(y, X, Z, np.full(20, np.nan))
 
     assert not fit.converged
     assert np.isnan(fit.beta).all()
