@@ -276,21 +276,12 @@ class Augur:
         # export subsampling.
         random.seed(random_state)
         if categorical:
-            label_subsamples = []
-            y_encodings = adata.obs["y_"].unique()
-            label_subsamples = [
-                sc.pp.sample(
-                    adata[adata.obs["y_"] == code, features],
-                    n=subsample_size,
-                    copy=True,
-                    rng=random_state,
-                )
-                for code in y_encodings
-            ]
-
-            subsample = ad.concat([*label_subsamples], index_unique=None)
+            y = adata.obs["y_"]
+            pools = [np.flatnonzero(y == code) for code in y.unique()]
         else:
-            subsample = sc.pp.sample(adata[:, features], n=subsample_size, copy=True, rng=random_state)
+            pools = [np.arange(adata.n_obs)]
+        obs_idx = np.concatenate([sc.pp.sample(pool, n=subsample_size, rng=random_state)[0] for pool in pools])
+        subsample = adata[obs_idx, features].copy()
 
         # filter features with 0 variance
         var = cast_frame(subsample.var)
@@ -346,10 +337,10 @@ class Augur:
         random.seed(random_state)
         if augur_mode == "permute":
             # shuffle labels
-            adata = adata.copy()
-            obs = cast_frame(adata.obs)
+            obs = cast_frame(adata.obs).copy()
             y_columns = obs.columns[obs.columns.str.startswith("y_")]
             obs[y_columns] = obs[y_columns].sample(frac=1, random_state=random_state).values
+            adata = AnnData(X=adata.X, obs=obs, var=cast_frame(adata.var))
 
         if augur_mode == "velocity":
             # no feature selection, assuming this has already happenend in calculating velocity

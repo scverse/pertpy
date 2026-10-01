@@ -21,6 +21,8 @@ from ._base import MethodBase
 
 _RNG_KWARGS = ("rng", "random_state")
 
+TestStatistic = Callable[[np.ndarray, np.ndarray], float] | Callable[[np.ndarray, np.ndarray], np.ndarray]
+
 
 def _var_block(x, block: slice) -> np.ndarray:
     """Get a block of variables (columns) as a dense array."""
@@ -44,6 +46,11 @@ def _run_test(test, x0_var: np.ndarray, x1_var: np.ndarray, paired: bool, kwargs
         "log_fc": np.log2(np.mean(x1_var)) - np.log2(np.mean(x0_var)),
         **test(x0_var, x1_var, paired, **kwargs),
     }
+
+
+def _log2_fold_change(x0: np.ndarray, x1: np.ndarray, axis: int = -1) -> np.ndarray:
+    """Log2 fold change of the means with a pseudocount, computed along `axis`."""
+    return np.log2(np.mean(x1, axis=axis) + 1e-8) - np.log2(np.mean(x0, axis=axis) + 1e-8)
 
 
 def fdr_correction(
@@ -329,9 +336,7 @@ class PermutationTest(SimpleComparisonBase):
         layer: str | None = None,
         n_jobs: int | None = None,
         n_permutations: int = 1000,
-        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: (
-            np.log2(np.mean(y) + 1e-8) - np.log2(np.mean(x) + 1e-8)
-        ),
+        test_statistic: TestStatistic = _log2_fold_change,
         fit_kwargs: Mapping = MappingProxyType({}),
         test_kwargs: Mapping = MappingProxyType({}),
     ) -> DataFrame:
@@ -394,9 +399,7 @@ class PermutationTest(SimpleComparisonBase):
         x0: np.ndarray,
         x1: np.ndarray,
         paired: bool,
-        test_statistic: Callable[[np.ndarray, np.ndarray], float] = lambda x, y: (
-            np.log2(np.mean(y) + 1e-8) - np.log2(np.mean(x) + 1e-8)
-        ),
+        test_statistic: TestStatistic = _log2_fold_change,
         n_permutations: int = 1000,
         **kwargs,
     ) -> dict[str, float]:

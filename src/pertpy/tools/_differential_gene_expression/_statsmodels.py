@@ -4,8 +4,9 @@ import statsmodels
 import statsmodels.api as sm
 from fast_array_utils.conv import to_dense
 from joblib import delayed, effective_n_jobs
+from scipy import stats
 from scipy.sparse import issparse
-from tqdm.auto import tqdm
+from statsmodels.tools.tools import recipr
 
 from pertpy._parallel import _MAX_BLOCK_ELEMENTS, _block_slices, _parallelize_with_joblib
 from pertpy._types import CSBase
@@ -75,20 +76,24 @@ class Statsmodels(LinearModelBase):
         self._fitted = True
 
     def _test_single_contrast(self, contrast, **kwargs) -> pd.DataFrame:
-        res = []
-        for var, mod in zip(tqdm(self.adata.var_names), self.models, strict=False):
-            t_test = mod.t_test(contrast)
-            res.append(
+        results = [getattr(mod, "_results", mod) for mod in self.models]
+        r_matrix = np.atleast_2d(np.asarray(contrast, dtype=np.float64))
+        effect = np.array([np.dot(r_matrix, res.params.ravel(order="F")).item() for res in results])
+        sd = np.array([np.sqrt(res.cov_params(r_matrix=r_matrix)).item() for res in results])
+        t_value = effect * recipr(sd)
+        df_resid = np.array([getattr(res, "df_resid_inference", res.df_resid) for res in results])
+        use_t = np.array([getattr(res, "use_t", False) for res in results], dtype=bool)
+        p_value = np.where(use_t, stats.t.sf(np.abs(t_value), df_resid), stats.norm.sf(np.abs(t_value))) * 2
+        return (
+            pd.DataFrame(
                 {
-                    "variable": var,
-                    "p_value": t_test.pvalue,
-                    "t_value": t_test.tvalue.item(),
-                    "sd": t_test.sd.item(),
-                    "log_fc": t_test.effect.item(),
+                    "variable": self.adata.var_names,
+                    "p_value": p_value,
+                    "t_value": t_value,
+                    "sd": sd,
+                    "log_fc": effect,
                 }
             )
-        return (
-            pd.DataFrame(res)
             .sort_values("p_value")
             .assign(adj_p_value=lambda x: statsmodels.stats.multitest.fdrcorrection(x["p_value"])[1])
         )

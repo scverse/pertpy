@@ -19,12 +19,13 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-import statsmodels.formula.api as smf
 from fast_array_utils.conv import to_dense
+from numba import njit, prange
 from scipy import sparse as sp
 from scipy import stats
 from scipy.optimize import nnls
 from sparsecca import multicca_permute, multicca_pmd
+from statsmodels.regression.mixed_linear_model import MixedLM
 from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -169,10 +170,31 @@ def _prepare_partial_targets(Y: np.ndarray, Z: np.ndarray) -> tuple[np.ndarray, 
     return Ys, design, n, df
 
 
+@njit(parallel=True, cache=True)
+def _rank_columns(x: np.ndarray) -> np.ndarray:
+    """Average ranks within each column of ``x``, keeping NaNs like :meth:`pandas.DataFrame.rank`."""
+    n_rows, n_cols = x.shape
+    ranks = np.empty((n_rows, n_cols))
+    for j in prange(n_cols):
+        col = x[:, j].copy()
+        order = np.argsort(col, kind="mergesort")
+        start = 0
+        while start < n_rows and not np.isnan(col[order[start]]):
+            end = start + 1
+            while end < n_rows and col[order[end]] == col[order[start]]:
+                end += 1
+            for k in range(start, end):
+                ranks[order[k], j] = (start + end + 1) / 2
+            start = end
+        for k in range(start, n_rows):
+            ranks[order[k], j] = np.nan
+    return ranks
+
+
 def _partial_spearman_block(
     X_block: np.ndarray, Ys: np.ndarray, design: np.ndarray, n: int, df: int
 ) -> tuple[np.ndarray, np.ndarray]:
-    X_rank = pd.DataFrame(X_block).rank().to_numpy()
+    X_rank = _rank_columns(np.ascontiguousarray(X_block, dtype=np.float64))
     Xr = X_rank - design @ np.linalg.lstsq(design, X_rank, rcond=None)[0]
     Xs = (Xr - Xr.mean(0)) / np.where(Xr.std(0, ddof=1) > 0, Xr.std(0, ddof=1), 1.0)
     R = (Xs.T @ Ys) / (n - 1)
@@ -320,14 +342,19 @@ def _hlm_pvalue_per_row(
         gene_index = pd.Index([f"gene_{i}" for i in range(expression.shape[0])])
     score = np.asarray(score, dtype=np.float64)
     n = score.shape[0]
-    covariates = covariates.reset_index(drop=True).copy()
     if covariates.shape[0] != n:
         raise ValueError("covariates rows must match score length")
-    groups = pd.Series(sample_groups, name="_sample_").reset_index(drop=True)
-    base = pd.concat([covariates, groups], axis=1)
-    base["_y_"] = score
-    extra_terms = " + ".join(f"Q('{col}')" for col in covariates.columns)
-    formula = "_y_ ~ _x_" + (f" + {extra_terms}" if extra_terms else "")
+    groups = np.asarray(sample_groups)
+    exog = np.asfortranarray(
+        np.column_stack(
+            [
+                np.ones(n),
+                np.zeros(n),
+                pd.get_dummies(covariates, drop_first=True, dtype=np.float64).to_numpy(dtype=np.float64),
+            ]
+        )
+    )
+    complete = not (np.isnan(score).any() or np.isnan(exog).any())
     estimates = np.full(expression.shape[0], np.nan)
     pvalues = np.full(expression.shape[0], np.nan)
     # statsmodels' mixedlm raises ConvergenceWarning whenever the optimizer doesn't
@@ -338,11 +365,13 @@ def _hlm_pvalue_per_row(
     with _warnings.catch_warnings():
         _warnings.simplefilter("ignore", category=Warning)
         for i in range(expression.shape[0]):
-            base["_x_"] = expression[i]
+            if not complete or np.isnan(expression[i]).any():
+                continue
+            exog[:, 1] = expression[i]
             try:
-                fit = smf.mixedlm(formula, base, groups=base["_sample_"]).fit(method="bfgs", reml=False, disp=False)
-                estimates[i] = float(fit.params.get("_x_", np.nan))
-                pvalues[i] = float(fit.pvalues.get("_x_", np.nan))
+                fit = MixedLM(score, exog, groups).fit(method="bfgs", reml=False, disp=False)
+                estimates[i] = float(fit.params[1])
+                pvalues[i] = float(fit.pvalues[1])
             except Exception:  # noqa: BLE001 — model may fail on degenerate covariates; record NaN
                 continue
     return pd.DataFrame({"estimate": estimates, "pvalue": pvalues}, index=gene_index)
