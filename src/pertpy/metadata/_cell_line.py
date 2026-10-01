@@ -620,12 +620,8 @@ class CellLine(MetaData):
         pvals = np.empty((mat1.shape[0], mat2.shape[0]))
 
         for i in range(mat1.shape[0]):
-            for j in range(mat2.shape[0]):
-                if i > j:
-                    corr[i, j] = corr[j, i]
-                    pvals[i, j] = pvals[j, i]
-                else:
-                    corr[i, j], pvals[i, j] = stats.pearsonr(mat1[i], mat2[j])
+            res = stats.pearsonr(mat1[i], mat2, axis=-1)
+            corr[i], pvals[i] = res.statistic, res.pvalue
         corr_df = pd.DataFrame(corr, index=list(row_name), columns=list(col_name))
         pvals_df = pd.DataFrame(pvals, index=list(row_name), columns=list(col_name))
 
