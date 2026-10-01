@@ -53,7 +53,10 @@ def fdr_correction(
     if not inplace:
         df = df.copy()
 
-    df[key_added] = statsmodels.stats.multitest.fdrcorrection(df[pvalue_col].values)[1]
+    pvalues = df[pvalue_col].to_numpy(dtype=float)
+    tested = ~np.isnan(pvalues)
+    df[key_added] = np.nan
+    df.loc[tested, key_added] = statsmodels.stats.multitest.fdrcorrection(pvalues[tested])[1]
 
     if not inplace:
         return df
