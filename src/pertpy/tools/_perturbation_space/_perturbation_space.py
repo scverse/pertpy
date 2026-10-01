@@ -8,13 +8,14 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from scipy import sparse
 from scipy.optimize import curve_fit
 from scipy.special import expit
 from scipy.stats import entropy
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import cast_dense, cast_frame
+from pertpy._types import cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -506,23 +507,28 @@ class PerturbationSpace:
         labels = obs[target_column].astype(str)
         target_cells = labels == target_val
 
-        connectivities = adata.obsp[adata.uns[neighbors_key]["connectivities_key"]]
+        connectivities = sparse.csc_matrix(cast_matrix(adata.obsp[adata.uns[neighbors_key]["connectivities_key"]]))
         # convert labels to an incidence matrix
-        one_hot_encoded_labels = labels.str.get_dummies()
+        unique_labels = labels.drop_duplicates()
+        one_hot_encoded_labels = unique_labels.str.get_dummies()
+        cell_incidence = sparse.csr_matrix(one_hot_encoded_labels.to_numpy())[
+            pd.Index(unique_labels).get_indexer(pd.Index(labels))
+        ]
         # convert to distance-weighted neighborhood incidence matrix
+        target_connectivities = connectivities.T[np.flatnonzero(target_cells)]
         weighted_label_occurence = pd.DataFrame(
-            (one_hot_encoded_labels.values.T * connectivities).T,
-            index=adata.obs_names,
+            (target_connectivities @ cell_incidence).toarray(),
+            index=adata.obs_names[target_cells.to_numpy()],
             columns=one_hot_encoded_labels.columns,
-        )
+        ).drop(target_val, axis=1)
         # choose best label for each target cell
-        best_labels = weighted_label_occurence.drop(target_val, axis=1)[target_cells].idxmax(axis=1)
+        best_labels = weighted_label_occurence.idxmax(axis=1)
         obs[target_column] = labels
         obs.loc[target_cells, target_column] = best_labels
 
         # calculate uncertainty
         uncertainty = np.zeros(adata.n_obs)
-        uncertainty[target_cells] = entropy(weighted_label_occurence.drop(target_val, axis=1)[target_cells], axis=1)
+        uncertainty[target_cells] = entropy(weighted_label_occurence, axis=1)
         adata.obs[column_uncertainty_score_key] = uncertainty
 
     def nearest_perturbations(
@@ -760,12 +766,13 @@ class PerturbationSpace:
             raise ValueError("Dose values must be non-negative.")
 
         labels = data[target_col].to_numpy()
+        positions = pd.Series(labels).groupby(labels, sort=False).indices
         fitted = np.full(len(data), np.nan)
         records: dict[object, dict[str, float | bool]] = {}
         for perturbation in pd.unique(labels):
-            mask = labels == perturbation
+            rows = positions.get(perturbation, np.array([], dtype=np.intp))
             try:
-                fit = _fit_hill(doses[mask], responses[mask])
+                fit = _fit_hill(doses[rows], responses[rows])
             except (ValueError, RuntimeError) as e:
                 warnings.warn(
                     f"Cannot fit a Hill curve for perturbation {perturbation!r}: {e}", UserWarning, stacklevel=2
@@ -773,8 +780,8 @@ class PerturbationSpace:
                 fit = dict.fromkeys(("e0", "emax", "slope", "ec50", "ec50_se", "r_squared"), np.nan)
                 fit["ec50_in_range"] = False
             else:
-                fitted[mask] = _four_parameter_logistic(
-                    doses[mask], fit["e0"], fit["emax"], np.log(fit["ec50"]), fit["slope"]
+                fitted[rows] = _four_parameter_logistic(
+                    doses[rows], fit["e0"], fit["emax"], np.log(fit["ec50"]), fit["slope"]
                 )
                 if np.isnan(fit["ec50_se"]):
                     warnings.warn(

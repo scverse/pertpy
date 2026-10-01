@@ -56,7 +56,9 @@ class Moa(MetaData):
             self._download_clue()
 
         identifier_num_all = len(adata.obs[query_id].unique())
-        not_matched_identifiers = list(set(adata.obs[query_id].str.lower()) - set(self.clue["pert_iname"].str.lower()))
+        not_matched_identifiers = list(
+            set(adata.obs[query_id].str.lower().unique()) - set(self.clue["pert_iname"].str.lower())
+        )
         self._warn_unmatch(
             total_identifiers=identifier_num_all,
             unmatched_identifiers=not_matched_identifiers,
@@ -84,9 +86,10 @@ class Moa(MetaData):
         if target is not None:
             annotated = cast_frame(adata.obs)
             target_meta = "target" if target != "target" else "target_fromMeta"
-            annotated[target_meta] = annotated[target_meta].mask(
-                ~annotated.apply(lambda row: str(row[target]) in str(row[target_meta]), axis=1)
-            )
+            matches = [
+                str(query) in str(meta) for query, meta in zip(annotated[target], annotated[target_meta], strict=True)
+            ]
+            annotated[target_meta] = annotated[target_meta].mask(~np.array(matches, dtype=bool))
             pertname_meta = "pert_iname" if query_id != "pert_iname" else "pert_iname_fromMeta"
             annotated.loc[annotated[target_meta].isna(), [pertname_meta, "moa"]] = np.nan
 
