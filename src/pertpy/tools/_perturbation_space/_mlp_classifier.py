@@ -154,44 +154,49 @@ class JAXDataset:
         else:
             raise ValueError(f"Target column {target_col} not found in obs or obsm")
 
-        self.pert_labels = adata.obs[label_col].values
+        self.pert_labels = np.asarray(adata.obs[label_col].values)
 
         # Keep sparse data sparse and densify only the requested batch to avoid materializing the full dense matrix.
         self.is_sparse = isinstance(data, CSBase)
-        self.data: CSBase | jax.Array = (
-            data.tocsr() if isinstance(data, CSBase) else jnp.array(np.asarray(data), dtype=jnp.float32)
+        self.data: CSBase | np.ndarray = (
+            data.tocsr() if isinstance(data, CSBase) else np.asarray(data, dtype=np.float32)
         )
-        self.labels = jnp.array(labels, dtype=jnp.float32)
+        self.labels = np.asarray(labels, dtype=np.float32)
 
     def __len__(self):
         return self.data.shape[0]
 
-    def get_batch(self, indices: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, list]:
+    def get_batch(self, indices: np.ndarray | jnp.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Returns a batch of samples and corresponding perturbations applied (labels)."""
         idx = np.asarray(indices)
         data = self.data
-        if isinstance(data, CSBase):
-            batch_data = jnp.array(to_dense(data[idx]), dtype=jnp.float32)
-        else:
-            batch_data = data[jnp.asarray(idx)]
-        batch_labels = self.labels[jnp.asarray(idx)]
-        batch_pert_labels = [self.pert_labels[i] for i in idx]
-        return batch_data, batch_labels, batch_pert_labels
+        batch_data = data[idx].toarray().astype(np.float32, copy=False) if isinstance(data, CSBase) else data[idx]
+        return batch_data, self.labels[idx], self.pert_labels[idx]
+
+
+def _split_keys(rng: jnp.ndarray, n: int) -> jnp.ndarray:
+    """The ``n`` subkeys produced by repeatedly calling ``rng, subkey = random.split(rng)``."""
+
+    def step(carry: jnp.ndarray, _) -> tuple[jnp.ndarray, jnp.ndarray]:
+        carry, subkey = random.split(carry)
+        return carry, subkey
+
+    return jax.lax.scan(step, rng, length=n)[1]
 
 
 def create_batched_indices(
     dataset_size: int, rng: jnp.ndarray, batch_size: int, n_batches: int, weights: jnp.ndarray | None = None
-) -> list:
+) -> np.ndarray:
     """Create batched indices for training, optionally with weighted sampling."""
-    batches = []
-    for _ in range(n_batches):
-        rng, batch_rng = random.split(rng)
+    if n_batches == 0:
+        return np.empty((0, batch_size), dtype=np.int32)
+
+    def draw(batch_rng: jnp.ndarray) -> jnp.ndarray:
         if weights is not None:
-            batch_indices = random.choice(batch_rng, dataset_size, shape=(batch_size,), p=weights)
-        else:
-            batch_indices = random.choice(batch_rng, dataset_size, shape=(batch_size,), replace=False)
-        batches.append(batch_indices)
-    return batches
+            return random.choice(batch_rng, dataset_size, shape=(batch_size,), p=weights)
+        return random.choice(batch_rng, dataset_size, shape=(batch_size,), replace=False)
+
+    return np.asarray(jax.vmap(draw)(_split_keys(rng, n_batches)))
 
 
 class MLPClassifierSpace(PerturbationSpace):
@@ -278,12 +283,12 @@ class MLPClassifierSpace(PerturbationSpace):
 
         if embedding_key is not None:
             work = AnnData(X=adata.obsm[embedding_key])
-            work.obs_names = adata.obs_names.tolist()
-            work.obs = cast_frame(adata.obs).copy()
-            adata = work
-            layer_key = None
         else:
-            adata = adata.copy()
+            work = AnnData(X=adata.X if layer_key is None else adata.layers[layer_key])
+        work.obs_names = adata.obs_names.tolist()
+        work.obs = cast_frame(adata.obs).copy()
+        adata = work
+        layer_key = None
 
         # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
@@ -324,34 +329,27 @@ class MLPClassifierSpace(PerturbationSpace):
         state = create_train_state(init_rng, model, (adata.n_vars,), lr)
 
         # Create weighted sampling for class imbalance
-        weights = 1.0 / (train_dataset.labels @ jnp.sum(train_dataset.labels, axis=0))
+        labels = jnp.asarray(train_dataset.labels)
+        weights = 1.0 / (labels @ jnp.sum(labels, axis=0))
         weights = weights / jnp.sum(weights)
 
         n_batches_per_epoch = len(train_dataset) // batch_size
-        train_batches = create_batched_indices(
-            len(train_dataset), train_rng, batch_size, max_epochs * n_batches_per_epoch, weights
-        )
+        n_steps = max_epochs * n_batches_per_epoch
+        train_batches = create_batched_indices(len(train_dataset), train_rng, batch_size, n_steps, weights)
+        step_rngs = np.asarray(_split_keys(rng, n_steps))
 
         best_val_loss: float | jax.Array = float("inf")
         patience_counter = 0
 
         for epoch in range(max_epochs):
-            epoch_train_loss = 0
-
-            epoch_start = epoch * n_batches_per_epoch
-            epoch_end = (epoch + 1) * n_batches_per_epoch
-            epoch_batches = train_batches[epoch_start:epoch_end]
-
-            for _n_train_batches, batch_indices in enumerate(epoch_batches, 1):
-                rng, step_rng = random.split(rng)
-                batch_data, batch_labels, *_ = train_dataset.get_batch(batch_indices)
-                state, loss = train_step(state, (batch_data, batch_labels), step_rng)
-                epoch_train_loss += loss
+            for step in range(epoch * n_batches_per_epoch, (epoch + 1) * n_batches_per_epoch):
+                batch_data, batch_labels, _ = train_dataset.get_batch(train_batches[step])
+                state, _ = train_step(state, (batch_data, batch_labels), step_rngs[step])
 
             if (epoch + 1) % val_epochs_check == 0:
                 val_losses = []
                 for i in range(0, len(val_dataset), batch_size):
-                    val_indices = jnp.arange(i, min(i + batch_size, len(val_dataset)))
+                    val_indices = np.arange(i, min(i + batch_size, len(val_dataset)))
                     val_batch_data, val_batch_labels, _ = val_dataset.get_batch(val_indices)
                     val_loss = val_step(state, (val_batch_data, val_batch_labels))
                     val_losses.append(val_loss)
@@ -370,28 +368,23 @@ class MLPClassifierSpace(PerturbationSpace):
         # Test evaluation
         test_losses = []
         for i in range(0, len(test_dataset), batch_size):
-            test_indices = jnp.arange(i, min(i + batch_size, len(test_dataset)))
+            test_indices = np.arange(i, min(i + batch_size, len(test_dataset)))
             test_batch_data, test_batch_labels, _ = test_dataset.get_batch(test_indices)
             test_loss = val_step(state, (test_batch_data, test_batch_labels))
             test_losses.append(test_loss)
 
         # Extract embeddings
         embeddings_list = []
-        labels_list = []
-
         for i in range(0, len(total_dataset), batch_size * 2):
-            indices = jnp.arange(i, min(i + batch_size * 2, len(total_dataset)))
-            batch_data, _, batch_pert_labels = total_dataset.get_batch(indices)
-            batch_embeddings = get_embeddings(state, batch_data)
-
-            embeddings_list.append(batch_embeddings)
-            labels_list.extend(batch_pert_labels)
+            indices = np.arange(i, min(i + batch_size * 2, len(total_dataset)))
+            batch_data, _, _ = total_dataset.get_batch(indices)
+            embeddings_list.append(get_embeddings(state, batch_data))
 
         all_embeddings = np.asarray(jnp.concatenate(embeddings_list, axis=0))
 
         # Average the per-cell embeddings within each perturbation to obtain one embedding per perturbation.
         cell_embeddings = pd.DataFrame(all_embeddings)
-        cell_embeddings[target_col] = [str(label) for label in labels_list]
+        cell_embeddings[target_col] = [str(label) for label in total_dataset.pert_labels]
         aggregated = cell_embeddings.groupby(target_col, observed=True).mean()
 
         pert_adata = AnnData(X=aggregated.to_numpy(dtype=np.float32))

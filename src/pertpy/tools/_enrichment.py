@@ -12,6 +12,7 @@ from fast_array_utils.conv import to_dense
 from matplotlib.axes import Axes
 from scanpy.plotting import DotPlot
 from scanpy.tools._score_genes import _sparse_nanmean
+from scipy import sparse
 from scipy.stats import hypergeom
 from scverse_misc import Deprecation, deprecated_arg
 from statsmodels.stats.multitest import multipletests
@@ -55,6 +56,17 @@ def _mean(X, names, axis):
     else:
         obs_avg = pd.Series(np.nanmean(X, axis=axis), index=names)
     return obs_avg
+
+
+def _weighted_sum(mtx: np.ndarray | CSBase, weights: pd.DataFrame) -> np.ndarray:
+    """Multiply a cell by gene matrix with sparse gene by group weights, keeping a sparse matrix sparse."""
+    if isinstance(mtx, CSBase):
+        sparse_weights = sparse.csr_array(weights.to_numpy())
+        out = np.empty((mtx.shape[0], sparse_weights.shape[1]), dtype=np.result_type(mtx.dtype, sparse_weights.dtype))
+        for start in range(0, mtx.shape[0], 4096):
+            out[start : start + 4096] = (mtx[start : start + 4096] @ sparse_weights).toarray()
+        return out
+    return np.dot(mtx, weights)
 
 
 def _get_signature_matrix(adata: AnnData, layer: str | None) -> np.ndarray | CSBase:
@@ -132,13 +144,12 @@ def _prepare_query_signature(
     return signature
 
 
-def _weighted_enrichment_score(values: np.ndarray, hits: np.ndarray) -> float:
+def _weighted_enrichment_score(values: np.ndarray, hits: np.ndarray, order: np.ndarray) -> float:
     n_hits = int(hits.sum())
     n_misses = len(hits) - n_hits
     if n_hits == 0 or n_misses == 0:
         raise ValueError("Weighted enrichment requires at least one hit and one non-hit gene.")
 
-    order = np.argsort(values, kind="mergesort")[::-1]
     ranked_values = values[order]
     ranked_hits = hits[order]
     ranked_weights = np.abs(ranked_values)
@@ -160,8 +171,9 @@ def _weighted_enrichment_score(values: np.ndarray, hits: np.ndarray) -> float:
 
 
 def _cmap_connectivity(values: np.ndarray, up_mask: np.ndarray, down_mask: np.ndarray) -> float:
-    es_up = _weighted_enrichment_score(values, up_mask) if up_mask.any() else float("nan")
-    es_down = _weighted_enrichment_score(values, down_mask) if down_mask.any() else float("nan")
+    order = np.argsort(values, kind="mergesort")[::-1]
+    es_up = _weighted_enrichment_score(values, up_mask, order) if up_mask.any() else float("nan")
+    es_down = _weighted_enrichment_score(values, down_mask, order) if down_mask.any() else float("nan")
 
     if up_mask.any() and down_mask.any():
         if np.sign(es_up) == np.sign(es_down):
@@ -229,7 +241,7 @@ class Enrichment:
         weights = pd.DataFrame(target_groups, index=adata.var_names)
         weights = weights.loc[:, weights.sum() > 0]
         weights = weights / weights.sum()
-        scores = mtx.dot(weights) if isinstance(mtx, CSBase) else np.dot(mtx, weights)
+        scores = _weighted_sum(mtx, weights)
 
         if method == "seurat":
             obs_avg = _mean(mtx, names=adata.var_names, axis=0)
@@ -248,9 +260,7 @@ class Enrichment:
             control_gene_weights = pd.DataFrame(control_groups, index=adata.var_names)
             control_gene_weights = control_gene_weights / control_gene_weights.sum()
 
-            control_profiles = (
-                mtx.dot(control_gene_weights) if isinstance(mtx, CSBase) else np.dot(mtx, control_gene_weights)
-            )
+            control_profiles = _weighted_sum(mtx, control_gene_weights)
             drug_bins = {}
             for drug in weights.columns:
                 bins = np.unique(obs_cut[target_groups[drug]])
@@ -263,12 +273,10 @@ class Enrichment:
         adata.uns[f"{key_added}_score"] = scores
         adata.uns[f"{key_added}_variables"] = weights.columns
 
-        adata.uns[f"{key_added}_genes"] = {"var": pd.DataFrame(columns=["genes"]).astype(object)}
-        adata.uns[f"{key_added}_all_genes"] = {"var": pd.DataFrame(columns=["all_genes"]).astype(object)}
-
-        for drug in weights.columns:
-            adata.uns[f"{key_added}_genes"]["var"].loc[drug, "genes"] = "|".join(adata.var_names[target_groups[drug]])
-            adata.uns[f"{key_added}_all_genes"]["var"].loc[drug, "all_genes"] = "|".join(full_targets[drug])
+        genes = {drug: "|".join(adata.var_names[target_groups[drug]]) for drug in weights.columns}
+        all_genes = {drug: "|".join(full_targets[drug]) for drug in weights.columns}
+        adata.uns[f"{key_added}_genes"] = {"var": pd.DataFrame({"genes": pd.Series(genes, dtype=object)})}
+        adata.uns[f"{key_added}_all_genes"] = {"var": pd.DataFrame({"all_genes": pd.Series(all_genes, dtype=object)})}
 
     def signature_reversal(
         self,
@@ -460,7 +468,9 @@ class Enrichment:
             results["gene_group"] = gene_group
             # need to subtract 1 from the intersection length
             # https://alexlenail.medium.com/understanding-and-implementing-the-hypergeometric-test-in-python-a7db688a7458
-            results["pvals"] = hypergeom.sf(intersection - 1, len(universe), len(markers), gene_group)
+            pairs, inverse = np.unique(np.column_stack((intersection, gene_group)), axis=0, return_inverse=True)
+            pvals = np.asarray(hypergeom.sf(pairs[:, 0] - 1, len(universe), len(markers), pairs[:, 1]))
+            results["pvals"] = pvals[inverse.reshape(-1)]
             # Just in case any NaNs popped up somehow, fill them to 1 so FDR works
             results = results.fillna(1)
             if corr_method == "benjamini-hochberg":
