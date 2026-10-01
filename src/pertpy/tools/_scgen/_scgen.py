@@ -491,6 +491,7 @@ class Scgen:
                 batch_list[study] = batch_list[study].copy()
                 delta = max_batch_mean - np.average(batch_list[study].X, axis=0)
                 batch_list[study].X = delta + batch_list[study].X
+                cast_dense(temp_cell.X)[batch_ind[study].to_numpy()] = batch_list[study].X
             shared_ct.append(temp_cell)
 
         all_shared_ann = ad.concat(shared_ct, label="concat_batch", index_unique=None)
@@ -507,7 +508,7 @@ class Scgen:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names.tolist()
                 corrected.raw = adata_raw
-            corrected.obsm["latent"] = cast_matrix(all_shared_ann.X)
+            corrected.obsm["latent"] = cast_matrix(all_shared_ann[adata.obs_names].X)
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
             return corrected
         else:
@@ -527,7 +528,7 @@ class Scgen:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names.tolist()
                 corrected.raw = adata_raw
-            corrected.obsm["latent"] = cast_matrix(all_corrected_data.X)
+            corrected.obsm["latent"] = cast_matrix(all_corrected_data[adata.obs_names].X)
             corrected.obsm["corrected_latent"] = self.get_latent_representation(corrected)
 
             return corrected
