@@ -13,7 +13,7 @@ import scanpy as sc
 import seaborn as sns
 from adjustText import adjust_text
 from anndata import AnnData
-from jax import config, random
+from jax import block_until_ready, config, debug, lax, random
 from matplotlib import cm, rcParams
 from matplotlib import image as mpimg
 from matplotlib.colors import Colormap
@@ -23,6 +23,7 @@ from rich import box, print
 from rich.console import Console
 from rich.table import Table
 from scipy.cluster import hierarchy as sp_hierarchy
+from tqdm.auto import tqdm
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
@@ -48,6 +49,26 @@ def _enable_x64() -> None:
     The flag is process wide, so it is set here rather than at import time.
     """
     config.update("jax_enable_x64", True)
+
+
+def _report_progress(kernel: npy.infer.mcmc.MCMCKernel, pbar: tqdm, num_warmup: int) -> None:
+    """Make `kernel` update `pbar` from inside numpyro's compiled sampling loop."""
+    rate = max(int(pbar.total or 0) // 100, 1)
+
+    def update(state) -> None:
+        pbar.set_description("warmup" if state.i <= num_warmup else "sample", refresh=False)
+        pbar.set_postfix_str(kernel.get_diagnostics_str(state), refresh=False)
+        pbar.update(int(state.i) - pbar.n)
+
+    sample = kernel.sample
+
+    def sample_and_report(state, model_args, model_kwargs):
+        state = sample(state, model_args, model_kwargs)
+        report = (state.i % rate == 0) | (state.i == pbar.total)
+        lax.cond(report, lambda: debug.callback(update, state), lambda: None)
+        return state
+
+    kernel.sample = sample_and_report  # type: ignore[method-assign]
 
 
 class CompositionalModel2(ABC):
@@ -311,16 +332,19 @@ class CompositionalModel2(ABC):
         numpyro_n_total = jnp.array(sample_adata.obsm["sample_counts"], dtype=dtype)
 
         # Create mcmc attribute and run inference
-        self.mcmc = MCMC(kernel, *args, **kwargs)
-        self.mcmc.run(
-            rng_key,
-            numpyro_counts,
-            numpyro_covariates,
-            numpyro_n_total,
-            jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
-            sample_adata,
-            extra_fields=extra_fields,
-        )
+        with tqdm(total=kwargs["num_warmup"] + kwargs["num_samples"]) as pbar:
+            _report_progress(kernel, pbar, kwargs["num_warmup"])
+            self.mcmc = MCMC(kernel, *args, progress_bar=False, **kwargs)
+            self.mcmc.run(
+                rng_key,
+                numpyro_counts,
+                numpyro_covariates,
+                numpyro_n_total,
+                jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
+                sample_adata,
+                extra_fields=extra_fields,
+            )
+            block_until_ready(self.mcmc.last_state)
 
         acc_rate = np.array(self.mcmc.last_state.mean_accept_prob)
         if acc_rate < 0.6:
