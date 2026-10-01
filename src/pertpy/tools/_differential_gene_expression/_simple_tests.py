@@ -23,8 +23,8 @@ _RNG_KWARGS = ("rng", "random_state")
 
 
 def _var_block(x, block: slice) -> np.ndarray:
-    """Get a block of variables (columns) as a dense array."""
-    return to_dense(x[:, block])
+    """Get a block of variables (columns) as a dense float64 array."""
+    return to_dense(x[:, block]).astype(np.float64, copy=False)
 
 
 def _run_vectorized_test(test, x0_block: np.ndarray, x1_block: np.ndarray, paired: bool, kwargs: dict) -> dict:

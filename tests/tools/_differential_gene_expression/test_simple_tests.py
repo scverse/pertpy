@@ -3,6 +3,7 @@ from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 import pytest
+from anndata import AnnData
 from pandas.core.api import DataFrame
 
 if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
@@ -163,3 +164,14 @@ def test_invalid_pairing(test_adata_minimal, params):
     """Test that the SimpleComparisonBase class raises an error when paired analysis is requested with invalid configuration."""
     with pytest.raises(ValueError):
         TTest.compare_groups(test_adata_minimal, **params)
+
+
+@pytest.mark.parametrize("test", [TTest, WilcoxonTest])
+def test_float32_input_matches_float64(rng, test):
+    X = rng.poisson(0.5, size=(4000, 5)) / 4
+    obs = pd.DataFrame({"condition": ["A", "B"] * 2000}, index=[str(i) for i in range(4000)])
+    p_values = [
+        test.compare_groups(AnnData(X.astype(dtype), obs=obs), column="condition", baseline="A", groups_to_compare="B")
+        for dtype in (np.float32, np.float64)
+    ]
+    np.testing.assert_array_equal(*(res["p_value"] for res in p_values))
