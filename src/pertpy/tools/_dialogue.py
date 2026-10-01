@@ -424,7 +424,6 @@ def _random_intercept_fits(
     for i in range(n):
         for a in range(n_fixed):
             centered[a, i] = fixed[i, a] - fixed_sums[groups[i], a] / sizes[groups[i]]
-    # Model columns are fixed[:, 0], x, fixed[:, 1:], so x takes column 1.
     cols = np.concatenate((np.zeros(1, dtype=np.int64), np.arange(2, m)))
     within = np.zeros((m, m))
     sums = np.zeros((n_groups, m))
