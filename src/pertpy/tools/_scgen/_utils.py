@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import pandas as pd
 
 
@@ -74,3 +76,17 @@ def balancer(labels: pd.Series) -> np.ndarray:
         index_all.append(index_cls[rng.choice(len(index_cls), max_number)])
 
     return np.concatenate(index_all)
+
+
+def _padded_batches(x: np.ndarray, batch_size: int, *, pad: bool = True) -> Iterator[tuple[np.ndarray, int]]:
+    """Yields row batches of ``x`` together with their number of rows.
+
+    With ``pad``, the last batch is zero-padded to the shape of the others.
+    """
+    batch_size = max(min(batch_size, x.shape[0]), 1)
+    for start in range(0, x.shape[0], batch_size):
+        batch = x[start : start + batch_size]
+        n = batch.shape[0]
+        if pad and n < batch_size:
+            batch = np.pad(batch, ((0, batch_size - n), (0, 0)))
+        yield batch, n

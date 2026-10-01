@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -23,16 +24,35 @@ from pertpy._types import cast_dense, cast_frame, cast_matrix
 
 from ._scgenvae import JaxSCGENVAE
 from ._train import DEFAULT_EPS, DEFAULT_LR, DEFAULT_WEIGHT_DECAY, train_module
-from ._utils import balancer, extractor
+from ._utils import _padded_batches, balancer, extractor
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from matplotlib.pyplot import Figure
 
 font = {"family": "Arial", "size": 14}
 
 SETUP_KEY = "_scgen_setup"
+
+
+@partial(jax.jit, static_argnames=("module", "give_mean", "n_samples"))
+def _encode_batch(
+    module: JaxSCGENVAE,
+    variables: Mapping[str, Any],
+    x: jax.Array,
+    key: jax.Array,
+    *,
+    give_mean: bool,
+    n_samples: int,
+) -> jax.Array:
+    out = cast("dict[str, Any]", module.apply(variables, x, n_samples=n_samples, method="inference", rngs={"z": key}))
+    return out["qz"].mean if give_mean else out["z"]
+
+
+@partial(jax.jit, static_argnames="module")
+def _decode_batch(module: JaxSCGENVAE, variables: Mapping[str, Any], z: jax.Array) -> jax.Array:
+    return cast("dict[str, Any]", module.apply(variables, z, method="generative"))["px"]
 
 
 class Scgen:
@@ -240,20 +260,13 @@ class Scgen:
         self.history = history
         self.is_trained_ = True
 
-    def _encode(self, x: np.ndarray, *, give_mean: bool, n_samples: int, key: jnp.ndarray) -> jnp.ndarray:
-        out = cast(
-            "dict[str, Any]",
-            self._eval_module.apply(
-                self._variables, jnp.asarray(x), n_samples=n_samples, method="inference", rngs={"z": key}
-            ),
-        )
-        return out["qz"].mean if give_mean else out["z"]
-
-    def _decode(self, z: object) -> np.ndarray:
-        out = cast(
-            "dict[str, Any]", self._eval_module.apply(self._variables, jnp.asarray(cast_dense(z)), method="generative")
-        )
-        return np.asarray(out["px"])
+    def _decode(self, z: object, batch_size: int = 1024) -> np.ndarray:
+        z = np.asarray(cast_dense(z))
+        decoded = np.empty((len(z), self.module.n_input), dtype=jnp.result_type(z, jnp.float32))
+        for i, (batch, n) in enumerate(_padded_batches(z, batch_size)):
+            px = _decode_batch(self._eval_module, self._variables, jnp.asarray(batch))
+            decoded[i * batch_size : i * batch_size + n] = np.asarray(px)[:n]
+        return decoded
 
     def get_latent_representation(
         self,
@@ -298,15 +311,17 @@ class Scgen:
             x = x[np.asarray(indices)]
 
         key = jax.random.PRNGKey(seed)
-        latent = []
-        for start in range(0, x.shape[0], batch_size):
+        latent: list[jax.Array] = []
+        for batch, n in _padded_batches(x, batch_size, pad=give_mean or n_samples == 1):
             key, z_key = jax.random.split(key)
-            latent.append(
-                self._encode(x[start : start + batch_size], give_mean=give_mean, n_samples=n_samples, key=z_key)
+            if latent:
+                latent[-1].block_until_ready()
+            z = _encode_batch(
+                self._eval_module, self._variables, jnp.asarray(batch), z_key, give_mean=give_mean, n_samples=n_samples
             )
-        concat_axis = 0 if ((n_samples == 1) or give_mean) else 1
+            latent.append(z[..., :n, :])
 
-        return np.asarray(jnp.concatenate(latent, axis=concat_axis))
+        return np.asarray(jnp.concatenate(latent, axis=-2))
 
     def get_decoded_expression(
         self,
@@ -339,7 +354,7 @@ class Scgen:
         self._check_if_trained()
 
         latent = self.get_latent_representation(adata, indices=indices, batch_size=batch_size, seed=seed)
-        return self._decode(latent)
+        return self._decode(latent, batch_size)
 
     def predict(
         self,
@@ -496,12 +511,9 @@ class Scgen:
         if "concat_batch" in all_shared_ann.obs.columns:
             del cast_frame(all_shared_ann.obs)["concat_batch"]
         if len(not_shared_ct) < 1:
-            corrected = AnnData(
-                self._decode(all_shared_ann.X),
-                obs=cast_frame(all_shared_ann.obs),
-            )
+            all_shared_ann = all_shared_ann[adata.obs_names].copy()
+            corrected = AnnData(self._decode(all_shared_ann.X), obs=cast_frame(all_shared_ann.obs))
             corrected.var_names = adata.var_names.tolist()
-            corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names.tolist()
@@ -516,12 +528,9 @@ class Scgen:
             )
             if "concat_batch" in all_corrected_data.obs.columns:
                 del cast_frame(all_corrected_data.obs)["concat_batch"]
-            corrected = AnnData(
-                self._decode(all_corrected_data.X),
-                obs=cast_frame(all_corrected_data.obs),
-            )
+            all_corrected_data = all_corrected_data[adata.obs_names].copy()
+            corrected = AnnData(self._decode(all_corrected_data.X), obs=cast_frame(all_corrected_data.obs))
             corrected.var_names = adata.var_names.tolist()
-            corrected = corrected[adata.obs_names].copy()
             if adata.raw is not None:
                 adata_raw = AnnData(X=adata.raw.X, var=adata.raw.var)
                 adata_raw.obs_names = adata.obs_names.tolist()
