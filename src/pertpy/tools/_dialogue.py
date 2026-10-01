@@ -24,8 +24,7 @@ from numba import njit, prange
 from scipy import sparse as sp
 from scipy import stats
 from scipy.optimize import nnls
-from sparsecca import multicca_permute, multicca_pmd
-from statsmodels.regression.mixed_linear_model import MixedLM
+from sparsecca import multicca_pmd
 from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -325,6 +324,145 @@ def _iterative_nnls(
     return coef
 
 
+@njit(cache=True)
+def _solve_small(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Solve ``a @ x = b`` by Gaussian elimination with partial pivoting, all NaN if ``a`` is singular."""
+    m = a.shape[0]
+    a = a.copy()
+    x = b.copy()
+    for k in range(m):
+        piv = k + np.argmax(np.abs(a[k:, k]))
+        if a[piv, k] == 0.0:
+            return np.full(m, np.nan)
+        for j in range(m):
+            a[k, j], a[piv, j] = a[piv, j], a[k, j]
+        x[k], x[piv] = x[piv], x[k]
+        for i in range(k + 1, m):
+            f = a[i, k] / a[k, k]
+            a[i, k:] -= f * a[k, k:]
+            x[i] -= f * x[k]
+    for k in range(m - 1, -1, -1):
+        x[k] = (x[k] - np.sum(a[k, k + 1 :] * x[k + 1 :])) / a[k, k]
+    return x
+
+
+@njit(cache=True)
+def _random_intercept_gls(
+    within: np.ndarray, sums: np.ndarray, sizes: np.ndarray, gamma: float
+) -> tuple[np.ndarray, float, np.ndarray, np.ndarray]:
+    """GLS fit of a random-intercept model, given the ratio ``gamma`` of the random-intercept to the residual variance.
+
+    ``within`` holds the within-group cross-products and ``sums`` the per-group sums of the design columns followed by the response.
+    Returns the fixed effects, the generalized residual sum of squares, the generalized cross-products, and the per-group residual sums divided by ``1 + n_g * gamma``.
+    """
+    p = within.shape[0] - 1
+    shrink = 1.0 / (1.0 + sizes * gamma)
+    cross = within + (sums.T * (shrink / sizes)) @ sums
+    beta = _solve_small(cross[:p, :p], cross[:p, p].copy())
+    rss = cross[p, p] - np.sum(cross[:p, p] * beta)
+    resid = sums[:, p].copy()
+    for a in range(p):
+        resid -= sums[:, a] * beta[a]
+    return beta, rss, cross, resid * shrink
+
+
+@njit(cache=True)
+def _random_intercept_slope(within: np.ndarray, sums: np.ndarray, sizes: np.ndarray, log_gamma: float) -> float:
+    """Derivative of the profile log-likelihood with respect to ``log(gamma)``."""
+    gamma = np.exp(log_gamma)
+    _, rss, _, resid = _random_intercept_gls(within, sums, sizes, gamma)
+    return 0.5 * gamma * (sizes.sum() * np.sum(resid**2) / rss - np.sum(sizes / (1.0 + sizes * gamma)))
+
+
+@njit(cache=True)
+def _random_intercept_log_gamma(within: np.ndarray, sums: np.ndarray, sizes: np.ndarray) -> float:
+    """Maximize the profile log-likelihood over ``log(gamma)`` by bracketing a root of its slope from 0, then bisection.
+
+    Returns -inf if the maximum is on the boundary ``gamma = 0`` and NaN if the fit is degenerate.
+    """
+    a, fa = 0.0, _random_intercept_slope(within, sums, sizes, 0.0)
+    b, fb = a, fa
+    step = 2.0 if fa > 0 else -2.0
+    while fb != 0.0 and (fb > 0) == (fa > 0):
+        a, fa = b, fb
+        b += step
+        if b < -40.0:
+            return -np.inf
+        if b > 40.0 or not np.isfinite(fa):
+            return np.nan
+        fb = _random_intercept_slope(within, sums, sizes, b)
+    if not np.isfinite(fb):
+        return np.nan
+    mid = 0.5 * (a + b)
+    while fb != 0.0 and a != mid != b:
+        f_mid = _random_intercept_slope(within, sums, sizes, mid)
+        if (f_mid > 0) == (fa > 0):
+            a, fa = mid, f_mid
+        else:
+            b, fb = mid, f_mid
+        mid = 0.5 * (a + b)
+    return b if fb == 0.0 else mid
+
+
+@njit(parallel=True, cache=True)
+def _random_intercept_fits(
+    x: np.ndarray, fixed: np.ndarray, groups: np.ndarray, n_groups: int
+) -> tuple[np.ndarray, np.ndarray]:
+    """Maximum likelihood fits of ``fixed[:, -1] ~ fixed[:, 0] + x[i] + fixed[:, 1:-1] + (1 | groups)`` for every row ``x[i]``.
+
+    Returns the coefficients of ``x[i]`` and their standard errors from the observed information, like statsmodels' ``MixedLM``.
+    """
+    n, n_fixed = fixed.shape
+    m = n_fixed + 1
+    sizes = np.zeros(n_groups)
+    fixed_sums = np.zeros((n_groups, n_fixed))
+    for i in range(n):
+        sizes[groups[i]] += 1.0
+        for a in range(n_fixed):
+            fixed_sums[groups[i], a] += fixed[i, a]
+    centered = np.empty((n_fixed, n))
+    for i in range(n):
+        for a in range(n_fixed):
+            centered[a, i] = fixed[i, a] - fixed_sums[groups[i], a] / sizes[groups[i]]
+    # Model columns are fixed[:, 0], x, fixed[:, 1:], so x takes column 1.
+    cols = np.concatenate((np.zeros(1, dtype=np.int64), np.arange(2, m)))
+    within = np.zeros((m, m))
+    sums = np.zeros((n_groups, m))
+    for a in range(n_fixed):
+        sums[:, cols[a]] = fixed_sums[:, a]
+        for b in range(n_fixed):
+            within[cols[a], cols[b]] = centered[a] @ centered[b]
+    estimates = np.full(x.shape[0], np.nan)
+    std_errors = np.full(x.shape[0], np.nan)
+    for row in prange(x.shape[0]):
+        row_within = within.copy()
+        row_sums = sums.copy()
+        for i in range(n):
+            row_sums[groups[i], 1] += x[row, i]
+        means = row_sums[:, 1] / sizes
+        for i in range(n):
+            row_within[1, 1] += (x[row, i] - means[groups[i]]) ** 2
+        for a in range(n_fixed):
+            row_within[1, cols[a]] = row_within[cols[a], 1] = x[row] @ centered[a]
+        log_gamma = _random_intercept_log_gamma(row_within, row_sums, sizes)
+        if np.isnan(log_gamma):
+            continue
+        gamma = np.exp(log_gamma)
+        beta, rss, cross, resid = _random_intercept_gls(row_within, row_sums, sizes, gamma)
+        shrink = 1.0 / (1.0 + sizes * gamma)
+        info = np.empty((m, m))
+        info[: m - 1, : m - 1] = n * cross[: m - 1, : m - 1] / rss
+        for a in range(m - 1):
+            info[a, m - 1] = info[m - 1, a] = n * np.sum(shrink * resid * row_sums[:, a]) / rss
+        info[m - 1, m - 1] = n * np.sum(sizes * shrink * resid**2) / rss - 0.5 * n * np.sum(resid**2) ** 2 / rss**2
+        info[m - 1, m - 1] -= 0.5 * np.sum((sizes * shrink) ** 2)
+        unit = np.zeros(m)
+        unit[1] = 1.0
+        estimates[row] = beta[1]
+        std_errors[row] = np.sqrt(_solve_small(info, unit)[1])
+    return estimates, std_errors
+
+
 def _hlm_pvalue_per_row(
     expression: np.ndarray | pd.DataFrame,
     score: np.ndarray,
@@ -333,6 +471,7 @@ def _hlm_pvalue_per_row(
 ) -> pd.DataFrame:
     """Hierarchical linear model per row: ``score ~ (1|sample) + x + covariates`` where ``x`` is each row of ``expression``.
 
+    Fitted by maximum likelihood, with Wald p-values from the observed information like statsmodels' ``MixedLM``.
     Returns a DataFrame with ``estimate`` and ``pvalue`` columns indexed like ``expression.index``.
     """
     if isinstance(expression, pd.DataFrame):
@@ -340,40 +479,23 @@ def _hlm_pvalue_per_row(
         expression = expression.to_numpy()
     else:
         gene_index = pd.Index([f"gene_{i}" for i in range(expression.shape[0])])
+    expression = np.asarray(expression, dtype=np.float64)
     score = np.asarray(score, dtype=np.float64)
     n = score.shape[0]
     if covariates.shape[0] != n:
         raise ValueError("covariates rows must match score length")
-    groups = np.asarray(sample_groups)
-    exog = np.asfortranarray(
-        np.column_stack(
-            [
-                np.ones(n),
-                np.zeros(n),
-                pd.get_dummies(covariates, drop_first=True, dtype=np.float64).to_numpy(dtype=np.float64),
-            ]
-        )
+    labels, groups = np.unique(np.asarray(sample_groups), return_inverse=True)
+    fixed = np.column_stack(
+        [np.ones(n), pd.get_dummies(covariates, drop_first=True, dtype=np.float64).to_numpy(dtype=np.float64), score]
     )
-    complete = not (np.isnan(score).any() or np.isnan(exog).any())
     estimates = np.full(expression.shape[0], np.nan)
-    pvalues = np.full(expression.shape[0], np.nan)
-    # statsmodels' mixedlm raises ConvergenceWarning whenever the optimizer doesn't
-    # hit a tiny gradient tolerance; that happens routinely on degenerate genes and
-    # the recorded pvalue is still usable, so silence the noise in bulk loops.
-    import warnings as _warnings
-
-    with _warnings.catch_warnings():
-        _warnings.simplefilter("ignore", category=Warning)
-        for i in range(expression.shape[0]):
-            if not complete or np.isnan(expression[i]).any():
-                continue
-            exog[:, 1] = expression[i]
-            try:
-                fit = MixedLM(score, exog, groups).fit(method="bfgs", reml=False, disp=False)
-                estimates[i] = float(fit.params[1])
-                pvalues[i] = float(fit.pvalues[1])
-            except Exception:  # noqa: BLE001 — model may fail on degenerate covariates; record NaN
-                continue
+    std_errors = np.full(expression.shape[0], np.nan)
+    rows = ~np.isnan(expression).any(axis=1) & ~np.isnan(fixed).any()
+    if rows.any():
+        estimates[rows], std_errors[rows] = _random_intercept_fits(
+            np.ascontiguousarray(expression[rows]), fixed, groups.astype(np.int64), len(labels)
+        )
+    pvalues = 2 * stats.norm.sf(np.abs(estimates / std_errors))
     return pd.DataFrame({"estimate": estimates, "pvalue": pvalues}, index=gene_index)
 
 
@@ -599,14 +721,7 @@ class Dialogue:
         return pd.DataFrame(scaled, index=pseudobulk.index, columns=pseudobulk.columns)
 
     def _fit_pmd(self, matrices: list[np.ndarray]) -> list[np.ndarray]:
-        n_samples = matrices[0].shape[0]
-        penalties = multicca_permute(
-            matrices,
-            penalties=float(np.sqrt(n_samples) / 2.0),  # type: ignore[arg-type]
-            nperms=10,
-            niter=50,
-            standardize=True,
-        )["bestpenalties"]
+        penalties = np.full(len(matrices), np.sqrt(matrices[0].shape[0]) / 2.0)
         weights, _ = multicca_pmd(
             matrices,
             penalties,
