@@ -222,3 +222,21 @@ def test_compare_distance(rng: np.random.Generator) -> None:
     assert isinstance(res_scaled, float)
     with pytest.raises(ValueError):
         Distance.compare_distance(X, Y, C, mode="new_mode")  # type: ignore[arg-type]
+
+
+def test_ks_test_matches_scipy(rng: np.random.Generator) -> None:
+    from scipy.stats import kstest
+
+    X = rng.poisson(1.0, size=(40, 8)).astype(float)
+    Y = rng.poisson(1.5, size=(70, 8)).astype(float)
+    expected = np.mean([kstest(X[:, i], Y[:, i]).statistic for i in range(X.shape[1])])
+    assert pt.tl.Distance("ks_test")(X, Y) == pytest.approx(expected, rel=1e-12)
+
+
+def test_edistance_from_precomputed_matches_block_means(rng: np.random.Generator) -> None:
+    from sklearn.metrics import pairwise_distances
+
+    P = pairwise_distances(rng.normal(size=(60, 5)))
+    idx = rng.random(60) < 0.3
+    expected = 2 * P[idx][:, ~idx].mean() - P[idx][:, idx].mean() - P[~idx][:, ~idx].mean()
+    assert pt.tl.Distance("edistance").metric_fct.from_precomputed(P, idx) == pytest.approx(expected, rel=1e-12)

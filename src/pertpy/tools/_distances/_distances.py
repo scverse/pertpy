@@ -12,7 +12,7 @@ from pandas import Series
 from rich.progress import track
 from scipy.spatial.distance import cosine, mahalanobis
 from scipy.special import gammaln
-from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
+from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
@@ -23,7 +23,7 @@ from pertpy._jax import jax_import
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Hashable, Iterable
 
     from anndata import AnnData
     from ott.geometry.geometry import Geometry
@@ -49,9 +49,15 @@ def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
     total_distance = 0.0
     n_pairs = n_samples * (n_samples - 1) / 2.0
 
-    for i in prange(n_samples):
+    for i in prange((n_samples + 1) // 2):
+        row_distance = 0.0
         for j in range(i + 1, n_samples):
-            total_distance += _euclidean_distance(X[i], X[j])
+            row_distance += _euclidean_distance(X[i], X[j])
+        mirror = n_samples - 1 - i
+        if mirror != i:
+            for j in range(mirror + 1, n_samples):
+                row_distance += _euclidean_distance(X[mirror], X[j])
+        total_distance += row_distance
 
     return total_distance / n_pairs
 
@@ -73,6 +79,54 @@ def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
             total_distance += _euclidean_distance(X[i], Y[j])
 
     return total_distance / n_pairs
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def _ks_statistics(X: np.ndarray, Y: np.ndarray, cdf_x: np.ndarray, cdf_y: np.ndarray) -> np.ndarray:
+    """Two-sided two-sample Kolmogorov-Smirnov statistic of every column, as computed by :func:`scipy.stats.ks_2samp`.
+
+    `cdf_x` and `cdf_y` hold the values the empirical CDFs of `X` and `Y` can take.
+    """
+    n_x, n_y = X.shape[0], Y.shape[0]
+    stats = np.empty(X.shape[1], dtype=cdf_x.dtype)
+    for k in prange(X.shape[1]):
+        x = np.sort(X[:, k])
+        y = np.sort(Y[:, k])
+        if np.isnan(x[-1]) or np.isnan(y[-1]):
+            stats[k] = np.nan
+            continue
+        i = j = 0
+        d_min = d_max = cdf_x[0] - cdf_y[0]
+        while i < n_x or j < n_y:
+            value = x[i] if j == n_y or (i < n_x and x[i] <= y[j]) else y[j]
+            while i < n_x and x[i] <= value:
+                i += 1
+            while j < n_y and y[j] <= value:
+                j += 1
+            diff = cdf_x[i] - cdf_y[j]
+            d_min = min(d_min, diff)
+            d_max = max(d_max, diff)
+        d_min = min(max(-d_min, 0), 1)
+        stats[k] = d_min if d_min > d_max else d_max
+    return stats
+
+
+@jit(nopython=True, parallel=True, cache=True, fastmath=True)
+def _masked_row_sums(P: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Sum of every row of `P` over the columns inside and outside of `mask`."""
+    inside = np.empty(P.shape[0])
+    outside = np.empty(P.shape[0])
+    for i in prange(P.shape[0]):
+        sum_inside = 0.0
+        sum_outside = 0.0
+        for j in range(P.shape[1]):
+            if mask[j]:
+                sum_inside += P[i, j]
+            else:
+                sum_outside += P[i, j]
+        inside[i] = sum_inside
+        outside[i] = sum_outside
+    return inside, outside
 
 
 def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: str = "euclidean", **kwargs) -> float:
@@ -106,6 +160,12 @@ def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: s
         return pairwise_distances(X, X, metric=metric, **kwargs).mean()
     else:
         return pairwise_distances(X, Y, metric=metric, **kwargs).mean()
+
+
+def _group_indices(grouping: pd.Series, groups: Iterable[Hashable]) -> list[np.ndarray]:
+    """Ascending positions of the cells of each of `groups` in `grouping`."""
+    indices = grouping.groupby(grouping, observed=True, sort=False).indices
+    return [np.asarray(indices.get(group, ()), dtype=np.intp) for group in groups]
 
 
 class MeanVar(NamedTuple):
@@ -400,10 +460,10 @@ class Distance:
         """
         obs = adata.obs
         groups = cast("list[str]", obs[groupby].unique()) if groups is None else groups
-        grouping = obs[groupby].copy()
-        df = pd.DataFrame(index=groups, columns=groups, dtype=float)
-        if bootstrap:
-            df_var = pd.DataFrame(index=groups, columns=groups, dtype=float)
+        group_idx = _group_indices(cast_frame(obs)[groupby], groups)
+        n_groups = len(groups)
+        dist = np.zeros((n_groups, n_groups))
+        dist_var = np.zeros((n_groups, n_groups))
         fct = track if show_progressbar else lambda iterable: iterable
 
         # Check if metric supports value caching (within/between distances) - more efficient than precomputed matrix
@@ -416,42 +476,19 @@ class Distance:
                 "np.ndarray",
                 adata.layers[self.layer_key] if self.layer_key else adata.obsm[cast("str", self.obsm_key)],
             )
-
-            # Precompute within distances for each group
-            df_within = pd.Series(index=groups, dtype=float)
-            for group in fct(groups):
-                idx_group = grouping == group
-                cells_group = dense_embedding[np.asarray(idx_group)]
-                df_within[group] = self.metric_fct.compute_within_distance(cells_group, **kwargs)
-
-            # Precompute between distances for each pair
-            df_between = pd.DataFrame(index=groups, columns=groups, dtype=float)
-            for index_x, group_x in enumerate(fct(groups)):
-                idx_x = grouping == group_x
-                dense_cells_x = dense_embedding[np.asarray(idx_x)]
-                for group_y in groups[index_x:]:
-                    if group_x == group_y:
-                        df_between.loc[group_x, group_y] = 0.0
-                    else:
-                        idx_y = grouping == group_y
-                        dense_cells_y = dense_embedding[np.asarray(idx_y)]
-                        between = self.metric_fct.compute_between_distance(dense_cells_x, dense_cells_y, **kwargs)
-                        df_between.loc[group_x, group_y] = between
-                        df_between.loc[group_y, group_x] = between
-
-            # Compute distances from cached values
-            for group_x in groups:
-                for group_y in groups:
-                    if group_x == group_y:
-                        df.loc[group_x, group_y] = 0.0
-                    else:
-                        dist = self.metric_fct.from_cached_values(
-                            float(df_within[group_x]),
-                            float(df_within[group_y]),
-                            cast("float", df_between.loc[group_x, group_y]),
-                            **kwargs,
-                        )
-                        df.loc[group_x, group_y] = dist
+            dense_cells = [dense_embedding[idx] for idx in group_idx]
+            within = [float(self.metric_fct.compute_within_distance(cells, **kwargs)) for cells in fct(dense_cells)]
+            for index_x in fct(range(n_groups)):
+                for index_y in range(index_x + 1, n_groups):
+                    between = float(
+                        self.metric_fct.compute_between_distance(dense_cells[index_x], dense_cells[index_y], **kwargs)
+                    )
+                    dist[index_x, index_y] = self.metric_fct.from_cached_values(
+                        within[index_x], within[index_y], between, **kwargs
+                    )
+                    dist[index_y, index_x] = self.metric_fct.from_cached_values(
+                        within[index_y], within[index_x], between, **kwargs
+                    )
 
         elif self.metric_fct.accepts_precomputed:
             # Precomputed pairwise distance matrix mode
@@ -459,21 +496,18 @@ class Distance:
             if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = cast_dense(adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"])
-            for index_x, group_x in enumerate(fct(groups)):
-                idx_x = grouping == group_x
-                for group_y in groups[index_x:]:
+            for index_x in fct(range(n_groups)):
+                for index_y in range(index_x, n_groups):
+                    if index_x == index_y and not bootstrap:
+                        continue
                     # subset the pairwise distance matrix to the two groups
-                    idx_y = grouping == group_y
-                    sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
-                    sub_idx = grouping[idx_x | idx_y] == group_x
+                    idx_xy = np.union1d(group_idx[index_x], group_idx[index_y])
+                    sub_pwd = pwd[np.ix_(idx_xy, idx_xy)]
+                    sub_idx = np.isin(idx_xy, group_idx[index_x])
                     if not bootstrap:
-                        if group_x == group_y:
-                            dist = 0.0
-                        else:
-                            dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
-                        df.loc[group_x, group_y] = dist
-                        df.loc[group_y, group_x] = dist
-
+                        dist[index_x, index_y] = dist[index_y, index_x] = self.metric_fct.from_precomputed(
+                            sub_pwd, sub_idx, **kwargs
+                        )
                     else:
                         bootstrap_output = self._bootstrap_mode_precomputed(
                             sub_pwd,
@@ -483,25 +517,24 @@ class Distance:
                             **kwargs,
                         )
                         # In the bootstrap case, distance of group to itself is a mean and can be non-zero
-                        df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
-                        df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
+                        dist[index_x, index_y] = dist[index_y, index_x] = bootstrap_output.mean
+                        dist_var[index_x, index_y] = dist_var[index_y, index_x] = bootstrap_output.variance
         else:
             # Standard mode: compute distances directly
             embedding = (
                 cast_matrix(adata.layers[self.layer_key])
                 if self.layer_key
-                else cast_matrix(adata.obsm[cast("str", self.obsm_key)]).copy()
+                else cast_matrix(adata.obsm[cast("str", self.obsm_key)])
             )
-            for index_x, group_x in enumerate(fct(groups)):
-                cells_x = embedding[np.asarray(grouping == group_x)].copy()
-                for group_y in groups[index_x:]:
-                    cells_y = embedding[np.asarray(grouping == group_y)].copy()
+            cells = [embedding[idx] for idx in group_idx]
+            for index_x in fct(range(n_groups)):
+                cells_x = to_dense(cells[index_x])
+                for index_y in range(index_x, n_groups):
+                    cells_y = cells[index_y]
                     if not bootstrap:
                         # By distance axiom, the distance between a group and itself is 0
-                        dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
-
-                        df.loc[group_x, group_y] = dist
-                        df.loc[group_y, group_x] = dist
+                        if index_x != index_y:
+                            dist[index_x, index_y] = dist[index_y, index_x] = self(cells_x, cells_y, **kwargs)
                     else:
                         bootstrap_output = self.bootstrap(
                             cells_x,
@@ -511,9 +544,10 @@ class Distance:
                             **kwargs,
                         )
                         # In the bootstrap case, distance of group to itself is a mean and can be non-zero
-                        df.loc[group_x, group_y] = df.loc[group_y, group_x] = bootstrap_output.mean
-                        df_var.loc[group_x, group_y] = df_var.loc[group_y, group_x] = bootstrap_output.variance
+                        dist[index_x, index_y] = dist[index_y, index_x] = bootstrap_output.mean
+                        dist_var[index_x, index_y] = dist_var[index_y, index_x] = bootstrap_output.variance
 
+        df = pd.DataFrame(dist, index=groups, columns=groups)
         df.index.name = groupby
         df.columns.name = groupby
         df.name = f"pairwise {self.metric}"  # type: ignore[attr-defined]
@@ -522,6 +556,7 @@ class Distance:
             return df
         else:
             df = df.fillna(0)
+            df_var = pd.DataFrame(dist_var, index=groups, columns=groups)
             df_var.index.name = groupby
             df_var.columns.name = groupby
             df_var = df_var.fillna(0)
@@ -584,7 +619,7 @@ class Distance:
 
         obs = cast_frame(adata.obs)
         groups = cast("list[str]", obs[groupby].unique()) if groups is None else groups
-        grouping = obs[groupby].copy()
+        *group_idx, selected_idx = _group_indices(obs[groupby], [*groups, selected_group])
         df = pd.Series(index=groups, dtype=float)
         if bootstrap:
             df_var = pd.Series(index=groups, dtype=float)
@@ -602,17 +637,15 @@ class Distance:
             )
 
             # Precompute within distance for selected_group (only need it once)
-            idx_selected = grouping == selected_group
-            cells_selected = dense_embedding[np.asarray(idx_selected)]
+            cells_selected = dense_embedding[selected_idx]
             within_selected = self.metric_fct.compute_within_distance(cells_selected, **kwargs)
 
             # Precompute within distances for each group and between distances to selected_group
-            for group_x in fct(groups):
+            for index_x, group_x in enumerate(fct(groups)):
                 if group_x == selected_group:
                     df.loc[group_x] = 0.0  # by distance axiom
                 else:
-                    idx_x = grouping == group_x
-                    dense_cells_x = dense_embedding[np.asarray(idx_x)]
+                    dense_cells_x = dense_embedding[group_idx[index_x]]
 
                     # Compute within distance for this group
                     within_x = self.metric_fct.compute_within_distance(dense_cells_x, **kwargs)
@@ -630,18 +663,16 @@ class Distance:
             if f"{self.obsm_key}_{self.cell_wise_metric}_predistances" not in adata.obsp:
                 self.precompute_distances(adata, n_jobs=n_jobs, **kwargs)
             pwd = cast_dense(adata.obsp[f"{self.obsm_key}_{self.cell_wise_metric}_predistances"])
-            for group_x in fct(groups):
-                idx_x = grouping == group_x
-                group_y = selected_group
-                if group_x == group_y:
+            for index_x, group_x in enumerate(fct(groups)):
+                if group_x == selected_group:
                     df.loc[group_x] = 0.0  # by distance axiom
                 else:
-                    idx_y = grouping == group_y
                     # subset the pairwise distance matrix to the two groups
-                    sub_pwd = pwd[idx_x | idx_y, :][:, idx_x | idx_y]
-                    sub_idx = grouping[idx_x | idx_y] == group_x
+                    idx_xy = np.union1d(group_idx[index_x], selected_idx)
+                    sub_pwd = pwd[np.ix_(idx_xy, idx_xy)]
+                    sub_idx = np.isin(idx_xy, group_idx[index_x])
                     if not bootstrap:
-                        dist = self.metric_fct.from_precomputed(sub_pwd, cast_dense(sub_idx), **kwargs)
+                        dist = self.metric_fct.from_precomputed(sub_pwd, sub_idx, **kwargs)
                         df.loc[group_x] = dist
                     else:
                         bootstrap_output = self._bootstrap_mode_precomputed(
@@ -658,11 +689,11 @@ class Distance:
             embedding = (
                 cast_matrix(adata.layers[self.layer_key])
                 if self.layer_key
-                else cast_matrix(adata.obsm[cast("str", self.obsm_key)]).copy()
+                else cast_matrix(adata.obsm[cast("str", self.obsm_key)])
             )
-            cells_y = to_dense(embedding[np.asarray(grouping == selected_group)])
-            for group_x in fct(groups):
-                cells_x = embedding[np.asarray(grouping == group_x)].copy()
+            cells_y = to_dense(embedding[selected_idx])
+            for index_x, group_x in enumerate(fct(groups)):
+                cells_x = embedding[group_idx[index_x]]
                 if not bootstrap:
                     # By distance axiom, the distance between a group and itself is 0
                     dist = 0.0 if group_x == selected_group else self(cells_x, cells_y, **kwargs)
@@ -759,18 +790,19 @@ class Distance:
 
     def _bootstrap_mode_precomputed(self, sub_pwd, sub_idx, n_bootstraps=100, random_state=0, **kwargs) -> MeanVar:
         rng = np.random.default_rng(random_state)
+        pos_idx = np.flatnonzero(sub_idx)
+        neg_idx = np.flatnonzero(~sub_idx)
 
         distances = []
         for _ in range(n_bootstraps):
             # To maintain the number of cells for both groups (whatever balancing they may have),
             # we sample the positive and negative indices separately
-            bootstrap_pos_idx = rng.choice(a=sub_idx[sub_idx].index, size=sub_idx[sub_idx].size, replace=True)
-            bootstrap_neg_idx = rng.choice(a=sub_idx[~sub_idx].index, size=sub_idx[~sub_idx].size, replace=True)
+            bootstrap_pos_idx = rng.choice(a=pos_idx, size=pos_idx.size, replace=True)
+            bootstrap_neg_idx = rng.choice(a=neg_idx, size=neg_idx.size, replace=True)
             bootstrap_idx = np.concatenate([bootstrap_pos_idx, bootstrap_neg_idx])
-            bootstrap_idx_nrs = sub_idx.index.get_indexer(bootstrap_idx)
 
             bootstrap_sub_idx = sub_idx[bootstrap_idx]
-            bootstrap_sub_pwd = sub_pwd[bootstrap_idx_nrs, :][:, bootstrap_idx_nrs]
+            bootstrap_sub_pwd = sub_pwd[np.ix_(bootstrap_idx, bootstrap_idx)]
 
             distance = self.metric_fct.from_precomputed(bootstrap_sub_pwd, bootstrap_sub_idx, **kwargs)
             distances.append(distance)
@@ -885,9 +917,13 @@ class Edistance(AbstractDistance):
         return 2 * between - within_X - within_Y
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
-        within_X = P[idx, :][:, idx].mean()
-        within_Y = P[~idx, :][:, ~idx].mean()
-        between = P[idx, :][:, ~idx].mean()
+        idx = np.asarray(idx, dtype=bool)
+        inside, outside = _masked_row_sums(P, idx)
+        n_x = np.count_nonzero(idx)
+        n_y = idx.size - n_x
+        within_X = inside[idx].sum() / n_x**2
+        within_Y = outside[~idx].sum() / n_y**2
+        between = outside[idx].sum() / (n_x * n_y)
         return 2 * between - within_X - within_Y
 
     def supports_value_cache(self) -> bool:
@@ -1186,10 +1222,12 @@ class SymmetricKLDivergence(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
+        # column-major so that every gene is reduced with pairwise summation
+        X, Y = np.asfortranarray(X), np.asfortranarray(Y)
         kl_all = []
-        for i in range(X.shape[1]):
-            x_mean, x_std = X[:, i].mean(), X[:, i].std() + epsilon
-            y_mean, y_std = Y[:, i].mean(), Y[:, i].std() + epsilon
+        for x_mean, x_std, y_mean, y_std in zip(
+            X.mean(axis=0), X.std(axis=0) + epsilon, Y.mean(axis=0), Y.std(axis=0) + epsilon, strict=True
+        ):
             kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
             klr = np.log(x_std / y_std) + (y_std**2 + (y_mean - x_mean) ** 2) / (2 * x_std**2) - 1 / 2
             kl_all.append(kl + klr)
@@ -1210,9 +1248,11 @@ class TTestDistance(AbstractDistance):
         t_test_all = []
         n1 = X.shape[0]
         n2 = Y.shape[0]
-        for i in range(X.shape[1]):
-            m1, v1 = X[:, i].mean(), X[:, i].std() ** 2 * n1 / (n1 - 1) + epsilon
-            m2, v2 = Y[:, i].mean(), Y[:, i].std() ** 2 * n2 / (n2 - 1) + epsilon
+        # column-major so that every gene is reduced with pairwise summation
+        X, Y = np.asfortranarray(X), np.asfortranarray(Y)
+        for m1, s1, m2, s2 in zip(X.mean(axis=0), X.std(axis=0), Y.mean(axis=0), Y.std(axis=0), strict=True):
+            v1 = s1**2 * n1 / (n1 - 1) + epsilon
+            v2 = s2**2 * n2 / (n2 - 1) + epsilon
             vn1 = v1 / n1
             vn2 = v2 / n2
             t = (m1 - m2) / np.sqrt(vn1 + vn2)
@@ -1231,8 +1271,16 @@ class KSTestDistance(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
-        stats = [abs(float(kstest(X[:, i], Y[:, i]).statistic)) for i in range(X.shape[1])]
-        return sum(stats) / len(stats)
+        dtype = np.result_type(X, Y)
+        if not np.issubdtype(dtype, np.floating):
+            dtype = np.dtype(np.float64)
+        stats = _ks_statistics(
+            np.asfortranarray(X, dtype=dtype),
+            np.asfortranarray(Y, dtype=dtype),
+            np.linspace(0, 1, X.shape[0] + 1, dtype=dtype),
+            np.linspace(0, 1, Y.shape[0] + 1, dtype=dtype),
+        )
+        return sum(np.abs(stats).tolist()) / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("KSTestDistance cannot be called on a pairwise distance matrix.")
@@ -1252,7 +1300,6 @@ class NBLL(AbstractDistance):
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBLL distance only works for raw counts.")
 
-        @jit(forceobj=True)
         def _compute_nll(y: np.ndarray, nb_params: tuple[float, float], epsilon: float) -> float:
             mu = np.exp(nb_params[0])
             theta = 1 / nb_params[1]
