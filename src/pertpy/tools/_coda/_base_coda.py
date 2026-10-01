@@ -135,7 +135,7 @@ class CompositionalModel2(ABC):
         num_chains = int(mcmc_state.get("num_chains", 1)) or 1
 
         predict_kwargs = {
-            "counts": None,
+            "counts": jnp.array(sample_adata.X, dtype="float64"),
             "covariates": jnp.array(sample_adata.obsm["covariate_matrix"], dtype="float64"),
             "n_total": jnp.rint(jnp.array(sample_adata.obsm["sample_counts"], dtype="float64")),
             "ref_index": jnp.array(sample_adata.uns["scCODA_params"]["reference_index"]),
@@ -146,11 +146,9 @@ class CompositionalModel2(ABC):
         def _grouped(d: dict, chains: int, *, predictive: bool = False) -> dict:
             out = {}
             for k, v in d.items():
+                if predictive and k == "counts":
+                    continue
                 arr = np.asarray(v)
-                # Drop variables whose rank past the sample axis doesn't match `dims[k]`,
-                # e.g. `counts` from `Predictive` carries an extra batch axis under
-                # numpyro's DirichletMultinomial broadcasting and would otherwise
-                # collide with the cell_type coord.
                 if predictive and len(arr.shape) - 1 != len(dims.get(k, [])):
                     continue
                 out[k] = arr.reshape((chains, -1, *arr.shape[1:]))

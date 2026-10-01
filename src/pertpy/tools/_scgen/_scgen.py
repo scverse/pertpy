@@ -374,21 +374,21 @@ class Scgen:
         # use keys registered from `setup_anndata()`
         cell_type_key = self.labels_key
         condition_key = self.batch_key
+        obs = cast_frame(self.adata.obs)
 
         if restrict_arithmetic_to == "all":
-            ctrl_x = self.adata[self.adata.obs[condition_key] == ctrl_key, :]
-            stim_x = self.adata[self.adata.obs[condition_key] == stim_key, :]
-            ctrl_x = balancer(ctrl_x, cell_type_key)
-            stim_x = balancer(stim_x, cell_type_key)
+            subset = np.ones(self.adata.n_obs, dtype=bool)
+            balance = True
         else:
             key = list(restrict_arithmetic_to.keys())[0]
             values = restrict_arithmetic_to[key]
-            subset = self.adata[self.adata.obs[key].isin(values)]
-            ctrl_x = subset[subset.obs[condition_key] == ctrl_key, :]
-            stim_x = subset[subset.obs[condition_key] == stim_key, :]
-            if len(values) > 1:
-                ctrl_x = balancer(ctrl_x, cell_type_key)
-                stim_x = balancer(stim_x, cell_type_key)
+            subset = obs[key].isin(values).to_numpy()
+            balance = len(values) > 1
+        ctrl_idx = np.flatnonzero(subset & (obs[condition_key] == ctrl_key).to_numpy())
+        stim_idx = np.flatnonzero(subset & (obs[condition_key] == stim_key).to_numpy())
+        if balance:
+            ctrl_idx = ctrl_idx[balancer(obs[cell_type_key].iloc[ctrl_idx])]
+            stim_idx = stim_idx[balancer(obs[cell_type_key].iloc[stim_idx])]
         if celltype_to_predict is not None and adata_to_predict is not None:
             raise Exception("Please provide either a cell type or adata not both!")
         if celltype_to_predict is None and adata_to_predict is None:
@@ -405,15 +405,13 @@ class Scgen:
         else:
             ctrl_pred = adata_to_predict
 
-        eq = min(ctrl_x.X.shape[0], stim_x.X.shape[0])
+        eq = min(len(ctrl_idx), len(stim_idx))
         rng = np.random.default_rng()
-        cd_ind = rng.choice(range(ctrl_x.shape[0]), size=eq, replace=False)
-        stim_ind = rng.choice(range(stim_x.shape[0]), size=eq, replace=False)
-        ctrl_adata = ctrl_x[cd_ind, :]
-        stim_adata = stim_x[stim_ind, :]
+        cd_ind = rng.choice(range(len(ctrl_idx)), size=eq, replace=False)
+        stim_ind = rng.choice(range(len(stim_idx)), size=eq, replace=False)
 
-        latent_ctrl = self._avg_vector(ctrl_adata)
-        latent_stim = self._avg_vector(stim_adata)
+        latent_ctrl = self._avg_vector(self.adata[ctrl_idx[cd_ind]])
+        latent_stim = self._avg_vector(self.adata[stim_idx[stim_ind]])
 
         delta = latent_stim - latent_ctrl
 
