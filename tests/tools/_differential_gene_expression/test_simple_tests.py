@@ -163,3 +163,9 @@ def test_invalid_pairing(test_adata_minimal, params):
     """Test that the SimpleComparisonBase class raises an error when paired analysis is requested with invalid configuration."""
     with pytest.raises(ValueError):
         TTest.compare_groups(test_adata_minimal, **params)
+
+
+def test_untestable_variable_keeps_other_adjusted_pvalues(test_adata_minimal):
+    test_adata_minimal.X[:, 1] = 0
+    res_df = TTest.compare_groups(adata=test_adata_minimal, column="condition", baseline="A", groups_to_compare="B")
+    np.testing.assert_array_equal(res_df["adj_p_value"].isna(), res_df["p_value"].isna())
