@@ -11,6 +11,8 @@ import optax
 from flax.training import train_state
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from ._scgenvae import JaxSCGENVAE
 
 DEFAULT_LR = 1e-3
@@ -70,25 +72,37 @@ def _batches(indices: np.ndarray, batch_size: int, rng: np.random.Generator | No
     return [order[i : i + batch_size] for i in range(0, len(order), batch_size)]
 
 
+def _mean_loss(losses: Sequence[jax.Array], sizes: Sequence[int]) -> float:
+    total = 0.0
+    for loss, size in zip(jax.device_get(losses), sizes, strict=True):
+        total += float(loss) * size
+    return total / sum(sizes)
+
+
 @jax.jit
-def _train_step(state: TrainStateWithState, x: jnp.ndarray, rngs: dict[str, jnp.ndarray]):
+def _train_step(state: TrainStateWithState, x: jnp.ndarray, key: jnp.ndarray):
+    key, dropout_key, z_key = jax.random.split(key, 3)
+
     def loss_fn(params):
         variables = {"params": params, **state.state}
-        outputs, new_model_state = state.apply_fn(variables, x, rngs=rngs, mutable=list(state.state.keys()))
+        outputs, new_model_state = state.apply_fn(
+            variables, x, rngs={"dropout": dropout_key, "z": z_key}, mutable=list(state.state.keys())
+        )
         loss_output = outputs[2]
         return loss_output.loss, (loss_output, new_model_state)
 
     (_loss, (loss_output, new_model_state)), grads = jax.value_and_grad(loss_fn, has_aux=True)(state.params)
     new_state = state.apply_gradients(grads=grads, state=new_model_state)
-    return new_state, loss_output.loss
+    return new_state, loss_output.loss, key
 
 
 def _make_eval_step(eval_apply_fn):
     @jax.jit
-    def _eval_step(params, model_state, x: jnp.ndarray, rngs: dict[str, jnp.ndarray]):
+    def _eval_step(params, model_state, x: jnp.ndarray, key: jnp.ndarray):
+        key, z_key = jax.random.split(key)
         variables = {"params": params, **model_state}
-        outputs = eval_apply_fn(variables, x, rngs=rngs)
-        return outputs[2].loss
+        outputs = eval_apply_fn(variables, x, rngs={"z": z_key})
+        return outputs[2].loss, key
 
     return _eval_step
 
@@ -131,7 +145,7 @@ def train_module(
 
     key = jax.random.PRNGKey(seed)
     key, *init_keys = jax.random.split(key, len(module.required_rngs) + 1)
-    variables = module.init(dict(zip(module.required_rngs, init_keys, strict=True)), jnp.asarray(x[:1]))
+    variables = jax.jit(module.init)(dict(zip(module.required_rngs, init_keys, strict=True)), jnp.asarray(x[:1]))
     params = variables["params"]
     model_state = {k: v for k, v in variables.items() if k != "params"}
 
@@ -150,24 +164,22 @@ def train_module(
     best_loss = np.inf
     epochs_without_improvement = 0
     for _epoch in range(max_epochs):
-        epoch_loss, epoch_cells = 0.0, 0
+        losses, sizes = [], []
         for batch_idx in _batches(train_idx, batch_size, np_rng):
-            key, dropout_key, z_key = jax.random.split(key, 3)
-            state, loss = _train_step(state, jnp.asarray(x[batch_idx]), {"dropout": dropout_key, "z": z_key})
-            epoch_loss += float(loss) * len(batch_idx)
-            epoch_cells += len(batch_idx)
-        history["train_loss"].append(epoch_loss / epoch_cells)
+            state, loss, key = _train_step(state, jnp.asarray(x[batch_idx]), key)
+            losses.append(loss)
+            sizes.append(len(batch_idx))
+        history["train_loss"].append(_mean_loss(losses, sizes))
 
         if len(val_idx) == 0:
             continue
 
-        val_loss, val_cells = 0.0, 0
+        losses, sizes = [], []
         for batch_idx in _batches(val_idx, batch_size, None):
-            key, z_key = jax.random.split(key)
-            loss = eval_step(state.params, state.state, jnp.asarray(x[batch_idx]), {"z": z_key})
-            val_loss += float(loss) * len(batch_idx)
-            val_cells += len(batch_idx)
-        val_loss /= val_cells
+            loss, key = eval_step(state.params, state.state, jnp.asarray(x[batch_idx]), key)
+            losses.append(loss)
+            sizes.append(len(batch_idx))
+        val_loss = _mean_loss(losses, sizes)
         history["validation_loss"].append(val_loss)
 
         if early_stopping:
