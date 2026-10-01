@@ -109,6 +109,7 @@ def test_mixscape_gaussian_mixture():
 
     assert np.allclose(model.means_[0], fixed_means[0])
     assert np.allclose(model.covariances_[1], fixed_covariances[1])
+    assert np.allclose(model.precisions_[1], 1 / fixed_covariances[1])
 
 
 def test_mixscape_gmm_predict_proba_matches_sklearn():
