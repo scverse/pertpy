@@ -324,7 +324,7 @@ class MLPClassifierSpace(PerturbationSpace):
         state = create_train_state(init_rng, model, (adata.n_vars,), lr)
 
         # Create weighted sampling for class imbalance
-        weights = 1.0 / (1.0 + jnp.sum(jnp.asarray(train_dataset.labels), axis=1))
+        weights = 1.0 / (train_dataset.labels @ jnp.sum(train_dataset.labels, axis=0))
         weights = weights / jnp.sum(weights)
 
         n_batches_per_epoch = len(train_dataset) // batch_size
