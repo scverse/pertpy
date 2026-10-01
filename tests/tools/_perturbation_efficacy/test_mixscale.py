@@ -103,7 +103,7 @@ R_GOLDEN = {
 }
 
 
-@pytest.fixture(params=[np.asarray, sparse.csr_array], ids=["dense", "csr_array"])
+@pytest.fixture(params=[np.asarray, sparse.csr_array, sparse.csr_matrix], ids=["dense", "csr_array", "csr_matrix"])
 def parity_adata(request):
     """The exact deterministic dataset the R golden scores were computed on, over each supported array type."""
     rng = np.random.default_rng(0)

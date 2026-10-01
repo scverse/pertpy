@@ -9,7 +9,7 @@ import pandas as pd
 import scanpy as sc
 from fast_array_utils.conv import to_dense
 from pandas.errors import PerformanceWarning
-from scipy.sparse import sparray
+from scipy.sparse import sparray, spmatrix
 
 from pertpy._types import CSBase, RankGenesMethod, cast_frame
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
@@ -39,16 +39,19 @@ def _leave_one_out_numerators(matrix: np.ndarray, numerator: np.ndarray, directi
 
 
 @_subset_column_mean.register(sparray)
+@_subset_column_mean.register(spmatrix)
 def _(matrix: CSBase, row_mask: np.ndarray) -> np.ndarray:  # type: ignore[misc]
     return np.asarray(matrix[row_mask].mean(axis=0)).ravel()
 
 
 @_project.register(sparray)
-def _(matrix: sparray, direction: np.ndarray) -> np.ndarray:  # type: ignore[misc]
+@_project.register(spmatrix)
+def _(matrix: CSBase, direction: np.ndarray) -> np.ndarray:  # type: ignore[misc]
     return np.asarray(matrix @ direction).ravel()
 
 
 @_leave_one_out_numerators.register(sparray)
+@_leave_one_out_numerators.register(spmatrix)
 def _(matrix: CSBase, numerator: np.ndarray, direction: np.ndarray) -> np.ndarray:  # type: ignore[misc]
     return numerator[:, None] - matrix.multiply(direction[None, :]).toarray()
 
