@@ -271,7 +271,7 @@ class DistanceTest:
             else:
                 raise ValueError("Either `layer_key` or `obsm_key` must be set.")
             pwd = pairwise_distances(cells, cells, metric=self.distance.cell_wise_metric)
-            precomputed_distances[group] = pwd
+            precomputed_distances[group] = pwd, pwd.sum(dtype=np.float64)
 
         # Generate the null distribution
         obs_labels = np.asarray(adata.obs[groupby].values)
@@ -287,7 +287,8 @@ class DistanceTest:
                 # Shuffle the labels of the groups
                 rng = np.random.default_rng()
                 idx = rng.permutation(in_group[group])
-                distances[i] = self.distance.metric_fct.from_precomputed(precomputed_distances[group], idx)
+                pwd, total = precomputed_distances[group]
+                distances[i] = self.distance.metric_fct.from_precomputed(pwd, idx, total=total)
             results.append(pd.DataFrame({"distance": distances}, index=groups).sort_index())
 
         # Generate the empirical distribution
@@ -295,7 +296,8 @@ class DistanceTest:
         for group in groups:
             if group == contrast:
                 continue
-            distance_result = self.distance.metric_fct.from_precomputed(precomputed_distances[group], in_group[group])
+            pwd, total = precomputed_distances[group]
+            distance_result = self.distance.metric_fct.from_precomputed(pwd, in_group[group], total=total)
             df.loc[group, "distance"] = distance_result
 
         # Evaluate the test

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, NamedTuple, cast
@@ -11,13 +12,9 @@ from numba import jit, prange
 from pandas import Series
 from rich.progress import track
 from scipy.spatial.distance import cosine, mahalanobis
-from scipy.special import gammaln
 from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import pairwise_distances, r2_score
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
-from sklearn.neighbors import KernelDensity
-from statsmodels.discrete.discrete_model import NegativeBinomialP
 
 from pertpy._jax import jax_import
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
@@ -25,60 +22,60 @@ from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 if TYPE_CHECKING:
     from collections.abc import Callable, Hashable, Iterable
 
+    import jax
     from anndata import AnnData
     from ott.geometry.geometry import Geometry
 
 
+_EUCLIDEAN, _RBF, _POLYNOMIAL = range(3)
+
+
 @jit(nopython=True, cache=True)
-def _euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
-    """Compute euclidean distance between two vectors."""
-    dist_sq = 0.0
+def _pair_kernel(x: np.ndarray, y: np.ndarray, kernel: int, gamma: float, degree: float) -> float:
+    """Euclidean distance, rbf kernel or polynomial kernel without offset between two vectors."""
+    total = 0.0
+    if kernel == _POLYNOMIAL:
+        for k in range(x.shape[0]):
+            total += x[k] * y[k]
+        return (gamma * total) ** degree
     for k in range(x.shape[0]):
         diff = x[k] - y[k]
-        dist_sq += diff * diff
-    return np.sqrt(dist_sq)
+        total += diff * diff
+    return np.sqrt(total) if kernel == _EUCLIDEAN else np.exp(-gamma * total)
 
 
 @jit(nopython=True, parallel=True, cache=True, fastmath=True)
-def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
-    """Compute mean pairwise euclidean distance within a group (X to X)."""
+def _pairwise_kernel_sum_within(
+    X: np.ndarray, kernel: int = _EUCLIDEAN, gamma: float = 0.0, degree: float = 0.0
+) -> float:
+    """Sum of :func:`_pair_kernel` over all ordered pairs of rows of `X`, including every row with itself."""
     n_samples = X.shape[0]
-    if n_samples < 2:
-        return 0.0
-
-    total_distance = 0.0
-    n_pairs = n_samples * (n_samples - 1) / 2.0
-
+    total = 0.0
     for i in prange((n_samples + 1) // 2):
-        row_distance = 0.0
+        row_total = 0.0
         for j in range(i + 1, n_samples):
-            row_distance += _euclidean_distance(X[i], X[j])
+            row_total += _pair_kernel(X[i], X[j], kernel, gamma, degree)
         mirror = n_samples - 1 - i
         if mirror != i:
             for j in range(mirror + 1, n_samples):
-                row_distance += _euclidean_distance(X[mirror], X[j])
-        total_distance += row_distance
-
-    return total_distance / n_pairs
+                row_total += _pair_kernel(X[mirror], X[j], kernel, gamma, degree)
+        total += row_total
+    diagonal = 0.0
+    for i in prange(n_samples):
+        diagonal += _pair_kernel(X[i], X[i], kernel, gamma, degree)
+    return 2 * total + diagonal
 
 
 @jit(nopython=True, parallel=True, cache=True, fastmath=True)
-def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
-    """Compute mean pairwise euclidean distance between two groups (X to Y)."""
-    n_samples_X = X.shape[0]
-    n_samples_Y = Y.shape[0]
-
-    if n_samples_X == 0 or n_samples_Y == 0:
-        return 0.0
-
-    total_distance = 0.0
-    n_pairs = n_samples_X * n_samples_Y
-
-    for i in prange(n_samples_X):
-        for j in range(n_samples_Y):
-            total_distance += _euclidean_distance(X[i], Y[j])
-
-    return total_distance / n_pairs
+def _pairwise_kernel_sum_between(
+    X: np.ndarray, Y: np.ndarray, kernel: int = _EUCLIDEAN, gamma: float = 0.0, degree: float = 0.0
+) -> float:
+    """Sum of :func:`_pair_kernel` over all pairs of a row of `X` and a row of `Y`."""
+    total = 0.0
+    for i in prange(X.shape[0]):
+        for j in range(Y.shape[0]):
+            total += _pair_kernel(X[i], Y[j], kernel, gamma, degree)
+    return total
 
 
 @jit(nopython=True, parallel=True, cache=True)
@@ -112,21 +109,92 @@ def _ks_statistics(X: np.ndarray, Y: np.ndarray, cdf_x: np.ndarray, cdf_y: np.nd
 
 
 @jit(nopython=True, parallel=True, cache=True, fastmath=True)
-def _masked_row_sums(P: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Sum of every row of `P` over the columns inside and outside of `mask`."""
-    inside = np.empty(P.shape[0])
-    outside = np.empty(P.shape[0])
-    for i in prange(P.shape[0]):
+def _masked_row_sums(P: np.ndarray, mask: np.ndarray, rows: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Sum of each of the `rows` of `P` over the columns inside and outside of `mask`."""
+    inside = np.empty(rows.size)
+    outside = np.empty(rows.size)
+    for i in prange(rows.size):
         sum_inside = 0.0
         sum_outside = 0.0
         for j in range(P.shape[1]):
             if mask[j]:
-                sum_inside += P[i, j]
+                sum_inside += P[rows[i], j]
             else:
-                sum_outside += P[i, j]
+                sum_outside += P[rows[i], j]
         inside[i] = sum_inside
         outside[i] = sum_outside
     return inside, outside
+
+
+@jit(nopython=True, parallel=True, cache=True, fastmath=True)
+def _exponential_kernel_sums(points: np.ndarray, grid: np.ndarray, bandwidth: float) -> np.ndarray:
+    """Sum of the exponential kernel between every row of `grid` and all rows of `points`."""
+    sums = np.empty(grid.shape[0])
+    for g in prange(grid.shape[0]):
+        total = 0.0
+        for i in range(points.shape[0]):
+            total += np.exp(-_pair_kernel(grid[g], points[i], _EUCLIDEAN, 0.0, 0.0) / bandwidth)
+        sums[g] = total
+    return sums
+
+
+@jit(nopython=True, cache=True)
+def _nb_size_mle(counts: np.ndarray) -> float:
+    """Maximum likelihood size of a negative binomial fitted to `counts`, NaN if they are not overdispersed."""
+    n = counts.size
+    mean = counts.mean()
+    var = ((counts - mean) ** 2).mean()
+    if var <= mean:
+        return np.nan
+    n_above = n - np.cumsum(np.bincount(counts))
+    lower, upper = -np.inf, np.inf
+    log_size = np.log(mean**2 / (var - mean))
+    for _ in range(100):
+        size = np.exp(log_size)
+        score = -n * np.log1p(mean / size)
+        slope = n * mean / (size + mean)
+        for j in range(n_above.size):
+            inverse = 1.0 / (size + j)
+            score += n_above[j] * inverse
+            slope -= n_above[j] * size * inverse * inverse
+        if score > 0:
+            lower = log_size
+        else:
+            upper = log_size
+        step = log_size - score / slope
+        if not (lower < step < upper and abs(step - log_size) < 1):
+            step = (lower + upper) / 2 if np.isfinite(lower + upper) else log_size + (1.0 if score > 0 else -1.0)
+        if abs(step - log_size) < 1e-12:
+            return np.exp(step)
+        log_size = step
+    return np.exp(log_size)
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def _nb_log_likelihoods(X: np.ndarray, Y: np.ndarray, epsilon: float) -> np.ndarray:
+    """Mean log-likelihood of every column of `Y` under a negative binomial fitted to the same column of `X`.
+
+    NaN for the columns of `X` that are not overdispersed.
+    """
+    log_likelihoods = np.empty(X.shape[1])
+    for k in prange(X.shape[1]):
+        counts = np.empty(X.shape[0], dtype=np.int64)
+        for i in range(X.shape[0]):
+            counts[i] = round(X[i, k])
+        mean = counts.mean()
+        size = _nb_size_mle(counts)
+        log_size_mean = np.log(size + mean + epsilon)
+        total = 0.0
+        for y in Y[:, k]:
+            total += (
+                size * (np.log(size + epsilon) - log_size_mean)
+                + y * (np.log(mean + epsilon) - log_size_mean)
+                + math.lgamma(y + size)
+                - math.lgamma(size)
+                - math.lgamma(y + 1)
+            )
+        log_likelihoods[k] = total / Y.shape[0]
+    return log_likelihoods
 
 
 def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: str = "euclidean", **kwargs) -> float:
@@ -152,14 +220,38 @@ def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: s
             )
         if Y is None:
             # Within-group distance (X to X)
-            return _euclidean_pairwise_mean_within(X)
+            return _pairwise_kernel_sum_within(X) / (len(X) * (len(X) - 1)) if len(X) > 1 else 0.0
         else:
             # Between-group distance (X to Y)
-            return _euclidean_pairwise_mean_between(X, Y)
+            return _pairwise_kernel_sum_between(X, Y) / (len(X) * len(Y)) if len(X) and len(Y) else 0.0
     elif Y is None:
         return pairwise_distances(X, X, metric=metric, **kwargs).mean()
     else:
         return pairwise_distances(X, Y, metric=metric, **kwargs).mean()
+
+
+def _sqeuclidean_std(X: np.ndarray, Y: np.ndarray) -> float:
+    """Standard deviation of the squared euclidean distances between all rows of `X` and `Y`, without forming them."""
+    x_sq, y_sq = (X**2).sum(axis=1), (Y**2).sum(axis=1)
+    x_mean, y_mean = X.mean(axis=0), Y.mean(axis=0)
+    mean = x_sq.mean() + y_sq.mean() - 2 * x_mean @ y_mean
+    mean_sq = (
+        (x_sq**2).mean()
+        + (y_sq**2).mean()
+        + 2 * x_sq.mean() * y_sq.mean()
+        + 4 * np.sum((X.T @ X) * (Y.T @ Y)) / (len(X) * len(Y))
+        - 4 * (x_sq @ X / len(X)) @ y_mean
+        - 4 * x_mean @ (y_sq @ Y / len(Y))
+    )
+    return float(np.sqrt(mean_sq - mean**2))
+
+
+def _padded_uniform_weights(n: int) -> np.ndarray:
+    """Uniform weights of `n` points, zero-padded to a multiple of a quarter of the largest power of two up to `n`."""
+    step = 1 << max(n.bit_length() - 3, 0)
+    weights = np.zeros(-(-n // step) * step)
+    weights[:n] = 1 / n
+    return weights
 
 
 def _group_indices(grouping: pd.Series, groups: Iterable[Hashable]) -> list[np.ndarray]:
@@ -916,15 +1008,22 @@ class Edistance(AbstractDistance):
         between = pairwise_distance_mean(X, Y, metric=self.cell_wise_metric, **kwargs)
         return 2 * between - within_X - within_Y
 
-    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
+    def from_precomputed(self, P: np.ndarray, idx: np.ndarray, total: float | None = None, **kwargs) -> float:
+        """Compute the edistance between the cells in and out of `idx` from their pairwise distances `P`.
+
+        Only the rows of the smaller group are read when the sum of all distances is passed as `total`.
+        """
         idx = np.asarray(idx, dtype=bool)
-        inside, outside = _masked_row_sums(P, idx)
-        n_x = np.count_nonzero(idx)
-        n_y = idx.size - n_x
-        within_X = inside[idx].sum() / n_x**2
-        within_Y = outside[~idx].sum() / n_y**2
-        between = outside[idx].sum() / (n_x * n_y)
-        return 2 * between - within_X - within_Y
+        smaller = idx if 2 * np.count_nonzero(idx) <= idx.size else ~idx
+        inside, outside = _masked_row_sums(P, smaller, np.flatnonzero(smaller))
+        if total is None:
+            total = P.sum(dtype=np.float64)
+        n_smaller = np.count_nonzero(smaller)
+        n_larger = idx.size - n_smaller
+        within_smaller = inside.sum() / n_smaller**2
+        between = outside.sum() / (n_smaller * n_larger)
+        within_larger = (total - inside.sum() - 2 * outside.sum()) / n_larger**2
+        return 2 * between - within_smaller - within_larger
 
     def supports_value_cache(self) -> bool:
         """Edistance benefits from caching within and between distances."""
@@ -951,23 +1050,12 @@ class MMD(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, *, kernel="linear", gamma=1.0, degree=2, **kwargs) -> float:
-        if kernel == "linear":
-            XX = np.dot(X, X.T)
-            YY = np.dot(Y, Y.T)
-            XY = np.dot(X, Y.T)
-        elif kernel == "rbf":
-            XX = rbf_kernel(X, X, gamma=gamma)
-            YY = rbf_kernel(Y, Y, gamma=gamma)
-            XY = rbf_kernel(X, Y, gamma=gamma)
-        elif kernel == "poly":
-            XX = polynomial_kernel(X, X, degree=degree, gamma=gamma, coef0=0)
-            YY = polynomial_kernel(Y, Y, degree=degree, gamma=gamma, coef0=0)
-            XY = polynomial_kernel(X, Y, degree=degree, gamma=gamma, coef0=0)
-        else:
-            raise ValueError(f"Kernel {kernel} not recognized.")
-
-        return XX.mean() + YY.mean() - 2 * XY.mean()
+    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+        return self.from_cached_values(
+            self.compute_within_distance(X, **kwargs),
+            self.compute_within_distance(Y, **kwargs),
+            self.compute_between_distance(X, Y, **kwargs),
+        )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MMD cannot be called on a pairwise distance matrix.")
@@ -976,31 +1064,27 @@ class MMD(AbstractDistance):
         """MMD benefits from caching within and between kernel means."""
         return True
 
-    def compute_within_distance(self, X: np.ndarray, *, kernel="linear", gamma=1.0, degree=2, **kwargs) -> float:
+    def compute_within_distance(self, X: np.ndarray, **kwargs) -> float:
         """Compute within-group kernel mean (mean of kernel matrix within group)."""
-        if kernel == "linear":
-            XX = np.dot(X, X.T)
-        elif kernel == "rbf":
-            XX = rbf_kernel(X, X, gamma=gamma)
-        elif kernel == "poly":
-            XX = polynomial_kernel(X, X, degree=degree, gamma=gamma, coef0=0)
-        else:
-            raise ValueError(f"Kernel {kernel} not recognized.")
-        return XX.mean()
+        return self._kernel_mean(X, None, **kwargs)
 
-    def compute_between_distance(
-        self, X: np.ndarray, Y: np.ndarray, *, kernel="linear", gamma=1.0, degree=2, **kwargs
-    ) -> float:
+    def compute_between_distance(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         """Compute between-group kernel mean (mean of kernel matrix between groups)."""
+        return self._kernel_mean(X, Y, **kwargs)
+
+    @staticmethod
+    def _kernel_mean(X: np.ndarray, Y: np.ndarray | None, *, kernel="linear", gamma=1.0, degree=2, **kwargs) -> float:
+        """Mean of the kernel matrix between `X` and `Y`, or within `X` if `Y` is `None`."""
+        X = np.asarray(X, dtype=np.float64)
+        Y = X if Y is None else np.asarray(Y, dtype=np.float64)
         if kernel == "linear":
-            XY = np.dot(X, Y.T)
-        elif kernel == "rbf":
-            XY = rbf_kernel(X, Y, gamma=gamma)
-        elif kernel == "poly":
-            XY = polynomial_kernel(X, Y, degree=degree, gamma=gamma, coef0=0)
-        else:
+            return float(X.mean(axis=0) @ Y.mean(axis=0))
+        kernels = {"rbf": _RBF, "poly": _POLYNOMIAL}
+        if kernel not in kernels:
             raise ValueError(f"Kernel {kernel} not recognized.")
-        return XY.mean()
+        if Y is X:
+            return _pairwise_kernel_sum_within(X, kernels[kernel], gamma, degree) / len(X) ** 2
+        return _pairwise_kernel_sum_between(X, Y, kernels[kernel], gamma, degree) / (len(X) * len(Y))
 
     def from_cached_values(self, within_X: float, within_Y: float, between: float, **kwargs) -> float:
         """Compute MMD using cached within and between kernel means."""
@@ -1022,8 +1106,12 @@ class WassersteinDistance(AbstractDistance):
 
         X = np.asarray(X, dtype=np.float64)
         Y = np.asarray(Y, dtype=np.float64)
-        geom = PointCloud(jnp.asarray(X), jnp.asarray(Y))
-        return self.solve_ot_problem(geom, **kwargs)
+        epsilon = 0.05 * _sqeuclidean_std(X, Y)
+        a, b = _padded_uniform_weights(len(X)), _padded_uniform_weights(len(Y))
+        X = np.pad(X, ((0, len(a) - len(X)), (0, 0)))
+        Y = np.pad(Y, ((0, len(b) - len(Y)), (0, 0)))
+        geom = PointCloud(jnp.asarray(X), jnp.asarray(Y), epsilon=epsilon)
+        return self.solve_ot_problem(geom, a=jnp.asarray(a), b=jnp.asarray(b), **kwargs)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         import jax.numpy as jnp
@@ -1033,10 +1121,10 @@ class WassersteinDistance(AbstractDistance):
         geom = Geometry(cost_matrix=jnp.asarray(P[idx, :][:, ~idx]))
         return self.solve_ot_problem(geom, **kwargs)
 
-    def solve_ot_problem(self, geom: Geometry, **kwargs):
+    def solve_ot_problem(self, geom: Geometry, a: jax.Array | None = None, b: jax.Array | None = None, **kwargs):
         from ott.problems.linear.linear_problem import LinearProblem
 
-        ot_prob = LinearProblem(geom)
+        ot_prob = LinearProblem(geom, a=a, b=b)
         ot = self.solver(ot_prob, **kwargs)
         cost = float(ot.reg_ot_cost)
 
@@ -1222,7 +1310,6 @@ class SymmetricKLDivergence(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
-        # column-major so that every gene is reduced with pairwise summation
         X, Y = np.asfortranarray(X), np.asfortranarray(Y)
         kl_all = []
         for x_mean, x_std, y_mean, y_std in zip(
@@ -1248,7 +1335,6 @@ class TTestDistance(AbstractDistance):
         t_test_all = []
         n1 = X.shape[0]
         n2 = Y.shape[0]
-        # column-major so that every gene is reduced with pairwise summation
         X, Y = np.asfortranarray(X), np.asfortranarray(Y)
         for m1, s1, m2, s2 in zip(X.mean(axis=0), X.std(axis=0), Y.mean(axis=0), Y.std(axis=0), strict=True):
             v1 = s1**2 * n1 / (n1 - 1) + epsilon
@@ -1300,45 +1386,15 @@ class NBLL(AbstractDistance):
         if not _is_count_matrix(matrix=X) or not _is_count_matrix(matrix=Y):
             raise ValueError("NBLL distance only works for raw counts.")
 
-        def _compute_nll(y: np.ndarray, nb_params: tuple[float, float], epsilon: float) -> float:
-            mu = np.exp(nb_params[0])
-            theta = 1 / nb_params[1]
-            eps = epsilon
+        nlls = _nb_log_likelihoods(X, Y, epsilon)
+        unexpressed = ~X.any(axis=0)
+        nlls[unexpressed] = np.where(Y[:, unexpressed].mean(axis=0) < 10, 0.0, np.nan)
 
-            log_theta_mu_eps = np.log(theta + mu + eps)
-            nll = (
-                theta * (np.log(theta + eps) - log_theta_mu_eps)
-                + y * (np.log(mu + eps) - log_theta_mu_eps)
-                + gammaln(y + theta)
-                - gammaln(theta)
-                - gammaln(y + 1)
-            )
-            return nll.mean()
-
-        def _process_gene(x: np.ndarray, y: np.ndarray, epsilon: float) -> float:
-            try:
-                nb_params = NegativeBinomialP(x, np.ones_like(x)).fit(disp=False).params
-                return _compute_nll(y, nb_params, epsilon)
-            except np.linalg.LinAlgError:
-                if x.mean() < 10 and y.mean() < 10:
-                    return 0.0
-                else:
-                    return np.nan  # Use NaN to indicate skipped genes
-
-        nlls = []
-        genes_skipped = 0
-
-        for i in range(X.shape[1]):
-            nll = _process_gene(X[:, i], Y[:, i], epsilon)
-            if np.isnan(nll):
-                genes_skipped += 1
-            else:
-                nlls.append(nll)
-
+        genes_skipped = np.count_nonzero(np.isnan(nlls))
         if genes_skipped > X.shape[1] / 2:
             raise AttributeError(f"{genes_skipped} genes could not be fit, which is over half.")
 
-        return -np.sum(nlls) / len(nlls)
+        return -np.nanmean(nlls)
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("NBLL cannot be called on a pairwise distance matrix.")
@@ -1477,21 +1533,17 @@ class MeanVarDistributionDistance(AbstractDistance):
         return np.arange(start=d_min + 0.5 * d_bin, stop=d_max, step=d_bin)
 
     @staticmethod
-    def _kde_eval_both(x_kde, y_kde, grid):
-        n_points = len(grid)
-        chunk_size = 10000
+    def _kde(points: np.ndarray, grid: np.ndarray) -> np.ndarray:
+        """Density at `grid` of the 2D exponential kernel density estimate of `points` with Silverman's bandwidth.
 
-        result_x = np.zeros(n_points)
-        result_y = np.zeros(n_points)
-
-        # Process same chunks for both KDEs
-        for start in range(0, n_points, chunk_size):
-            end = min(start + chunk_size, n_points)
-            chunk = grid[start:end]
-            result_x[start:end] = x_kde.score_samples(chunk)
-            result_y[start:end] = y_kde.score_samples(chunk)
-
-        return result_x, result_y
+        Matches :class:`~sklearn.neighbors.KernelDensity` with `bandwidth="silverman"` and `kernel="exponential"`.
+        """
+        n_points = len(points)
+        bandwidth = n_points ** (-1 / 6)
+        sums = _exponential_kernel_sums(
+            np.asarray(points, dtype=np.float64), np.asarray(grid, dtype=np.float64), bandwidth
+        )
+        return sums / (2 * np.pi * bandwidth**2 * n_points)
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
         """Difference of mean-var distributions in 2 matrices.
@@ -1512,14 +1564,7 @@ class MeanVarDistributionDistance(AbstractDistance):
         var_grid = self._grid_points(np.concatenate([var_x, var_y]))
         grid = np.array(np.meshgrid(mean_grid, var_grid)).T.reshape(-1, 2)
 
-        # Fit both KDEs first
-        x_kde = KernelDensity(bandwidth="silverman", kernel="exponential").fit(x)
-        y_kde = KernelDensity(bandwidth="silverman", kernel="exponential").fit(y)
-
-        # Evaluate both KDEs on same grid chunks
-        kde_x, kde_y = self._kde_eval_both(x_kde, y_kde, grid)
-
-        return ((np.exp(kde_x) - np.exp(kde_y)) ** 2).mean()
+        return ((self._kde(x, grid) - self._kde(y, grid)) ** 2).mean()
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("MeanVarDistributionDistance cannot be called on a pairwise distance matrix.")
