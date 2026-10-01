@@ -660,13 +660,12 @@ class Distance:
                 if self.layer_key
                 else cast_matrix(adata.obsm[cast("str", self.obsm_key)]).copy()
             )
+            cells_y = to_dense(embedding[np.asarray(grouping == selected_group)])
             for group_x in fct(groups):
                 cells_x = embedding[np.asarray(grouping == group_x)].copy()
-                group_y = selected_group
-                cells_y = embedding[np.asarray(grouping == group_y)].copy()
                 if not bootstrap:
                     # By distance axiom, the distance between a group and itself is 0
-                    dist = 0.0 if group_x == group_y else self(cells_x, cells_y, **kwargs)
+                    dist = 0.0 if group_x == selected_group else self(cells_x, cells_y, **kwargs)
                     df.loc[group_x] = dist
                 else:
                     bootstrap_output = self.bootstrap(

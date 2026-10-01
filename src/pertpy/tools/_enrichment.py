@@ -219,7 +219,7 @@ class Enrichment:
         full_targets = target_groups.copy()
 
         for drug in target_groups:
-            target_groups[drug] = np.isin(adata.var_names, target_groups[drug])
+            target_groups[drug] = adata.var_names.isin(target_groups[drug])
 
         # Scoring is done via matrix multiplication of the original cell by gene matrix by a new gene by drug matrix
         # with the entries in the new matrix being the weights of each gene for that group (such as drug)
@@ -452,15 +452,13 @@ class Enrichment:
             results["universe"] = len(universe)
             results["pvals"] = results["pvals"].astype(float)
 
-            for ind in results.index:
-                gene_group = target_groups[ind]
-                common = gene_group.intersection(markers)
-                results.loc[ind, "intersection"] = len(common)
-                results.loc[ind, "gene_group"] = len(gene_group)
-                # need to subtract 1 from the intersection length
-                # https://alexlenail.medium.com/understanding-and-implementing-the-hypergeometric-test-in-python-a7db688a7458
-                pval = hypergeom.sf(len(common) - 1, len(universe), len(markers), len(gene_group))
-                results.loc[ind, "pvals"] = pval
+            intersection = np.array([len(target_groups[ind] & markers) for ind in results.index], dtype=np.int64)
+            gene_group = np.array([len(target_groups[ind]) for ind in results.index], dtype=np.int64)
+            results["intersection"] = intersection
+            results["gene_group"] = gene_group
+            # need to subtract 1 from the intersection length
+            # https://alexlenail.medium.com/understanding-and-implementing-the-hypergeometric-test-in-python-a7db688a7458
+            results["pvals"] = hypergeom.sf(intersection - 1, len(universe), len(markers), gene_group)
             # Just in case any NaNs popped up somehow, fill them to 1 so FDR works
             results = results.fillna(1)
             if corr_method == "benjamini-hochberg":

@@ -902,10 +902,7 @@ class SinkhornKnopp:
             c = csum / P.T.dot(r)
             r = rsum / P.dot(c)
 
-            self._D1 = np.diag(np.squeeze(r))
-            self._D2 = np.diag(np.squeeze(c))
-
-            P_eps = np.diag(self._D1)[:, None] * P * np.diag(self._D2)[None, :]
+            P_eps = r * P * c.T
 
             self._iterations += 1
 
