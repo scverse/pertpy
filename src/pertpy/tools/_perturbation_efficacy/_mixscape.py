@@ -19,7 +19,7 @@ from sklearn.mixture import GaussianMixture
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._types import RankGenesMethod, cast_dense, cast_frame, cast_matrix
-from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
+from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer, _subset_rows_cols
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -149,61 +149,70 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         )
         gv_list: dict[str, dict] = {}
 
-        obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = 0.0
+        pert_labels = obs[pert_key].to_numpy()
+        class_dtype = obs[new_class_name].dtype
+        classes = obs[new_class_name].to_numpy(dtype=object)
+        post_probs = np.zeros(adata.n_obs)
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
+            split_cells = np.asarray(split_mask)
             gene_targets = list(set(adata[split_mask].obs[pert_key]).difference([control]))
+            nt_cells = (pert_labels == control) & split_cells
             for gene in gene_targets:
                 post_prob = 0
-                orig_guide_cells = (obs[pert_key] == gene) & split_mask
-                orig_guide_cells_index = list(orig_guide_cells.index[orig_guide_cells])
-                nt_cells = (obs[pert_key] == control) & split_mask
-                all_cells = orig_guide_cells | nt_cells
+                orig_guide_cells = (pert_labels == gene) & split_cells
+                orig_guide_rows = np.flatnonzero(orig_guide_cells)
+                all_rows = np.flatnonzero(orig_guide_cells | nt_cells)
 
                 if len(perturbation_markers[(category, gene)]) == 0:
-                    obs.loc[orig_guide_cells, new_class_name] = f"{gene} NP"
+                    classes[orig_guide_rows] = f"{gene} NP"
 
                 else:
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
-                    dat = to_dense(X[np.asarray(all_cells)][:, de_genes_indices])  # type: ignore[call-overload, index]
+                    dat = to_dense(_subset_rows_cols(cast_matrix(X), all_rows, de_genes_indices))
                     if scale:
                         dat = sc.pp.scale(dat)
 
                     converged = False
                     n_iter = 0
-                    old_classes = obs[new_class_name][all_cells]
-
-                    nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
+                    gene_rows_elsewhere = np.flatnonzero((classes == gene) & split_cells & ~orig_guide_cells)
+                    old_classes = classes[orig_guide_rows]
+                    all_cells_index = obs.index[all_rows]
+                    orig_guide_cells_dat_idx = np.flatnonzero(orig_guide_cells[all_rows])
+                    nt_cells_dat_idx = np.flatnonzero(nt_cells[all_rows])
                     nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)
 
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
-                        guide_cells = (obs[new_class_name] == gene) & split_mask
+                        guide_in_orig = classes[orig_guide_rows] == gene
+                        guide_rows = orig_guide_rows[guide_in_orig]
+                        guide_cells_dat_idx = orig_guide_cells_dat_idx[guide_in_orig]
 
                         # get average value for each gene over all selected cells
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
-                        guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
                         guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)
                         vec = guide_cells_mean - nt_cells_mean
 
                         # project cells onto the perturbation vector
                         pvec = np.dot(dat, vec) / np.dot(vec, vec)
-                        pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
+                        pvec = pd.Series(np.asarray(pvec).flatten(), index=all_cells_index)
 
                         if n_iter == 0:
                             gv = pd.DataFrame(columns=["pvec", pert_key])
                             gv["pvec"] = pvec
                             gv[pert_key] = control
-                            gv.loc[guide_cells, pert_key] = gene
+                            gv.loc[np.isin(np.arange(all_rows.size), guide_cells_dat_idx), pert_key] = gene
                             if gene not in gv_list:
                                 gv_list[gene] = {}
                             gv_list[gene][category] = gv
 
-                        means_init = np.array([[pvec[nt_cells].mean()], [pvec[guide_cells].mean()]])
-                        std_init = np.array([pvec[nt_cells].std(), pvec[guide_cells].std()])
+                        nt_pvec = pvec.iloc[nt_cells_dat_idx]
+                        guide_pvec = pvec.iloc[guide_cells_dat_idx]
+                        means_init = np.array([[nt_pvec.mean()], [guide_pvec.mean()]])
+                        std_init = np.array([nt_pvec.std(), guide_pvec.std()])
                         mm = MixscapeGaussianMixture(
                             n_components=2,
                             covariance_type="spherical",
@@ -211,34 +220,38 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                             precisions_init=1 / (std_init**2),
                             random_state=random_state,
                             max_iter=100,
-                            fixed_means=[pvec[nt_cells].mean(), None],
-                            fixed_covariances=[pvec[nt_cells].std() ** 2, None],
+                            fixed_means=[nt_pvec.mean(), None],
+                            fixed_covariances=[nt_pvec.std() ** 2, None],
                             **gmmkwargs,
                         ).fit(np.asarray(pvec).reshape(-1, 1))
-                        probabilities = mm.predict_proba(np.array(pvec[orig_guide_cells_index]).reshape(-1, 1))
+                        probabilities = mm.predict_proba(np.asarray(pvec)[orig_guide_cells_dat_idx].reshape(-1, 1))
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
                         post_prob = 1 / (1 + lik_ratio)
 
                         # based on the posterior probability, assign cells to the two classes
                         ko_mask = post_prob > 0.5
-                        obs.loc[np.array(orig_guide_cells_index)[ko_mask], new_class_name] = gene
-                        obs.loc[np.array(orig_guide_cells_index)[~ko_mask], new_class_name] = f"{gene} NP"
+                        classes[orig_guide_rows[ko_mask]] = gene
+                        classes[orig_guide_rows[~ko_mask]] = f"{gene} NP"
 
-                        if (obs[new_class_name][split_mask] == gene).sum() < min_de_genes:
-                            obs.loc[guide_cells, new_class_name] = "NP"
+                        current_classes = classes[orig_guide_rows]
+                        if gene_rows_elsewhere.size + (current_classes == gene).sum() < min_de_genes:
+                            classes[gene_rows_elsewhere] = "NP"
+                            classes[guide_rows] = "NP"
                             converged = True
-                        current_classes = obs[new_class_name][all_cells]
+                            current_classes = classes[orig_guide_rows]
                         if (current_classes == old_classes).all():
                             converged = True
                         old_classes = current_classes
 
                         n_iter += 1
 
-                    obs.loc[(obs[new_class_name] == gene) & split_mask, new_class_name] = f"{gene} {perturbation_type}"
+                    classes[(classes == gene) & split_cells] = f"{gene} {perturbation_type}"
 
-                obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
+                post_probs[orig_guide_rows] = post_prob
             if gene_targets:
-                obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in obs[new_class_name]]
+                obs[new_class_name] = pd.Series(classes, index=obs.index, dtype=class_dtype)
+                obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in classes]
+        obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = post_probs
         adata.uns["mixscape"] = gv_list
 
         if copy:
@@ -323,25 +336,26 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             logfc_threshold=logfc_threshold,
             test_method=test_method,
         )
-        adata_subset = adata[
-            (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
-        ]
+        subset_cells = (adata.obs[mixscape_class_global] == perturbation_type) | (
+            adata.obs[mixscape_class_global] == control
+        )
+        adata_subset = adata[subset_cells]
         X = cast_matrix(adata_subset.X) - cast_matrix(adata_subset.X).mean(0)
+        pert_labels = adata.obs[pert_key]
         projected_pcs: dict[str, np.ndarray] = {}
         # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
         for _, (key, value) in enumerate(perturbation_markers.items()):
             if len(value) == 0:
                 continue
             else:
-                gene_subset = adata_subset[
-                    (adata_subset.obs[pert_key] == key[1]) | (adata_subset.obs[pert_key] == control)
-                ].copy()
+                gene_rows = np.flatnonzero(subset_cells & ((pert_labels == key[1]) | (pert_labels == control)))
+                gene_subset = sc.AnnData(X=cast_matrix(adata.X)[gene_rows], var=adata.var.copy())
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", UserWarning)
                     sc.pp.scale(gene_subset)
                 sc.tl.pca(gene_subset, n_comps=n_comps)
                 # project cells into PCA space of gene_subset
-                projected_pcs[key[1]] = np.asarray(np.dot(X, gene_subset.varm["PCs"]))
+                projected_pcs[key[1]] = np.asarray(np.dot(X, cast_dense(gene_subset.varm["PCs"])))
         # concatenate all pcs into a single matrix.
         projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
 
