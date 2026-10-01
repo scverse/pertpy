@@ -49,7 +49,7 @@ def _euclidean_pairwise_mean_within(X: np.ndarray) -> float:
     total_distance = 0.0
     n_pairs = n_samples * (n_samples - 1) / 2.0
 
-    for i in prange(n_samples):  # type: ignore[attr-defined]
+    for i in prange(n_samples):
         for j in range(i + 1, n_samples):
             total_distance += _euclidean_distance(X[i], X[j])
 
@@ -68,7 +68,7 @@ def _euclidean_pairwise_mean_between(X: np.ndarray, Y: np.ndarray) -> float:
     total_distance = 0.0
     n_pairs = n_samples_X * n_samples_Y
 
-    for i in prange(n_samples_X):  # type: ignore[attr-defined]
+    for i in prange(n_samples_X):
         for j in range(n_samples_Y):
             total_distance += _euclidean_distance(X[i], Y[j])
 

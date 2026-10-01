@@ -83,7 +83,7 @@ class GuideAssignment:
     @njit(parallel=True)
     def _threshold_sparse_numba(data: np.ndarray, threshold: float) -> np.ndarray:
         out = np.zeros_like(data, dtype=np.int8)
-        for i in prange(data.shape[0]):  # type: ignore[attr-defined]
+        for i in prange(data.shape[0]):
             if data[i] >= threshold:
                 out[i] = 1
         return out
