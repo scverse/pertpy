@@ -362,7 +362,7 @@ class CompositionalModel2(ABC):
 
         # Save intercept and effect dfs in `sample_adata.varm` (one effect df per covariate)
         sample_adata.varm["intercept_df"] = intercept_df
-        for cov in effect_df.index.get_level_values("Covariate"):
+        for cov in effect_df.index.get_level_values("Covariate").unique():
             sample_adata.varm[f"effect_df_{cov}"] = effect_df.loc[cov, :]
         if copy:
             return sample_adata
@@ -1187,7 +1187,7 @@ class CompositionalModel2(ABC):
             raise ValueError("No valid model type!")
 
         sample_adata.varm["intercept_df"] = intercept_df
-        for cov in effect_df.index.get_level_values("Covariate"):
+        for cov in effect_df.index.get_level_values("Covariate").unique():
             sample_adata.varm[f"effect_df_{cov}"] = effect_df.loc[cov, :]
 
     def credible_effects(
@@ -2725,7 +2725,10 @@ def from_scanpy(
 
     if isinstance(sample_identifier, list):
         adata.obs = cast_frame(adata.obs).copy()
-        adata.obs["scCODA_sample_id"] = cast_frame(adata.obs)[sample_identifier].agg("-".join, axis=1)
+        obs = cast_frame(adata.obs)
+        adata.obs["scCODA_sample_id"] = pd.Series(
+            ["-".join(vals) for vals in zip(*(obs[c] for c in sample_identifier), strict=True)], index=obs.index
+        )
         sample_identifier = "scCODA_sample_id"
 
     groups = cast_frame(adata.obs).value_counts([sample_identifier, cell_type_identifier])
@@ -2737,13 +2740,13 @@ def from_scanpy(
         covariate_df_ = pd.concat([covariate_df_, covariate_df_uns], axis=1)
 
     if covariate_obs:
-        unique_check = cast_frame(adata.obs).groupby(sample_identifier).nunique()
+        unique_check = cast_frame(adata.obs).groupby(sample_identifier)[covariate_obs].nunique()
         for c in covariate_obs.copy():
             if unique_check[c].max() != 1:
                 logger.warning(f"Covariate {c} has non-unique values for batch! Skipping...")
                 covariate_obs.remove(c)
         if covariate_obs:
-            covariate_df_obs = cast_frame(adata.obs).groupby(sample_identifier).first()[covariate_obs]
+            covariate_df_obs = cast_frame(adata.obs).groupby(sample_identifier)[covariate_obs].first()
             covariate_df_ = pd.concat([covariate_df_, covariate_df_obs], axis=1)
 
     if covariate_df is not None:

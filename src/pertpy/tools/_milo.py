@@ -19,7 +19,7 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import CSBase, cast_frame, cast_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, log_cpm, parse_random_effects, random_effect_matrices
 
 if TYPE_CHECKING:
@@ -276,22 +276,24 @@ class Milo:
                 use_rep = "X_pca"
             knn_graph = adata.obsp[neighbors_key + "_connectivities"].copy()  # type: ignore[union-attr]
 
-        X_dimred = adata.obsm[use_rep]
+        X_dimred = cast_dense(adata.obsm[use_rep])
         n_ixs = int(np.round(adata.n_obs * prop))
         knn_graph[knn_graph != 0] = 1
         random.seed(seed)
         random_vertices = random.sample(range(adata.n_obs), k=n_ixs)
         random_vertices.sort()
         ixs_nn = knn_graph[random_vertices, :]
-        non_zero_rows = ixs_nn.nonzero()[0]
-        non_zero_cols = ixs_nn.nonzero()[1]
+        non_zero_rows, non_zero_cols = ixs_nn.nonzero()
+        # nonzero() returns row indices sorted, so each vertex's neighbours are a contiguous slice
+        row_bounds = np.searchsorted(non_zero_rows, np.arange(len(random_vertices) + 1))
         refined_vertices = np.empty(len(random_vertices), dtype=np.int64)
 
         for i in range(len(random_vertices)):
-            nh_pos = np.median(X_dimred[non_zero_cols[non_zero_rows == i], :], 0).reshape(-1, 1)  # type: ignore[arg-type]
-            nn_ixs = non_zero_cols[non_zero_rows == i]
+            nn_ixs = non_zero_cols[row_bounds[i] : row_bounds[i + 1]]
+            X_nn = X_dimred[nn_ixs, :]
+            nh_pos = np.median(X_nn, 0).reshape(-1, 1)
             # Find closest real point (amongst nearest neighbors)
-            dists = euclidean_distances(X_dimred[non_zero_cols[non_zero_rows == i], :], nh_pos.T)
+            dists = euclidean_distances(X_nn, nh_pos.T)
             # Update vertex index
             refined_vertices[i] = nn_ixs[dists.argmin()]
 
@@ -1180,7 +1182,7 @@ class Milo:
 
         # Aggregate over nhoods -- taking the mean
         nhoods_X = X.T.dot(adata.obsm["nhoods"])  # type: ignore[arg-type, type-var, union-attr]
-        nhoods_X = csr_matrix(nhoods_X / adata.obsm["nhoods"].toarray().sum(0))  # type: ignore[operator, union-attr]
+        nhoods_X = csr_matrix(nhoods_X / np.asarray(cast_matrix(adata.obsm["nhoods"]).sum(0)).ravel())
         sample_adata.varm[expr_id] = nhoods_X.T
 
     def _setup_rpy2(
