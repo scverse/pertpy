@@ -336,9 +336,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             logfc_threshold=logfc_threshold,
             test_method=test_method,
         )
-        subset_cells = (adata.obs[mixscape_class_global] == perturbation_type) | (
-            adata.obs[mixscape_class_global] == control
-        )
+        subset_cells = (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[pert_key] == control)
         adata_subset = adata[subset_cells]
         X = cast_matrix(adata_subset.X) - cast_matrix(adata_subset.X).mean(0)
         pert_labels = adata.obs[pert_key]
@@ -977,7 +975,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             raise ValueError(f'Did not find `.uns["{lda_key!r}"]`. Please run the `lda` function first.')
 
         adata_subset = adata[
-            (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class_global] == control)
+            (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[mixscape_class] == control)
         ].copy()
         adata_subset.obsm[lda_key] = adata_subset.uns[lda_key]
         if n_components is None:
