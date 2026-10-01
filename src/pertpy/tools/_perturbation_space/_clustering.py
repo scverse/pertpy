@@ -91,7 +91,7 @@ class ClusteringSpace(PerturbationSpace):
                 results["asw"] = asw(
                     pairwise_distances=distances,
                     labels=true_labels,
-                    metric=kwargs["metric"],
+                    metric="precomputed",
                     sample_size=kwargs["sample_size"],
                     random_state=kwargs["random_state"],
                 )
