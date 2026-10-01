@@ -170,7 +170,7 @@ class GuideAssignment:
     @njit(parallel=True)
     def _assign_max_guide_sparse(indptr, data, indices, assignment_threshold, assigned_grna):
         n_rows = len(indptr) - 1
-        for i in range(n_rows):
+        for i in prange(n_rows):
             row_start = indptr[i]
             row_end = indptr[i + 1]
 
@@ -526,7 +526,9 @@ class GuideAssignment:
         n_cells = binary.shape[0]
         num_guides_assigned = binary.sum(axis=1)
         assignments = np.full(n_cells, no_grna_assigned_key, dtype=object)
-        multi_mask = (num_guides_assigned > 0) & (num_guides_assigned <= max_assignments_per_cell)
+        single_mask = num_guides_assigned == 1
+        assignments[single_mask] = guide_names[binary[single_mask].argmax(axis=1)]
+        multi_mask = (num_guides_assigned > 1) & (num_guides_assigned <= max_assignments_per_cell)
         for cell_idx in np.where(multi_mask)[0]:
             assigned_guides = guide_names[binary[cell_idx] == 1]
             assignments[cell_idx] = multiple_grna_assignment_string.join(assigned_guides.tolist())

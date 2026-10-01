@@ -5,16 +5,51 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import scanpy as sc
+from fast_array_utils.conv import to_dense
 from fast_array_utils.stats import mean, mean_var
+from numba import njit, prange
 from pandas.errors import PerformanceWarning
 from scanpy.tools._utils import _choose_representation
-from scipy.sparse import csr_array, csr_matrix, lil_matrix, sparray
+from scipy.sparse import csr_array, csr_matrix, sparray, vstack
 
-from pertpy._types import CSBase, RankGenesMethod, cast_dense, cast_matrix
+from pertpy._types import CSBase, RankGenesMethod, cast_matrix
 
 if TYPE_CHECKING:
     import pandas as pd
     from anndata import AnnData
+
+
+@njit(parallel=True)
+def _csr_subset_kernel(
+    indptr: np.ndarray, indices: np.ndarray, data: np.ndarray, rows: np.ndarray, col_map: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    counts = np.zeros(rows.size + 1, dtype=np.int64)
+    for i in prange(rows.size):
+        for k in range(indptr[rows[i]], indptr[rows[i] + 1]):
+            if col_map[indices[k]] >= 0:
+                counts[i + 1] += 1
+    out_indptr = np.cumsum(counts)
+    out_indices = np.empty(out_indptr[-1], dtype=indices.dtype)
+    out_data = np.empty(out_indptr[-1], dtype=data.dtype)
+    for i in prange(rows.size):
+        pos = out_indptr[i]
+        for k in range(indptr[rows[i]], indptr[rows[i] + 1]):
+            new_col = col_map[indices[k]]
+            if new_col >= 0:
+                out_indices[pos] = new_col
+                out_data[pos] = data[k]
+                pos += 1
+    return out_indptr, out_indices, out_data
+
+
+def _subset_rows_cols(X: np.ndarray | CSBase, rows: np.ndarray, cols: np.ndarray) -> np.ndarray | CSBase:
+    """`X[rows][:, cols]` for unique `cols`, without materializing the full selected rows of a CSR matrix."""
+    if not (isinstance(X, CSBase) and X.format == "csr"):
+        return X[rows][:, cols]
+    col_map = np.full(X.shape[1], -1, dtype=np.int64)
+    col_map[cols] = np.arange(cols.size)
+    indptr, indices, data = _csr_subset_kernel(X.indptr, X.indices, X.data, rows, col_map)
+    return type(X)((data, indices, indptr), shape=(rows.size, cols.size))
 
 
 class PerturbationEfficacyAnalyzer:
@@ -92,32 +127,34 @@ class PerturbationEfficacyAnalyzer:
         if copy:
             adata = adata.copy()
 
-        # pynndescent and the LIL workflow below only support legacy scipy sparse matrices, so a sparse array
-        # input is computed on as a csr_matrix and converted back to a sparse array at the end.
         input_is_sparray = isinstance(adata.X, sparray)
         X = csr_matrix(cast_matrix(adata.X)) if input_is_sparray else cast_matrix(adata.X)
-        adata.layers["X_pert"] = X.copy()
+        X_pert = None if isinstance(X, CSBase) else X.copy()
+        sparse_blocks: list[tuple[np.ndarray, CSBase]] = []
 
-        # Work with LIL for efficient indexing but don't store it in AnnData as LIL is not supported anymore
-        X_pert = cast_matrix(adata.layers["X_pert"])
-        X_pert_lil = X_pert.tolil() if isinstance(X_pert, CSBase) else X_pert
+        def _set_rows(rows: np.ndarray, values) -> None:
+            if X_pert is None:
+                sparse_blocks.append((rows, csr_matrix(values, dtype=X.dtype)))
+            else:
+                X_pert[rows] = values
 
-        control_mask = adata.obs[pert_key] == control
+        control_mask = np.asarray(adata.obs[pert_key] == control)
 
         if ref_selection_mode == "split_by":
             for split in adata.obs[split_by].unique():
-                split_mask = adata.obs[split_by] == split
-                control_mask_group = control_mask & split_mask
-                control_mean_expr = mean(X[control_mask_group], axis=0)
-                X_pert_lil[split_mask] = (
-                    np.repeat(control_mean_expr.reshape(1, -1), split_mask.sum(), axis=0) - X_pert_lil[split_mask]
+                split_mask = np.asarray(adata.obs[split_by] == split)
+                split_rows = np.flatnonzero(split_mask)
+                control_mean_expr = mean(X[control_mask & split_mask], axis=0)
+                _set_rows(
+                    split_rows,
+                    np.repeat(control_mean_expr.reshape(1, -1), split_rows.size, axis=0) - X[split_rows],
                 )
         else:
             if split_by is None:
                 split_masks = [np.full(adata.n_obs, True, dtype=bool)]
             else:
                 split_obs = adata.obs[split_by]
-                split_masks = [split_obs == cat for cat in split_obs.unique()]
+                split_masks = [np.asarray(split_obs == cat) for cat in split_obs.unique()]
 
             representation = cast_matrix(_choose_representation(adata, use_rep=use_rep, n_pcs=n_pcs))
             if isinstance(representation, sparray):
@@ -130,15 +167,16 @@ class PerturbationEfficacyAnalyzer:
             eps = kwargs.pop("epsilon", 0.1)
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
+                split_rows = np.flatnonzero(split_mask)
                 R_split = representation[split_mask]
                 R_control = representation[np.asarray(control_mask_split)]
                 nn_index = NNDescent(R_control, **kwargs)
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
-                X_split_control = X[np.asarray(control_mask_split)]
+                X_split_control = X[control_mask_split]
                 X_control = (
                     X_split_control.expm1() if isinstance(X_split_control, CSBase) else np.expm1(X_split_control)
                 )
-                n_split = split_mask.sum()
+                n_split = split_rows.size
                 n_control = X_control.shape[0]
 
                 if batch_size is None:
@@ -149,26 +187,30 @@ class PerturbationEfficacyAnalyzer:
                         shape=(n_split, n_control),
                     )
                     neigh_matrix /= n_neighbors
-                    X_pert_lil[np.asarray(split_mask)] = (
-                        sc.pp.log1p(neigh_matrix @ X_control) - X_pert_lil[np.asarray(split_mask)]
-                    )
+                    _set_rows(split_rows, sc.pp.log1p(neigh_matrix @ X_control) - X[split_rows])
                 else:
-                    split_indices = np.where(split_mask)[0]
                     for i in range(0, n_split, batch_size):
                         size = min(i + batch_size, n_split)
                         select = slice(i, size)
                         batch = np.ravel(indices[select])
-                        split_batch = split_indices[select]
+                        split_batch = split_rows[select]
                         size = size - i
-                        means_batch = cast_dense(X_control[batch])
+                        means_batch = to_dense(X_control[batch])
                         batch_reshaped = means_batch.reshape(size, n_neighbors, -1)
                         means_batch, _ = mean_var(batch_reshaped, axis=1)
-                        X_pert_lil[split_batch] = np.log1p(means_batch) - X_pert_lil[split_batch]
+                        _set_rows(split_batch, np.log1p(means_batch) - X[split_batch])
 
-        if isinstance(X_pert_lil, np.ndarray):
-            adata.layers["X_pert"] = X_pert_lil
+        if X_pert is not None:
+            adata.layers["X_pert"] = X_pert
         else:
-            x_pert = X_pert_lil.tocsr()
+            rows = np.concatenate([r for r, _ in sparse_blocks]) if sparse_blocks else np.array([], dtype=int)
+            unset_rows = np.setdiff1d(np.arange(adata.n_obs), rows)
+            if unset_rows.size:
+                sparse_blocks.append((unset_rows, csr_matrix(X[unset_rows])))
+                rows = np.concatenate([rows, unset_rows])
+            x_pert = vstack([block for _, block in sparse_blocks], format="csr")[np.argsort(rows)]
+            x_pert.eliminate_zeros()
+            x_pert.sort_indices()
             adata.layers["X_pert"] = csr_array(x_pert) if input_is_sparray else x_pert
 
         if copy:

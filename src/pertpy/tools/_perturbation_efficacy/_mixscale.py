@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from functools import singledispatch
+from functools import partial, singledispatch
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,8 +11,8 @@ from fast_array_utils.conv import to_dense
 from pandas.errors import PerformanceWarning
 from scipy.sparse import sparray, spmatrix
 
-from pertpy._types import CSBase, RankGenesMethod, cast_frame
-from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
+from pertpy._types import CSBase, RankGenesMethod, cast_frame, cast_matrix
+from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer, _subset_rows_cols
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -205,7 +205,9 @@ class Mixscale(PerturbationEfficacyAnalyzer):
                     continue
 
                 de_indices = [var_loc[g] for g in de_genes]
-                dat = X[all_mask][:, de_indices].astype(np.float64)  # type: ignore[call-overload, index, union-attr]
+                dat = _subset_rows_cols(cast_matrix(X), np.flatnonzero(all_mask), np.asarray(de_indices)).astype(
+                    np.float64
+                )
                 if scale:
                     dat = self._scale_features(dat)
 
@@ -288,6 +290,8 @@ class Mixscale(PerturbationEfficacyAnalyzer):
         gene_targets = set(adata.obs[pert_key]).difference([control])
         nt_cells = adata.obs_names[np.asarray(adata.obs[pert_key] == control)]
         markers: dict[str, np.ndarray] = {}
+        de_groups: dict[str, list[pd.Index]] = {}
+        harmonized_refs: dict[str, pd.Index] = {}
 
         for gene in gene_targets:
             if de_genes_by_target is not None:
@@ -297,48 +301,53 @@ class Mixscale(PerturbationEfficacyAnalyzer):
                         f"No DE genes provided for perturbation {gene!r} in de_genes_by_target; it will not be scored.",
                         stacklevel=2,
                     )
-                de_genes = np.array(supplied, dtype=object)
+                markers[gene] = np.array(supplied, dtype=object)
+                continue
+
+            guide_cells = adata.obs_names[adata.obs[pert_key] == gene]
+            if harmonize and split_by is not None:
+                harmonized_refs[gene] = self._harmonize_control_cells(
+                    adata,
+                    target_cells=guide_cells,
+                    control_cells=nt_cells,
+                    split_by=split_by,
+                    min_proportion=harmonize_min_proportion,
+                    random_state=random_state,
+                )
+            if fine_mode:
+                guide_labels = cast_frame(adata.obs).loc[guide_cells, fine_mode_labels]
+                de_groups[gene] = [guide_cells[guide_labels == guide] for guide in guide_labels.unique()]
             else:
-                guide_cells = adata.obs_names[adata.obs[pert_key] == gene]
-                ref_cells = nt_cells
-                if harmonize and split_by is not None:
-                    ref_cells = self._harmonize_control_cells(
-                        adata,
-                        target_cells=guide_cells,
-                        control_cells=nt_cells,
-                        split_by=split_by,
-                        min_proportion=harmonize_min_proportion,
-                        random_state=random_state,
-                    )
+                de_groups[gene] = [guide_cells]
 
-                if fine_mode:
-                    pooled: list[str] = []
-                    guide_labels = cast_frame(adata.obs).loc[guide_cells, fine_mode_labels]
-                    for guide in guide_labels.unique():
-                        guide_subset = guide_cells[guide_labels == guide]
-                        for g in self._de_for_pair(
-                            adata,
-                            guide_subset,
-                            ref_cells,
-                            de_layer=de_layer,
-                            test_method=test_method,
-                            logfc_threshold=logfc_threshold,
-                            pval_cutoff=pval_cutoff,
-                        ):
-                            if g not in pooled:
-                                pooled.append(g)
-                    de_genes = np.array(pooled, dtype=object)
-                else:
-                    de_genes = self._de_for_pair(
-                        adata,
-                        guide_cells,
-                        ref_cells,
-                        de_layer=de_layer,
-                        test_method=test_method,
-                        logfc_threshold=logfc_threshold,
-                        pval_cutoff=pval_cutoff,
-                    )
+        de_for_groups = partial(
+            self._de_for_groups,
+            adata,
+            de_layer=de_layer,
+            test_method=test_method,
+            logfc_threshold=logfc_threshold,
+            pval_cutoff=pval_cutoff,
+        )
+        de_results = de_for_groups(
+            {
+                (gene, i): cells
+                for gene, groups in de_groups.items()
+                if gene not in harmonized_refs
+                for i, cells in enumerate(groups)
+            },
+            nt_cells,
+        )
+        for gene, ref_cells in harmonized_refs.items():
+            de_results |= de_for_groups({(gene, i): cells for i, cells in enumerate(de_groups[gene])}, ref_cells)
+        for gene, groups in de_groups.items():
+            if fine_mode:
+                pooled = dict.fromkeys(g for i in range(len(groups)) for g in de_results[(gene, i)])
+                markers[gene] = np.array(list(pooled), dtype=object)
+            else:
+                markers[gene] = de_results[(gene, 0)]
 
+        for gene in gene_targets:
+            de_genes = markers.pop(gene)
             if len(de_genes) > max_de_genes:
                 de_genes = de_genes[:max_de_genes]
             if len(de_genes) < min_de_genes:
@@ -348,46 +357,60 @@ class Mixscale(PerturbationEfficacyAnalyzer):
         return markers
 
     @staticmethod
-    def _de_for_pair(
+    def _de_for_groups(
         adata: AnnData,
-        group_cells,
+        groups: Mapping[tuple[str, int], pd.Index],
         reference_cells,
         *,
         de_layer: str | None,
         test_method: RankGenesMethod,
         logfc_threshold: float,
         pval_cutoff: float,
-    ) -> np.ndarray:
-        """Wilcoxon-style DE between two cell sets; returns gene names passing the filters, sorted by raw p-value."""
-        group_cells = pd.Index(group_cells)
-        reference_cells = pd.Index(reference_cells)
-        if len(group_cells) == 0 or len(reference_cells) == 0:
-            return np.array([], dtype=object)
+    ) -> dict[tuple[str, int], np.ndarray]:
+        """Wilcoxon-style DE of each disjoint cell set against the reference cells; returns gene names passing the filters, sorted by raw p-value."""
+        results = {key: np.array([], dtype=object) for key in groups}
+        tested = [key for key, cells in groups.items() if len(cells) > 0]
+        if len(tested) == 0 or len(reference_cells) == 0:
+            return results
 
-        sub = adata[adata.obs_names.isin(group_cells.union(reference_cells))].copy()
-        groups = np.where(sub.obs_names.isin(group_cells), "perturbed", "control")
-        sub.obs["_mixscale_de"] = pd.Categorical(groups, categories=["control", "perturbed"])
+        codes = np.full(adata.n_obs, -1)
+        codes[adata.obs_names.get_indexer(pd.Index(reference_cells))] = 0
+        for code, key in enumerate(tested, start=1):
+            codes[adata.obs_names.get_indexer(groups[key])] = code
+        rows = np.flatnonzero(codes >= 0)
+        categories = ["control", *(f"perturbed{code}" for code in range(1, len(tested) + 1))]
+        X = cast_matrix(adata.X if de_layer is None else adata.layers[de_layer])
+        sub = sc.AnnData(
+            X=X[rows],
+            obs=pd.DataFrame(
+                {"_mixscale_de": pd.Categorical.from_codes(codes[rows], categories=pd.Index(categories))},
+                index=adata.obs_names[rows],
+            ),
+            var=pd.DataFrame(index=adata.var_names),
+            uns={"log1p": adata.uns["log1p"]} if "log1p" in adata.uns else None,
+        )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             warnings.simplefilter("ignore", PerformanceWarning)
             sc.tl.rank_genes_groups(
                 sub,
-                layer=de_layer,
                 groupby="_mixscale_de",
-                groups=["perturbed"],
+                groups=categories[1:],
                 reference="control",
                 method=test_method,
                 use_raw=False,
             )
         result = sub.uns["rank_genes_groups"]
-        names = np.asarray(result["names"]["perturbed"])
-        logfoldchanges = np.asarray(result["logfoldchanges"]["perturbed"])
-        pvals = np.asarray(result["pvals"]["perturbed"])
-        pvals_adj = np.asarray(result["pvals_adj"]["perturbed"])
+        for key, group in zip(tested, categories[1:], strict=True):
+            names = np.asarray(result["names"][group])
+            logfoldchanges = np.asarray(result["logfoldchanges"][group])
+            pvals = np.asarray(result["pvals"][group])
+            pvals_adj = np.asarray(result["pvals_adj"][group])
 
-        keep = (np.abs(logfoldchanges) >= logfc_threshold) & (pvals_adj < pval_cutoff)
-        names, pvals = names[keep], pvals[keep]
-        return names[np.argsort(pvals, kind="stable")]
+            keep = (np.abs(logfoldchanges) >= logfc_threshold) & (pvals_adj < pval_cutoff)
+            names, pvals = names[keep], pvals[keep]
+            results[key] = names[np.argsort(pvals, kind="stable")]
+        return results
 
     @staticmethod
     def _harmonize_control_cells(
