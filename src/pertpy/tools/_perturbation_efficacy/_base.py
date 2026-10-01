@@ -127,11 +127,11 @@ class PerturbationEfficacyAnalyzer:
 
             from pynndescent import NNDescent
 
+            eps = kwargs.pop("epsilon", 0.1)
             for split_mask in split_masks:
                 control_mask_split = control_mask & split_mask
                 R_split = representation[split_mask]
                 R_control = representation[np.asarray(control_mask_split)]
-                eps = kwargs.pop("epsilon", 0.1)
                 nn_index = NNDescent(R_control, **kwargs)
                 indices, _ = nn_index.query(R_split, k=n_neighbors, epsilon=eps)
                 X_split_control = X[np.asarray(control_mask_split)]
