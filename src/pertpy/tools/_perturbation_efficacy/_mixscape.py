@@ -231,7 +231,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                         obs.loc[np.array(orig_guide_cells_index)[ko_mask], new_class_name] = gene
                         obs.loc[np.array(orig_guide_cells_index)[~ko_mask], new_class_name] = f"{gene} NP"
 
-                        if sum(obs[new_class_name][split_mask] == gene) < min_de_genes:
+                        if (obs[new_class_name][split_mask] == gene).sum() < min_de_genes:
                             obs.loc[guide_cells, new_class_name] = "NP"
                             converged = True
                         current_classes = obs[new_class_name][all_cells]
@@ -243,8 +243,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
                     obs.loc[(obs[new_class_name] == gene) & split_mask, new_class_name] = f"{gene} {perturbation_type}"
 
-                obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in obs[new_class_name]]
                 obs.loc[orig_guide_cells_index, f"{new_class_name}_p_{perturbation_type.lower()}"] = post_prob
+            if gene_targets:
+                obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in obs[new_class_name]]
         adata.uns["mixscape"] = gv_list
 
         if copy:

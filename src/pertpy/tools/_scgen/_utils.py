@@ -88,6 +88,7 @@ def balancer(
         index_all.append(index_cls_r)
 
     indices = np.concatenate(index_all)
-    balanced_data = ad.concat([adata[i : i + 1] for i in indices], index_unique="-")
+    balanced_data = ad.concat([adata[indices]])
+    balanced_data.obs_names = adata.obs_names[indices] + "-" + np.arange(len(indices)).astype(str)
 
     return balanced_data
