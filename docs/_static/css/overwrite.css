@@ -71,3 +71,10 @@ li.toctree-l4 {
     font-weight: 600;
     text-transform: uppercase;
 }
+
+html[data-theme="light"] {
+    --pst-color-link-hover: #30679a;
+}
+html[data-theme="dark"] {
+    --pst-color-link-hover: #639bcf;
+}
