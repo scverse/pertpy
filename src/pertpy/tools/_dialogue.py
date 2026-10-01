@@ -796,6 +796,8 @@ class Dialogue:
             ct2_samples = ct_views[ct2].obs[self.sample_key].astype(str).to_numpy()[ct2_cells]
             ct1_quality = cast_frame(ct_views[ct1].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct1_cells]
             ct2_quality = cast_frame(ct_views[ct2].obs)[self.cell_quality_key].to_numpy(dtype=np.float64)[ct2_cells]
+            ct1_covariates = cast_frame(ct_views[ct1].obs)[list(self.additional_covariates)][ct1_cells]
+            ct2_covariates = cast_frame(ct_views[ct2].obs)[list(self.additional_covariates)][ct2_cells]
             ct1_tme_qc = per_sample_quality[ct2].reindex(ct1_samples).to_numpy()
             ct2_tme_qc = per_sample_quality[ct1].reindex(ct2_samples).to_numpy()
 
@@ -825,6 +827,7 @@ class Dialogue:
                     up_set=sig1_up,
                     cell_quality=ct2_quality,
                     tme_qc=ct2_tme_qc,
+                    additional_covariates=ct2_covariates,
                     sample_groups=ct2_samples,
                 )
 
@@ -837,6 +840,7 @@ class Dialogue:
                     up_set=sig2_up,
                     cell_quality=ct1_quality,
                     tme_qc=ct1_tme_qc,
+                    additional_covariates=ct1_covariates,
                     sample_groups=ct1_samples,
                 )
 
@@ -902,6 +906,7 @@ class Dialogue:
         up_set: list[str],
         cell_quality: np.ndarray,
         tme_qc: np.ndarray,
+        additional_covariates: pd.DataFrame,
         sample_groups: np.ndarray,
     ) -> pd.DataFrame:
         if len(gene_names) == 0:
@@ -910,9 +915,7 @@ class Dialogue:
         if self.use_tme_qc:
             covariate_dict["tme_qc"] = tme_qc
         for col in self.additional_covariates:
-            covariate_dict[col] = np.zeros_like(
-                cell_quality
-            )  # placeholder; user-provided covariate handling reserved for run()
+            covariate_dict[col] = additional_covariates[col].to_numpy()
         covariates = pd.DataFrame(covariate_dict)
         # expression rows -> genes, columns -> cells. Transpose to genes-by-cells for our helper.
         expression_arr = pd.DataFrame(expression.T, index=gene_names).to_numpy()
