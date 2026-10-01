@@ -25,6 +25,7 @@ Pertpy enables differential gene expression tests through a common interface tha
     tools.TTest
     tools.PermutationTest
     tools.Statsmodels
+    tools.LinearMixedModel
 ```
 
 Example implementation:
