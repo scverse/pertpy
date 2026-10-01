@@ -15,6 +15,7 @@ from jax import random
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 
+from pertpy._parallel import _MAX_BLOCK_ELEMENTS
 from pertpy._types import CSBase, cast_dense, cast_frame
 from pertpy.tools._perturbation_space._perturbation_space import (
     PerturbationSpace,
@@ -107,6 +108,17 @@ def train_step(state: TrainState, batch: tuple[jnp.ndarray, jnp.ndarray], rng: j
 
 
 @jax.jit
+def train_steps(state: TrainState, batches: tuple[jnp.ndarray, jnp.ndarray], rngs: jnp.ndarray) -> TrainState:
+    """Apply :func:`train_step` to each of the stacked batches in turn."""
+
+    def step(state: TrainState, batch: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]) -> tuple[TrainState, None]:
+        x, y, rng = batch
+        return train_step(state, (x, y), rng)[0], None
+
+    return jax.lax.scan(step, state, (*batches, rngs))[0]
+
+
+@jax.jit
 def val_step(state: TrainState, batch: tuple[jnp.ndarray, jnp.ndarray]) -> float:
     x, y = batch
     variables = {"params": state.params, "batch_stats": state.batch_stats}
@@ -167,10 +179,16 @@ class JAXDataset:
         return self.data.shape[0]
 
     def get_batch(self, indices: np.ndarray | jnp.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Returns a batch of samples and corresponding perturbations applied (labels)."""
+        """Returns a batch of samples and corresponding perturbations applied (labels).
+
+        Indices of several batches stacked along the first axis return stacked batches.
+        """
         idx = np.asarray(indices)
         data = self.data
-        batch_data = data[idx].toarray().astype(np.float32, copy=False) if isinstance(data, CSBase) else data[idx]
+        if isinstance(data, CSBase):
+            batch_data = data[idx.ravel()].toarray().astype(np.float32, copy=False).reshape(*idx.shape, -1)
+        else:
+            batch_data = data[idx]
         return batch_data, self.labels[idx], self.pert_labels[idx]
 
 
@@ -313,9 +331,6 @@ class MLPClassifierSpace(PerturbationSpace):
         val_dataset = JAXDataset(
             adata=adata[X_val], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
-        test_dataset = JAXDataset(
-            adata=adata[X_test], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
-        )
         total_dataset = JAXDataset(
             adata=adata, target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
@@ -341,10 +356,15 @@ class MLPClassifierSpace(PerturbationSpace):
         best_val_loss: float | jax.Array = float("inf")
         patience_counter = 0
 
+        step_elements = batch_size * (adata.n_vars + n_classes)
+        steps_per_chunk = max(1, min(n_batches_per_epoch, _MAX_BLOCK_ELEMENTS // step_elements))
+
         for epoch in range(max_epochs):
-            for step in range(epoch * n_batches_per_epoch, (epoch + 1) * n_batches_per_epoch):
-                batch_data, batch_labels, _ = train_dataset.get_batch(train_batches[step])
-                state, _ = train_step(state, (batch_data, batch_labels), step_rngs[step])
+            epoch_end = (epoch + 1) * n_batches_per_epoch
+            for start in range(epoch * n_batches_per_epoch, epoch_end, steps_per_chunk):
+                steps = slice(start, min(start + steps_per_chunk, epoch_end))
+                batch_data, batch_labels, _ = train_dataset.get_batch(train_batches[steps])
+                state = train_steps(state, (batch_data, batch_labels), step_rngs[steps])
 
             if (epoch + 1) % val_epochs_check == 0:
                 val_losses = []
@@ -364,14 +384,6 @@ class MLPClassifierSpace(PerturbationSpace):
 
                 if patience_counter >= patience:
                     break
-
-        # Test evaluation
-        test_losses = []
-        for i in range(0, len(test_dataset), batch_size):
-            test_indices = np.arange(i, min(i + batch_size, len(test_dataset)))
-            test_batch_data, test_batch_labels, _ = test_dataset.get_batch(test_indices)
-            test_loss = val_step(state, (test_batch_data, test_batch_labels))
-            test_losses.append(test_loss)
 
         # Extract embeddings
         embeddings_list = []
