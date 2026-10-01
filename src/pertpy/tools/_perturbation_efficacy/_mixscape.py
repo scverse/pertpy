@@ -3,22 +3,22 @@ from __future__ import annotations
 import copy
 import warnings
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
+from fast_array_utils.conv import to_dense
 from pandas.errors import PerformanceWarning
 from scanpy import get
 from scanpy._utils import check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
-from scipy.sparse import spmatrix
 from sklearn.mixture import GaussianMixture
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, RankGenesMethod, cast_dense, cast_frame, cast_matrix
+from pertpy._types import RankGenesMethod, cast_dense, cast_frame, cast_matrix
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer
 
 if TYPE_CHECKING:
@@ -167,20 +167,16 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
-                    dat = X[np.asarray(all_cells)][:, de_genes_indices]  # type: ignore[call-overload, index]
+                    dat = to_dense(X[np.asarray(all_cells)][:, de_genes_indices])  # type: ignore[call-overload, index]
                     if scale:
-                        with warnings.catch_warnings():
-                            warnings.filterwarnings(
-                                "ignore", message="zero-centering a sparse array/matrix densifies it."
-                            )
-                            dat = sc.pp.scale(dat)
+                        dat = sc.pp.scale(dat)
 
                     converged = False
                     n_iter = 0
                     old_classes = obs[new_class_name][all_cells]
 
                     nt_cells_dat_idx = all_cells[all_cells].index.get_indexer(nt_cells[nt_cells].index)
-                    nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)  # type: ignore[arg-type]
+                    nt_cells_mean = np.mean(dat[nt_cells_dat_idx], axis=0)
 
                     while not converged and n_iter < iter_num:
                         # Get all cells in current split&Gene
@@ -190,14 +186,11 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                         # all cells in current split&Gene minus all NT cells in current split
                         # Each row is for each cell, each column is for each gene, get mean for each column
                         guide_cells_dat_idx = all_cells[all_cells].index.get_indexer(guide_cells[guide_cells].index)
-                        guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)  # type: ignore[arg-type]
+                        guide_cells_mean = np.mean(dat[guide_cells_dat_idx], axis=0)
                         vec = guide_cells_mean - nt_cells_mean
 
                         # project cells onto the perturbation vector
-                        if isinstance(dat, spmatrix):
-                            pvec = cast("CSBase", dat).dot(vec) / np.dot(vec, vec)
-                        else:
-                            pvec = np.dot(cast_dense(dat), vec) / np.dot(vec, vec)
+                        pvec = np.dot(dat, vec) / np.dot(vec, vec)
                         pvec = pd.Series(np.asarray(pvec).flatten(), index=list(all_cells.index[all_cells]))
 
                         if n_iter == 0:
