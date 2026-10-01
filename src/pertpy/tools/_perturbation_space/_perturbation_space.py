@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import itertools
 import warnings
 from typing import TYPE_CHECKING, Literal
 
@@ -9,6 +10,8 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
+from joblib import delayed, effective_n_jobs
+from numba import njit, prange
 from scipy import sparse
 from scipy.optimize import curve_fit
 from scipy.special import expit
@@ -16,6 +19,7 @@ from scipy.stats import entropy
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
+from pertpy._parallel import _block_slices, _parallelize_with_joblib
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
@@ -93,14 +97,30 @@ def _vector_distance(u: np.ndarray, v: np.ndarray, metric: str) -> float:
     raise ValueError(f"Unknown metric {metric!r}. Choose from 'euclidean', 'cosine', 'pearson'.")
 
 
+def _log_dose(dose: np.ndarray) -> np.ndarray:
+    """Natural logarithm of the doses, with -inf for a zero dose."""
+    log_dose = np.full_like(dose, -np.inf, dtype=float)
+    np.log(dose, out=log_dose, where=dose > 0)
+    return log_dose
+
+
 def _four_parameter_logistic(
     dose: np.ndarray, e0: float, emax: float, log_midpoint: float, hill_coefficient: float
 ) -> np.ndarray:
     """Calculate predicted responses at the given doses from four-parameter Hill curve parameters."""
-    log_dose = np.full_like(dose, -np.inf, dtype=float)
-    np.log(dose, out=log_dose, where=dose > 0)
-    fraction = expit(hill_coefficient * (log_dose - log_midpoint))
+    fraction = expit(hill_coefficient * (_log_dose(dose) - log_midpoint))
     return e0 + (emax - e0) * fraction
+
+
+def _four_parameter_logistic_jacobian(
+    dose: np.ndarray, e0: float, emax: float, log_midpoint: float, hill_coefficient: float
+) -> np.ndarray:
+    """Calculate the derivatives of :func:`_four_parameter_logistic` with respect to each of its parameters."""
+    log_ratio = _log_dose(dose) - log_midpoint
+    fraction = expit(hill_coefficient * log_ratio)
+    sensitivity = (emax - e0) * fraction * (1 - fraction)
+    log_ratio[dose == 0] = 0
+    return np.column_stack((1 - fraction, fraction, -hill_coefficient * sensitivity, sensitivity * log_ratio))
 
 
 def _fit_hill(doses: np.ndarray, responses: np.ndarray) -> dict[str, float | bool]:
@@ -125,6 +145,7 @@ def _fit_hill(doses: np.ndarray, responses: np.ndarray) -> dict[str, float | boo
         doses,
         responses,
         p0=(e0_guess, emax_guess, np.log(midpoint_guess), 1.0),
+        jac=_four_parameter_logistic_jacobian,
         bounds=((-np.inf, -np.inf, -np.inf, np.finfo(float).eps), np.inf),
         absolute_sigma=True,
         maxfev=20_000,
@@ -158,31 +179,83 @@ def _fit_hill(doses: np.ndarray, responses: np.ndarray) -> dict[str, float | boo
     }
 
 
+def _fit_hill_block(
+    doses: Sequence[np.ndarray], responses: Sequence[np.ndarray]
+) -> list[dict[str, float | bool] | ValueError | RuntimeError]:
+    """Fit a Hill curve per perturbation, returning the error instead for curves that cannot be fit."""
+    fits: list[dict[str, float | bool] | ValueError | RuntimeError] = []
+    for perturbation_doses, perturbation_responses in zip(doses, responses, strict=True):
+        try:
+            fits.append(_fit_hill(perturbation_doses, perturbation_responses))
+        except (ValueError, RuntimeError) as e:
+            fits.append(e)
+    return fits
+
+
+@njit(cache=True)
+def _group_control_sums(
+    matrix: np.ndarray, groups: np.ndarray, control_mask: np.ndarray, sums: np.ndarray
+) -> np.ndarray:
+    """Add up the control rows of every group in row order like ``np.sum(axis=0)``, keeping a lone control row as is."""
+    counts = np.zeros(sums.shape[0], dtype=np.int64)
+    last_rows = np.zeros(sums.shape[0], dtype=np.int64)
+    for i in range(matrix.shape[0]):
+        group = groups[i]
+        if group >= 0 and control_mask[i]:
+            sums[group] += matrix[i]
+            counts[group] += 1
+            last_rows[group] = i
+    for group in range(sums.shape[0]):
+        if counts[group] == 1:
+            sums[group] = matrix[last_rows[group]]
+    return counts
+
+
+@njit(cache=True, parallel=True)
+def _subtract_group_means(
+    matrix: np.ndarray, groups: np.ndarray, means: np.ndarray, has_control: np.ndarray
+) -> np.ndarray:
+    """Subtract its group's mean from every row, leaving rows of groups without control unchanged."""
+    out = np.zeros(matrix.shape, dtype=np.float64)
+    for i in prange(matrix.shape[0]):
+        group = groups[i]
+        if group < 0:
+            continue
+        if has_control[group]:
+            for j in range(matrix.shape[1]):
+                out[i, j] = matrix[i, j] - means[group, j]
+        else:
+            for j in range(matrix.shape[1]):
+                out[i, j] = matrix[i, j]
+    return out
+
+
 def _subtract_control_mean(
     matrix: np.ndarray,
     control_mask: np.ndarray,
-    group_masks: list[np.ndarray],
+    groups: np.ndarray,
     *,
     name: str,
 ) -> np.ndarray:
     """Return ``matrix`` with the within-group control mean subtracted from every row.
 
+    ``groups`` holds a group code per row, rows coded -1 belong to no group and are set to zero.
     Groups with no control cells are left untouched and a warning is emitted.
     """
-    out = np.zeros_like(matrix, dtype=float)
-    for mask in group_masks:
-        in_group = mask & control_mask
-        n_control = int(in_group.sum())
-        if n_control == 0:
-            logger.warning(
-                f"No control cells found for one group when computing {name!r}; "
-                "leaving those rows unchanged (no control subtraction applied)."
-            )
-            out[mask, :] = matrix[mask, :]
-            continue
-        control_mean = matrix[in_group, :] if n_control == 1 else np.mean(matrix[in_group, :], axis=0)
-        out[mask, :] = matrix[mask, :] - control_mean
-    return out
+    matrix = np.asarray(matrix)
+    if matrix.dtype == np.float16:
+        matrix = matrix.astype(np.float32)
+    sums = np.zeros(
+        (int(groups.max(initial=-1)) + 1, matrix.shape[1]), dtype=matrix.dtype if matrix.dtype.kind == "f" else float
+    )
+    counts = _group_control_sums(matrix, groups, control_mask, sums)
+    for _ in range(int(np.count_nonzero(counts == 0))):
+        logger.warning(
+            f"No control cells found for one group when computing {name!r}; "
+            "leaving those rows unchanged (no control subtraction applied)."
+        )
+    means = (sums.astype(np.float64) / np.maximum(counts, 1)[:, np.newaxis]).astype(sums.dtype)
+    return _subtract_group_means(matrix, groups, means, counts > 0)
 
 
 class PerturbationSpace:
@@ -249,23 +322,24 @@ class PerturbationSpace:
             adata = adata.copy()
 
         control_mask = (adata.obs[target_col] == reference_key).to_numpy()
-        if group_col is None:
-            group_masks: list[np.ndarray] = [np.ones(adata.n_obs, dtype=bool)]
-        else:
-            group_masks = [(adata.obs[group_col] == sample).to_numpy() for sample in adata.obs[group_col].unique()]
+        groups = (
+            np.zeros(adata.n_obs, dtype=np.intp)
+            if group_col is None
+            else pd.factorize(cast_frame(adata.obs)[group_col])[0]
+        )
 
         if layer_key:
             adata.layers[new_layer_key] = _subtract_control_mean(
-                to_dense(adata.layers[layer_key]), control_mask, group_masks, name=new_layer_key
+                to_dense(adata.layers[layer_key]), control_mask, groups, name=new_layer_key
             )
 
         if embedding_key:
             adata.obsm[new_embedding_key] = _subtract_control_mean(
-                cast_dense(adata.obsm[embedding_key]), control_mask, group_masks, name=new_embedding_key
+                cast_dense(adata.obsm[embedding_key]), control_mask, groups, name=new_embedding_key
             )
 
         if (not layer_key and not embedding_key) or all_data:
-            adata.X = _subtract_control_mean(to_dense(adata.X), control_mask, group_masks, name="X")
+            adata.X = _subtract_control_mean(to_dense(adata.X), control_mask, groups, name="X")
 
         if all_data:
             for local_layer_key in [key for key in adata.layers.keys() if isinstance(key, str)]:  # noqa: SIM118
@@ -273,7 +347,7 @@ class PerturbationSpace:
                     continue
                 new_key = local_layer_key + "_control_diff"
                 adata.layers[new_key] = _subtract_control_mean(
-                    to_dense(adata.layers[local_layer_key]), control_mask, group_masks, name=new_key
+                    to_dense(adata.layers[local_layer_key]), control_mask, groups, name=new_key
                 )
 
             for local_embedding_key in [key for key in adata.obsm if isinstance(key, str)]:
@@ -281,7 +355,7 @@ class PerturbationSpace:
                     continue
                 new_key = local_embedding_key + "_control_diff"
                 adata.obsm[new_key] = _subtract_control_mean(
-                    cast_dense(adata.obsm[local_embedding_key]), control_mask, group_masks, name=new_key
+                    cast_dense(adata.obsm[local_embedding_key]), control_mask, groups, name=new_key
                 )
 
         self.control_diff_computed = True
@@ -739,6 +813,7 @@ class PerturbationSpace:
         target_col: str = "perturbation",
         dose_col: str = "dose",
         key_added: str | None = None,
+        n_jobs: int | None = None,
     ) -> None:
         """Fit a four-parameter Hill curve for each perturbation.
 
@@ -750,6 +825,8 @@ class PerturbationSpace:
             target_col: `.obs` column identifying the perturbation.
             dose_col: `.obs` column containing non-negative numeric doses.
             key_added: Prefix of the `.obs` columns the results are written to. Defaults to ``response``.
+            n_jobs: Number of jobs to distribute the perturbations over, passed to `joblib.Parallel`.
+                None means one job, -1 all available cores.
 
         Returns:
             Adds the fitted response and the per-perturbation ``e0``, ``emax``, ``slope``, ``ec50``, ``ec50_se``, ``r_squared`` and ``ec50_in_range`` to `.obs`, prefixed with ``key_added``.
@@ -770,19 +847,37 @@ class PerturbationSpace:
 
         labels = data[target_col].to_numpy()
         positions = pd.Series(labels).groupby(labels, sort=False).indices
+        perturbations = pd.unique(labels)
+        perturbation_rows = [positions.get(p, np.array([], dtype=np.intp)) for p in perturbations]
+        n_workers = effective_n_jobs(n_jobs if n_jobs is not None else 1)
+        blocks = _block_slices(len(perturbations), n_blocks=len(perturbations) if n_workers == 1 else 4 * n_workers)
+        block_fits = _parallelize_with_joblib(
+            (
+                delayed(_fit_hill_block)(
+                    [doses[rows] for rows in perturbation_rows[block]],
+                    [responses[rows] for rows in perturbation_rows[block]],
+                )
+                for block in blocks
+            ),
+            total=len(blocks),
+            n_jobs=n_jobs,
+        )
+
         fitted = np.full(len(data), np.nan)
         records: dict[object, dict[str, float | bool]] = {}
-        for perturbation in pd.unique(labels):
-            rows = positions.get(perturbation, np.array([], dtype=np.intp))
-            try:
-                fit = _fit_hill(doses[rows], responses[rows])
-            except (ValueError, RuntimeError) as e:
+        for perturbation, rows, result in zip(
+            perturbations, perturbation_rows, itertools.chain.from_iterable(block_fits), strict=True
+        ):
+            if isinstance(result, Exception):
                 warnings.warn(
-                    f"Cannot fit a Hill curve for perturbation {perturbation!r}: {e}", UserWarning, stacklevel=2
+                    f"Cannot fit a Hill curve for perturbation {perturbation!r}: {result}", UserWarning, stacklevel=2
                 )
-                fit = dict.fromkeys(("e0", "emax", "slope", "ec50", "ec50_se", "r_squared"), np.nan)
+                fit: dict[str, float | bool] = dict.fromkeys(
+                    ("e0", "emax", "slope", "ec50", "ec50_se", "r_squared"), np.nan
+                )
                 fit["ec50_in_range"] = False
             else:
+                fit = result
                 fitted[rows] = _four_parameter_logistic(
                     doses[rows], fit["e0"], fit["emax"], np.log(fit["ec50"]), fit["slope"]
                 )
