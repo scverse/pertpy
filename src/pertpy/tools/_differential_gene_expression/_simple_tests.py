@@ -12,8 +12,10 @@ import statsmodels
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
 from joblib import delayed
+from numba import njit, prange
 from pandas.core.api import DataFrame
-from scipy.sparse import diags, issparse
+from scipy import special
+from scipy.sparse import csc_array, diags, issparse
 
 from pertpy._parallel import _MAX_BLOCK_ELEMENTS, _block_slices, _parallelize_with_joblib, _spawn_rngs
 
@@ -24,15 +26,122 @@ _RNG_KWARGS = ("rng", "random_state")
 TestStatistic = Callable[[np.ndarray, np.ndarray], float] | Callable[[np.ndarray, np.ndarray], np.ndarray]
 
 
-def _var_block(x, block: slice) -> np.ndarray:
-    """Get a block of variables (columns) as a dense array."""
-    return to_dense(x[:, block])
+def _var_block(x, block: slice, *, dense: bool = True):
+    """Get a block of variables (columns), as a dense array if `dense`."""
+    return to_dense(x[:, block]) if dense else x[:, block]
 
 
-def _run_vectorized_test(test, x0_block: np.ndarray, x1_block: np.ndarray, paired: bool, kwargs: dict) -> dict:
+def _csc_columns(x) -> tuple[np.ndarray, np.ndarray]:
+    """Column pointers and stored values of `x` in CSC format, as int64 and float64."""
+    x = csc_array(x)
+    return x.indptr.astype(np.int64, copy=False), x.data.astype(np.float64, copy=False)
+
+
+@njit(parallel=True, cache=True)
+def _column_sums(indptr: np.ndarray, values: np.ndarray) -> np.ndarray:
+    """Sum of the stored values of every column of a CSC matrix, with compensated summation since columns are long."""
+    sums = np.empty(len(indptr) - 1)
+    for j in prange(len(sums)):
+        total = compensation = 0.0
+        for value in values[indptr[j] : indptr[j + 1]]:
+            updated = total + value
+            compensation += (total - updated) + value if abs(total) >= abs(value) else (value - updated) + total
+            total = updated
+        sums[j] = total + compensation
+    return sums
+
+
+def _column_means(x) -> np.ndarray:
+    """Mean of every column in float64, from the stored entries if `x` is sparse."""
+    n = x.shape[0]
+    if not issparse(x):
+        return np.asarray(x).mean(axis=0, dtype=np.float64)
+    return _column_sums(*_csc_columns(x)) / n
+
+
+def _mean_var(x) -> tuple[np.ndarray, np.ndarray]:
+    """Mean and unbiased variance of every column in float64, from the stored entries if `x` is sparse."""
+    n = x.shape[0]
+    mean = _column_means(x)
+    if issparse(x):
+        indptr, values = _csc_columns(x)
+        stored = np.diff(indptr)
+        squares = _column_sums(indptr, (values - np.repeat(mean, stored)) ** 2) + (n - stored) * mean**2
+    else:
+        squares = np.sum((np.asarray(x, dtype=np.float64) - mean) ** 2, axis=0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return mean, np.where(n == 1, 0.0, squares / n * (n / (n - 1)))
+
+
+def _t_test_ind(x0, x1) -> dict[str, np.ndarray]:
+    """:func:`scipy.stats.ttest_ind` with its default arguments for every column, from the column sums of sparse input."""
+    (mean0, var0), (mean1, var1) = _mean_var(x0), _mean_var(x1)
+    n0, n1 = x0.shape[0], x1.shape[0]
+    df = n0 + n1 - 2.0
+    with np.errstate(divide="ignore", invalid="ignore"):
+        t = (mean0 - mean1) / np.sqrt(((n0 - 1) * var0 + (n1 - 1) * var1) / df * (1.0 / n0 + 1.0 / n1))
+    return {"p_value": 2 * special.stdtr(df, -np.abs(t)), "statistic": t}
+
+
+@njit(parallel=True, cache=True)
+def _rank_sums(  # noqa: PLR0917
+    indptr0: np.ndarray, data0: np.ndarray, n0: int, indptr1: np.ndarray, data1: np.ndarray, n1: int
+) -> tuple[np.ndarray, np.ndarray]:
+    """Rank sum of the first group and tie term ``sum(t**3 - t)`` of every column of two CSC matrices.
+
+    The zeros that are not stored enter as one tied block, so only the stored entries are sorted.
+    """
+    n_cols = len(indptr0) - 1
+    rank_sum = np.empty(n_cols)
+    tie_term = np.empty(n_cols)
+    for j in prange(n_cols):
+        stored0, stored1 = indptr0[j + 1] - indptr0[j], indptr1[j + 1] - indptr1[j]
+        values = np.zeros(stored0 + stored1 + 1)
+        values[:stored0] = data0[indptr0[j] : indptr0[j + 1]]
+        values[stored0:-1] = data1[indptr1[j] : indptr1[j + 1]]
+        weight = np.ones(len(values))
+        weight[-1] = n0 + n1 - stored0 - stored1
+        weight_first = np.zeros(len(values))
+        weight_first[:stored0] = 1.0
+        weight_first[-1] = n0 - stored0
+        order = np.argsort(values)
+        if np.isnan(values[order[-1]]):
+            rank_sum[j] = tie_term[j] = np.nan
+            continue
+        total = ties = ranked = 0.0
+        start = 0
+        while start < len(order):
+            count = count_first = 0.0
+            end = start
+            while end < len(order) and values[order[end]] == values[order[start]]:
+                count += weight[order[end]]
+                count_first += weight_first[order[end]]
+                end += 1
+            total += count_first * (ranked + (count + 1) / 2)
+            ties += count**3 - count
+            ranked += count
+            start = end
+        rank_sum[j], tie_term[j] = total, ties
+    return rank_sum, tie_term
+
+
+def _mann_whitney_u(x0, x1) -> dict[str, np.ndarray]:
+    """:func:`scipy.stats.mannwhitneyu` with its default arguments for every column, ranking only the nonzero entries."""
+    n0, n1 = x0.shape[0], x1.shape[0]
+    n = n0 + n1
+    rank_sum, tie_term = _rank_sums(*_csc_columns(x0), n0, *_csc_columns(x1), n1)
+    statistic = rank_sum - n0 * (n0 + 1) / 2
+    numerator = statistic - n0 * n1 / 2
+    numerator -= 0.5 * np.sign(numerator)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = numerator / np.sqrt(n0 * n1 / 12 * ((n + 1) - tie_term / (n * (n - 1))))
+    return {"p_value": np.clip(2 * special.ndtr(-np.abs(z)), 0, 1), "statistic": statistic}
+
+
+def _run_vectorized_test(test, x0_block, x1_block, paired: bool, kwargs: dict) -> dict:
     """Test a block of variables at once, returning one array of values per metric."""
     return {
-        "log_fc": np.log2(np.mean(x1_block, axis=0)) - np.log2(np.mean(x0_block, axis=0)),
+        "log_fc": np.log2(_column_means(x1_block)) - np.log2(_column_means(x0_block)),
         **{
             metric: np.atleast_1d(np.asarray(value))
             for metric, value in test(x0_block, x1_block, paired, **kwargs).items()
@@ -73,6 +182,7 @@ class SimpleComparisonBase(MethodBase):
     #: Counterpart of :func:`_test` that tests a block of variables at once, which is orders of magnitude faster.
     #: If None, :func:`_test` is called per variable instead.
     _test_vectorized: Callable[..., dict[str, np.ndarray]] | None = None
+    _test_vectorized_sparse: bool = False
 
     @staticmethod
     @abstractmethod
@@ -133,17 +243,28 @@ class SimpleComparisonBase(MethodBase):
         blocks = _block_slices(x0.shape[1], max_block_size=_MAX_BLOCK_ELEMENTS // max(x0.shape[0] + x1.shape[0], 1))
         if not blocks:
             return pd.DataFrame()
+        dense = not type(self)._test_vectorized_sparse
         # Densifying here rather than in the workers keeps the full matrices from being sent around.
         if len(blocks) == 1:
             results = [
-                _run_vectorized_test(test, _var_block(x0, blocks[0]), _var_block(x1, blocks[0]), paired, dict(kwargs))
+                _run_vectorized_test(
+                    test,
+                    _var_block(x0, blocks[0], dense=dense),
+                    _var_block(x1, blocks[0], dense=dense),
+                    paired,
+                    dict(kwargs),
+                )
             ]
         else:
             results = list(
                 _parallelize_with_joblib(
                     (
                         delayed(_run_vectorized_test)(
-                            test, _var_block(x0, block), _var_block(x1, block), paired, dict(kwargs)
+                            test,
+                            _var_block(x0, block, dense=dense),
+                            _var_block(x1, block, dense=dense),
+                            paired,
+                            dict(kwargs),
                         )
                         for block in blocks
                     ),
@@ -265,9 +386,17 @@ class WilcoxonTest(SimpleComparisonBase):
             "statistic": test_result.statistic,
         }
 
+    _test_vectorized_sparse = True
+
     @staticmethod
-    def _test_vectorized(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, np.ndarray]:
-        """Perform an unpaired or paired Wilcoxon/Mann-Whitney-U test for each column of x0 and x1."""
+    def _test_vectorized(x0, x1, paired: bool, **kwargs) -> dict[str, np.ndarray]:
+        """Perform an unpaired or paired Wilcoxon/Mann-Whitney-U test for each column of x0 and x1.
+
+        Without arguments, the unpaired test uses the normal approximation with tie and continuity correction for samples larger than 8, which only needs to rank the nonzero values.
+        """
+        if not (paired or kwargs) and min(x0.shape[0], x1.shape[0]) > 8:
+            return _mann_whitney_u(x0, x1)
+        x0, x1 = to_dense(x0), to_dense(x1)
         test_result = (
             scipy.stats.wilcoxon(x0, x1, axis=0, **kwargs)
             if paired
@@ -292,9 +421,14 @@ class TTest(SimpleComparisonBase):
             "statistic": test_result.statistic,
         }
 
+    _test_vectorized_sparse = True
+
     @staticmethod
-    def _test_vectorized(x0: np.ndarray, x1: np.ndarray, paired: bool, **kwargs) -> dict[str, np.ndarray]:
+    def _test_vectorized(x0, x1, paired: bool, **kwargs) -> dict[str, np.ndarray]:
         """Perform an unpaired or paired T-test for each column of x0 and x1."""
+        if not (paired or kwargs):
+            return _t_test_ind(x0, x1)
+        x0, x1 = to_dense(x0), to_dense(x1)
         test_result = (
             scipy.stats.ttest_rel(x0, x1, axis=0, **kwargs)
             if paired
