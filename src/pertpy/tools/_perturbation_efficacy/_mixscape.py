@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import math
 import warnings
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Literal
@@ -11,14 +12,18 @@ import pandas as pd
 import scanpy as sc
 import seaborn as sns
 from fast_array_utils.conv import to_dense
+from numba import njit
 from pandas.errors import PerformanceWarning
 from scanpy import get
 from scanpy._utils import check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
+from sklearn.cluster import kmeans_plusplus
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.mixture import GaussianMixture
+from sklearn.utils import check_random_state
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import RankGenesMethod, cast_dense, cast_frame, cast_matrix
+from pertpy._types import CSBase, RankGenesMethod, cast_dense, cast_frame, cast_matrix
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer, _subset_rows_cols
 
 if TYPE_CHECKING:
@@ -29,6 +34,9 @@ if TYPE_CHECKING:
     from matplotlib.colors import Colormap
     from matplotlib.pyplot import Figure
     from seaborn.axisgrid import FacetGrid
+
+_LOG_2PI = math.log(2 * math.pi)
+_NK_EPS = 10 * np.finfo(np.float64).eps
 
 
 class Mixscape(PerturbationEfficacyAnalyzer):
@@ -213,18 +221,27 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                         guide_pvec = pvec.iloc[guide_cells_dat_idx]
                         means_init = np.array([[nt_pvec.mean()], [guide_pvec.mean()]])
                         std_init = np.array([nt_pvec.std(), guide_pvec.std()])
-                        mm = MixscapeGaussianMixture(
-                            n_components=2,
-                            covariance_type="spherical",
-                            means_init=means_init,
-                            precisions_init=1 / (std_init**2),
-                            random_state=random_state,
-                            max_iter=100,
-                            fixed_means=[nt_pvec.mean(), None],
-                            fixed_covariances=[nt_pvec.std() ** 2, None],
-                            **gmmkwargs,
-                        ).fit(np.asarray(pvec).reshape(-1, 1))
-                        probabilities = mm.predict_proba(np.asarray(pvec)[orig_guide_cells_dat_idx].reshape(-1, 1))
+                        if gmmkwargs:
+                            mm = MixscapeGaussianMixture(
+                                n_components=2,
+                                covariance_type="spherical",
+                                means_init=means_init,
+                                precisions_init=1 / (std_init**2),
+                                random_state=random_state,
+                                max_iter=100,
+                                fixed_means=[nt_pvec.mean(), None],
+                                fixed_covariances=[nt_pvec.std() ** 2, None],
+                                **gmmkwargs,
+                            ).fit(np.asarray(pvec).reshape(-1, 1))
+                            probabilities = mm.predict_proba(np.asarray(pvec)[orig_guide_cells_dat_idx].reshape(-1, 1))
+                        else:
+                            probabilities = _mixscape_gmm_predict_proba(
+                                pvec.to_numpy(dtype=np.float64),
+                                orig_guide_cells_dat_idx,
+                                means_init=means_init.ravel().astype(np.float64),
+                                precisions_init=1 / (std_init.astype(np.float64) ** 2),
+                                random_state=random_state,
+                            )
                         lik_ratio = probabilities[:, 0] / probabilities[:, 1]
                         post_prob = 1 / (1 + lik_ratio)
 
@@ -338,24 +355,23 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         )
         subset_cells = (adata.obs[mixscape_class_global] == perturbation_type) | (adata.obs[pert_key] == control)
         adata_subset = adata[subset_cells]
-        X = cast_matrix(adata_subset.X) - cast_matrix(adata_subset.X).mean(0)
+        X_subset = cast_matrix(adata_subset.X)
+        X = X_subset - X_subset.mean(0)
         pert_labels = adata.obs[pert_key]
-        projected_pcs: dict[str, np.ndarray] = {}
+        components: dict[str, np.ndarray] = {}
         # performs PCA on each mixscape class separately and projects each subspace onto all cells in the data.
-        for _, (key, value) in enumerate(perturbation_markers.items()):
-            if len(value) == 0:
+        for (_, gene), markers in perturbation_markers.items():
+            if len(markers) == 0 or gene in components:
                 continue
-            else:
-                gene_rows = np.flatnonzero(subset_cells & ((pert_labels == key[1]) | (pert_labels == control)))
-                gene_subset = sc.AnnData(X=cast_matrix(adata.X)[gene_rows], var=adata.var.copy())
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", UserWarning)
-                    sc.pp.scale(gene_subset)
-                sc.tl.pca(gene_subset, n_comps=n_comps)
-                # project cells into PCA space of gene_subset
-                projected_pcs[key[1]] = np.asarray(np.dot(X, cast_dense(gene_subset.varm["PCs"])))
-        # concatenate all pcs into a single matrix.
-        projected_pcs_array = np.concatenate(list(projected_pcs.values()), axis=1)
+            gene_rows = np.flatnonzero(subset_cells & ((pert_labels == gene) | (pert_labels == control)))
+            gene_subset = sc.AnnData(X=cast_matrix(adata.X)[gene_rows], var=adata.var.copy())
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                sc.pp.scale(gene_subset)
+            sc.tl.pca(gene_subset, n_comps=n_comps)
+            components[gene] = cast_dense(gene_subset.varm["PCs"])
+        # project cells into PCA space of gene_subset
+        projected_pcs_array = np.asarray(np.dot(X, np.concatenate(list(components.values()), axis=1)))
 
         clf = LinearDiscriminantAnalysis(n_components=len(np.unique(adata_subset.obs[pert_key])) - 1)
         clf.fit(projected_pcs_array, adata_subset.obs[pert_key])
@@ -1047,3 +1063,136 @@ class MixscapeGaussianMixture(GaussianMixture):
             self.covariances_[self.fixed_cov_indices] = self.fixed_cov_values
 
         return self
+
+
+@njit(cache=True)
+def _kmeans_assign_1d(x: np.ndarray, centers: np.ndarray, labels: np.ndarray) -> None:
+    sq_centers = centers * centers
+    for i in range(x.size):
+        label = 0
+        best = sq_centers[0] - 2.0 * (x[i] * centers[0])
+        for j in range(1, centers.size):
+            dist = sq_centers[j] - 2.0 * (x[i] * centers[j])
+            if dist < best:
+                best = dist
+                label = j
+        labels[i] = label
+
+
+@njit(cache=True)
+def _kmeans_1d(x: np.ndarray, centers: np.ndarray, tol: float, max_iter: int = 300) -> np.ndarray:
+    """Labels of :class:`~sklearn.cluster.KMeans`' Lloyd iterations on 1-D data starting from `centers`."""
+    labels = np.full(x.size, -1, dtype=np.int64)
+    labels_old = labels.copy()
+    for _ in range(max_iter):
+        _kmeans_assign_1d(x, centers, labels)
+        sums = np.zeros_like(centers)
+        counts = np.zeros_like(centers)
+        for i in range(x.size):
+            sums[labels[i]] += x[i]
+            counts[labels[i]] += 1.0
+        for j in range(centers.size):
+            if counts[j] == 0:
+                far = np.argmax((x - centers[labels]) ** 2)
+                sums[labels[far]] -= x[far]
+                counts[labels[far]] -= 1.0
+                sums[j] = x[far]
+                counts[j] = 1.0
+        new_centers = sums * (1.0 / counts)
+        shift = np.sum((new_centers - centers) ** 2)
+        centers = new_centers
+        if (labels == labels_old).all():
+            return labels
+        if shift <= tol:
+            break
+        labels_old[:] = labels
+    _kmeans_assign_1d(x, centers, labels)
+    return labels
+
+
+@njit(cache=True)
+def _gmm_e_step(x: np.ndarray, params: np.ndarray, log_resp: np.ndarray) -> float:
+    """Fill `log_resp` for a two-component 1-D Gaussian mixture and return the summed log-likelihood.
+
+    `params` holds the weights, means and precision Cholesky factors as rows.
+    """
+    weights, means, prec_chol = params[0], params[1], params[2]
+    prec = prec_chol * prec_chol
+    log_prec_chol = np.log(prec_chol)
+    log_weights = np.log(weights)
+    log_likelihood = 0.0
+    for i in range(x.size):
+        for j in range(2):
+            log_prob = means[j] * means[j] * prec[j] - 2 * (x[i] * means[j] * prec[j]) + x[i] * x[i] * prec[j]
+            log_resp[i, j] = -0.5 * (_LOG_2PI + log_prob) + log_prec_chol[j] + log_weights[j]
+        hi = max(log_resp[i, 0], log_resp[i, 1])
+        lo = min(log_resp[i, 0], log_resp[i, 1])
+        log_norm = (np.log(2.0) if lo == hi else np.log1p(np.exp(lo - hi))) + hi
+        log_resp[i, 0] -= log_norm
+        log_resp[i, 1] -= log_norm
+        log_likelihood += log_norm
+    return log_likelihood
+
+
+@njit(cache=True)
+def _gmm_em(x: np.ndarray, params: np.ndarray, tol: float, max_iter: int, reg_covar: float) -> tuple[np.ndarray, bool]:
+    """EM of a spherical two-component :class:`~sklearn.mixture.GaussianMixture` on 1-D data with the first mean fixed."""
+    params = params.copy()
+    log_resp = np.empty((x.size, 2))
+    lower_bound = -np.inf
+    for _ in range(max_iter):
+        prev_lower_bound = lower_bound
+        lower_bound = _gmm_e_step(x, params, log_resp) / x.size
+        nk = np.zeros(2)
+        sum_x = np.zeros(2)
+        sum_x2 = np.zeros(2)
+        for i in range(x.size):
+            for j in range(2):
+                resp = np.exp(log_resp[i, j])
+                nk[j] += resp
+                sum_x[j] += resp * x[i]
+                sum_x2[j] += resp * (x[i] * x[i])
+        nk += _NK_EPS
+        means = sum_x / nk
+        covariances = sum_x2 / nk - means**2 + reg_covar
+        if (covariances <= 0.0).any():
+            raise ValueError("Fitting the mixture model failed because a component has an ill-defined covariance.")
+        params[0] = nk / nk.sum()
+        params[1, 1] = means[1]
+        params[2] = 1.0 / np.sqrt(covariances)
+        if abs(lower_bound - prev_lower_bound) < tol:
+            return params, True
+    return params, False
+
+
+def _mixscape_gmm_predict_proba(
+    x: np.ndarray,
+    predict_idx: np.ndarray,
+    *,
+    means_init: np.ndarray,
+    precisions_init: np.ndarray,
+    random_state: int | np.random.RandomState | None,
+    tol: float = 1e-3,
+    max_iter: int = 100,
+    reg_covar: float = 1e-6,
+) -> np.ndarray:
+    """Component probabilities of `x[predict_idx]` under :class:`MixscapeGaussianMixture` fitted to `x` with the first mean fixed.
+
+    Reproduces scikit-learn's k-means initialisation, EM updates and convergence check for two spherical components.
+    """
+    rng = check_random_state(random_state)
+    x_centered = x - x.mean()
+    centers, _ = kmeans_plusplus(x_centered.reshape(-1, 1), 2, random_state=rng)
+    labels = _kmeans_1d(x_centered, centers[:, 0], np.var(x) * 1e-4)
+    weights = (np.bincount(labels, minlength=2) + _NK_EPS) / x.size
+    params, converged = _gmm_em(x, np.stack([weights, means_init, np.sqrt(precisions_init)]), tol, max_iter, reg_covar)
+    if not converged:
+        warnings.warn(
+            "Best performing initialization did not converge. "
+            "Try different init parameters, or increase max_iter, tol, or check for degenerate data.",
+            ConvergenceWarning,
+            stacklevel=3,
+        )
+    log_resp = np.empty((predict_idx.size, 2))
+    _gmm_e_step(x[predict_idx], params, log_resp)
+    return np.exp(log_resp)

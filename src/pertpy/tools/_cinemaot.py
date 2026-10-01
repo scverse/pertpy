@@ -429,12 +429,12 @@ class Cinemaot:
         adata_ = sc.AnnData(obs=cast_frame(adata.obs).copy(), obsm={use_rep: adata.obsm[use_rep]})
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]  # type: ignore[index]
         X_pca2 = adata_.obsm[use_rep][adata_.obs[pert_key] != control, :]  # type: ignore[index]
-        nbrs = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(X_pca1)
+        nbrs = NearestNeighbors(n_neighbors=k, algorithm="brute").fit(X_pca1)
         mixscape_pca = cast_dense(adata.obsm[use_rep]).copy()
-        mixscapematrix = nbrs.kneighbors_graph(X_pca2).toarray()
+        mixscapematrix = nbrs.kneighbors_graph(X_pca2).sorted_indices()
         mixscape_pca[adata_.obs[pert_key] != control, :] = (
-            np.dot(mixscapematrix, mixscape_pca[adata_.obs[pert_key] == control, :]) / k
-        )
+            mixscapematrix @ mixscape_pca[adata_.obs[pert_key] == control, :]
+        ) / k
 
         adata_.obsm["X_mpca"] = mixscape_pca
         sc.pp.neighbors(adata_, use_rep="X_mpca")
