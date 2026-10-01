@@ -239,4 +239,24 @@ def test_edistance_from_precomputed_matches_block_means(rng: np.random.Generator
     P = pairwise_distances(rng.normal(size=(60, 5)))
     idx = rng.random(60) < 0.3
     expected = 2 * P[idx][:, ~idx].mean() - P[idx][:, idx].mean() - P[~idx][:, ~idx].mean()
-    assert pt.tl.Distance("edistance").metric_fct.from_precomputed(P, idx) == pytest.approx(expected, rel=1e-12)
+    edistance = pt.tl.Distance("edistance").metric_fct
+    assert edistance.from_precomputed(P, idx) == pytest.approx(expected, rel=1e-12)
+    assert edistance.from_precomputed(P, ~idx, total=P.sum()) == pytest.approx(expected, rel=1e-12)
+
+
+@mark.parametrize("counts", [[0] * 97 + [2, 3, 3], [0, 1, 4, 9, 2, 0, 0, 15, 1, 3]])
+def test_nb_ll_fits_maximum_likelihood_size(counts: list[int]) -> None:
+    from scipy.optimize import minimize_scalar
+    from scipy.stats import nbinom
+
+    from pertpy.tools._distances._distances import _nb_size_mle
+
+    x = np.array(counts)
+
+    def neg_log_likelihood(log_size: float) -> float:
+        size = np.exp(log_size)
+        return -nbinom.logpmf(x, size, size / (size + x.mean())).sum()
+
+    expected = np.exp(minimize_scalar(neg_log_likelihood, bounds=(-10, 10), options={"xatol": 1e-10}).x)
+    assert _nb_size_mle(x) == pytest.approx(expected, rel=1e-6)
+    assert np.isnan(_nb_size_mle(np.array([1, 2, 1, 2])))
