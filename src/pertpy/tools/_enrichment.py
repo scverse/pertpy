@@ -17,7 +17,7 @@ from scverse_misc import Deprecation, deprecated_arg
 from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, cast_frame, cast_matrix
+from pertpy._types import CSBase, RandomStateLike, cast_frame, cast_matrix
 from pertpy.metadata import Drug
 
 
@@ -184,6 +184,7 @@ class Enrichment:
         method: Literal["mean", "seurat"] = "mean",
         n_bins: int = 25,
         ctrl_size: int = 50,
+        random_state: RandomStateLike = 0,
         key_added: str = "pertpy_enrichment",
     ) -> None:
         """Obtain per-cell scoring of gene groups of interest.
@@ -207,6 +208,7 @@ class Enrichment:
             layer: Specifies which `.layers` of AnnData to use for expression values.
             n_bins: The number of expression bins for the `'seurat'` method.
             ctrl_size: The number of genes to randomly sample from each expression bin for the `"seurat"` method.
+            random_state: Seed or random generator for sampling the control genes of the `"seurat"` method.
             key_added: Prefix key that adds the results to `uns`.
                        Note that the actual values are `key_added_score`, `key_added_variables`, `key_added_genes`, `key_added_all_genes`.
 
@@ -236,10 +238,10 @@ class Enrichment:
             obs_cut = obs_cut.values
 
             control_groups = {}
+            rng = np.random.default_rng(random_state)
             for cut in np.unique(obs_cut):
                 mask = obs_cut == cut
                 r_genes = np.nonzero(mask)[0]
-                rng = np.random.default_rng()
                 rng.shuffle(r_genes)
                 mask[r_genes[ctrl_size:]] = False
                 control_groups[cut] = mask
