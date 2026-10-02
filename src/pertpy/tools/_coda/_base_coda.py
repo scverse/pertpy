@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tempfile
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -2039,6 +2040,8 @@ class CompositionalModel2(ABC):
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if return_fig:
             return tree, tree_style
+        if save:
+            return None
 
         return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
 
@@ -2209,12 +2212,12 @@ class CompositionalModel2(ABC):
             leaf_effs = leaf_effs.loc[leaf_name].reset_index()
             palette = ["blue" if Effect > 0 else "red" for Effect in leaf_effs["Effect"].tolist()]
 
-            dir_path = Path.cwd()
-            dir_path = Path(dir_path / "tree_effect.png")
-            tree2.render(dir_path.as_posix(), tree_style=tree_style, units="in")
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                tree_path = Path(tmp_dir) / "tree_effect.png"
+                tree2.render(tree_path.as_posix(), tree_style=tree_style, units="in")
+                img = mpimg.imread(tree_path)
             _, ax = plt.subplots(1, 2, figsize=(10, 10))
             sns.barplot(data=leaf_effs, x="Effect", y="Cell Type", palette=palette, ax=ax[1])
-            img = mpimg.imread(dir_path)
             ax[0].imshow(img)
             ax[0].get_xaxis().set_visible(False)
             ax[0].get_yaxis().set_visible(False)
@@ -2237,6 +2240,8 @@ class CompositionalModel2(ABC):
                 tree2.render(save, tree_style=tree_style, units=units)
             if return_fig:
                 return tree2, tree_style
+            if save:
+                return None
             width, height = figsize if figsize is not None else (None, None)
             return tree2.render("%%inline", tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)
 
