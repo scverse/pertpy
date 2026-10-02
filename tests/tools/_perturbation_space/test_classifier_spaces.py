@@ -35,7 +35,8 @@ def test_lr_classifier_space_is_perturbation_level(adata):
     assert "classifier_score" in pert_adata.obs
     # constant-within-group obs are carried over, ambiguous ones dropped
     assert pert_adata.obs.loc["target1", "MoA"] == "Growth"
-    assert "partial" not in pert_adata.obs
+    assert pd.isna(pert_adata.obs.loc["control", "partial"])
+    assert pert_adata.obs.loc["target1", "partial"] == "annotated"
 
 
 def test_lr_classifier_space_reproducible_and_accepts_generator(adata):
