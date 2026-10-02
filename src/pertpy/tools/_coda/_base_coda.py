@@ -2724,7 +2724,7 @@ def from_scanpy(
         AnnData: A data set with cells aggregated to the (sample x cell type) level
     """
     sample_identifier = [sample_identifier] if isinstance(sample_identifier, str) else sample_identifier
-    covariate_obs = list(set(covariate_obs or []) | set(sample_identifier))
+    covariate_obs = list(dict.fromkeys([*sample_identifier, *(covariate_obs or [])]))
 
     if isinstance(sample_identifier, list):
         adata.obs = cast_frame(adata.obs).copy()
