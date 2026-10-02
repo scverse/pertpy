@@ -269,12 +269,13 @@ def test_hlm_pvalue_per_row_matches_statsmodels():
 def test_hlm_pvalue_per_row_handles_degenerate_row():
     n = 30
     sample = np.repeat(["A", "B", "C"], n // 3)
-    expression = np.zeros((2, n))
+    expression = np.full((2, n), 2.0)
     expression[1] = np.arange(n) / n
     covariates = pd.DataFrame({"cellQ": np.linspace(0, 1, n)})
     score = np.linspace(-1, 1, n)
     res = _hlm_pvalue_per_row(expression, score, covariates, sample)
     assert res.shape == (2, 2)
+    assert res.loc["gene_0"].isna().all()
 
 
 def _preprocess_dialogue_adata(adata: ad.AnnData) -> ad.AnnData:
