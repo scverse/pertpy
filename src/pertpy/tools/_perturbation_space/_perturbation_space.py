@@ -65,7 +65,7 @@ def _constant_obs_per_group(obs: pd.DataFrame, group_cols: Sequence[str]) -> pd.
     """
     grouped = obs.groupby(list(group_cols), observed=True)
     collapsed = grouped.first().loc[:, grouped.nunique(dropna=False).max() == 1]
-    return collapsed.loc[:, ~collapsed.isna().any()]
+    return collapsed.loc[:, ~collapsed.isna().all()]
 
 
 def _carry_constant_obs(ps_adata: AnnData, source_obs: pd.DataFrame, group_cols: str | Sequence[str]) -> None:
