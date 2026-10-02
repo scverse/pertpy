@@ -75,6 +75,29 @@ def test_run_nuts(adata):
     assert mdata["coda"].varm["intercept_df"].shape == (8, 5)
 
 
+def test_run_nuts_multichain(adata):
+    # Vectorized multi-chain sampling: results are produced and the chain count is recorded.
+    mdata = sccoda.load(
+        adata,
+        type="cell_level",
+        generate_sample_level=True,
+        cell_type_identifier="cell_label",
+        sample_identifier="batch",
+        covariate_obs=["condition"],
+    )
+    mdata = sccoda.prepare(mdata, formula="condition", reference_cell_type="Endocrine")
+    sccoda.run_nuts(mdata, num_samples=1000, num_warmup=100, num_chains=2)
+    assert mdata["coda"].uns["scCODA_params"]["mcmc"]["num_chains"] == 2
+    assert "intercept_df" in mdata["coda"].varm
+    assert "effect_df_condition[T.Salmonella]" in mdata["coda"].varm
+    # make_arviz must reshape the stored (flattened) samples back into 2 chains.
+    arviz_data = sccoda.make_arviz(mdata, num_prior_samples=0, use_posterior_predictive=False)
+    assert arviz_data.posterior.sizes["chain"] == 2
+    # summary(extended=True) formats the acceptance rate, which is a per-chain array when
+    # num_chains > 1; guards against the array-vs-scalar format TypeError.
+    sccoda.summary(mdata, extended=True)
+
+
 def test_credible_effects(adata):
     adata_salm = adata[adata.obs["condition"].isin(["Control", "Salmonella"])]
     mdata = sccoda.load(
