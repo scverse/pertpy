@@ -103,7 +103,6 @@ class PerturbationEfficacyAnalyzer:
                 If `n_pcs==0` use `.X` if `use_rep is None`.
             batch_size: Size of batch to calculate the perturbation signature.
                 If 'None', the perturbation signature is calcuated in the full mode, requiring more memory.
-                The batched mode is very inefficient for sparse data.
             copy: Determines whether a copy of the `adata` is returned.
             **kwargs: Additional arguments for the `NNDescent` class from `pynndescent`.
 
