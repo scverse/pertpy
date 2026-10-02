@@ -220,7 +220,7 @@ def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: s
             )
         if Y is None:
             # Within-group distance (X to X)
-            return _pairwise_kernel_sum_within(X) / (len(X) * (len(X) - 1)) if len(X) > 1 else 0.0
+            return _pairwise_kernel_sum_within(X) / len(X) ** 2 if len(X) else 0.0
         else:
             # Between-group distance (X to Y)
             return _pairwise_kernel_sum_between(X, Y) / (len(X) * len(Y)) if len(X) and len(Y) else 0.0
