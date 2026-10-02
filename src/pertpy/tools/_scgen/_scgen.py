@@ -14,6 +14,7 @@ import scanpy as sc
 from adjustText import adjust_text
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
+from fast_array_utils.stats import mean_var
 from flax import serialization
 from scipy import stats
 
@@ -804,15 +805,15 @@ class Scgen:
             adata_diff = adata[:, diff_genes]
             stim_diff = adata_diff[adata_diff.obs[condition_key] == axis_keys["y"]]
             ctrl_diff = adata_diff[adata_diff.obs[condition_key] == axis_keys["x"]]
-            x_diff = np.asarray(np.var(ctrl_diff.X, axis=0)).ravel()
-            y_diff = np.asarray(np.var(stim_diff.X, axis=0)).ravel()
+            x_diff = np.asarray(mean_var(ctrl_diff.X, axis=0)[1])
+            y_diff = np.asarray(mean_var(stim_diff.X, axis=0)[1])
             m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
             if verbose:
                 logger.info(f"Top 100 DEGs var: {r_value_diff**2}")
         if "y1" in axis_keys:
             real_stim = adata[adata.obs[condition_key] == axis_keys["y1"]]
-        x = np.asarray(np.var(ctrl.X, axis=0)).ravel()
-        y = np.asarray(np.var(stim.X, axis=0)).ravel()
+        x = np.asarray(mean_var(ctrl.X, axis=0)[1])
+        y = np.asarray(mean_var(stim.X, axis=0)[1])
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         if verbose:
             logger.info(f"All genes var: {r_value**2}")
@@ -828,7 +829,7 @@ class Scgen:
         ax.set_xlabel(labels["x"], fontsize=fontsize)
         ax.set_ylabel(labels["y"], fontsize=fontsize)
         if "y1" in axis_keys:
-            y1 = np.asarray(np.var(real_stim.X, axis=0)).ravel()
+            y1 = np.asarray(mean_var(real_stim.X, axis=0)[1])
             _ = plt.scatter(
                 x,
                 y1,
