@@ -3,6 +3,7 @@ from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 import pytest
+import scipy.stats
 from pandas.core.api import DataFrame
 
 if find_spec("formulaic_contrasts") is None or find_spec("formulaic") is None:
@@ -169,3 +170,14 @@ def test_untestable_variable_keeps_other_adjusted_pvalues(test_adata_minimal):
     test_adata_minimal.X[:, 1] = 0
     res_df = TTest.compare_groups(adata=test_adata_minimal, column="condition", baseline="A", groups_to_compare="B")
     np.testing.assert_array_equal(res_df["adj_p_value"].isna(), res_df["p_value"].isna())
+
+
+def test_t_single_cell_group_matches_scipy(test_adata_minimal):
+    adata = test_adata_minimal[:41].copy()
+    adata.obs["condition"] = ["A"] * 40 + ["B"]
+    res_df = TTest.compare_groups(adata=adata, column="condition", baseline="A", groups_to_compare="B")
+    res_df = res_df.set_index("variable").loc[adata.var_names]
+    x = adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X
+    expected = scipy.stats.ttest_ind(x[:40], x[40:], axis=0)
+    np.testing.assert_allclose(res_df["statistic"], expected.statistic, rtol=1e-12)
+    np.testing.assert_allclose(res_df["p_value"], expected.pvalue, rtol=1e-12)

@@ -54,6 +54,8 @@ def _column_sums(indptr: np.ndarray, values: np.ndarray) -> np.ndarray:
 def _column_means(x) -> np.ndarray:
     """Mean of every column in float64, from the stored entries if `x` is sparse."""
     n = x.shape[0]
+    if n == 0:
+        return np.full(x.shape[1], np.nan)
     if not issparse(x):
         return np.asarray(x).mean(axis=0, dtype=np.float64)
     return _column_sums(*_csc_columns(x)) / n
@@ -70,13 +72,13 @@ def _mean_var(x) -> tuple[np.ndarray, np.ndarray]:
     else:
         squares = np.sum((np.asarray(x, dtype=np.float64) - mean) ** 2, axis=0)
     with np.errstate(divide="ignore", invalid="ignore"):
-        return mean, np.where(n == 1, 0.0, squares / n * (n / (n - 1)))
+        return mean, squares / n * (n / (n - 1) if n > 1 else 0.0)
 
 
 def _t_test_ind(x0, x1) -> dict[str, np.ndarray]:
     """:func:`scipy.stats.ttest_ind` with its default arguments for every column, from the column sums of sparse input."""
     (mean0, var0), (mean1, var1) = _mean_var(x0), _mean_var(x1)
-    n0, n1 = x0.shape[0], x1.shape[0]
+    n0, n1 = np.float64(x0.shape[0]), np.float64(x1.shape[0])
     df = n0 + n1 - 2.0
     with np.errstate(divide="ignore", invalid="ignore"):
         t = (mean0 - mean1) / np.sqrt(((n0 - 1) * var0 + (n1 - 1) * var1) / df * (1.0 / n0 + 1.0 / n1))
