@@ -495,16 +495,17 @@ class CompositionalModel2(ABC):
         )
 
     def summary_prepare(
-        self, sample_adata: AnnData, est_fdr: float = 0.05, **kwargs
+        self, sample_adata: AnnData, est_fdr: float = 0.05, hdi_prob: float | None = None, **kwargs
     ) -> tuple[pd.DataFrame, pd.DataFrame] | tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Generates summary dataframes for intercepts, effects and node-level effect (if using tree aggregation).
 
-        This function builds on and supports all functionalities from ``az.summary``.
+        This function builds on and supports all functionalities from :func:`arviz.summary`.
 
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             est_fdr: Desired FDR value.
-            kwargs: Passed to ``az.summary``
+            hdi_prob: Width of the highest density interval; if None, the :func:`arviz.summary` default interval is used.
+            kwargs: Passed to :func:`arviz.summary`
 
         Returns:
             Tuple[:class:pandas.DataFrame, :class:pandas.DataFrame] or Tuple[:class:pandas.DataFrame, :class:pandas.DataFrame, :class:pandas.DataFrame]: Intercept, effect and node-level DataFrames
@@ -566,6 +567,8 @@ class CompositionalModel2(ABC):
 
         arviz_data = self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False)
 
+        if hdi_prob is not None:
+            kwargs |= {"ci_prob": hdi_prob, "ci_kind": "hdi"}
         summ = az.summary(
             data=arviz_data,
             var_names=var_names,
@@ -621,8 +624,10 @@ class CompositionalModel2(ABC):
 
         # Give nice column names, remove unnecessary columns
         hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi|eti")]
-        hdis_new = hdis.str.replace("hdi_", "HDI ").str.replace(
-            r"eti(\d+)_(lb|ub)", lambda m: f"ETI {m.group(1)}% {'lower' if m.group(2) == 'lb' else 'upper'}", regex=True
+        hdis_new = hdis.str.replace(
+            r"(hdi|eti)(\d+)_(lb|ub)",
+            lambda m: f"{m.group(1).upper()} {m.group(2)}% {'lower' if m.group(3) == 'lb' else 'upper'}",
+            regex=True,
         )
 
         # Calculate credible intervals if using classical spike-and-slab
