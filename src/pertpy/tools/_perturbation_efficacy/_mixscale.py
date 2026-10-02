@@ -374,9 +374,9 @@ class Mixscale(PerturbationEfficacyAnalyzer):
             return results
 
         codes = np.full(adata.n_obs, -1)
-        codes[adata.obs_names.get_indexer(pd.Index(reference_cells))] = 0
+        codes[adata.obs_names.isin(reference_cells)] = 0
         for code, key in enumerate(tested, start=1):
-            codes[adata.obs_names.get_indexer(groups[key])] = code
+            codes[adata.obs_names.isin(groups[key])] = code
         rows = np.flatnonzero(codes >= 0)
         categories = ["control", *(f"perturbed{code}" for code in range(1, len(tested) + 1))]
         X = cast_matrix(adata.X if de_layer is None else adata.layers[de_layer])
