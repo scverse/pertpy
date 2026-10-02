@@ -873,7 +873,7 @@ class Distance:
         distances = []
         for _ in range(n_bootstraps):
             X_bootstrapped = X[rng.choice(a=X.shape[0], size=X.shape[0], replace=True)]
-            Y_bootstrapped = Y[rng.choice(a=Y.shape[0], size=X.shape[0], replace=True)]
+            Y_bootstrapped = Y[rng.choice(a=Y.shape[0], size=Y.shape[0], replace=True)]
 
             distance = self(X_bootstrapped, Y_bootstrapped, **kwargs)
             distances.append(distance)
