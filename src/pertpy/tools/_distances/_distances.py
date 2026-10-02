@@ -20,7 +20,7 @@ from pertpy._jax import jax_import
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Hashable, Iterable
+    from collections.abc import Callable, Hashable, Iterable, Iterator
 
     import jax
     from anndata import AnnData
@@ -230,20 +230,46 @@ def pairwise_distance_mean(X: np.ndarray, Y: np.ndarray | None = None, metric: s
         return pairwise_distances(X, Y, metric=metric, **kwargs).mean()
 
 
+def _column_block_width(*arrays: np.ndarray) -> int:
+    """Number of columns whose block over the longest of `arrays` stays within a few million elements."""
+    return max(1, 2**22 // max(len(array) for array in arrays))
+
+
+def _column_blocks(X: np.ndarray, width: int, dtype: np.dtype | None = None) -> Iterator[np.ndarray]:
+    """Column-major copies of `width` columns of `X` at a time, so every column is reduced with pairwise summation."""
+    for start in range(0, X.shape[1], width):
+        yield np.asfortranarray(X[:, start : start + width], dtype=dtype)
+
+
+def _column_moments(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Mean and standard deviation of every column of `X`."""
+    if X.shape[1] == 0:
+        return np.empty(0), np.empty(0)
+    means, stds = zip(
+        *((block.mean(axis=0), block.std(axis=0)) for block in _column_blocks(X, _column_block_width(X))), strict=True
+    )
+    return np.concatenate(means), np.concatenate(stds)
+
+
 def _sqeuclidean_std(X: np.ndarray, Y: np.ndarray) -> float:
     """Standard deviation of the squared euclidean distances between all rows of `X` and `Y`, without forming them."""
     x_sq, y_sq = (X**2).sum(axis=1), (Y**2).sum(axis=1)
     x_mean, y_mean = X.mean(axis=0), Y.mean(axis=0)
     mean = x_sq.mean() + y_sq.mean() - 2 * x_mean @ y_mean
+    width = max(1, 2**22 // max(X.shape[1], 1))
+    gram_product = sum(
+        np.sum((X[:, start : start + width].T @ X) * (Y[:, start : start + width].T @ Y))
+        for start in range(0, X.shape[1], width)
+    )
     mean_sq = (
         (x_sq**2).mean()
         + (y_sq**2).mean()
         + 2 * x_sq.mean() * y_sq.mean()
-        + 4 * np.sum((X.T @ X) * (Y.T @ Y)) / (len(X) * len(Y))
+        + 4 * gram_product / (len(X) * len(Y))
         - 4 * (x_sq @ X / len(X)) @ y_mean
         - 4 * x_mean @ (y_sq @ Y / len(Y))
     )
-    return float(np.sqrt(mean_sq - mean**2))
+    return float(np.sqrt(max(mean_sq - mean**2, 0.0)))
 
 
 def _padded_uniform_weights(n: int) -> np.ndarray:
@@ -1011,13 +1037,17 @@ class Edistance(AbstractDistance):
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, total: float | None = None, **kwargs) -> float:
         """Compute the edistance between the cells in and out of `idx` from their pairwise distances `P`.
 
-        Only the rows of the smaller group are read when the sum of all distances is passed as `total`.
+        Only the rows of the smaller group are read when the sum of all distances is passed as `total`, which requires `P` to be symmetric.
         """
         idx = np.asarray(idx, dtype=bool)
+        if total is None:
+            n_x = np.count_nonzero(idx)
+            n_y = idx.size - n_x
+            within_x, between = _masked_row_sums(P, idx, np.flatnonzero(idx))
+            within_y, _ = _masked_row_sums(P, ~idx, np.flatnonzero(~idx))
+            return 2 * between.sum() / (n_x * n_y) - within_x.sum() / n_x**2 - within_y.sum() / n_y**2
         smaller = idx if 2 * np.count_nonzero(idx) <= idx.size else ~idx
         inside, outside = _masked_row_sums(P, smaller, np.flatnonzero(smaller))
-        if total is None:
-            total = P.sum(dtype=np.float64)
         n_smaller = np.count_nonzero(smaller)
         n_larger = idx.size - n_smaller
         within_smaller = inside.sum() / n_smaller**2
@@ -1050,11 +1080,13 @@ class MMD(AbstractDistance):
         super().__init__()
         self.accepts_precomputed = False
 
-    def __call__(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+    def __call__(
+        self, X: np.ndarray, Y: np.ndarray, *, kernel: str = "linear", gamma: float = 1.0, degree: float = 2, **kwargs
+    ) -> float:
         return self.from_cached_values(
-            self.compute_within_distance(X, **kwargs),
-            self.compute_within_distance(Y, **kwargs),
-            self.compute_between_distance(X, Y, **kwargs),
+            self.compute_within_distance(X, kernel=kernel, gamma=gamma, degree=degree),
+            self.compute_within_distance(Y, kernel=kernel, gamma=gamma, degree=degree),
+            self.compute_between_distance(X, Y, kernel=kernel, gamma=gamma, degree=degree),
         )
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
@@ -1064,19 +1096,23 @@ class MMD(AbstractDistance):
         """MMD benefits from caching within and between kernel means."""
         return True
 
-    def compute_within_distance(self, X: np.ndarray, **kwargs) -> float:
+    def compute_within_distance(
+        self, X: np.ndarray, *, kernel: str = "linear", gamma: float = 1.0, degree: float = 2, **kwargs
+    ) -> float:
         """Compute within-group kernel mean (mean of kernel matrix within group)."""
-        return self._kernel_mean(X, None, **kwargs)
+        return self._kernel_mean(X, None, kernel=kernel, gamma=gamma, degree=degree)
 
-    def compute_between_distance(self, X: np.ndarray, Y: np.ndarray, **kwargs) -> float:
+    def compute_between_distance(
+        self, X: np.ndarray, Y: np.ndarray, *, kernel: str = "linear", gamma: float = 1.0, degree: float = 2, **kwargs
+    ) -> float:
         """Compute between-group kernel mean (mean of kernel matrix between groups)."""
-        return self._kernel_mean(X, Y, **kwargs)
+        return self._kernel_mean(X, Y, kernel=kernel, gamma=gamma, degree=degree)
 
     @staticmethod
-    def _kernel_mean(X: np.ndarray, Y: np.ndarray | None, *, kernel="linear", gamma=1.0, degree=2, **kwargs) -> float:
+    def _kernel_mean(X: np.ndarray, Y: np.ndarray | None, *, kernel: str, gamma: float, degree: float) -> float:
         """Mean of the kernel matrix between `X` and `Y`, or within `X` if `Y` is `None`."""
-        X = np.asarray(X, dtype=np.float64)
-        Y = X if Y is None else np.asarray(Y, dtype=np.float64)
+        X = np.asarray(to_dense(X), dtype=np.float64)
+        Y = X if Y is None else np.asarray(to_dense(Y), dtype=np.float64)
         if kernel == "linear":
             return float(X.mean(axis=0) @ Y.mean(axis=0))
         kernels = {"rbf": _RBF, "poly": _POLYNOMIAL}
@@ -1310,11 +1346,9 @@ class SymmetricKLDivergence(AbstractDistance):
         self.accepts_precomputed = False
 
     def __call__(self, X: np.ndarray, Y: np.ndarray, epsilon=1e-8, **kwargs) -> float:
-        X, Y = np.asfortranarray(X), np.asfortranarray(Y)
+        (x_means, x_stds), (y_means, y_stds) = _column_moments(X), _column_moments(Y)
         kl_all = []
-        for x_mean, x_std, y_mean, y_std in zip(
-            X.mean(axis=0), X.std(axis=0) + epsilon, Y.mean(axis=0), Y.std(axis=0) + epsilon, strict=True
-        ):
+        for x_mean, x_std, y_mean, y_std in zip(x_means, x_stds + epsilon, y_means, y_stds + epsilon, strict=True):
             kl = np.log(y_std / x_std) + (x_std**2 + (x_mean - y_mean) ** 2) / (2 * y_std**2) - 1 / 2
             klr = np.log(x_std / y_std) + (y_std**2 + (y_mean - x_mean) ** 2) / (2 * x_std**2) - 1 / 2
             kl_all.append(kl + klr)
@@ -1335,8 +1369,8 @@ class TTestDistance(AbstractDistance):
         t_test_all = []
         n1 = X.shape[0]
         n2 = Y.shape[0]
-        X, Y = np.asfortranarray(X), np.asfortranarray(Y)
-        for m1, s1, m2, s2 in zip(X.mean(axis=0), X.std(axis=0), Y.mean(axis=0), Y.std(axis=0), strict=True):
+        (x_means, x_stds), (y_means, y_stds) = _column_moments(X), _column_moments(Y)
+        for m1, s1, m2, s2 in zip(x_means, x_stds, y_means, y_stds, strict=True):
             v1 = s1**2 * n1 / (n1 - 1) + epsilon
             v2 = s2**2 * n2 / (n2 - 1) + epsilon
             vn1 = v1 / n1
@@ -1360,13 +1394,13 @@ class KSTestDistance(AbstractDistance):
         dtype = np.result_type(X, Y)
         if not np.issubdtype(dtype, np.floating):
             dtype = np.dtype(np.float64)
-        stats = _ks_statistics(
-            np.asfortranarray(X, dtype=dtype),
-            np.asfortranarray(Y, dtype=dtype),
-            np.linspace(0, 1, X.shape[0] + 1, dtype=dtype),
-            np.linspace(0, 1, Y.shape[0] + 1, dtype=dtype),
-        )
-        return sum(np.abs(stats).tolist()) / X.shape[1]
+        cdf_x, cdf_y = np.linspace(0, 1, X.shape[0] + 1, dtype=dtype), np.linspace(0, 1, Y.shape[0] + 1, dtype=dtype)
+        width = _column_block_width(X, Y)
+        stats = [
+            np.abs(_ks_statistics(block_x, block_y, cdf_x, cdf_y)).tolist()
+            for block_x, block_y in zip(_column_blocks(X, width, dtype), _column_blocks(Y, width, dtype), strict=True)
+        ]
+        return sum(sum(block) for block in stats) / X.shape[1]
 
     def from_precomputed(self, P: np.ndarray, idx: np.ndarray, **kwargs) -> float:
         raise NotImplementedError("KSTestDistance cannot be called on a pairwise distance matrix.")
