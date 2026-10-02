@@ -245,12 +245,13 @@ class MLPClassifierSpace(PerturbationSpace):
         patience: int = 2,
         lr: float = 1e-4,
         seed: int = 42,
+        balance_classes: bool = False,
     ) -> AnnData:
         """Creates a perturbation embedding by training a MLP classifier model to distinguish between perturbations.
 
         A model is created using the specified parameters (hidden_dim, dropout, batch_norm). Further parameters such as
         the number of classes to predict (number of perturbations) are obtained from the provided AnnData object directly.
-        Dataloaders that take into account class imbalances are created. Next, the model is trained and tested, using the
+        Training batches are drawn uniformly, or inversely to perturbation frequency with ``balance_classes``. Next, the model is trained and tested, using the
         GPU if available. The penultimate-layer activations are extracted for every cell and averaged per perturbation,
         yielding one embedding per perturbation.
 
@@ -274,6 +275,7 @@ class MLPClassifierSpace(PerturbationSpace):
                 is activated and training is therefore stopped.
             lr: Learning rate for training.
             seed: Random seed for reproducibility.
+            balance_classes: Whether to sample training cells inversely to the size of their perturbation, so that every perturbation is seen equally often.
 
         Returns:
             AnnData with one observation per perturbation, the averaged penultimate-layer embedding in `.X` and the perturbation labels in `.obs[target_col]`.
@@ -345,7 +347,7 @@ class MLPClassifierSpace(PerturbationSpace):
 
         # Create weighted sampling for class imbalance
         labels = jnp.asarray(train_dataset.labels)
-        weights = 1.0 / (labels @ jnp.sum(labels, axis=0))
+        weights = 1.0 / (labels @ jnp.sum(labels, axis=0)) if balance_classes else jnp.ones(len(labels))
         weights = weights / jnp.sum(weights)
 
         n_batches_per_epoch = len(train_dataset) // batch_size
