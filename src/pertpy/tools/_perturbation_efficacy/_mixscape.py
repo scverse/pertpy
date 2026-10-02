@@ -179,7 +179,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                     de_genes = perturbation_markers[(category, gene)]
                     de_genes_indices = np.where(np.isin(adata.var_names, list(de_genes)))[0]
 
-                    dat = to_dense(_subset_rows_cols(cast_matrix(X), all_rows, de_genes_indices))
+                    dat = to_dense(_subset_rows_cols(cast_matrix(X), all_rows, de_genes_indices)).astype(np.float64)
                     if scale:
                         dat = sc.pp.scale(dat)
 
