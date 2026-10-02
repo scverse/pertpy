@@ -20,6 +20,7 @@ from scanpy.plotting import _utils
 from sklearn.cluster import kmeans_plusplus
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.mixture import GaussianMixture
+from sklearn.mixture._gaussian_mixture import _compute_precision_cholesky
 from sklearn.utils import check_random_state
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -1061,6 +1062,7 @@ class MixscapeGaussianMixture(GaussianMixture):
 
         if self.fixed_cov_indices:
             self.covariances_[self.fixed_cov_indices] = self.fixed_cov_values
+            self.precisions_cholesky_ = _compute_precision_cholesky(self.covariances_, self.covariance_type)
 
         return self
 
@@ -1136,7 +1138,7 @@ def _gmm_e_step(x: np.ndarray, params: np.ndarray, log_resp: np.ndarray) -> floa
 
 @njit(cache=True)
 def _gmm_em(x: np.ndarray, params: np.ndarray, tol: float, max_iter: int, reg_covar: float) -> tuple[np.ndarray, bool]:
-    """EM of a spherical two-component :class:`~sklearn.mixture.GaussianMixture` on 1-D data with the first mean fixed."""
+    """EM of a spherical two-component :class:`~sklearn.mixture.GaussianMixture` on 1-D data with the first mean and variance fixed."""
     params = params.copy()
     log_resp = np.empty((x.size, 2))
     lower_bound = -np.inf
@@ -1159,7 +1161,7 @@ def _gmm_em(x: np.ndarray, params: np.ndarray, tol: float, max_iter: int, reg_co
             raise ValueError("Fitting the mixture model failed because a component has an ill-defined covariance.")
         params[0] = nk / nk.sum()
         params[1, 1] = means[1]
-        params[2] = 1.0 / np.sqrt(covariances)
+        params[2, 1] = 1.0 / np.sqrt(covariances[1])
         if abs(lower_bound - prev_lower_bound) < tol:
             return params, True
     return params, False
@@ -1176,7 +1178,7 @@ def _mixscape_gmm_predict_proba(
     max_iter: int = 100,
     reg_covar: float = 1e-6,
 ) -> np.ndarray:
-    """Component probabilities of `x[predict_idx]` under :class:`MixscapeGaussianMixture` fitted to `x` with the first mean fixed.
+    """Component probabilities of `x[predict_idx]` under :class:`MixscapeGaussianMixture` fitted to `x` with the first mean and variance fixed.
 
     Reproduces scikit-learn's k-means initialisation, EM updates and convergence check for two spherical components.
     """
