@@ -326,13 +326,14 @@ def _iterative_nnls(
 
 @njit(cache=True)
 def _solve_small(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """Solve ``a @ x = b`` by Gaussian elimination with partial pivoting, all NaN if ``a`` is singular."""
+    """Solve ``a @ x = b`` by Gaussian elimination with partial pivoting, all NaN if ``a`` is singular to working precision."""
     m = a.shape[0]
     a = a.copy()
     x = b.copy()
+    tol = 1e-7 * np.abs(np.diag(a))
     for k in range(m):
         piv = k + np.argmax(np.abs(a[k:, k]))
-        if a[piv, k] == 0.0:
+        if not np.abs(a[piv, k]) > tol[k]:
             return np.full(m, np.nan)
         for j in range(m):
             a[k, j], a[piv, j] = a[piv, j], a[k, j]
@@ -484,9 +485,14 @@ def _hlm_pvalue_per_row(
     if covariates.shape[0] != n:
         raise ValueError("covariates rows must match score length")
     labels, groups = np.unique(np.asarray(sample_groups), return_inverse=True)
-    fixed = np.column_stack(
-        [np.ones(n), pd.get_dummies(covariates, drop_first=True, dtype=np.float64).to_numpy(dtype=np.float64), score]
-    )
+    dummies = np.empty((n, 0))
+    if covariates.shape[1]:
+        covariates = covariates.apply(
+            lambda col: col.cat.remove_unused_categories() if isinstance(col.dtype, pd.CategoricalDtype) else col
+        )
+        dummies = pd.get_dummies(covariates, drop_first=True, dtype=np.float64).to_numpy(dtype=np.float64)
+        dummies = dummies[:, np.ptp(dummies, axis=0) > 0]
+    fixed = np.column_stack([np.ones(n), dummies, score])
     estimates = np.full(expression.shape[0], np.nan)
     std_errors = np.full(expression.shape[0], np.nan)
     rows = ~np.isnan(expression).any(axis=1) & ~np.isnan(fixed).any()
@@ -530,7 +536,7 @@ class Dialogue:
         use_tme_qc: If True, add ``tme_qc`` (partner-celltype per-sample average of ``cell_quality_key``) as an additional HLM covariate (R default).
         additional_covariates: Extra ``adata.obs`` columns to include as HLM covariates.
         min_cells_per_sample: Minimum cells per sample required for a cell type to be considered in the pair-level HLM (R's ``abn.c``).
-        random_state: Reproducibility seed for permutation tests and PMD permute search.
+        random_state: Reproducibility seed for the permutation tests.
     """
 
     def __init__(
