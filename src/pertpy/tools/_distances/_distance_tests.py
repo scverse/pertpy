@@ -171,24 +171,20 @@ class DistanceTest:
         # Generate the null distribution
         obs_labels = np.asarray(adata.obs[groupby].values)
         masks = {group: adata.obs[groupby].isin([group, contrast]).to_numpy() for group in groups if group != contrast}
-        in_group = {group: obs_labels[mask] == group for group, mask in masks.items()}
-        group_embeddings = {group: embedding[mask] for group, mask in masks.items()}
-        results = []
-        for _permutation in fct(range(self.n_perms)):
-            # per perturbation, shuffle with control and compute e-distance
-            distances = np.full(len(groups), np.nan)
-            for i, group in enumerate(groups):
-                if group == contrast:
-                    continue
+        distances = np.full((self.n_perms, len(groups)), np.nan)
+        for i, group in enumerate(fct(groups)):
+            if group == contrast:
+                continue
+            in_group = obs_labels[masks[group]] == group
+            group_embedding = embedding[masks[group]]
+            for permutation in range(self.n_perms):
                 # Shuffle the labels of the groups
                 rng = np.random.default_rng()
-                idx = rng.permutation(in_group[group])
-
-                group_embedding = group_embeddings[group]
+                idx = rng.permutation(in_group)
                 X = group_embedding[idx]  # shuffled group
                 Y = group_embedding[~idx]  # shuffled contrast
-                distances[i] = self.distance(X, Y)
-            results.append(pd.DataFrame({"distance": distances}, index=groups).sort_index())
+                distances[permutation, i] = self.distance(X, Y)
+        results = [pd.DataFrame({"distance": row}, index=groups).sort_index() for row in distances]
 
         # Generate the empirical distribution
         df = pd.DataFrame(index=groups, columns=["distance"], dtype=float)
