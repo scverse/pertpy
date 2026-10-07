@@ -81,6 +81,7 @@ dependencies = [
     "pyarrow",
     "blitzgsea",
     "scikit-learn>=1.4",
+    "scipy>=1.16",
     "fast-array-utils[accel,sparse]",
     "arviz>=1.2.0",
     "pooch",

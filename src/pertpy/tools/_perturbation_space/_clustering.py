@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sklearn.metrics import pairwise_distances
-
 from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace, _resolve_matrix
 
 if TYPE_CHECKING:
@@ -81,17 +79,15 @@ class ClusteringSpace(PerturbationSpace):
                 kwargs.setdefault("random_state", None)
 
                 if "distances" in kwargs:
-                    distances = kwargs["distances"]
+                    data, data_metric = kwargs["distances"], "precomputed"
                 else:
-                    distances = pairwise_distances(
-                        _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key),
-                        metric=kwargs["metric"],
-                    )
+                    data = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
+                    data_metric = kwargs["metric"]
 
                 results["asw"] = asw(
-                    pairwise_distances=distances,
+                    pairwise_distances=data,
                     labels=true_labels,
-                    metric=kwargs["metric"],
+                    metric=data_metric,
                     sample_size=kwargs["sample_size"],
                     random_state=kwargs["random_state"],
                 )

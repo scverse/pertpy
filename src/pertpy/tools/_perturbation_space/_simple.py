@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from fast_array_utils.conv import to_dense
 from sklearn.cluster import HDBSCAN, KMeans
 
 from pertpy._logger import logger
@@ -65,12 +66,11 @@ class CentroidSpace(PerturbationSpace):
 
         coords = _resolve_matrix(adata, layer_key=layer_key, embedding_key=embedding_key)
 
-        groups = cast_frame(adata.obs).groupby(target_col, observed=True)
-        index = [str(key) for key in groups.groups]
+        groups = cast_frame(adata.obs).groupby(target_col, observed=True).indices
+        index = [str(key) for key in groups]
         X = np.empty((len(index), coords.shape[1]), dtype=coords.dtype)
-        for pert_index, (_, group_data) in enumerate(groups):
-            row_idx = adata.obs_names.get_indexer(group_data.index)
-            points = coords[row_idx]
+        for pert_index, row_idx in enumerate(groups.values()):
+            points = to_dense(coords[row_idx])
             centroid = points.mean(axis=0)
             closest = np.argmin(np.linalg.norm(points - centroid, axis=1))
             X[pert_index, :] = points[closest]
@@ -143,7 +143,12 @@ class PseudobulkSpace(PerturbationSpace):
             adata_emb.obs = cast_frame(adata.obs).copy()
             adata = adata_emb
         else:
-            adata = adata.copy()
+            adata = AnnData(
+                X=adata.X,
+                obs=cast_frame(adata.obs).copy(),
+                var=cast_frame(adata.var).copy(),
+                layers=None if layer_key is None else {layer_key: adata.layers[layer_key]},
+            )
         adata.obs[target_col] = cast_frame(adata.obs)[target_col].astype("category")
         grouping_cols = [target_col] if groups_col is None else [target_col, groups_col]
         original_obs = cast_frame(adata.obs).copy()

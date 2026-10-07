@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from sklearn.metrics import silhouette_score
 
 import pertpy as pt
 
@@ -35,3 +36,13 @@ def test_hdbscan(rng):
     )
     np.testing.assert_allclose(results["nmi"], 1.0, rtol=0.1)
     np.testing.assert_allclose(results["ari"], 1.0, rtol=0.1)
+
+
+def test_evaluate_clustering_asw_uses_cell_distances(rng):
+    adata = _blobs(rng)
+    adata.obs["k-means"] = adata.obs["perturbations"]
+
+    results = pt.tl.KMeansSpace().evaluate_clustering(
+        adata, true_label_col="perturbations", cluster_col="k-means", metrics=["asw"]
+    )
+    np.testing.assert_allclose(results["asw"], silhouette_score(adata.X, adata.obs["perturbations"]))

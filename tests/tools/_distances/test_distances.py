@@ -222,3 +222,41 @@ def test_compare_distance(rng: np.random.Generator) -> None:
     assert isinstance(res_scaled, float)
     with pytest.raises(ValueError):
         Distance.compare_distance(X, Y, C, mode="new_mode")  # type: ignore[arg-type]
+
+
+def test_ks_test_matches_scipy(rng: np.random.Generator) -> None:
+    from scipy.stats import kstest
+
+    X = rng.poisson(1.0, size=(40, 8)).astype(float)
+    Y = rng.poisson(1.5, size=(70, 8)).astype(float)
+    expected = np.mean([kstest(X[:, i], Y[:, i]).statistic for i in range(X.shape[1])])
+    assert pt.tl.Distance("ks_test")(X, Y) == pytest.approx(expected, rel=1e-12)
+
+
+def test_edistance_from_precomputed_matches_block_means(rng: np.random.Generator) -> None:
+    from sklearn.metrics import pairwise_distances
+
+    P = pairwise_distances(rng.normal(size=(60, 5)))
+    idx = rng.random(60) < 0.3
+    expected = 2 * P[idx][:, ~idx].mean() - P[idx][:, idx].mean() - P[~idx][:, ~idx].mean()
+    edistance = pt.tl.Distance("edistance").metric_fct
+    assert edistance.from_precomputed(P, idx) == pytest.approx(expected, rel=1e-12)
+    assert edistance.from_precomputed(P, ~idx, total=P.sum()) == pytest.approx(expected, rel=1e-12)
+
+
+@mark.parametrize("counts", [[0] * 97 + [2, 3, 3], [0, 1, 4, 9, 2, 0, 0, 15, 1, 3]])
+def test_nb_ll_fits_maximum_likelihood_size(counts: list[int]) -> None:
+    from scipy.optimize import minimize_scalar
+    from scipy.stats import nbinom
+
+    from pertpy.tools._distances._distances import _nb_size_mle
+
+    x = np.array(counts)
+
+    def neg_log_likelihood(log_size: float) -> float:
+        size = np.exp(log_size)
+        return -nbinom.logpmf(x, size, size / (size + x.mean())).sum()
+
+    expected = np.exp(minimize_scalar(neg_log_likelihood, bounds=(-10, 10), options={"xatol": 1e-10}).x)
+    assert _nb_size_mle(x) == pytest.approx(expected, rel=1e-6)
+    assert np.isnan(_nb_size_mle(np.array([1, 2, 1, 2])))

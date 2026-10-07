@@ -70,6 +70,25 @@ def test_scgen(adata, trained_model):
     )
 
 
+@pytest.mark.parametrize("unshared_label", [False, True])
+def test_scgen_batch_removal_shifts_each_batch_to_the_largest(adata, trained_model, unshared_label):
+    if unshared_label:
+        adata = adata.copy()
+        adata.obs.loc[adata.obs["labels"] == "label_1", "batch"] = "batch_0"
+    corrected = trained_model.batch_removal(adata)
+
+    latent = trained_model.get_latent_representation(adata)
+    shift = corrected.obsm["latent"] - latent
+    for label in np.unique(adata.obs["labels"]):
+        in_label = (adata.obs["labels"] == label).to_numpy()
+        batches, sizes = np.unique(adata.obs["batch"][in_label], return_counts=True)
+        largest_mean = latent[in_label & (adata.obs["batch"] == batches[sizes.argmax()]).to_numpy()].mean(0)
+        for batch in batches:
+            cells = in_label & (adata.obs["batch"] == batch).to_numpy()
+            np.testing.assert_allclose(shift[cells], np.broadcast_to(shift[cells][0], shift[cells].shape), atol=1e-5)
+            np.testing.assert_allclose(corrected.obsm["latent"][cells].mean(0), largest_mean, atol=1e-5)
+
+
 def test_scgen_does_not_require_scvi_or_torch():
     """scGen is a pure JAX implementation; importing it must not pull in a second runtime."""
     import subprocess

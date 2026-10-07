@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-import anndata as ad
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 def extractor(
@@ -51,43 +55,22 @@ def extractor(
     return [training, condition_1, condition_2, cell_with_both_condition]
 
 
-def balancer(
-    adata,
-    cell_type_key,
-):
-    """Makes cell type populations equal.
+def balancer(labels: pd.Series) -> np.ndarray:
+    """Upsamples every cell type to the size of the largest one.
 
     Args:
-        adata: `~anndata.AnnData` Annotated data matrix.
-        cell_type_key: key for `.obs` of `data` where cell types can be found.
+        labels: Cell type of every cell.
 
     Returns:
-        Equal cell type population Annotated data matrix.
-
-    Example:
-        .. code-block:: python
-
-            import Scgen
-            import anndata
-
-            train_data = anndata.read("./train_kang.h5ad")
-            train_ctrl = train_data[train_data.obs["condition"] == "control", :]
-            train_ctrl = balancer(train_ctrl, "conditions", "cell_type")
+        Positional indices into ``labels`` with equally many cells per cell type.
     """
-    class_names = np.unique(adata.obs[cell_type_key])
-    class_pop = {}
-    for cls in class_names:
-        class_pop[cls] = adata[adata.obs[cell_type_key] == cls].shape[0]
-    max_number = np.max(list(class_pop.values()))
+    labels_arr = np.asarray(labels)
+    class_names, class_pop = np.unique(labels_arr, return_counts=True)
+    max_number = class_pop.max()
     index_all = []
     for cls in class_names:
-        class_index = np.array(adata.obs[cell_type_key] == cls)
-        index_cls = np.nonzero(class_index)[0]
+        index_cls = np.flatnonzero(labels_arr == cls)
         rng = np.random.default_rng()
-        index_cls_r = index_cls[rng.choice(len(index_cls), max_number)]
-        index_all.append(index_cls_r)
+        index_all.append(index_cls[rng.choice(len(index_cls), max_number)])
 
-    indices = np.concatenate(index_all)
-    balanced_data = ad.concat([adata[i : i + 1] for i in indices], index_unique="-")
-
-    return balanced_data
+    return np.concatenate(index_all)

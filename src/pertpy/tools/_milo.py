@@ -19,7 +19,7 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import CSBase, cast_frame, cast_matrix
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, log_cpm, parse_random_effects, random_effect_matrices
 
 if TYPE_CHECKING:
@@ -30,10 +30,9 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
     from numpy.typing import ArrayLike
 
-from scipy.linalg import null_space
+from scipy.linalg import null_space, solve
 from scipy.sparse import coo_matrix, csr_matrix, issparse, spmatrix
 from scipy.stats import chi2, false_discovery_control, rankdata
-from sklearn.metrics.pairwise import euclidean_distances
 
 
 def _contrast_vector(columns: list[str], model_contrasts: str, reference_levels: Collection[str] = ()) -> np.ndarray:
@@ -138,6 +137,79 @@ def _tmm_factors(
     return factors / np.exp(np.mean(np.log(factors)))
 
 
+def _closest_to_median(X: np.ndarray, indptr: np.ndarray, indices: np.ndarray) -> np.ndarray:
+    """For every row of a CSR pattern, the column whose position in ``X`` is closest to the median position of all its columns.
+
+    Distances are computed like ``sklearn.metrics.pairwise.euclidean_distances``, which rounds them to float32 for float32 input, so that ties resolve to the same column.
+    """
+    closest = np.empty(len(indptr) - 1, dtype=np.int64)
+    sizes = np.diff(indptr)
+    for size in np.unique(sizes):
+        same_size = np.flatnonzero(sizes == size)
+        for rows in np.array_split(same_size, -(-same_size.size // 1024)):
+            neighbours = indices[indptr[rows, None] + np.arange(size)]
+            X_nn = X[neighbours]
+            median = np.median(X_nn, axis=1).astype(np.float64)
+            X_nn = X_nn.astype(np.float64)
+            distances = -2 * (X_nn @ median[..., None])[..., 0]
+            distances += np.einsum("mkd,mkd->mk", X_nn, X_nn)
+            distances += np.einsum("md,md->m", median, median)[:, None]
+            distances = distances.astype(np.float32 if X.dtype == np.float32 else np.float64)
+            closest[rows] = neighbours[np.arange(len(rows)), np.sqrt(np.maximum(distances, 0)).argmin(axis=1)]
+    return closest
+
+
+def _nb_irls(
+    counts: np.ndarray,
+    size_factors: np.ndarray,
+    design: np.ndarray,
+    dispersions: np.ndarray,
+    *,
+    min_mu: float = 1e-6,
+    beta_tol: float = 1e-8,
+    max_beta: float = 30,
+    maxiter: int = 250,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Coefficients and unthresholded means of the ``irls_solver`` fits of pydeseq2 to every row of ``counts``, iterated jointly.
+
+    Rows on which the iterations diverge are refit by ``irls_solver`` itself, which hands them over to L-BFGS-B.
+    """
+    from pydeseq2.utils import irls_solver, nb_nll
+
+    n_rows, n_coefs = counts.shape[0], design.shape[1]
+    if np.linalg.matrix_rank(design) == n_coefs:
+        q, r = np.linalg.qr(design)
+        beta = solve(r, q.T @ np.log(counts / size_factors + 0.1).T).T
+    else:
+        beta = np.zeros((n_rows, n_coefs))
+        beta[:, 0] = np.log(counts / size_factors).mean(axis=1)
+    mu = np.maximum(size_factors * np.exp(beta @ design.T), min_mu)
+    deviance = np.full(n_rows, 1000.0)
+    ridge = np.diag(np.repeat(1e-6, n_coefs))
+    active = np.arange(n_rows)
+    diverged = np.zeros(n_rows, dtype=bool)
+    for iteration in range(1, maxiter + 1):
+        if active.size == 0:
+            break
+        y, m, dispersion = counts[active], mu[active], dispersions[active]
+        weights = m / (1.0 + m * dispersion[:, None])
+        z = np.log(m / size_factors) + (y - m) / m
+        hessian = (design.T * weights[:, None, :]) @ design + ridge
+        beta_hat = solve(hessian, ((weights * z) @ design)[..., None], assume_a="pos")[..., 0]
+        diverging = (np.abs(beta_hat) > max_beta).any(axis=1) | (iteration >= maxiter)
+        diverged[active[diverging]] = True
+        active, beta_hat, dispersion = active[~diverging], beta_hat[~diverging], dispersion[~diverging]
+        beta[active] = beta_hat
+        mu[active] = np.maximum(size_factors * np.exp(beta_hat @ design.T), min_mu)
+        previous = deviance[active]
+        deviance[active] = -2 * nb_nll(counts[active].T, mu[active].T, dispersion)
+        active = active[np.abs(deviance[active] - previous) / (np.abs(deviance[active]) + 0.1) > beta_tol]
+    mu = size_factors * np.exp(beta @ design.T)
+    for row in np.flatnonzero(diverged):
+        beta[row], mu[row], *_ = irls_solver(counts[row], size_factors, design, dispersions[row], min_mu=min_mu)
+    return beta, mu
+
+
 def _nb_lrt(
     counts: np.ndarray,
     lib_size: np.ndarray,
@@ -153,19 +225,15 @@ def _nb_lrt(
     The fits therefore drop the floor of 0.5 that pydeseq2 puts on fitted means, which would cap the fold change in exactly those neighbourhoods.
     As in edgeR, the fold change comes from a refit with ``prior_count`` added in proportion to the library sizes, which keeps it finite when a group has no cells.
     """
-    from pydeseq2.utils import irls_solver, nb_nll
+    from pydeseq2.utils import nb_nll
 
     reduced = design @ null_space(contrast[None, :])
     prior = prior_count * lib_size / lib_size.mean()
-    logfc = np.empty(len(counts))
-    statistic = np.empty(len(counts))
-    for i, (y, dispersion) in enumerate(zip(counts, dispersions, strict=True)):
-        _, mu_full, *_ = irls_solver(y, lib_size, design, dispersion, min_mu=1e-6)
-        _, mu_reduced, *_ = irls_solver(y, lib_size, reduced, dispersion, min_mu=1e-6)
-        statistic[i] = 2 * (nb_nll(y, mu_reduced, dispersion) - nb_nll(y, mu_full, dispersion))
-        shrunk, *_ = irls_solver(y + prior, lib_size + 2 * prior, design, dispersion, min_mu=1e-6)
-        logfc[i] = contrast @ shrunk / np.log(2)
-    return logfc, chi2.sf(np.maximum(statistic, 0), df=1)
+    _, mu_full = _nb_irls(counts, lib_size, design, dispersions)
+    _, mu_reduced = _nb_irls(counts, lib_size, reduced, dispersions)
+    statistic = 2 * (nb_nll(counts.T, mu_reduced.T, dispersions) - nb_nll(counts.T, mu_full.T, dispersions))
+    shrunk, _ = _nb_irls(counts + prior, lib_size + 2 * prior, design, dispersions)
+    return shrunk @ contrast / np.log(2), chi2.sf(np.maximum(statistic, 0), df=1)
 
 
 class Milo:
@@ -276,24 +344,17 @@ class Milo:
                 use_rep = "X_pca"
             knn_graph = adata.obsp[neighbors_key + "_connectivities"].copy()  # type: ignore[union-attr]
 
-        X_dimred = adata.obsm[use_rep]
+        X_dimred = cast_dense(adata.obsm[use_rep])
         n_ixs = int(np.round(adata.n_obs * prop))
         knn_graph[knn_graph != 0] = 1
         random.seed(seed)
         random_vertices = random.sample(range(adata.n_obs), k=n_ixs)
         random_vertices.sort()
         ixs_nn = knn_graph[random_vertices, :]
-        non_zero_rows = ixs_nn.nonzero()[0]
-        non_zero_cols = ixs_nn.nonzero()[1]
-        refined_vertices = np.empty(len(random_vertices), dtype=np.int64)
-
-        for i in range(len(random_vertices)):
-            nh_pos = np.median(X_dimred[non_zero_cols[non_zero_rows == i], :], 0).reshape(-1, 1)  # type: ignore[arg-type]
-            nn_ixs = non_zero_cols[non_zero_rows == i]
-            # Find closest real point (amongst nearest neighbors)
-            dists = euclidean_distances(X_dimred[non_zero_cols[non_zero_rows == i], :], nh_pos.T)
-            # Update vertex index
-            refined_vertices[i] = nn_ixs[dists.argmin()]
+        non_zero_rows, non_zero_cols = ixs_nn.nonzero()
+        # nonzero() returns row indices sorted, so each vertex's neighbours are a contiguous slice
+        row_bounds = np.searchsorted(non_zero_rows, np.arange(len(random_vertices) + 1))
+        refined_vertices = _closest_to_median(X_dimred, row_bounds, non_zero_cols)
 
         refined_vertices = np.unique(refined_vertices)
         refined_vertices.sort()
@@ -1180,7 +1241,7 @@ class Milo:
 
         # Aggregate over nhoods -- taking the mean
         nhoods_X = X.T.dot(adata.obsm["nhoods"])  # type: ignore[arg-type, type-var, union-attr]
-        nhoods_X = csr_matrix(nhoods_X / adata.obsm["nhoods"].toarray().sum(0))  # type: ignore[operator, union-attr]
+        nhoods_X = csr_matrix(nhoods_X / np.asarray(cast_matrix(adata.obsm["nhoods"]).sum(0)).ravel())
         sample_adata.varm[expr_id] = nhoods_X.T
 
     def _setup_rpy2(

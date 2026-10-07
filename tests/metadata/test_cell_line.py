@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
-from scipy import sparse
+from scipy import sparse, stats
 
 import pertpy as pt
 
@@ -93,3 +93,18 @@ def test_bulk_rna_expression_annotation(adata):
         NUM_GENES,
         pt_metadata.bulk_rna_sanger.shape[1],
     )
+
+
+def test_correlate_matches_pairwise_pearson(rng):
+    X = rng.normal(size=(5, 30))
+    adata = AnnData(
+        X=X, obs=pd.DataFrame({"DepMap_ID": list("abcde")}), var=pd.DataFrame(index=list(map(str, range(30))))
+    )
+    metadata = pd.DataFrame(rng.normal(size=X.shape), index=adata.obs_names, columns=adata.var_names)
+    metadata.iloc[2:] = np.nan
+    adata.obsm["bulk_rna_broad"] = metadata
+
+    corr, _, new_corr, _ = pt_metadata.correlate(adata, identifier="DepMap_ID")
+
+    expected = [[stats.pearsonr(x, m).statistic for m in metadata.to_numpy()[:2]] for x in X]
+    np.testing.assert_allclose(np.vstack([corr, new_corr]), expected)

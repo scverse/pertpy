@@ -15,6 +15,7 @@ from jax import random
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 
+from pertpy._parallel import _MAX_BLOCK_ELEMENTS
 from pertpy._types import CSBase, cast_dense, cast_frame
 from pertpy.tools._perturbation_space._perturbation_space import (
     PerturbationSpace,
@@ -107,6 +108,17 @@ def train_step(state: TrainState, batch: tuple[jnp.ndarray, jnp.ndarray], rng: j
 
 
 @jax.jit
+def train_steps(state: TrainState, batches: tuple[jnp.ndarray, jnp.ndarray], rngs: jnp.ndarray) -> TrainState:
+    """Apply :func:`train_step` to each of the stacked batches in turn."""
+
+    def step(state: TrainState, batch: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]) -> tuple[TrainState, None]:
+        x, y, rng = batch
+        return train_step(state, (x, y), rng)[0], None
+
+    return jax.lax.scan(step, state, (*batches, rngs))[0]
+
+
+@jax.jit
 def val_step(state: TrainState, batch: tuple[jnp.ndarray, jnp.ndarray]) -> float:
     x, y = batch
     variables = {"params": state.params, "batch_stats": state.batch_stats}
@@ -154,44 +166,55 @@ class JAXDataset:
         else:
             raise ValueError(f"Target column {target_col} not found in obs or obsm")
 
-        self.pert_labels = adata.obs[label_col].values
+        self.pert_labels = np.asarray(adata.obs[label_col].values)
 
         # Keep sparse data sparse and densify only the requested batch to avoid materializing the full dense matrix.
         self.is_sparse = isinstance(data, CSBase)
-        self.data: CSBase | jax.Array = (
-            data.tocsr() if isinstance(data, CSBase) else jnp.array(np.asarray(data), dtype=jnp.float32)
+        self.data: CSBase | np.ndarray = (
+            data.tocsr() if isinstance(data, CSBase) else np.asarray(data, dtype=np.float32)
         )
-        self.labels = jnp.array(labels, dtype=jnp.float32)
+        self.labels = np.asarray(labels, dtype=np.float32)
 
     def __len__(self):
         return self.data.shape[0]
 
-    def get_batch(self, indices: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, list]:
-        """Returns a batch of samples and corresponding perturbations applied (labels)."""
+    def get_batch(self, indices: np.ndarray | jnp.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Returns a batch of samples and corresponding perturbations applied (labels).
+
+        Indices of several batches stacked along the first axis return stacked batches.
+        """
         idx = np.asarray(indices)
         data = self.data
         if isinstance(data, CSBase):
-            batch_data = jnp.array(to_dense(data[idx]), dtype=jnp.float32)
+            batch_data = data[idx.ravel()].toarray().astype(np.float32, copy=False).reshape(*idx.shape, -1)
         else:
-            batch_data = data[jnp.asarray(idx)]
-        batch_labels = self.labels[jnp.asarray(idx)]
-        batch_pert_labels = [self.pert_labels[i] for i in idx]
-        return batch_data, batch_labels, batch_pert_labels
+            batch_data = data[idx]
+        return batch_data, self.labels[idx], self.pert_labels[idx]
+
+
+def _split_keys(rng: jnp.ndarray, n: int) -> jnp.ndarray:
+    """The ``n`` subkeys produced by repeatedly calling ``rng, subkey = random.split(rng)``."""
+
+    def step(carry: jnp.ndarray, _) -> tuple[jnp.ndarray, jnp.ndarray]:
+        carry, subkey = random.split(carry)
+        return carry, subkey
+
+    return jax.lax.scan(step, rng, length=n)[1]
 
 
 def create_batched_indices(
     dataset_size: int, rng: jnp.ndarray, batch_size: int, n_batches: int, weights: jnp.ndarray | None = None
-) -> list:
+) -> np.ndarray:
     """Create batched indices for training, optionally with weighted sampling."""
-    batches = []
-    for _ in range(n_batches):
-        rng, batch_rng = random.split(rng)
+    if n_batches == 0:
+        return np.empty((0, batch_size), dtype=np.int32)
+
+    def draw(batch_rng: jnp.ndarray) -> jnp.ndarray:
         if weights is not None:
-            batch_indices = random.choice(batch_rng, dataset_size, shape=(batch_size,), p=weights)
-        else:
-            batch_indices = random.choice(batch_rng, dataset_size, shape=(batch_size,), replace=False)
-        batches.append(batch_indices)
-    return batches
+            return random.choice(batch_rng, dataset_size, shape=(batch_size,), p=weights)
+        return random.choice(batch_rng, dataset_size, shape=(batch_size,), replace=False)
+
+    return np.asarray(jax.vmap(draw)(_split_keys(rng, n_batches)))
 
 
 class MLPClassifierSpace(PerturbationSpace):
@@ -222,12 +245,13 @@ class MLPClassifierSpace(PerturbationSpace):
         patience: int = 2,
         lr: float = 1e-4,
         seed: int = 42,
+        balance_classes: bool = False,
     ) -> AnnData:
         """Creates a perturbation embedding by training a MLP classifier model to distinguish between perturbations.
 
         A model is created using the specified parameters (hidden_dim, dropout, batch_norm). Further parameters such as
         the number of classes to predict (number of perturbations) are obtained from the provided AnnData object directly.
-        Dataloaders that take into account class imbalances are created. Next, the model is trained and tested, using the
+        Training batches are drawn uniformly, or inversely to perturbation frequency with ``balance_classes``. Next, the model is trained and tested, using the
         GPU if available. The penultimate-layer activations are extracted for every cell and averaged per perturbation,
         yielding one embedding per perturbation.
 
@@ -251,6 +275,7 @@ class MLPClassifierSpace(PerturbationSpace):
                 is activated and training is therefore stopped.
             lr: Learning rate for training.
             seed: Random seed for reproducibility.
+            balance_classes: Whether to sample training cells inversely to the size of their perturbation, so that every perturbation is seen equally often.
 
         Returns:
             AnnData with one observation per perturbation, the averaged penultimate-layer embedding in `.X` and the perturbation labels in `.obs[target_col]`.
@@ -278,12 +303,12 @@ class MLPClassifierSpace(PerturbationSpace):
 
         if embedding_key is not None:
             work = AnnData(X=adata.obsm[embedding_key])
-            work.obs_names = adata.obs_names.tolist()
-            work.obs = cast_frame(adata.obs).copy()
-            adata = work
-            layer_key = None
         else:
-            adata = adata.copy()
+            work = AnnData(X=adata.X if layer_key is None else adata.layers[layer_key])
+        work.obs_names = adata.obs_names.tolist()
+        work.obs = cast_frame(adata.obs).copy()
+        adata = work
+        layer_key = None
 
         # Labels are strings, one hot encoding for classification
         n_classes = len(adata.obs[target_col].unique())
@@ -308,9 +333,6 @@ class MLPClassifierSpace(PerturbationSpace):
         val_dataset = JAXDataset(
             adata=adata[X_val], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
-        test_dataset = JAXDataset(
-            adata=adata[X_test], target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
-        )
         total_dataset = JAXDataset(
             adata=adata, target_col="encoded_perturbations", label_col=target_col, layer_key=layer_key
         )
@@ -324,34 +346,32 @@ class MLPClassifierSpace(PerturbationSpace):
         state = create_train_state(init_rng, model, (adata.n_vars,), lr)
 
         # Create weighted sampling for class imbalance
-        weights = 1.0 / (1.0 + jnp.sum(jnp.asarray(train_dataset.labels), axis=1))
+        labels = jnp.asarray(train_dataset.labels)
+        weights = 1.0 / (labels @ jnp.sum(labels, axis=0)) if balance_classes else jnp.ones(len(labels))
         weights = weights / jnp.sum(weights)
 
         n_batches_per_epoch = len(train_dataset) // batch_size
-        train_batches = create_batched_indices(
-            len(train_dataset), train_rng, batch_size, max_epochs * n_batches_per_epoch, weights
-        )
+        n_steps = max_epochs * n_batches_per_epoch
+        train_batches = create_batched_indices(len(train_dataset), train_rng, batch_size, n_steps, weights)
+        step_rngs = np.asarray(_split_keys(rng, n_steps))
 
         best_val_loss: float | jax.Array = float("inf")
         patience_counter = 0
 
+        step_elements = batch_size * (adata.n_vars + n_classes)
+        steps_per_chunk = max(1, min(n_batches_per_epoch, _MAX_BLOCK_ELEMENTS // step_elements))
+
         for epoch in range(max_epochs):
-            epoch_train_loss = 0
-
-            epoch_start = epoch * n_batches_per_epoch
             epoch_end = (epoch + 1) * n_batches_per_epoch
-            epoch_batches = train_batches[epoch_start:epoch_end]
-
-            for _n_train_batches, batch_indices in enumerate(epoch_batches, 1):
-                rng, step_rng = random.split(rng)
-                batch_data, batch_labels, *_ = train_dataset.get_batch(batch_indices)
-                state, loss = train_step(state, (batch_data, batch_labels), step_rng)
-                epoch_train_loss += loss
+            for start in range(epoch * n_batches_per_epoch, epoch_end, steps_per_chunk):
+                steps = slice(start, min(start + steps_per_chunk, epoch_end))
+                batch_data, batch_labels, _ = train_dataset.get_batch(train_batches[steps])
+                state = train_steps(state, (batch_data, batch_labels), step_rngs[steps])
 
             if (epoch + 1) % val_epochs_check == 0:
                 val_losses = []
                 for i in range(0, len(val_dataset), batch_size):
-                    val_indices = jnp.arange(i, min(i + batch_size, len(val_dataset)))
+                    val_indices = np.arange(i, min(i + batch_size, len(val_dataset)))
                     val_batch_data, val_batch_labels, _ = val_dataset.get_batch(val_indices)
                     val_loss = val_step(state, (val_batch_data, val_batch_labels))
                     val_losses.append(val_loss)
@@ -367,31 +387,18 @@ class MLPClassifierSpace(PerturbationSpace):
                 if patience_counter >= patience:
                     break
 
-        # Test evaluation
-        test_losses = []
-        for i in range(0, len(test_dataset), batch_size):
-            test_indices = jnp.arange(i, min(i + batch_size, len(test_dataset)))
-            test_batch_data, test_batch_labels, _ = test_dataset.get_batch(test_indices)
-            test_loss = val_step(state, (test_batch_data, test_batch_labels))
-            test_losses.append(test_loss)
-
         # Extract embeddings
         embeddings_list = []
-        labels_list = []
-
         for i in range(0, len(total_dataset), batch_size * 2):
-            indices = jnp.arange(i, min(i + batch_size * 2, len(total_dataset)))
-            batch_data, _, batch_pert_labels = total_dataset.get_batch(indices)
-            batch_embeddings = get_embeddings(state, batch_data)
-
-            embeddings_list.append(batch_embeddings)
-            labels_list.extend(batch_pert_labels)
+            indices = np.arange(i, min(i + batch_size * 2, len(total_dataset)))
+            batch_data, _, _ = total_dataset.get_batch(indices)
+            embeddings_list.append(get_embeddings(state, batch_data))
 
         all_embeddings = np.asarray(jnp.concatenate(embeddings_list, axis=0))
 
         # Average the per-cell embeddings within each perturbation to obtain one embedding per perturbation.
         cell_embeddings = pd.DataFrame(all_embeddings)
-        cell_embeddings[target_col] = [str(label) for label in labels_list]
+        cell_embeddings[target_col] = [str(label) for label in total_dataset.pert_labels]
         aggregated = cell_embeddings.groupby(target_col, observed=True).mean()
 
         pert_adata = AnnData(X=aggregated.to_numpy(dtype=np.float32))

@@ -169,28 +169,25 @@ class DistanceTest:
         embedding = cast_matrix(adata.obsm[self.obsm_key])
 
         # Generate the null distribution
-        results = []
-        for _permutation in fct(range(self.n_perms)):
-            # per perturbation, shuffle with control and compute e-distance
-            df = pd.DataFrame(index=groups, columns=["distance"], dtype=float)
-            for group in groups:
-                if group == contrast:
-                    continue
+        obs_labels = np.asarray(adata.obs[groupby].values)
+        masks = {group: adata.obs[groupby].isin([group, contrast]).to_numpy() for group in groups if group != contrast}
+        distances = np.full((self.n_perms, len(groups)), np.nan)
+        for i, group in enumerate(fct(groups)):
+            if group == contrast:
+                continue
+            in_group = obs_labels[masks[group]] == group
+            group_embedding = embedding[masks[group]]
+            for permutation in range(self.n_perms):
                 # Shuffle the labels of the groups
-                mask = adata.obs[groupby].isin([group, contrast])
-                labels = np.asarray(adata.obs[groupby].values)[mask]
                 rng = np.random.default_rng()
-                shuffled_labels = rng.permutation(labels)
-                idx = shuffled_labels == group
-
-                X = embedding[mask][idx]  # shuffled group
-                Y = embedding[mask][~idx]  # shuffled contrast
-                dist = self.distance(X, Y)
-
-                df.loc[group, "distance"] = dist
-            results.append(df.sort_index())
+                idx = rng.permutation(in_group)
+                X = group_embedding[idx]  # shuffled group
+                Y = group_embedding[~idx]  # shuffled contrast
+                distances[permutation, i] = self.distance(X, Y)
+        results = [pd.DataFrame({"distance": row}, index=groups).sort_index() for row in distances]
 
         # Generate the empirical distribution
+        df = pd.DataFrame(index=groups, columns=["distance"], dtype=float)
         for group in groups:
             if group == contrast:
                 continue
@@ -270,40 +267,33 @@ class DistanceTest:
             else:
                 raise ValueError("Either `layer_key` or `obsm_key` must be set.")
             pwd = pairwise_distances(cells, cells, metric=self.distance.cell_wise_metric)
-            precomputed_distances[group] = pwd
+            precomputed_distances[group] = pwd, pwd.sum(dtype=np.float64)
 
         # Generate the null distribution
+        obs_labels = np.asarray(adata.obs[groupby].values)
+        masks = {group: adata.obs[groupby].isin([group, contrast]).to_numpy() for group in groups if group != contrast}
+        in_group = {group: obs_labels[mask] == group for group, mask in masks.items()}
         results = []
         for _permutation in fct(range(self.n_perms)):
             # per perturbation, shuffle with control and compute e-distance
-            df = pd.DataFrame(index=groups, columns=["distance"], dtype=float)
-            for group in groups:
+            distances = np.full(len(groups), np.nan)
+            for i, group in enumerate(groups):
                 if group == contrast:
                     continue
                 # Shuffle the labels of the groups
-                mask = adata.obs[groupby].isin([group, contrast])
-                labels = np.asarray(adata.obs[groupby].values)[mask]
                 rng = np.random.default_rng()
-                shuffled_labels = rng.permutation(labels)
-                idx = shuffled_labels == group
-
-                precomputed_distance = precomputed_distances[group]
-                distance_result = self.distance.metric_fct.from_precomputed(precomputed_distance, idx)
-
-                df.loc[group, "distance"] = distance_result
-            results.append(df.sort_index())
+                idx = rng.permutation(in_group[group])
+                pwd, total = precomputed_distances[group]
+                distances[i] = self.distance.metric_fct.from_precomputed(pwd, idx, total=total)
+            results.append(pd.DataFrame({"distance": distances}, index=groups).sort_index())
 
         # Generate the empirical distribution
+        df = pd.DataFrame(index=groups, columns=["distance"], dtype=float)
         for group in groups:
             if group == contrast:
                 continue
-            mask = adata.obs[groupby].isin([group, contrast])
-            labels = np.asarray(adata.obs[groupby].values)[mask]
-            idx = labels == group
-
-            precomputed_distance = precomputed_distances[group]
-            distance_result = self.distance.metric_fct.from_precomputed(precomputed_distance, idx)
-
+            pwd, total = precomputed_distances[group]
+            distance_result = self.distance.metric_fct.from_precomputed(pwd, in_group[group], total=total)
             df.loc[group, "distance"] = distance_result
 
         # Evaluate the test

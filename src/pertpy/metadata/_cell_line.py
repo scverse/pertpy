@@ -156,7 +156,7 @@ class CellLine(MetaData):
             # If the specified cell line type can be found in the database,
             # we can compare these keys and fetch the corresponding metadata.
             identifier_num_all = len(adata.obs[query_id].unique())
-            not_matched_identifiers = list(set(adata.obs[query_id]) - set(cell_line_meta[reference_id]))
+            not_matched_identifiers = list(set(adata.obs[query_id].unique()) - set(cell_line_meta[reference_id]))
 
             self._warn_unmatch(
                 total_identifiers=identifier_num_all,
@@ -272,7 +272,7 @@ class CellLine(MetaData):
             if self.bulk_rna_sanger is None:
                 self._download_bulk_rna(cell_line_source="sanger")
             reference_id = "model_name"
-            not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_sanger.index))
+            not_matched_identifiers = list(set(adata.obs[query_id].unique()) - set(self.bulk_rna_sanger.index))
         else:
             if query_id not in adata.obs.columns:
                 raise ValueError(
@@ -283,7 +283,7 @@ class CellLine(MetaData):
 
             if self.bulk_rna_broad is None:
                 self._download_bulk_rna(cell_line_source="broad")
-            not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.bulk_rna_broad.index))
+            not_matched_identifiers = list(set(adata.obs[query_id].unique()) - set(self.bulk_rna_broad.index))
 
         self._warn_unmatch(
             total_identifiers=identifier_num_all,
@@ -374,7 +374,7 @@ class CellLine(MetaData):
             )
 
         identifier_num_all = len(adata.obs[query_id].unique())
-        not_matched_identifiers = list(set(adata.obs[query_id]) - set(self.proteomics[reference_id]))
+        not_matched_identifiers = list(set(adata.obs[query_id].unique()) - set(self.proteomics[reference_id].unique()))
 
         self._warn_unmatch(
             total_identifiers=identifier_num_all,
@@ -454,7 +454,7 @@ class CellLine(MetaData):
             raise ValueError("The GDSC dataset specified in `gdsc_dataset` must be either 'gdsc_1' or 'gdsc_2'.")
 
         identifier_num_all = len(adata.obs[query_id].unique())
-        not_matched_identifiers = list(set(adata.obs[query_id]) - set(gdsc_data[reference_id]))
+        not_matched_identifiers = list(set(adata.obs[query_id].unique()) - set(gdsc_data[reference_id].unique()))
         self._warn_unmatch(
             total_identifiers=identifier_num_all,
             unmatched_identifiers=not_matched_identifiers,
@@ -520,11 +520,11 @@ class CellLine(MetaData):
             self._download_prism()
         prism_data = self.drug_response_prism
         # PRISM starts most drug names with a lowercase letter, so we want to make it case-insensitive
-        prism_data["name_lower"] = prism_data["name"].str.lower()
+        prism_data = prism_data.assign(name=prism_data["name"].str.lower())
         adata.obs["perturbation_lower"] = cast_frame(adata.obs)[query_perturbation].str.lower()
 
         identifier_num_all = len(adata.obs[query_id].unique())
-        not_matched_identifiers = list(set(adata.obs[query_id]) - set(prism_data["depmap_id"]))
+        not_matched_identifiers = list(set(adata.obs[query_id].unique()) - set(prism_data["depmap_id"].unique()))
         self._warn_unmatch(
             total_identifiers=identifier_num_all,
             unmatched_identifiers=not_matched_identifiers,
@@ -617,15 +617,10 @@ class CellLine(MetaData):
             Returns DataFrames for both the Pearson correlation coefficients and their associated p-values.
         """
         corr = np.empty((mat1.shape[0], mat2.shape[0]))
-        pvals = np.empty((mat1.shape[0], mat2.shape[0]))
-
-        for i in range(mat1.shape[0]):
-            for j in range(mat2.shape[0]):
-                if i > j:
-                    corr[i, j] = corr[j, i]
-                    pvals[i, j] = pvals[j, i]
-                else:
-                    corr[i, j], pvals[i, j] = stats.pearsonr(mat1[i], mat2[j])
+        pvals = np.empty_like(corr)
+        for start in range(0, mat1.shape[0], 64):
+            res = stats.pearsonr(mat1[start : start + 64, np.newaxis, :], mat2[np.newaxis, :, :], axis=-1)
+            corr[start : start + 64], pvals[start : start + 64] = res.statistic, res.pvalue
         corr_df = pd.DataFrame(corr, index=list(row_name), columns=list(col_name))
         pvals_df = pd.DataFrame(pvals, index=list(row_name), columns=list(col_name))
 

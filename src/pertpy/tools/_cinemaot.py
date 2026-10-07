@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy.stats as ss
-import sklearn.metrics
 from fast_array_utils.conv import to_dense
 from ott.geometry.pointcloud import PointCloud
 from ott.problems.linear import linear_problem
@@ -109,12 +108,8 @@ class Cinemaot:
         cf = np.array(X_transformed[:, xi < thres], np.float64)
         cf1 = np.array(cf[adata.obs[pert_key] == control, :], np.float64)
         cf2 = np.array(cf[adata.obs[pert_key] != control, :], np.float64)
-        if sum(xi < thres) == 1:
-            sklearn.metrics.pairwise_distances(cf1.reshape(-1, 1), cf2.reshape(-1, 1))
-        elif sum(xi < thres) == 0:
+        if sum(xi < thres) == 0:
             raise ValueError("No confounder components identified. Please try a higher threshold.")
-        else:
-            sklearn.metrics.pairwise_distances(cf1, cf2)
 
         e = smoothness * sum(xi < thres)
         geom = PointCloud(jnp.asarray(cf1), jnp.asarray(cf2), epsilon=e, batch_size=batch_size)
@@ -172,31 +167,31 @@ class Cinemaot:
         else:
             _solver = jax.jit(sinkhorn.Sinkhorn(threshold=eps))
             ot_sink = _solver(ot_prob)
-            ot_matrix = np.array(ot_sink.matrix.T, dtype=np.float64)
+            matching = ot_sink.matrix.T
+            transport = np.array(matching, dtype=np.float64)
+            transport /= np.sum(transport, axis=1)[:, None]
             embedding = X_transformed[adata.obs[pert_key] != control, :] - np.matmul(
-                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X_transformed[adata.obs[pert_key] == control, :]
+                transport, X_transformed[adata.obs[pert_key] == control, :]
             )
 
             adata_X = adata.X
             X = to_dense(adata_X)
 
-            te2 = X[adata.obs[pert_key] != control, :] - np.matmul(
-                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], X[adata.obs[pert_key] == control, :]
-            )
+            te2 = X[adata.obs[pert_key] != control, :] - np.matmul(transport, X[adata.obs[pert_key] == control, :])
             if isinstance(adata_X, CSBase):
                 del X
 
             adata.obsm[cf_rep] = cf
             cf_matrix = cast_dense(adata.obsm[cf_rep])
             cf_matrix[adata.obs[pert_key] != control, :] = np.matmul(
-                ot_matrix / np.sum(ot_matrix, axis=1)[:, None], cf_matrix[adata.obs[pert_key] == control, :]
+                transport, cf_matrix[adata.obs[pert_key] == control, :]
             )
 
         TE = sc.AnnData(np.array(te2), obs=adata[adata.obs[pert_key] != control, :].obs.copy(), var=adata.var.copy())
         TE.obsm["X_embedding"] = embedding
 
         if return_matching:
-            TE.obsm["ot"] = np.asarray(ot_sink.matrix.T)
+            TE.obsm["ot"] = np.asarray(matching if solver == "Sinkhorn" else ot_sink.matrix.T)
             return TE
         else:
             return TE
@@ -395,8 +390,8 @@ class Cinemaot:
         data = to_dense(adata.raw.X)
         vm = (1e-3 + data + c * data * data) / (1 + c)
         sk.fit(vm)
-        wm = np.dot(np.dot(np.sqrt(sk._D1), vm), np.sqrt(sk._D2))
-        u, s, vt = np.linalg.svd(wm)
+        wm = np.sqrt(sk._D1)[:, None] * vm * np.sqrt(sk._D2)[None, :]
+        s = np.linalg.svd(wm, compute_uv=False)
         dim = min(sum(s > (np.sqrt(data.shape[0]) + np.sqrt(data.shape[1]))), adata.obsm[use_rep].shape[1])
         return dim
 
@@ -431,15 +426,15 @@ class Cinemaot:
             >>> model = pt.tl.Cinemaot()
             >>> idx = model._get_weightidx(adata, pert_key="perturbation", control="No stimulation")
         """
-        adata_ = adata.copy()
+        adata_ = sc.AnnData(obs=cast_frame(adata.obs).copy(), obsm={use_rep: adata.obsm[use_rep]})
         X_pca1 = adata_.obsm[use_rep][adata_.obs[pert_key] == control, :]  # type: ignore[index]
         X_pca2 = adata_.obsm[use_rep][adata_.obs[pert_key] != control, :]  # type: ignore[index]
-        nbrs = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(X_pca1)
+        nbrs = NearestNeighbors(n_neighbors=k, algorithm="brute").fit(X_pca1)
         mixscape_pca = cast_dense(adata.obsm[use_rep]).copy()
-        mixscapematrix = nbrs.kneighbors_graph(X_pca2).toarray()
+        mixscapematrix = nbrs.kneighbors_graph(X_pca2).sorted_indices()
         mixscape_pca[adata_.obs[pert_key] != control, :] = (
-            np.dot(mixscapematrix, mixscape_pca[adata_.obs[pert_key] == control, :]) / k
-        )
+            mixscapematrix @ mixscape_pca[adata_.obs[pert_key] == control, :]
+        ) / k
 
         adata_.obsm["X_mpca"] = mixscape_pca
         sc.pp.neighbors(adata_, use_rep="X_mpca")
@@ -894,18 +889,15 @@ class SinkhornKnopp:
 
         P_eps = np.copy(P)
         while (
-            np.any(np.sum(P_eps, axis=1) < min_threshr)
-            or np.any(np.sum(P_eps, axis=1) > max_threshr)
-            or np.any(np.sum(P_eps, axis=0) < min_threshc)
-            or np.any(np.sum(P_eps, axis=0) > max_threshc)
+            np.any((row_sums := np.sum(P_eps, axis=1)) < min_threshr)
+            or np.any(row_sums > max_threshr)
+            or np.any((col_sums := np.sum(P_eps, axis=0)) < min_threshc)
+            or np.any(col_sums > max_threshc)
         ):
             c = csum / P.T.dot(r)
             r = rsum / P.dot(c)
 
-            self._D1 = np.diag(np.squeeze(r))
-            self._D2 = np.diag(np.squeeze(c))
-
-            P_eps = np.diag(self._D1)[:, None] * P * np.diag(self._D2)[None, :]
+            P_eps = r * P * c.T
 
             self._iterations += 1
 
@@ -916,8 +908,8 @@ class SinkhornKnopp:
         if not self._stopping_condition:
             self._stopping_condition = "epsilon"
 
-        self._D1 = np.diag(np.squeeze(r))
-        self._D2 = np.diag(np.squeeze(c))
-        P_eps = np.diag(self._D1)[:, None] * P * np.diag(self._D2)[None, :]
+        self._D1 = np.squeeze(r)
+        self._D2 = np.squeeze(c)
+        P_eps = self._D1[:, None] * P * self._D2[None, :]
 
         return P_eps

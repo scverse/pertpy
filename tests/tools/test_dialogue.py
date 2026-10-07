@@ -12,6 +12,7 @@ import pandas as pd
 import pytest
 import scanpy as sc
 from scipy import sparse
+from statsmodels.regression.mixed_linear_model import MixedLM
 
 import pertpy as pt
 from pertpy._types import cast_frame
@@ -251,15 +252,30 @@ def test_hlm_pvalue_per_row_detects_planted_signal():
     assert res["estimate"].iloc[0] > 0.5
 
 
+def test_hlm_pvalue_per_row_matches_statsmodels():
+    rng = np.random.default_rng(1)
+    sample = np.repeat([f"S{i}" for i in range(12)], [4, 9, 30, 12, 50, 20, 7, 15, 25, 3, 40, 10])
+    codes = pd.factorize(sample)[0]
+    cellQ = rng.normal(size=sample.size)
+    expression = rng.normal(size=(3, 12))[:, codes]
+    score = 0.5 * expression[0] + rng.normal(size=12)[codes] + 0.3 * cellQ + rng.normal(size=sample.size)
+    res = _hlm_pvalue_per_row(expression, score, pd.DataFrame({"cellQ": cellQ}), sample)
+    for i, x in enumerate(expression):
+        exog = np.column_stack([np.ones(sample.size), x, cellQ])
+        fit = MixedLM(score, exog, sample).fit(method="bfgs", reml=False, gtol=1e-12)
+        np.testing.assert_allclose(res.iloc[i], [fit.params[1], fit.pvalues[1]], rtol=1e-6)
+
+
 def test_hlm_pvalue_per_row_handles_degenerate_row():
     n = 30
     sample = np.repeat(["A", "B", "C"], n // 3)
-    expression = np.zeros((2, n))
+    expression = np.full((2, n), 2.0)
     expression[1] = np.arange(n) / n
     covariates = pd.DataFrame({"cellQ": np.linspace(0, 1, n)})
     score = np.linspace(-1, 1, n)
     res = _hlm_pvalue_per_row(expression, score, covariates, sample)
     assert res.shape == (2, 2)
+    assert res.loc["gene_0"].isna().all()
 
 
 def _preprocess_dialogue_adata(adata: ad.AnnData) -> ad.AnnData:

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 import pertpy as pt
-from pertpy.tools._perturbation_efficacy._mixscape import MixscapeGaussianMixture
+from pertpy.tools._perturbation_efficacy._mixscape import MixscapeGaussianMixture, _mixscape_gmm_predict_proba
 
 NUM_CELLS_PER_GROUP = 10
 ACCURACY_THRESHOLD = 0.8
@@ -24,6 +24,17 @@ def test_mixscape(adata):
     assert "mixscape_class_p_ko" in adata.obs
     assert sum(np_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
     assert sum(ko_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
+
+
+def test_mixscape_sparse_without_scaling_matches_dense(adata):
+    adata.layers["X_pert"] = adata.X.toarray()
+    dense = pt.tl.Mixscape().mixscape(
+        adata=adata, pert_key="gene_target", control="NT", test_method="t-test", scale=False, copy=True
+    )
+    adata.layers["X_pert"] = adata.X
+    pt.tl.Mixscape().mixscape(adata=adata, pert_key="gene_target", control="NT", test_method="t-test", scale=False)
+
+    pd.testing.assert_frame_equal(adata.obs, dense.obs)
 
 
 def test_perturbation_signature(adata):
@@ -98,3 +109,32 @@ def test_mixscape_gaussian_mixture():
 
     assert np.allclose(model.means_[0], fixed_means[0])
     assert np.allclose(model.covariances_[1], fixed_covariances[1])
+    assert np.allclose(model.precisions_[1], 1 / fixed_covariances[1])
+
+
+def test_mixscape_gmm_predict_proba_matches_sklearn():
+    rng = np.random.default_rng(0)
+    x = np.concatenate([rng.normal(0, 1, 300), rng.normal(2.5, 1, 100)])
+    guide_idx = np.arange(300, 400)
+    means_init = np.array([x[:300].mean(), x[300:].mean()])
+    precisions_init = 1 / np.array([x[:300].std(ddof=1), x[300:].std(ddof=1)]) ** 2
+    expected = (
+        MixscapeGaussianMixture(
+            n_components=2,
+            covariance_type="spherical",
+            means_init=means_init[:, None],
+            precisions_init=precisions_init,
+            random_state=0,
+            max_iter=100,
+            fixed_means=[means_init[0], None],
+            fixed_covariances=[1 / precisions_init[0], None],
+        )
+        .fit(x[:, None])
+        .predict_proba(x[guide_idx, None])
+    )
+
+    proba = _mixscape_gmm_predict_proba(
+        x, guide_idx, means_init=means_init, precisions_init=precisions_init, random_state=0
+    )
+
+    np.testing.assert_allclose(proba, expected, rtol=1e-9, atol=1e-12)
