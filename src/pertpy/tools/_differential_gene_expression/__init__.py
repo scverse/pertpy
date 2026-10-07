@@ -12,6 +12,7 @@ def __getattr__(name: str):
         "PyDESeq2": ["pydeseq2", "formulaic_contrasts", "formulaic"],
         "EdgeR": ["rpy2", "formulaic_contrasts", "formulaic"],
         "Statsmodels": ["formulaic_contrasts", "formulaic"],
+        "LinearMixedModel": ["formulaic_contrasts", "formulaic"],
     }
 
     if name in deps:
@@ -23,6 +24,7 @@ def __getattr__(name: str):
             "PyDESeq2": "pertpy.tools._differential_gene_expression._pydeseq2",
             "EdgeR": "pertpy.tools._differential_gene_expression._edger",
             "Statsmodels": "pertpy.tools._differential_gene_expression._statsmodels",
+            "LinearMixedModel": "pertpy.tools._differential_gene_expression._linear_mixed_model",
         }
 
         module = import_module(module_map[name])
@@ -53,6 +55,7 @@ __all__ = [
     "EdgeR",
     "PyDESeq2",
     "Statsmodels",
+    "LinearMixedModel",
     "SimpleComparisonBase",
     "WilcoxonTest",
     "TTest",

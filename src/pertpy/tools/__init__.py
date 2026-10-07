@@ -44,7 +44,7 @@ def __getattr__(name: str):
             ) from None
         with jax_import(name):
             return import_module("pertpy.tools._coda._tasccoda").Tasccoda
-    elif name in ["EdgeR", "PermutationTest", "PyDESeq2", "Statsmodels", "TTest", "WilcoxonTest"]:
+    elif name in ["EdgeR", "LinearMixedModel", "PermutationTest", "PyDESeq2", "Statsmodels", "TTest", "WilcoxonTest"]:
         module = import_module("pertpy.tools._differential_gene_expression")
         return getattr(module, name)
 
@@ -67,6 +67,7 @@ __all__ = [
     "TTest",
     "PermutationTest",
     "Statsmodels",
+    "LinearMixedModel",
     "DistanceTest",
     "Distance",
     "Enrichment",

@@ -1060,9 +1060,7 @@ class LinearModelBase(MethodBase):
         fit_kwargs=MappingProxyType({}),
         test_kwargs=MappingProxyType({}),
     ):
-        design = f"~{column}"
-        if paired_by is not None:
-            design += f"+{paired_by}"
+        design = cls._comparison_design(column, paired_by)
         if isinstance(groups_to_compare, str):
             groups_to_compare = [groups_to_compare]
         model = cls(adata, design=design, mask=mask, layer=layer)
@@ -1078,6 +1076,14 @@ class LinearModelBase(MethodBase):
         )
 
         return de_res
+
+    @classmethod
+    def _comparison_design(cls, column: str, paired_by: str | None) -> str:
+        """Build the design formula used by `compare_groups`."""
+        design = f"~{column}"
+        if paired_by is not None:
+            design += f"+{paired_by}"
+        return design
 
     @property
     def variables(self):
