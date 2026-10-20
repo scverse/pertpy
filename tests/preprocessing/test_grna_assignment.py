@@ -322,3 +322,18 @@ def test_grna_mixture_model_matrix_overloads_match_anndata(matrix_type, syntheti
     assert out.shape == (adata.n_obs,)
     pt.pp.GuideAssignment().assign_mixture_model(adata)
     assert list(out) == list(adata.obs["assigned_guide"])
+
+
+@pytest.mark.parametrize("adata_fixture", ["synthetic_dense_adata", "synthetic_sparse_adata"])
+def test_grna_mixture_model_writes_assignment_layer(request, adata_fixture):
+    """The layer holds the uncapped binary assignment in the storage format of the input."""
+    adata, _ = request.getfixturevalue(adata_fixture)
+    pt.pp.GuideAssignment().assign_mixture_model(adata, max_assignments_per_cell=1)
+    layer = adata.layers["assigned_guides"]
+    assert sparse.issparse(layer) == sparse.issparse(adata.X)
+    binary = layer.toarray() if sparse.issparse(layer) else layer
+    thresholds = np.nan_to_num(adata.var["threshold"].to_numpy(), nan=np.inf)
+    np.testing.assert_array_equal(binary, (thresholds[None, :] <= _x_as_dense(adata)).astype(np.int8))
+    multi = binary.sum(axis=1) > 1
+    assert multi.any()
+    assert (adata.obs["assigned_guide"].astype(str).to_numpy()[multi] == "multiple").all()

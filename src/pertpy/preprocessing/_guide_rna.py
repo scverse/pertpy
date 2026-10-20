@@ -242,6 +242,7 @@ class GuideAssignment:
         model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
         layer: str | None = None,
         assigned_guides_key: str = "assigned_guide",
+        output_layer: str | None = "assigned_guides",
         no_grna_assigned_key: str = "negative",
         max_assignments_per_cell: int = 5,
         multiple_grna_assigned_key: str = "multiple",
@@ -267,6 +268,8 @@ class GuideAssignment:
             model: The mixture model to use; currently only ``"poisson_gauss_mixture"`` is supported.
             layer: Layer name to use when ``data`` is an AnnData (defaults to ``X``).
             assigned_guides_key: Per-cell assignment is saved on ``adata.obs[assigned_guides_key]``.
+            output_layer: The binary cell-by-guide assignment matrix is saved on ``adata.layers[output_layer]``, or not at all if ``None``.
+                          Unlike the per-cell assignment it is not capped by ``max_assignments_per_cell``.
             no_grna_assigned_key: Key to use when a cell is negative for all gRNAs.
             max_assignments_per_cell: Maximum number of gRNAs that can be assigned to a cell.
             multiple_grna_assigned_key: Key to use when more than ``max_assignments_per_cell`` gRNAs are assigned.
@@ -299,6 +302,7 @@ class GuideAssignment:
         model: Literal["poisson_gauss_mixture"] = "poisson_gauss_mixture",
         layer: str | None = None,
         assigned_guides_key: str = "assigned_guide",
+        output_layer: str | None = "assigned_guides",
         no_grna_assigned_key: str = "negative",
         max_assignments_per_cell: int = 5,
         multiple_grna_assigned_key: str = "multiple",
@@ -335,6 +339,8 @@ class GuideAssignment:
         for column, estimate in estimates.items():
             adata.var[column] = estimate
         adata.obs[assigned_guides_key] = pd.Categorical(assignments)
+        if output_layer is not None:
+            adata.layers[output_layer] = binary if isinstance(X, CSBase) else binary.toarray()
         return None
 
     @assign_mixture_model.register(np.ndarray)
