@@ -27,6 +27,13 @@ def tiny_sparse_adata():
     )
 
 
+@pytest.fixture
+def tiny_csc_adata(tiny_sparse_adata):
+    adata = tiny_sparse_adata.copy()
+    adata.X = sparse.csc_matrix(adata.X)
+    return adata
+
+
 def _make_synthetic_matrix():
     """Cell-by-guide matrix with a clear bimodal positive/background split per guide."""
     rng = np.random.default_rng(0)
@@ -95,7 +102,27 @@ def _x_as_dense(adata):
     return adata.X.toarray() if sparse.issparse(adata.X) else np.asarray(adata.X)
 
 
-@pytest.mark.parametrize("adata_fixture", ["tiny_dense_adata", "tiny_sparse_adata"])
+@pytest.fixture
+def high_moi_dense_adata():
+    """Half of the cells carry each guide, as in a high-MOI screen."""
+    rng = np.random.default_rng(0)
+    n_cells, n_guides = 2000, 3
+    X = np.zeros((n_cells, n_guides), dtype=np.float32)
+    truth = np.zeros((n_cells, n_guides), dtype=bool)
+    for g in range(n_guides):
+        is_pos = rng.random(n_cells) < 0.5
+        X[is_pos, g] = np.clip(np.round(2 ** rng.normal(6.0, 0.6, is_pos.sum())), 1, None)
+        X[~is_pos, g] = rng.poisson(1.0, (~is_pos).sum())
+        truth[is_pos, g] = True
+    adata = ad.AnnData(
+        X,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(n_cells)]),
+        var=pd.DataFrame(index=[f"g{i}" for i in range(n_guides)]),
+    )
+    return adata, truth
+
+
+@pytest.mark.parametrize("adata_fixture", ["tiny_dense_adata", "tiny_sparse_adata", "tiny_csc_adata"])
 def test_grna_threshold_assignment(request, adata_fixture):
     adata = request.getfixturevalue(adata_fixture)
     threshold = 5
@@ -116,7 +143,7 @@ def test_grna_threshold_assignment(request, adata_fixture):
     assert np.all((original_matrix >= threshold) == (result_matrix == 1))
 
 
-@pytest.mark.parametrize("adata_fixture", ["tiny_dense_adata", "tiny_sparse_adata"])
+@pytest.mark.parametrize("adata_fixture", ["tiny_dense_adata", "tiny_sparse_adata", "tiny_csc_adata"])
 def test_grna_max_assignment(request, adata_fixture):
     adata = request.getfixturevalue(adata_fixture)
     threshold = 6
@@ -227,19 +254,26 @@ def test_grna_mixture_model_gaussian_above_poisson(request, adata_fixture):
     pt.pp.GuideAssignment().assign_mixture_model(adata)
     mu = adata.var["gaussian_mean"].to_numpy()
     lam = adata.var["poisson_rate"].to_numpy()
-    valid = ~np.isnan(mu)
-    assert valid.sum() >= adata.n_vars - 1
-    assert np.all(mu[valid] > lam[valid])
+    assert not np.isnan(mu).any()
+    assert np.all(mu > lam)
+
+
+def test_grna_mixture_model_high_moi_keeps_component_order(high_moi_dense_adata):
+    """With half of the cells positive, the Gaussian must stay the on-target component instead of swapping with the Poisson."""
+    adata, truth = high_moi_dense_adata
+    pt.pp.GuideAssignment().assign_mixture_model(adata)
+    thresholds = adata.var["threshold"].to_numpy()
+    assert np.all(thresholds > 1)
+    assert np.all(adata.var["gaussian_mean"].to_numpy() > adata.var["poisson_rate"].to_numpy())
+    pred = np.asarray(adata.X) >= thresholds[None, :]
+    assert (pred == truth).mean() > 0.99
 
 
 @pytest.mark.parametrize("adata_fixture", ["low_count_dense_adata", "low_count_sparse_adata"])
 def test_grna_mixture_model_skips_low_count_guides(request, adata_fixture):
     """Guides with <2 nonzero cells or max count <2 must be skipped (NaN params and a warning)."""
     adata = request.getfixturevalue(adata_fixture)
-    with (
-        pytest.warns(UserWarning, match="less than 2 cells"),
-        pytest.warns(UserWarning, match="maximum count is below 2"),
-    ):
+    with pytest.warns(UserWarning, match="Skipping 3 guides .*: zero, one_nonzero, max_below_two"):
         pt.pp.GuideAssignment().assign_mixture_model(adata)
     assert np.isnan(adata.var.loc["zero", "threshold"])
     assert np.isnan(adata.var.loc["one_nonzero", "threshold"])
