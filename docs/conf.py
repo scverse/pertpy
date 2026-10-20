@@ -140,6 +140,7 @@ intersphinx_mapping = {
     "annbatch": ("https://annbatch.readthedocs.io/en/stable/", None),
 }
 nitpick_ignore = [
+    ("py:class", "ete4.Tree"),
     ("py:class", "ete4.core.tree.Tree"),
     ("py:class", "ete4.treeview.TreeStyle"),
     ("py:class", "pertpy.tools._distances._distances.MeanVar"),

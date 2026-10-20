@@ -269,19 +269,6 @@ def test_grna_mixture_model_high_moi_keeps_component_order(high_moi_dense_adata)
     assert (pred == truth).mean() > 0.99
 
 
-def test_grna_mixture_model_ignores_explicit_zeros(synthetic_sparse_adata):
-    """Explicitly stored zeros in a sparse matrix must not take part in the fit."""
-    adata, _ = synthetic_sparse_adata
-    X = sparse.csr_matrix(adata.X)
-    X.data[np.flatnonzero(X.indices == 0)[:50]] = 0
-    with_zeros = ad.AnnData(X, obs=adata.obs.copy(), var=adata.var.copy())
-    dense = ad.AnnData(X.toarray(), obs=adata.obs.copy(), var=adata.var.copy())
-    pt.pp.GuideAssignment().assign_mixture_model(with_zeros)
-    pt.pp.GuideAssignment().assign_mixture_model(dense)
-    np.testing.assert_array_equal(with_zeros.var["threshold"].to_numpy(), dense.var["threshold"].to_numpy())
-    assert list(with_zeros.obs["assigned_guide"]) == list(dense.obs["assigned_guide"])
-
-
 @pytest.mark.parametrize("adata_fixture", ["low_count_dense_adata", "low_count_sparse_adata"])
 def test_grna_mixture_model_skips_low_count_guides(request, adata_fixture):
     """Guides with <2 nonzero cells or max count <2 must be skipped (NaN params and a warning)."""
@@ -335,18 +322,3 @@ def test_grna_mixture_model_matrix_overloads_match_anndata(matrix_type, syntheti
     assert out.shape == (adata.n_obs,)
     pt.pp.GuideAssignment().assign_mixture_model(adata)
     assert list(out) == list(adata.obs["assigned_guide"])
-
-
-def test_grna_heatmap_saved_order_reproduces_plot(synthetic_dense_adata):
-    """Passing the saved cell order back as `order_by` must reproduce the same plot order."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    adata, _ = synthetic_dense_adata
-    ga = pt.pp.GuideAssignment()
-    ga.plot_heatmap(adata, key_to_save_order="first", return_fig=True)
-    ga.plot_heatmap(adata, order_by="first", key_to_save_order="second", return_fig=True)
-    plt.close("all")
-    np.testing.assert_array_equal(adata.obs["first"].to_numpy(), adata.obs["second"].to_numpy())

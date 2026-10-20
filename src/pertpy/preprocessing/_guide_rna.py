@@ -259,12 +259,8 @@ class GuideAssignment:
         For each guide, the log2 of its non-zero UMI counts is modelled as a mixture of a continuous Poisson background and a Gaussian on-target component with priors ``weights ~ Dirichlet([0.9, 0.1])``, ``mu ~ Normal(3, 2)``, ``scale ~ LogNormal(2, 1)``, ``lam ~ LogNormal(0, 1)``.
         A cell is assigned to a guide if its UMI count is at least the smallest integer ``t`` for which ``P(Normal | log2(t)) > 0.5``.
 
-        The MAP estimate is found by multi-start EM on the distinct count values of every guide, for all guides in parallel, where crispat runs a fixed number of stochastic variational inference steps per guide.
-        Starts are the prior medians that crispat uses plus quantile splits of the data.
-        The solution with the lowest negative log joint is kept, after discarding label-switched optima that place the Gaussian below the Poisson and degenerate optima in which the Gaussian weight vanishes or the Gaussian collapses onto a single count value.
-        Results therefore agree with crispat where its optimisation converges and differ where it does not.
-        A guide without a positive population is not assigned to any cell and its model parameters are ``nan``.
-        As in crispat, a guide without any positive cells can still be fit, in which case cells with low background counts are assigned to it.
+        The MAP estimate is found by multi-start EM on the distinct count values of every guide, for all guides in parallel.
+        The lowest-loss solution is kept after discarding label-switched optima and degenerate optima in which the Gaussian weight vanishes or the Gaussian collapses onto a single count value.
 
         Args:
             data: AnnData with gRNA counts, or a dense or sparse cell-by-guide count matrix.
