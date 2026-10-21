@@ -43,7 +43,7 @@ from statsmodels.stats.multitest import fdrcorrection
 
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
-from pertpy._types import CSBase, cast_frame, cast_matrix
+from pertpy._types import CSBase, RandomStateLike, _sklearn_random_state, cast_frame, cast_matrix
 from pertpy.tools.core import _is_raw_counts
 
 if TYPE_CHECKING:
@@ -96,7 +96,7 @@ class Augur:
         max_depth: int | None = None,
         max_features: Literal["auto", "log2", "sqrt"] | int | float = 2,
         penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
-        random_state: int | None = None,
+        random_state: RandomStateLike = None,
     ):
         """Defines the Augur estimator model and parameters.
 
@@ -229,7 +229,7 @@ class Augur:
         max_depth: int | None = None,
         max_features: Literal["auto", "log2", "sqrt"] | int | float = 2,
         penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
-        random_state: int | None = None,
+        random_state: RandomStateLike = None,
     ) -> RandomForestClassifier | RandomForestRegressor | LogisticRegression:
         """Creates a model object of the provided type and populates it with desired parameters.
 
@@ -261,6 +261,7 @@ class Augur:
             >>> augur = pt.tl.Augur("random_forest_classifier")
             >>> estimator = augur.create_estimator("logistic_regression_classifier")
         """
+        random_state = _sklearn_random_state(random_state)
         if classifier == "random_forest_classifier":
             return RandomForestClassifier(
                 n_estimators=n_estimators,
@@ -403,7 +404,7 @@ class Augur:
         folds: int,
         feature_perc: float,
         subsample_idx: int,
-        random_state: int | None,
+        random_state: RandomStateLike,
         zero_division: int | str,
     ) -> dict:
         """Cross validate subsample anndata object.
@@ -587,7 +588,7 @@ class Augur:
         *,
         subsample_idx: int,
         folds: int,
-        random_state: int | None,
+        random_state: RandomStateLike,
         zero_division: int | str,
     ) -> dict:
         """Perform cross validation on given subsample.
@@ -620,7 +621,7 @@ class Augur:
         genes = np.asarray(subsample.var_names, dtype=object)
         y = subsample.obs["y_"].to_numpy().ravel()
         metrics = self._metric_functions(multiclass=len(np.unique(y)) > 2, zero_division=zero_division)
-        seed = subsample_idx if random_state is None else random_state
+        seed = subsample_idx if random_state is None else _sklearn_random_state(random_state)
         fold_class = KFold if is_regressor(self.estimator) else StratifiedKFold
         splitter = fold_class(n_splits=folds, random_state=seed, shuffle=True)
         estimator = self.estimator
@@ -865,7 +866,7 @@ class Augur:
         augur_mode: Literal["default", "permute", "velocity"] = "default",
         select_variance_features: bool = True,
         key_added: str = "augurpy_results",
-        random_state: int | None = None,
+        random_state: RandomStateLike = None,
         zero_division: int | str = 0,
     ) -> tuple[AnnData, dict[str, Any]]:
         """Calculates the Area under the Curve using the given classifier.
@@ -1025,7 +1026,7 @@ class Augur:
         *,
         n_subsamples: int = 50,
         n_permutations: int = 1000,
-        random_state: int | None = 0,
+        random_state: RandomStateLike = 0,
     ) -> pd.DataFrame:
         """Predicts the differential prioritization by performing permutation tests on samples.
 

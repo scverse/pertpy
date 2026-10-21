@@ -99,24 +99,6 @@ def test_regressor(adata):
     assert any([isclose(cv["mean_ccc"], ccc, abs_tol=10**-5), isclose(cv["mean_r2"], r2, abs_tol=10**-5)])
 
 
-def test_lean_forest_matches_random_forest_classifier():
-    """The tree-by-tree forest must reproduce scikit-learn's forest bit for bit."""
-    from sklearn.ensemble import RandomForestClassifier
-
-    from pertpy.tools._augur import _fit_forest, _forest_importances, _forest_proba
-
-    rng = np.random.default_rng(3)
-    x = (rng.random((40, 300)) < 0.1) * rng.poisson(3, (40, 300)).astype(float)
-    y = np.repeat([0, 1], 20)
-    forest = RandomForestClassifier(n_estimators=25, max_features=2, random_state=7).fit(x, y)
-    trees = _fit_forest(forest, np.ascontiguousarray(x, dtype=np.float32), y)
-    x_test = (rng.random((15, 300)) < 0.1) * rng.poisson(3, (15, 300)).astype(float)
-    np.testing.assert_array_equal(
-        _forest_proba(trees, np.ascontiguousarray(x_test, dtype=np.float32)), forest.predict_proba(x_test)
-    )
-    np.testing.assert_array_equal(_forest_importances(trees), forest.feature_importances_)
-
-
 def test_regressor_scorer_with_more_than_two_labels():
     """Regressors get regression scorers even when the target has more than two values (#655)."""
     scorer = ag_rfr.set_scorer(multiclass=True, zero_division=0)

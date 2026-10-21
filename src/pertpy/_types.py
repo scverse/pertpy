@@ -11,6 +11,14 @@ SpBase = sparse.spmatrix
 
 RandomStateLike = int | np.random.Generator | np.random.RandomState | None
 
+
+def _sklearn_random_state(random_state: RandomStateLike) -> int | np.random.RandomState | None:
+    """Normalize a random state to something scikit-learn accepts (an int, a ``RandomState`` or ``None``)."""
+    if isinstance(random_state, np.random.Generator):
+        return int(random_state.integers(np.iinfo(np.int32).max))
+    return random_state
+
+
 RankGenesMethod = Literal["logreg", "t-test", "wilcoxon", "t-test_overestim_var"]
 
 
