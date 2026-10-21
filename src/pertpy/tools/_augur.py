@@ -1135,30 +1135,22 @@ class Augur:
         delta = augur_score1.merge(augur_score2, on=["cell_type"], suffixes=("1", "2")).assign(
             delta_augur=lambda x: x.mean_augur_score2 - x.mean_augur_score1
         )
-
-        # delta between permutation scores
-        delta_rnd = sampled_df.assign(delta_rnd=lambda x: x.mean2 - x.mean1)
-
-        # number of values where permutations are larger than test statistic
-        delta["b"] = (
-            pd.merge(
-                delta_rnd[["cell_type", "delta_rnd"]], delta[["cell_type", "delta_augur"]], on="cell_type", how="left"
-            )
-            .assign(b=lambda x: x.delta_rnd >= x.delta_augur)
-            .groupby("cell_type", as_index=False)
-            .sum()["b"]
+        # delta between permutation scores, summarized per cell type
+        permuted = sampled_df.assign(delta_rnd=lambda x: x.mean2 - x.mean1).merge(
+            delta[["cell_type", "delta_augur"]], on="cell_type"
         )
+        permuted["exceeds"] = permuted["delta_rnd"] >= permuted["delta_augur"]
+        null = permuted.groupby("cell_type").agg(
+            b=("exceeds", "sum"), mean_rnd=("delta_rnd", "mean"), sd_rnd=("delta_rnd", "std")
+        )
+        delta = delta.merge(null, left_on="cell_type", right_index=True)
         delta["m"] = n_permutations
-        delta["z"] = (
-            delta["delta_augur"] - delta_rnd.groupby("cell_type", as_index=False).mean()["delta_rnd"]
-        ) / delta_rnd.groupby("cell_type", as_index=False).std()["delta_rnd"]
-
+        delta["z"] = (delta["delta_augur"] - delta["mean_rnd"]) / delta["sd_rnd"]
         delta["pval"] = np.minimum(
             2 * (delta["b"] + 1) / (delta["m"] + 1), 2 * (delta["m"] - delta["b"] + 1) / (delta["m"] + 1)
         )
         delta["padj"] = fdrcorrection(delta["pval"])[1]
-
-        return delta
+        return delta.drop(columns=["mean_rnd", "sd_rnd"])
 
     @_doc_params(common_plot_args=doc_common_plot_args)
     def plot_dp_scatter(  # pragma: no cover # noqa: D417

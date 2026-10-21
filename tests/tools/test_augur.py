@@ -204,3 +204,32 @@ def test_differential_prioritization():
     a, permut2 = ag.predict(adata, augur_mode="permute", n_threads=4, n_subsamples=100, random_state=42)
     delta = ag.predict_differential_prioritization(results1, results2, permut1, permut2)
     assert not np.isnan(delta["z"]).any()
+
+
+def test_differential_prioritization_aligns_cell_types():
+    """b and z must belong to the cell type of the row, whatever the row order."""
+    rng = np.random.default_rng(0)
+
+    def results(scores: dict[str, float], n: int) -> dict:
+        full = pd.DataFrame(
+            {
+                "cell_type": np.repeat(list(scores), n * 3),
+                "idx": np.tile(np.repeat(np.arange(n), 3), len(scores)),
+                "augur_score": np.concatenate([rng.normal(s, 0.02, n * 3) for s in scores.values()]),
+            }
+        )
+        return {
+            "summary_metrics": pd.DataFrame({ct: {"mean_augur_score": s} for ct, s in scores.items()}),
+            "full_results": full,
+        }
+
+    ag = pt.tl.Augur("random_forest_classifier")
+    delta = ag.predict_differential_prioritization(
+        results({"zeta": 0.5, "alpha": 0.5}, 1),
+        results({"zeta": 0.9, "alpha": 0.2}, 1),
+        results({"zeta": 0.5, "alpha": 0.5}, 100),
+        results({"zeta": 0.5, "alpha": 0.5}, 100),
+        n_permutations=200,
+    ).set_index("cell_type")
+    assert delta.loc["zeta", "b"] == 0 and delta.loc["zeta", "z"] > 10
+    assert delta.loc["alpha", "b"] == 200 and delta.loc["alpha", "z"] < -10
