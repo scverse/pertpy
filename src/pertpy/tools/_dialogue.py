@@ -561,6 +561,7 @@ class Dialogue:
         anova_alpha: Per-feature ANOVA significance threshold for filtering uninformative components (R's ``p.anova``).
         winsorize_quantile: Tail clipping fraction applied to pseudobulk components (R's ``cap.mat`` parameter).
         n_permutations: Number of PMD fits in the empirical test, the observed one plus ``n_permutations - 1`` on sample-permuted matrices (R's ``n1`` in ``DIALOGUE1.PMD.empirical``).
+            At least 11 are needed for any pair to pass the default ``empirical_alpha``.
         empirical_alpha: P-value threshold below which a program is considered shared between a pair of cell types (R's implicit ``< 0.1``).
         use_tme_qc: If True, add ``tme_qc`` (partner-celltype per-sample average of ``cell_quality_key``) as an additional HLM covariate (R default).
         additional_covariates: Extra ``adata.obs`` columns to include as HLM covariates.
