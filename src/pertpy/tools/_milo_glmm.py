@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, NamedTuple
 
@@ -13,43 +12,8 @@ from scipy import stats
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-_RANDOM_EFFECT = re.compile(r"\(\s*1\s*\|\s*([^)]+?)\s*\)")
 _LOG_2PI = float(np.log(2 * np.pi))
 _LOG_DISPERSION_BOUNDS = (float(np.log(1e-6)), float(np.log(1e3)))
-
-
-def parse_random_effects(design: str) -> tuple[str, list[str]]:
-    """Split a formula into its fixed effects part and the variables entering as random intercepts.
-
-    Random intercepts follow the ``(1 | variable)`` syntax of lme4 and R Milo.
-
-    Returns:
-        The formula with the random effect terms removed and the random intercept variables.
-    """
-    if re.search(r"\|", _RANDOM_EFFECT.sub("", design)):
-        raise ValueError(f"{design!r} is an invalid formula for random effects. Use the '(1 | variable)' format.")
-
-    random_effects = [match.group(1).strip() for match in _RANDOM_EFFECT.finditer(design)]
-    fixed = _RANDOM_EFFECT.sub("", design)
-    fixed = re.sub(r"\+\s*(?=\+|$)", "", fixed).strip().rstrip("+").strip()
-    if fixed in {"", "~"}:
-        fixed = "~ 1"
-    return fixed, random_effects
-
-
-def random_effect_matrices(obs: pd.DataFrame, random_effects: Sequence[str]) -> list[tuple[str, np.ndarray]]:
-    """Build one indicator matrix of shape samples x levels per random intercept variable."""
-    matrices = []
-    for variable in random_effects:
-        if variable not in obs.columns:
-            raise ValueError(f"Random effect variable {variable!r} is not a column of the sample metadata.")
-        dummies = pd.get_dummies(obs[variable].astype("category"), drop_first=False)
-        if dummies.shape[1] < 2:
-            raise ValueError(
-                f"Random effect variable {variable!r} has a single level, which cannot be told apart from the intercept."
-            )
-        matrices.append((variable, dummies.to_numpy(dtype=float)))
-    return matrices
 
 
 class GLMMFit(NamedTuple):

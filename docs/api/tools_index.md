@@ -13,6 +13,7 @@
 Differential gene expression involves the quantitative comparison of gene expression levels between two or more groups,
 such as different cell types, tissues, or conditions to discern genes that are significantly up- or downregulated in response to specific biological contexts or stimuli.
 Pertpy enables differential gene expression tests through a common interface that supports complex designs.
+{class}`~pertpy.tools.Statsmodels` also fits linear mixed models with a random intercept, written as `(1 | donor)` in the design, to test single cells while accounting for the samples they come from.
 
 ```{eval-rst}
 .. autosummary::
@@ -25,7 +26,6 @@ Pertpy enables differential gene expression tests through a common interface tha
     tools.TTest
     tools.PermutationTest
     tools.Statsmodels
-    tools.LinearMixedModel
 ```
 
 Example implementation:

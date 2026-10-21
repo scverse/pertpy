@@ -15,7 +15,6 @@ from functools import singledispatch
 from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
-import numba
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -29,7 +28,9 @@ from scipy.optimize import nnls
 from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
+from pertpy._parallel import _numba_threads
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
+from pertpy.tools._mixed_models import _random_intercept_fits
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -413,188 +414,6 @@ def _iterative_nnls(
     return coef
 
 
-@njit(cache=True)
-def _solve_small(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """Solve ``a @ x = b`` by Gaussian elimination with partial pivoting, all NaN if ``a`` is singular to working precision."""
-    m = a.shape[0]
-    a = a.copy()
-    x = b.copy()
-    tol = 1e-7 * np.abs(np.diag(a))
-    for k in range(m):
-        piv = k + np.argmax(np.abs(a[k:, k]))
-        if not np.abs(a[piv, k]) > tol[k]:
-            return np.full(m, np.nan)
-        for j in range(m):
-            a[k, j], a[piv, j] = a[piv, j], a[k, j]
-        x[k], x[piv] = x[piv], x[k]
-        for i in range(k + 1, m):
-            f = a[i, k] / a[k, k]
-            a[i, k:] -= f * a[k, k:]
-            x[i] -= f * x[k]
-    for k in range(m - 1, -1, -1):
-        x[k] = (x[k] - np.sum(a[k, k + 1 :] * x[k + 1 :])) / a[k, k]
-    return x
-
-
-@njit(cache=True)
-def _random_intercept_gls(
-    within: np.ndarray, sums: np.ndarray, sizes: np.ndarray, gamma: float
-) -> tuple[np.ndarray, float, np.ndarray, np.ndarray]:
-    """GLS fit of a random-intercept model, given the ratio ``gamma`` of the random-intercept to the residual variance.
-
-    ``within`` holds the within-group cross-products and ``sums`` the per-group sums of the design columns followed by the response.
-    Returns the fixed effects, the generalized residual sum of squares, the generalized cross-products, and the per-group residual sums divided by ``1 + n_g * gamma``.
-    """
-    p = within.shape[0] - 1
-    shrink = 1.0 / (1.0 + sizes * gamma)
-    cross = within + (sums.T * (shrink / sizes)) @ sums
-    beta = _solve_small(cross[:p, :p], cross[:p, p].copy())
-    rss = cross[p, p] - np.sum(cross[:p, p] * beta)
-    resid = sums[:, p].copy()
-    for a in range(p):
-        resid -= sums[:, a] * beta[a]
-    return beta, rss, cross, resid * shrink
-
-
-@njit(cache=True)
-def _inverse_small(a: np.ndarray) -> np.ndarray:
-    """Inverse of ``a`` by solving against the identity, all NaN if ``a`` is singular to working precision."""
-    m = a.shape[0]
-    out = np.empty((m, m))
-    for j in range(m):
-        unit = np.zeros(m)
-        unit[j] = 1.0
-        out[:, j] = _solve_small(a, unit)
-    return out
-
-
-@njit(cache=True)
-def _random_intercept_slope(within: np.ndarray, sums: np.ndarray, sizes: np.ndarray, log_gamma: float) -> float:
-    """Derivative of the REML profile log-likelihood with respect to ``log(gamma)``."""
-    gamma = np.exp(log_gamma)
-    p = within.shape[0] - 1
-    _, rss, cross, resid = _random_intercept_gls(within, sums, sizes, gamma)
-    shrink = 1.0 / (1.0 + sizes * gamma)
-    design_sums = np.ascontiguousarray(sums[:, :p])
-    quad = np.sum((design_sums @ _inverse_small(cross[:p, :p])) * design_sums, axis=1)
-    return (
-        0.5 * gamma * ((sizes.sum() - p) * np.sum(resid**2) / rss - np.sum(sizes * shrink) + np.sum(shrink**2 * quad))
-    )
-
-
-@njit(cache=True)
-def _random_intercept_log_gamma(within: np.ndarray, sums: np.ndarray, sizes: np.ndarray) -> float:
-    """Maximize the REML profile log-likelihood over ``log(gamma)`` by bracketing a root of its slope from 0, then bisection.
-
-    Returns -inf if the maximum is on the boundary ``gamma = 0`` and NaN if the fit is degenerate.
-    """
-    a, fa = 0.0, _random_intercept_slope(within, sums, sizes, 0.0)
-    b, fb = a, fa
-    step = 2.0 if fa > 0 else -2.0
-    while fb != 0.0 and (fb > 0) == (fa > 0):
-        a, fa = b, fb
-        b += step
-        if b < -40.0:
-            return -np.inf
-        if b > 40.0 or not np.isfinite(fa):
-            return np.nan
-        fb = _random_intercept_slope(within, sums, sizes, b)
-    if not np.isfinite(fb):
-        return np.nan
-    mid = 0.5 * (a + b)
-    while fb != 0.0 and a != mid != b:
-        f_mid = _random_intercept_slope(within, sums, sizes, mid)
-        if (f_mid > 0) == (fa > 0):
-            a, fa = mid, f_mid
-        else:
-            b, fb = mid, f_mid
-        mid = 0.5 * (a + b)
-    return b if fb == 0.0 else mid
-
-
-@njit(cache=True)
-def _satterthwaite_df(  # noqa: PLR0917
-    sums: np.ndarray, sizes: np.ndarray, resid: np.ndarray, gamma: float, sigma2: float, inv: np.ndarray
-) -> float:
-    """Satterthwaite denominator degrees of freedom of the coefficient at index 1, as lmerTest computes them.
-
-    Uses the gradient of the coefficient's variance and the REML observed information, both with respect to ``(gamma, sigma2)``.
-    """
-    p = inv.shape[0]
-    shrink = 1.0 / (1.0 + sizes * gamma)
-    design_sums = np.ascontiguousarray(sums[:, :p])
-    scaled = design_sums @ inv
-    quad = np.sum(scaled * design_sums, axis=1)
-    v = np.zeros(p)
-    for g in range(sizes.shape[0]):
-        v += shrink[g] * resid[g] * design_sums[g]
-    pair_quad = np.outer(shrink, shrink) * (scaled @ np.ascontiguousarray(design_sums.T))
-    log_det_curvature = -np.sum((sizes * shrink) ** 2) - np.sum(pair_quad**2) + 2.0 * np.sum(sizes * shrink**3 * quad)
-    rss_curvature = 2.0 * np.sum(sizes * shrink * resid**2) - 2.0 * np.dot(v, inv @ v)
-    info_gg = 0.5 * (log_det_curvature + rss_curvature / sigma2)
-    info_gs = np.sum(resid**2) / (2.0 * sigma2**2)
-    info_ss = (sizes.sum() - p) / (2.0 * sigma2**2)
-    grad_g = sigma2 * np.sum(shrink**2 * scaled[:, 1] ** 2)
-    grad_s = inv[1, 1]
-    det = info_gg * info_ss - info_gs**2
-    denominator = (grad_g**2 * info_ss - 2.0 * grad_g * grad_s * info_gs + grad_s**2 * info_gg) / det
-    return 2.0 * (sigma2 * inv[1, 1]) ** 2 / denominator
-
-
-@njit(parallel=True, cache=True)
-def _random_intercept_fits(
-    x: np.ndarray, fixed: np.ndarray, groups: np.ndarray, n_groups: int
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """REML fits of ``fixed[:, -1] ~ fixed[:, 0] + x[i] + fixed[:, 1:-1] + (1 | groups)`` for every row ``x[i]``.
-
-    Returns the coefficients of ``x[i]``, their standard errors and their Satterthwaite degrees of freedom, like lmerTest's ``summary``.
-    """
-    n, n_fixed = fixed.shape
-    m = n_fixed + 1
-    p = m - 1
-    sizes = np.zeros(n_groups)
-    fixed_sums = np.zeros((n_groups, n_fixed))
-    for i in range(n):
-        sizes[groups[i]] += 1.0
-        for a in range(n_fixed):
-            fixed_sums[groups[i], a] += fixed[i, a]
-    centered = np.empty((n_fixed, n))
-    for i in range(n):
-        for a in range(n_fixed):
-            centered[a, i] = fixed[i, a] - fixed_sums[groups[i], a] / sizes[groups[i]]
-    cols = np.concatenate((np.zeros(1, dtype=np.int64), np.arange(2, m)))
-    within = np.zeros((m, m))
-    sums = np.zeros((n_groups, m))
-    for a in range(n_fixed):
-        sums[:, cols[a]] = fixed_sums[:, a]
-        for b in range(n_fixed):
-            within[cols[a], cols[b]] = centered[a] @ centered[b]
-    estimates = np.full(x.shape[0], np.nan)
-    std_errors = np.full(x.shape[0], np.nan)
-    dfs = np.full(x.shape[0], np.nan)
-    for row in prange(x.shape[0]):
-        row_within = within.copy()
-        row_sums = sums.copy()
-        for i in range(n):
-            row_sums[groups[i], 1] += x[row, i]
-        means = row_sums[:, 1] / sizes
-        for i in range(n):
-            row_within[1, 1] += (x[row, i] - means[groups[i]]) ** 2
-        for a in range(n_fixed):
-            row_within[1, cols[a]] = row_within[cols[a], 1] = x[row] @ centered[a]
-        log_gamma = _random_intercept_log_gamma(row_within, row_sums, sizes)
-        if np.isnan(log_gamma):
-            continue
-        gamma = np.exp(log_gamma)
-        beta, rss, cross, resid = _random_intercept_gls(row_within, row_sums, sizes, gamma)
-        inv = _inverse_small(cross[:p, :p])
-        sigma2 = rss / (n - p)
-        estimates[row] = beta[1]
-        std_errors[row] = np.sqrt(sigma2 * inv[1, 1])
-        dfs[row] = n - p if gamma == 0.0 else _satterthwaite_df(row_sums, sizes, resid, gamma, sigma2, inv)
-    return estimates, std_errors, dfs
-
-
 def _hlm_pvalue_per_row(
     expression: np.ndarray | pd.DataFrame,
     score: np.ndarray,
@@ -630,14 +449,10 @@ def _hlm_pvalue_per_row(
     dfs = np.full(expression.shape[0], np.nan)
     rows = ~np.isnan(expression).any(axis=1) & ~np.isnan(fixed).any()
     if rows.any():
-        n_threads = numba.get_num_threads()
-        numba.set_num_threads(min(n_threads, int(rows.sum())))
-        try:
+        with _numba_threads(int(rows.sum())):
             estimates[rows], std_errors[rows], dfs[rows] = _random_intercept_fits(
                 np.ascontiguousarray(expression[rows]), fixed, groups.astype(np.int64), len(labels)
             )
-        finally:
-            numba.set_num_threads(n_threads)
     pvalues = 2 * stats.t.sf(np.abs(estimates / std_errors), dfs)
     return pd.DataFrame(
         {"estimate": estimates, "std_error": std_errors, "df": dfs, "pvalue": pvalues}, index=gene_index

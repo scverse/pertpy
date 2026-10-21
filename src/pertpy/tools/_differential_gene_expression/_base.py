@@ -23,6 +23,7 @@ from pertpy._logger import logger
 from pertpy._types import CSBase, cast_dense, cast_frame
 from pertpy.tools import PseudobulkSpace
 from pertpy.tools._differential_gene_expression._checks import check_is_numeric_matrix
+from pertpy.tools._mixed_models import parse_random_effects
 
 # Colors are expressed relative to the surrounding text so that the summary renders on light and dark themes alike.
 # The table styles undo the borders, zebra stripes and centering that notebook frontends apply to rendered tables.
@@ -1023,12 +1024,15 @@ class MethodBase(ABC):
 
 
 class LinearModelBase(MethodBase):
+    _supports_random_effects = False
+
     def __init__(self, adata, design, *, mask=None, layer=None, **kwargs):
         """Initialize the method.
 
         Args:
             adata: AnnData object, usually pseudobulked.
             design: Model design. Can be either a design matrix, a formulaic formula.Formulaic formula in the format 'x + z' or '~x+z'.
+                Methods that support random effects accept random intercepts written as '(1 | variable)'.
             mask: A column in adata.var that contains a boolean mask with selected features.
             layer: Layer to use in fit(). If None, use the X array.
             **kwargs: Keyword arguments specific to the method implementation.
@@ -1039,7 +1043,14 @@ class LinearModelBase(MethodBase):
         from formulaic_contrasts import FormulaicContrasts
 
         self.formulaic_contrasts = None
+        self.random_effects: list[str] = []
         if isinstance(design, str):
+            design, self.random_effects = parse_random_effects(design)
+            if self.random_effects and not self._supports_random_effects:
+                raise ValueError(
+                    f"{type(self).__name__} does not support random effects such as '(1 | {self.random_effects[0]})'. "
+                    "Statsmodels fits linear mixed models with a random intercept."
+                )
             self.formulaic_contrasts = FormulaicContrasts(adata.obs, design)
             self.design = self.formulaic_contrasts.design_matrix
         else:
@@ -1060,7 +1071,9 @@ class LinearModelBase(MethodBase):
         fit_kwargs=MappingProxyType({}),
         test_kwargs=MappingProxyType({}),
     ):
-        design = cls._comparison_design(column, paired_by)
+        design = f"~{column}"
+        if paired_by is not None:
+            design += f"+{paired_by}"
         if isinstance(groups_to_compare, str):
             groups_to_compare = [groups_to_compare]
         model = cls(adata, design=design, mask=mask, layer=layer)
@@ -1076,14 +1089,6 @@ class LinearModelBase(MethodBase):
         )
 
         return de_res
-
-    @classmethod
-    def _comparison_design(cls, column: str, paired_by: str | None) -> str:
-        """Build the design formula used by `compare_groups`."""
-        design = f"~{column}"
-        if paired_by is not None:
-            design += f"+{paired_by}"
-        return design
 
     @property
     def variables(self):
@@ -1107,6 +1112,8 @@ class LinearModelBase(MethodBase):
         else:
             summary["Design"] = str(self.design.model_spec.formula)
             summary["Variables"] = _format_names(sorted(self.variables))
+            if self.random_effects:
+                summary["Random effects"] = _format_names(self.random_effects)
         if hasattr(self.design, "columns"):
             summary["Coefficients"] = _format_names([str(column) for column in self.design.columns])
         summary["Fitted"] = "yes" if self.is_fitted else "no"
