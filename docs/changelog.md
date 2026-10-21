@@ -9,7 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### ⚠️ Changed results
 
 * Dialogue reproduces the R reference end to end: REML mixed models with Satterthwaite t-tests like `lmerTest`, R's PMD penalty, permutation test and cell-type pruning, Pearson pre-selection of signature genes, one-sided gene p-values, and `test_phenotype_association` now follows `DIALOGUE.pheno` (first level or `True` as the indicator, pooled `All` row, no Fisher combination) ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+* Dialogue orders the shared samples like R's ICU collation, since that order decides the signs of the PMD initialization and with them the programs found ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
 * Dialogue's `min_cells_per_sample` defaults to R's 15 and only gates the ANOVA feature filter, which now raises below five retained features instead of keeping all of them; `n_permutations` counts the observed fit, so values below 11 cannot pass the default `empirical_alpha` ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+
+### ⚡ Performance
+
+* Dialogue runs the PMD iterations in a numba kernel (20x per fit) and solves the iterative NNLS on the normal equations, replacing the `sparsecca` dependency; whole runs take 3 to 13 s on 5k to 27k cells, about 2x faster than before with up to half the peak memory, where R needs 2 to 16 minutes ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
 
 ### 🐛 Bug Fixes
 

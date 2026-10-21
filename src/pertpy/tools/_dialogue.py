@@ -15,6 +15,7 @@ from functools import singledispatch
 from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
+import numba
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -23,8 +24,8 @@ from fast_array_utils.conv import to_dense
 from numba import njit, prange
 from scipy import sparse as sp
 from scipy import stats
+from scipy.linalg import svd
 from scipy.optimize import nnls
-from sparsecca import multicca_pmd
 from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
@@ -37,6 +38,15 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 _LOG2_PI = float(np.log(2.0 * np.pi))
+
+
+def _collation_key(name: str) -> tuple[tuple[tuple[int, str], ...], str]:
+    """Sort key approximating the ICU collation of R's ``sort``: punctuation before digits before letters, case-insensitive first and lowercase first on ties.
+
+    The order of the shared samples decides the signs of the PMD's SVD initialization and with them which local optimum it reaches, so it has to follow R.
+    """
+    primary = tuple((0, c) if not c.isalnum() else (1, c) if c.isdigit() else (2, c.lower()) for c in name)
+    return primary, name.swapcase()
 
 
 def _pseudobulk_per_sample(
@@ -116,6 +126,93 @@ def _center_scale_winsorize(matrix: np.ndarray, *, cap: float = 0.01) -> np.ndar
         hi = np.quantile(scaled, 1.0 - cap, axis=0, keepdims=True)
         scaled = np.clip(scaled, lo, hi)
     return scaled
+
+
+@njit(cache=True)
+def _soft_threshold_unit(vector: np.ndarray, bound: float) -> np.ndarray:
+    """Soft-threshold ``vector`` to unit L2 norm and L1 norm at most ``bound``, PMA's ``BinarySearch`` followed by ``soft``."""
+    norm = np.sqrt(np.sum(vector**2))
+    if norm == 0.0:
+        norm = 0.05
+    lam = 0.0
+    if norm != 0.0 and np.sum(np.abs(vector / norm)) > bound:
+        lam1, lam2 = 0.0, np.max(np.abs(vector)) - 1e-5
+        for _ in range(150):
+            soft = np.sign(vector) * np.maximum(np.abs(vector) - 0.5 * (lam1 + lam2), 0.0)
+            soft_norm = np.sqrt(np.sum(soft**2))
+            if soft_norm == 0.0:
+                soft_norm = 0.05
+            if np.sum(np.abs(soft / soft_norm)) < bound:
+                lam2 = 0.5 * (lam1 + lam2)
+            else:
+                lam1 = 0.5 * (lam1 + lam2)
+            if lam2 - lam1 < 1e-6:
+                break
+        lam = 0.5 * (lam1 + lam2)
+    soft = np.sign(vector) * np.maximum(np.abs(vector) - lam, 0.0)
+    soft_norm = np.sqrt(np.sum(soft**2))
+    if soft_norm == 0.0:
+        soft_norm = 0.05
+    return soft / soft_norm
+
+
+@njit(cache=True)
+def _multicca_iterate(cross: np.ndarray, inits: np.ndarray, penalties: np.ndarray, n_iter: int) -> np.ndarray:
+    """PMA's ``MultiCCA`` iterations for standardized data sets given their cross-products ``cross[i, j] = X_i' X_j`` and SVD initializations.
+
+    Data sets are zero-padded to a common number of features, which leaves every update unchanged.
+    """
+    n_sets, _, p_max, _ = cross.shape
+    n_components = inits.shape[2]
+    final = np.zeros((n_sets, p_max, n_components))
+    for comp in range(n_components):
+        ws = np.zeros((n_sets, p_max))
+        for i in range(n_sets):
+            ws[i] = inits[i, :, comp]
+        crit_old, crit, iteration = -10.0, -20.0, 0
+        while iteration < n_iter and abs(crit_old - crit) / abs(crit_old) > 0.001 and crit_old != 0.0:
+            crit_old = crit
+            crit = 0.0
+            for ii in range(1, n_sets):
+                for jj in range(ii):
+                    crit += ws[ii] @ (cross[ii, jj] @ ws[jj])
+            iteration += 1
+            for idx in range(n_sets):
+                total = np.zeros(p_max)
+                for jj in range(n_sets):
+                    if jj == idx:
+                        continue
+                    projected = final[idx].T @ (cross[idx, jj] @ final[jj])
+                    diagonal = np.zeros(n_components)
+                    for k in range(n_components):
+                        diagonal[k] = projected[k, k]
+                    total += cross[idx, jj] @ ws[jj] - final[idx] @ (diagonal * (final[jj].T @ ws[jj]))
+                ws[idx] = _soft_threshold_unit(total, penalties[idx])
+        for i in range(n_sets):
+            final[i, :, comp] = ws[i]
+    return final
+
+
+def _multicca(matrices: list[np.ndarray], penalties: np.ndarray, *, n_components: int, n_iter: int) -> list[np.ndarray]:
+    """Sparse multiple CCA by penalized matrix decomposition, PMA's ``MultiCCA(type = "standard", standardize = TRUE)``.
+
+    Returns one ``features x n_components`` weight matrix per data set.
+    """
+    standardized = []
+    for matrix in matrices:
+        centered = np.asarray(matrix, dtype=np.float64) - np.mean(matrix, axis=0)
+        std = centered.std(axis=0, ddof=1)
+        standardized.append(centered / np.where(std > 0, std, 1.0))
+    sizes = [m.shape[1] for m in standardized]
+    p_max = max(sizes)
+    cross = np.zeros((len(matrices), len(matrices), p_max, p_max))
+    inits = np.zeros((len(matrices), p_max, n_components))
+    for i, a in enumerate(standardized):
+        inits[i, : sizes[i]] = svd(a)[2][:n_components].T
+        for j, b in enumerate(standardized):
+            cross[i, j, : sizes[i], : sizes[j]] = a.T @ b
+    final = _multicca_iterate(cross, inits, np.asarray(penalties, dtype=np.float64), n_iter)
+    return [final[i, : sizes[i]] for i in range(len(matrices))]
 
 
 def _residualize(values: np.ndarray, covariates: np.ndarray) -> np.ndarray:
@@ -263,6 +360,16 @@ def _adjust_pvalues(pvalues: np.ndarray, method: str) -> np.ndarray:
     return out
 
 
+def _nnls(X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Non-negative least squares solved on the Cholesky factor of the normal equations, which has the same minimizer as the full problem whenever ``X`` has full column rank."""
+    gram = X.T @ X
+    try:
+        lower = np.linalg.cholesky(gram)
+    except np.linalg.LinAlgError:
+        return nnls(X, y)[0]
+    return nnls(lower.T, np.linalg.solve(lower, X.T @ y))[0]
+
+
 def _iterative_nnls(
     X: np.ndarray,
     y: np.ndarray,
@@ -291,7 +398,7 @@ def _iterative_nnls(
         if mask.sum() < minimum_features:
             continue
         x_sel = X[:, mask]
-        x_coef, _ = nnls(x_sel, y)
+        x_coef = _nnls(x_sel, y)
         coef[mask] = x_coef
         fit = x_sel @ x_coef
         y_fit = y_fit + fit
@@ -302,8 +409,7 @@ def _iterative_nnls(
     leftover = feature_rank < (buckets[-1] if buckets else 1.0)
     if leftover.sum() >= minimum_features:
         x_sel = X[:, leftover]
-        x_coef, _ = nnls(x_sel, y)
-        coef[leftover] = x_coef
+        coef[leftover] = _nnls(x_sel, y)
     return coef
 
 
@@ -524,9 +630,14 @@ def _hlm_pvalue_per_row(
     dfs = np.full(expression.shape[0], np.nan)
     rows = ~np.isnan(expression).any(axis=1) & ~np.isnan(fixed).any()
     if rows.any():
-        estimates[rows], std_errors[rows], dfs[rows] = _random_intercept_fits(
-            np.ascontiguousarray(expression[rows]), fixed, groups.astype(np.int64), len(labels)
-        )
+        n_threads = numba.get_num_threads()
+        numba.set_num_threads(min(n_threads, int(rows.sum())))
+        try:
+            estimates[rows], std_errors[rows], dfs[rows] = _random_intercept_fits(
+                np.ascontiguousarray(expression[rows]), fixed, groups.astype(np.int64), len(labels)
+            )
+        finally:
+            numba.set_num_threads(n_threads)
     pvalues = 2 * stats.t.sf(np.abs(estimates / std_errors), dfs)
     return pd.DataFrame(
         {"estimate": estimates, "std_error": std_errors, "df": dfs, "pvalue": pvalues}, index=gene_index
@@ -749,7 +860,7 @@ class Dialogue:
         shared = set.intersection(*[set(pb.index) for pb in pseudobulks.values()])
         if len(shared) < 5:
             raise ValueError(f"Only {len(shared)} samples are present in all cell types; DIALOGUE needs at least 5.")
-        return sorted(shared)
+        return sorted(shared, key=_collation_key)
 
     def _center(self, pseudobulk: pd.DataFrame) -> pd.DataFrame:
         scaled = _center_scale_winsorize(pseudobulk.to_numpy(), cap=self.winsorize_quantile)
@@ -758,15 +869,7 @@ class Dialogue:
     def _fit_pmd(self, matrices: list[np.ndarray]) -> list[np.ndarray]:
         """Penalized multi-CCA weights with R's penalty ``sqrt(ncol(X[[1]])) / 2`` for every matrix."""
         penalties = np.full(len(matrices), np.sqrt(matrices[0].shape[1]) / 2.0)
-        weights, _ = multicca_pmd(
-            matrices,
-            penalties,
-            K=self.n_programs,
-            standardize=True,
-            niter=100,
-            mimic_R=True,
-        )
-        return weights
+        return _multicca(matrices, penalties, n_components=self.n_programs, n_iter=100)
 
     def _empirical_pmd_pvalues(self, matrices: list[np.ndarray], celltypes: list[str]) -> pd.DataFrame:
         """Empirical p-values of the per-pair CCA score correlations, R's ``DIALOGUE1.PMD.empirical``.
@@ -867,7 +970,7 @@ class Dialogue:
             return out
         for program in empirical_p.index:
             members = list(celltypes)
-            ordered = sorted(celltypes)
+            ordered = sorted(celltypes, key=_collation_key)
             significant = pd.DataFrame(np.eye(len(celltypes), dtype=bool), index=ordered, columns=ordered)
             program_p = empirical_p.loc[program].to_numpy(dtype=np.float64)
             for value, (i, j) in zip(program_p, _pair_indices(len(celltypes)), strict=True):

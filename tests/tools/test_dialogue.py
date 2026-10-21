@@ -20,6 +20,7 @@ from pertpy.tools._dialogue import (
     Dialogue,
     _anova_filter_features,
     _center_scale_winsorize,
+    _collation_key,
     _column_anova,
     _hlm_pvalue_per_row,
     _iterative_nnls,
@@ -190,6 +191,43 @@ def test_top_correlated_matches_r_get_top_cor():
     up, down = _top_correlated(values, q=5, min_ci=0.05)
     assert up.sum() == 3
     assert down.sum() == 2
+
+
+def test_collation_key_matches_r_sort():
+    """Expected order from R 4.5.3 with ICU collation, which decides the sample order and with it the PMD solution."""
+    names = [
+        "AP10_D0",
+        "AP1_D0",
+        "patient_1015_ctrl",
+        "patient_101_ctrl",
+        "b",
+        "B",
+        "a",
+        "N7",
+        "N10",
+        "CD14+ Monocytes",
+        "CD4 T cells",
+        "s1-a",
+        "s1a",
+        "S1a",
+    ]
+    expected = [
+        "a",
+        "AP1_D0",
+        "AP10_D0",
+        "b",
+        "B",
+        "CD14+ Monocytes",
+        "CD4 T cells",
+        "N10",
+        "N7",
+        "patient_101_ctrl",
+        "patient_1015_ctrl",
+        "s1-a",
+        "s1a",
+        "S1a",
+    ]
+    assert sorted(names, key=_collation_key) == expected
 
 
 def test_ranksum_greater_pvalue_matches_r_wilcox_test():
