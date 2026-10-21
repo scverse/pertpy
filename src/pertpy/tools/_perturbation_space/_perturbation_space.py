@@ -31,13 +31,6 @@ if TYPE_CHECKING:
     from pertpy.tools._distances._distances import Metric
 
 
-def _sklearn_random_state(random_state: RandomStateLike) -> int | np.random.RandomState | None:
-    """Normalize a random state to something scikit-learn accepts (an int, a ``RandomState`` or ``None``)."""
-    if isinstance(random_state, np.random.Generator):
-        return int(random_state.integers(np.iinfo(np.int32).max))
-    return random_state
-
-
 def _resolve_matrix(adata: AnnData, *, layer_key: str | None, embedding_key: str | None) -> np.ndarray | CSBase:
     """Pick the cell-by-feature matrix from a layer, an obsm embedding, or ``.X``.
 

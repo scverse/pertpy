@@ -8,12 +8,8 @@ from anndata import AnnData
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-from pertpy._types import cast_frame, cast_matrix
-from pertpy.tools._perturbation_space._perturbation_space import (
-    PerturbationSpace,
-    _carry_constant_obs,
-    _sklearn_random_state,
-)
+from pertpy._types import _sklearn_random_state, cast_frame, cast_matrix
+from pertpy.tools._perturbation_space._perturbation_space import PerturbationSpace, _carry_constant_obs
 
 if TYPE_CHECKING:
     from pertpy._types import RandomStateLike
