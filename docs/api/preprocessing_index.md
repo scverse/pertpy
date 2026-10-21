@@ -34,7 +34,7 @@ gdo.layers["counts"] = gdo.X.copy()
 sc.pp.log1p(gdo)
 
 ga = pt.pp.GuideAssignment()
-ga.assign_by_threshold(gdo, 5, layer="counts", output_layer="assigned_guides")
+ga.assign_by_threshold(gdo, assignment_threshold=5, layer="counts", output_layer="assigned_guides")
 
 ga.plot_heatmap(gdo, layer="assigned_guides")
 ```

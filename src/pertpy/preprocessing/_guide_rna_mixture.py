@@ -1,28 +1,33 @@
 """Poisson-Gaussian mixture model for gRNA assignment.
 
-Reimplements the model of ``crispat.ga_poisson_gauss`` (Velten group) in JAX/optax.
-The priors, log-density, and per-guide thresholding rule match crispat so that output is directly comparable, while MAP estimation runs for every guide in parallel via ``jax.vmap`` and ``jax.lax.scan``.
-
-Reference: https://github.com/velten-group/crispat
+Implements the model of ``crispat.ga_poisson_gauss`` (Velten group, https://github.com/velten-group/crispat).
+For every guide, the log2 of its non-zero UMI counts is modelled as a mixture of a continuous Poisson background and a Gaussian on-target component with priors ``weights ~ Dirichlet([0.9, 0.1])``, ``mu ~ Normal(3, 2)``, ``scale ~ LogNormal(2, 1)`` and ``lam ~ LogNormal(0, 1)``.
+The MAP estimate is found by multi-start EM on the unique count values of every guide, run for all guides in parallel with JAX, where crispat runs one stochastic variational inference loop per guide.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import partial
 
 import jax
 import jax.numpy as jnp
 import numpy as np
-import optax
-from jax.scipy.special import gammaln, logsumexp
+from jax.scipy.special import gammaln
 from scipy.special import gammaln as _np_gammaln
 
 _LOG_SQRT_2PI = 0.5 * float(np.log(2.0 * np.pi))
+_SCALE_FLOOR = 1e-3
+_WEIGHT_FLOOR = 1e-6
+_INIT_QUANTILES = (0.5, 0.75, 0.9, 0.97, 0.99)
+_PRIOR_INIT_SAMPLES = 15
+_NEWTON_STEPS = 12
+_CHUNK_ELEMENTS = 2**22
 
 
 @dataclass
 class PoissonGaussFit:
-    """MAP estimates for the Poisson-Gaussian mixture, one entry per guide."""
+    """MAP estimates for the Poisson-Gaussian mixture, one entry per guide and ``nan`` where no admissible solution exists."""
 
     poisson_rate: np.ndarray
     gaussian_mean: np.ndarray
@@ -31,148 +36,229 @@ class PoissonGaussFit:
     final_loss: np.ndarray
 
 
-def _log_poisson_pmf(x: jnp.ndarray, rate: jnp.ndarray) -> jnp.ndarray:
-    """Continuous Poisson log-density used by crispat: ``log(lam^x exp(-lam) / Gamma(x+1))``."""
-    return x * jnp.log(rate) - rate - gammaln(x + 1.0)
+def _neg_log_joint(
+    rate: jnp.ndarray,
+    mu: jnp.ndarray,
+    scale: jnp.ndarray,
+    w_norm: jnp.ndarray,
+    *,
+    values: jnp.ndarray,
+    weights: jnp.ndarray,
+    log_gamma: jnp.ndarray,
+) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Negative log joint of one guide on weighted unique values, with the Gaussian responsibilities.
 
-
-def _log_normal_pdf(x: jnp.ndarray, mean: jnp.ndarray, std: jnp.ndarray) -> jnp.ndarray:
-    return -_LOG_SQRT_2PI - jnp.log(std) - 0.5 * jnp.square((x - mean) / std)
-
-
-def _unpack(params: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    """Map unconstrained parameters to ``(rate, mu, scale, w_pois, w_norm)``."""
-    log_rate = params[..., 0]
-    mu = params[..., 1]
-    log_scale = params[..., 2]
-    logit_w_norm = params[..., 3]
-    rate = jnp.exp(log_rate)
-    scale = jnp.exp(log_scale)
-    w_norm = jax.nn.sigmoid(logit_w_norm)
-    w_pois = 1.0 - w_norm
-    return rate, mu, scale, w_pois, w_norm
-
-
-def _neg_log_joint_one(params: jnp.ndarray, data: jnp.ndarray, mask: jnp.ndarray) -> jnp.ndarray:
-    """Negative log joint for one guide.
-
-    ``data`` and ``mask`` have shape ``[N]``.
-    Priors match crispat: ``weights ~ Dirichlet([0.9, 0.1])``, ``mu ~ Normal(3, 2)``, ``scale ~ LogNormal(2, 1)``, ``lam ~ LogNormal(0, 1)``.
+    Additive prior constants are dropped.
     """
-    rate, mu, scale, w_pois, w_norm = _unpack(params)
-
-    log_pois = _log_poisson_pmf(data, rate)
-    log_norm = _log_normal_pdf(data, mu, scale)
-    log_mix = logsumexp(
-        jnp.stack([jnp.log(w_pois) + log_pois, jnp.log(w_norm) + log_norm], axis=-1),
-        axis=-1,
+    log_pois = values * jnp.log(rate) - rate - log_gamma
+    log_norm = -_LOG_SQRT_2PI - jnp.log(scale) - 0.5 * jnp.square((values - mu) / scale)
+    log_norm_weighted = jnp.log(w_norm) + log_norm
+    log_mix = jnp.logaddexp(log_norm_weighted, jnp.log1p(-w_norm) + log_pois)
+    log_prior = (
+        -0.1 * jnp.log1p(-w_norm)
+        - 0.9 * jnp.log(w_norm)
+        - 0.5 * jnp.square((mu - 3.0) / 2.0)
+        - jnp.log(scale)
+        - 0.5 * jnp.square(jnp.log(scale) - 2.0)
+        - jnp.log(rate)
+        - 0.5 * jnp.square(jnp.log(rate))
     )
-    log_lik = jnp.sum(jnp.where(mask, log_mix, 0.0))
-
-    # Log priors in the constrained space; additive constants dropped.
-    log_prior_w = (0.9 - 1.0) * jnp.log(w_pois) + (0.1 - 1.0) * jnp.log(w_norm)
-    log_prior_mu = -0.5 * jnp.square((mu - 3.0) / 2.0)
-    log_prior_scale = -jnp.log(scale) - 0.5 * jnp.square(jnp.log(scale) - 2.0)
-    log_prior_rate = -jnp.log(rate) - 0.5 * jnp.square(jnp.log(rate))
-
-    return -(log_lik + log_prior_w + log_prior_mu + log_prior_scale + log_prior_rate)
+    return -(jnp.sum(weights * log_mix) + log_prior), jnp.exp(log_norm_weighted - log_mix)
 
 
-_neg_log_joint_batched = jax.vmap(_neg_log_joint_one, in_axes=(0, 0, 0))
+def _solve_log_scale(sum_squares: jnp.ndarray, n_norm: jnp.ndarray) -> jnp.ndarray:
+    """MAP log scale of the Gaussian given its responsibility mass: the root of a convex decreasing function."""
+    log_floor = float(np.log(_SCALE_FLOOR))
+    v0 = 0.5 * jnp.log(jnp.maximum(sum_squares, 1e-12) / jnp.maximum(n_norm, 1e-12))
+
+    def step(_: int, v: jnp.ndarray) -> jnp.ndarray:
+        e = sum_squares * jnp.exp(-2.0 * v)
+        f = e - (v - 2.0) - n_norm - 1.0
+        return jnp.clip(v - f / (-2.0 * e - 1.0), log_floor, 10.0)
+
+    return jax.lax.fori_loop(0, _NEWTON_STEPS, step, jnp.clip(v0, log_floor, 10.0))
 
 
-def _total_loss(params: jnp.ndarray, data: jnp.ndarray, mask: jnp.ndarray) -> jnp.ndarray:
-    return jnp.sum(_neg_log_joint_batched(params, data, mask))
+def _solve_log_rate(sum_values: jnp.ndarray, n_pois: jnp.ndarray) -> jnp.ndarray:
+    """MAP log rate of the Poisson given its responsibility mass: the root of a concave decreasing function."""
+    l0 = jnp.log(jnp.maximum(sum_values, 1e-12) / jnp.maximum(n_pois, 1e-12))
+
+    def step(_: int, log_rate: jnp.ndarray) -> jnp.ndarray:
+        e = n_pois * jnp.exp(log_rate)
+        g = sum_values - 1.0 - log_rate - e
+        return jnp.clip(log_rate - g / (-1.0 - e), -20.0, 10.0)
+
+    return jax.lax.fori_loop(0, _NEWTON_STEPS, step, jnp.clip(l0, -20.0, 10.0))
 
 
-def _sample_init_params(key: jax.Array, n_guides: int) -> jnp.ndarray:
-    """Initial unconstrained params for one restart.
+def _em_step(
+    params: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    values: jnp.ndarray,
+    weights: jnp.ndarray,
+    log_gamma: jnp.ndarray,
+) -> tuple[tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray], jnp.ndarray]:
+    """One MAP-EM step; returns the updated parameters and the loss of the incoming ones."""
+    rate, mu, scale, w_norm = params
+    loss, resp = _neg_log_joint(rate, mu, scale, w_norm, values=values, weights=weights, log_gamma=log_gamma)
+    w_resp = weights * resp
+    w_rest = weights - w_resp
+    n_norm = w_resp.sum()
+    n_pois = w_rest.sum()
+    w_new = jnp.clip((n_norm - 0.9) / (n_norm + n_pois - 1.0), _WEIGHT_FLOOR, 1.0 - _WEIGHT_FLOOR)
+    precision = 1.0 / jnp.square(scale)
+    mu_new = ((w_resp * values).sum() * precision + 0.75) / (n_norm * precision + 0.25)
+    sum_squares = (w_resp * jnp.square(values - mu_new)).sum()
+    scale_new = jnp.maximum(jnp.exp(_solve_log_scale(sum_squares, n_norm)), _SCALE_FLOOR)
+    rate_new = jnp.exp(_solve_log_rate((w_rest * values).sum(), n_pois))
+    return (rate_new, mu_new, scale_new, w_new), loss
 
-    Continuous params start at their prior medians (Pyro's ``init_to_median`` default for Normal/LogNormal), with a small per-seed jitter for diversity across restarts.
-    The Dirichlet weight init uses the prior *mean* ``w_norm = 0.1`` instead of the median ~0.01: at the median, the sigmoid is saturated and the gradient vanishes, leaving borderline guides stuck at init.
-    Using the mean yields the same MAP for clearly-fittable guides while letting borderline ones escape the local mode.
+
+def _fit_one(
+    init: jnp.ndarray,
+    values: jnp.ndarray,
+    weights: jnp.ndarray,
+    log_gamma: jnp.ndarray,
+    *,
+    n_iter: int,
+    tol: float,
+) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    """Run EM from one initialisation until the loss stops changing."""
+    params = (init[0], init[1], init[2], init[3])
+    big = jnp.asarray(1e30, dtype=values.dtype)
+
+    def cond(carry):
+        _, previous, current, i = carry
+        return (i < n_iter) & (jnp.abs(previous - current) > tol * jnp.abs(current))
+
+    def body(carry):
+        params, _, current, i = carry
+        new_params, loss = _em_step(params, values, weights, log_gamma)
+        return new_params, current, loss, i + 1
+
+    params, _, _, _ = jax.lax.while_loop(cond, body, (params, jnp.asarray(jnp.inf, dtype=values.dtype), big, 0))
+    loss, _ = _neg_log_joint(*params, values=values, weights=weights, log_gamma=log_gamma)
+    return (*params, loss)
+
+
+def _prior_median_inits(key: jax.Array, n_guides: int, n_starts: int, dtype: jnp.dtype) -> jnp.ndarray:
+    """Initialisations as in crispat: prior medians for the continuous parameters and equal weights."""
+    k_rate, k_mu, k_scale = jax.random.split(key, 3)
+    shape = (n_starts, _PRIOR_INIT_SAMPLES, n_guides)
+    rate = jnp.exp(jnp.median(jax.random.normal(k_rate, shape, dtype=dtype), axis=1))
+    mu = jnp.median(3.0 + 2.0 * jax.random.normal(k_mu, shape, dtype=dtype), axis=1)
+    scale = jnp.exp(jnp.median(2.0 + jax.random.normal(k_scale, shape, dtype=dtype), axis=1))
+    w_norm = jnp.full((n_starts, n_guides), 0.5, dtype=dtype)
+    return jnp.stack([rate, mu, scale, w_norm], axis=-1)
+
+
+def _data_inits(values: jnp.ndarray, weights: jnp.ndarray) -> jnp.ndarray:
+    """Initialisations that split every guide at a quantile, Poisson below and Gaussian above."""
+    total = jnp.maximum(weights.sum(axis=1), 1.0)
+    cumulative = jnp.cumsum(weights, axis=1) / total[:, None]
+    inits = []
+    for q in _INIT_QUANTILES:
+        upper = (cumulative > q) & (weights > 0)
+        w_up = jnp.where(upper, weights, 0.0)
+        w_low = weights - w_up
+        n_up = w_up.sum(axis=1)
+        n_low = w_low.sum(axis=1)
+        rate = jnp.maximum((w_low * values).sum(axis=1) / jnp.maximum(n_low, 1.0), 0.05)
+        mu = jnp.where(n_up > 0, (w_up * values).sum(axis=1) / jnp.maximum(n_up, 1.0), values.max(axis=1))
+        variance = (w_up * jnp.square(values - mu[:, None])).sum(axis=1) / jnp.maximum(n_up, 1.0)
+        scale = jnp.maximum(jnp.sqrt(variance), 0.5)
+        w_norm = jnp.clip(n_up / total, 0.01, 0.9)
+        inits.append(jnp.stack([rate, mu, scale, w_norm], axis=-1))
+    return jnp.stack(inits)
+
+
+@partial(jax.jit, static_argnames=("n_init_seeds", "n_iter", "tol"))
+def _fit_chunk(
+    values: jnp.ndarray,
+    weights: jnp.ndarray,
+    key: jax.Array,
+    *,
+    n_init_seeds: int,
+    n_iter: int,
+    tol: float,
+) -> tuple[jnp.ndarray, ...]:
+    """Fit all starts of a chunk of guides and keep the admissible solution with the lowest loss per guide.
+
+    Label-switched optima (Gaussian below the Poisson) and solutions pinned at the weight or scale floor are inadmissible.
     """
-    n_inner = 10
-    k_lam, k_mu, k_scale, k_w = jax.random.split(key, 4)
-    log_rate_samples = jax.random.normal(k_lam, (n_inner, n_guides))
-    mu_samples = 3.0 + 2.0 * jax.random.normal(k_mu, (n_inner, n_guides))
-    log_scale_samples = 2.0 + jax.random.normal(k_scale, (n_inner, n_guides))
-
-    log_rate = jnp.median(log_rate_samples, axis=0)
-    mu = jnp.median(mu_samples, axis=0)
-    log_scale = jnp.median(log_scale_samples, axis=0)
-    # Prior mean for the Normal weight; jitter slightly per seed in [0.02, 0.5].
-    w_norm = jnp.clip(0.1 * jnp.exp(0.5 * jax.random.normal(k_w, (n_guides,))), 0.02, 0.5)
-    logit_w_norm = jnp.log(w_norm) - jnp.log1p(-w_norm)
-    return jnp.stack([log_rate, mu, log_scale, logit_w_norm], axis=-1)
+    log_gamma = gammaln(values + 1.0)
+    inits = jnp.concatenate(
+        [_prior_median_inits(key, values.shape[0], n_init_seeds, values.dtype), _data_inits(values, weights)]
+    )
+    fit_one = partial(_fit_one, n_iter=n_iter, tol=tol)
+    run = jax.vmap(jax.vmap(fit_one, in_axes=(0, 0, 0, 0)), in_axes=(0, None, None, None))
+    rate, mu, scale, w_norm, loss = run(inits, values, weights, log_gamma)
+    admissible = jnp.isfinite(loss) & (mu > rate) & (w_norm > 2 * _WEIGHT_FLOOR) & (scale > 2 * _SCALE_FLOOR)
+    best = jnp.argmin(jnp.where(admissible, loss, jnp.inf), axis=0)[None]
+    rate, mu, scale, w_norm, loss, ok = (
+        jnp.take_along_axis(a, best, axis=0)[0] for a in (rate, mu, scale, w_norm, loss, admissible)
+    )
+    return rate, mu, scale, w_norm, loss, ok
 
 
 def fit_poisson_gauss_mixture(
-    data: np.ndarray | jnp.ndarray,
-    mask: np.ndarray | jnp.ndarray,
+    values: np.ndarray,
+    weights: np.ndarray,
     *,
-    n_iter: int = 500,
-    learning_rate: float = 0.01,
+    n_iter: int = 1000,
     n_init_seeds: int = 10,
     seed: int = 2024,
+    tol: float = 1e-7,
 ) -> PoissonGaussFit:
-    """Fit Poisson-Gaussian mixtures for many guides in parallel via MAP/SVI.
+    """Fit Poisson-Gaussian mixtures for many guides in parallel by multi-start MAP-EM.
+
+    Guides are grouped by their number of distinct values and fit in chunks of bounded size, so peak memory does not grow with the number of guides.
 
     Args:
-        data: Log2-transformed gRNA counts of shape ``[G, N_max]``; padding entries are ignored via ``mask``.
-        mask: Boolean array of shape ``[G, N_max]`` marking valid (non-padded) cells.
-        n_iter: Optimizer steps; crispat uses 500 with early stopping but we run a fixed budget so the JAX scan can compile.
-        learning_rate: Adam learning rate (matches crispat's default of 0.01).
-        n_init_seeds: Number of prior-sampled inits; the best per guide is kept (matches crispat's 10-seed multi-start).
-        seed: Top-level RNG seed.
+        values: Sorted log2-transformed distinct non-zero counts per guide of shape ``[n_guides, n_values]``, zero padded.
+        weights: Number of cells with each value, zero for padding.
+        n_iter: Maximum EM iterations per start.
+        n_init_seeds: Number of prior-median initialisations per guide, used in addition to quantile-split initialisations.
+        seed: Random seed for the prior-median initialisations.
+        tol: Relative change of the loss below which EM stops.
 
     Returns:
         MAP estimates for all guides.
     """
-    data_arr = jnp.asarray(data, dtype=jnp.float32)
-    mask_arr = jnp.asarray(mask, dtype=jnp.bool_)
-    n_guides = data_arr.shape[0]
+    values = np.asarray(values, dtype=np.float32)
+    weights = np.asarray(weights, dtype=np.float32)
+    n_guides = values.shape[0]
+    n_starts = n_init_seeds + len(_INIT_QUANTILES)
+    n_values = (weights > 0).sum(axis=1)
+    bucket = np.ceil(np.log2(np.maximum(n_values, 2))).astype(int)
     key = jax.random.PRNGKey(seed)
 
-    # Multi-seed init: pick the candidate with lowest negative-log-joint per guide.
-    init_keys = jax.random.split(key, n_init_seeds)
-    candidate_params = jax.vmap(lambda k: _sample_init_params(k, n_guides))(init_keys)  # [S, G, 4]
-    candidate_losses = jax.vmap(lambda p: _neg_log_joint_batched(p, data_arr, mask_arr))(candidate_params)  # [S, G]
-    best_seed_per_guide = jnp.argmin(candidate_losses, axis=0)  # [G]
-    init_params = candidate_params[best_seed_per_guide, jnp.arange(n_guides)]  # [G, 4]
+    out = {name: np.full(n_guides, np.nan) for name in ("rate", "mu", "scale", "w_norm", "loss")}
+    for chunk_id, b in enumerate(np.unique(bucket)):
+        guides = np.flatnonzero(bucket == b)
+        width = min(2**b, values.shape[1])
+        rows = 2 ** int(np.ceil(np.log2(min(guides.size, max(_CHUNK_ELEMENTS // (n_starts * width), 1)))))
+        for part, chunk in enumerate(np.array_split(guides, int(np.ceil(guides.size / rows)))):
+            chunk_values = np.zeros((rows, width), dtype=np.float32)
+            chunk_weights = np.zeros((rows, width), dtype=np.float32)
+            chunk_values[: chunk.size] = values[chunk, :width]
+            chunk_weights[: chunk.size] = weights[chunk, :width]
+            chunk_key = jax.random.fold_in(key, chunk_id * 2**16 + part)
+            rate, mu, scale, w_norm, loss, ok = (
+                np.asarray(a)[: chunk.size]
+                for a in _fit_chunk(
+                    chunk_values, chunk_weights, chunk_key, n_init_seeds=n_init_seeds, n_iter=n_iter, tol=tol
+                )
+            )
+            fitted = chunk[ok]
+            for name, estimate in zip(out, (rate, mu, scale, w_norm, loss), strict=True):
+                out[name][fitted] = estimate[ok]
 
-    optimizer = optax.adam(learning_rate=learning_rate, b1=0.8, b2=0.99)
-    opt_state = optimizer.init(init_params)
-
-    grad_fn = jax.grad(_total_loss)
-
-    def step(carry, _):
-        params, opt_state, best_loss, best_params = carry
-        grads = grad_fn(params, data_arr, mask_arr)
-        updates, opt_state = optimizer.update(grads, opt_state, params)
-        new_params = optax.apply_updates(params, updates)
-        new_losses = _neg_log_joint_batched(new_params, data_arr, mask_arr)
-        improved = new_losses < best_loss
-        best_loss = jnp.where(improved, new_losses, best_loss)
-        best_params = jnp.where(improved[:, None], new_params, best_params)
-        return (new_params, opt_state, best_loss, best_params), None
-
-    init_carry = (
-        init_params,
-        opt_state,
-        _neg_log_joint_batched(init_params, data_arr, mask_arr),
-        init_params,
-    )
-    (_final_params, _opt_state, best_loss, best_params), _ = jax.lax.scan(step, init_carry, None, length=n_iter)
-
-    rate, mu, scale, w_pois, w_norm = _unpack(best_params)
-    mix_probs = jnp.stack([w_pois, w_norm], axis=-1)
     return PoissonGaussFit(
-        poisson_rate=np.asarray(rate),
-        gaussian_mean=np.asarray(mu),
-        gaussian_std=np.asarray(scale),
-        mix_probs=np.asarray(mix_probs),
-        final_loss=np.asarray(best_loss),
+        poisson_rate=out["rate"],
+        gaussian_mean=out["mu"],
+        gaussian_std=out["scale"],
+        mix_probs=np.stack([1.0 - out["w_norm"], out["w_norm"]], axis=-1),
+        final_loss=out["loss"],
     )
 
 
@@ -180,13 +266,13 @@ def compute_count_thresholds(fit: PoissonGaussFit, max_counts: np.ndarray) -> np
     """Per-guide assignment threshold matching crispat.
 
     For each guide, scans integer UMI counts ``t = 1, 2, ..., max_count`` and returns the smallest ``t`` for which ``P(Normal | log2(t)) > 0.5``.
-    Returns ``np.nan`` if no such ``t`` exists within ``max_count``.
+    Returns ``np.nan`` if no such ``t`` exists within ``max_count`` or the guide has no fit.
     """
     max_counts = np.asarray(max_counts, dtype=np.int64)
     n_guides = len(fit.poisson_rate)
     thresholds = np.full(n_guides, np.nan, dtype=np.float64)
     for g, max_c in enumerate(max_counts):
-        if max_c < 1:
+        if max_c < 1 or np.isnan(fit.gaussian_mean[g]):
             continue
         counts = np.arange(1, int(max_c) + 1, dtype=np.float64)
         log_counts = np.log2(counts)

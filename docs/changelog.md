@@ -4,6 +4,82 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.5.0
+
+### ⚠️ Changed results
+
+* Dialogue reproduces the R reference end to end: REML mixed models with Satterthwaite t-tests like `lmerTest`, R's PMD penalty, permutation test and cell-type pruning, Pearson pre-selection of signature genes, one-sided gene p-values, and `test_phenotype_association` now follows `DIALOGUE.pheno` (first level or `True` as the indicator, pooled `All` row, no Fisher combination) ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+* Dialogue orders the shared samples like R's ICU collation, since that order decides the signs of the PMD initialization and with them the programs found ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+* Augur is reproducible by default: unseeded estimators and folds are seeded by the subsample index like R Augur, and `predict_differential_prioritization` draws its permuted means without replacement from a seeded generator, as R does ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
+* Dialogue's `min_cells_per_sample` defaults to R's 15 and only gates the ANOVA feature filter, which now raises below five retained features instead of keeping all of them; `n_permutations` counts the observed fit, so values below 11 cannot pass the default `empirical_alpha` ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+
+### ⚡ Performance
+
+* Augur scores each cross-validation fold in one pass over the forest instead of six scorer passes, skips scikit-learn's per-tree parameter validation and no longer ships the fitted trees back from the workers, with identical metrics and importances on seeded runs ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
+* Dialogue runs the PMD iterations in a numba kernel (20x per fit) and solves the iterative NNLS on the normal equations, replacing the `sparsecca` dependency; whole runs take 3 to 13 s on 5k to 27k cells, about 2x faster than before with up to half the peak memory, where R needs 2 to 16 minutes ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Augur encodes the condition labels after filtering to two conditions, so binary precision, recall and F1 are no longer NaN when the kept labels were not the first two; those metrics now take the first condition as the positive class like R Augur, `min_cells` defaults to `subsample_size` and applies per condition like R, data sets with fewer than 1000 features skip feature selection like R, per-cell `augur_score` is assigned by exact cell type match, and regressors use unstratified folds ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
+* Dialogue treated signed log10 p-value z-scores as normal z-scores in phase 3, which inflated strong genes, lost the up/down direction and dropped underflowing genes from the Fisher combination ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+
+## v1.4.0
+
+### 🚀 Features
+
+* Add signature reversal scoring to enrichment ([#1082](https://github.com/scverse/pertpy/pull/1082)) @daveringelberg
+* Add native Hill dose-response fitting ([#1097](https://github.com/scverse/pertpy/pull/1097)) @daveringelberg
+* Expose datasets as `pt.ds` in addition to `pt.dt` ([#1103](https://github.com/scverse/pertpy/pull/1103)) @Zethson
+* Make Milo differential abundance testing match R Milo, including the pydeseq2 solver ([#1109](https://github.com/scverse/pertpy/pull/1109), [#1110](https://github.com/scverse/pertpy/pull/1110)) @Zethson
+* Add `n_jobs` to `fit_dose_response` and `balance_classes` to `MLPClassifierSpace.compute` ([#1142](https://github.com/scverse/pertpy/pull/1142), [#1153](https://github.com/scverse/pertpy/pull/1153)) @Zethson
+* Seed the control gene sampling of `Enrichment.score` via `random_state` ([#1128](https://github.com/scverse/pertpy/pull/1128)) @Zethson
+* Accept `hdi_prob` in scCODA summaries with arviz 1.x ([#1159](https://github.com/scverse/pertpy/pull/1159)) @Zethson
+
+### ⚡ Performance
+
+Hot loops across all tools were vectorized or moved into numba kernels, with results verified against the previous implementation or the reference library on real data.
+
+* Distances: `DistanceTest` 35x, `ks_test` 27x, `pairwise` with `t_test`/`sym_kldiv` 9-13x, MMD without n x n kernel matrices, numba KDE for `mean_var_distribution`, exact NB2 fits for `nb_ll` ([#1118](https://github.com/scverse/pertpy/pull/1118), [#1134](https://github.com/scverse/pertpy/pull/1134), [#1135](https://github.com/scverse/pertpy/pull/1135)) @Zethson
+* Differential expression: Statsmodels contrasts 11-20x and batched OLS fits, sparse Wilcoxon and t-test kernels, vectorized `PermutationTest` statistic ([#1124](https://github.com/scverse/pertpy/pull/1124), [#1136](https://github.com/scverse/pertpy/pull/1136)) @Zethson
+* Milo: batched neighbourhood refinement and pydeseq2 likelihood-ratio fits (3-7x), numba GLMM fits (~34x) ([#1125](https://github.com/scverse/pertpy/pull/1125), [#1137](https://github.com/scverse/pertpy/pull/1137)) @Zethson
+* Dialogue: numba random-intercept fits (`test_celltype_pairs` 119 s to 0.9 s at 30k cells) ([#1124](https://github.com/scverse/pertpy/pull/1124), [#1133](https://github.com/scverse/pertpy/pull/1133)) @Zethson
+* Mixscape and Mixscale: sparse signature assembly, numba EM, one DE call per reference (`mixscale` 11x, `mixscape` 6x) ([#1140](https://github.com/scverse/pertpy/pull/1140), [#1143](https://github.com/scverse/pertpy/pull/1143)) @Zethson
+* Perturbation spaces, enrichment and metadata: `Enrichment.score` 88x, `label_transfer` 19x, `CellLine.correlate` 6x, chunked MLP training, parallel PubChem lookups ([#1139](https://github.com/scverse/pertpy/pull/1139), [#1142](https://github.com/scverse/pertpy/pull/1142)) @Zethson
+* scCODA: `make_arviz` no longer simulates a discarded N x N counts tensor (minutes to under a second) ([#1138](https://github.com/scverse/pertpy/pull/1138)) @Zethson
+* Guide assignment 120x on sparse input and faster CINEMA-OT without N x N intermediates ([#1140](https://github.com/scverse/pertpy/pull/1140)) @Zethson
+
+### ⚠️ Changed results
+
+* Mixscape holds the control variance fixed during EM as Seurat does; about 0.4% of KO/NP calls change on Papalexi 2021 ([#1144](https://github.com/scverse/pertpy/pull/1144)) @Zethson
+* Euclidean e-distance and mean pairwise distance average over all n^2 cell pairs, so `Distance.__call__`, `pairwise` and `DistanceTest` agree ([#1151](https://github.com/scverse/pertpy/pull/1151)) @Zethson
+* `Distance.bootstrap` resamples the second group with its own size ([#1152](https://github.com/scverse/pertpy/pull/1152)) @Zethson
+* scGen `batch_removal` applies its latent correction, which was previously discarded ([#1119](https://github.com/scverse/pertpy/pull/1119)) @Zethson
+* Dialogue p-values move slightly because the mixed-model fit converges where statsmodels' BFGS stopped early ([#1133](https://github.com/scverse/pertpy/pull/1133)) @Zethson
+* `nb_ll` fits the overdispersed genes that statsmodels silently dropped ([#1135](https://github.com/scverse/pertpy/pull/1135)) @Zethson
+* Wilcoxon, t-test, e-distance and MMD statistics on float32 input are accumulated in float64 ([#1134](https://github.com/scverse/pertpy/pull/1134), [#1136](https://github.com/scverse/pertpy/pull/1136)) @Zethson
+* `CellLine.correlate` computes every pair instead of mirroring the asymmetric matrix ([#1121](https://github.com/scverse/pertpy/pull/1121)) @Zethson
+* `evaluate_clustering` computes ASW on the cells instead of on rows of the distance matrix ([#1120](https://github.com/scverse/pertpy/pull/1120)) @Zethson
+* Adjusted p-values of the simple DE tests are kept when some variables have NaN p-values ([#1122](https://github.com/scverse/pertpy/pull/1122)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Keep scCODA and tascCODA working under numpyro 0.22 ([#1104](https://github.com/scverse/pertpy/pull/1104)) @Zethson
+* Use regression-appropriate scorers for Augur regressor estimators ([#1105](https://github.com/scverse/pertpy/pull/1105)) @Sizerta
+* Dialogue: use `additional_covariates`, handle degenerate genes and unused categorical levels ([#1132](https://github.com/scverse/pertpy/pull/1132), [#1156](https://github.com/scverse/pertpy/pull/1156)) @Zethson
+* Mixscape and Mixscale: `scale=False` on sparse layers, `epsilon` for every split, control labels with spaces, duplicate `obs_names` ([#1129](https://github.com/scverse/pertpy/pull/1129), [#1130](https://github.com/scverse/pertpy/pull/1130), [#1131](https://github.com/scverse/pertpy/pull/1131), [#1145](https://github.com/scverse/pertpy/pull/1145), [#1149](https://github.com/scverse/pertpy/pull/1149), [#1155](https://github.com/scverse/pertpy/pull/1155)) @Zethson
+* Distances: sparse MMD in `pairwise`, bounded memory, symmetric-matrix assumption, one-cell t-test groups ([#1150](https://github.com/scverse/pertpy/pull/1150), [#1154](https://github.com/scverse/pertpy/pull/1154)) @Zethson
+* Perturbation spaces: sparse `.X`, pseudobulks keep obs columns that are NaN for some groups ([#1146](https://github.com/scverse/pertpy/pull/1146), [#1158](https://github.com/scverse/pertpy/pull/1158)) @Zethson
+* `CellLine.annotate_from_prism` matches drug names case-insensitively ([#1127](https://github.com/scverse/pertpy/pull/1127)) @Zethson
+* `Scgen.plot_reg_var_plot` on sparse `X`, scCODA tree plots after `save=`, deterministic `from_scanpy` column order ([#1160](https://github.com/scverse/pertpy/pull/1160), [#1161](https://github.com/scverse/pertpy/pull/1161), [#1162](https://github.com/scverse/pertpy/pull/1162)) @Zethson
+* Make the PubChem compound annotation test robust to outages ([#1111](https://github.com/scverse/pertpy/pull/1111)) @Zethson
+
+### 🧰 Maintenance
+
+* Require `scipy>=1.16` ([#1125](https://github.com/scverse/pertpy/pull/1125)) @Zethson
+* Switch the docs to the scverse.org domain and use the logo blue for links ([#1112](https://github.com/scverse/pertpy/pull/1112), [#1115](https://github.com/scverse/pertpy/pull/1115)) @flying-sheep, @Zethson
+* Remove type ignores made unused by numba 0.68 ([#1116](https://github.com/scverse/pertpy/pull/1116)) @Zethson
+* Bump the tutorials submodule ([#1163](https://github.com/scverse/pertpy/pull/1163)) @Zethson
+
 ## v1.3.0
 
 ### 🚀 Features

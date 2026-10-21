@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tempfile
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -494,16 +495,17 @@ class CompositionalModel2(ABC):
         )
 
     def summary_prepare(
-        self, sample_adata: AnnData, est_fdr: float = 0.05, **kwargs
+        self, sample_adata: AnnData, est_fdr: float = 0.05, hdi_prob: float | None = None, **kwargs
     ) -> tuple[pd.DataFrame, pd.DataFrame] | tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Generates summary dataframes for intercepts, effects and node-level effect (if using tree aggregation).
 
-        This function builds on and supports all functionalities from ``az.summary``.
+        This function builds on and supports all functionalities from :func:`arviz.summary`.
 
         Args:
             sample_adata: Anndata object with cell counts as sample_adata.X and covariates saved in sample_adata.obs.
             est_fdr: Desired FDR value.
-            kwargs: Passed to ``az.summary``
+            hdi_prob: Width of the highest density interval; if None, the :func:`arviz.summary` default interval is used.
+            kwargs: Passed to :func:`arviz.summary`
 
         Returns:
             Tuple[:class:pandas.DataFrame, :class:pandas.DataFrame] or Tuple[:class:pandas.DataFrame, :class:pandas.DataFrame, :class:pandas.DataFrame]: Intercept, effect and node-level DataFrames
@@ -565,6 +567,8 @@ class CompositionalModel2(ABC):
 
         arviz_data = self.make_arviz(sample_adata, num_prior_samples=0, use_posterior_predictive=False)
 
+        if hdi_prob is not None:
+            kwargs |= {"ci_prob": hdi_prob, "ci_kind": "hdi"}
         summ = az.summary(
             data=arviz_data,
             var_names=var_names,
@@ -620,8 +624,10 @@ class CompositionalModel2(ABC):
 
         # Give nice column names, remove unnecessary columns
         hdis = intercept_df.columns[intercept_df.columns.str.contains("hdi|eti")]
-        hdis_new = hdis.str.replace("hdi_", "HDI ").str.replace(
-            r"eti(\d+)_(lb|ub)", lambda m: f"ETI {m.group(1)}% {'lower' if m.group(2) == 'lb' else 'upper'}", regex=True
+        hdis_new = hdis.str.replace(
+            r"(hdi|eti)(\d+)_(lb|ub)",
+            lambda m: f"{m.group(1).upper()} {m.group(2)}% {'lower' if m.group(3) == 'lb' else 'upper'}",
+            regex=True,
         )
 
         # Calculate credible intervals if using classical spike-and-slab
@@ -2039,6 +2045,8 @@ class CompositionalModel2(ABC):
             tree.render(save, tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
         if return_fig:
             return tree, tree_style
+        if save:
+            return None
 
         return tree.render("%%inline", tree_style=tree_style, units=units, w=figsize[0], h=figsize[1], dpi=dpi)  # type: ignore
 
@@ -2209,12 +2217,12 @@ class CompositionalModel2(ABC):
             leaf_effs = leaf_effs.loc[leaf_name].reset_index()
             palette = ["blue" if Effect > 0 else "red" for Effect in leaf_effs["Effect"].tolist()]
 
-            dir_path = Path.cwd()
-            dir_path = Path(dir_path / "tree_effect.png")
-            tree2.render(dir_path.as_posix(), tree_style=tree_style, units="in")
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                tree_path = Path(tmp_dir) / "tree_effect.png"
+                tree2.render(tree_path.as_posix(), tree_style=tree_style, units="in")
+                img = mpimg.imread(tree_path)
             _, ax = plt.subplots(1, 2, figsize=(10, 10))
             sns.barplot(data=leaf_effs, x="Effect", y="Cell Type", palette=palette, ax=ax[1])
-            img = mpimg.imread(dir_path)
             ax[0].imshow(img)
             ax[0].get_xaxis().set_visible(False)
             ax[0].get_yaxis().set_visible(False)
@@ -2237,6 +2245,8 @@ class CompositionalModel2(ABC):
                 tree2.render(save, tree_style=tree_style, units=units)
             if return_fig:
                 return tree2, tree_style
+            if save:
+                return None
             width, height = figsize if figsize is not None else (None, None)
             return tree2.render("%%inline", tree_style=tree_style, units=units, w=width, h=height, dpi=dpi)
 
@@ -2719,7 +2729,7 @@ def from_scanpy(
         AnnData: A data set with cells aggregated to the (sample x cell type) level
     """
     sample_identifier = [sample_identifier] if isinstance(sample_identifier, str) else sample_identifier
-    covariate_obs = list(set(covariate_obs or []) | set(sample_identifier))
+    covariate_obs = list(dict.fromkeys([*sample_identifier, *(covariate_obs or [])]))
 
     if isinstance(sample_identifier, list):
         adata.obs = cast_frame(adata.obs).copy()
