@@ -378,12 +378,12 @@ class Augur:
             obs[y_columns] = obs[y_columns].sample(frac=1, random_state=random_state).values
             adata = AnnData(X=adata.X, obs=obs, var=cast_frame(adata.var))
 
-        if augur_mode == "velocity" or adata.n_vars < 1000:
+        if augur_mode == "velocity":
             features = adata.var_names.tolist()
         else:
-            # randomly sample features from highly variable genes
-            highly_variable_genes = adata.var_names[cast_frame(adata.var)["highly_variable"]].tolist()
-            features = random.sample(highly_variable_genes, floor(len(highly_variable_genes) * feature_perc))
+            features = adata.var_names[cast_frame(adata.var)["highly_variable"]].tolist()
+            if len(features) >= 1000:
+                features = random.sample(features, floor(len(features) * feature_perc))
 
         # randomly sample samples for each label
         return self.sample(
@@ -591,6 +591,8 @@ class Augur:
         zero_division: int | str,
     ) -> dict:
         """Perform cross validation on given subsample.
+
+        Binary precision, recall and F1 take class ``0`` as the positive class, so ``y_`` must be encoded from ``0`` as :meth:`load` does.
 
         Args:
             subsample: subsample of gene expression matrix of size subsample_size
