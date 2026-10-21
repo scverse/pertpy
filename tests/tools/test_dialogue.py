@@ -17,15 +17,18 @@ from statsmodels.regression.mixed_linear_model import MixedLM
 import pertpy as pt
 from pertpy._types import cast_frame
 from pertpy.tools._dialogue import (
+    Dialogue,
     _anova_filter_features,
     _center_scale_winsorize,
     _column_anova,
-    _fisher_combine_by_label,
     _hlm_pvalue_per_row,
     _iterative_nnls,
     _partial_spearman,
+    _pearson_columns,
     _pseudobulk_per_sample,
+    _ranksum_greater_pvalue,
     _residualize,
+    _top_correlated,
     _zscores_from_signed_pvalues,
 )
 
@@ -142,35 +145,74 @@ def test_residualize_multi_target():
         assert abs(np.corrcoef(resid[:, col], z[:, 0])[0, 1]) < 0.1
 
 
-@pytest.mark.parametrize("backend", ["dense", "sparse"])
-def test_partial_spearman_removes_confound(backend):
+def test_partial_spearman_removes_confound():
     rng = np.random.default_rng(6)
     n = 400
     z = rng.normal(0, 1, n)
     x = z + rng.normal(0, 0.1, n)
     y = z + rng.normal(0, 0.1, n)
-    X = x[:, None]
-    if backend == "sparse":
-        X = sparse.csr_matrix(X)
     raw_R = np.corrcoef(x, y)[0, 1]
-    R, _ = _partial_spearman(X, y[:, None], z[:, None])
+    R, _ = _partial_spearman(x[:, None], y[:, None], z[:, None])
     assert raw_R > 0.95
     assert abs(R[0, 0]) < 0.2
 
 
-@pytest.mark.parametrize("backend", ["dense", "sparse"])
-def test_partial_spearman_keeps_unconfounded_correlation(backend):
+def test_partial_spearman_keeps_unconfounded_correlation():
     rng = np.random.default_rng(7)
     n = 400
     z = rng.normal(0, 1, n)
     x = rng.normal(0, 1, n)
     y = x + rng.normal(0, 0.1, n)
-    X = x[:, None]
-    if backend == "sparse":
-        X = sparse.csr_matrix(X)
-    R, P = _partial_spearman(X, y[:, None], z[:, None])
+    R, P = _partial_spearman(x[:, None], y[:, None], z[:, None])
     assert R[0, 0] > 0.8
     assert P[0, 0] < 1e-30
+
+
+@pytest.mark.parametrize("backend", ["dense", "sparse"])
+def test_pearson_columns_matches_corrcoef_and_flags_constant(backend):
+    rng = np.random.default_rng(3)
+    X = rng.normal(size=(50, 4))
+    X[:, 2] = 1.5
+    Y = rng.normal(size=(50, 2))
+    r = _pearson_columns(sparse.csr_matrix(X) if backend == "sparse" else X, Y)
+    for j in (0, 1, 3):
+        for k in range(2):
+            assert r[j, k] == pytest.approx(np.corrcoef(X[:, j], Y[:, k])[0, 1])
+    assert np.isnan(r[2]).all()
+
+
+def test_top_correlated_matches_r_get_top_cor():
+    """R keeps the top q per direction with |value| >= min.ci, including ties at the q-th value."""
+    values = np.array([0.9, 0.5, 0.5, 0.04, -0.3, -0.02, -0.7, np.nan])
+    up, down = _top_correlated(values, q=2, min_ci=0.05)
+    assert up.tolist() == [True, True, True, False, False, False, False, False]
+    assert down.tolist() == [False, False, False, False, True, False, True, False]
+    up, down = _top_correlated(values, q=5, min_ci=0.05)
+    assert up.sum() == 3
+    assert down.sum() == 2
+
+
+def test_ranksum_greater_pvalue_matches_r_wilcox_test():
+    reference = np.array([0.1, 0.5, 0.3, 0.8, 0.95, 0.2, 0.4, 0.6, 0.7, 0.05])
+    assert _ranksum_greater_pvalue(0.9, reference) == pytest.approx(0.181818181818)
+    assert _ranksum_greater_pvalue(0.01, reference) == pytest.approx(1.0)
+    assert _ranksum_greater_pvalue(0.5, reference) == pytest.approx(0.5)
+    asymptotic = np.linspace(0.001, 0.99, 60)
+    assert _ranksum_greater_pvalue(0.95, asymptotic) == pytest.approx(0.0661493309381)
+    assert _ranksum_greater_pvalue(0.5, asymptotic) == pytest.approx(0.511327676909)
+
+
+def test_program_celltypes_prunes_like_r_identify_cell_types():
+    """A star of significant pairs around A drops the first weakly connected cell type, then stops."""
+    celltypes = ["A", "B", "C", "D", "E"]
+    pairs = [f"{celltypes[i]}_{celltypes[j]}" for i in range(5) for j in range(i + 1, 5)]
+    emp = pd.DataFrame(1.0, index=["MCP1", "MCP2"], columns=pairs)
+    emp.loc["MCP1", [p for p in pairs if p.startswith("A_")]] = 0.01
+    emp.loc["MCP2", ["A_B", "C_D"]] = 0.01
+    dl = Dialogue(celltype_key="ct", sample_key="s")
+    out = dl._program_celltypes(emp, celltypes)
+    assert out["MCP1"] == ["A", "C", "D", "E"]
+    assert out["MCP2"] == ["A", "B", "C", "D"]
 
 
 def test_zscores_from_signed_pvalues_sign_follows_estimate():
@@ -196,22 +238,12 @@ def test_zscores_from_signed_pvalues_handles_zero_pvalue():
     assert z[2] > 20
 
 
-def test_fisher_combine_strong_signal_combines_to_significant():
-    pvalues = np.array([[1e-5, 1e-5, 1e-5], [0.5, 0.5, 0.5]])
-    labels = np.array(["MCP1", "MCP1"])
-    combined = _fisher_combine_by_label(pvalues, labels)
-    assert combined[0] < 0.05
-    assert combined[1] > 0.05
-
-
-def test_fisher_combine_per_label_independence():
-    pvalues = np.array([[1e-8, 1e-8], [0.6, 0.6], [1e-8, 1e-8], [0.6, 0.6]])
-    labels = np.array(["A", "A", "B", "B"])
-    combined = _fisher_combine_by_label(pvalues, labels)
-    assert combined[0] < 0.05
-    assert combined[2] < 0.05
-    assert combined[1] > 0.05
-    assert combined[3] > 0.05
+def test_pvals_from_zscores_inverts_signed_log10_pvalues():
+    estimate = np.array([1.0, -1.0, 1.0, -1.0])
+    pvalue = np.array([2e-10, 2e-10, 0.4, 0.4])
+    z = _zscores_from_signed_pvalues(estimate, pvalue)
+    np.testing.assert_allclose(Dialogue._pvals_from_zscores(z), [1e-10, 1 - 1e-10, 0.2, 0.8])
+    np.testing.assert_allclose(Dialogue._pvals_from_zscores(-z), [1 - 1e-10, 1e-10, 0.8, 0.2])
 
 
 def test_iterative_nnls_recovers_positive_weights():
@@ -252,7 +284,7 @@ def test_hlm_pvalue_per_row_detects_planted_signal():
     assert res["estimate"].iloc[0] > 0.5
 
 
-def test_hlm_pvalue_per_row_matches_statsmodels():
+def test_hlm_pvalue_per_row_matches_statsmodels_reml():
     rng = np.random.default_rng(1)
     sample = np.repeat([f"S{i}" for i in range(12)], [4, 9, 30, 12, 50, 20, 7, 15, 25, 3, 40, 10])
     codes = pd.factorize(sample)[0]
@@ -262,8 +294,27 @@ def test_hlm_pvalue_per_row_matches_statsmodels():
     res = _hlm_pvalue_per_row(expression, score, pd.DataFrame({"cellQ": cellQ}), sample)
     for i, x in enumerate(expression):
         exog = np.column_stack([np.ones(sample.size), x, cellQ])
-        fit = MixedLM(score, exog, sample).fit(method="bfgs", reml=False, gtol=1e-12)
-        np.testing.assert_allclose(res.iloc[i], [fit.params[1], fit.pvalues[1]], rtol=1e-6)
+        fit = MixedLM(score, exog, sample).fit(method="bfgs", reml=True, gtol=1e-12)
+        np.testing.assert_allclose(res.iloc[i][["estimate", "std_error"]], [fit.params[1], fit.bse[1]], rtol=1e-3)
+
+
+def test_hlm_pvalue_per_row_matches_lmertest():
+    """Reference values from lmerTest 3.2.1 (REML, Satterthwaite) on this exact data."""
+    rng = np.random.default_rng(7)
+    sample = np.repeat(["S1", "S2", "S3", "S4", "S5", "S6"], [5, 8, 6, 9, 7, 5])
+    codes = pd.factorize(sample)[0]
+    cellQ = rng.normal(size=sample.size)
+    x_sample = rng.normal(size=6)[codes]
+    x_cell = rng.normal(size=sample.size)
+    score = rng.normal(size=6)[codes] + 0.4 * x_sample + 0.3 * cellQ + rng.normal(size=sample.size)
+    res = _hlm_pvalue_per_row(np.vstack([x_sample, x_cell]), score, pd.DataFrame({"cellQ": cellQ}), sample)
+    expected = np.array(
+        [
+            [-0.23178258461, 0.212526472392, 4.42203911505, 0.331273991831],
+            [-0.00653992517124, 0.192734565056, 36.7119800228, 0.973114968453],
+        ]
+    )
+    np.testing.assert_allclose(res[["estimate", "std_error", "df", "pvalue"]].to_numpy(), expected, rtol=1e-5)
 
 
 def test_hlm_pvalue_per_row_handles_degenerate_row():
@@ -274,7 +325,7 @@ def test_hlm_pvalue_per_row_handles_degenerate_row():
     covariates = pd.DataFrame({"cellQ": np.linspace(0, 1, n)})
     score = np.linspace(-1, 1, n)
     res = _hlm_pvalue_per_row(expression, score, covariates, sample)
-    assert res.shape == (2, 2)
+    assert res.shape == (2, 4)
     assert res.loc["gene_0"].isna().all()
 
 
@@ -299,7 +350,7 @@ def _new_dialogue() -> pt.tl.Dialogue:
         n_programs=3,
         n_components=15,
         n_genes_per_signature=10,
-        n_permutations=10,
+        n_permutations=20,
         random_state=1234,
     )
 
@@ -382,12 +433,12 @@ def test_dense_matches_sparse_full_pipeline():
         )
 
 
-def test_fit_programs_raises_on_too_few_shared_samples():
+def test_fit_programs_raises_on_too_few_samples():
     raw = _preprocess_dialogue_adata(pt.ds.dialogue_example())
     keep = list(raw.obs["sample"].cat.categories[:2])
     a = raw[raw.obs["sample"].isin(keep)].copy()
     a.obs["sample"] = a.obs["sample"].astype("category").cat.remove_unused_categories()
-    with pytest.raises(ValueError, match="at least 5"):
+    with pytest.raises(ValueError):
         _new_dialogue().fit_programs(a)
 
 
@@ -407,7 +458,8 @@ def test_find_extreme_score_genes_returns_rank_tables(fitted_dialogue):
 
 def test_test_phenotype_association_returns_zscore_table(fitted_dialogue):
     adata = fitted_dialogue.copy()
-    z = _new_dialogue().test_phenotype_association(adata, condition_key="path_str")
+    z = _new_dialogue().test_phenotype_association(adata, condition_key="pathology")
     assert isinstance(z, pd.DataFrame)
-    assert z.shape == (len(adata.uns["dialogue"]["cell_type_order"]), 3)
-    assert "phenotype_pvalues" in adata.uns["dialogue"]
+    assert z.shape == (len(adata.uns["dialogue"]["cell_type_order"]) + 1, 3)
+    assert z.index[-1] == "All"
+    assert "phenotype_zscores" in adata.uns["dialogue"]

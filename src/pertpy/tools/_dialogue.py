@@ -4,7 +4,7 @@ Re-implements the algorithm of Jerby-Arnon & Regev (2022), `livnatje/DIALOGUE <h
 
 The pipeline has three phases:
     1. ``fit_programs`` — pseudobulk per sample, filter informative features by ANOVA, center + winsorize, run penalized multiple-CCA, residualize on confounders, find program gene signatures by partial Spearman correlation.
-    2. ``test_celltype_pairs`` — for every ordered pair of cell types, fit a hierarchical linear model (``y ~ (1 | sample) + x + cell_quality + tme_qc``) of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes, producing signed z-scores.
+    2. ``test_celltype_pairs`` — for every pair of cell types, fit a hierarchical linear model (``y ~ (1 | sample) + x + cell_quality + tme_qc``) of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes by REML, producing signed log10 p-value z-scores from Satterthwaite t-tests as ``lmerTest`` does.
     3. ``refine_scores`` — aggregate per-gene HLM p-values across pairs via Fisher's method, fit a non-negative least-squares regression of CCA scores against retained genes, and write final per-cell program scores back to ``adata.obsm``.
 """
 
@@ -28,7 +28,7 @@ from sparsecca import multicca_pmd
 from statsmodels.stats.multitest import multipletests
 
 from pertpy._doc import _doc_params, doc_common_plot_args
-from pertpy._types import CSBase, cast_dense, cast_frame
+from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -138,37 +138,6 @@ def _residualize(values: np.ndarray, covariates: np.ndarray) -> np.ndarray:
     return values - design @ beta
 
 
-@singledispatch
-def _partial_spearman(X, Y, Z, *, batch_size: int = 2048):
-    """Partial Spearman correlation of every column of X against every column of Y, controlling for Z.
-
-    Returns ``(R, P)`` arrays of shape ``[X_cols, Y_cols]``.
-    Matches R's ``ppcor::pcor.mat`` with the Spearman method as used by ``DIALOGUE::pcor.mat``.
-    Dispatches on dense ``np.ndarray`` and sparse ``scipy.sparse`` matrices.
-    The sparse branch processes column blocks of ``batch_size`` so the full gene-by-cell matrix is never materialized.
-    """
-    raise NotImplementedError(f"Unsupported X type: {type(X)!r}")
-
-
-def _prepare_partial_targets(Y: np.ndarray, Z: np.ndarray) -> tuple[np.ndarray, np.ndarray, int, int]:
-    """Compute the rank-residualized + standardized target ``Ys`` and the design matrix used to residualize X column blocks."""
-    Y = np.asarray(Y, dtype=np.float64)
-    Z = np.asarray(Z, dtype=np.float64)
-    if Z.ndim == 1:
-        Z = Z[:, None]
-    n = Y.shape[0]
-    if Z.shape[0] != n:
-        raise ValueError("Y and Z must have the same number of rows")
-    Y_rank = pd.DataFrame(Y).rank().to_numpy()
-    Z_rank = pd.DataFrame(Z).rank().to_numpy()
-    design = np.column_stack([np.ones(n), Z_rank])
-    Yr = Y_rank - design @ np.linalg.lstsq(design, Y_rank, rcond=None)[0]
-    Y_std = np.where(Yr.std(0, ddof=1) > 0, Yr.std(0, ddof=1), 1.0)
-    Ys = (Yr - Yr.mean(0)) / Y_std
-    df = max(n - 2 - Z_rank.shape[1], 1)
-    return Ys, design, n, df
-
-
 @njit(parallel=True, cache=True)
 def _rank_columns(x: np.ndarray) -> np.ndarray:
     """Average ranks within each column of ``x``, keeping NaNs like :meth:`pandas.DataFrame.rank`."""
@@ -190,42 +159,82 @@ def _rank_columns(x: np.ndarray) -> np.ndarray:
     return ranks
 
 
-def _partial_spearman_block(
-    X_block: np.ndarray, Ys: np.ndarray, design: np.ndarray, n: int, df: int
-) -> tuple[np.ndarray, np.ndarray]:
-    X_rank = _rank_columns(np.ascontiguousarray(X_block, dtype=np.float64))
-    Xr = X_rank - design @ np.linalg.lstsq(design, X_rank, rcond=None)[0]
-    Xs = (Xr - Xr.mean(0)) / np.where(Xr.std(0, ddof=1) > 0, Xr.std(0, ddof=1), 1.0)
+def _partial_spearman(X: np.ndarray, Y: np.ndarray, Z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Partial Spearman correlation of every column of ``X`` against every column of ``Y``, controlling for ``Z``.
+
+    Returns ``(R, P)`` arrays of shape ``[X_cols, Y_cols]`` with the t-test p-values of ``ppcor::pcor.test``, as used by R's ``pcor.mat``.
+    """
+    X = np.asarray(X, dtype=np.float64)
+    Y = np.asarray(Y, dtype=np.float64)
+    Z = np.asarray(Z, dtype=np.float64)
+    if Z.ndim == 1:
+        Z = Z[:, None]
+    n = Y.shape[0]
+    if X.shape[0] != n or Z.shape[0] != n:
+        raise ValueError("X, Y and Z must have the same number of rows")
+    design = np.column_stack([np.ones(n), _rank_columns(np.ascontiguousarray(Z))])
+
+    def residual_standardized(values: np.ndarray) -> np.ndarray:
+        ranks = _rank_columns(np.ascontiguousarray(values))
+        resid = ranks - design @ np.linalg.lstsq(design, ranks, rcond=None)[0]
+        std = resid.std(0, ddof=1)
+        return (resid - resid.mean(0)) / np.where(std > 0, std, 1.0)
+
+    Xs = residual_standardized(X)
+    Ys = residual_standardized(Y)
+    df = max(n - 2 - Z.shape[1], 1)
     R = (Xs.T @ Ys) / (n - 1)
     t_stat = R * np.sqrt(df / np.clip(1 - R**2, 1e-30, None))
-    P = 2.0 * stats.t.sf(np.abs(t_stat), df=df)
-    return R, P
+    return R, 2.0 * stats.t.sf(np.abs(t_stat), df=df)
 
 
-@_partial_spearman.register(np.ndarray)
-def _partial_spearman_dense(X: np.ndarray, Y: np.ndarray, Z: np.ndarray, *, batch_size: int = 2048):
-    Ys, design, n, df = _prepare_partial_targets(Y, Z)
-    if X.shape[0] != n:
-        raise ValueError("X and Y must have the same number of rows")
-    return _partial_spearman_block(np.asarray(X, dtype=np.float64), Ys, design, n, df)
+def _pearson_columns(X: np.ndarray | CSBase, Y: np.ndarray) -> np.ndarray:
+    """Pearson correlation of every column of ``X`` with every column of ``Y``, NaN for constant columns like R's ``cor``."""
+    Y = np.asarray(Y, dtype=np.float64)
+    n = Y.shape[0]
+    Yc = Y - Y.mean(axis=0)
+    if sp.issparse(X):
+        mean_x = np.asarray(X.sum(axis=0, dtype=np.float64)).ravel() / n
+        sum_sq = np.asarray(X.multiply(X).sum(axis=0, dtype=np.float64)).ravel()
+        cross = np.asarray(X.T @ Yc, dtype=np.float64)
+    else:
+        Xd = np.asarray(X, dtype=np.float64)
+        mean_x = Xd.mean(axis=0)
+        sum_sq = np.einsum("ij,ij->j", Xd, Xd)
+        cross = Xd.T @ Yc
+    var_x = sum_sq - n * mean_x**2
+    constant = var_x <= 1e-10 * np.maximum(sum_sq, np.finfo(np.float64).tiny)
+    var_x = np.where(constant, 1.0, var_x)
+    r = cross / np.sqrt(np.outer(var_x, np.einsum("ij,ij->j", Yc, Yc)))
+    r[constant] = np.nan
+    return r
 
 
-@_partial_spearman.register(sp.spmatrix)
-def _partial_spearman_sparse(X: CSBase, Y: np.ndarray, Z: np.ndarray, *, batch_size: int = 2048):
-    Ys, design, n, df = _prepare_partial_targets(Y, Z)
-    if X.shape[0] != n:
-        raise ValueError("X and Y must have the same number of rows")
-    n_features = X.shape[1]
-    R_all = np.zeros((n_features, Ys.shape[1]), dtype=np.float64)
-    P_all = np.zeros((n_features, Ys.shape[1]), dtype=np.float64)
-    X_csc = X.tocsc()
-    for start in range(0, n_features, batch_size):
-        end = min(start + batch_size, n_features)
-        block = np.asarray(X_csc[:, start:end].toarray(), dtype=np.float64)
-        R, P = _partial_spearman_block(block, Ys, design, n, df)
-        R_all[start:end] = R
-        P_all[start:end] = P
-    return R_all, P_all
+def _top_correlated(values: np.ndarray, *, q: int, min_ci: float) -> tuple[np.ndarray, np.ndarray]:
+    """Boolean masks of the top ``q`` positive and the top ``q`` negative values with magnitude at least ``min_ci``, like R's ``get.top.cor``.
+
+    Ties at the ``q``-th value are kept, as in R.
+    """
+    values = np.asarray(values, dtype=np.float64)
+
+    def top(signed: np.ndarray) -> np.ndarray:
+        finite = signed[np.isfinite(signed)]
+        if finite.size == 0:
+            return np.zeros(signed.shape, dtype=bool)
+        cutoff = min(np.sort(finite)[min(q, finite.size) - 1], -abs(min_ci))
+        return np.isfinite(signed) & (signed <= cutoff)
+
+    return top(-values), top(values)
+
+
+def _ranksum_greater_pvalue(value: float, reference: np.ndarray) -> float:
+    """One-sided Wilcoxon rank-sum p-value that ``value`` exceeds ``reference``, choosing the exact or normal approximation like R's ``wilcox.test``."""
+    reference = reference[np.isfinite(reference)]
+    if not np.isfinite(value) or reference.size == 0:
+        return np.nan
+    exact = reference.size < 50 and np.unique(np.append(reference, value)).size == reference.size + 1
+    result = stats.mannwhitneyu([value], reference, alternative="greater", method="exact" if exact else "asymptotic")
+    return float(result.pvalue)
 
 
 def _zscores_from_signed_pvalues(estimate: np.ndarray, pvalue: np.ndarray) -> np.ndarray:
@@ -245,39 +254,13 @@ def _zscores_from_signed_pvalues(estimate: np.ndarray, pvalue: np.ndarray) -> np
     return z
 
 
-def _fisher_combine_by_label(pvalues: np.ndarray, labels: np.ndarray) -> np.ndarray:
-    """Fisher-combine p-values within each label group, returning one combined p-value per row.
-
-    ``pvalues`` shape ``[n_rows, n_columns]``; ``labels`` shape ``[n_rows]`` (program label per row).
-    Mirrors R's ``fisher.combine`` applied after ``p.adjust.mat.per.label`` over programs.
-    """
-    pvalues = np.asarray(pvalues, dtype=np.float64)
-    labels = np.asarray(labels)
-    adjusted = np.full_like(pvalues, np.nan)
-    for label in np.unique(labels):
-        mask = labels == label
-        block = pvalues[mask]
-        valid = ~np.isnan(block)
-        for j in range(block.shape[1]):
-            col = block[:, j]
-            mask_j = valid[:, j]
-            if mask_j.sum() < 1:
-                continue
-            adj = multipletests(col[mask_j], method="fdr_bh")[1]
-            full = np.full(col.shape, np.nan)
-            full[mask_j] = adj
-            block[:, j] = full
-        adjusted[mask] = block
-    combined = np.empty(adjusted.shape[0], dtype=np.float64)
-    for i, row in enumerate(adjusted):
-        finite = row[np.isfinite(row) & (row > 0)]
-        if finite.size == 0:
-            combined[i] = 1.0
-            continue
-        stat = -2.0 * np.log(finite).sum()
-        df = 2 * finite.size
-        combined[i] = float(stats.chi2.sf(stat, df=df))
-    return combined
+def _adjust_pvalues(pvalues: np.ndarray, method: str) -> np.ndarray:
+    """Adjust p-values with ``method``, leaving NaN entries in place like R's ``p.adjust``."""
+    out = np.full(pvalues.shape, np.nan)
+    valid = np.isfinite(pvalues)
+    if valid.any():
+        out[valid] = multipletests(pvalues[valid], method=method)[1]
+    return out
 
 
 def _iterative_nnls(
@@ -368,16 +351,34 @@ def _random_intercept_gls(
 
 
 @njit(cache=True)
+def _inverse_small(a: np.ndarray) -> np.ndarray:
+    """Inverse of ``a`` by solving against the identity, all NaN if ``a`` is singular to working precision."""
+    m = a.shape[0]
+    out = np.empty((m, m))
+    for j in range(m):
+        unit = np.zeros(m)
+        unit[j] = 1.0
+        out[:, j] = _solve_small(a, unit)
+    return out
+
+
+@njit(cache=True)
 def _random_intercept_slope(within: np.ndarray, sums: np.ndarray, sizes: np.ndarray, log_gamma: float) -> float:
-    """Derivative of the profile log-likelihood with respect to ``log(gamma)``."""
+    """Derivative of the REML profile log-likelihood with respect to ``log(gamma)``."""
     gamma = np.exp(log_gamma)
-    _, rss, _, resid = _random_intercept_gls(within, sums, sizes, gamma)
-    return 0.5 * gamma * (sizes.sum() * np.sum(resid**2) / rss - np.sum(sizes / (1.0 + sizes * gamma)))
+    p = within.shape[0] - 1
+    _, rss, cross, resid = _random_intercept_gls(within, sums, sizes, gamma)
+    shrink = 1.0 / (1.0 + sizes * gamma)
+    design_sums = np.ascontiguousarray(sums[:, :p])
+    quad = np.sum((design_sums @ _inverse_small(cross[:p, :p])) * design_sums, axis=1)
+    return (
+        0.5 * gamma * ((sizes.sum() - p) * np.sum(resid**2) / rss - np.sum(sizes * shrink) + np.sum(shrink**2 * quad))
+    )
 
 
 @njit(cache=True)
 def _random_intercept_log_gamma(within: np.ndarray, sums: np.ndarray, sizes: np.ndarray) -> float:
-    """Maximize the profile log-likelihood over ``log(gamma)`` by bracketing a root of its slope from 0, then bisection.
+    """Maximize the REML profile log-likelihood over ``log(gamma)`` by bracketing a root of its slope from 0, then bisection.
 
     Returns -inf if the maximum is on the boundary ``gamma = 0`` and NaN if the fit is degenerate.
     """
@@ -405,16 +406,46 @@ def _random_intercept_log_gamma(within: np.ndarray, sums: np.ndarray, sizes: np.
     return b if fb == 0.0 else mid
 
 
+@njit(cache=True)
+def _satterthwaite_df(  # noqa: PLR0917
+    sums: np.ndarray, sizes: np.ndarray, resid: np.ndarray, gamma: float, sigma2: float, inv: np.ndarray
+) -> float:
+    """Satterthwaite denominator degrees of freedom of the coefficient at index 1, as lmerTest computes them.
+
+    Uses the gradient of the coefficient's variance and the REML observed information, both with respect to ``(gamma, sigma2)``.
+    """
+    p = inv.shape[0]
+    shrink = 1.0 / (1.0 + sizes * gamma)
+    design_sums = np.ascontiguousarray(sums[:, :p])
+    scaled = design_sums @ inv
+    quad = np.sum(scaled * design_sums, axis=1)
+    v = np.zeros(p)
+    for g in range(sizes.shape[0]):
+        v += shrink[g] * resid[g] * design_sums[g]
+    pair_quad = np.outer(shrink, shrink) * (scaled @ np.ascontiguousarray(design_sums.T))
+    log_det_curvature = -np.sum((sizes * shrink) ** 2) - np.sum(pair_quad**2) + 2.0 * np.sum(sizes * shrink**3 * quad)
+    rss_curvature = 2.0 * np.sum(sizes * shrink * resid**2) - 2.0 * np.dot(v, inv @ v)
+    info_gg = 0.5 * (log_det_curvature + rss_curvature / sigma2)
+    info_gs = np.sum(resid**2) / (2.0 * sigma2**2)
+    info_ss = (sizes.sum() - p) / (2.0 * sigma2**2)
+    grad_g = sigma2 * np.sum(shrink**2 * scaled[:, 1] ** 2)
+    grad_s = inv[1, 1]
+    det = info_gg * info_ss - info_gs**2
+    denominator = (grad_g**2 * info_ss - 2.0 * grad_g * grad_s * info_gs + grad_s**2 * info_gg) / det
+    return 2.0 * (sigma2 * inv[1, 1]) ** 2 / denominator
+
+
 @njit(parallel=True, cache=True)
 def _random_intercept_fits(
     x: np.ndarray, fixed: np.ndarray, groups: np.ndarray, n_groups: int
-) -> tuple[np.ndarray, np.ndarray]:
-    """Maximum likelihood fits of ``fixed[:, -1] ~ fixed[:, 0] + x[i] + fixed[:, 1:-1] + (1 | groups)`` for every row ``x[i]``.
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """REML fits of ``fixed[:, -1] ~ fixed[:, 0] + x[i] + fixed[:, 1:-1] + (1 | groups)`` for every row ``x[i]``.
 
-    Returns the coefficients of ``x[i]`` and their standard errors from the observed information, like statsmodels' ``MixedLM``.
+    Returns the coefficients of ``x[i]``, their standard errors and their Satterthwaite degrees of freedom, like lmerTest's ``summary``.
     """
     n, n_fixed = fixed.shape
     m = n_fixed + 1
+    p = m - 1
     sizes = np.zeros(n_groups)
     fixed_sums = np.zeros((n_groups, n_fixed))
     for i in range(n):
@@ -434,6 +465,7 @@ def _random_intercept_fits(
             within[cols[a], cols[b]] = centered[a] @ centered[b]
     estimates = np.full(x.shape[0], np.nan)
     std_errors = np.full(x.shape[0], np.nan)
+    dfs = np.full(x.shape[0], np.nan)
     for row in prange(x.shape[0]):
         row_within = within.copy()
         row_sums = sums.copy()
@@ -449,18 +481,12 @@ def _random_intercept_fits(
             continue
         gamma = np.exp(log_gamma)
         beta, rss, cross, resid = _random_intercept_gls(row_within, row_sums, sizes, gamma)
-        shrink = 1.0 / (1.0 + sizes * gamma)
-        info = np.empty((m, m))
-        info[: m - 1, : m - 1] = n * cross[: m - 1, : m - 1] / rss
-        for a in range(m - 1):
-            info[a, m - 1] = info[m - 1, a] = n * np.sum(shrink * resid * row_sums[:, a]) / rss
-        info[m - 1, m - 1] = n * np.sum(sizes * shrink * resid**2) / rss - 0.5 * n * np.sum(resid**2) ** 2 / rss**2
-        info[m - 1, m - 1] -= 0.5 * np.sum((sizes * shrink) ** 2)
-        unit = np.zeros(m)
-        unit[1] = 1.0
+        inv = _inverse_small(cross[:p, :p])
+        sigma2 = rss / (n - p)
         estimates[row] = beta[1]
-        std_errors[row] = np.sqrt(_solve_small(info, unit)[1])
-    return estimates, std_errors
+        std_errors[row] = np.sqrt(sigma2 * inv[1, 1])
+        dfs[row] = n - p if gamma == 0.0 else _satterthwaite_df(row_sums, sizes, resid, gamma, sigma2, inv)
+    return estimates, std_errors, dfs
 
 
 def _hlm_pvalue_per_row(
@@ -471,8 +497,8 @@ def _hlm_pvalue_per_row(
 ) -> pd.DataFrame:
     """Hierarchical linear model per row: ``score ~ (1|sample) + x + covariates`` where ``x`` is each row of ``expression``.
 
-    Fitted by maximum likelihood, with Wald p-values from the observed information like statsmodels' ``MixedLM``.
-    Returns a DataFrame with ``estimate`` and ``pvalue`` columns indexed like ``expression.index``.
+    Fitted by REML with Satterthwaite t-tests, like ``lmerTest::lmer`` as DIALOGUE calls it.
+    Returns a DataFrame with ``estimate``, ``std_error``, ``df`` and ``pvalue`` columns indexed like ``expression.index``.
     """
     if isinstance(expression, pd.DataFrame):
         gene_index = expression.index
@@ -495,13 +521,16 @@ def _hlm_pvalue_per_row(
     fixed = np.column_stack([np.ones(n), dummies, score])
     estimates = np.full(expression.shape[0], np.nan)
     std_errors = np.full(expression.shape[0], np.nan)
+    dfs = np.full(expression.shape[0], np.nan)
     rows = ~np.isnan(expression).any(axis=1) & ~np.isnan(fixed).any()
     if rows.any():
-        estimates[rows], std_errors[rows] = _random_intercept_fits(
+        estimates[rows], std_errors[rows], dfs[rows] = _random_intercept_fits(
             np.ascontiguousarray(expression[rows]), fixed, groups.astype(np.int64), len(labels)
         )
-    pvalues = 2 * stats.norm.sf(np.abs(estimates / std_errors))
-    return pd.DataFrame({"estimate": estimates, "pvalue": pvalues}, index=gene_index)
+    pvalues = 2 * stats.t.sf(np.abs(estimates / std_errors), dfs)
+    return pd.DataFrame(
+        {"estimate": estimates, "std_error": std_errors, "df": dfs, "pvalue": pvalues}, index=gene_index
+    )
 
 
 @dataclass
@@ -528,14 +557,14 @@ class Dialogue:
         n_programs: Number of multicellular programs to fit (``k`` in the paper).
         feature_space_key: ``adata.obsm`` key for the pre-computed feature space (typically PCA).
         n_components: Number of components of the feature space to use.
-        n_genes_per_signature: Number of top-correlated genes kept per program signature (R's ``n.genes``).
+        n_genes_per_signature: Number of top-correlated genes kept per program signature and direction (R's ``n.genes``, 100 as in the DIALOGUE tutorial).
         anova_alpha: Per-feature ANOVA significance threshold for filtering uninformative components (R's ``p.anova``).
         winsorize_quantile: Tail clipping fraction applied to pseudobulk components (R's ``cap.mat`` parameter).
-        n_permutations: Permutations used to derive empirical PMD p-values (R's ``n1`` in ``DIALOGUE1.PMD.empirical``).
+        n_permutations: Number of PMD fits in the empirical test, the observed one plus ``n_permutations - 1`` on sample-permuted matrices (R's ``n1`` in ``DIALOGUE1.PMD.empirical``).
         empirical_alpha: P-value threshold below which a program is considered shared between a pair of cell types (R's implicit ``< 0.1``).
         use_tme_qc: If True, add ``tme_qc`` (partner-celltype per-sample average of ``cell_quality_key``) as an additional HLM covariate (R default).
         additional_covariates: Extra ``adata.obs`` columns to include as HLM covariates.
-        min_cells_per_sample: Minimum cells per sample required for a cell type to be considered in the pair-level HLM (R's ``abn.c``).
+        min_cells_per_sample: Minimum cells a sample needs for its cells to enter the ANOVA feature filter (R's ``abn.c``).
         random_state: Reproducibility seed for the permutation tests.
     """
 
@@ -555,7 +584,7 @@ class Dialogue:
         empirical_alpha: float = 0.1,
         use_tme_qc: bool = True,
         additional_covariates: Sequence[str] = (),
-        min_cells_per_sample: int = 5,
+        min_cells_per_sample: int = 15,
         random_state: int = 1234,
     ) -> None:
         self.celltype_key = celltype_key
@@ -588,8 +617,8 @@ class Dialogue:
         - ``adata.uns["dialogue"]["pseudobulk_features"][celltype]`` — the post-filter, post-center pseudobulk matrices (samples × retained components).
         - ``adata.uns["dialogue"]["empirical_pvalues"]`` — programs × cell-type pairs.
         - ``adata.uns["dialogue"]["cca_correlations_R"]`` / ``"_P"`` — per-pair pairwise correlation and p-value of the cell types' CCA scores.
-        - ``adata.uns["dialogue"]["program_celltypes"]`` — mapping of each program to the cell types whose pair passed ``empirical_alpha``.
-        - ``adata.uns["dialogue"]["program_signatures"][program][celltype]`` — initial signature genes from partial Spearman correlation of CCA scores against the cell type's expression matrix.
+        - ``adata.uns["dialogue"]["program_celltypes"]`` — mapping of each program to the cell types retained by R's ``DIALOGUE.identify.cell.types`` pruning of the pairs passing ``empirical_alpha``.
+        - ``adata.uns["dialogue"]["program_signatures"][program][celltype]`` — initial signature genes, the top Pearson-correlated genes re-ranked by partial Spearman correlation of the CCA scores with expression, controlling for cell quality.
         - ``adata.uns["dialogue"]["params"]`` — recorded hyperparameters.
         - ``adata.uns["dialogue"]["shared_samples"]`` — samples present in all cell types.
         - ``adata.uns["dialogue"]["cell_type_order"]`` — cell types fit (in stable order).
@@ -614,8 +643,7 @@ class Dialogue:
                 )
 
         shared = self._shared_samples(pseudobulks)
-        pseudobulks = {ct: pb.loc[shared] for ct, pb in pseudobulks.items()}
-        centered = {ct: self._center(pb) for ct, pb in pseudobulks.items()}
+        centered = {ct: self._center(pb).loc[shared] for ct, pb in pseudobulks.items()}
 
         matrices = [centered[ct].to_numpy() for ct in celltypes]
         weights = self._fit_pmd(matrices)
@@ -642,7 +670,7 @@ class Dialogue:
         adata.obsm["X_dialogue_cca"] = self._broadcast_per_celltype(adata, cca_scores, ct_views, n_cols=self.n_programs)
 
         program_celltypes = self._program_celltypes(empirical_p, celltypes)
-        program_signatures = self._initial_program_signatures(ct_views, cca_scores, ws_dict)
+        program_signatures = self._initial_program_signatures(ct_views, cca_scores)
 
         adata.uns["dialogue"] = {
             "weights": {ct: ws_dict[ct].to_numpy() for ct in celltypes},
@@ -694,7 +722,7 @@ class Dialogue:
     ) -> dict[str, pd.DataFrame]:
         """For each cell type, drop pseudobulk components whose per-cell ANOVA across samples is non-significant.
 
-        Mirrors R's filter: the ANOVA is run on the per-cell PCA values (not the sample-level pseudobulks), restricting to samples with ``>= min_cells_per_sample`` cells, and BH-adjusted.
+        Mirrors R's filter: the ANOVA runs on the per-cell feature values of samples with at least ``min_cells_per_sample`` cells and is BH-adjusted, and fewer than five retained components is an error.
         """
         out: dict[str, pd.DataFrame] = {}
         for ct, pb in pseudobulks_full.items():
@@ -702,16 +730,17 @@ class Dialogue:
             pcs = cast_dense(view.obsm[self.feature_space_key])[:, : self.n_components]
             samples = view.obs[self.sample_key].astype(str).to_numpy()
             counts = pd.Series(samples).value_counts()
-            abundant = counts[counts >= self.min_cells_per_sample].index
-            row_mask = np.isin(samples, abundant.to_numpy())
-            if row_mask.sum() == 0 or np.unique(samples[row_mask]).size < 2:
-                out[ct] = pb
-                continue
+            row_mask = np.isin(samples, counts.index[counts >= self.min_cells_per_sample].to_numpy())
+            if np.unique(samples[row_mask]).size < 2:
+                raise ValueError(
+                    f"Fewer than two samples of {ct!r} have at least min_cells_per_sample={self.min_cells_per_sample} "
+                    "cells, so the ANOVA feature filter cannot run."
+                )
             mask = _anova_filter_features(pcs[row_mask], samples[row_mask], alpha=self.anova_alpha)
-            if mask.sum() < self.n_programs:
-                # R also keeps the original components when too few pass; we propagate that.
-                out[ct] = pb
-                continue
+            if mask.sum() < 5:
+                raise ValueError(
+                    f"Only {int(mask.sum())} {ct!r} features passed the ANOVA filter. Try rerunning without {ct!r}."
+                )
             out[ct] = pb.iloc[:, mask]
         return out
 
@@ -726,7 +755,8 @@ class Dialogue:
         return pd.DataFrame(scaled, index=pseudobulk.index, columns=pseudobulk.columns)
 
     def _fit_pmd(self, matrices: list[np.ndarray]) -> list[np.ndarray]:
-        penalties = np.full(len(matrices), np.sqrt(matrices[0].shape[0]) / 2.0)
+        """Penalized multi-CCA weights with R's penalty ``sqrt(ncol(X[[1]])) / 2`` for every matrix."""
+        penalties = np.full(len(matrices), np.sqrt(matrices[0].shape[1]) / 2.0)
         weights, _ = multicca_pmd(
             matrices,
             penalties,
@@ -738,21 +768,28 @@ class Dialogue:
         return weights
 
     def _empirical_pmd_pvalues(self, matrices: list[np.ndarray], celltypes: list[str]) -> pd.DataFrame:
+        """Empirical p-values of the per-pair CCA score correlations, R's ``DIALOGUE1.PMD.empirical``.
+
+        The observed correlation is compared with ``n_permutations - 1`` correlations from PMD fits on matrices whose columns were permuted independently, by a one-sided Wilcoxon rank-sum test.
+        """
+        if self.n_permutations < 2:
+            raise ValueError("n_permutations must be at least 2.")
         rng = np.random.default_rng(self.random_state)
-        baseline = self._pmd_pair_correlations(matrices, celltypes)
-        pair_names = baseline.columns.tolist()
-        better = np.zeros((self.n_programs, len(pair_names)), dtype=np.float64)
-        for _ in range(self.n_permutations):
-            permuted = [_column_shuffle(m, rng) for m in matrices]
-            try:
-                perm_cor = self._pmd_pair_correlations(permuted, celltypes)
-            except Exception:  # noqa: BLE001 - degenerate permutation; treat as exceeded
-                better += 1.0
-                continue
-            better += (np.abs(perm_cor.to_numpy()) >= np.abs(baseline.to_numpy())).astype(np.float64)
-        empirical = (better + 1.0) / (self.n_permutations + 1.0)
-        index = [f"MCP{i + 1}" for i in range(self.n_programs)]
-        return pd.DataFrame(empirical, index=index, columns=pair_names)
+        observed = self._pmd_pair_correlations(matrices, celltypes)
+        permuted = np.stack(
+            [
+                self._pmd_pair_correlations([_column_shuffle(m, rng) for m in matrices], celltypes).to_numpy()
+                for _ in range(self.n_permutations - 1)
+            ]
+        )
+        observed_values = observed.to_numpy(dtype=np.float64)
+        pvalues = np.array(
+            [
+                [_ranksum_greater_pvalue(observed_values[i, j], permuted[:, i, j]) for j in range(observed.shape[1])]
+                for i in range(observed.shape[0])
+            ]
+        )
+        return pd.DataFrame(pvalues, index=observed.index, columns=observed.columns)
 
     def _pmd_pair_correlations(self, matrices: list[np.ndarray], celltypes: list[str]) -> pd.DataFrame:
         weights = self._fit_pmd(matrices)
@@ -817,62 +854,73 @@ class Dialogue:
         return out
 
     def _program_celltypes(self, empirical_p: pd.DataFrame, celltypes: list[str]) -> dict[str, list[str]]:
-        pair_to_celltypes = {
-            f"{celltypes[i]}_{celltypes[j]}": (celltypes[i], celltypes[j]) for i, j in _pair_indices(len(celltypes))
-        }
+        """Cell types participating in each program, R's ``DIALOGUE.identify.cell.types``.
+
+        Cell types are pruned one at a time, the first with the fewest significant pairs (counting itself) going first, until every remaining cell type is significant with at least half of the remaining ones.
+        Like R, the first pruning step reads the counts in alphabetical order but removes by input position.
+        """
         out: dict[str, list[str]] = {}
+        if len(celltypes) == 2:
+            for program in empirical_p.index:
+                out[program] = list(celltypes) if empirical_p.loc[program].iloc[0] < self.empirical_alpha else []
+            return out
         for program in empirical_p.index:
-            members: set[str] = set()
-            for col, value in empirical_p.loc[program].items():
-                if value < self.empirical_alpha:
-                    a, b = pair_to_celltypes[col]
-                    members.update({a, b})
-            out[program] = sorted(members) if members else []
+            members = list(celltypes)
+            ordered = sorted(celltypes)
+            significant = pd.DataFrame(np.eye(len(celltypes), dtype=bool), index=ordered, columns=ordered)
+            program_p = empirical_p.loc[program].to_numpy(dtype=np.float64)
+            for value, (i, j) in zip(program_p, _pair_indices(len(celltypes)), strict=True):
+                hit = bool(value < self.empirical_alpha)
+                significant.loc[celltypes[i], celltypes[j]] = hit
+                significant.loc[celltypes[j], celltypes[i]] = hit
+            counts = significant.sum(axis=1).to_numpy()
+            while counts.min() < int(np.ceil(len(members) / 2)):
+                members.pop(int(np.flatnonzero(counts <= counts.min())[0]))
+                significant = significant.loc[members, members]
+                counts = significant.sum(axis=1).to_numpy()
+            out[program] = members
         return out
 
     def _initial_program_signatures(
-        self,
-        ct_views: dict[str, AnnData],
-        cca_scores: dict[str, np.ndarray],
-        ws_dict: dict[str, pd.DataFrame],
+        self, ct_views: dict[str, AnnData], cca_scores: dict[str, np.ndarray]
     ) -> dict[str, dict[str, dict[str, list[str]]]]:
-        out: dict[str, dict[str, dict[str, list[str]]]] = {f"MCP{i + 1}": {} for i in range(self.n_programs)}
+        """Per program and cell type, the genes most correlated with the program scores, following R's ``DIALOGUE1``.
+
+        The top ``n_genes_per_signature`` Pearson-correlated genes per program and direction are re-ranked by partial Spearman correlation controlling for cell quality, keeping Bonferroni-significant genes with ``|rho| >= 0.05``.
+        """
+        q = self.n_genes_per_signature
+        programs = [f"MCP{i + 1}" for i in range(self.n_programs)]
+        out: dict[str, dict[str, dict[str, list[str]]]] = {program: {} for program in programs}
         for ct, scores in cca_scores.items():
             view = ct_views[ct]
-            X = view.X  # may be sparse; _partial_spearman dispatches and streams
-            cellQ = cast_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
-            n_genes = view.n_vars
-            R, P = _partial_spearman(X, scores, cellQ)
+            pearson = _pearson_columns(cast_matrix(view.X), scores)
+            candidate = np.zeros(view.n_vars, dtype=bool)
             for program_idx in range(scores.shape[1]):
-                program_name = f"MCP{program_idx + 1}"
-                col_R = R[:, program_idx]
-                col_P = P[:, program_idx]
-                bonferroni = 0.05 / max(n_genes, 1)
-                ranked = np.argsort(-np.abs(col_R))
-                up: list[str] = []
-                down: list[str] = []
-                for gene_idx in ranked:
-                    if len(up) + len(down) >= self.n_genes_per_signature * 2:
-                        break
-                    if col_P[gene_idx] > bonferroni:
-                        continue
-                    name = view.var_names[gene_idx]
-                    if col_R[gene_idx] > 0 and len(up) < self.n_genes_per_signature:
-                        up.append(name)
-                    elif col_R[gene_idx] < 0 and len(down) < self.n_genes_per_signature:
-                        down.append(name)
-                out[program_name][ct] = {"up": up, "down": down}
+                up, down = _top_correlated(pearson[:, program_idx], q=q, min_ci=0.05)
+                candidate |= up | down
+            genes = np.asarray(view.var_names[candidate], dtype=object)
+            if genes.size == 0:
+                for program in programs:
+                    out[program][ct] = {"up": [], "down": []}
+                continue
+            cellQ = cast_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
+            expression = _select_dense_gene_columns(view.X, view.var_names, genes.tolist())
+            R, P = _partial_spearman(expression, scores, cellQ)
+            R[0.05 / view.n_vars < P] = 0.0
+            for program_idx, program in enumerate(programs):
+                up, down = _top_correlated(R[:, program_idx], q=q, min_ci=0.05)
+                out[program][ct] = {"up": sorted(genes[up]), "down": sorted(genes[down])}
         return out
 
     def test_celltype_pairs(self, adata: AnnData, *, show_progress: bool = False) -> AnnData:
         """For every ordered pair of cell types, fit a hierarchical linear model of one cell type's program score against the partner cell type's pseudobulk expression of candidate genes.
 
         Phase 2 of DIALOGUE.
-        Builds per-pair, per-program tables of (estimate, pvalue, z-score) for each candidate gene from ``fit_programs``' signatures and prunes them to the top ``n_genes_per_signature`` per direction.
-        Pair-level "shared abundant" samples are those with at least ``min_cells_per_sample`` cells in both cell types of the pair.
+        Builds per-pair, per-program tables of (estimate, standard error, degrees of freedom, p-value, z-score) for each candidate gene from ``fit_programs``' signatures and keeps the top 100 genes per direction with ``|z| >= 1`` as refined signatures, like R.
+        Only samples with at least two cells in both cell types of the pair enter a pair's models, as in R.
 
         Stores on ``adata.uns["dialogue"]["pair_results"]`` a nested dict.
-        ``pair_results[pair_name][program][celltype]`` is a DataFrame with one row per gene tested (in that cell type's signature) and columns ``estimate, pvalue, zscore, up``.
+        ``pair_results[pair_name][program][celltype]`` is a DataFrame with one row per gene tested (in that cell type's signature) and columns ``estimate, std_error, df, pvalue, zscore, pvalue_adj, up``.
         Refined per-pair signatures live at ``pair_results[pair_name][program]["refined_signatures"][celltype] = {"up": [...], "down": [...]}``.
 
         Args:
@@ -902,9 +950,9 @@ class Dialogue:
             ct1, ct2 = celltypes[i], celltypes[j]
             pair_name = f"{ct1}_{ct2}"
             shared = self._shared_abundant_samples(ct_views, ct1, ct2)
-            if len(shared) < 5:
+            if len(shared) < 2:
                 if show_progress:
-                    print(f"  skip {pair_name}: only {len(shared)} shared abundant samples")
+                    print(f"  skip {pair_name}: only {len(shared)} shared samples with at least two cells")
                 pair_results[pair_name] = {}
                 continue
 
@@ -964,8 +1012,8 @@ class Dialogue:
                     sample_groups=ct1_samples,
                 )
 
-                refined_ct1 = self._top_by_zscore(df_ct1, n=self.n_genes_per_signature)
-                refined_ct2 = self._top_by_zscore(df_ct2, n=self.n_genes_per_signature)
+                refined_ct1 = self._top_by_zscore(df_ct1)
+                refined_ct2 = self._top_by_zscore(df_ct2)
                 pair_results[pair_name][program] = {
                     ct1: df_ct1,
                     ct2: df_ct2,
@@ -1006,10 +1054,11 @@ class Dialogue:
         return out
 
     def _shared_abundant_samples(self, ct_views: dict[str, AnnData], ct1: str, ct2: str) -> list[str]:
+        """Samples with at least two cells in both cell types, R's ``get.abundant`` default in ``DIALOGUE2.pair``."""
+
         def _abundant(ct: str) -> set[str]:
-            samples = ct_views[ct].obs[self.sample_key].astype(str)
-            counts = samples.value_counts()
-            return set(counts[counts >= self.min_cells_per_sample].index)
+            counts = ct_views[ct].obs[self.sample_key].astype(str).value_counts()
+            return set(counts[counts >= 2].index)
 
         return sorted(_abundant(ct1) & _abundant(ct2))
 
@@ -1030,7 +1079,7 @@ class Dialogue:
         sample_groups: np.ndarray,
     ) -> pd.DataFrame:
         if len(gene_names) == 0:
-            return pd.DataFrame(columns=["estimate", "pvalue", "zscore", "up"])
+            return pd.DataFrame(columns=["estimate", "std_error", "df", "pvalue", "zscore", "pvalue_adj", "up"])
         covariate_dict = {self.cell_quality_key: cell_quality}
         if self.use_tme_qc:
             covariate_dict["tme_qc"] = tme_qc
@@ -1046,20 +1095,17 @@ class Dialogue:
             sample_groups,
         )
         res["zscore"] = _zscores_from_signed_pvalues(res["estimate"].to_numpy(), res["pvalue"].to_numpy())
+        res["pvalue_adj"] = _adjust_pvalues(res["pvalue"].to_numpy(), "fdr_bh")
         up_lookup = set(up_set)
         res["up"] = [g in up_lookup for g in res.index]
         return res
 
-    def _top_by_zscore(self, df: pd.DataFrame, *, n: int) -> dict[str, list[str]]:
+    def _top_by_zscore(self, df: pd.DataFrame) -> dict[str, list[str]]:
+        """Top 100 genes per direction with ``|z| >= 1``, R's ``get.top.cor(p, q = 100, idx = "Z", min.ci = 1)``."""
         if df.empty:
             return {"up": [], "down": []}
-        finite = df.dropna(subset=["zscore"])
-        up_candidates = finite.loc[finite["zscore"] > 0].sort_values("zscore", ascending=False)
-        down_candidates = finite.loc[finite["zscore"] < 0].sort_values("zscore", ascending=True)
-        return {
-            "up": up_candidates.head(n).index.tolist(),
-            "down": down_candidates.head(n).index.tolist(),
-        }
+        up, down = _top_correlated(df["zscore"].to_numpy(dtype=np.float64), q=100, min_ci=1.0)
+        return {"up": sorted(df.index[up]), "down": sorted(df.index[down])}
 
     def refine_scores(self, adata: AnnData) -> AnnData:
         """Aggregate per-pair HLM evidence and fit final per-cell program scores via iterative non-negative least squares.
@@ -1070,10 +1116,10 @@ class Dialogue:
 
         Stores on ``adata.uns["dialogue"]``:
 
-        - ``gene_pvalues[celltype]`` — combined gene table with per-pair z-scores, Fisher-combined ``p_up``/``p_down``, support counts ``n_up``/``n_down``, fractions ``nf_up``/``nf_down``, program label, ``up`` direction, and the fitted ``coef`` from NNLS.
+        - ``gene_pvalues[celltype]`` — R's ``gene.pval`` table with per-partner z-scores, Fisher-combined one-sided ``p_up``/``p_down``, support counts ``n_up``/``n_down`` and fractions ``nf_up``/``nf_down`` at R's fixed 0.1 threshold, program label, ``up`` direction, and the fitted ``coef`` from NNLS.
         - ``program_gene_signatures[program][celltype] = {"up": [...], "down": [...]}`` — refined gene signatures (R's ``sig1`` from ``DLG.find.scoring``).
         - ``program_gene_signatures_strict[program][celltype] = {"up": [...], "down": [...]}`` — stricter set (R's ``sig2``).
-        - ``pair_refined_correlations[pair][program]`` — per-pair sample-average correlation R of the refined scores plus the HLM p-value for the same pair.
+        - ``pair_refined_correlations[pair][program]`` — R's ``pref``: the correlation ``R`` of the per-sample median refined scores of the two cell types, and the p-values ``hlm_p1``/``hlm_p2`` of each cell type's scores against the partner's per-sample median score in the pair HLM.
 
         Updates ``adata.obsm["X_dialogue"]`` with the refined per-cell program scores.
 
@@ -1178,7 +1224,7 @@ class Dialogue:
         for p in range(self.n_programs):
             adata.obs[f"mcp_{p}"] = cast_dense(adata.obsm["X_dialogue"])[:, p]
 
-        pair_refined = self._refined_pair_correlations(adata, nnls_scores, ct_views, celltypes)
+        pair_refined = self._refined_pair_correlations(nnls_scores, ct_views, celltypes, state["per_sample_quality"])
 
         state["gene_pvalues"] = gene_pvalues
         state["program_gene_signatures"] = refined_signatures
@@ -1192,111 +1238,95 @@ class Dialogue:
         celltypes: list[str],
         ct: str,
     ) -> pd.DataFrame:
-        """For a given cell type, build R's per-program-x-gene gene_pval DataFrame from pair results."""
-        gene_records: dict[tuple[str, str, bool], dict[str, float]] = {}
-        partner_cols: list[str] = []
-        for pair_name, programs in pair_results.items():
-            ct1, ct2 = self._pair_split(pair_name, celltypes)
-            if ct not in (ct1, ct2):
-                continue
-            partner = ct2 if ct == ct1 else ct1
-            colname = f"{partner}"
-            if colname not in partner_cols:
-                partner_cols.append(colname)
+        """Build R's per-program-by-gene ``gene.pval`` table for one cell type from the pair results.
+
+        Follows ``DLG.multi.get.gene.pval`` and, like ``DLG.find.scoring``, drops genes without a z-score in the first partner column.
+        """
+        position = celltypes.index(ct)
+        partner_tables: dict[str, dict[str, pd.DataFrame]] = {}
+        for partner in celltypes[position + 1 :] + celltypes[:position]:
+            i, j = sorted((position, celltypes.index(partner)))
+            programs = pair_results.get(f"{celltypes[i]}_{celltypes[j]}", {})
+            tables: dict[str, pd.DataFrame] = {}
             for program, info in programs.items():
-                df = info.get(ct)
-                if not isinstance(df, pd.DataFrame) or df.empty:
-                    continue
-                for gene_name, row in df.iterrows():
-                    if not np.isfinite(row["zscore"]):
-                        continue
-                    key = (program, str(gene_name), bool(row["up"]))
-                    gene_records.setdefault(key, {})[colname] = float(row["zscore"])
-
-        if not gene_records:
-            return pd.DataFrame(
-                columns=[
-                    "gene",
-                    "program",
-                    "up",
-                    "programF",
-                    "p_up",
-                    "p_down",
-                    "n_up",
-                    "nf_up",
-                    "n_down",
-                    "nf_down",
-                    "N",
-                    "Nf",
-                ]
-            )
-
-        records = []
-        for (program, gene, up), partners in gene_records.items():
-            record: dict[str, object] = {
-                "program": program,
-                "gene": gene,
-                "up": up,
-                "programF": f"{program}.{'up' if up else 'down'}",
-            }
-            record.update({col: partners.get(col, np.nan) for col in partner_cols})
-            records.append(record)
-        df = pd.DataFrame(records)
-        df.index = [f"{r['programF']}_{r['gene']}" for _, r in df.iterrows()]
-
-        z = df[partner_cols].to_numpy()
-        # Two-sided p from z, then BH-adjust within (program, direction) and Fisher-combine.
-        p_up_partner = self._adjust_per_label(self._pvals_from_zscores(z), df["programF"].to_numpy())
-        p_down_partner = self._adjust_per_label(self._pvals_from_zscores(-z), df["programF"].to_numpy())
-        df["p_up"] = self._fisher_per_row(p_up_partner)
-        df["p_down"] = self._fisher_per_row(p_down_partner)
-        df["n_up"] = (p_up_partner < self.empirical_alpha).sum(axis=1)
-        df["nf_up"] = (p_up_partner < self.empirical_alpha).mean(axis=1)
-        df["n_down"] = (p_down_partner < self.empirical_alpha).sum(axis=1)
-        df["nf_down"] = (p_down_partner < self.empirical_alpha).mean(axis=1)
-        df["N"] = np.where(df["up"], df["n_up"], df["n_down"])
-        df["Nf"] = np.where(df["up"], df["nf_up"], df["nf_down"])
-        # Override p_up/p_down: when the gene is "up" we keep p_up; otherwise the down side carries the signal.
-        df.loc[~df["up"].astype(bool), "p_up"] = 1.0
-        df.loc[df["up"].astype(bool), "p_down"] = 1.0
-        return df.reset_index(drop=True)
-
-    def _pair_split(self, pair_name: str, celltypes: list[str]) -> tuple[str, str]:
-        for i, j in _pair_indices(len(celltypes)):
-            if f"{celltypes[i]}_{celltypes[j]}" == pair_name:
-                return celltypes[i], celltypes[j]
-        raise KeyError(pair_name)
+                table = info.get(ct)
+                if isinstance(table, pd.DataFrame) and not table.empty:
+                    tables[program] = table
+            if tables:
+                partner_tables[partner] = tables
+        records: dict[tuple[str, str, bool], dict[str, float]] = {}
+        for partner, tables in partner_tables.items():
+            for program, table in tables.items():
+                for gene, row in table.iterrows():
+                    if np.isfinite(row["zscore"]):
+                        records.setdefault((program, str(gene), bool(row["up"])), {})[partner] = float(row["zscore"])
+        partner_cols = list(partner_tables)
+        columns = ["gene", "program", "up", "programF", *partner_cols]
+        columns += ["p_up", "p_down", "n_up", "nf_up", "n_down", "nf_down", "N", "Nf"]
+        if not records:
+            return pd.DataFrame(columns=columns)
+        df = pd.DataFrame(
+            [
+                {
+                    "program": program,
+                    "gene": gene,
+                    "up": up,
+                    "programF": f"{program}.{'up' if up else 'down'}",
+                    **{col: partners.get(col, np.nan) for col in partner_cols},
+                }
+                for (program, gene, up), partners in records.items()
+            ]
+        )
+        labels = df["programF"].to_numpy()
+        z = df[partner_cols].to_numpy(dtype=np.float64)
+        p_up = self._adjust_per_label(self._pvals_from_zscores(z), labels)
+        p_down = self._adjust_per_label(self._pvals_from_zscores(-z), labels)
+        df["p_up"] = self._fisher_per_row(p_up)
+        df["p_down"] = self._fisher_per_row(p_down)
+        for side, adjusted in (("up", p_up), ("down", p_down)):
+            hits = np.where(np.isnan(adjusted), np.nan, (adjusted < 0.1).astype(np.float64))
+            df[f"n_{side}"] = np.nansum(hits, axis=1).astype(np.int64)
+            df[f"nf_{side}"] = np.nanmean(hits, axis=1)
+        up = df["up"].to_numpy(dtype=bool)
+        df["N"] = np.where(up, df["n_up"], df["n_down"])
+        df["Nf"] = np.where(up, df["nf_up"], df["nf_down"])
+        df.loc[~up, "p_up"] = 1.0
+        df.loc[up, "p_down"] = 1.0
+        df = df[np.isfinite(df[partner_cols[0]].to_numpy(dtype=np.float64))]
+        return df[columns].reset_index(drop=True)
 
     def _adjust_per_label(self, pvalues: np.ndarray, labels: np.ndarray) -> np.ndarray:
+        """BH-adjust each partner column within each program label, R's ``p.adjust.mat.per.label``.
+
+        With a single partner column R falls through to ``p.adjust``'s default, Holm, and so does this.
+        """
+        method = "fdr_bh" if pvalues.shape[1] >= 2 else "holm"
         adjusted = np.full_like(pvalues, np.nan)
         for label in np.unique(labels):
             mask = labels == label
-            block = pvalues[mask]
-            for j in range(block.shape[1]):
-                col = block[:, j]
-                valid = np.isfinite(col)
-                if valid.sum() < 1:
-                    continue
-                adj = multipletests(col[valid], method="fdr_bh")[1]
-                column_full = np.full_like(col, np.nan)
-                column_full[valid] = adj
-                block[:, j] = column_full
-            adjusted[mask] = block
+            for j in range(pvalues.shape[1]):
+                adjusted[mask, j] = _adjust_pvalues(pvalues[mask, j], method)
         return adjusted
 
     def _fisher_per_row(self, pvalues: np.ndarray) -> np.ndarray:
+        """Fisher-combine the finite p-values of each row, R's ``fisher.combine``."""
         out = np.full(pvalues.shape[0], 1.0)
         for i, row in enumerate(pvalues):
-            finite = row[np.isfinite(row) & (row > 0)]
+            finite = row[np.isfinite(row)]
             if finite.size == 0:
                 continue
-            stat = -2.0 * np.log(finite).sum()
-            out[i] = float(stats.chi2.sf(stat, df=2 * finite.size))
+            if (finite == 0).any():
+                out[i] = 0.0
+                continue
+            out[i] = float(stats.chi2.sf(-2.0 * np.log(finite).sum(), df=2 * finite.size))
         return out
 
     @staticmethod
     def _pvals_from_zscores(z: np.ndarray) -> np.ndarray:
-        return np.where(np.isfinite(z), 2.0 * stats.norm.sf(np.abs(z)), np.nan)
+        """One-sided p-values from signed log10 z-scores, the inverse of :func:`_zscores_from_signed_pvalues` (R's ``get.pval.from.zscores``)."""
+        z = np.asarray(z, dtype=np.float64)
+        p = 10.0 ** (-np.abs(z))
+        return np.where(np.isfinite(z), np.where(z < 0, 1.0 - p, p), np.nan)
 
     def _split_up_down(self, rows: pd.DataFrame) -> dict[str, list[str]]:
         if rows.empty:
@@ -1312,41 +1342,56 @@ class Dialogue:
         pcs = view.obsm[self.feature_space_key][:, : self.n_components][:, kept]  # type: ignore[call-overload, index]
         return np.asarray(pcs, dtype=np.float64) @ W
 
-    @staticmethod
-    def _gene_indices(var_names: pd.Index, genes: np.ndarray) -> np.ndarray:
-        lookup = {g: i for i, g in enumerate(var_names)}
-        return np.array([lookup[g] for g in genes], dtype=np.int64)
-
     def _refined_pair_correlations(
         self,
-        adata: AnnData,
         nnls_scores: dict[str, np.ndarray],
         ct_views: dict[str, AnnData],
         celltypes: list[str],
+        per_sample_quality: dict[str, pd.Series],
     ) -> dict[str, dict[str, dict[str, float]]]:
+        """R's ``pref``: per pair and program, the correlation of the per-sample median refined scores over samples with at least two cells in both cell types, and the p-values of ``DLG.hlm.pval``."""
+        samples = {ct: ct_views[ct].obs[self.sample_key].astype(str).to_numpy() for ct in celltypes}
+        medians = {ct: pd.DataFrame(nnls_scores[ct], index=samples[ct]).groupby(level=0).median() for ct in celltypes}
+        abundant = {ct: set(pd.Series(samples[ct]).value_counts().loc[lambda c: c >= 2].index) for ct in celltypes}
         out: dict[str, dict[str, dict[str, float]]] = {}
-        sample_avg = {
-            ct: pd.DataFrame(nnls_scores[ct], index=ct_views[ct].obs[self.sample_key].astype(str).to_numpy())
-            .groupby(level=0)
-            .median()
-            for ct in celltypes
-        }
         for i, j in _pair_indices(len(celltypes)):
             ct1, ct2 = celltypes[i], celltypes[j]
-            shared = sorted(set(sample_avg[ct1].index) & set(sample_avg[ct2].index))
-            if len(shared) < 3:
-                continue
-            a = sample_avg[ct1].loc[shared].to_numpy()
-            b = sample_avg[ct2].loc[shared].to_numpy()
-            pair_name = f"{ct1}_{ct2}"
-            out[pair_name] = {}
+            shared = sorted(abundant[ct1] & abundant[ct2])
+            a = medians[ct1].loc[shared].to_numpy()
+            b = medians[ct2].loc[shared].to_numpy()
+            hlm_p1 = self._pair_score_hlm(
+                nnls_scores[ct1], ct_views[ct1], samples[ct1], medians[ct2], per_sample_quality[ct2]
+            )
+            hlm_p2 = self._pair_score_hlm(
+                nnls_scores[ct2], ct_views[ct2], samples[ct2], medians[ct1], per_sample_quality[ct1]
+            )
+            out[f"{ct1}_{ct2}"] = {}
             for p in range(self.n_programs):
-                ap = a[:, p]
-                bp = b[:, p]
-                denom = (ap.std(ddof=1) * bp.std(ddof=1)) or 1.0
-                r = float(np.cov(ap, bp, ddof=1)[0, 1] / denom)
-                out[pair_name][f"MCP{p + 1}"] = {"R": r}
+                r = float(np.corrcoef(a[:, p], b[:, p])[0, 1]) if len(shared) >= 2 else np.nan
+                out[f"{ct1}_{ct2}"][f"MCP{p + 1}"] = {"R": r, "hlm_p1": float(hlm_p1[p]), "hlm_p2": float(hlm_p2[p])}
         return out
+
+    def _pair_score_hlm(
+        self,
+        scores: np.ndarray,
+        view: AnnData,
+        samples: np.ndarray,
+        partner_medians: pd.DataFrame,
+        partner_quality: pd.Series,
+    ) -> np.ndarray:
+        """P-values per program of ``score ~ (1 | sample) + partner_score + cell_quality + tme_qc``, with the partner's per-sample median score and mean cell quality broadcast to the cells."""
+        x = partner_medians.reindex(samples).to_numpy(dtype=np.float64)
+        tme_qc = partner_quality.reindex(samples).to_numpy(dtype=np.float64)
+        keep = np.isfinite(x).all(axis=1) & np.isfinite(tme_qc)
+        pvalues = np.full(self.n_programs, np.nan)
+        if keep.sum() < 2:
+            return pvalues
+        cellQ = cast_frame(view.obs)[self.cell_quality_key].to_numpy(dtype=np.float64)
+        covariates = pd.DataFrame({self.cell_quality_key: cellQ[keep], "tme_qc": tme_qc[keep]})
+        for p in range(self.n_programs):
+            res = _hlm_pvalue_per_row(x[keep, p][None, :], scores[keep, p], covariates, samples[keep])
+            pvalues[p] = res["pvalue"].iloc[0]
+        return pvalues
 
     def test_phenotype_association(
         self,
@@ -1355,19 +1400,20 @@ class Dialogue:
         *,
         conditions: tuple[str, str] | None = None,
     ) -> pd.DataFrame:
-        """Test each program's association with a binary phenotype using per-celltype hierarchical models.
+        """Test each program's association with a phenotype by hierarchical linear models, R's ``DIALOGUE.pheno``.
 
-        For every (program, cell type), fits ``score ~ phenotype + cell_quality + (1 | sample)`` on the cells of that cell type, where ``phenotype`` is a binary indicator coded from ``adata.obs[condition_key]``.
-        Returns a DataFrame of signed z-scores (rows = cell types, columns = programs) plus a Fisher-combined p-value column across cell types per program.
+        For every cell type, and once more for all cells pooled (row ``"All"``), fits ``score ~ (1 | sample) + phenotype + cell_quality`` on the refined scores.
+        ``phenotype`` indicates the first level of ``adata.obs[condition_key]`` in sorted order, or is the column itself when it is boolean, as in R.
+        Returns signed log10 p-value z-scores (rows: cell types and ``"All"``, columns: programs), positive when that level has higher scores.
 
         Args:
             adata: AnnData after :meth:`refine_scores`.
-            condition_key: Column of ``adata.obs`` with the phenotype labels (categorical with exactly two levels, or pass ``conditions`` to pick which two to compare).
-            conditions: Optional two-element tuple selecting which two values of ``adata.obs[condition_key]`` are compared.
+            condition_key: Column of ``adata.obs`` with the phenotype labels.
+            conditions: Optional two values of ``adata.obs[condition_key]`` to compare.
+                Cells with other values are dropped and ``phenotype`` indicates ``conditions[0]``.
 
         Returns:
-            ``zscores`` DataFrame (rows: cell types, columns: programs).
-            The combined p-values are stored on ``adata.uns["dialogue"]["phenotype_pvalues"]``.
+            ``zscores`` DataFrame (rows: cell types and ``"All"``, columns: programs), also stored on ``adata.uns["dialogue"]["phenotype_zscores"]``.
 
         Examples:
             >>> import pertpy as pt
@@ -1378,7 +1424,7 @@ class Dialogue:
             >>> dl.fit_programs(adata)
             >>> dl.test_celltype_pairs(adata)
             >>> dl.refine_scores(adata)
-            >>> dl.test_phenotype_association(adata, condition_key="path_str")
+            >>> dl.test_phenotype_association(adata, condition_key="pathology")
         """
         if "dialogue" not in adata.uns:
             raise RuntimeError("Run fit_programs/refine_scores before test_phenotype_association.")
@@ -1386,46 +1432,38 @@ class Dialogue:
             raise RuntimeError("Refined scores missing; run refine_scores(adata) first.")
         state = adata.uns["dialogue"]
         celltypes = state["cell_type_order"]
-        if conditions is None:
-            labels = pd.Series(adata.obs[condition_key]).astype("category").cat.categories.tolist()
-            if len(labels) != 2:
-                raise ValueError(
-                    f"adata.obs[{condition_key!r}] has {len(labels)} levels; pass `conditions` to pick two."
-                )
-            conditions = (labels[0], labels[1])
-        scores = adata.obsm["X_dialogue"]
         obs = cast_frame(adata.obs)
+        phenotype = obs[condition_key]
+        if conditions is not None:
+            labels = phenotype.astype(str).to_numpy()
+            keep = np.isin(labels, [str(c) for c in conditions])
+            indicator = labels == str(conditions[0])
+        else:
+            keep = phenotype.notna().to_numpy()
+            if pd.api.types.is_bool_dtype(phenotype):
+                indicator = phenotype.to_numpy(dtype=bool)
+            else:
+                labels = phenotype.astype(str).to_numpy()
+                indicator = labels == sorted(labels[keep])[0]
+        scores = cast_dense(adata.obsm["X_dialogue"])
+        keep = keep & np.isfinite(scores).all(axis=1)
+        cellQ = obs[self.cell_quality_key].to_numpy(dtype=np.float64)
+        samples = obs[self.sample_key].astype(str).to_numpy()
+        ct_labels = obs[self.celltype_key].astype(str).to_numpy()
         program_cols = [f"MCP{p + 1}" for p in range(self.n_programs)]
-        z_table = pd.DataFrame(np.nan, index=celltypes, columns=program_cols)
-        p_table = pd.DataFrame(np.nan, index=celltypes, columns=program_cols)
-        for ct in celltypes:
-            mask = (obs[self.celltype_key] == ct).to_numpy()
-            sub_scores = scores[mask]
-            sub_obs = obs.loc[mask]
-            condition = sub_obs[condition_key].astype(str).to_numpy()
-            keep = np.isin(condition, list(conditions))
-            if keep.sum() < 5:
+        z_table = pd.DataFrame(np.nan, index=[*celltypes, "All"], columns=program_cols)
+        for ct in z_table.index:
+            mask = keep if ct == "All" else keep & (ct_labels == ct)
+            if np.unique(samples[mask]).size < 2:
                 continue
-            x = (condition[keep] == conditions[1]).astype(float)
-            covariates = pd.DataFrame({self.cell_quality_key: sub_obs[self.cell_quality_key].to_numpy()[keep]})
-            sample_groups = sub_obs[self.sample_key].astype(str).to_numpy()[keep]
+            covariates = pd.DataFrame({self.cell_quality_key: cellQ[mask]})
             for program_idx, program in enumerate(program_cols):
-                y = sub_scores[keep, program_idx]  # type: ignore[call-overload, index]
-                if not np.isfinite(y).any():  # type: ignore[arg-type]
-                    continue
-                df_one = _hlm_pvalue_per_row(
-                    np.asarray(x[None, :]),
-                    y,  # type: ignore[arg-type]
-                    covariates,
-                    sample_groups,
+                res = _hlm_pvalue_per_row(
+                    indicator[mask].astype(np.float64)[None, :], scores[mask, program_idx], covariates, samples[mask]
                 )
-                est = float(df_one["estimate"].iloc[0])
-                pval = float(df_one["pvalue"].iloc[0])
-                z_table.loc[ct, program] = float(_zscores_from_signed_pvalues(np.array([est]), np.array([pval]))[0])
-                p_table.loc[ct, program] = pval
-        # Combine across cell types for each program (the rows are cell types so we transpose).
-        combined = self._fisher_per_row(p_table.to_numpy().T)
-        state["phenotype_pvalues"] = pd.DataFrame({"combined_p": combined}, index=program_cols)
+                z_table.loc[ct, program] = _zscores_from_signed_pvalues(
+                    res["estimate"].to_numpy(), res["pvalue"].to_numpy()
+                )[0]
         state["phenotype_zscores"] = z_table
         return z_table
 

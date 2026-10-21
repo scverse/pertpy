@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.5.0
+
+### ⚠️ Changed results
+
+* Dialogue reproduces the R reference end to end: REML mixed models with Satterthwaite t-tests like `lmerTest`, R's PMD penalty, permutation test and cell-type pruning, Pearson pre-selection of signature genes, one-sided gene p-values, and `test_phenotype_association` now follows `DIALOGUE.pheno` (first level or `True` as the indicator, pooled `All` row, no Fisher combination) ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+
+### 🐛 Bug Fixes
+
+* Dialogue treated signed log10 p-value z-scores as normal z-scores in phase 3, which inflated strong genes, lost the up/down direction and dropped underflowing genes from the Fisher combination ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+
 ## v1.4.0
 
 ### 🚀 Features
