@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import random
+import time
+import warnings
 from collections import defaultdict
+from functools import partial
 from math import floor, nan
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -15,7 +18,8 @@ from fast_array_utils.conv import to_dense
 from joblib import Parallel, delayed
 from rich.progress import track
 from scipy import sparse, stats
-from sklearn.base import is_classifier, is_regressor
+from sklearn import config_context
+from sklearn.base import clone, is_classifier, is_regressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -29,8 +33,10 @@ from sklearn.metrics import (
     roc_auc_score,
     root_mean_squared_error,
 )
-from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.model_selection import KFold, StratifiedKFold, cross_validate
 from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import check_random_state
 from skmisc.loess import loess
 from statsmodels.api import OLS
 from statsmodels.stats.multitest import fdrcorrection
@@ -41,10 +47,42 @@ from pertpy._types import CSBase, cast_frame, cast_matrix
 from pertpy.tools.core import _is_raw_counts
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+
+
+def _fit_forest(forest: RandomForestClassifier, X: np.ndarray, y: np.ndarray) -> list[DecisionTreeClassifier]:
+    """Fit the trees of ``forest`` on float32 ``X`` one by one, bit for bit as ``RandomForestClassifier.fit`` does but without its per-tree cloning and validation."""
+    random_state = check_random_state(forest.random_state)
+    params = {name: getattr(forest, name) for name in forest.estimator_params if name != "random_state"}
+    n_samples = X.shape[0]
+    trees = []
+    for _ in range(forest.n_estimators):
+        seed = random_state.randint(np.iinfo(np.int32).max)
+        indices = np.random.RandomState(seed).randint(0, n_samples, n_samples, dtype=np.int32)
+        tree = DecisionTreeClassifier(random_state=seed, **params)
+        tree.fit(X, y, sample_weight=np.bincount(indices, minlength=n_samples).astype(np.float64), check_input=False)
+        trees.append(tree)
+    return trees
+
+
+def _forest_proba(trees: list[DecisionTreeClassifier], X: np.ndarray) -> np.ndarray:
+    """Class probabilities of a forest on float32 ``X``, accumulated like ``RandomForestClassifier.predict_proba``."""
+    proba = np.zeros((X.shape[0], trees[0].n_classes_))
+    for tree in trees:
+        proba += tree.predict_proba(X, check_input=False)
+    return proba / len(trees)
+
+
+def _forest_importances(trees: list[DecisionTreeClassifier]) -> np.ndarray:
+    """Impurity importances of a forest, like ``RandomForestClassifier.feature_importances_``."""
+    importances = [tree.feature_importances_ for tree in trees if tree.tree_.node_count > 1]
+    if not importances:
+        return np.zeros(trees[0].n_features_in_)
+    mean = np.mean(importances, axis=0)
+    return mean / np.sum(mean)
 
 
 class Augur:
@@ -157,9 +195,6 @@ class Augur:
 
         # dummy variables for categorical data
         if final_adata.obs["label"].dtype.name == "category":
-            label_encoder = LabelEncoder()
-            final_adata.obs["y_"] = label_encoder.fit_transform(final_adata.obs["label"])
-
             if condition_label is not None and treatment_label is not None:
                 logger.info(f"Filtering samples with {condition_label} and {treatment_label} labels.")
                 final_adata = ad.concat(
@@ -168,6 +203,7 @@ class Augur:
                         final_adata[final_adata.obs["label"] == treatment_label],
                     ]
                 )
+            final_adata.obs["y_"] = LabelEncoder().fit_transform(final_adata.obs["label"])
         else:
             y = final_adata.obs["label"].to_frame()
             y = y.rename(columns={"label": "y_"})
@@ -342,10 +378,8 @@ class Augur:
             obs[y_columns] = obs[y_columns].sample(frac=1, random_state=random_state).values
             adata = AnnData(X=adata.X, obs=obs, var=cast_frame(adata.var))
 
-        if augur_mode == "velocity":
-            # no feature selection, assuming this has already happenend in calculating velocity
+        if augur_mode == "velocity" or adata.n_vars < 1000:
             features = adata.var_names.tolist()
-
         else:
             # randomly sample features from highly variable genes
             highly_variable_genes = adata.var_names[cast_frame(adata.var)["highly_variable"]].tolist()
@@ -442,6 +476,32 @@ class Augur:
 
         return ccc
 
+    def _metric_functions(
+        self, multiclass: bool, zero_division: int | str
+    ) -> dict[str, tuple[Callable[..., float], dict[str, Any], str]]:
+        """Metric name to (function, keyword arguments, estimator response method) for the estimator.
+
+        Binary metrics take the first class as the positive one, like yardstick's ``event_level = "first"`` in R Augur.
+        """
+        if is_regressor(self.estimator):
+            return {
+                "augur_score": (self.ccc_score, {}, "predict"),
+                "r2": (r2_score, {}, "predict"),
+                "ccc": (self.ccc_score, {}, "predict"),
+                "neg_mean_squared_error": (root_mean_squared_error, {}, "predict"),
+                "explained_variance": (explained_variance_score, {}, "predict"),
+            }
+        auc_kwargs: dict[str, Any] = {"multi_class": "ovo"} if multiclass else {}
+        label_kwargs: dict[str, Any] = {"average": "macro"} if multiclass else {"average": "binary", "pos_label": 0}
+        return {
+            "augur_score": (roc_auc_score, auc_kwargs, "predict_proba"),
+            "auc": (roc_auc_score, auc_kwargs, "predict_proba"),
+            "accuracy": (accuracy_score, {}, "predict"),
+            "precision": (precision_score, {**label_kwargs, "zero_division": zero_division}, "predict"),
+            "f1": (f1_score, label_kwargs, "predict"),
+            "recall": (recall_score, label_kwargs, "predict"),
+        }
+
     def set_scorer(
         self,
         multiclass: bool,
@@ -462,31 +522,64 @@ class Augur:
             >>> ag_rfc = pt.tl.Augur("random_forest_classifier")
             >>> scorer = ag_rfc.set_scorer(True, 0)
         """
-        if is_regressor(self.estimator):
-            return {
-                "augur_score": make_scorer(self.ccc_score),
-                "r2": make_scorer(r2_score),
-                "ccc": make_scorer(self.ccc_score),
-                "neg_mean_squared_error": make_scorer(root_mean_squared_error),
-                "explained_variance": make_scorer(explained_variance_score),
-            }
-        if multiclass:
-            return {
-                "augur_score": make_scorer(roc_auc_score, multi_class="ovo", response_method="predict_proba"),
-                "auc": make_scorer(roc_auc_score, multi_class="ovo", response_method="predict_proba"),
-                "accuracy": make_scorer(accuracy_score),
-                "precision": make_scorer(precision_score, average="macro", zero_division=zero_division),
-                "f1": make_scorer(f1_score, average="macro"),
-                "recall": make_scorer(recall_score, average="macro"),
-            }
         return {
-            "augur_score": make_scorer(roc_auc_score, response_method="predict_proba"),
-            "auc": make_scorer(roc_auc_score, response_method="predict_proba"),
-            "accuracy": make_scorer(accuracy_score),
-            "precision": make_scorer(precision_score, average="binary", zero_division=zero_division),
-            "f1": make_scorer(f1_score, average="binary"),
-            "recall": make_scorer(recall_score, average="binary"),
+            name: make_scorer(function, response_method=method, **kwargs)
+            for name, (function, kwargs, method) in self._metric_functions(multiclass, zero_division).items()
         }
+
+    def _score_once(
+        self,
+        estimator: Any,
+        X: np.ndarray,
+        y: np.ndarray,
+        metrics: Mapping[str, tuple[Callable[..., float], dict[str, Any], str]],
+    ) -> dict[str, float]:
+        """Evaluate every metric from one pass of the estimator over ``X``, giving the same values as scikit-learn's scorers one by one.
+
+        A metric that raises scores NaN, as scikit-learn's ``error_score`` default does.
+        """
+        if any(method == "predict_proba" for _, _, method in metrics.values()):
+            responses = self._responses_from_proba(estimator.classes_, self._predict_proba(estimator, X))
+        else:
+            responses = {"predict": estimator.predict(X)}
+        return self._evaluate_metrics(y, responses, metrics)
+
+    @staticmethod
+    def _responses_from_proba(classes: np.ndarray, proba: np.ndarray) -> dict[str, np.ndarray]:
+        return {
+            "predict_proba": proba if proba.shape[1] > 2 else proba[:, 1],
+            "predict": classes.take(np.argmax(proba, axis=1), axis=0),
+        }
+
+    @staticmethod
+    def _evaluate_metrics(
+        y: np.ndarray,
+        responses: Mapping[str, np.ndarray],
+        metrics: Mapping[str, tuple[Callable[..., float], dict[str, Any], str]],
+    ) -> dict[str, float]:
+        scores = {}
+        for name, (function, kwargs, method) in metrics.items():
+            try:
+                scores[name] = function(y, responses[method], **kwargs)
+            except Exception as error:  # noqa: BLE001
+                warnings.warn(f"Scoring {name} failed, setting it to NaN: {error}", UserWarning, stacklevel=2)
+                scores[name] = np.nan
+        return scores
+
+    @staticmethod
+    def _predict_proba(estimator: Any, X: np.ndarray) -> np.ndarray:
+        """Class probabilities of ``estimator`` on ``X``.
+
+        A random forest is accumulated tree by tree without per-tree input validation, exactly as its ``predict_proba`` does it.
+        """
+        if not isinstance(estimator, RandomForestClassifier):
+            return estimator.predict_proba(X)
+        X32 = np.ascontiguousarray(X, dtype=np.float32)
+        proba = np.zeros((X.shape[0], estimator.n_classes_))
+        for tree in estimator.estimators_:
+            proba += tree.predict_proba(X32, check_input=False)
+        proba /= len(estimator.estimators_)
+        return proba
 
     def run_cross_validation(
         self,
@@ -504,7 +597,7 @@ class Augur:
             estimator: classifier object to use in calculating the area under the curve
             subsample_idx: index of subsample
             folds: number of folds
-            random_state: set random fold seed
+            random_state: set random fold seed; ``None`` seeds the folds and an unseeded estimator by ``subsample_idx``, so results are reproducible like R Augur's
             zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
                 set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
@@ -521,50 +614,82 @@ class Augur:
                 categorical=True, random_state=42)
             >>> results = ag_rfc.run_cross_validation(subsample=subsample, folds=3, subsample_idx=0, random_state=42, zero_division=0)
         """
-        # Pass the dense matrix instead of subsample.to_df(); its arrow-backed string columns make scikit-learn re-validate dtypes on every fold and scorer, while the values (and results) stay identical.
         x = np.asarray(to_dense(subsample.X))
-        genes = subsample.var_names.tolist()
-        n_genes = len(genes)
-        y = subsample.obs["y_"]
-        scorer = self.set_scorer(multiclass=len(y.unique()) > 2, zero_division=zero_division)
-        folds = StratifiedKFold(n_splits=folds, random_state=random_state, shuffle=True)  # type: ignore[assignment]
-
-        results = cross_validate(
-            estimator=self.estimator,
-            X=x,
-            y=y.values.ravel(),
-            scoring=scorer,
-            cv=folds,
-            return_estimator=True,
-        )
-
-        results["subsample_idx"] = subsample_idx
-        for score in scorer:
-            results[f"mean_{score}"] = results[f"test_{score}"].mean()
-
-        # feature importances
-        feature_importances = defaultdict(list)
-        if isinstance(self.estimator, RandomForestClassifier | RandomForestRegressor):
-            for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
-                feature_importances["genes"].extend(genes)
-                feature_importances["feature_importances"].extend(estimator.feature_importances_.tolist())
-                feature_importances["subsample_idx"].extend(n_genes * [subsample_idx])
-                feature_importances["fold"].extend(n_genes * [fold])
-
-        # standardized coefficients with Agresti method
-        # cf. https://think-lab.github.io/d/205/#3
-        if isinstance(self.estimator, LogisticRegression):
-            for fold, estimator in list(zip(range(len(results["estimator"])), results["estimator"], strict=False)):
-                feature_importances["genes"].extend(genes)
-                feature_importances["feature_importances"].extend(
-                    (estimator.coef_ * estimator.coef_.std()).flatten().tolist()
+        genes = np.asarray(subsample.var_names, dtype=object)
+        y = subsample.obs["y_"].to_numpy().ravel()
+        metrics = self._metric_functions(multiclass=len(np.unique(y)) > 2, zero_division=zero_division)
+        seed = subsample_idx if random_state is None else random_state
+        fold_class = KFold if is_regressor(self.estimator) else StratifiedKFold
+        splitter = fold_class(n_splits=folds, random_state=seed, shuffle=True)
+        estimator = self.estimator
+        if estimator.random_state is None:
+            estimator = clone(estimator).set_params(random_state=subsample_idx)
+        with config_context(skip_parameter_validation=True, assume_finite=True):
+            if (
+                isinstance(estimator, RandomForestClassifier)
+                and estimator.bootstrap
+                and estimator.max_samples is None
+                and estimator.class_weight is None
+                and not estimator.oob_score
+            ):
+                results, importances = self._cross_validate_forest(estimator, x, y, splitter, metrics)
+            else:
+                results = cross_validate(
+                    estimator=estimator,
+                    X=x,
+                    y=y,
+                    scoring=partial(self._score_once, metrics=metrics),
+                    cv=splitter,
+                    return_estimator=True,
                 )
-                feature_importances["subsample_idx"].extend(n_genes * [subsample_idx])
-                feature_importances["fold"].extend(n_genes * [fold])
-
-        results["feature_importances"] = feature_importances
+                estimators = results.pop("estimator")
+                if isinstance(estimator, RandomForestClassifier | RandomForestRegressor):
+                    importances = [fitted.feature_importances_ for fitted in estimators]
+                elif isinstance(estimator, LogisticRegression):
+                    # standardized coefficients with Agresti method, cf. https://think-lab.github.io/d/205/#3
+                    importances = [(fitted.coef_ * fitted.coef_.std()).ravel() for fitted in estimators]
+                else:
+                    importances = []
+        results["subsample_idx"] = subsample_idx
+        for name in metrics:
+            results[f"mean_{name}"] = results[f"test_{name}"].mean()
+        n_folds = len(importances)
+        results["feature_importances"] = {
+            "genes": np.tile(genes, n_folds),
+            "feature_importances": np.concatenate(importances) if importances else np.empty(0),
+            "subsample_idx": np.full(n_folds * genes.size, subsample_idx),
+            "fold": np.repeat(np.arange(n_folds), genes.size),
+        }
 
         return results
+
+    def _cross_validate_forest(
+        self,
+        forest: RandomForestClassifier,
+        x: np.ndarray,
+        y: np.ndarray,
+        splitter: KFold | StratifiedKFold,
+        metrics: Mapping[str, tuple[Callable[..., float], dict[str, Any], str]],
+    ) -> tuple[dict[str, Any], list[np.ndarray]]:
+        """Cross-validate a random forest classifier tree by tree, with the same scores and importances as ``cross_validate`` on the forest."""
+        x32 = np.ascontiguousarray(x, dtype=np.float32)
+        scores: dict[str, list[float]] = {name: [] for name in metrics}
+        fit_times, score_times, importances = [], [], []
+        for train, test in splitter.split(x32, y):
+            start = time.perf_counter()
+            trees = _fit_forest(forest, x32[train], y[train])
+            fitted = time.perf_counter()
+            fold_scores = self._evaluate_metrics(
+                y[test], self._responses_from_proba(trees[0].classes_, _forest_proba(trees, x32[test])), metrics
+            )
+            for name, value in fold_scores.items():
+                scores[name].append(value)
+            fit_times.append(fitted - start)
+            score_times.append(time.perf_counter() - fitted)
+            importances.append(_forest_importances(trees))
+        results: dict[str, Any] = {"fit_time": np.array(fit_times), "score_time": np.array(score_times)}
+        results.update({f"test_{name}": np.array(values) for name, values in scores.items()})
+        return results, importances
 
     def average_metrics(self, cell_cv_results: list[Any]) -> dict[Any, Any]:
         """Calculate average metric of cross validation runs done of one cell type.
@@ -743,12 +868,14 @@ class Augur:
     ) -> tuple[AnnData, dict[str, Any]]:
         """Calculates the Area under the Curve using the given classifier.
 
+        Scikit-learn's random forest keeps searching for a split when the ``max_features`` drawn for a node cannot split it, where R's ``randomForest`` stops, so AUCs run higher than R Augur's on sparse data while the ranking of cell types agrees.
+
         Args:
             adata: Anndata with obs `label` and `cell_type` for label and cell type and dummie variable `y_` columns used as target
             n_subsamples: number of random subsamples to draw from complete dataset for each cell type
             subsample_size: number of cells to subsample randomly per type from each experimental condition
             folds: number of folds to run cross validation on. Be careful changing this parameter without also changing `subsample_size`.
-            min_cells: minimum number of cells for a particular cell type in each condition in order to retain that type for analysis (depricated..)
+            min_cells: minimum number of cells of a cell type in each condition to analyze that cell type; defaults to ``subsample_size`` like R Augur
             feature_perc: proportion of genes that are randomly selected as features for input to the classifier in each
                           subsample using the random gene filter
             var_quantile: The quantile below which features will be filtered, based on their residuals in a loess model.
@@ -762,7 +889,7 @@ class Augur:
                         assuming feature selection has been performed by the RNA velocity procedure to produce the input matrix,
                         while setting augur_mode = "permute" will generate a null distribution of AUCs for each cell type by
                         permuting the labels. Note that when setting augur_mode = "permute" n_subsample values less than 100 will be set to 500.
-            random_state: set numpy random seed, sampling seed and fold seed
+            random_state: set numpy random seed, sampling seed and fold seed; ``None`` seeds every subsample's folds and an unseeded estimator by the subsample index, so results are reproducible like R Augur's
             zero_division: 0 or 1 or `warn`; Sets the value to return when there is a zero division. If
                            set to “warn”, this acts as 0, but warnings are also raised. Precision metric parameter.
 
@@ -770,7 +897,7 @@ class Augur:
             A tuple with a dictionary containing the following keys with an updated AnnData object with mean_augur_score metrics in obs.
 
                 * summary_metrics: Pandas Dataframe containing mean metrics for each cell type
-                * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs
+                * feature_importances: Pandas Dataframe containing feature importances of genes across all cross validation runs (impurity importance of the random forest or standardized coefficients of the logistic regression, where R Augur reports permutation importance)
                 * full_results: Dict containing merged results of individual cross validation runs for each cell type
                 * [cell_types]: Cross validation runs of the cell type called
 
@@ -794,7 +921,7 @@ class Augur:
                 + "Use a random forest classifier or filter labels in load()."
             )
         if min_cells is None:
-            min_cells = n_subsamples
+            min_cells = subsample_size
         results: dict[str, Any] = {
             "summary_metrics": {},
             "feature_importances": defaultdict(list),
@@ -808,35 +935,29 @@ class Augur:
         eligible_cell_types = []
         for cell_type in adata.obs["cell_type"].unique():
             cell_type_subsample = adata[adata.obs["cell_type"] == cell_type].copy()
-
-            if augur_mode in ("default", "permute") and len(cell_type_subsample) >= min_cells:
-                cell_type_subsample = (
-                    self.select_highly_variable(cell_type_subsample)
-                    if not select_variance_features
-                    else self.select_variance(
+            if is_classifier(self.estimator):
+                smallest = int(cast_frame(cell_type_subsample.obs).groupby("label", observed=True)["y_"].count().min())
+            else:
+                smallest = cell_type_subsample.n_obs
+            if smallest < max(min_cells, subsample_size):
+                logger.warning(
+                    f"Skipping {cell_type} cell type - {smallest} cells in the smallest condition is less than "
+                    f"min_cells {min_cells} or subsample_size {subsample_size}."
+                )
+                continue
+            if augur_mode in ("default", "permute"):
+                if cell_type_subsample.n_vars < 1000:
+                    cell_type_subsample.var["highly_variable"] = True
+                elif select_variance_features:
+                    cell_type_subsample = self.select_variance(
                         cell_type_subsample,
                         var_quantile=var_quantile,
                         filter_negative_residuals=filter_negative_residuals,
                         span=span,
                     )
-                )
-            if len(cell_type_subsample) < min_cells:
-                logger.warning(
-                    f"Skipping {cell_type} cell type - {len(cell_type_subsample)} samples is less than min_cells {min_cells}."
-                )
-            elif (
-                cell_type_subsample.obs.groupby(
-                    ["cell_type", "label"],
-                    observed=True,
-                ).y_.count()
-                < subsample_size
-            ).any():
-                logger.warning(
-                    f"Skipping {cell_type} cell type - the number of samples for at least one class type is less than "
-                    f"subsample size {subsample_size}."
-                )
-            else:
-                eligible_cell_types.append((cell_type, cell_type_subsample))
+                else:
+                    cell_type_subsample = self.select_highly_variable(cell_type_subsample)
+            eligible_cell_types.append((cell_type, cell_type_subsample))
 
         # Fan subsamples out across all eligible cell types in one pool so workers don't idle at each cell-type boundary; submission order is preserved for regrouping.
         flat_tasks = [(cell_type, sub, i) for cell_type, sub in eligible_cell_types for i in range(n_subsamples)]
@@ -863,18 +984,15 @@ class Augur:
 
             # add scores as observation to anndata
             obs = cast_frame(adata.obs)
-            mask = obs["cell_type"].str.startswith(cell_type)
-            obs.loc[mask, "augur_score"] = results["summary_metrics"][cell_type]["mean_augur_score"]
+            obs.loc[obs["cell_type"] == cell_type, "augur_score"] = results["summary_metrics"][cell_type][
+                "mean_augur_score"
+            ]
 
-            # concatenate feature importances for each subsample cv
-            subsample_feature_importances_dicts = [cv["feature_importances"] for cv in results[cell_type]]
-
-            for dictionary in subsample_feature_importances_dicts:
-                for key, value in dictionary.items():
-                    results["feature_importances"][key].extend(value)
-            results["feature_importances"]["cell_type"].extend(
-                [cell_type]
-                * (len(results["feature_importances"]["genes"]) - len(results["feature_importances"]["cell_type"]))
+            importances = [cv["feature_importances"] for cv in results[cell_type]]
+            for key in ("genes", "feature_importances", "subsample_idx", "fold"):
+                results["feature_importances"][key].append(np.concatenate([fi[key] for fi in importances]))
+            results["feature_importances"]["cell_type"].append(
+                np.repeat(cell_type, sum(fi["genes"].size for fi in importances))
             )
 
             for idx, cv in zip(range(n_subsamples), results[cell_type], strict=False):
@@ -887,7 +1005,9 @@ class Augur:
             logger.warning("No cells types had more than min_cells needed. Please adjust data or min_cells parameter.")
 
         results["summary_metrics"] = pd.DataFrame(results["summary_metrics"])
-        results["feature_importances"] = pd.DataFrame(results["feature_importances"])
+        results["feature_importances"] = pd.DataFrame(
+            {key: np.concatenate(parts) for key, parts in results["feature_importances"].items()}
+        )
         results["full_results"] = pd.DataFrame(results["full_results"])
         adata.uns["summary_metrics"] = pd.DataFrame(results["summary_metrics"])
         adata.uns[key_added] = results
@@ -903,11 +1023,13 @@ class Augur:
         *,
         n_subsamples: int = 50,
         n_permutations: int = 1000,
+        random_state: int | None = 0,
     ) -> pd.DataFrame:
         """Predicts the differential prioritization by performing permutation tests on samples.
 
         Performs permutation tests that identifies cell types with statistically significant differences in `augur_score`
         between two conditions respectively compared to the control.
+        Each permutation averages ``n_subsamples`` permuted scores drawn without replacement, as R Augur does.
 
         Args:
             augur_results1: Augurpy results from condition 1, obtained from `predict()[1]`
@@ -916,6 +1038,7 @@ class Augur:
             permuted_results2: permuted Augurpy results from condition 2, obtained from `predict()` with argument `augur_mode=permute`
             n_subsamples: number of subsamples to pool when calculating the mean augur score for each permutation.
             n_permutations: the total number of mean augur scores to calculate from a background distribution
+            random_state: seed of the permutation draws
 
         Returns:
             Results object containing mean augur scores.
@@ -972,7 +1095,7 @@ class Augur:
             .mean()
         )
 
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(random_state)
         sampled_data = []
 
         # draw mean aucs for permute1 and permute2
@@ -980,16 +1103,16 @@ class Augur:
             df1 = permuted_cv_augur1[permuted_cv_augur1["cell_type"] == celltype]
             df2 = permuted_cv_augur2[permuted_cv_augur2["cell_type"] == celltype]
 
-            indices1 = rng.choice(len(df1), size=(n_permutations, n_subsamples), replace=True)
-            indices2 = rng.choice(len(df2), size=(n_permutations, n_subsamples), replace=True)
+            indices1 = np.argsort(rng.random((n_permutations, len(df1))), axis=1)[:, : min(n_subsamples, len(df1))]
+            indices2 = np.argsort(rng.random((n_permutations, len(df2))), axis=1)[:, : min(n_subsamples, len(df2))]
 
-            scores1 = df1["augur_score"].values[indices1]
-            scores2 = df2["augur_score"].values[indices2]
+            scores1 = df1["augur_score"].to_numpy()[indices1]
+            scores2 = df2["augur_score"].to_numpy()[indices2]
 
             means1 = scores1.mean(axis=1)
             means2 = scores2.mean(axis=1)
-            stds1 = scores1.std(axis=1)
-            stds2 = scores2.std(axis=1)
+            stds1 = scores1.std(axis=1, ddof=1)
+            stds2 = scores2.std(axis=1, ddof=1)
 
             sampled_data.append(
                 pd.DataFrame(
