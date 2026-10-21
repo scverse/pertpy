@@ -1548,7 +1548,7 @@ class Dialogue:
                 indicator = phenotype.to_numpy(dtype=bool)
             else:
                 labels = phenotype.astype(str).to_numpy()
-                indicator = labels == sorted(labels[keep])[0]
+                indicator = labels == sorted(set(labels[keep]), key=_collation_key)[0]
         scores = cast_dense(adata.obsm["X_dialogue"])
         keep = keep & np.isfinite(scores).all(axis=1)
         cellQ = obs[self.cell_quality_key].to_numpy(dtype=np.float64)
