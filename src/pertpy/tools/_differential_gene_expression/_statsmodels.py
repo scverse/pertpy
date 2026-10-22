@@ -122,6 +122,7 @@ class Statsmodels(LinearModelBase):
     A random intercept written as ``(1 | variable)`` in the design, e.g. ``"~condition + (1 | donor)"``, turns the linear regression into a linear mixed model.
     It is fitted by REML and its contrasts are tested with Satterthwaite degrees of freedom like ``lmerTest``, so effects that are constant within a donor are judged by the number of donors rather than the number of cells.
     This is how to test single cells of a cell type while accounting for the samples they come from.
+    The per-gene results in ``models`` are then refits with ``statsmodels.MixedLM``, whose z-test p-values differ from the Satterthwaite p-values of ``test_contrasts``.
     """
 
     _supports_random_effects = True
