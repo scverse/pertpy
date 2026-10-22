@@ -9,7 +9,7 @@ from fast_array_utils.conv import to_dense
 from joblib import delayed, effective_n_jobs
 from scipy import stats
 from scipy.sparse import issparse
-from statsmodels.tools.sm_exceptions import SingularMatrixWarning
+from statsmodels.tools.sm_exceptions import ConvergenceWarning, SingularMatrixWarning
 from statsmodels.tools.tools import pinv_extended, recipr
 
 from pertpy._parallel import _MAX_BLOCK_ELEMENTS, _block_slices, _numba_threads, _parallelize_with_joblib
@@ -99,7 +99,9 @@ class _MixedFits(Sequence):
     def __getitem__(self, index):
         if isinstance(index, slice):
             return [self[i] for i in range(len(self))[index]]
-        return sm.MixedLM(to_dense(self.endog[:, [index]])[:, 0], self.exog, groups=self.groups).fit()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            return sm.MixedLM(to_dense(self.endog[:, [index]])[:, 0], self.exog, groups=self.groups).fit()
 
     def contrast(self, contrast: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Estimate, standard error and Satterthwaite degrees of freedom of `contrast` for every column."""
