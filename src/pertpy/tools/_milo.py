@@ -537,7 +537,7 @@ class Milo:
             logger.warning("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
             raise
         sample_obs = sample_obs[covariates + [sample_col]]
-        sample_obs.index = sample_obs[sample_col].astype("str")
+        sample_obs.index = sample_obs[sample_col].astype("str").rename(None)
 
         try:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
@@ -1137,7 +1137,7 @@ class Milo:
             logger.error("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
             raise
         sample_obs = sample_obs[covariates + [sample_col]].copy()
-        sample_obs.index = sample_obs[sample_col].astype("str")
+        sample_obs.index = sample_obs[sample_col].astype("str").rename(None)
         # Preserve categoricals; coerce remaining object columns to category so downstream
         # plotting (e.g. plot_nhood_counts_by_cond) doesn't choke on object dtype.
         for col in covariates:
