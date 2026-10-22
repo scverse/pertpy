@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 * Augur encodes the condition labels after filtering to two conditions, so binary precision, recall and F1 are no longer NaN when the kept labels were not the first two; those metrics now take the first condition as the positive class like R Augur, `min_cells` defaults to `subsample_size` and applies per condition like R, data sets with fewer than 1000 features skip feature selection like R, per-cell `augur_score` is assigned by exact cell type match, and regressors use unstratified folds ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
 * Dialogue treated signed log10 p-value z-scores as normal z-scores in phase 3, which inflated strong genes, lost the up/down direction and dropped underflowing genes from the Fisher combination ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
 
+### 🧰 Maintenance
+
+* Build the docs with the shared scverse theme and configuration from `scverse-doc`, with the logo blue as its accent for links and highlights ([#1179](https://github.com/scverse/pertpy/pull/1179)) @Zethson
+
 ## v1.4.0
 
 ### 🚀 Features
