@@ -20,7 +20,8 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
-from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, log_cpm, parse_random_effects, random_effect_matrices
+from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, log_cpm
+from pertpy.tools._mixed_models import parse_random_effects, random_effect_matrices
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## v1.5.0
 
+### 🚀 Features
+
+* `Statsmodels` fits linear mixed models when the design contains a random intercept such as `~condition + (1 | donor)`, by REML with Satterthwaite t-tests like `lmerTest`, so single cells can be tested while accounting for the samples they come from; the kernel is shared with Dialogue and the `(1 | variable)` syntax with Milo ([#1147](https://github.com/scverse/pertpy/pull/1147)) @Sizerta @Zethson
+
 ### ⚠️ Changed results
 
 * Dialogue reproduces the R reference end to end: REML mixed models with Satterthwaite t-tests like `lmerTest`, R's PMD penalty, permutation test and cell-type pruning, Pearson pre-selection of signature genes, one-sided gene p-values, and `test_phenotype_association` now follows `DIALOGUE.pheno` (first level or `True` as the indicator, pooled `All` row, no Fisher combination) ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson

@@ -2,14 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pertpy.tools._milo_glmm import (
-    between_within_df,
-    fit_nb_glmm,
-    fit_nb_glmm_nhoods,
-    has_separation,
-    parse_random_effects,
-    random_effect_matrices,
-)
+from pertpy.tools._milo_glmm import between_within_df, fit_nb_glmm, fit_nb_glmm_nhoods, has_separation
+from pertpy.tools._mixed_models import parse_random_effects, random_effect_matrices
 
 
 @pytest.mark.parametrize(

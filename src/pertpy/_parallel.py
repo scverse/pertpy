@@ -5,8 +5,10 @@
 
 import math
 from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
 from typing import Any
 
+import numba
 import numpy as np
 from joblib import Parallel
 from tqdm.auto import tqdm
@@ -27,6 +29,17 @@ def _parallelize_with_joblib(delayed_objects: Iterable[Any], *, total: int | Non
             "Consider setting verbosity in joblib.parallel_config"
         )
         return iter(Parallel(return_as="list", **kwargs)(delayed_objects))
+
+
+@contextmanager
+def _numba_threads(n_tasks: int) -> Iterator[None]:
+    """Cap the numba thread count at `n_tasks` within the block, since every thread of a parallel region costs time even when idle."""
+    n_threads = numba.get_num_threads()
+    numba.set_num_threads(max(1, min(n_threads, n_tasks)))
+    try:
+        yield
+    finally:
+        numba.set_num_threads(n_threads)
 
 
 def _block_slices(n_items: int, *, n_blocks: int = 1, max_block_size: int | None = None) -> list[slice]:
