@@ -53,6 +53,8 @@ For more details, see [Pertpy: an end-to-end framework for perturbation analysis
 :maxdepth: 2
 
 installation
+quickstart
+about/background
 ```
 
 ```{toctree}
@@ -70,7 +72,7 @@ usecases
 :maxdepth: 2
 
 api
-about/background
+glossary
 ```
 
 ```{toctree}

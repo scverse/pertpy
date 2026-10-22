@@ -29,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### 🧰 Maintenance
 
-* Group the docs sidebar into Getting started, Guides, Reference and Project like the other scverse core packages ([#1180](https://github.com/scverse/pertpy/pull/1180)) @Zethson
+* Group the docs sidebar into Getting started, Guides, Reference and Project like the other scverse core packages, with a new quickstart and glossary ([#1180](https://github.com/scverse/pertpy/pull/1180)) @Zethson
 
 ## v1.4.0
 
