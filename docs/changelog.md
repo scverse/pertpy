@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### 🧰 Maintenance
 
-* Build the docs with the shared scverse theme and configuration from `scverse-doc`, which also takes the link colors from pertpy's scverse accent ([#1179](https://github.com/scverse/pertpy/pull/1179)) @Zethson
+* Build the docs with the shared scverse theme and configuration from `scverse-doc`, with the logo blue as its accent for links and highlights ([#1179](https://github.com/scverse/pertpy/pull/1179)) @Zethson
 
 ## v1.4.0
 

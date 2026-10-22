@@ -54,6 +54,7 @@ myst_url_schemes = ("http", "https", "mailto")
 typehints_defaults = "comma"
 
 html_logo = "_static/pertpy_logo.svg"
+html_theme_options = {"accent": "#30679a"}
 
 html_static_path = ["_static"]
 html_extra_path = ["llms.txt"]

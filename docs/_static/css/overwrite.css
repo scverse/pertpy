@@ -65,3 +65,9 @@ li.toctree-l3 {
 li.toctree-l4 {
     font-size: 75% !important;
 }
+
+.bd-sidebar .caption-text {
+    color: #e63946;
+    font-weight: 600;
+    text-transform: uppercase;
+}
