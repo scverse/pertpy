@@ -2,47 +2,32 @@
 # mypy: ignore-errors
 
 import os
-import sys
 from datetime import datetime
 from importlib.metadata import metadata
-from pathlib import Path
 
-HERE = Path(__file__).parent
-sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
-
-needs_sphinx = "4.3"
+from scverse_doc.registry import intersphinx
 
 info = metadata("pertpy")
-project_name = info["Name"]
+project = info["Name"]
 author = info["Author"]
 copyright = f"{datetime.now():%Y}, {author}"
 version = info["Version"]
 urls = dict(pu.split(", ") for pu in info.get_all("Project-URL"))
-repository_url = urls["Source"]
+source_repository = urls["Source"]
 release = info["Version"]
-github_repo = "pertpy"
-master_doc = "index"
 language = "en"
 
 extensions = [
-    "myst_nb",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.intersphinx",
+    "scverse_doc",
     "sphinx.ext.viewcode",
     "nbsphinx",
     "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
-    "sphinx_autodoc_typehints",  # needs to be after napoleon
-    "scanpydoc.elegant_typehints",
-    "sphinx.ext.autosummary",
-    "sphinx_copybutton",
+    "sphinx_autodoc_typehints",
     "sphinx_gallery.load_style",
     "sphinx_remove_toctrees",
-    "sphinx_design",
     "sphinx_tabs.tabs",
     "sphinx_issues",
     "sphinxcontrib.bibtex",
-    "sphinxext.opengraph",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
@@ -54,61 +39,21 @@ ogp_image = "_static/pertpy_logo.png"
 ogp_enable_meta_description = True
 ogp_social_cards = {"enable": False}
 
-# nbsphinx specific settings
-exclude_patterns = [
-    "_build",
-    "Thumbs.db",
-    ".DS_Store",
-    "auto_*/**.ipynb",
-    "auto_*/**.md5",
-    "auto_*/**.py",
-    "**.ipynb_checkpoints",
-]
 nbsphinx_execute = "never"
-pygments_style = "sphinx"
 
-templates_path = ["_templates"]
 bibtex_bibfiles = ["references.bib"]
-nitpicky = True  # Warn about broken links
-source_suffix = {
-    ".rst": "restructuredtext",
-    ".ipynb": "myst-nb",
-    ".myst": "myst-nb",
-}
 
 suppress_warnings = ["toc.not_included"]
 
-autosummary_generate = True
 autosummary_imported_members = True
-autodoc_member_order = "groupwise"
 napoleon_google_docstring = True
-napoleon_include_init_with_doc = False
-napoleon_use_rtype = True
-napoleon_use_param = True
-myst_heading_anchors = 6
 napoleon_custom_sections = [("Params", "Parameters")]
 todo_include_todos = False
-annotate_defaults = True
-myst_enable_extensions = [
-    "amsmath",
-    "colon_fence",
-    "deflist",
-    "dollarmath",
-    "html_image",
-    "html_admonition",
-]
 myst_url_schemes = ("http", "https", "mailto")
-nb_execution_mode = "off"
-nb_merge_streams = True
-warn_as_error = True
 
 typehints_defaults = "comma"
 
-html_theme = "scanpydoc"
-html_title = "pertpy"
 html_logo = "_static/pertpy_logo.svg"
-
-html_theme_options = {}
 
 html_static_path = ["_static"]
 html_extra_path = ["llms.txt"]
@@ -117,16 +62,7 @@ html_show_sphinx = False
 
 add_module_names = False
 autodoc_mock_imports = ["ete4"]
-intersphinx_mapping = {
-    "anndata": ("https://anndata.scverse.org/en/stable/", None),
-    "decoupler": ("https://decoupler.readthedocs.io/en/latest/", None),
-    "mudata": ("https://mudata.readthedocs.io/stable/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas": ("https://pandas.pydata.org/docs/", None),
-    "python": ("https://docs.python.org/3", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "scanpy": ("https://scanpy.scverse.org/en/stable/", None),
+intersphinx_mapping = intersphinx("annbatch") | {
     "seaborn": ("https://seaborn.pydata.org/", None),
     "pyro": ("https://docs.pyro.ai/en/stable/", None),
     "pymde": ("https://pymde.org/", None),
@@ -137,23 +73,12 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
     "statsmodels": ("https://www.statsmodels.org/stable", None),
     "xarray": ("https://docs.xarray.dev/en/stable/", None),
-    "annbatch": ("https://annbatch.readthedocs.io/en/stable/", None),
 }
 nitpick_ignore = [
-    ("py:class", "ete4.Tree"),
     ("py:class", "ete4.core.tree.Tree"),
     ("py:class", "ete4.treeview.TreeStyle"),
     ("py:class", "pertpy.tools._distances._distances.MeanVar"),
-    ("py:class", "The requested data as a NumPy array."),
-    ("py:class", "The full registry saved with the model"),
-    ("py:class", "The requested data."),
-    ("py:class", "Model with loaded state dictionaries."),
-    ("py:class", "pertpy.tools.lazy_import.<locals>.Placeholder"),
-    ("py:data", "typing.Union"),
 ]
-qualname_overrides = {
-    "pandas.core.series.Series": "pandas.Series",
-}
 
 sphinx_gallery_conf = {"nested_sections=": False}
 nbsphinx_thumbnails = {
