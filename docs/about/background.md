@@ -1,4 +1,4 @@
-# About Pertpy
+# Background
 
 Pertpy is an end-to-end framework for the analysis of large-scale single-cell perturbation experiments.
 It provides access to harmonized perturbation datasets and metadata databases along with numerous fast and user-friendly implementations of both established and novel methods such as automatic metadata annotation or perturbation distances to efficiently analyze perturbation data.
