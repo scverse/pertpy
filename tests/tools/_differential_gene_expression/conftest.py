@@ -1,4 +1,6 @@
 from importlib.util import find_spec
+from typing import Literal
+from urllib.error import URLError
 
 import anndata as ad
 import numpy as np
@@ -9,32 +11,26 @@ import scipy.sparse as sp
 PYDESEQ2_AVAILABLE = find_spec("pydeseq2") is not None
 
 
-@pytest.fixture
-def test_counts():
+def _load_example_data(modality: Literal["raw_counts", "metadata"]) -> pd.DataFrame:
     if not PYDESEQ2_AVAILABLE:
         pytest.skip("pydeseq2 not available")
 
     from pydeseq2.utils import load_example_data
 
-    return load_example_data(
-        modality="raw_counts",
-        dataset="synthetic",
-        debug=False,
-    )
+    try:
+        return load_example_data(modality=modality, dataset="synthetic", debug=False)
+    except URLError as e:
+        pytest.skip(f"pydeseq2 example data unavailable: {e}")
+
+
+@pytest.fixture
+def test_counts():
+    return _load_example_data("raw_counts")
 
 
 @pytest.fixture
 def test_metadata():
-    if not PYDESEQ2_AVAILABLE:
-        pytest.skip("pydeseq2 not available")
-
-    from pydeseq2.utils import load_example_data
-
-    return load_example_data(
-        modality="metadata",
-        dataset="synthetic",
-        debug=False,
-    )
+    return _load_example_data("metadata")
 
 
 @pytest.fixture

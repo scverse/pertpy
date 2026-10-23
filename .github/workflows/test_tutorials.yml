@@ -85,6 +85,9 @@ jobs:
                   any::statmod
                   bioc::edgeR
 
+            - name: Keep setup-python's libpython ahead of the system one in R's library path
+              run: echo "R_LD_LIBRARY_PATH=$(R RHOME)/lib" >> "$GITHUB_ENV"
+
             - name: Install uv
               uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
               with:
