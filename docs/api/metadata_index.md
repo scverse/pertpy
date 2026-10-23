@@ -42,6 +42,15 @@ Available databases for drug metadata:
 
 -   [chembl](https://www.ebi.ac.uk/chembl/)
 
+## Cytokine
+
+This module provides the cytokine response signatures of the Human Cytokine Dictionary {cite}`Oesinghaus2025`.
+They hold the genes that 90 cytokines up- or downregulate in 24 cell types of human peripheral blood mononuclear cells and can be tested for enrichment with {class}`~pertpy.tools.Enrichment`.
+
+Available databases for cytokine metadata:
+
+-   [Human Cytokine Dictionary](https://doi.org/10.64898/2025.12.12.693897)
+
 ```{eval-rst}
 .. autosummary::
     :toctree: metadata
@@ -49,6 +58,7 @@ Available databases for drug metadata:
 
     metadata.CellLine
     metadata.Compound
+    metadata.Cytokine
     metadata.Moa
     metadata.Drug
     metadata.LookUp
