@@ -20,7 +20,8 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 from pertpy._doc import _doc_params, doc_common_plot_args
 from pertpy._logger import logger
 from pertpy._types import CSBase, cast_dense, cast_frame, cast_matrix
-from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, log_cpm, parse_random_effects, random_effect_matrices
+from pertpy.tools._milo_glmm import fit_nb_glmm_nhoods, log_cpm
+from pertpy.tools._mixed_models import parse_random_effects, random_effect_matrices
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -536,7 +537,7 @@ class Milo:
             logger.warning("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
             raise
         sample_obs = sample_obs[covariates + [sample_col]]
-        sample_obs.index = sample_obs[sample_col].astype("str")
+        sample_obs.index = sample_obs[sample_col].astype("str").rename(None)
 
         try:
             assert sample_obs.loc[sample_adata.obs_names].shape[0] == len(sample_adata.obs_names)
@@ -1136,7 +1137,7 @@ class Milo:
             logger.error("Covariates {c} are not columns in adata.obs".format(c=" ".join(missing_cov)))
             raise
         sample_obs = sample_obs[covariates + [sample_col]].copy()
-        sample_obs.index = sample_obs[sample_col].astype("str")
+        sample_obs.index = sample_obs[sample_col].astype("str").rename(None)
         # Preserve categoricals; coerce remaining object columns to category so downstream
         # plotting (e.g. plot_nhood_counts_by_cond) doesn't choke on object dtype.
         for col in covariates:

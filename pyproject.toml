@@ -124,7 +124,7 @@ dev = [
 doc = [
     "docutils>=0.8",
     "sphinx>=8.1",
-    "scverse-doc[full]>=0.2.4",
+    "scverse-doc[full]>=0.3.0",
     "sphinxcontrib-bibtex>=1.0.0",
     "sphinx-issues",
     "sphinx-gallery",
