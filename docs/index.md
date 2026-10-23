@@ -54,7 +54,6 @@ For more details, see [Pertpy: an end-to-end framework for perturbation analysis
 
 installation
 quickstart
-about/background
 ```
 
 ```{toctree}
