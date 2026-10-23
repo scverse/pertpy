@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### 🚀 Features
 
+* `pt.md.Cytokine` provides the cytokine response signatures of the Human Cytokine Dictionary for 90 cytokines in 24 PBMC cell types, as gene sets that the `Enrichment` tests take as `targets` ([#PRNUM](https://github.com/scverse/pertpy/pull/PRNUM)) @Jenniliu12 @Zethson
 * `Statsmodels` fits linear mixed models when the design contains a random intercept such as `~condition + (1 | donor)`, by REML with Satterthwaite t-tests like `lmerTest`, so single cells can be tested while accounting for the samples they come from; the kernel is shared with Dialogue and the `(1 | variable)` syntax with Milo ([#1147](https://github.com/scverse/pertpy/pull/1147)) @Sizerta @Zethson
 
 ### ⚠️ Changed results
