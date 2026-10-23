@@ -1,4 +1,5 @@
 import time
+from urllib.error import URLError
 
 import anndata
 import numpy as np
@@ -47,7 +48,7 @@ def test_compound_annotation(adata):
             annotated = pt_compound.annotate_compounds(adata=adata, query_id="perturbation", copy=True)
             break
         # pubchempy turns PubChem 404s into empty results, which surface as a ValueError for no matches
-        except (PubChemHTTPError, ValueError) as e:
+        except (PubChemHTTPError, URLError, ValueError) as e:
             if attempt == retries - 1:
                 pytest.skip(f"PubChem unavailable: {e}")
             time.sleep(10)
