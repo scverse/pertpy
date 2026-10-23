@@ -67,7 +67,7 @@ usecases
 ```
 
 ```{toctree}
-:caption: 'Reference'
+:caption: 'Lookup'
 :hidden: true
 :maxdepth: 2
 
