@@ -1,4 +1,4 @@
-# Citing pertpy
+# Citation
 
 If you find pertpy useful for your research, please consider citing our work as follows:
 
