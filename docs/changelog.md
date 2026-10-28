@@ -34,6 +34,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 * Build the docs with the shared scverse theme and configuration from `scverse-doc`, with the logo blue as its accent for links and highlights ([#1179](https://github.com/scverse/pertpy/pull/1179)) @Zethson
 * The docs take their accents from the scverse-doc registry and colour the sidebar captions in the logo red ([#1182](https://github.com/scverse/pertpy/pull/1182)) @Zethson
 
+### 🧰 Maintenance
+
+* Group the docs sidebar into Getting started, Guides, Reference and Project like the other scverse core packages, with a new quickstart that replaces the background page and a new glossary ([#1180](https://github.com/scverse/pertpy/pull/1180)) @Zethson
+
 ## v1.4.0
 
 ### 🚀 Features

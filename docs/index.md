@@ -48,19 +48,16 @@ For more details, see [Pertpy: an end-to-end framework for perturbation analysis
 ```
 
 ```{toctree}
-:caption: 'General'
+:caption: 'Getting started'
 :hidden: true
 :maxdepth: 2
 
 installation
-api
-contributing
-changelog
-references
+quickstart
 ```
 
 ```{toctree}
-:caption: 'Gallery'
+:caption: 'Guides'
 :hidden: true
 :maxdepth: 3
 
@@ -69,12 +66,23 @@ usecases
 ```
 
 ```{toctree}
-:caption: 'About'
+:caption: 'Reference'
 :hidden: true
 :maxdepth: 2
 
-about/background
+api
+glossary
+```
+
+```{toctree}
+:caption: 'Project'
+:hidden: true
+:maxdepth: 2
+
+changelog
+contributing
 about/cite
+references
 GitHub <https://github.com/scverse/pertpy>
 Discourse <https://discourse.scverse.org/c/ecosystem/pertpy/46>
 ```
