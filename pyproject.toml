@@ -342,6 +342,10 @@ module = [
     "toytree.*",
 ]
 follow_untyped_imports = true
+[[tool.mypy.overrides]]
+module = [ "PyQt6.*" ]
+follow_imports = "skip"
+follow_imports_for_stubs = true
 # Dependencies that ship no type information (absent or `Incomplete` annotations),
 # or whose source mypy cannot follow.
 [[tool.mypy.overrides]]
