@@ -1,4 +1,5 @@
 import anndata as ad
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -24,6 +25,48 @@ def test_mixscape(adata):
     assert "mixscape_class_p_ko" in adata.obs
     assert sum(np_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
     assert sum(ko_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
+
+
+def _barplot_adata(n_genes: int, *, control: str = "NT", perturbation_type: str = "KO") -> ad.AnnData:
+    guides: list[str] = []
+    classes: list[str] = []
+    for i in range(n_genes):
+        guide = f"GENE{i}g1"
+        guides.extend([guide, guide])
+        classes.extend([perturbation_type, "NP"])
+    guides.extend([f"{control}g1", f"{control}g1"])
+    classes.extend([control, control])
+    return ad.AnnData(
+        X=np.zeros((len(guides), 1)),
+        obs=pd.DataFrame({"guide": guides, "mixscape_class_global": classes}),
+    )
+
+
+def test_mixscape_barplot_handles_partial_subplot_rows():
+    adata = _barplot_adata(6)
+    fig = pt.tl.Mixscape().plot_barplot(adata, "guide", return_fig=True)
+
+    visible_axes = [ax for ax in fig.axes if ax.get_visible()]
+    assert len(fig.axes) == 10
+    assert len(visible_axes) == 6
+    assert {ax.get_title() for ax in visible_axes} == {f"GENE{i}" for i in range(6)}
+    plt.close(fig)
+
+
+def test_mixscape_barplot_respects_custom_class_labels():
+    adata = _barplot_adata(2, control="CTRL", perturbation_type="KD")
+    fig = pt.tl.Mixscape().plot_barplot(
+        adata,
+        "guide",
+        control="CTRL",
+        perturbation_type="KD",
+        return_fig=True,
+    )
+
+    visible_axes = [ax for ax in fig.axes if ax.get_visible()]
+    assert len(visible_axes) == 2
+    assert {ax.get_title() for ax in visible_axes} == {"GENE0", "GENE1"}
+    plt.close(fig)
 
 
 def test_mixscape_min_cells_is_independent_of_min_de_genes():

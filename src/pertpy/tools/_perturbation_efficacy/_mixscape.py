@@ -391,6 +391,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         guide_rna_column: str,
         *,
         mixscape_class_global: str = "mixscape_class_global",
+        control: str = "NT",
+        perturbation_type: str = "KO",
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
         axis_title_size: int = 8,
@@ -406,7 +408,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             adata: The annotated data object.
             guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels.
                               The format must be <gene_target>g<#>. Examples are 'STAT2g1' and 'ATF2g1'.
-            mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
+            mixscape_class_global: The column of `.obs` with mixscape global classification result.
+            control: Control category used in the Mixscape classification.
+            perturbation_type: Perturbation class label used in the Mixscape classification.
             axis_text_x_size: Size of the x-axis text.
             axis_text_y_size: Size of the y-axis text.
             axis_title_size: Size of the axis title.
@@ -435,28 +439,31 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         obs = cast_frame(adata.obs)
         count = pd.crosstab(index=obs[mixscape_class_global], columns=obs[guide_rna_column])
         all_cells_percentage = pd.melt(count / count.sum(), ignore_index=False).reset_index()
-        KO_cells_percentage = all_cells_percentage[all_cells_percentage[mixscape_class_global] == "KO"]
-        KO_cells_percentage = KO_cells_percentage.sort_values("value", ascending=False)
+        perturbed_cells_percentage = all_cells_percentage[
+            all_cells_percentage[mixscape_class_global] == perturbation_type
+        ]
+        perturbed_cells_percentage = perturbed_cells_percentage.sort_values("value", ascending=False)
 
-        new_levels = KO_cells_percentage[guide_rna_column]
+        new_levels = perturbed_cells_percentage[guide_rna_column]
         all_cells_percentage[guide_rna_column] = pd.Categorical(
             all_cells_percentage[guide_rna_column], categories=new_levels, ordered=False
         )
         all_cells_percentage[mixscape_class_global] = pd.Categorical(
-            all_cells_percentage[mixscape_class_global], categories=["NT", "NP", "KO"], ordered=False
+            all_cells_percentage[mixscape_class_global], categories=[control, "NP", perturbation_type], ordered=False
         )
         all_cells_percentage["gene"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[0]
         all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
         all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
-        NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
+        perturbed_cells = all_cells_percentage[all_cells_percentage["gene"] != control]
 
-        color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
-        unique_genes = NP_KO_cells["gene"].unique()
-        fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=figsize, sharey=True)
+        color_mapping = {perturbation_type: "salmon", "NP": "lightgray", control: "grey"}
+        unique_genes = perturbed_cells["gene"].unique()
+        n_rows = max(1, math.ceil(len(unique_genes) / 5))
+        fig, axs = plt.subplots(n_rows, 5, figsize=figsize, sharey=True, squeeze=False)
         for i, gene in enumerate(unique_genes):
             ax = axs[int(i / 5), i % 5]
             grouped_df = (
-                NP_KO_cells[NP_KO_cells["gene"] == gene]
+                perturbed_cells[perturbed_cells["gene"] == gene]
                 .groupby(["guide_number", "mixscape_class_global"], observed=False)["value"]
                 .sum()
                 .unstack()
@@ -482,6 +489,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                 fontsize=legend_text_size,
                 title_fontsize=legend_title_size,
             )
+
+        for ax in axs.flat[len(unique_genes) :]:
+            ax.set_visible(False)
 
         fig.subplots_adjust(right=0.8)
         fig.subplots_adjust(hspace=0.5, wspace=0.5)
