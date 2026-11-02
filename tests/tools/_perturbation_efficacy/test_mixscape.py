@@ -27,13 +27,15 @@ def test_mixscape(adata):
     assert sum(ko_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
 
 
-def _barplot_adata(n_genes: int, *, control: str = "NT", perturbation_type: str = "KO") -> ad.AnnData:
+def _barplot_adata(
+    n_genes: int, *, control: str = "NT", perturbation_type: str = "KO", non_perturbed_label: str = "NP"
+) -> ad.AnnData:
     guides: list[str] = []
     classes: list[str] = []
     for i in range(n_genes):
         guide = f"GENE{i}g1"
         guides.extend([guide, guide])
-        classes.extend([perturbation_type, "NP"])
+        classes.extend([perturbation_type, non_perturbed_label])
     guides.extend([f"{control}g1", f"{control}g1"])
     classes.extend([control, control])
     return ad.AnnData(
@@ -54,12 +56,13 @@ def test_mixscape_barplot_handles_partial_subplot_rows():
 
 
 def test_mixscape_barplot_respects_custom_class_labels():
-    adata = _barplot_adata(2, control="CTRL", perturbation_type="KD")
+    adata = _barplot_adata(2, control="CTRL", perturbation_type="KD", non_perturbed_label="not perturbed")
     fig = pt.tl.Mixscape().plot_barplot(
         adata,
         "guide",
         control="CTRL",
         perturbation_type="KD",
+        non_perturbed_label="not perturbed",
         return_fig=True,
     )
 
