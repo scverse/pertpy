@@ -52,6 +52,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         new_class_name: str = "mixscape_class",
         layer: str | None = None,
         min_de_genes: int = 5,
+        min_cells: int = 5,
         logfc_threshold: float = 0.25,
         de_layer: str | None = None,
         test_method: RankGenesMethod = "wilcoxon",
@@ -75,6 +76,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             new_class_name: Name of mixscape classification to be stored in `.obs`.
             layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
+            min_cells: Minimum number of cells in a target gene class. If fewer cells remain assigned during classification, all are assigned NP.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
             test_method: Method to use for differential expression testing.
@@ -252,7 +254,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                         classes[orig_guide_rows[~ko_mask]] = f"{gene} NP"
 
                         current_classes = classes[orig_guide_rows]
-                        if gene_rows_elsewhere.size + (current_classes == gene).sum() < min_de_genes:
+                        if gene_rows_elsewhere.size + (current_classes == gene).sum() < min_cells:
                             classes[gene_rows_elsewhere] = "NP"
                             classes[guide_rows] = "NP"
                             converged = True

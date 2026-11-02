@@ -26,6 +26,46 @@ def test_mixscape(adata):
     assert sum(ko_result_correct) > ACCURACY_THRESHOLD * NUM_CELLS_PER_GROUP
 
 
+def test_mixscape_min_cells_is_independent_of_min_de_genes():
+    rng = np.random.default_rng(7)
+    n_cells = 6
+    n_genes = 20
+    control = rng.normal(1.0, 0.1, size=(n_cells, n_genes))
+    perturbed = rng.normal(5.0, 0.1, size=(n_cells, n_genes))
+    adata = ad.AnnData(
+        X=np.vstack([control, perturbed]),
+        obs=pd.DataFrame(
+            {"gene_target": ["NT"] * n_cells + ["target_gene"] * n_cells},
+            index=[f"cell_{i}" for i in range(2 * n_cells)],
+        ),
+        var=pd.DataFrame(index=[f"gene_{i}" for i in range(n_genes)]),
+    )
+    adata.layers["X_pert"] = adata.X.copy()
+
+    result = pt.tl.Mixscape().mixscape(
+        adata,
+        pert_key="gene_target",
+        control="NT",
+        test_method="t-test",
+        min_de_genes=10,
+        min_cells=3,
+        copy=True,
+    )
+    target = result.obs["gene_target"] == "target_gene"
+    assert (result.obs.loc[target, "mixscape_class_global"] == "KO").all()
+
+    result = pt.tl.Mixscape().mixscape(
+        adata,
+        pert_key="gene_target",
+        control="NT",
+        test_method="t-test",
+        min_de_genes=1,
+        min_cells=7,
+        copy=True,
+    )
+    assert (result.obs.loc[target, "mixscape_class_global"] == "NP").all()
+
+
 def test_mixscape_sparse_without_scaling_matches_dense(adata):
     adata.layers["X_pert"] = adata.X.toarray()
     dense = pt.tl.Mixscape().mixscape(
