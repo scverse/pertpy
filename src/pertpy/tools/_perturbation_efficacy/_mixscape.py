@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import math
 import warnings
 from collections import OrderedDict
@@ -654,10 +653,11 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             raise ValueError("Please run the `mixscape` function first.")
         perturbation_score: pd.DataFrame | None = None
         for key in adata.uns["mixscape"][target_gene]:
-            perturbation_score_temp = adata.uns["mixscape"][target_gene][key]
-            perturbation_score_temp["name"] = key
+            perturbation_score_temp = adata.uns["mixscape"][target_gene][key].copy()
+            if split_by is not None:
+                perturbation_score_temp[split_by] = key
             if perturbation_score is None:
-                perturbation_score = copy.deepcopy(perturbation_score_temp)
+                perturbation_score = perturbation_score_temp
             else:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
         perturbation_score = cast_frame(perturbation_score)
@@ -686,12 +686,12 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             if split_by is not None:
                 sns.set_theme(style="whitegrid")
                 g = sns.FacetGrid(
-                    data=perturbation_score, col=split_by, hue=split_by, palette=palette, height=5, sharey=False
+                    data=perturbation_score, col=split_by, hue=pert_key, palette=palette, height=5, sharey=False
                 )
-                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False, palette=palette)
-                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5, palette=palette)
+                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False)
+                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
                 g.set_axis_labels("Perturbation score", "Cell density")
-                g.add_legend(title=split_by, fontsize=14, title_fontsize=16)
+                g.add_legend(title=pert_key, fontsize=14, title_fontsize=16)
                 g.despine(left=True)
 
             # If split_by is not provided, create a single plot

@@ -2,6 +2,7 @@ import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytest
 
 import pertpy as pt
 from pertpy.tools._perturbation_efficacy._mixscape import MixscapeGaussianMixture, _mixscape_gmm_predict_proba
@@ -69,6 +70,59 @@ def test_mixscape_barplot_respects_custom_class_labels():
     visible_axes = [ax for ax in fig.axes if ax.get_visible()]
     assert len(visible_axes) == 2
     assert {ax.get_title() for ax in visible_axes} == {"GENE0", "GENE1"}
+    plt.close(fig)
+
+
+def test_mixscape_barplot_raises_without_perturbed_cells():
+    adata = _barplot_adata(1, perturbation_type="KD")
+    adata.obs["mixscape_class_global"] = adata.obs["mixscape_class_global"].replace({"KD": "NP"})
+
+    with pytest.raises(ValueError, match="No cells are classified as 'KD'"):
+        pt.tl.Mixscape().plot_barplot(adata, "guide", perturbation_type="KD", return_fig=True)
+
+
+def test_mixscape_perturbscore_split_by_uses_target_hue_without_mutating_uns():
+    obs_names = [f"cell_{i}" for i in range(16)]
+    target = ["NT"] * 4 + ["GENE"] * 4 + ["NT"] * 4 + ["GENE"] * 4
+    mixscape_class = ["NT"] * 4 + ["GENE KO"] * 4 + ["NT"] * 4 + ["GENE KO"] * 4
+    adata = ad.AnnData(
+        X=np.zeros((16, 1)),
+        obs=pd.DataFrame({"target": target, "mixscape_class": mixscape_class}, index=obs_names),
+    )
+    adata.uns["mixscape"] = {
+        "GENE": {
+            "rep1": pd.DataFrame(
+                {
+                    "pvec": [-1.2, -0.8, -1.0, -0.6, 0.7, 1.0, 1.3, 0.9],
+                    "target": ["NT"] * 4 + ["GENE"] * 4,
+                },
+                index=obs_names[:8],
+            ),
+            "rep2": pd.DataFrame(
+                {
+                    "pvec": [-1.1, -0.7, -0.9, -0.5, 0.8, 1.1, 1.4, 1.0],
+                    "target": ["NT"] * 4 + ["GENE"] * 4,
+                },
+                index=obs_names[8:],
+            ),
+        }
+    }
+
+    fig = pt.tl.Mixscape().plot_perturbscore(
+        adata,
+        pert_key="target",
+        target_gene="GENE",
+        split_by="replicate",
+        before_mixscape=True,
+        return_fig=True,
+    )
+
+    assert len(fig.axes) == 2
+    assert fig.legends[0].get_title().get_text() == "target"
+    assert all(
+        "replicate" not in frame.columns and "name" not in frame.columns
+        for frame in adata.uns["mixscape"]["GENE"].values()
+    )
     plt.close(fig)
 
 
