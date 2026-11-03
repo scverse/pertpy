@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import math
 import warnings
 from collections import OrderedDict
@@ -28,7 +27,7 @@ from pertpy._types import CSBase, RankGenesMethod, cast_dense, cast_frame, cast_
 from pertpy.tools._perturbation_efficacy._base import PerturbationEfficacyAnalyzer, _subset_rows_cols
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from anndata import AnnData
     from matplotlib.axes import Axes
@@ -61,6 +60,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         split_by: str | None = None,
         pval_cutoff: float = 5e-2,
         perturbation_type: str = "KO",
+        non_perturbed_label: str = "NP",
         random_state: int | None = 0,
         copy: bool = False,
         **gmmkwargs,
@@ -76,7 +76,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             new_class_name: Name of mixscape classification to be stored in `.obs`.
             layer: Key from adata.layers whose value will be used to perform tests on. Default is using `.layers["X_pert"]`.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            min_cells: Minimum number of cells in a target gene class. If fewer cells remain assigned during classification, all are assigned NP.
+            min_cells: Minimum number of cells in a target gene class. If fewer cells remain assigned during classification, all are assigned `non_perturbed_label`.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
             test_method: Method to use for differential expression testing.
@@ -85,6 +85,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             split_by: Provide `.obs` column with experimental condition/cell type annotation, if perturbations are condition/cell type-specific.
             pval_cutoff: P-value cut-off for selection of significantly DE genes.
             perturbation_type: specify type of CRISPR perturbation expected for labeling mixscape classifications.
+            non_perturbed_label: Label of cells classified as non-perturbed.
             random_state: Random seed for the GaussianMixture model.
             copy: Determines whether a copy of the `adata` is returned.
             **gmmkwargs: Passed to custom implementation of scikit-learn Gaussian Mixture Model.
@@ -94,10 +95,10 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             Otherwise, writes the results directly to `.obs` of the provided `adata`.
 
             - mixscape_class: pandas.Series (`adata.obs['mixscape_class']`).
-              Classification result with cells being either classified as perturbed (KO, by default) or non-perturbed (NP) based on their target gene class.
+              Classification result with cells being either classified as perturbed (KO, by default) or non-perturbed (NP, by default) based on their target gene class.
 
             - mixscape_class_global: pandas.Series (`adata.obs['mixscape_class_global']`).
-              Global classification result (perturbed, NP or NT).
+              Global classification result (perturbed, non-perturbed or control).
 
             - mixscape_class_p_ko: pandas.Series (`adata.obs['mixscape_class_p_ko']`).
               Posterior probabilities used to determine if a cell is KO (default).
@@ -176,7 +177,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                 all_rows = np.flatnonzero(orig_guide_cells | nt_cells)
 
                 if len(perturbation_markers[(category, gene)]) == 0:
-                    classes[orig_guide_rows] = f"{gene} NP"
+                    classes[orig_guide_rows] = f"{gene} {non_perturbed_label}"
 
                 else:
                     de_genes = perturbation_markers[(category, gene)]
@@ -251,12 +252,12 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                         # based on the posterior probability, assign cells to the two classes
                         ko_mask = post_prob > 0.5
                         classes[orig_guide_rows[ko_mask]] = gene
-                        classes[orig_guide_rows[~ko_mask]] = f"{gene} NP"
+                        classes[orig_guide_rows[~ko_mask]] = f"{gene} {non_perturbed_label}"
 
                         current_classes = classes[orig_guide_rows]
                         if gene_rows_elsewhere.size + (current_classes == gene).sum() < min_cells:
-                            classes[gene_rows_elsewhere] = "NP"
-                            classes[guide_rows] = "NP"
+                            classes[gene_rows_elsewhere] = non_perturbed_label
+                            classes[guide_rows] = non_perturbed_label
                             converged = True
                             current_classes = classes[orig_guide_rows]
                         if (current_classes == old_classes).all():
@@ -270,7 +271,10 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                 post_probs[orig_guide_rows] = post_prob
             if gene_targets:
                 obs[new_class_name] = pd.Series(classes, index=obs.index, dtype=class_dtype)
-                obs[f"{new_class_name}_global"] = [a.split(" ")[-1] for a in classes]
+                perturbed = classes == np.char.add(pert_labels.astype(str), f" {perturbation_type}")
+                obs[f"{new_class_name}_global"] = np.where(
+                    pert_labels == control, control, np.where(perturbed, perturbation_type, non_perturbed_label)
+                )
         obs[f"{new_class_name}_p_{perturbation_type.lower()}"] = post_probs
         adata.uns["mixscape"] = gv_list
 
@@ -391,6 +395,10 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         guide_rna_column: str,
         *,
         mixscape_class_global: str = "mixscape_class_global",
+        control: str = "NT",
+        perturbation_type: str = "KO",
+        non_perturbed_label: str = "NP",
+        palette: Mapping[str, str] | None = None,
         axis_text_x_size: int = 8,
         axis_text_y_size: int = 6,
         axis_title_size: int = 8,
@@ -406,7 +414,12 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             adata: The annotated data object.
             guide_rna_column: The column of `.obs` with guide RNA labels. The target gene labels.
                               The format must be <gene_target>g<#>. Examples are 'STAT2g1' and 'ATF2g1'.
-            mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
+            mixscape_class_global: The column of `.obs` with mixscape global classification result.
+            control: Control category used in the Mixscape classification.
+            perturbation_type: Perturbation class label used in the Mixscape classification.
+            non_perturbed_label: Non-perturbed class label used in the Mixscape classification.
+            palette: Colors of the control, non-perturbed and perturbed classes.
+                     Defaults to grey, light grey and salmon.
             axis_text_x_size: Size of the x-axis text.
             axis_text_y_size: Size of the y-axis text.
             axis_title_size: Size of the axis title.
@@ -434,37 +447,43 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             raise ValueError("Please run the `mixscape` function first.")
         obs = cast_frame(adata.obs)
         count = pd.crosstab(index=obs[mixscape_class_global], columns=obs[guide_rna_column])
+        if perturbation_type not in count.index:
+            raise ValueError(f"No cells are classified as {perturbation_type!r} in `.obs[{mixscape_class_global!r}]`.")
         all_cells_percentage = pd.melt(count / count.sum(), ignore_index=False).reset_index()
-        KO_cells_percentage = all_cells_percentage[all_cells_percentage[mixscape_class_global] == "KO"]
-        KO_cells_percentage = KO_cells_percentage.sort_values("value", ascending=False)
+        perturbed_cells_percentage = all_cells_percentage[
+            all_cells_percentage[mixscape_class_global] == perturbation_type
+        ]
+        perturbed_cells_percentage = perturbed_cells_percentage.sort_values("value", ascending=False)
 
-        new_levels = KO_cells_percentage[guide_rna_column]
+        new_levels = perturbed_cells_percentage[guide_rna_column]
         all_cells_percentage[guide_rna_column] = pd.Categorical(
             all_cells_percentage[guide_rna_column], categories=new_levels, ordered=False
         )
         all_cells_percentage[mixscape_class_global] = pd.Categorical(
-            all_cells_percentage[mixscape_class_global], categories=["NT", "NP", "KO"], ordered=False
+            all_cells_percentage[mixscape_class_global],
+            categories=[control, non_perturbed_label, perturbation_type],
+            ordered=False,
         )
-        all_cells_percentage["gene"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[0]
-        all_cells_percentage["guide_number"] = all_cells_percentage[guide_rna_column].str.rsplit("g", expand=True)[1]
-        all_cells_percentage["guide_number"] = "g" + all_cells_percentage["guide_number"]
-        NP_KO_cells = all_cells_percentage[all_cells_percentage["gene"] != "NT"]
+        gene_guide = all_cells_percentage[guide_rna_column].str.rsplit("g", n=1, expand=True)
+        all_cells_percentage["gene"] = gene_guide[0]
+        all_cells_percentage["guide_number"] = "g" + gene_guide[1]
+        perturbed_cells = all_cells_percentage[all_cells_percentage["gene"] != control]
 
-        color_mapping = {"KO": "salmon", "NP": "lightgray", "NT": "grey"}
-        unique_genes = NP_KO_cells["gene"].unique()
-        fig, axs = plt.subplots(int(len(unique_genes) / 5), 5, figsize=figsize, sharey=True)
-        for i, gene in enumerate(unique_genes):
-            ax = axs[int(i / 5), i % 5]
+        if palette is None:
+            palette = {perturbation_type: "salmon", non_perturbed_label: "lightgray", control: "grey"}
+        unique_genes = perturbed_cells["gene"].unique()
+        fig, axs = plt.subplots(math.ceil(len(unique_genes) / 5), 5, figsize=figsize, sharey=True, squeeze=False)
+        for ax, gene in zip(axs.flat, unique_genes, strict=False):
             grouped_df = (
-                NP_KO_cells[NP_KO_cells["gene"] == gene]
-                .groupby(["guide_number", "mixscape_class_global"], observed=False)["value"]
+                perturbed_cells[perturbed_cells["gene"] == gene]
+                .groupby(["guide_number", mixscape_class_global], observed=False)["value"]
                 .sum()
                 .unstack()
             )
             grouped_df.plot(
                 kind="bar",
                 stacked=True,
-                color=[color_mapping[col] for col in grouped_df.columns],
+                color=[palette[col] for col in grouped_df.columns],
                 ax=ax,
                 width=0.8,
                 legend=False,
@@ -483,6 +502,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                 title_fontsize=legend_title_size,
             )
 
+        for ax in axs.flat[len(unique_genes) :]:
+            ax.set_visible(False)
+
         fig.subplots_adjust(right=0.8)
         fig.subplots_adjust(hspace=0.5, wspace=0.5)
         plt.tight_layout()
@@ -500,8 +522,10 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         target_gene: str,
         control: str = "NT",
         *,
+        mixscape_class: str = "mixscape_class",
         layer: str | None = None,
         method: RankGenesMethod | None = "wilcoxon",
+        n_genes: int = 20,
         subsample_number: int | None = 900,
         random_state: int = 0,
         vmin: float | None = -2,
@@ -516,8 +540,10 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             pert_key: The column of `.obs` with target gene labels.
             target_gene: Target gene name to visualize heatmap for.
             control: Control category from the `pert_key` column.
+            mixscape_class: The column of `.obs` with the mixscape classification result.
             layer: Key from `adata.layers` whose value will be used to perform tests on.
             method: The default method is 'wilcoxon', see `method` parameter in `scanpy.tl.rank_genes_groups` for more options.
+            n_genes: Number of top genes to show.
             subsample_number: Subsample to this number of observations.
             random_state: Seed for the subsampling.
             vmin: The value representing the lower limit of the color scale. Values smaller than vmin are plotted with the same color as vmin.
@@ -535,13 +561,13 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
             >>> ms_pt.plot_heatmap(
-            ...     adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", layer="X_pert", control="NT"
+            ...     adata=mdata["rna"], pert_key="gene_target", target_gene="IFNGR2", layer="X_pert", control="NT"
             ... )
 
         Preview:
             .. image:: /_static/docstring_previews/mixscape_heatmap.png
         """
-        if "mixscape_class" not in adata.obs:
+        if mixscape_class not in adata.obs:
             raise ValueError("Please run `pt.tl.mixscape` first.")
         adata_subset = adata[(adata.obs[pert_key] == target_gene) | (adata.obs[pert_key] == control)].copy()
         with warnings.catch_warnings():
@@ -554,11 +580,11 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         fig = sc.pl.rank_genes_groups_heatmap(
             adata_subset,
-            groupby="mixscape_class",
+            groupby=mixscape_class,
             vmin=vmin,
             vmax=vmax,
-            n_genes=20,
-            groups=adata_subset[adata_subset.obs[pert_key] == control].obs["mixscape_class"].unique().tolist(),
+            n_genes=n_genes,
+            groups=adata_subset[adata_subset.obs[pert_key] == control].obs[mixscape_class].unique().tolist(),
             show=False,
             **kwds,
         )
@@ -581,6 +607,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         split_by: str | None = None,
         before_mixscape: bool = False,
         perturbation_type: str = "KO",
+        non_perturbed_label: str = "NP",
         return_fig: bool = False,
     ) -> Figure | None:
         """Density plots to visualize perturbation scores calculated by the `pt.tl.mixscape` function.
@@ -601,6 +628,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             before_mixscape: Option to split densities based on mixscape classification (default) or original target gene classification.
                              Default is set to NULL and plots cells by original class ID.
             perturbation_type: Specify type of CRISPR perturbation expected for labeling mixscape classifications.
+            non_perturbed_label: Non-perturbed class label used in the Mixscape classification.
             {common_plot_args}
 
         Returns:
@@ -614,7 +642,9 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             >>> ms_pt = pt.tl.Mixscape()
             >>> ms_pt.perturbation_signature(mdata["rna"], "perturbation", "NT", split_by="replicate")
             >>> ms_pt.mixscape(mdata["rna"], "gene_target", "NT", layer="X_pert")
-            >>> ms_pt.plot_perturbscore(adata=mdata["rna"], labels="gene_target", target_gene="IFNGR2", color="orange")
+            >>> ms_pt.plot_perturbscore(
+            ...     adata=mdata["rna"], pert_key="gene_target", target_gene="IFNGR2", color="orange"
+            ... )
 
         Preview:
             .. image:: /_static/docstring_previews/mixscape_perturbscore.png
@@ -623,10 +653,11 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             raise ValueError("Please run the `mixscape` function first.")
         perturbation_score: pd.DataFrame | None = None
         for key in adata.uns["mixscape"][target_gene]:
-            perturbation_score_temp = adata.uns["mixscape"][target_gene][key]
-            perturbation_score_temp["name"] = key
+            perturbation_score_temp = adata.uns["mixscape"][target_gene][key].copy()
+            if split_by is not None:
+                perturbation_score_temp[split_by] = key
             if perturbation_score is None:
-                perturbation_score = copy.deepcopy(perturbation_score_temp)
+                perturbation_score = perturbation_score_temp
             else:
                 perturbation_score = pd.concat([perturbation_score, perturbation_score_temp])
         perturbation_score = cast_frame(perturbation_score)
@@ -635,12 +666,15 @@ class Mixscape(PerturbationEfficacyAnalyzer):
 
         # If before_mixscape is True, split densities based on original target gene classification
         if before_mixscape is True:
-            palette = {gd: "#7d7d7d", target_gene: color}
+            if palette is None:
+                palette = {gd: "#7d7d7d", target_gene: color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
-            top_r = max(
-                cast_dense(plot_dens.get_lines()[cond].get_data()[1]).max()
-                for cond in range(len(plot_dens.get_lines()))
-            )
+            density_maxima = []
+            for line in plot_dens.get_lines():
+                density = np.asarray(line.get_ydata(), dtype=float)
+                if density.size:
+                    density_maxima.append(float(np.nanmax(density)))
+            top_r = max(density_maxima, default=1.0)
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
@@ -654,42 +688,51 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             if split_by is not None:
                 sns.set_theme(style="whitegrid")
                 g = sns.FacetGrid(
-                    data=perturbation_score, col=split_by, hue=split_by, palette=palette, height=5, sharey=False
+                    data=perturbation_score, col=split_by, hue=pert_key, palette=palette, height=5, sharey=False
                 )
-                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False, palette=palette)
-                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5, palette=palette)
+                g.map(sns.kdeplot, "pvec", fill=True, common_norm=False)
+                g.map(sns.scatterplot, "pvec", "y_jitter", s=10, alpha=0.5)
                 g.set_axis_labels("Perturbation score", "Cell density")
-                g.add_legend(title=split_by, fontsize=14, title_fontsize=16)
+                g.add_legend(title=pert_key, fontsize=14, title_fontsize=16)
                 g.despine(left=True)
 
             # If split_by is not provided, create a single plot
             else:
                 sns.set_theme(style="whitegrid")
                 sns.kdeplot(
-                    data=perturbation_score, x="pvec", hue="gene_target", fill=True, common_norm=False, palette=palette
+                    data=perturbation_score, x="pvec", hue=pert_key, fill=True, common_norm=False, palette=palette
                 )
                 sns.scatterplot(
-                    data=perturbation_score, x="pvec", y="y_jitter", hue="gene_target", palette=palette, s=10, alpha=0.5
+                    data=perturbation_score, x="pvec", y="y_jitter", hue=pert_key, palette=palette, s=10, alpha=0.5
                 )
                 plt.xlabel("Perturbation score", fontsize=16)
                 plt.ylabel("Cell density", fontsize=16)
                 plt.title("Density Plot", fontsize=18)
-                plt.legend(title="gene_target", title_fontsize=14, fontsize=12)
+                plt.legend(title=pert_key, title_fontsize=14, fontsize=12)
                 sns.despine()
 
         # If before_mixscape is False, split densities based on mixscape classifications
         else:
             if palette is None:
-                palette = {gd: "#7d7d7d", f"{target_gene} NP": "#c9c9c9", f"{target_gene} {perturbation_type}": color}
+                palette = {
+                    gd: "#7d7d7d",
+                    f"{target_gene} {non_perturbed_label}": "#c9c9c9",
+                    f"{target_gene} {perturbation_type}": color,
+                }
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
-            top_r = max(
-                cast_dense(plot_dens.get_lines()[i].get_data()[1]).max() for i in range(len(plot_dens.get_lines()))
-            )
+            density_maxima = []
+            for line in plot_dens.get_lines():
+                density = np.asarray(line.get_ydata(), dtype=float)
+                if density.size:
+                    density_maxima.append(float(np.nanmax(density)))
+            top_r = max(density_maxima, default=1.0)
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
             gd2 = list(
-                set(perturbation_score["mix"]).difference([f"{target_gene} NP", f"{target_gene} {perturbation_type}"])
+                set(perturbation_score["mix"]).difference(
+                    [f"{target_gene} {non_perturbed_label}", f"{target_gene} {perturbation_type}"]
+                )
             )[0]
             perturbation_score.loc[perturbation_score["mix"] == gd2, "y_jitter"] = rng.uniform(
                 low=0.001, high=top_r / 10, size=sum(perturbation_score["mix"] == gd2)
@@ -699,8 +742,12 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                     low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} {perturbation_type}")
                 )
             )
-            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} NP", "y_jitter"] = rng.uniform(
-                low=-top_r / 10, high=0, size=sum(perturbation_score["mix"] == f"{target_gene} NP")
+            perturbation_score.loc[perturbation_score["mix"] == f"{target_gene} {non_perturbed_label}", "y_jitter"] = (
+                rng.uniform(
+                    low=-top_r / 10,
+                    high=0,
+                    size=sum(perturbation_score["mix"] == f"{target_gene} {non_perturbed_label}"),
+                )
             )
             # If split_by is provided, split densities based on the split_by
             if split_by is not None:
