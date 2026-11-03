@@ -8,441 +8,441 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### 🚀 Features
 
-* `pt.md.Cytokine` provides the cytokine response signatures of the Human Cytokine Dictionary for 90 cytokines in 24 PBMC cell types, as gene sets that the `Enrichment` tests take as `targets` ([#1186](https://github.com/scverse/pertpy/pull/1186)) @Jenniliu12, @Zethson
-* `Statsmodels` fits linear mixed models when the design contains a random intercept such as `~condition + (1 | donor)`, by REML with Satterthwaite t-tests like `lmerTest`, so single cells can be tested while accounting for the samples they come from; the kernel is shared with Dialogue and the `(1 | variable)` syntax with Milo ([#1147](https://github.com/scverse/pertpy/pull/1147)) @Sizerta, @Zethson
-* `assign_mixture_model` also writes the binary cell-by-guide assignment to `adata.layers[output_layer]`, since the per-cell string in `.obs` caps and joins the assigned guides ([#1173](https://github.com/scverse/pertpy/pull/1173)) @Zethson
+* `pt.md.Cytokine` provides the cytokine response signatures of the Human Cytokine Dictionary for 90 cytokines in 24 PBMC cell types, as gene sets that the `Enrichment` tests take as `targets` ([#1186](https://github.com/scverse/pertpy/pull/1186)) [@Jenniliu12](https://github.com/Jenniliu12), [@Zethson](https://github.com/Zethson)
+* `Statsmodels` fits linear mixed models when the design contains a random intercept such as `~condition + (1 | donor)`, by REML with Satterthwaite t-tests like `lmerTest`, so single cells can be tested while accounting for the samples they come from; the kernel is shared with Dialogue and the `(1 | variable)` syntax with Milo ([#1147](https://github.com/scverse/pertpy/pull/1147)) [@Sizerta](https://github.com/Sizerta), [@Zethson](https://github.com/Zethson)
+* `assign_mixture_model` also writes the binary cell-by-guide assignment to `adata.layers[output_layer]`, since the per-cell string in `.obs` caps and joins the assigned guides ([#1173](https://github.com/scverse/pertpy/pull/1173)) [@Zethson](https://github.com/Zethson)
 
 ### ⚡ Performance
 
-* Augur scores each cross-validation fold in one pass over the forest instead of six scorer passes, skips scikit-learn's per-tree parameter validation and no longer ships the fitted trees back from the workers, with identical metrics and importances on seeded runs ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
-* Dialogue runs the PMD iterations in a numba kernel (20x per fit) and solves the iterative NNLS on the normal equations, replacing the `sparsecca` dependency; whole runs take 3 to 13 s on 5k to 27k cells, about 2x faster than before with up to half the peak memory, where R needs 2 to 16 minutes ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
-* `assign_mixture_model` fits each guide on its distinct count values, 20x faster on Papalexi (2.9 s to 0.14 s) and with a third of the peak memory at 100k cells x 500 guides ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
+* Augur scores each cross-validation fold in one pass over the forest instead of six scorer passes, skips scikit-learn's per-tree parameter validation and no longer ships the fitted trees back from the workers, with identical metrics and importances on seeded runs ([#1178](https://github.com/scverse/pertpy/pull/1178)) [@Zethson](https://github.com/Zethson)
+* Dialogue runs the PMD iterations in a numba kernel (20x per fit) and solves the iterative NNLS on the normal equations, replacing the `sparsecca` dependency; whole runs take 3 to 13 s on 5k to 27k cells, about 2x faster than before with up to half the peak memory, where R needs 2 to 16 minutes ([#1177](https://github.com/scverse/pertpy/pull/1177)) [@Zethson](https://github.com/Zethson)
+* `assign_mixture_model` fits each guide on its distinct count values, 20x faster on Papalexi (2.9 s to 0.14 s) and with a third of the peak memory at 100k cells x 500 guides ([#1172](https://github.com/scverse/pertpy/pull/1172)) [@Zethson](https://github.com/Zethson)
 
 ### ⚠️ Changed results
 
-* Dialogue reproduces the R reference end to end: REML mixed models with Satterthwaite t-tests like `lmerTest`, R's PMD penalty, permutation test and cell-type pruning, Pearson pre-selection of signature genes, one-sided gene p-values, and `test_phenotype_association` now follows `DIALOGUE.pheno` (first level or `True` as the indicator, pooled `All` row, no Fisher combination) ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
-* Dialogue orders the shared samples like R's ICU collation, since that order decides the signs of the PMD initialization and with them the programs found ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
-* Augur is reproducible by default: unseeded estimators and folds are seeded by the subsample index like R Augur, and `predict_differential_prioritization` draws its permuted means without replacement from a seeded generator, as R does ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
-* Dialogue's `min_cells_per_sample` defaults to R's 15 and only gates the ANOVA feature filter, which now raises below five retained features instead of keeping all of them; `n_permutations` counts the observed fit, so values below 11 cannot pass the default `empirical_alpha` ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
-* `assign_mixture_model` fits the Poisson-Gaussian mixture by multi-start EM instead of 500 Adam steps from one start, which left thresholds unconverged, swapped the components on high-MOI guides and dropped small guides; thresholds now match crispat run to convergence on 105 of 106 Papalexi guides, `learning_rate` is deprecated and `n_iter` caps the EM iterations ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
+* Dialogue reproduces the R reference end to end: REML mixed models with Satterthwaite t-tests like `lmerTest`, R's PMD penalty, permutation test and cell-type pruning, Pearson pre-selection of signature genes, one-sided gene p-values, and `test_phenotype_association` now follows `DIALOGUE.pheno` (first level or `True` as the indicator, pooled `All` row, no Fisher combination) ([#1177](https://github.com/scverse/pertpy/pull/1177)) [@Zethson](https://github.com/Zethson)
+* Dialogue orders the shared samples like R's ICU collation, since that order decides the signs of the PMD initialization and with them the programs found ([#1177](https://github.com/scverse/pertpy/pull/1177)) [@Zethson](https://github.com/Zethson)
+* Augur is reproducible by default: unseeded estimators and folds are seeded by the subsample index like R Augur, and `predict_differential_prioritization` draws its permuted means without replacement from a seeded generator, as R does ([#1178](https://github.com/scverse/pertpy/pull/1178)) [@Zethson](https://github.com/Zethson)
+* Dialogue's `min_cells_per_sample` defaults to R's 15 and only gates the ANOVA feature filter, which now raises below five retained features instead of keeping all of them; `n_permutations` counts the observed fit, so values below 11 cannot pass the default `empirical_alpha` ([#1177](https://github.com/scverse/pertpy/pull/1177)) [@Zethson](https://github.com/Zethson)
+* `assign_mixture_model` fits the Poisson-Gaussian mixture by multi-start EM instead of 500 Adam steps from one start, which left thresholds unconverged, swapped the components on high-MOI guides and dropped small guides; thresholds now match crispat run to convergence on 105 of 106 Papalexi guides, `learning_rate` is deprecated and `n_iter` caps the EM iterations ([#1172](https://github.com/scverse/pertpy/pull/1172)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* Augur encodes the condition labels after filtering to two conditions, so binary precision, recall and F1 are no longer NaN when the kept labels were not the first two; those metrics now take the first condition as the positive class like R Augur, `min_cells` defaults to `subsample_size` and applies per condition like R, data sets with fewer than 1000 features skip feature selection like R, per-cell `augur_score` is assigned by exact cell type match, and regressors use unstratified folds ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
-* Dialogue treated signed log10 p-value z-scores as normal z-scores in phase 3, which inflated strong genes, lost the up/down direction and dropped underflowing genes from the Fisher combination ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
-* Mixscape's `plot_barplot` no longer fails when the number of target genes is not a multiple of five, and Mixscape takes the control, perturbed and non-perturbed class labels from `control`, `perturbation_type` and the new `non_perturbed_label` instead of hardcoding `NT`, `KO` and `NP`; `plot_heatmap` and `plot_perturbscore` use the `mixscape_class` and `pert_key` columns they are given, `plot_perturbscore` keeps a custom `palette` with `before_mixscape=True`, and `plot_barplot` takes a `palette` ([#1191](https://github.com/scverse/pertpy/pull/1191)) @kkkklck, @Zethson
-* Mixscape takes the minimum number of cells left in a perturbed class from the new `min_cells` instead of `min_de_genes`, as Seurat does, which changes results only for a non-default `min_de_genes` ([#1189](https://github.com/scverse/pertpy/pull/1189)) @kkkklck, @Zethson
-* Milo's `plot_nhood_counts_by_cond` raised with pandas 3.1, which kept the sample column's name on the per-sample index ([#1181](https://github.com/scverse/pertpy/pull/1181)) @Zethson
-* Guide assignment: `assign_by_threshold` and `assign_to_max_guide` accept CSC and sparse-array input, explicitly stored zeros no longer enter the mixture fit, `plot_heatmap` saves a reusable cell order and `only_return_results=True` no longer writes to `adata.var` ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
+* Augur encodes the condition labels after filtering to two conditions, so binary precision, recall and F1 are no longer NaN when the kept labels were not the first two; those metrics now take the first condition as the positive class like R Augur, `min_cells` defaults to `subsample_size` and applies per condition like R, data sets with fewer than 1000 features skip feature selection like R, per-cell `augur_score` is assigned by exact cell type match, and regressors use unstratified folds ([#1178](https://github.com/scverse/pertpy/pull/1178)) [@Zethson](https://github.com/Zethson)
+* Dialogue treated signed log10 p-value z-scores as normal z-scores in phase 3, which inflated strong genes, lost the up/down direction and dropped underflowing genes from the Fisher combination ([#1177](https://github.com/scverse/pertpy/pull/1177)) [@Zethson](https://github.com/Zethson)
+* Mixscape's `plot_barplot` no longer fails when the number of target genes is not a multiple of five, and Mixscape takes the control, perturbed and non-perturbed class labels from `control`, `perturbation_type` and the new `non_perturbed_label` instead of hardcoding `NT`, `KO` and `NP`; `plot_heatmap` and `plot_perturbscore` use the `mixscape_class` and `pert_key` columns they are given, `plot_perturbscore` keeps a custom `palette` with `before_mixscape=True`, and `plot_barplot` takes a `palette` ([#1191](https://github.com/scverse/pertpy/pull/1191)) [@kkkklck](https://github.com/kkkklck), [@Zethson](https://github.com/Zethson)
+* Mixscape takes the minimum number of cells left in a perturbed class from the new `min_cells` instead of `min_de_genes`, as Seurat does, which changes results only for a non-default `min_de_genes` ([#1189](https://github.com/scverse/pertpy/pull/1189)) [@kkkklck](https://github.com/kkkklck), [@Zethson](https://github.com/Zethson)
+* Milo's `plot_nhood_counts_by_cond` raised with pandas 3.1, which kept the sample column's name on the per-sample index ([#1181](https://github.com/scverse/pertpy/pull/1181)) [@Zethson](https://github.com/Zethson)
+* Guide assignment: `assign_by_threshold` and `assign_to_max_guide` accept CSC and sparse-array input, explicitly stored zeros no longer enter the mixture fit, `plot_heatmap` saves a reusable cell order and `only_return_results=True` no longer writes to `adata.var` ([#1172](https://github.com/scverse/pertpy/pull/1172)) [@Zethson](https://github.com/Zethson)
 
 ### 🧰 Maintenance
 
-* Require Python 3.13 ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
-* Build the docs with the shared scverse theme and configuration from `scverse-doc`, with the logo blue as its accent for links and highlights ([#1179](https://github.com/scverse/pertpy/pull/1179)) @Zethson
-* The docs take their accents from the scverse-doc registry and colour the sidebar captions in the logo red ([#1182](https://github.com/scverse/pertpy/pull/1182)) @Zethson
-* Group the docs sidebar into Getting started, Guides, Reference and Project like the other scverse core packages, with a new quickstart that replaces the background page and a new glossary ([#1180](https://github.com/scverse/pertpy/pull/1180)) @Zethson
-* Skip the network tests when a download fails with a `URLError` ([#1184](https://github.com/scverse/pertpy/pull/1184)) @Zethson
-* Keep R from loading the system libpython in the tutorial notebooks on Ubuntu 26.04 ([#1185](https://github.com/scverse/pertpy/pull/1185)) @Zethson
-* Skip PyQt6's stubs in mypy, whose invalid syntax made mypy abort ([#1190](https://github.com/scverse/pertpy/pull/1190)) @Zethson
-* Require LLM usage disclosure in the pull request template ([#1165](https://github.com/scverse/pertpy/pull/1165)) @Zethson
+* Require Python 3.13 ([#1172](https://github.com/scverse/pertpy/pull/1172)) [@Zethson](https://github.com/Zethson)
+* Build the docs with the shared scverse theme and configuration from `scverse-doc`, with the logo blue as its accent for links and highlights ([#1179](https://github.com/scverse/pertpy/pull/1179)) [@Zethson](https://github.com/Zethson)
+* The docs take their accents from the scverse-doc registry and colour the sidebar captions in the logo red ([#1182](https://github.com/scverse/pertpy/pull/1182)) [@Zethson](https://github.com/Zethson)
+* Group the docs sidebar into Getting started, Guides, Reference and Project like the other scverse core packages, with a new quickstart that replaces the background page and a new glossary ([#1180](https://github.com/scverse/pertpy/pull/1180)) [@Zethson](https://github.com/Zethson)
+* Skip the network tests when a download fails with a `URLError` ([#1184](https://github.com/scverse/pertpy/pull/1184)) [@Zethson](https://github.com/Zethson)
+* Keep R from loading the system libpython in the tutorial notebooks on Ubuntu 26.04 ([#1185](https://github.com/scverse/pertpy/pull/1185)) [@Zethson](https://github.com/Zethson)
+* Skip PyQt6's stubs in mypy, whose invalid syntax made mypy abort ([#1190](https://github.com/scverse/pertpy/pull/1190)) [@Zethson](https://github.com/Zethson)
+* Require LLM usage disclosure in the pull request template ([#1165](https://github.com/scverse/pertpy/pull/1165)) [@Zethson](https://github.com/Zethson)
 
 ## v1.4.0
 
 ### 🚀 Features
 
-* Add signature reversal scoring to enrichment ([#1082](https://github.com/scverse/pertpy/pull/1082)) @daveringelberg
-* Add native Hill dose-response fitting ([#1097](https://github.com/scverse/pertpy/pull/1097)) @daveringelberg
-* Expose datasets as `pt.ds` in addition to `pt.dt` ([#1103](https://github.com/scverse/pertpy/pull/1103)) @Zethson
-* Make Milo differential abundance testing match R Milo, including the pydeseq2 solver ([#1109](https://github.com/scverse/pertpy/pull/1109), [#1110](https://github.com/scverse/pertpy/pull/1110)) @Zethson
-* Add `n_jobs` to `fit_dose_response` and `balance_classes` to `MLPClassifierSpace.compute` ([#1142](https://github.com/scverse/pertpy/pull/1142), [#1153](https://github.com/scverse/pertpy/pull/1153)) @Zethson
-* Seed the control gene sampling of `Enrichment.score` via `random_state` ([#1128](https://github.com/scverse/pertpy/pull/1128)) @Zethson
-* Accept `hdi_prob` in scCODA summaries with arviz 1.x ([#1159](https://github.com/scverse/pertpy/pull/1159)) @Zethson
+* Add signature reversal scoring to enrichment ([#1082](https://github.com/scverse/pertpy/pull/1082)) [@daveringelberg](https://github.com/daveringelberg)
+* Add native Hill dose-response fitting ([#1097](https://github.com/scverse/pertpy/pull/1097)) [@daveringelberg](https://github.com/daveringelberg)
+* Expose datasets as `pt.ds` in addition to `pt.dt` ([#1103](https://github.com/scverse/pertpy/pull/1103)) [@Zethson](https://github.com/Zethson)
+* Make Milo differential abundance testing match R Milo, including the pydeseq2 solver ([#1109](https://github.com/scverse/pertpy/pull/1109), [#1110](https://github.com/scverse/pertpy/pull/1110)) [@Zethson](https://github.com/Zethson)
+* Add `n_jobs` to `fit_dose_response` and `balance_classes` to `MLPClassifierSpace.compute` ([#1142](https://github.com/scverse/pertpy/pull/1142), [#1153](https://github.com/scverse/pertpy/pull/1153)) [@Zethson](https://github.com/Zethson)
+* Seed the control gene sampling of `Enrichment.score` via `random_state` ([#1128](https://github.com/scverse/pertpy/pull/1128)) [@Zethson](https://github.com/Zethson)
+* Accept `hdi_prob` in scCODA summaries with arviz 1.x ([#1159](https://github.com/scverse/pertpy/pull/1159)) [@Zethson](https://github.com/Zethson)
 
 ### ⚡ Performance
 
 Hot loops across all tools were vectorized or moved into numba kernels, with results verified against the previous implementation or the reference library on real data.
 
-* Distances: `DistanceTest` 35x, `ks_test` 27x, `pairwise` with `t_test`/`sym_kldiv` 9-13x, MMD without n x n kernel matrices, numba KDE for `mean_var_distribution`, exact NB2 fits for `nb_ll` ([#1118](https://github.com/scverse/pertpy/pull/1118), [#1134](https://github.com/scverse/pertpy/pull/1134), [#1135](https://github.com/scverse/pertpy/pull/1135)) @Zethson
-* Differential expression: Statsmodels contrasts 11-20x and batched OLS fits, sparse Wilcoxon and t-test kernels, vectorized `PermutationTest` statistic ([#1124](https://github.com/scverse/pertpy/pull/1124), [#1136](https://github.com/scverse/pertpy/pull/1136)) @Zethson
-* Milo: batched neighbourhood refinement and pydeseq2 likelihood-ratio fits (3-7x), numba GLMM fits (~34x) ([#1125](https://github.com/scverse/pertpy/pull/1125), [#1137](https://github.com/scverse/pertpy/pull/1137)) @Zethson
-* Dialogue: numba random-intercept fits (`test_celltype_pairs` 119 s to 0.9 s at 30k cells) ([#1124](https://github.com/scverse/pertpy/pull/1124), [#1133](https://github.com/scverse/pertpy/pull/1133)) @Zethson
-* Mixscape and Mixscale: sparse signature assembly, numba EM, one DE call per reference (`mixscale` 11x, `mixscape` 6x) ([#1140](https://github.com/scverse/pertpy/pull/1140), [#1143](https://github.com/scverse/pertpy/pull/1143)) @Zethson
-* Perturbation spaces, enrichment and metadata: `Enrichment.score` 88x, `label_transfer` 19x, `CellLine.correlate` 6x, chunked MLP training, parallel PubChem lookups ([#1139](https://github.com/scverse/pertpy/pull/1139), [#1142](https://github.com/scverse/pertpy/pull/1142)) @Zethson
-* scCODA: `make_arviz` no longer simulates a discarded N x N counts tensor (minutes to under a second) ([#1138](https://github.com/scverse/pertpy/pull/1138)) @Zethson
-* Guide assignment 120x on sparse input and faster CINEMA-OT without N x N intermediates ([#1140](https://github.com/scverse/pertpy/pull/1140)) @Zethson
+* Distances: `DistanceTest` 35x, `ks_test` 27x, `pairwise` with `t_test`/`sym_kldiv` 9-13x, MMD without n x n kernel matrices, numba KDE for `mean_var_distribution`, exact NB2 fits for `nb_ll` ([#1118](https://github.com/scverse/pertpy/pull/1118), [#1134](https://github.com/scverse/pertpy/pull/1134), [#1135](https://github.com/scverse/pertpy/pull/1135)) [@Zethson](https://github.com/Zethson)
+* Differential expression: Statsmodels contrasts 11-20x and batched OLS fits, sparse Wilcoxon and t-test kernels, vectorized `PermutationTest` statistic ([#1124](https://github.com/scverse/pertpy/pull/1124), [#1136](https://github.com/scverse/pertpy/pull/1136)) [@Zethson](https://github.com/Zethson)
+* Milo: batched neighbourhood refinement and pydeseq2 likelihood-ratio fits (3-7x), numba GLMM fits (~34x) ([#1125](https://github.com/scverse/pertpy/pull/1125), [#1137](https://github.com/scverse/pertpy/pull/1137)) [@Zethson](https://github.com/Zethson)
+* Dialogue: numba random-intercept fits (`test_celltype_pairs` 119 s to 0.9 s at 30k cells) ([#1124](https://github.com/scverse/pertpy/pull/1124), [#1133](https://github.com/scverse/pertpy/pull/1133)) [@Zethson](https://github.com/Zethson)
+* Mixscape and Mixscale: sparse signature assembly, numba EM, one DE call per reference (`mixscale` 11x, `mixscape` 6x) ([#1140](https://github.com/scverse/pertpy/pull/1140), [#1143](https://github.com/scverse/pertpy/pull/1143)) [@Zethson](https://github.com/Zethson)
+* Perturbation spaces, enrichment and metadata: `Enrichment.score` 88x, `label_transfer` 19x, `CellLine.correlate` 6x, chunked MLP training, parallel PubChem lookups ([#1139](https://github.com/scverse/pertpy/pull/1139), [#1142](https://github.com/scverse/pertpy/pull/1142)) [@Zethson](https://github.com/Zethson)
+* scCODA: `make_arviz` no longer simulates a discarded N x N counts tensor (minutes to under a second) ([#1138](https://github.com/scverse/pertpy/pull/1138)) [@Zethson](https://github.com/Zethson)
+* Guide assignment 120x on sparse input and faster CINEMA-OT without N x N intermediates ([#1140](https://github.com/scverse/pertpy/pull/1140)) [@Zethson](https://github.com/Zethson)
 
 ### ⚠️ Changed results
 
-* Mixscape holds the control variance fixed during EM as Seurat does; about 0.4% of KO/NP calls change on Papalexi 2021 ([#1144](https://github.com/scverse/pertpy/pull/1144)) @Zethson
-* Euclidean e-distance and mean pairwise distance average over all n^2 cell pairs, so `Distance.__call__`, `pairwise` and `DistanceTest` agree ([#1151](https://github.com/scverse/pertpy/pull/1151)) @Zethson
-* `Distance.bootstrap` resamples the second group with its own size ([#1152](https://github.com/scverse/pertpy/pull/1152)) @Zethson
-* scGen `batch_removal` applies its latent correction, which was previously discarded ([#1119](https://github.com/scverse/pertpy/pull/1119)) @Zethson
-* Dialogue p-values move slightly because the mixed-model fit converges where statsmodels' BFGS stopped early ([#1133](https://github.com/scverse/pertpy/pull/1133)) @Zethson
-* `nb_ll` fits the overdispersed genes that statsmodels silently dropped ([#1135](https://github.com/scverse/pertpy/pull/1135)) @Zethson
-* Wilcoxon, t-test, e-distance and MMD statistics on float32 input are accumulated in float64 ([#1134](https://github.com/scverse/pertpy/pull/1134), [#1136](https://github.com/scverse/pertpy/pull/1136)) @Zethson
-* `CellLine.correlate` computes every pair instead of mirroring the asymmetric matrix ([#1121](https://github.com/scverse/pertpy/pull/1121)) @Zethson
-* `evaluate_clustering` computes ASW on the cells instead of on rows of the distance matrix ([#1120](https://github.com/scverse/pertpy/pull/1120)) @Zethson
-* Adjusted p-values of the simple DE tests are kept when some variables have NaN p-values ([#1122](https://github.com/scverse/pertpy/pull/1122)) @Zethson
+* Mixscape holds the control variance fixed during EM as Seurat does; about 0.4% of KO/NP calls change on Papalexi 2021 ([#1144](https://github.com/scverse/pertpy/pull/1144)) [@Zethson](https://github.com/Zethson)
+* Euclidean e-distance and mean pairwise distance average over all n^2 cell pairs, so `Distance.__call__`, `pairwise` and `DistanceTest` agree ([#1151](https://github.com/scverse/pertpy/pull/1151)) [@Zethson](https://github.com/Zethson)
+* `Distance.bootstrap` resamples the second group with its own size ([#1152](https://github.com/scverse/pertpy/pull/1152)) [@Zethson](https://github.com/Zethson)
+* scGen `batch_removal` applies its latent correction, which was previously discarded ([#1119](https://github.com/scverse/pertpy/pull/1119)) [@Zethson](https://github.com/Zethson)
+* Dialogue p-values move slightly because the mixed-model fit converges where statsmodels' BFGS stopped early ([#1133](https://github.com/scverse/pertpy/pull/1133)) [@Zethson](https://github.com/Zethson)
+* `nb_ll` fits the overdispersed genes that statsmodels silently dropped ([#1135](https://github.com/scverse/pertpy/pull/1135)) [@Zethson](https://github.com/Zethson)
+* Wilcoxon, t-test, e-distance and MMD statistics on float32 input are accumulated in float64 ([#1134](https://github.com/scverse/pertpy/pull/1134), [#1136](https://github.com/scverse/pertpy/pull/1136)) [@Zethson](https://github.com/Zethson)
+* `CellLine.correlate` computes every pair instead of mirroring the asymmetric matrix ([#1121](https://github.com/scverse/pertpy/pull/1121)) [@Zethson](https://github.com/Zethson)
+* `evaluate_clustering` computes ASW on the cells instead of on rows of the distance matrix ([#1120](https://github.com/scverse/pertpy/pull/1120)) [@Zethson](https://github.com/Zethson)
+* Adjusted p-values of the simple DE tests are kept when some variables have NaN p-values ([#1122](https://github.com/scverse/pertpy/pull/1122)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* Keep scCODA and tascCODA working under numpyro 0.22 ([#1104](https://github.com/scverse/pertpy/pull/1104)) @Zethson
-* Use regression-appropriate scorers for Augur regressor estimators ([#1105](https://github.com/scverse/pertpy/pull/1105)) @Sizerta
-* Dialogue: use `additional_covariates`, handle degenerate genes and unused categorical levels ([#1132](https://github.com/scverse/pertpy/pull/1132), [#1156](https://github.com/scverse/pertpy/pull/1156)) @Zethson
-* Mixscape and Mixscale: `scale=False` on sparse layers, `epsilon` for every split, control labels with spaces, duplicate `obs_names` ([#1129](https://github.com/scverse/pertpy/pull/1129), [#1130](https://github.com/scverse/pertpy/pull/1130), [#1131](https://github.com/scverse/pertpy/pull/1131), [#1145](https://github.com/scverse/pertpy/pull/1145), [#1149](https://github.com/scverse/pertpy/pull/1149), [#1155](https://github.com/scverse/pertpy/pull/1155)) @Zethson
-* Distances: sparse MMD in `pairwise`, bounded memory, symmetric-matrix assumption, one-cell t-test groups ([#1150](https://github.com/scverse/pertpy/pull/1150), [#1154](https://github.com/scverse/pertpy/pull/1154)) @Zethson
-* Perturbation spaces: sparse `.X`, pseudobulks keep obs columns that are NaN for some groups ([#1146](https://github.com/scverse/pertpy/pull/1146), [#1158](https://github.com/scverse/pertpy/pull/1158)) @Zethson
-* `CellLine.annotate_from_prism` matches drug names case-insensitively ([#1127](https://github.com/scverse/pertpy/pull/1127)) @Zethson
-* `Scgen.plot_reg_var_plot` on sparse `X`, scCODA tree plots after `save=`, deterministic `from_scanpy` column order ([#1160](https://github.com/scverse/pertpy/pull/1160), [#1161](https://github.com/scverse/pertpy/pull/1161), [#1162](https://github.com/scverse/pertpy/pull/1162)) @Zethson
-* Make the PubChem compound annotation test robust to outages ([#1111](https://github.com/scverse/pertpy/pull/1111)) @Zethson
+* Keep scCODA and tascCODA working under numpyro 0.22 ([#1104](https://github.com/scverse/pertpy/pull/1104)) [@Zethson](https://github.com/Zethson)
+* Use regression-appropriate scorers for Augur regressor estimators ([#1105](https://github.com/scverse/pertpy/pull/1105)) [@Sizerta](https://github.com/Sizerta)
+* Dialogue: use `additional_covariates`, handle degenerate genes and unused categorical levels ([#1132](https://github.com/scverse/pertpy/pull/1132), [#1156](https://github.com/scverse/pertpy/pull/1156)) [@Zethson](https://github.com/Zethson)
+* Mixscape and Mixscale: `scale=False` on sparse layers, `epsilon` for every split, control labels with spaces, duplicate `obs_names` ([#1129](https://github.com/scverse/pertpy/pull/1129), [#1130](https://github.com/scverse/pertpy/pull/1130), [#1131](https://github.com/scverse/pertpy/pull/1131), [#1145](https://github.com/scverse/pertpy/pull/1145), [#1149](https://github.com/scverse/pertpy/pull/1149), [#1155](https://github.com/scverse/pertpy/pull/1155)) [@Zethson](https://github.com/Zethson)
+* Distances: sparse MMD in `pairwise`, bounded memory, symmetric-matrix assumption, one-cell t-test groups ([#1150](https://github.com/scverse/pertpy/pull/1150), [#1154](https://github.com/scverse/pertpy/pull/1154)) [@Zethson](https://github.com/Zethson)
+* Perturbation spaces: sparse `.X`, pseudobulks keep obs columns that are NaN for some groups ([#1146](https://github.com/scverse/pertpy/pull/1146), [#1158](https://github.com/scverse/pertpy/pull/1158)) [@Zethson](https://github.com/Zethson)
+* `CellLine.annotate_from_prism` matches drug names case-insensitively ([#1127](https://github.com/scverse/pertpy/pull/1127)) [@Zethson](https://github.com/Zethson)
+* `Scgen.plot_reg_var_plot` on sparse `X`, scCODA tree plots after `save=`, deterministic `from_scanpy` column order ([#1160](https://github.com/scverse/pertpy/pull/1160), [#1161](https://github.com/scverse/pertpy/pull/1161), [#1162](https://github.com/scverse/pertpy/pull/1162)) [@Zethson](https://github.com/Zethson)
+* Make the PubChem compound annotation test robust to outages ([#1111](https://github.com/scverse/pertpy/pull/1111)) [@Zethson](https://github.com/Zethson)
 
 ### 🧰 Maintenance
 
-* Require `scipy>=1.16` ([#1125](https://github.com/scverse/pertpy/pull/1125)) @Zethson
-* Switch the docs to the scverse.org domain and use the logo blue for links ([#1112](https://github.com/scverse/pertpy/pull/1112), [#1115](https://github.com/scverse/pertpy/pull/1115)) @flying-sheep, @Zethson
-* Remove type ignores made unused by numba 0.68 ([#1116](https://github.com/scverse/pertpy/pull/1116)) @Zethson
-* Bump the tutorials submodule ([#1163](https://github.com/scverse/pertpy/pull/1163)) @Zethson
+* Require `scipy>=1.16` ([#1125](https://github.com/scverse/pertpy/pull/1125)) [@Zethson](https://github.com/Zethson)
+* Switch the docs to the scverse.org domain and use the logo blue for links ([#1112](https://github.com/scverse/pertpy/pull/1112), [#1115](https://github.com/scverse/pertpy/pull/1115)) [@flying-sheep](https://github.com/flying-sheep), [@Zethson](https://github.com/Zethson)
+* Remove type ignores made unused by numba 0.68 ([#1116](https://github.com/scverse/pertpy/pull/1116)) [@Zethson](https://github.com/Zethson)
+* Bump the tutorials submodule ([#1163](https://github.com/scverse/pertpy/pull/1163)) [@Zethson](https://github.com/Zethson)
 
 ## v1.3.0
 
 ### 🚀 Features
 
-* Make JAX optional and reimplement scGen without scvi-tools ([#1084](https://github.com/scverse/pertpy/pull/1084)) @Zethson
+* Make JAX optional and reimplement scGen without scvi-tools ([#1084](https://github.com/scverse/pertpy/pull/1084)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* Raise a clear error when a `da_nhoods` design has no residual degrees of freedom ([#1077](https://github.com/scverse/pertpy/pull/1077)) @Zethson
-* Drop empty annotation rows from `plot_da_beeswarm()` ([#1078](https://github.com/scverse/pertpy/pull/1078)) @Zethson
-* Keep permutation p-values aligned with their group labels in `DistanceTest` ([#1079](https://github.com/scverse/pertpy/pull/1079)) @Zethson
-* Ensure right fit object is in R scope ([#1073](https://github.com/scverse/pertpy/pull/1073)) @sagar87, @Zethson
+* Raise a clear error when a `da_nhoods` design has no residual degrees of freedom ([#1077](https://github.com/scverse/pertpy/pull/1077)) [@Zethson](https://github.com/Zethson)
+* Drop empty annotation rows from `plot_da_beeswarm()` ([#1078](https://github.com/scverse/pertpy/pull/1078)) [@Zethson](https://github.com/Zethson)
+* Keep permutation p-values aligned with their group labels in `DistanceTest` ([#1079](https://github.com/scverse/pertpy/pull/1079)) [@Zethson](https://github.com/Zethson)
+* Ensure right fit object is in R scope ([#1073](https://github.com/scverse/pertpy/pull/1073)) [@sagar87](https://github.com/sagar87), [@Zethson](https://github.com/Zethson)
 
 ### 🧰 Maintenance
 
-* Read the Lightning intersphinx inventory from Read the Docs ([#1083](https://github.com/scverse/pertpy/pull/1083)) @Zethson
+* Read the Lightning intersphinx inventory from Read the Docs ([#1083](https://github.com/scverse/pertpy/pull/1083)) [@Zethson](https://github.com/Zethson)
 
 ## v1.2.0
 
 ### 🚀 Features
 
-* Rework perturbation spaces around a perturbation-level API ([#1032](https://github.com/scverse/pertpy/pull/1032)) @Zethson
-* Milo: add mixed models to differential abundance testing ([#1069](https://github.com/scverse/pertpy/pull/1069)) @Zethson
-* Milo: add neighbourhood grouping ([#801](https://github.com/scverse/pertpy/pull/801)) @MaximilianNuber, @Zethson
-* Add `plot_ma()` for DGE results ([#1066](https://github.com/scverse/pertpy/pull/1066)) @Zethson
-* Add `plot_credible` option to `plot_effects_umap()` ([#1063](https://github.com/scverse/pertpy/pull/1063)) @Zethson
-* Add text and HTML representations to DE model classes ([#1070](https://github.com/scverse/pertpy/pull/1070)) @Zethson
-* Rename `DistanceTest` `alpha` to `padj_threshold` ([#1062](https://github.com/scverse/pertpy/pull/1062)) @Zethson
-* Vectorize and parallelize the DE methods that support it ([#1051](https://github.com/scverse/pertpy/pull/1051)) @Zethson
-* Speed up Augur `predict()` ([#1043](https://github.com/scverse/pertpy/pull/1043)) @Zethson
-* Show output filename in download progress ([#1056](https://github.com/scverse/pertpy/pull/1056)) @corkang
+* Rework perturbation spaces around a perturbation-level API ([#1032](https://github.com/scverse/pertpy/pull/1032)) [@Zethson](https://github.com/Zethson)
+* Milo: add mixed models to differential abundance testing ([#1069](https://github.com/scverse/pertpy/pull/1069)) [@Zethson](https://github.com/Zethson)
+* Milo: add neighbourhood grouping ([#801](https://github.com/scverse/pertpy/pull/801)) [@MaximilianNuber](https://github.com/MaximilianNuber), [@Zethson](https://github.com/Zethson)
+* Add `plot_ma()` for DGE results ([#1066](https://github.com/scverse/pertpy/pull/1066)) [@Zethson](https://github.com/Zethson)
+* Add `plot_credible` option to `plot_effects_umap()` ([#1063](https://github.com/scverse/pertpy/pull/1063)) [@Zethson](https://github.com/Zethson)
+* Add text and HTML representations to DE model classes ([#1070](https://github.com/scverse/pertpy/pull/1070)) [@Zethson](https://github.com/Zethson)
+* Rename `DistanceTest` `alpha` to `padj_threshold` ([#1062](https://github.com/scverse/pertpy/pull/1062)) [@Zethson](https://github.com/Zethson)
+* Vectorize and parallelize the DE methods that support it ([#1051](https://github.com/scverse/pertpy/pull/1051)) [@Zethson](https://github.com/Zethson)
+* Speed up Augur `predict()` ([#1043](https://github.com/scverse/pertpy/pull/1043)) [@Zethson](https://github.com/Zethson)
+* Show output filename in download progress ([#1056](https://github.com/scverse/pertpy/pull/1056)) [@corkang](https://github.com/corkang)
 
 ### 🐛 Bug Fixes
 
-* scGen: vendor JAX backend to support scvi-tools 1.5.0 ([#1042](https://github.com/scverse/pertpy/pull/1042)) @Zethson,
-* scGen: make the JAX implementation reproduce the PyTorch one ([#1028](https://github.com/scverse/pertpy/pull/1028)) @Zethson
-* Fix import of removed scanpy `_get_obs_rep`/`_set_obs_rep` ([#1050](https://github.com/scverse/pertpy/pull/1050)) @Zethson
-* pseudobulk: only transfer constant obs columns ([#1061](https://github.com/scverse/pertpy/pull/1061)) @Zethson
-* Correct the version of the Milo deprecations ([#1064](https://github.com/scverse/pertpy/pull/1064)) @Zethson
+* scGen: vendor JAX backend to support scvi-tools 1.5.0 ([#1042](https://github.com/scverse/pertpy/pull/1042)) [@Zethson](https://github.com/Zethson),
+* scGen: make the JAX implementation reproduce the PyTorch one ([#1028](https://github.com/scverse/pertpy/pull/1028)) [@Zethson](https://github.com/Zethson)
+* Fix import of removed scanpy `_get_obs_rep`/`_set_obs_rep` ([#1050](https://github.com/scverse/pertpy/pull/1050)) [@Zethson](https://github.com/Zethson)
+* pseudobulk: only transfer constant obs columns ([#1061](https://github.com/scverse/pertpy/pull/1061)) [@Zethson](https://github.com/Zethson)
+* Correct the version of the Milo deprecations ([#1064](https://github.com/scverse/pertpy/pull/1064)) [@Zethson](https://github.com/Zethson)
 
 ### 🧰 Maintenance
 
-* Adopt the src layout, VCS versioning and supply chain pinning ([#1057](https://github.com/scverse/pertpy/pull/1057)) @Zethson
-* Type check pertpy and tests with mypy ([#1053](https://github.com/scverse/pertpy/pull/1053)) @Zethson
-* Adopt anndata's mypy configuration ([#1060](https://github.com/scverse/pertpy/pull/1060)) @Zethson
-* Deduplicate metadata download boilerplate ([#1027](https://github.com/scverse/pertpy/pull/1027)) @Zethson,
-* Align dataset download progress ([#1059](https://github.com/scverse/pertpy/pull/1059)) @corkang
-* Add discoverability metadata ([#1067](https://github.com/scverse/pertpy/pull/1067)) @Zethson
-* Update template to v0.8.0 ([#1045](https://github.com/scverse/pertpy/pull/1045)) @scverse-bot, @Zethson
-* Bump tutorials submodule ([#1040](https://github.com/scverse/pertpy/pull/1040), [#1065](https://github.com/scverse/pertpy/pull/1065)) @Zethson
+* Adopt the src layout, VCS versioning and supply chain pinning ([#1057](https://github.com/scverse/pertpy/pull/1057)) [@Zethson](https://github.com/Zethson)
+* Type check pertpy and tests with mypy ([#1053](https://github.com/scverse/pertpy/pull/1053)) [@Zethson](https://github.com/Zethson)
+* Adopt anndata's mypy configuration ([#1060](https://github.com/scverse/pertpy/pull/1060)) [@Zethson](https://github.com/Zethson)
+* Deduplicate metadata download boilerplate ([#1027](https://github.com/scverse/pertpy/pull/1027)) [@Zethson](https://github.com/Zethson),
+* Align dataset download progress ([#1059](https://github.com/scverse/pertpy/pull/1059)) [@corkang](https://github.com/corkang)
+* Add discoverability metadata ([#1067](https://github.com/scverse/pertpy/pull/1067)) [@Zethson](https://github.com/Zethson)
+* Update template to v0.8.0 ([#1045](https://github.com/scverse/pertpy/pull/1045)) [@scverse-bot](https://github.com/scverse-bot), [@Zethson](https://github.com/Zethson)
+* Bump tutorials submodule ([#1040](https://github.com/scverse/pertpy/pull/1040), [#1065](https://github.com/scverse/pertpy/pull/1065)) [@Zethson](https://github.com/Zethson)
 
 ## v1.1.1
 
 ### 🚀 Features
 
-* mixscale: add continuous perturbation scoring ([#945](https://github.com/scverse/pertpy/pull/945)) @stefanm808
-* Add MiloDE for neighbourhood-level differential expression ([#1001](https://github.com/scverse/pertpy/pull/1001)) @Zethson
-* Add `plot_disp_ests()` for dispersion-estimate visualisation ([#1004](https://github.com/scverse/pertpy/pull/1004)) @LuisHeinzlmeier
-* Add and rename significance thresholds ([#974](https://github.com/scverse/pertpy/pull/974)) @LuisHeinzlmeier
+* mixscale: add continuous perturbation scoring ([#945](https://github.com/scverse/pertpy/pull/945)) [@stefanm808](https://github.com/stefanm808)
+* Add MiloDE for neighbourhood-level differential expression ([#1001](https://github.com/scverse/pertpy/pull/1001)) [@Zethson](https://github.com/Zethson)
+* Add `plot_disp_ests()` for dispersion-estimate visualisation ([#1004](https://github.com/scverse/pertpy/pull/1004)) [@LuisHeinzlmeier](https://github.com/LuisHeinzlmeier)
+* Add and rename significance thresholds ([#974](https://github.com/scverse/pertpy/pull/974)) [@LuisHeinzlmeier](https://github.com/LuisHeinzlmeier)
 
 ### 🐛 Bug Fixes
 
-* tascCODA: fix no credible effects returned (theta collapse) ([#1017](https://github.com/scverse/pertpy/pull/1017)) @Zethson
-* tascCODA: fix always returning insignificant results ([#1016](https://github.com/scverse/pertpy/pull/1016)) @Zethson
-* PseudobulkSpace: fix all-NaN extra obs with `groups_col` ([#1006](https://github.com/scverse/pertpy/pull/1006)) @Zethson
-* perturbation_space: skip None-keyed layers in `_combine` ([#1000](https://github.com/scverse/pertpy/pull/1000)) @Zethson
-* `plot_effects_barplot()`: remove FutureWarning ([#1013](https://github.com/scverse/pertpy/pull/1013)) @LuisHeinzlmeier
-* coda: fix ImportError ([#1014](https://github.com/scverse/pertpy/pull/1014)) @LuisHeinzlmeier
+* tascCODA: fix no credible effects returned (theta collapse) ([#1017](https://github.com/scverse/pertpy/pull/1017)) [@Zethson](https://github.com/Zethson)
+* tascCODA: fix always returning insignificant results ([#1016](https://github.com/scverse/pertpy/pull/1016)) [@Zethson](https://github.com/Zethson)
+* PseudobulkSpace: fix all-NaN extra obs with `groups_col` ([#1006](https://github.com/scverse/pertpy/pull/1006)) [@Zethson](https://github.com/Zethson)
+* perturbation_space: skip None-keyed layers in `_combine` ([#1000](https://github.com/scverse/pertpy/pull/1000)) [@Zethson](https://github.com/Zethson)
+* `plot_effects_barplot()`: remove FutureWarning ([#1013](https://github.com/scverse/pertpy/pull/1013)) [@LuisHeinzlmeier](https://github.com/LuisHeinzlmeier)
+* coda: fix ImportError ([#1014](https://github.com/scverse/pertpy/pull/1014)) [@LuisHeinzlmeier](https://github.com/LuisHeinzlmeier)
 
 ### 🧰 Maintenance
 
-* perturbation_space: cleanup, safer defaults, kill stale-state bugs ([#994](https://github.com/scverse/pertpy/pull/994)) @Zethson
-* Resolve test-suite warnings ([#1018](https://github.com/scverse/pertpy/pull/1018)) @Zethson
-* docs: refresh DE docstring pseudobulk examples ([#996](https://github.com/scverse/pertpy/pull/996)) @Zethson
-* ci: bump codecov-action to v6 and fail CI on upload error ([#1009](https://github.com/scverse/pertpy/pull/1009)) @timtreis
+* perturbation_space: cleanup, safer defaults, kill stale-state bugs ([#994](https://github.com/scverse/pertpy/pull/994)) [@Zethson](https://github.com/Zethson)
+* Resolve test-suite warnings ([#1018](https://github.com/scverse/pertpy/pull/1018)) [@Zethson](https://github.com/Zethson)
+* docs: refresh DE docstring pseudobulk examples ([#996](https://github.com/scverse/pertpy/pull/996)) [@Zethson](https://github.com/Zethson)
+* ci: bump codecov-action to v6 and fail CI on upload error ([#1009](https://github.com/scverse/pertpy/pull/1009)) [@timtreis](https://github.com/timtreis)
 
 ## v1.1.0
 
 ### 🚀 Features
 
-* milo: speed up pydeseq2 da_nhoods ~100x via poscounts size factors ([#992](https://github.com/scverse/pertpy/pull/992)) @Zethson
-* Guide RNA assignment: crispat-matching JAX MAP fit (10–30× faster) ([#987](https://github.com/scverse/pertpy/pull/987)) @Zethson
-* DIALOGUE: from-scratch port of the R reference (PMD + HLM + iterative NNLS) ([#988](https://github.com/scverse/pertpy/pull/988)) @Zethson
-* PyDESeq2: optional apeGLM LFC shrinkage ([#985](https://github.com/scverse/pertpy/pull/985)) @Zethson
-* Add layout option to coda plot_boxplots (#718) ([#932](https://github.com/scverse/pertpy/pull/932)) @emekaokoli19
+* milo: speed up pydeseq2 da_nhoods ~100x via poscounts size factors ([#992](https://github.com/scverse/pertpy/pull/992)) [@Zethson](https://github.com/Zethson)
+* Guide RNA assignment: crispat-matching JAX MAP fit (10–30× faster) ([#987](https://github.com/scverse/pertpy/pull/987)) [@Zethson](https://github.com/Zethson)
+* DIALOGUE: from-scratch port of the R reference (PMD + HLM + iterative NNLS) ([#988](https://github.com/scverse/pertpy/pull/988)) [@Zethson](https://github.com/Zethson)
+* PyDESeq2: optional apeGLM LFC shrinkage ([#985](https://github.com/scverse/pertpy/pull/985)) [@Zethson](https://github.com/Zethson)
+* Add layout option to coda plot_boxplots (#718) ([#932](https://github.com/scverse/pertpy/pull/932)) [@emekaokoli19](https://github.com/emekaokoli19)
 
 ### 🐛 Bug Fixes
 
-* scCODA: fix run_hmc TypeError; clarify log2-fold-change sign ([#993](https://github.com/scverse/pertpy/pull/993)) @Zethson
-* scCODA/tascCODA: make make_arviz stateless ([#991](https://github.com/scverse/pertpy/pull/991)) @Zethson
-* scCODA: unify covariate index format across get_effect_df / summary / credible_effects ([#989](https://github.com/scverse/pertpy/pull/989)) @Zethson
-* Reject all-zero contrasts in test_contrasts ([#981](https://github.com/scverse/pertpy/pull/981)) @Zethson
-* Fix PseudobulkSpace.compute losing X with anndata main ([#979](https://github.com/scverse/pertpy/pull/979)) @Zethson
-* Fix plot_effects_umap KeyError on Sccoda output (#780) ([#971](https://github.com/scverse/pertpy/pull/971)) @LiudengZhang
-* Fix marker positions: calculate marker positions from DataFrame, not rendered labels ([#970](https://github.com/scverse/pertpy/pull/970)) @kimjune01
-* Fix plot_multicomparison_fc ValueError with default figsize ([#965](https://github.com/scverse/pertpy/pull/965)) @kimjune01
-* Fix minor bugs ([#960](https://github.com/scverse/pertpy/pull/960)) @Zethson
-* Fix `add` and `subtract` ([#959](https://github.com/scverse/pertpy/pull/959)) @Zethson
+* scCODA: fix run_hmc TypeError; clarify log2-fold-change sign ([#993](https://github.com/scverse/pertpy/pull/993)) [@Zethson](https://github.com/Zethson)
+* scCODA/tascCODA: make make_arviz stateless ([#991](https://github.com/scverse/pertpy/pull/991)) [@Zethson](https://github.com/Zethson)
+* scCODA: unify covariate index format across get_effect_df / summary / credible_effects ([#989](https://github.com/scverse/pertpy/pull/989)) [@Zethson](https://github.com/Zethson)
+* Reject all-zero contrasts in test_contrasts ([#981](https://github.com/scverse/pertpy/pull/981)) [@Zethson](https://github.com/Zethson)
+* Fix PseudobulkSpace.compute losing X with anndata main ([#979](https://github.com/scverse/pertpy/pull/979)) [@Zethson](https://github.com/Zethson)
+* Fix plot_effects_umap KeyError on Sccoda output (#780) ([#971](https://github.com/scverse/pertpy/pull/971)) [@LiudengZhang](https://github.com/LiudengZhang)
+* Fix marker positions: calculate marker positions from DataFrame, not rendered labels ([#970](https://github.com/scverse/pertpy/pull/970)) [@kimjune01](https://github.com/kimjune01)
+* Fix plot_multicomparison_fc ValueError with default figsize ([#965](https://github.com/scverse/pertpy/pull/965)) [@kimjune01](https://github.com/kimjune01)
+* Fix minor bugs ([#960](https://github.com/scverse/pertpy/pull/960)) [@Zethson](https://github.com/Zethson)
+* Fix `add` and `subtract` ([#959](https://github.com/scverse/pertpy/pull/959)) [@Zethson](https://github.com/Zethson)
 
 ### 🧰 Maintenance
 
-* Milo cleanup: address #181 ([#986](https://github.com/scverse/pertpy/pull/986)) @Zethson
-* Refresh tools API page ([#983](https://github.com/scverse/pertpy/pull/983)) @Zethson
-* Resolve scgen test warnings ([#982](https://github.com/scverse/pertpy/pull/982)) @Zethson
-* Upgrade R ([#943](https://github.com/scverse/pertpy/pull/943)) @Zethson
-* Use pooch for dataset downloads ([#980](https://github.com/scverse/pertpy/pull/980)) @Zethson
+* Milo cleanup: address #181 ([#986](https://github.com/scverse/pertpy/pull/986)) [@Zethson](https://github.com/Zethson)
+* Refresh tools API page ([#983](https://github.com/scverse/pertpy/pull/983)) [@Zethson](https://github.com/Zethson)
+* Resolve scgen test warnings ([#982](https://github.com/scverse/pertpy/pull/982)) [@Zethson](https://github.com/Zethson)
+* Upgrade R ([#943](https://github.com/scverse/pertpy/pull/943)) [@Zethson](https://github.com/Zethson)
+* Use pooch for dataset downloads ([#980](https://github.com/scverse/pertpy/pull/980)) [@Zethson](https://github.com/Zethson)
 
 ## v1.0.6
 
 ### 🚀 Features
 
-* Support Python 3.14 ([#893](https://github.com/scverse/pertpy/pull/893)) @Zethson
+* Support Python 3.14 ([#893](https://github.com/scverse/pertpy/pull/893)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* Correct `neighbors_key` docstring for `make_nhoods` ([#940](https://github.com/scverse/pertpy/pull/940)) @Zethson
-* Fix augur low frequency cell type behavior ([#938](https://github.com/scverse/pertpy/pull/938)) @Zethson
-* Fix replogle_2022_k562_essential URL ([#917](https://github.com/scverse/pertpy/pull/917)) @Zethson
-* Fix reshaping ([#909](https://github.com/scverse/pertpy/pull/909)) @Zethson
-* fillna(1) spatialfdr ([#913](https://github.com/scverse/pertpy/pull/913)) @ktpolanski
+* Correct `neighbors_key` docstring for `make_nhoods` ([#940](https://github.com/scverse/pertpy/pull/940)) [@Zethson](https://github.com/Zethson)
+* Fix augur low frequency cell type behavior ([#938](https://github.com/scverse/pertpy/pull/938)) [@Zethson](https://github.com/Zethson)
+* Fix replogle_2022_k562_essential URL ([#917](https://github.com/scverse/pertpy/pull/917)) [@Zethson](https://github.com/Zethson)
+* Fix reshaping ([#909](https://github.com/scverse/pertpy/pull/909)) [@Zethson](https://github.com/Zethson)
+* fillna(1) spatialfdr ([#913](https://github.com/scverse/pertpy/pull/913)) [@ktpolanski](https://github.com/ktpolanski)
 
 ### 🧰 Maintenance
 
-* Mention paper in README ([#935](https://github.com/scverse/pertpy/pull/935)) @Zethson
+* Mention paper in README ([#935](https://github.com/scverse/pertpy/pull/935)) [@Zethson](https://github.com/Zethson)
 
 ## v1.0.5
 
 ### 🐛 Bug Fixes
 
-* fix use raw & docs build ([#906](https://github.com/scverse/pertpy/pull/906)) @Zethson
-* Add relative abundance warning ([#900](https://github.com/scverse/pertpy/pull/900)) @Zethson
-* Fix PyDESeq2 layer handling in fit() ([#895](https://github.com/scverse/pertpy/pull/895)) @giovp
+* fix use raw & docs build ([#906](https://github.com/scverse/pertpy/pull/906)) [@Zethson](https://github.com/Zethson)
+* Add relative abundance warning ([#900](https://github.com/scverse/pertpy/pull/900)) [@Zethson](https://github.com/Zethson)
+* Fix PyDESeq2 layer handling in fit() ([#895](https://github.com/scverse/pertpy/pull/895)) [@giovp](https://github.com/giovp)
 
 ### 🧰 Maintenance
 
-* Update citation ([#899](https://github.com/scverse/pertpy/pull/899)) @Zethson
-* Update the exampledataset URLs to point to cloudfront ([#898](https://github.com/scverse/pertpy/pull/898)) @grst
+* Update citation ([#899](https://github.com/scverse/pertpy/pull/899)) [@Zethson](https://github.com/Zethson)
+* Update the exampledataset URLs to point to cloudfront ([#898](https://github.com/scverse/pertpy/pull/898)) [@grst](https://github.com/grst)
 
 ## v1.0.4
 
 ### 🚀 Features
 
-* Add dataset cache back ([#885](https://github.com/scverse/pertpy/pull/885)) @Zethson
-* switch to template ([#866](https://github.com/scverse/pertpy/pull/866)) @Zethson
-* Move metadata to scverse AWS ([#860](https://github.com/scverse/pertpy/pull/860)) @Zethson
-* Speedup For EDistance-like distances ([#880](https://github.com/scverse/pertpy/pull/880)) @selmanozleyen
-* add `milo-edger` extra ([#874](https://github.com/scverse/pertpy/pull/874)) @mschilli87
-* Add permutation test ([#726](https://github.com/scverse/pertpy/pull/726)) @maltekuehl
+* Add dataset cache back ([#885](https://github.com/scverse/pertpy/pull/885)) [@Zethson](https://github.com/Zethson)
+* switch to template ([#866](https://github.com/scverse/pertpy/pull/866)) [@Zethson](https://github.com/Zethson)
+* Move metadata to scverse AWS ([#860](https://github.com/scverse/pertpy/pull/860)) [@Zethson](https://github.com/Zethson)
+* Speedup For EDistance-like distances ([#880](https://github.com/scverse/pertpy/pull/880)) [@selmanozleyen](https://github.com/selmanozleyen)
+* add `milo-edger` extra ([#874](https://github.com/scverse/pertpy/pull/874)) [@mschilli87](https://github.com/mschilli87)
+* Add permutation test ([#726](https://github.com/scverse/pertpy/pull/726)) [@maltekuehl](https://github.com/maltekuehl)
 
 ### 🐛 Bug Fixes
 
-* Remove cmap default in `GuideAssignment.heatmap` ([#887](https://github.com/scverse/pertpy/pull/887)) @Zethson
-* Adapt fixture usage to newer pytest versions ([#879](https://github.com/scverse/pertpy/pull/879)) @flying-sheep
-* Remove decoupler mention ([#869](https://github.com/scverse/pertpy/pull/869)) @Zethson
-* Unpin R version in CI ([#863](https://github.com/scverse/pertpy/pull/863)) @Zethson
-* Fix harded control key in plot_heatmap ([#862](https://github.com/scverse/pertpy/pull/862)) @Zethson
+* Remove cmap default in `GuideAssignment.heatmap` ([#887](https://github.com/scverse/pertpy/pull/887)) [@Zethson](https://github.com/Zethson)
+* Adapt fixture usage to newer pytest versions ([#879](https://github.com/scverse/pertpy/pull/879)) [@flying-sheep](https://github.com/flying-sheep)
+* Remove decoupler mention ([#869](https://github.com/scverse/pertpy/pull/869)) [@Zethson](https://github.com/Zethson)
+* Unpin R version in CI ([#863](https://github.com/scverse/pertpy/pull/863)) [@Zethson](https://github.com/Zethson)
+* Fix harded control key in plot_heatmap ([#862](https://github.com/scverse/pertpy/pull/862)) [@Zethson](https://github.com/Zethson)
 
 ### 🧰 Maintenance
 
-* fix isort formatting ([#878](https://github.com/scverse/pertpy/pull/878)) @flying-sheep
+* fix isort formatting ([#878](https://github.com/scverse/pertpy/pull/878)) [@flying-sheep](https://github.com/flying-sheep)
 
 ## v1.0.3
 
 ### 🚀 Features
 
-* Move from figshare to scverse AWS S3 ([#848](https://github.com/scverse/pertpy/pull/848)) @Zethson
-* Rename `label_transfer` `column` parameter to `target_column` ([#848](https://github.com/scverse/pertpy/pull/848)) @Zethson
-* Rename `mixscape` `labels` parameter to `pert_key` ([#848](https://github.com/scverse/pertpy/pull/848)) @Zethson
+* Move from figshare to scverse AWS S3 ([#848](https://github.com/scverse/pertpy/pull/848)) [@Zethson](https://github.com/Zethson)
+* Rename `label_transfer` `column` parameter to `target_column` ([#848](https://github.com/scverse/pertpy/pull/848)) [@Zethson](https://github.com/Zethson)
+* Rename `mixscape` `labels` parameter to `pert_key` ([#848](https://github.com/scverse/pertpy/pull/848)) [@Zethson](https://github.com/Zethson)
 
 ## v1.0.2
 
 ### 🐛 Bug Fixes
 
-* Fix Validate 'type' parameter in Tasccoda.load ([#839](https://github.com/scverse/pertpy/pull/839)) @JuanTejedor
-* Partial fixes for make_arviz ([#834](https://github.com/scverse/pertpy/pull/834)) @jpintar
-* Fix setting of `rng_key` in `make_arviz` ([#831](https://github.com/scverse/pertpy/pull/831)) @jpintar
-* Fix GDSC and PRISM annotation warnings ([#835](https://github.com/scverse/pertpy/pull/835)) @Lilly-May
+* Fix Validate 'type' parameter in Tasccoda.load ([#839](https://github.com/scverse/pertpy/pull/839)) [@JuanTejedor](https://github.com/JuanTejedor)
+* Partial fixes for make_arviz ([#834](https://github.com/scverse/pertpy/pull/834)) [@jpintar](https://github.com/jpintar)
+* Fix setting of `rng_key` in `make_arviz` ([#831](https://github.com/scverse/pertpy/pull/831)) [@jpintar](https://github.com/jpintar)
+* Fix GDSC and PRISM annotation warnings ([#835](https://github.com/scverse/pertpy/pull/835)) [@Lilly-May](https://github.com/Lilly-May)
 
 ## v1.0.1
 
 ### 🚀 Features
 
-* Add support for gamma parameter in MMD distance ([#825](https://github.com/scverse/pertpy/pull/825)) @Zethson
-* Run notebooks in CI ([#815](https://github.com/scverse/pertpy/pull/815)) @Zethson
+* Add support for gamma parameter in MMD distance ([#825](https://github.com/scverse/pertpy/pull/825)) [@Zethson](https://github.com/Zethson)
+* Run notebooks in CI ([#815](https://github.com/scverse/pertpy/pull/815)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* Fix milo output writing ([#821](https://github.com/scverse/pertpy/pull/821)) @Zethson
+* Fix milo output writing ([#821](https://github.com/scverse/pertpy/pull/821)) [@Zethson](https://github.com/Zethson)
 
 ## v1.0.0
 
 ### 🚀 Features
 
-* Simplify guide assignment tutorial ([#796](https://github.com/scverse/pertpy/pull/796)) @Zethson
-* Add milo pydeseq2 solver ([#795](https://github.com/scverse/pertpy/pull/795)) @Zethson
+* Simplify guide assignment tutorial ([#796](https://github.com/scverse/pertpy/pull/796)) [@Zethson](https://github.com/Zethson)
+* Add milo pydeseq2 solver ([#795](https://github.com/scverse/pertpy/pull/795)) [@Zethson](https://github.com/Zethson)
 
 ## v0.11.5
 
 ### 🚀 Features
 
-* Move to trusted publishing ([#790](https://github.com/scverse/pertpy/pull/790)) @Zethson
-* Add conda-forge to installation instructions ([#789](https://github.com/scverse/pertpy/pull/789)) @Zethson
-* Fix seaborn 0.14 compat & testing dependencies & speed up tests ([#787](https://github.com/scverse/pertpy/pull/787)) @Zethson
-* Support > 2 colors in `pt.tl.Sccoda.plot_boxplots` ([#784](https://github.com/scverse/pertpy/pull/784)) @mschilli87
+* Move to trusted publishing ([#790](https://github.com/scverse/pertpy/pull/790)) [@Zethson](https://github.com/Zethson)
+* Add conda-forge to installation instructions ([#789](https://github.com/scverse/pertpy/pull/789)) [@Zethson](https://github.com/Zethson)
+* Fix seaborn 0.14 compat & testing dependencies & speed up tests ([#787](https://github.com/scverse/pertpy/pull/787)) [@Zethson](https://github.com/Zethson)
+* Support > 2 colors in `pt.tl.Sccoda.plot_boxplots` ([#784](https://github.com/scverse/pertpy/pull/784)) [@mschilli87](https://github.com/mschilli87)
 
 ### 🐛 Bug Fixes
 
-* Fix LIL support for AnnData 0.12 ([#792](https://github.com/scverse/pertpy/pull/792)) @Zethson
-* Fix compatibility with rpy 3.6.0 in milo ([#791](https://github.com/scverse/pertpy/pull/791)) @seohyonkim
+* Fix LIL support for AnnData 0.12 ([#792](https://github.com/scverse/pertpy/pull/792)) [@Zethson](https://github.com/Zethson)
+* Fix compatibility with rpy 3.6.0 in milo ([#791](https://github.com/scverse/pertpy/pull/791)) [@seohyonkim](https://github.com/seohyonkim)
 
 ## v0.11.4
 
 ### 🧰 Maintenance
 
-* Remove decoupler ([#783](https://github.com/scverse/pertpy/pull/783)) @Zethson
+* Remove decoupler ([#783](https://github.com/scverse/pertpy/pull/783)) [@Zethson](https://github.com/Zethson)
 
 ## v0.11.3
 
 ### 🚀 Features
 
-* add about page ([#770](https://github.com/scverse/pertpy/pull/770)) @Zethson
-* Simplify Metadata errors ([#765](https://github.com/scverse/pertpy/pull/765)) @Zethson
-* Standardize scCODA plot palette interface ([#773](https://github.com/scverse/pertpy/pull/773)) @mschilli87
+* add about page ([#770](https://github.com/scverse/pertpy/pull/770)) [@Zethson](https://github.com/Zethson)
+* Simplify Metadata errors ([#765](https://github.com/scverse/pertpy/pull/765)) [@Zethson](https://github.com/Zethson)
+* Standardize scCODA plot palette interface ([#773](https://github.com/scverse/pertpy/pull/773)) [@mschilli87](https://github.com/mschilli87)
 
 ## v0.11.2
 
 ### 🚀 Features
 
-* Simplify Metadata errors ([#765](https://github.com/scverse/pertpy/pull/765)) @Zethson
+* Simplify Metadata errors ([#765](https://github.com/scverse/pertpy/pull/765)) [@Zethson](https://github.com/Zethson)
 
 ## v0.11.1
 
 ### 🐛 Bug Fixes
 
-* Restructure documentation & fix scCODA not requiring tcoda extra ([#762](https://github.com/scverse/pertpy/pull/762)) @Zethson
+* Restructure documentation & fix scCODA not requiring tcoda extra ([#762](https://github.com/scverse/pertpy/pull/762)) [@Zethson](https://github.com/Zethson)
 
 ## v0.11.0
 
 ### 🚀 Features
 
-* Improve CI test setup & speed up mixscape ([#757](https://github.com/scverse/pertpy/pull/757)) @Zethson
-* Speed up mixscape ([#756](https://github.com/scverse/pertpy/pull/756)) @Zethson
-* Optimize mixscape ([#735](https://github.com/scverse/pertpy/pull/735)) @Zethson
-* Cleaner mixscape ([#746](https://github.com/scverse/pertpy/pull/746)) @eroell
-* Speedup Mixscape's lda function ([#754](https://github.com/scverse/pertpy/pull/754)) @eroell
-* Skip milotests properly & cache metadata ([#752](https://github.com/scverse/pertpy/pull/752)) @Zethson
-* Sparse threshold max assignment ([#744](https://github.com/scverse/pertpy/pull/744)) @Zethson
-* Speedup import times ([#743](https://github.com/scverse/pertpy/pull/743)) @stefanpeidli
-* Add sparse threshold guide assignment & fix docstrings ([#737](https://github.com/scverse/pertpy/pull/737)) @Zethson
-* More robust download ([#721](https://github.com/scverse/pertpy/pull/721)) @Zethson
-* Support Python 3.13 ([#720](https://github.com/scverse/pertpy/pull/720)) @Zethson
-* PRISM drug response metadata annotation ([#716](https://github.com/scverse/pertpy/pull/716)) @Lilly-May
-* Improve CellLine metadata module UX ([#717](https://github.com/scverse/pertpy/pull/717)) @JiriBruthans
-* Switch from ete3 to ete4 ([#618](https://github.com/scverse/pertpy/pull/618)) @dengzq1234
-* Move pynndescent import out of for-loop ([#761](https://github.com/scverse/pertpy/pull/761)) @eroell
-* Cleaner CinemaOT ([#745](https://github.com/scverse/pertpy/pull/745)) @eroell
+* Improve CI test setup & speed up mixscape ([#757](https://github.com/scverse/pertpy/pull/757)) [@Zethson](https://github.com/Zethson)
+* Speed up mixscape ([#756](https://github.com/scverse/pertpy/pull/756)) [@Zethson](https://github.com/Zethson)
+* Optimize mixscape ([#735](https://github.com/scverse/pertpy/pull/735)) [@Zethson](https://github.com/Zethson)
+* Cleaner mixscape ([#746](https://github.com/scverse/pertpy/pull/746)) [@eroell](https://github.com/eroell)
+* Speedup Mixscape's lda function ([#754](https://github.com/scverse/pertpy/pull/754)) [@eroell](https://github.com/eroell)
+* Skip milotests properly & cache metadata ([#752](https://github.com/scverse/pertpy/pull/752)) [@Zethson](https://github.com/Zethson)
+* Sparse threshold max assignment ([#744](https://github.com/scverse/pertpy/pull/744)) [@Zethson](https://github.com/Zethson)
+* Speedup import times ([#743](https://github.com/scverse/pertpy/pull/743)) [@stefanpeidli](https://github.com/stefanpeidli)
+* Add sparse threshold guide assignment & fix docstrings ([#737](https://github.com/scverse/pertpy/pull/737)) [@Zethson](https://github.com/Zethson)
+* More robust download ([#721](https://github.com/scverse/pertpy/pull/721)) [@Zethson](https://github.com/Zethson)
+* Support Python 3.13 ([#720](https://github.com/scverse/pertpy/pull/720)) [@Zethson](https://github.com/Zethson)
+* PRISM drug response metadata annotation ([#716](https://github.com/scverse/pertpy/pull/716)) [@Lilly-May](https://github.com/Lilly-May)
+* Improve CellLine metadata module UX ([#717](https://github.com/scverse/pertpy/pull/717)) [@JiriBruthans](https://github.com/JiriBruthans)
+* Switch from ete3 to ete4 ([#618](https://github.com/scverse/pertpy/pull/618)) [@dengzq1234](https://github.com/dengzq1234)
+* Move pynndescent import out of for-loop ([#761](https://github.com/scverse/pertpy/pull/761)) [@eroell](https://github.com/eroell)
+* Cleaner CinemaOT ([#745](https://github.com/scverse/pertpy/pull/745)) [@eroell](https://github.com/eroell)
 
 ### 🐛 Bug Fixes
 
-* Change how guide assignment model saves params from uns to var ([#758](https://github.com/scverse/pertpy/pull/758)) @stefanpeidli
-* A ton of doc improvements & fix mudata warnings & Augur interface ([#759](https://github.com/scverse/pertpy/pull/759)) @Zethson
-* Change cell_wise_metric from "sqeuclidean" to "euclidean" for edist ([#733](https://github.com/scverse/pertpy/pull/733)) @stefanpeidli
-* Check only for numeric in statsmodels ([#725](https://github.com/scverse/pertpy/pull/725)) @grst
-* Remove leidenalg from requirements ([#729](https://github.com/scverse/pertpy/pull/729)) @Zethson
-* Remove pyenchant ([#728](https://github.com/scverse/pertpy/pull/728)) @Zethson
-* Fix coda plot axes ([#739](https://github.com/scverse/pertpy/pull/739)) @mschilli87
+* Change how guide assignment model saves params from uns to var ([#758](https://github.com/scverse/pertpy/pull/758)) [@stefanpeidli](https://github.com/stefanpeidli)
+* A ton of doc improvements & fix mudata warnings & Augur interface ([#759](https://github.com/scverse/pertpy/pull/759)) [@Zethson](https://github.com/Zethson)
+* Change cell_wise_metric from "sqeuclidean" to "euclidean" for edist ([#733](https://github.com/scverse/pertpy/pull/733)) [@stefanpeidli](https://github.com/stefanpeidli)
+* Check only for numeric in statsmodels ([#725](https://github.com/scverse/pertpy/pull/725)) [@grst](https://github.com/grst)
+* Remove leidenalg from requirements ([#729](https://github.com/scverse/pertpy/pull/729)) [@Zethson](https://github.com/Zethson)
+* Remove pyenchant ([#728](https://github.com/scverse/pertpy/pull/728)) [@Zethson](https://github.com/Zethson)
+* Fix coda plot axes ([#739](https://github.com/scverse/pertpy/pull/739)) [@mschilli87](https://github.com/mschilli87)
 
 ### 🧰 Maintenance
 
-* A ton of doc improvements & fix mudata warnings & Augur interface ([#759](https://github.com/scverse/pertpy/pull/759)) @Zethson
-* Additional pre-commit checks ([#748](https://github.com/scverse/pertpy/pull/748)) @Zethson
-* Mixscape dropdown ([#740](https://github.com/scverse/pertpy/pull/740)) @Zethson
-* Fix docstrings ([#737](https://github.com/scverse/pertpy/pull/737)) @Zethson
+* A ton of doc improvements & fix mudata warnings & Augur interface ([#759](https://github.com/scverse/pertpy/pull/759)) [@Zethson](https://github.com/Zethson)
+* Additional pre-commit checks ([#748](https://github.com/scverse/pertpy/pull/748)) [@Zethson](https://github.com/Zethson)
+* Mixscape dropdown ([#740](https://github.com/scverse/pertpy/pull/740)) [@Zethson](https://github.com/Zethson)
+* Fix docstrings ([#737](https://github.com/scverse/pertpy/pull/737)) [@Zethson](https://github.com/Zethson)
 
 ## v0.10.0
 
 ### 🚀 Features
 
-* Allow Custom Feature Spaces in Dialogue ([#712](https://github.com/scverse/pertpy/pull/712)) @grpinto
-* Add Poisson-Gauss Mixture model for Guide Assignment ([#709](https://github.com/scverse/pertpy/pull/709)) @stefanpeidli
-* Add perturbation signature calculation from replicate control cells ([#695](https://github.com/scverse/pertpy/pull/695)) @Lilly-May
-* Optimize test speed ([#699](https://github.com/scverse/pertpy/pull/699)) @Zethson
-* Optimize MeanVarDistributionDistance ([#697](https://github.com/scverse/pertpy/pull/697)) @Zethson
+* Allow Custom Feature Spaces in Dialogue ([#712](https://github.com/scverse/pertpy/pull/712)) [@grpinto](https://github.com/grpinto)
+* Add Poisson-Gauss Mixture model for Guide Assignment ([#709](https://github.com/scverse/pertpy/pull/709)) [@stefanpeidli](https://github.com/stefanpeidli)
+* Add perturbation signature calculation from replicate control cells ([#695](https://github.com/scverse/pertpy/pull/695)) [@Lilly-May](https://github.com/Lilly-May)
+* Optimize test speed ([#699](https://github.com/scverse/pertpy/pull/699)) [@Zethson](https://github.com/Zethson)
+* Optimize MeanVarDistributionDistance ([#697](https://github.com/scverse/pertpy/pull/697)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* Align Mixscape with Seurat's implementation ([#710](https://github.com/scverse/pertpy/pull/710)) @Lilly-May
-* Fix empty figure returns when show=True in plotting functions ([#703](https://github.com/scverse/pertpy/pull/703)) @Lilly-May
-* Fix probability data type ([#696](https://github.com/scverse/pertpy/pull/696)) @Zethson
-* Mixscape reproducibility ([#683](https://github.com/scverse/pertpy/pull/683)) @Lilly-May
+* Align Mixscape with Seurat's implementation ([#710](https://github.com/scverse/pertpy/pull/710)) [@Lilly-May](https://github.com/Lilly-May)
+* Fix empty figure returns when show=True in plotting functions ([#703](https://github.com/scverse/pertpy/pull/703)) [@Lilly-May](https://github.com/Lilly-May)
+* Fix probability data type ([#696](https://github.com/scverse/pertpy/pull/696)) [@Zethson](https://github.com/Zethson)
+* Mixscape reproducibility ([#683](https://github.com/scverse/pertpy/pull/683)) [@Lilly-May](https://github.com/Lilly-May)
 
 ## v0.9.x
 
 ### 🚀 Features
 
-* Python 3.12 support ([#644](https://github.com/scverse/pertpy/pull/644)) @Lilly-May
-* Add lazy loading for deferred modules ([#647](https://github.com/scverse/pertpy/pull/647) and [#648](https://github.com/scverse/pertpy/pull/648)) @Zethson
-* Support for scipy 1.14 ([#646](https://github.com/scverse/pertpy/pull/646)) @andr-kun
-* Update scperturb datasets ([#649](https://github.com/scverse/pertpy/pull/649)) @tessadgreen
-* Augur scsim warnings ([#670](https://github.com/scverse/pertpy/pull/670)) @Zethson
-* Add uncertainty score in KNN label_transfer in PerturbationSpace ([#658](https://github.com/scverse/pertpy/pull/658)) @stefanpeidli
-* Incorporate use case tutorials ([#665](https://github.com/scverse/pertpy/pull/665)) @Lilly-May
-* Add plots for DE analysis and unify plotting API ([#654](https://github.com/scverse/pertpy/pull/654)) @Lilly-May
-* Switch to formulaic-contrasts ([#682](https://github.com/scverse/pertpy/pull/682)) @grst @emdann
-* Remove anndata pin ([#653](https://github.com/scverse/pertpy/pull/653)) @Lilly-May
+* Python 3.12 support ([#644](https://github.com/scverse/pertpy/pull/644)) [@Lilly-May](https://github.com/Lilly-May)
+* Add lazy loading for deferred modules ([#647](https://github.com/scverse/pertpy/pull/647) and [#648](https://github.com/scverse/pertpy/pull/648)) [@Zethson](https://github.com/Zethson)
+* Support for scipy 1.14 ([#646](https://github.com/scverse/pertpy/pull/646)) [@andr-kun](https://github.com/andr-kun)
+* Update scperturb datasets ([#649](https://github.com/scverse/pertpy/pull/649)) [@tessadgreen](https://github.com/tessadgreen)
+* Augur scsim warnings ([#670](https://github.com/scverse/pertpy/pull/670)) [@Zethson](https://github.com/Zethson)
+* Add uncertainty score in KNN label_transfer in PerturbationSpace ([#658](https://github.com/scverse/pertpy/pull/658)) [@stefanpeidli](https://github.com/stefanpeidli)
+* Incorporate use case tutorials ([#665](https://github.com/scverse/pertpy/pull/665)) [@Lilly-May](https://github.com/Lilly-May)
+* Add plots for DE analysis and unify plotting API ([#654](https://github.com/scverse/pertpy/pull/654)) [@Lilly-May](https://github.com/Lilly-May)
+* Switch to formulaic-contrasts ([#682](https://github.com/scverse/pertpy/pull/682)) [@grst](https://github.com/grst) [@emdann](https://github.com/emdann)
+* Remove anndata pin ([#653](https://github.com/scverse/pertpy/pull/653)) [@Lilly-May](https://github.com/Lilly-May)
 
 ### 🐛 Bug Fixes
 
-* Fix jax random array ([#686](https://github.com/scverse/pertpy/pull/686)) @Zethson
-* Fixed plotting for mixscape.plot_barplot and sccoda.plot_effects_barplot ([#667](https://github.com/scverse/pertpy/pull/667)) @Lilly-May
-* Remove explicit anndata in dependencies ([#666](https://github.com/scverse/pertpy/pull/666)) @Zethson
-* Fix legend position for pt.tl.Mixscape.plot_barplot ([#660](https://github.com/scverse/pertpy/pull/660)) @Lilly-May
+* Fix jax random array ([#686](https://github.com/scverse/pertpy/pull/686)) [@Zethson](https://github.com/Zethson)
+* Fixed plotting for mixscape.plot_barplot and sccoda.plot_effects_barplot ([#667](https://github.com/scverse/pertpy/pull/667)) [@Lilly-May](https://github.com/Lilly-May)
+* Remove explicit anndata in dependencies ([#666](https://github.com/scverse/pertpy/pull/666)) [@Zethson](https://github.com/Zethson)
+* Fix legend position for pt.tl.Mixscape.plot_barplot ([#660](https://github.com/scverse/pertpy/pull/660)) [@Lilly-May](https://github.com/Lilly-May)
 
 ### 🧰 Maintenance
 
-* Fix docs rendering for classes using lazy import ([#651](https://github.com/scverse/pertpy/pull/651)) @Lilly-May
+* Fix docs rendering for classes using lazy import ([#651](https://github.com/scverse/pertpy/pull/651)) [@Lilly-May](https://github.com/Lilly-May)
 
 ## v0.8.0
 
 ### 🚀 Features
 
-* Add hagai dataloader ([#627](https://github.com/scverse/pertpy/pull/627)) @Zethson
-* Add more informative error if not every cell type is represented in e… ([#620](https://github.com/scverse/pertpy/pull/620)) @Zethson
-* Add typehints_defaults ([#619](https://github.com/scverse/pertpy/pull/619)) @Zethson
-* Add metadata notebook ([#609](https://github.com/scverse/pertpy/pull/609)) @Zethson
-* Add multicondition analysis (differential gene expression interface) ([#607](https://github.com/scverse/pertpy/pull/607)) @Zethson
-* Add zhang 2021 dataloader ([#602](https://github.com/scverse/pertpy/pull/602)) @Zethson
-* Speed up tests ([#601](https://github.com/scverse/pertpy/pull/601) [#599](https://github.com/scverse/pertpy/pull/599)) @Zethson
-* Use __all__ ([#588](https://github.com/scverse/pertpy/pull/588)) @Zethson
-* Use lamin logger ([#586](https://github.com/scverse/pertpy/pull/586)) @Zethson
-* Add two distance metrics, three-way comparison and bootstrapping ([#608](https://github.com/scverse/pertpy/pull/608)) @wxicu
-* Metadata GDSC annotation improvements ([#625](https://github.com/scverse/pertpy/pull/625)) @Lilly-May
-* Add file lock during downloading ([#590](https://github.com/scverse/pertpy/pull/590)) @wxicu
+* Add hagai dataloader ([#627](https://github.com/scverse/pertpy/pull/627)) [@Zethson](https://github.com/Zethson)
+* Add more informative error if not every cell type is represented in e… ([#620](https://github.com/scverse/pertpy/pull/620)) [@Zethson](https://github.com/Zethson)
+* Add typehints_defaults ([#619](https://github.com/scverse/pertpy/pull/619)) [@Zethson](https://github.com/Zethson)
+* Add metadata notebook ([#609](https://github.com/scverse/pertpy/pull/609)) [@Zethson](https://github.com/Zethson)
+* Add multicondition analysis (differential gene expression interface) ([#607](https://github.com/scverse/pertpy/pull/607)) [@Zethson](https://github.com/Zethson)
+* Add zhang 2021 dataloader ([#602](https://github.com/scverse/pertpy/pull/602)) [@Zethson](https://github.com/Zethson)
+* Speed up tests ([#601](https://github.com/scverse/pertpy/pull/601) [#599](https://github.com/scverse/pertpy/pull/599)) [@Zethson](https://github.com/Zethson)
+* Use __all__ ([#588](https://github.com/scverse/pertpy/pull/588)) [@Zethson](https://github.com/Zethson)
+* Use lamin logger ([#586](https://github.com/scverse/pertpy/pull/586)) [@Zethson](https://github.com/Zethson)
+* Add two distance metrics, three-way comparison and bootstrapping ([#608](https://github.com/scverse/pertpy/pull/608)) [@wxicu](https://github.com/wxicu)
+* Metadata GDSC annotation improvements ([#625](https://github.com/scverse/pertpy/pull/625)) [@Lilly-May](https://github.com/Lilly-May)
+* Add file lock during downloading ([#590](https://github.com/scverse/pertpy/pull/590)) [@wxicu](https://github.com/wxicu)
 
 ### 🐛 Bug Fixes
 
-* Fix CI ([#637](https://github.com/scverse/pertpy/pull/637)) @Zethson
-* Fix layer handling in Mixscape.mixscape to resolve errors with adata.raw ([#636](https://github.com/scverse/pertpy/pull/636)) @Lilly-May
-* Fix from_scanpy ([#596](https://github.com/scverse/pertpy/pull/596)) @Zethson
-* Fix volcano plot y-axis being cut-off ([#622](https://github.com/scverse/pertpy/pull/622)) @pakiessling
+* Fix CI ([#637](https://github.com/scverse/pertpy/pull/637)) [@Zethson](https://github.com/Zethson)
+* Fix layer handling in Mixscape.mixscape to resolve errors with adata.raw ([#636](https://github.com/scverse/pertpy/pull/636)) [@Lilly-May](https://github.com/Lilly-May)
+* Fix from_scanpy ([#596](https://github.com/scverse/pertpy/pull/596)) [@Zethson](https://github.com/Zethson)
+* Fix volcano plot y-axis being cut-off ([#622](https://github.com/scverse/pertpy/pull/622)) [@pakiessling](https://github.com/pakiessling)
 
 ## v0.7.0
 
@@ -452,180 +452,180 @@ Note that the syntax for plotting for most tools changed. We removed the `pt.pl`
 
 ### 🚀 Features
 
-* Silence pandas groupby() warning when running Augur predict ([#573](https://github.com/scverse/pertpy/pull/573)) @namsaraeva
-* Added milo beeswarm example plot ([#552](https://github.com/scverse/pertpy/pull/552)) @namsaraeva
-* Lazily metadata loading ([#544](https://github.com/scverse/pertpy/pull/544)) @wxicu
-* Added tasccoda example plots ([#527](https://github.com/scverse/pertpy/pull/527)) @namsaraeva
-* Add examples to plotting functions ([#511](https://github.com/scverse/pertpy/pull/511)) @namsaraeva
-* Replace plotnine implementation of barplot with seaborn/matplotlib ([#441](https://github.com/scverse/pertpy/pull/441)) @kcArtemis
-* Cinemaot dataset loader ([#424](https://github.com/scverse/pertpy/pull/424)) @Lilly-May
-* Add classifiers ([#427](https://github.com/scverse/pertpy/pull/427)) @Zethson
-* Remove remotezip ([#401](https://github.com/scverse/pertpy/pull/401)) @wxicu
-* Add new distances ([#304](https://github.com/scverse/pertpy/pull/304)) @mojtababahrami
-* wasserstein distance return type float ([#386](https://github.com/scverse/pertpy/pull/386)) @eroell
-* Implementation of CINEMA-OT for pertpy - follow up ([#379](https://github.com/scverse/pertpy/pull/379)) @MingzeDong
-* Implementation of CINEMA-OT for pertpy ([#377](https://github.com/scverse/pertpy/pull/377)) @MingzeDong
-* Update cell line meta data class ([#539](https://github.com/scverse/pertpy/pull/539)) @wxicu
-* Add dgidb and pharmgkb for drug annotation ([#575](https://github.com/scverse/pertpy/pull/575)) @wxicu
-* Add sciplex-GxE dataloader ([#576](https://github.com/scverse/pertpy/pull/576)) @namsaraeva
-* Harmonize plots ([#574](https://github.com/scverse/pertpy/pull/574)) @namsaraeva
-* Compute method for MLPClassifierSpace ([#565](https://github.com/scverse/pertpy/pull/565)) @Lilly-May
-* uv for CI ([#569](https://github.com/scverse/pertpy/pull/569)) @Zethson
-* Logistic regression support for the Discriminator Classifier ([#560](https://github.com/scverse/pertpy/pull/560)) @Lilly-May
-* Allow saving of CODA plots ([#559](https://github.com/scverse/pertpy/pull/559)) @namsaraeva
-* Order plot functions last ([#555](https://github.com/scverse/pertpy/pull/555)) @Zethson
-* Sparse guide RNA plot ([#554](https://github.com/scverse/pertpy/pull/554)) @Zethson
-* Rename cmap to palette ([#553](https://github.com/scverse/pertpy/pull/553)) @Zethson
-* Expand load for sccoda docstrings ([#543](https://github.com/scverse/pertpy/pull/543)) @Zethson
-* Pseudobulk improvements ([#529](https://github.com/scverse/pertpy/pull/529)) @Lilly-May
-* Add more detailed tool explanations ([#528](https://github.com/scverse/pertpy/pull/528)) @Zethson
-* Add knn imputation ([#517](https://github.com/scverse/pertpy/pull/517)) @Zethson
-* Add combosciplex ([#512](https://github.com/scverse/pertpy/pull/512)) @Zethson
-* Add DE set comparisons ([#489](https://github.com/scverse/pertpy/pull/489)) @Zethson
-* More informative images in tutorial gallery ([#488](https://github.com/scverse/pertpy/pull/488)) @Lilly-May
-* Add perturbation space tutorial ([#487](https://github.com/scverse/pertpy/pull/487)) @Lilly-May
-* Add enrichment ([#482](https://github.com/scverse/pertpy/pull/482)) @Zethson
-* Save perturbation and clustering labels as categorical ([#481](https://github.com/scverse/pertpy/pull/481)) @Lilly-May
-* Optimize from_scanpy ([#473](https://github.com/scverse/pertpy/pull/473)) @Zethson
-* Add Drug metadata from chembl ([#480](https://github.com/scverse/pertpy/pull/480)) @Zethson
-* Add DE filtering ([#477](https://github.com/scverse/pertpy/pull/477)) @Zethson
-* PertSpace docs improvements ([#471](https://github.com/scverse/pertpy/pull/471)) @Lilly-May
-* Make dialogue's load protected ([#464](https://github.com/scverse/pertpy/pull/464)) @Lilly-May
-* New plotting API ([#456](https://github.com/scverse/pertpy/pull/456)) @Zethson
-* Added smillie_2019 dataloader and renamed smillie dataset to tasccoda_example ([#450](https://github.com/scverse/pertpy/pull/450)) @Lilly-May
-* Docs examples for CINEMA-OT ([#433](https://github.com/scverse/pertpy/pull/433)) @Lilly-May
-* Removing dependencies ([#426](https://github.com/scverse/pertpy/pull/426)) @Zethson
-* Added example for pt.pl.milo.nhood_graph ([#423](https://github.com/scverse/pertpy/pull/423)) @Lilly-May
-* scope imports of ete3 in tasccoda ([#422](https://github.com/scverse/pertpy/pull/422)) @Zethson
-* Add cinemaot nb ([#419](https://github.com/scverse/pertpy/pull/419)) @Zethson
-* DIALOGUE attribution ([#371](https://github.com/scverse/pertpy/pull/371)) @Zethson
-* DIALOGUE extensions and plots ([#368](https://github.com/scverse/pertpy/pull/368)) @tessadgreen
-* Set run nuts random key to 0 by default. ([#363](https://github.com/scverse/pertpy/pull/363)) @Zethson
-* Remove statsannotations ([#362](https://github.com/scverse/pertpy/pull/362)) @Zethson
-* Refactoring ([#354](https://github.com/scverse/pertpy/pull/354)) @Zethson
-* Add combosciplex ([#512](https://github.com/scverse/pertpy/pull/512)) @Zethson
+* Silence pandas groupby() warning when running Augur predict ([#573](https://github.com/scverse/pertpy/pull/573)) [@namsaraeva](https://github.com/namsaraeva)
+* Added milo beeswarm example plot ([#552](https://github.com/scverse/pertpy/pull/552)) [@namsaraeva](https://github.com/namsaraeva)
+* Lazily metadata loading ([#544](https://github.com/scverse/pertpy/pull/544)) [@wxicu](https://github.com/wxicu)
+* Added tasccoda example plots ([#527](https://github.com/scverse/pertpy/pull/527)) [@namsaraeva](https://github.com/namsaraeva)
+* Add examples to plotting functions ([#511](https://github.com/scverse/pertpy/pull/511)) [@namsaraeva](https://github.com/namsaraeva)
+* Replace plotnine implementation of barplot with seaborn/matplotlib ([#441](https://github.com/scverse/pertpy/pull/441)) [@kcArtemis](https://github.com/kcArtemis)
+* Cinemaot dataset loader ([#424](https://github.com/scverse/pertpy/pull/424)) [@Lilly-May](https://github.com/Lilly-May)
+* Add classifiers ([#427](https://github.com/scverse/pertpy/pull/427)) [@Zethson](https://github.com/Zethson)
+* Remove remotezip ([#401](https://github.com/scverse/pertpy/pull/401)) [@wxicu](https://github.com/wxicu)
+* Add new distances ([#304](https://github.com/scverse/pertpy/pull/304)) [@mojtababahrami](https://github.com/mojtababahrami)
+* wasserstein distance return type float ([#386](https://github.com/scverse/pertpy/pull/386)) [@eroell](https://github.com/eroell)
+* Implementation of CINEMA-OT for pertpy - follow up ([#379](https://github.com/scverse/pertpy/pull/379)) [@MingzeDong](https://github.com/MingzeDong)
+* Implementation of CINEMA-OT for pertpy ([#377](https://github.com/scverse/pertpy/pull/377)) [@MingzeDong](https://github.com/MingzeDong)
+* Update cell line meta data class ([#539](https://github.com/scverse/pertpy/pull/539)) [@wxicu](https://github.com/wxicu)
+* Add dgidb and pharmgkb for drug annotation ([#575](https://github.com/scverse/pertpy/pull/575)) [@wxicu](https://github.com/wxicu)
+* Add sciplex-GxE dataloader ([#576](https://github.com/scverse/pertpy/pull/576)) [@namsaraeva](https://github.com/namsaraeva)
+* Harmonize plots ([#574](https://github.com/scverse/pertpy/pull/574)) [@namsaraeva](https://github.com/namsaraeva)
+* Compute method for MLPClassifierSpace ([#565](https://github.com/scverse/pertpy/pull/565)) [@Lilly-May](https://github.com/Lilly-May)
+* uv for CI ([#569](https://github.com/scverse/pertpy/pull/569)) [@Zethson](https://github.com/Zethson)
+* Logistic regression support for the Discriminator Classifier ([#560](https://github.com/scverse/pertpy/pull/560)) [@Lilly-May](https://github.com/Lilly-May)
+* Allow saving of CODA plots ([#559](https://github.com/scverse/pertpy/pull/559)) [@namsaraeva](https://github.com/namsaraeva)
+* Order plot functions last ([#555](https://github.com/scverse/pertpy/pull/555)) [@Zethson](https://github.com/Zethson)
+* Sparse guide RNA plot ([#554](https://github.com/scverse/pertpy/pull/554)) [@Zethson](https://github.com/Zethson)
+* Rename cmap to palette ([#553](https://github.com/scverse/pertpy/pull/553)) [@Zethson](https://github.com/Zethson)
+* Expand load for sccoda docstrings ([#543](https://github.com/scverse/pertpy/pull/543)) [@Zethson](https://github.com/Zethson)
+* Pseudobulk improvements ([#529](https://github.com/scverse/pertpy/pull/529)) [@Lilly-May](https://github.com/Lilly-May)
+* Add more detailed tool explanations ([#528](https://github.com/scverse/pertpy/pull/528)) [@Zethson](https://github.com/Zethson)
+* Add knn imputation ([#517](https://github.com/scverse/pertpy/pull/517)) [@Zethson](https://github.com/Zethson)
+* Add combosciplex ([#512](https://github.com/scverse/pertpy/pull/512)) [@Zethson](https://github.com/Zethson)
+* Add DE set comparisons ([#489](https://github.com/scverse/pertpy/pull/489)) [@Zethson](https://github.com/Zethson)
+* More informative images in tutorial gallery ([#488](https://github.com/scverse/pertpy/pull/488)) [@Lilly-May](https://github.com/Lilly-May)
+* Add perturbation space tutorial ([#487](https://github.com/scverse/pertpy/pull/487)) [@Lilly-May](https://github.com/Lilly-May)
+* Add enrichment ([#482](https://github.com/scverse/pertpy/pull/482)) [@Zethson](https://github.com/Zethson)
+* Save perturbation and clustering labels as categorical ([#481](https://github.com/scverse/pertpy/pull/481)) [@Lilly-May](https://github.com/Lilly-May)
+* Optimize from_scanpy ([#473](https://github.com/scverse/pertpy/pull/473)) [@Zethson](https://github.com/Zethson)
+* Add Drug metadata from chembl ([#480](https://github.com/scverse/pertpy/pull/480)) [@Zethson](https://github.com/Zethson)
+* Add DE filtering ([#477](https://github.com/scverse/pertpy/pull/477)) [@Zethson](https://github.com/Zethson)
+* PertSpace docs improvements ([#471](https://github.com/scverse/pertpy/pull/471)) [@Lilly-May](https://github.com/Lilly-May)
+* Make dialogue's load protected ([#464](https://github.com/scverse/pertpy/pull/464)) [@Lilly-May](https://github.com/Lilly-May)
+* New plotting API ([#456](https://github.com/scverse/pertpy/pull/456)) [@Zethson](https://github.com/Zethson)
+* Added smillie_2019 dataloader and renamed smillie dataset to tasccoda_example ([#450](https://github.com/scverse/pertpy/pull/450)) [@Lilly-May](https://github.com/Lilly-May)
+* Docs examples for CINEMA-OT ([#433](https://github.com/scverse/pertpy/pull/433)) [@Lilly-May](https://github.com/Lilly-May)
+* Removing dependencies ([#426](https://github.com/scverse/pertpy/pull/426)) [@Zethson](https://github.com/Zethson)
+* Added example for pt.pl.milo.nhood_graph ([#423](https://github.com/scverse/pertpy/pull/423)) [@Lilly-May](https://github.com/Lilly-May)
+* scope imports of ete3 in tasccoda ([#422](https://github.com/scverse/pertpy/pull/422)) [@Zethson](https://github.com/Zethson)
+* Add cinemaot nb ([#419](https://github.com/scverse/pertpy/pull/419)) [@Zethson](https://github.com/Zethson)
+* DIALOGUE attribution ([#371](https://github.com/scverse/pertpy/pull/371)) [@Zethson](https://github.com/Zethson)
+* DIALOGUE extensions and plots ([#368](https://github.com/scverse/pertpy/pull/368)) [@tessadgreen](https://github.com/tessadgreen)
+* Set run nuts random key to 0 by default. ([#363](https://github.com/scverse/pertpy/pull/363)) [@Zethson](https://github.com/Zethson)
+* Remove statsannotations ([#362](https://github.com/scverse/pertpy/pull/362)) [@Zethson](https://github.com/Zethson)
+* Refactoring ([#354](https://github.com/scverse/pertpy/pull/354)) [@Zethson](https://github.com/Zethson)
+* Add combosciplex ([#512](https://github.com/scverse/pertpy/pull/512)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* Fix stephenson 2021 and refactor ([#374](https://github.com/scverse/pertpy/pull/374)) @Zethson
-* fix: double plot issue related to barplot ([#460](https://github.com/scverse/pertpy/pull/460)) @kcArtemis
-* Small fixes to milo.plot_da_beeswarm ([#551](https://github.com/scverse/pertpy/pull/551)) @emdann
-* Check and fix plotting functions ([#579](https://github.com/scverse/pertpy/pull/579)) @namsaraeva
-* Fix jax config ([#550](https://github.com/scverse/pertpy/pull/550)) @Zethson
-* fixed augur runtime ([#547](https://github.com/scverse/pertpy/pull/547)) @zzheng18
-* Fix Distance docstring rendering ([#537](https://github.com/scverse/pertpy/pull/537)) @Zethson
-* Address some Jax random key issues ([#531](https://github.com/scverse/pertpy/pull/531)) @Zethson
-* Fixed Augur bug ([#533](https://github.com/scverse/pertpy/pull/533)) @namsaraeva
-* Fix discriminator classifier nn dimensions ([#475](https://github.com/scverse/pertpy/pull/475)) @Lilly-May
-* bug fixes, implementation tweaks, and additional distances ([#397](https://github.com/scverse/pertpy/pull/397)) @yugeji
-* Fix subsetting of milo.plot_da_beeswarm ([#472](https://github.com/scverse/pertpy/pull/472)) @Lilly-May
-* CentroidSpace AnnData Annotations ([#455](https://github.com/scverse/pertpy/pull/455)) @Lilly-May
-* DiscriminatorClassifier compatibility with sparse matrices ([#453](https://github.com/scverse/pertpy/pull/453)) @Lilly-May
-* Fix code coverage ([#432](https://github.com/scverse/pertpy/pull/432)) @flying-sheep
-* Fixed set_fdr for tascCODA models ([#411](https://github.com/scverse/pertpy/pull/411)) @Lilly-May
-* Small bug fixes and docs improvements ([#409](https://github.com/scverse/pertpy/pull/409)) @Lilly-May
-* Move to new numpy.random.Generator  ([#396](https://github.com/scverse/pertpy/pull/396)) @Lilly-May
-* Fix cinema OT test ([#392](https://github.com/scverse/pertpy/pull/392)) @Zethson
-* fix naming of example data in doc examples ([#387](https://github.com/scverse/pertpy/pull/387)) @eroell
-* Fix stephenson 2021 and refactor ([#374](https://github.com/scverse/pertpy/pull/374)) @Zethson
-* scCODA: add low/high acceptance probability warnings ([#366](https://github.com/scverse/pertpy/pull/366)) @johannesostner
-* actually use `neighbors_key` in `milo` ([#418](https://github.com/scverse/pertpy/pull/418)) @maarten-devries
-* Fixed some bugs (due to inconsistencies during migration) and typos in CINEMA-OT ([#413](https://github.com/scverse/pertpy/pull/413)) @MingzeDong
-* fix Implicit modification warnings in cellline tests ([#404](https://github.com/scverse/pertpy/pull/404)) @wxicu
+* Fix stephenson 2021 and refactor ([#374](https://github.com/scverse/pertpy/pull/374)) [@Zethson](https://github.com/Zethson)
+* fix: double plot issue related to barplot ([#460](https://github.com/scverse/pertpy/pull/460)) [@kcArtemis](https://github.com/kcArtemis)
+* Small fixes to milo.plot_da_beeswarm ([#551](https://github.com/scverse/pertpy/pull/551)) [@emdann](https://github.com/emdann)
+* Check and fix plotting functions ([#579](https://github.com/scverse/pertpy/pull/579)) [@namsaraeva](https://github.com/namsaraeva)
+* Fix jax config ([#550](https://github.com/scverse/pertpy/pull/550)) [@Zethson](https://github.com/Zethson)
+* fixed augur runtime ([#547](https://github.com/scverse/pertpy/pull/547)) [@zzheng18](https://github.com/zzheng18)
+* Fix Distance docstring rendering ([#537](https://github.com/scverse/pertpy/pull/537)) [@Zethson](https://github.com/Zethson)
+* Address some Jax random key issues ([#531](https://github.com/scverse/pertpy/pull/531)) [@Zethson](https://github.com/Zethson)
+* Fixed Augur bug ([#533](https://github.com/scverse/pertpy/pull/533)) [@namsaraeva](https://github.com/namsaraeva)
+* Fix discriminator classifier nn dimensions ([#475](https://github.com/scverse/pertpy/pull/475)) [@Lilly-May](https://github.com/Lilly-May)
+* bug fixes, implementation tweaks, and additional distances ([#397](https://github.com/scverse/pertpy/pull/397)) [@yugeji](https://github.com/yugeji)
+* Fix subsetting of milo.plot_da_beeswarm ([#472](https://github.com/scverse/pertpy/pull/472)) [@Lilly-May](https://github.com/Lilly-May)
+* CentroidSpace AnnData Annotations ([#455](https://github.com/scverse/pertpy/pull/455)) [@Lilly-May](https://github.com/Lilly-May)
+* DiscriminatorClassifier compatibility with sparse matrices ([#453](https://github.com/scverse/pertpy/pull/453)) [@Lilly-May](https://github.com/Lilly-May)
+* Fix code coverage ([#432](https://github.com/scverse/pertpy/pull/432)) [@flying-sheep](https://github.com/flying-sheep)
+* Fixed set_fdr for tascCODA models ([#411](https://github.com/scverse/pertpy/pull/411)) [@Lilly-May](https://github.com/Lilly-May)
+* Small bug fixes and docs improvements ([#409](https://github.com/scverse/pertpy/pull/409)) [@Lilly-May](https://github.com/Lilly-May)
+* Move to new numpy.random.Generator  ([#396](https://github.com/scverse/pertpy/pull/396)) [@Lilly-May](https://github.com/Lilly-May)
+* Fix cinema OT test ([#392](https://github.com/scverse/pertpy/pull/392)) [@Zethson](https://github.com/Zethson)
+* fix naming of example data in doc examples ([#387](https://github.com/scverse/pertpy/pull/387)) [@eroell](https://github.com/eroell)
+* Fix stephenson 2021 and refactor ([#374](https://github.com/scverse/pertpy/pull/374)) [@Zethson](https://github.com/Zethson)
+* scCODA: add low/high acceptance probability warnings ([#366](https://github.com/scverse/pertpy/pull/366)) [@johannesostner](https://github.com/johannesostner)
+* actually use `neighbors_key` in `milo` ([#418](https://github.com/scverse/pertpy/pull/418)) [@maarten-devries](https://github.com/maarten-devries)
+* Fixed some bugs (due to inconsistencies during migration) and typos in CINEMA-OT ([#413](https://github.com/scverse/pertpy/pull/413)) [@MingzeDong](https://github.com/MingzeDong)
+* fix Implicit modification warnings in cellline tests ([#404](https://github.com/scverse/pertpy/pull/404)) [@wxicu](https://github.com/wxicu)
 
 ## v0.5.0
 
 ### 🚀 Features
 
-* Perturbation space - add/subtract ([#328](https://github.com/scverse/pertpy/pull/328)) @AlejandroTL
-* Perturbation space - pseudobulk, discriminative classifier, clustering ([#316](https://github.com/scverse/pertpy/pull/316)) @AlejandroTL
-* add n_jobs support for pairwise distance computation ([#305](https://github.com/scverse/pertpy/pull/305)) @XinmingTu
+* Perturbation space - add/subtract ([#328](https://github.com/scverse/pertpy/pull/328)) [@AlejandroTL](https://github.com/AlejandroTL)
+* Perturbation space - pseudobulk, discriminative classifier, clustering ([#316](https://github.com/scverse/pertpy/pull/316)) [@AlejandroTL](https://github.com/AlejandroTL)
+* add n_jobs support for pairwise distance computation ([#305](https://github.com/scverse/pertpy/pull/305)) [@XinmingTu](https://github.com/XinmingTu)
 
 ### 🐛 Bug Fixes
 
-* fix initial MCMC values ([#302](https://github.com/scverse/pertpy/pull/302)) @johannesostner
-* Fix docs CI ([#303](https://github.com/scverse/pertpy/pull/303)) @Zethson
-* fixed the output_file_name of frangieh_2021_raw ([#321](https://github.com/scverse/pertpy/pull/321)) @XinmingTu
+* fix initial MCMC values ([#302](https://github.com/scverse/pertpy/pull/302)) [@johannesostner](https://github.com/johannesostner)
+* Fix docs CI ([#303](https://github.com/scverse/pertpy/pull/303)) [@Zethson](https://github.com/Zethson)
+* fixed the output_file_name of frangieh_2021_raw ([#321](https://github.com/scverse/pertpy/pull/321)) [@XinmingTu](https://github.com/XinmingTu)
 
 ## v0.4.0
 
 ### 🚀 Features
 
-* Guide assignment ([#194](https://github.com/scverse/pertpy/pull/194)) @moinfar
-* Distances ([#217](https://github.com/scverse/pertpy/pull/217)) @Zethson
-* Add initial DIALOGUE ([#199](https://github.com/scverse/pertpy/pull/199)) @Zethson
-* Add Jax ScGen ([#183](https://github.com/scverse/pertpy/pull/183)) @Zethson
-* Guide assignment ([#194](https://github.com/scverse/pertpy/pull/194)) @moinfar
-* Add cell line annotation ([#187](https://github.com/scverse/pertpy/pull/187)) @wxicu
+* Guide assignment ([#194](https://github.com/scverse/pertpy/pull/194)) [@moinfar](https://github.com/moinfar)
+* Distances ([#217](https://github.com/scverse/pertpy/pull/217)) [@Zethson](https://github.com/Zethson)
+* Add initial DIALOGUE ([#199](https://github.com/scverse/pertpy/pull/199)) [@Zethson](https://github.com/Zethson)
+* Add Jax ScGen ([#183](https://github.com/scverse/pertpy/pull/183)) [@Zethson](https://github.com/Zethson)
+* Guide assignment ([#194](https://github.com/scverse/pertpy/pull/194)) [@moinfar](https://github.com/moinfar)
+* Add cell line annotation ([#187](https://github.com/scverse/pertpy/pull/187)) [@wxicu](https://github.com/wxicu)
 
 ### 🐛 Bug Fixes
 
-* docstring enhancement for sample identifiers ([#237](https://github.com/scverse/pertpy/pull/237)) @johannesostner
-* improve mixscape documentation & fix a bug ([#222](https://github.com/scverse/pertpy/pull/222)) @xinyuejohn
-* Fix docs ete3 ([#206](https://github.com/scverse/pertpy/pull/206)) @Zethson
-* Update _dialogue.py ([#203](https://github.com/scverse/pertpy/pull/203)) @tessadgreen
-* scCODA bugfix: duplicates in covariate_obs ([#198](https://github.com/scverse/pertpy/pull/198)) @Zethson
-* Fix [#211](https://github.com/scverse/pertpy/issues/211) ([#212](https://github.com/scverse/pertpy/pull/212)) @Moomboh
-* fix [#207](https://github.com/scverse/pertpy/issues/207) ete3 warning masks other ImportErrors ([#208](https://github.com/scverse/pertpy/pull/208)) @Moomboh
+* docstring enhancement for sample identifiers ([#237](https://github.com/scverse/pertpy/pull/237)) [@johannesostner](https://github.com/johannesostner)
+* improve mixscape documentation & fix a bug ([#222](https://github.com/scverse/pertpy/pull/222)) [@xinyuejohn](https://github.com/xinyuejohn)
+* Fix docs ete3 ([#206](https://github.com/scverse/pertpy/pull/206)) [@Zethson](https://github.com/Zethson)
+* Update _dialogue.py ([#203](https://github.com/scverse/pertpy/pull/203)) [@tessadgreen](https://github.com/tessadgreen)
+* scCODA bugfix: duplicates in covariate_obs ([#198](https://github.com/scverse/pertpy/pull/198)) [@Zethson](https://github.com/Zethson)
+* Fix [#211](https://github.com/scverse/pertpy/issues/211) ([#212](https://github.com/scverse/pertpy/pull/212)) [@Moomboh](https://github.com/Moomboh)
+* fix [#207](https://github.com/scverse/pertpy/issues/207) ete3 warning masks other ImportErrors ([#208](https://github.com/scverse/pertpy/pull/208)) [@Moomboh](https://github.com/Moomboh)
 
 ## v0.3.0
 
 ### 🚀 Features
 
-* added list option for sample_identifier in load ([#190](https://github.com/scverse/pertpy/pull/190)) @Zethson
-* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) @xinyuejohn
-* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) @xinyuejohn
+* added list option for sample_identifier in load ([#190](https://github.com/scverse/pertpy/pull/190)) [@Zethson](https://github.com/Zethson)
+* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) [@xinyuejohn](https://github.com/xinyuejohn)
+* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) [@xinyuejohn](https://github.com/xinyuejohn)
 
 ### 🐛 Bug Fixes
 
-* changes default settings of coda and milo ([#196](https://github.com/scverse/pertpy/pull/196)) @xinyuejohn
-* fix mixscape default setting of layer ([#195](https://github.com/scverse/pertpy/pull/195)) @xinyuejohn
+* changes default settings of coda and milo ([#196](https://github.com/scverse/pertpy/pull/196)) [@xinyuejohn](https://github.com/xinyuejohn)
+* fix mixscape default setting of layer ([#195](https://github.com/scverse/pertpy/pull/195)) [@xinyuejohn](https://github.com/xinyuejohn)
 
 ### 🧰 Maintenance
 
-* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) @xinyuejohn
-* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) @xinyuejohn
+* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) [@xinyuejohn](https://github.com/xinyuejohn)
+* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) [@xinyuejohn](https://github.com/xinyuejohn)
 
 ## v0.2.0
 
 ### 🚀 Features
 
-* added list option for sample_identifier in load ([#190](https://github.com/scverse/pertpy/pull/190)) @Zethson
-* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) @xinyuejohn
-* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) @xinyuejohn
-* Add scperturb datasets ([#182](https://github.com/scverse/pertpy/pull/182)) @wxicu
-* Added subsampled Stephenson2021 COVID19 dataset ([#179](https://github.com/scverse/pertpy/pull/179)) @emdann
+* added list option for sample_identifier in load ([#190](https://github.com/scverse/pertpy/pull/190)) [@Zethson](https://github.com/Zethson)
+* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) [@xinyuejohn](https://github.com/xinyuejohn)
+* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) [@xinyuejohn](https://github.com/xinyuejohn)
+* Add scperturb datasets ([#182](https://github.com/scverse/pertpy/pull/182)) [@wxicu](https://github.com/wxicu)
+* Added subsampled Stephenson2021 COVID19 dataset ([#179](https://github.com/scverse/pertpy/pull/179)) [@emdann](https://github.com/emdann)
 
 ### 🐛 Bug Fixes
 
-* changes default settings of coda and milo ([#196](https://github.com/scverse/pertpy/pull/196)) @xinyuejohn
-* fix mixscape default setting of layer ([#195](https://github.com/scverse/pertpy/pull/195)) @xinyuejohn
-* Solve pre-commit prettier and isort version incompatibility issues ([#193](https://github.com/scverse/pertpy/pull/193)) @moinfar
+* changes default settings of coda and milo ([#196](https://github.com/scverse/pertpy/pull/196)) [@xinyuejohn](https://github.com/xinyuejohn)
+* fix mixscape default setting of layer ([#195](https://github.com/scverse/pertpy/pull/195)) [@xinyuejohn](https://github.com/xinyuejohn)
+* Solve pre-commit prettier and isort version incompatibility issues ([#193](https://github.com/scverse/pertpy/pull/193)) [@moinfar](https://github.com/moinfar)
 
 ### 🧰 Maintenance
 
-* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) @xinyuejohn
-* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) @xinyuejohn
+* integrate scCODA and tascCODA ([#188](https://github.com/scverse/pertpy/pull/188)) [@xinyuejohn](https://github.com/xinyuejohn)
+* add milopy ([#165](https://github.com/scverse/pertpy/pull/165)) [@xinyuejohn](https://github.com/xinyuejohn)
 
 ## v0.1.0
 
 ### 🚀 Features
 
-* Augurpy refactoring ([#148](https://github.com/scverse/pertpy/pull/148)) @Zethson
-* add kang dataset ([#146](https://github.com/scverse/pertpy/pull/146)) @antschum
-* add inits for plots, fix error messages and output, tutorial version ([#144](https://github.com/scverse/pertpy/pull/144)) @antschum
-* Feature/furo md ([#141](https://github.com/scverse/pertpy/pull/141)) @Zethson
-* add augurpy ([#135](https://github.com/scverse/pertpy/pull/135)) @antschum
-* add better data draft ([#71](https://github.com/scverse/pertpy/pull/71)) @Zethson
-* Documentation structure ([#23](https://github.com/scverse/pertpy/pull/23)) @Zethson
-* add pypi-latest & architecture ([#22](https://github.com/scverse/pertpy/pull/22)) @Zethson
+* Augurpy refactoring ([#148](https://github.com/scverse/pertpy/pull/148)) [@Zethson](https://github.com/Zethson)
+* add kang dataset ([#146](https://github.com/scverse/pertpy/pull/146)) [@antschum](https://github.com/antschum)
+* add inits for plots, fix error messages and output, tutorial version ([#144](https://github.com/scverse/pertpy/pull/144)) [@antschum](https://github.com/antschum)
+* Feature/furo md ([#141](https://github.com/scverse/pertpy/pull/141)) [@Zethson](https://github.com/Zethson)
+* add augurpy ([#135](https://github.com/scverse/pertpy/pull/135)) [@antschum](https://github.com/antschum)
+* add better data draft ([#71](https://github.com/scverse/pertpy/pull/71)) [@Zethson](https://github.com/Zethson)
+* Documentation structure ([#23](https://github.com/scverse/pertpy/pull/23)) [@Zethson](https://github.com/Zethson)
+* add pypi-latest & architecture ([#22](https://github.com/scverse/pertpy/pull/22)) [@Zethson](https://github.com/Zethson)
 
 ### 🐛 Bug Fixes
 
-* add inits for plots, fix error messages and output, tutorial version ([#144](https://github.com/scverse/pertpy/pull/144)) @antschum
+* add inits for plots, fix error messages and output, tutorial version ([#144](https://github.com/scverse/pertpy/pull/144)) [@antschum](https://github.com/antschum)
 
 ### 🧰 Maintenance
 
-* Augurpy refactoring ([#148](https://github.com/scverse/pertpy/pull/148)) @Zethson
-* Feature/furo md ([#141](https://github.com/scverse/pertpy/pull/141)) @Zethson
-* add pypi-latest & architecture ([#22](https://github.com/scverse/pertpy/pull/22)) @Zethson
+* Augurpy refactoring ([#148](https://github.com/scverse/pertpy/pull/148)) [@Zethson](https://github.com/Zethson)
+* Feature/furo md ([#141](https://github.com/scverse/pertpy/pull/141)) [@Zethson](https://github.com/Zethson)
+* add pypi-latest & architecture ([#22](https://github.com/scverse/pertpy/pull/22)) [@Zethson](https://github.com/Zethson)
