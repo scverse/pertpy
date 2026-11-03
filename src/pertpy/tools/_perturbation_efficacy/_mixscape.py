@@ -669,10 +669,12 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             if palette is None:
                 palette = {gd: "#7d7d7d", target_gene: color}
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
-            top_r = max(
-                cast_dense(plot_dens.get_lines()[cond].get_data()[1]).max()
-                for cond in range(len(plot_dens.get_lines()))
-            )
+            density_maxima = []
+            for line in plot_dens.get_lines():
+                density = np.asarray(line.get_ydata(), dtype=float)
+                if density.size:
+                    density_maxima.append(float(np.nanmax(density)))
+            top_r = max(density_maxima, default=1.0)
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
@@ -718,9 +720,12 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                     f"{target_gene} {perturbation_type}": color,
                 }
             plot_dens = sns.kdeplot(data=perturbation_score, x="pvec", hue=pert_key, fill=False, common_norm=False)
-            top_r = max(
-                cast_dense(plot_dens.get_lines()[i].get_data()[1]).max() for i in range(len(plot_dens.get_lines()))
-            )
+            density_maxima = []
+            for line in plot_dens.get_lines():
+                density = np.asarray(line.get_ydata(), dtype=float)
+                if density.size:
+                    density_maxima.append(float(np.nanmax(density)))
+            top_r = max(density_maxima, default=1.0)
             plt.close()
             perturbation_score["y_jitter"] = perturbation_score["pvec"]
             rng = np.random.default_rng()
