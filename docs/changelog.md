@@ -8,8 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### 🚀 Features
 
-* `pt.md.Cytokine` provides the cytokine response signatures of the Human Cytokine Dictionary for 90 cytokines in 24 PBMC cell types, as gene sets that the `Enrichment` tests take as `targets` ([#1186](https://github.com/scverse/pertpy/pull/1186)) @Jenniliu12 @Zethson
-* `Statsmodels` fits linear mixed models when the design contains a random intercept such as `~condition + (1 | donor)`, by REML with Satterthwaite t-tests like `lmerTest`, so single cells can be tested while accounting for the samples they come from; the kernel is shared with Dialogue and the `(1 | variable)` syntax with Milo ([#1147](https://github.com/scverse/pertpy/pull/1147)) @Sizerta @Zethson
+* `pt.md.Cytokine` provides the cytokine response signatures of the Human Cytokine Dictionary for 90 cytokines in 24 PBMC cell types, as gene sets that the `Enrichment` tests take as `targets` ([#1186](https://github.com/scverse/pertpy/pull/1186)) @Jenniliu12, @Zethson
+* `Statsmodels` fits linear mixed models when the design contains a random intercept such as `~condition + (1 | donor)`, by REML with Satterthwaite t-tests like `lmerTest`, so single cells can be tested while accounting for the samples they come from; the kernel is shared with Dialogue and the `(1 | variable)` syntax with Milo ([#1147](https://github.com/scverse/pertpy/pull/1147)) @Sizerta, @Zethson
+* `assign_mixture_model` also writes the binary cell-by-guide assignment to `adata.layers[output_layer]`, since the per-cell string in `.obs` caps and joins the assigned guides ([#1173](https://github.com/scverse/pertpy/pull/1173)) @Zethson
+
+### ⚡ Performance
+
+* Augur scores each cross-validation fold in one pass over the forest instead of six scorer passes, skips scikit-learn's per-tree parameter validation and no longer ships the fitted trees back from the workers, with identical metrics and importances on seeded runs ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
+* Dialogue runs the PMD iterations in a numba kernel (20x per fit) and solves the iterative NNLS on the normal equations, replacing the `sparsecca` dependency; whole runs take 3 to 13 s on 5k to 27k cells, about 2x faster than before with up to half the peak memory, where R needs 2 to 16 minutes ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+* `assign_mixture_model` fits each guide on its distinct count values, 20x faster on Papalexi (2.9 s to 0.14 s) and with a third of the peak memory at 100k cells x 500 guides ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
 
 ### ⚠️ Changed results
 
@@ -17,27 +24,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 * Dialogue orders the shared samples like R's ICU collation, since that order decides the signs of the PMD initialization and with them the programs found ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
 * Augur is reproducible by default: unseeded estimators and folds are seeded by the subsample index like R Augur, and `predict_differential_prioritization` draws its permuted means without replacement from a seeded generator, as R does ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
 * Dialogue's `min_cells_per_sample` defaults to R's 15 and only gates the ANOVA feature filter, which now raises below five retained features instead of keeping all of them; `n_permutations` counts the observed fit, so values below 11 cannot pass the default `empirical_alpha` ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
-
-### ⚡ Performance
-
-* Augur scores each cross-validation fold in one pass over the forest instead of six scorer passes, skips scikit-learn's per-tree parameter validation and no longer ships the fitted trees back from the workers, with identical metrics and importances on seeded runs ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
-* Dialogue runs the PMD iterations in a numba kernel (20x per fit) and solves the iterative NNLS on the normal equations, replacing the `sparsecca` dependency; whole runs take 3 to 13 s on 5k to 27k cells, about 2x faster than before with up to half the peak memory, where R needs 2 to 16 minutes ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
+* `assign_mixture_model` fits the Poisson-Gaussian mixture by multi-start EM instead of 500 Adam steps from one start, which left thresholds unconverged, swapped the components on high-MOI guides and dropped small guides; thresholds now match crispat run to convergence on 105 of 106 Papalexi guides, `learning_rate` is deprecated and `n_iter` caps the EM iterations ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
 
 ### 🐛 Bug Fixes
 
 * Augur encodes the condition labels after filtering to two conditions, so binary precision, recall and F1 are no longer NaN when the kept labels were not the first two; those metrics now take the first condition as the positive class like R Augur, `min_cells` defaults to `subsample_size` and applies per condition like R, data sets with fewer than 1000 features skip feature selection like R, per-cell `augur_score` is assigned by exact cell type match, and regressors use unstratified folds ([#1178](https://github.com/scverse/pertpy/pull/1178)) @Zethson
 * Dialogue treated signed log10 p-value z-scores as normal z-scores in phase 3, which inflated strong genes, lost the up/down direction and dropped underflowing genes from the Fisher combination ([#1177](https://github.com/scverse/pertpy/pull/1177)) @Zethson
-* Mixscape's `plot_barplot` no longer fails when the number of target genes is not a multiple of five, and Mixscape takes the control, perturbed and non-perturbed class labels from `control`, `perturbation_type` and the new `non_perturbed_label` instead of hardcoding `NT`, `KO` and `NP`; `plot_heatmap` and `plot_perturbscore` use the `mixscape_class` and `pert_key` columns they are given, `plot_perturbscore` keeps a custom `palette` with `before_mixscape=True`, and `plot_barplot` takes a `palette` ([#1191](https://github.com/scverse/pertpy/pull/1191)) @kkkklck @Zethson
+* Mixscape's `plot_barplot` no longer fails when the number of target genes is not a multiple of five, and Mixscape takes the control, perturbed and non-perturbed class labels from `control`, `perturbation_type` and the new `non_perturbed_label` instead of hardcoding `NT`, `KO` and `NP`; `plot_heatmap` and `plot_perturbscore` use the `mixscape_class` and `pert_key` columns they are given, `plot_perturbscore` keeps a custom `palette` with `before_mixscape=True`, and `plot_barplot` takes a `palette` ([#1191](https://github.com/scverse/pertpy/pull/1191)) @kkkklck, @Zethson
+* Mixscape takes the minimum number of cells left in a perturbed class from the new `min_cells` instead of `min_de_genes`, as Seurat does, which changes results only for a non-default `min_de_genes` ([#1189](https://github.com/scverse/pertpy/pull/1189)) @kkkklck, @Zethson
 * Milo's `plot_nhood_counts_by_cond` raised with pandas 3.1, which kept the sample column's name on the per-sample index ([#1181](https://github.com/scverse/pertpy/pull/1181)) @Zethson
+* Guide assignment: `assign_by_threshold` and `assign_to_max_guide` accept CSC and sparse-array input, explicitly stored zeros no longer enter the mixture fit, `plot_heatmap` saves a reusable cell order and `only_return_results=True` no longer writes to `adata.var` ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
 
 ### 🧰 Maintenance
 
+* Require Python 3.13 ([#1172](https://github.com/scverse/pertpy/pull/1172)) @Zethson
 * Build the docs with the shared scverse theme and configuration from `scverse-doc`, with the logo blue as its accent for links and highlights ([#1179](https://github.com/scverse/pertpy/pull/1179)) @Zethson
 * The docs take their accents from the scverse-doc registry and colour the sidebar captions in the logo red ([#1182](https://github.com/scverse/pertpy/pull/1182)) @Zethson
-
-### 🧰 Maintenance
-
 * Group the docs sidebar into Getting started, Guides, Reference and Project like the other scverse core packages, with a new quickstart that replaces the background page and a new glossary ([#1180](https://github.com/scverse/pertpy/pull/1180)) @Zethson
+* Skip the network tests when a download fails with a `URLError` ([#1184](https://github.com/scverse/pertpy/pull/1184)) @Zethson
+* Keep R from loading the system libpython in the tutorial notebooks on Ubuntu 26.04 ([#1185](https://github.com/scverse/pertpy/pull/1185)) @Zethson
+* Skip PyQt6's stubs in mypy, whose invalid syntax made mypy abort ([#1190](https://github.com/scverse/pertpy/pull/1190)) @Zethson
+* Require LLM usage disclosure in the pull request template ([#1165](https://github.com/scverse/pertpy/pull/1165)) @Zethson
 
 ## v1.4.0
 
