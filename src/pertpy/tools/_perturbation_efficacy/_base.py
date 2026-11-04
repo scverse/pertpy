@@ -248,10 +248,8 @@ class PerturbationEfficacyAnalyzer:
     ) -> dict[tuple, np.ndarray]:
         """Select Mixscape marker genes with Seurat's `TopDEGenesMixscape` defaults.
 
-        The Wilcoxon (or other requested) test is performed by Scanpy; selection
-        uses Seurat's full-feature Bonferroni correction, 10% detection filter,
-        3-cell minimum per group, and fold change for log1p-normalized data.
-        The statistical test backends are not guaranteed numerically identical.
+        The test runs in Scanpy with tie correction, like R's `wilcox.test`.
+        Selection uses Seurat's full-feature Bonferroni correction, 10% detection filter, 3-cell minimum per group, and fold change for log1p-normalized data.
         """
         perturbation_markers: dict[tuple, np.ndarray] = {}
         for split, split_mask in enumerate(split_masks):
@@ -282,6 +280,7 @@ class PerturbationEfficacyAnalyzer:
                     method=test_method,
                     use_raw=False,
                     corr_method="bonferroni",
+                    tie_correct=True,
                 )
                 de_results = adata_split.uns["rank_genes_groups"]
                 for gene in valid_targets:
