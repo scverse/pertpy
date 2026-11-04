@@ -266,7 +266,7 @@ class PerturbationEfficacyAnalyzer:
             if group_sizes.get(control, 0) < 3 or not valid_targets:
                 continue
 
-            expression = adata_split.layers[layer] if layer is not None else adata_split.X
+            expression = cast_matrix(adata_split.layers[layer] if layer is not None else adata_split.X)
             control_expression = expression[np.asarray(labels == control)]
             control_pct, control_mean = self._seurat_expression_stats(control_expression)
 

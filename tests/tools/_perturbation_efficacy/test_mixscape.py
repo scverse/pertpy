@@ -15,6 +15,7 @@ ACCURACY_THRESHOLD = 0.8
 
 def _strengthen_synthetic_ko_signal(adata: ad.AnnData) -> None:
     """Make synthetic KO markers significant under Seurat's Bonferroni filter."""
+    assert isinstance(adata.X, sparse.csr_matrix)
     X = adata.X.toarray()
     X[2 * NUM_CELLS_PER_GROUP :, adata.n_vars // 2 :] += 8.0
     adata.X = sparse.csr_matrix(X)
@@ -201,15 +202,16 @@ def test_mixscape_markers_use_seurat_fold_change_and_selected_layer(monkeypatch:
     X = np.zeros((40, 2))
     X[20:22, 0] = 0.05  # Exact Seurat log2FC < 0.25.
     X[20:22, 1] = 0.3  # Exact Seurat log2FC > 0.25.
+    expression: np.ndarray | sparse.csr_matrix | sparse.csr_array = X
     if matrix_type == "csr_matrix":
-        X = sparse.csr_matrix(X)
+        expression = sparse.csr_matrix(X)
     elif matrix_type == "csr_array":
-        X = sparse.csr_array(X)
+        expression = sparse.csr_array(X)
     adata = ad.AnnData(
         X=np.zeros((40, 2)),
         obs=pd.DataFrame({"target": ["NT"] * 20 + ["KO"] * 20}),
         var=pd.DataFrame(index=["weak", "strong"]),
-        layers={"de": X},
+        layers={"de": expression},
     )
     assert _marker_selection(adata, layer="de") == ["strong"]
 
