@@ -16,6 +16,8 @@ from pandas.errors import PerformanceWarning
 from scanpy import get
 from scanpy._utils import check_use_raw, sanitize_anndata
 from scanpy.plotting import _utils
+from scipy.special import expit
+from scipy.stats import norm
 from sklearn.cluster import kmeans_plusplus
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.mixture import GaussianMixture
@@ -37,6 +39,8 @@ if TYPE_CHECKING:
 
 _LOG_2PI = math.log(2 * math.pi)
 _NK_EPS = 10 * np.finfo(np.float64).eps
+_EM_TOL = 1e-8
+_EM_MAX_ITER = 5000
 
 
 class Mixscape(PerturbationEfficacyAnalyzer):
@@ -79,6 +83,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             min_cells: Minimum number of cells in a target gene class. If fewer cells remain assigned during classification, all are assigned `non_perturbed_label`.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
+                This expression must be log1p-normalized for Seurat-style fold-change filtering.
+                Marker selection uses a 10% detection filter, Bonferroni correction, and at least 3 cells per group.
             test_method: Method to use for differential expression testing.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             scale: Scale the data specified in `layer` before running the GaussianMixture model on it.
@@ -232,22 +238,25 @@ class Mixscape(PerturbationEfficacyAnalyzer):
                                 means_init=means_init,
                                 precisions_init=1 / (std_init**2),
                                 random_state=random_state,
-                                max_iter=100,
+                                tol=_EM_TOL,
+                                max_iter=_EM_MAX_ITER,
                                 fixed_means=[nt_pvec.mean(), None],
                                 fixed_covariances=[nt_pvec.std() ** 2, None],
                                 **gmmkwargs,
                             ).fit(np.asarray(pvec).reshape(-1, 1))
-                            probabilities = mm.predict_proba(np.asarray(pvec)[orig_guide_cells_dat_idx].reshape(-1, 1))
+                            means, sds = mm.means_.ravel(), np.sqrt(mm.covariances_)
                         else:
-                            probabilities = _mixscape_gmm_predict_proba(
+                            means, sds = _mixscape_gmm_fit(
                                 pvec.to_numpy(dtype=np.float64),
-                                orig_guide_cells_dat_idx,
                                 means_init=means_init.ravel().astype(np.float64),
                                 precisions_init=1 / (std_init.astype(np.float64) ** 2),
                                 random_state=random_state,
                             )
-                        lik_ratio = probabilities[:, 0] / probabilities[:, 1]
-                        post_prob = 1 / (1 + lik_ratio)
+                        guide_pvec_orig = np.asarray(pvec)[orig_guide_cells_dat_idx]
+                        post_prob = expit(
+                            norm.logpdf(guide_pvec_orig, means[1], sds[1])
+                            - norm.logpdf(guide_pvec_orig, means[0], sds[0])
+                        )
 
                         # based on the posterior probability, assign cells to the two classes
                         ko_mask = post_prob > 0.5
@@ -306,6 +315,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
+                This expression must be log1p-normalized for Seurat-style fold-change filtering.
+                Marker selection uses a 10% detection filter, Bonferroni correction, and at least 3 cells per group.
             n_comps: Number of principal components to use.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
@@ -1216,18 +1227,17 @@ def _gmm_em(x: np.ndarray, params: np.ndarray, tol: float, max_iter: int, reg_co
     return params, False
 
 
-def _mixscape_gmm_predict_proba(
+def _mixscape_gmm_fit(
     x: np.ndarray,
-    predict_idx: np.ndarray,
     *,
     means_init: np.ndarray,
     precisions_init: np.ndarray,
     random_state: int | np.random.RandomState | None,
-    tol: float = 1e-3,
-    max_iter: int = 100,
+    tol: float = _EM_TOL,
+    max_iter: int = _EM_MAX_ITER,
     reg_covar: float = 1e-6,
-) -> np.ndarray:
-    """Component probabilities of `x[predict_idx]` under :class:`MixscapeGaussianMixture` fitted to `x` with the first mean and variance fixed.
+) -> tuple[np.ndarray, np.ndarray]:
+    """Component means and standard deviations of :class:`MixscapeGaussianMixture` fitted to `x` with the first mean and variance fixed.
 
     Reproduces scikit-learn's k-means initialisation, EM updates and convergence check for two spherical components.
     """
@@ -1244,6 +1254,4 @@ def _mixscape_gmm_predict_proba(
             ConvergenceWarning,
             stacklevel=3,
         )
-    log_resp = np.empty((predict_idx.size, 2))
-    _gmm_e_step(x[predict_idx], params, log_resp)
-    return np.exp(log_resp)
+    return params[1], 1.0 / params[2]
