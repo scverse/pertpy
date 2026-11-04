@@ -79,6 +79,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             min_cells: Minimum number of cells in a target gene class. If fewer cells remain assigned during classification, all are assigned `non_perturbed_label`.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
             de_layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
+                This expression must be log1p-normalized for Seurat-style fold-change filtering.
+                Marker selection uses a 10% detection filter, Bonferroni correction, and at least 3 cells per group.
             test_method: Method to use for differential expression testing.
             iter_num: Number of normalmixEM iterations to run if convergence does not occur.
             scale: Scale the data specified in `layer` before running the GaussianMixture model on it.
@@ -306,6 +308,8 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             control: Control category from the `pert_key` column.
             mixscape_class_global: The column of `.obs` with mixscape global classification result (perturbed, NP or NT).
             layer: Layer to use for identifying differentially expressed genes. If `None`, adata.X is used.
+                This expression must be log1p-normalized for Seurat-style fold-change filtering.
+                Marker selection uses a 10% detection filter, Bonferroni correction, and at least 3 cells per group.
             n_comps: Number of principal components to use.
             min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
             logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.

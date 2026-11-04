@@ -215,6 +215,23 @@ class PerturbationEfficacyAnalyzer:
         if copy:
             return adata
 
+    @staticmethod
+    def _seurat_expression_stats(X: np.ndarray | CSBase) -> tuple[np.ndarray, np.ndarray]:
+        """Detection fractions and Seurat-style log2 mean expression for log1p data.
+
+        Seurat's default `data`-slot fold change uses
+        log2((sum(expm1(expression)) + 1) / n_cells).
+        """
+        n_cells = X.shape[0]
+        if isinstance(X, CSBase):
+            detected = np.asarray((X > 0).sum(axis=0)).ravel() / n_cells
+            linear_sum = np.asarray(X.expm1().sum(axis=0)).ravel()
+        else:
+            X = np.asarray(X)
+            detected = np.count_nonzero(X > 0, axis=0) / n_cells
+            linear_sum = np.expm1(X).sum(axis=0)
+        return detected, np.log2((linear_sum + 1) / n_cells)
+
     def _get_perturbation_markers(
         self,
         adata: AnnData,
@@ -229,30 +246,30 @@ class PerturbationEfficacyAnalyzer:
         logfc_threshold: float,
         test_method: RankGenesMethod,
     ) -> dict[tuple, np.ndarray]:
-        """Determine gene sets across all splits/groups through differential gene expression.
+        """Select Mixscape marker genes with Seurat's `TopDEGenesMixscape` defaults.
 
-        Args:
-            adata: :class:`~anndata.AnnData` object
-            split_masks: List of boolean masks for each split/group.
-            categories: List of split/group names.
-            pert_key: The column of `.obs` with target gene labels.
-            control: Control category from the `labels` column.
-            layer: Key from adata.layers whose value will be used to compare gene expression.
-            pval_cutoff: P-value cut-off for selection of significantly DE genes.
-            min_de_genes: Required number of genes that are differentially expressed for method to separate perturbed and non-perturbed cells.
-            logfc_threshold: Limit testing to genes which show, on average, at least X-fold difference (log-scale) between the two groups of cells.
-            test_method: Method to use for differential expression testing.
-
-        Returns:
-            Set of column indices.
+        The Wilcoxon (or other requested) test is performed by Scanpy; selection
+        uses Seurat's full-feature Bonferroni correction, 10% detection filter,
+        3-cell minimum per group, and fold change for log1p-normalized data.
+        The statistical test backends are not guaranteed numerically identical.
         """
         perturbation_markers: dict[tuple, np.ndarray] = {}
         for split, split_mask in enumerate(split_masks):
             category = categories[split]
-            # get gene sets for each split
-            gene_targets = list(set(adata[split_mask].obs[pert_key]).difference([control]))
             adata_split = adata[split_mask].copy()
-            # find top DE genes between cells with targeting and non-targeting gRNAs
+            labels = adata_split.obs[pert_key]
+            gene_targets = [gene for gene in labels.unique() if gene != control]
+            group_sizes = labels.value_counts()
+            valid_targets = [gene for gene in gene_targets if group_sizes[gene] >= 3]
+            for gene in gene_targets:
+                perturbation_markers[(category, gene)] = np.array([], dtype=str)
+            if group_sizes.get(control, 0) < 3 or not valid_targets:
+                continue
+
+            expression = adata_split.layers[layer] if layer is not None else adata_split.X
+            control_expression = expression[np.asarray(labels == control)]
+            control_pct, control_mean = self._seurat_expression_stats(control_expression)
+
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 warnings.simplefilter("ignore", PerformanceWarning)
@@ -260,21 +277,23 @@ class PerturbationEfficacyAnalyzer:
                     adata_split,
                     layer=layer,
                     groupby=pert_key,
-                    groups=gene_targets,
+                    groups=valid_targets,
                     reference=control,
                     method=test_method,
                     use_raw=False,
+                    corr_method="bonferroni",
                 )
-                # get DE genes for each target gene
-                for gene in gene_targets:
-                    logfc_threshold_mask = (
-                        np.abs(adata_split.uns["rank_genes_groups"]["logfoldchanges"][gene]) >= logfc_threshold
-                    )
-                    de_genes = adata_split.uns["rank_genes_groups"]["names"][gene][logfc_threshold_mask]
-                    pvals_adj = adata_split.uns["rank_genes_groups"]["pvals_adj"][gene][logfc_threshold_mask]
-                    de_genes = de_genes[pvals_adj < pval_cutoff]
-                    if len(de_genes) < min_de_genes:
-                        de_genes = np.array([])
-                    perturbation_markers[(category, gene)] = de_genes
+                de_results = adata_split.uns["rank_genes_groups"]
+                for gene in valid_targets:
+                    target_expression = expression[np.asarray(labels == gene)]
+                    target_pct, target_mean = self._seurat_expression_stats(target_expression)
+                    gene_names = de_results["names"][gene]
+                    gene_idx = adata_split.var_names.get_indexer(gene_names)
+                    detection_mask = np.maximum(target_pct[gene_idx], control_pct[gene_idx]) >= 0.1
+                    fold_change_mask = np.abs(target_mean[gene_idx] - control_mean[gene_idx]) >= logfc_threshold
+                    pval_mask = de_results["pvals_adj"][gene] < pval_cutoff
+                    markers = gene_names[detection_mask & fold_change_mask & pval_mask]
+                    if len(markers) >= min_de_genes:
+                        perturbation_markers[(category, gene)] = markers
 
         return perturbation_markers

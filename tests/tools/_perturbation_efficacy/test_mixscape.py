@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
+import scanpy as sc
+from scipy import sparse
 
 import pertpy as pt
 from pertpy.tools._perturbation_efficacy._mixscape import MixscapeGaussianMixture, _mixscape_gmm_predict_proba
@@ -11,7 +13,15 @@ NUM_CELLS_PER_GROUP = 10
 ACCURACY_THRESHOLD = 0.8
 
 
+def _strengthen_synthetic_ko_signal(adata: ad.AnnData) -> None:
+    """Make synthetic KO markers significant under Seurat's Bonferroni filter."""
+    X = adata.X.toarray()
+    X[2 * NUM_CELLS_PER_GROUP :, adata.n_vars // 2 :] += 8.0
+    adata.X = sparse.csr_matrix(X)
+
+
 def test_mixscape(adata):
+    _strengthen_synthetic_ko_signal(adata)
     adata.layers["X_pert"] = adata.X
     mixscape_identifier = pt.tl.Mixscape()
     mixscape_identifier.mixscape(adata=adata, pert_key="gene_target", control="NT", test_method="t-test")
@@ -126,6 +136,96 @@ def test_mixscape_perturbscore_split_by_uses_target_hue_without_mutating_uns():
     plt.close(fig)
 
 
+def _mock_mixscape_de(monkeypatch: pytest.MonkeyPatch, adjusted_pvals: list[float]) -> None:
+    """Supply known p-values so marker filters can be tested independently."""
+
+    def rank_genes_groups(adata: ad.AnnData, **kwargs) -> None:
+        assert kwargs["corr_method"] == "bonferroni"
+        assert kwargs["reference"] == "NT"
+        assert kwargs["groups"] == ["KO"]
+        assert kwargs["use_raw"] is False
+        adata.uns["rank_genes_groups"] = {
+            "names": np.rec.fromarrays([np.asarray(adata.var_names)], names=["KO"]),
+            "pvals_adj": np.rec.fromarrays([np.asarray(adjusted_pvals)], names=["KO"]),
+        }
+
+    monkeypatch.setattr(sc.tl, "rank_genes_groups", rank_genes_groups)
+
+
+def _marker_selection(adata: ad.AnnData, *, layer: str | None = None) -> list[str]:
+    result = pt.tl.Mixscape()._get_perturbation_markers(
+        adata,
+        split_masks=[np.ones(adata.n_obs, dtype=bool)],
+        categories=["all"],
+        pert_key="target",
+        control="NT",
+        layer=layer,
+        pval_cutoff=0.05,
+        min_de_genes=1,
+        logfc_threshold=0.25,
+        test_method="wilcoxon",
+    )
+    return list(result[("all", "KO")])
+
+
+def test_mixscape_markers_require_three_cells_in_both_groups(monkeypatch: pytest.MonkeyPatch):
+    def should_not_rank(*args, **kwargs) -> None:
+        pytest.fail("DE should not run for a group with fewer than three cells")
+
+    monkeypatch.setattr(sc.tl, "rank_genes_groups", should_not_rank)
+    for n_control, n_target in [(2, 5), (5, 2)]:
+        adata = ad.AnnData(
+            X=np.ones((n_control + n_target, 1)),
+            obs=pd.DataFrame({"target": ["NT"] * n_control + ["KO"] * n_target}),
+            var=pd.DataFrame(index=["gene"]),
+        )
+        assert _marker_selection(adata) == []
+
+
+def test_mixscape_markers_apply_seurat_detection_filter(monkeypatch: pytest.MonkeyPatch):
+    _mock_mixscape_de(monkeypatch, [0.001, 0.001])
+    X = np.zeros((40, 2))
+    X[20, 0] = 3.0  # Only 1/20 target cells express this gene (5%).
+    X[20:22, 1] = 3.0  # Exactly 2/20 target cells (10%) must pass.
+    adata = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame({"target": ["NT"] * 20 + ["KO"] * 20}),
+        var=pd.DataFrame(index=["rare", "at_threshold"]),
+    )
+    assert _marker_selection(adata) == ["at_threshold"]
+
+
+@pytest.mark.parametrize("matrix_type", ["dense", "csr_matrix", "csr_array"])
+def test_mixscape_markers_use_seurat_fold_change_and_selected_layer(monkeypatch: pytest.MonkeyPatch, matrix_type: str):
+    _mock_mixscape_de(monkeypatch, [0.001, 0.001])
+    X = np.zeros((40, 2))
+    X[20:22, 0] = 0.05  # Exact Seurat log2FC < 0.25.
+    X[20:22, 1] = 0.3  # Exact Seurat log2FC > 0.25.
+    if matrix_type == "csr_matrix":
+        X = sparse.csr_matrix(X)
+    elif matrix_type == "csr_array":
+        X = sparse.csr_array(X)
+    adata = ad.AnnData(
+        X=np.zeros((40, 2)),
+        obs=pd.DataFrame({"target": ["NT"] * 20 + ["KO"] * 20}),
+        var=pd.DataFrame(index=["weak", "strong"]),
+        layers={"de": X},
+    )
+    assert _marker_selection(adata, layer="de") == ["strong"]
+
+
+def test_mixscape_markers_use_adjusted_pvalues(monkeypatch: pytest.MonkeyPatch):
+    _mock_mixscape_de(monkeypatch, [0.2, 0.001])
+    X = np.zeros((40, 2))
+    X[20:, :] = 2.0
+    adata = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame({"target": ["NT"] * 20 + ["KO"] * 20}),
+        var=pd.DataFrame(index=["fails_bonferroni", "passes_bonferroni"]),
+    )
+    assert _marker_selection(adata) == ["passes_bonferroni"]
+
+
 def test_mixscape_min_cells_is_independent_of_min_de_genes():
     rng = np.random.default_rng(7)
     n_cells = 6
@@ -185,6 +285,7 @@ def test_perturbation_signature(adata):
 
 
 def test_lda(adata):
+    _strengthen_synthetic_ko_signal(adata)
     adata.layers["X_pert"] = adata.X
     mixscape_identifier = pt.tl.Mixscape()
     mixscape_identifier.mixscape(adata=adata, pert_key="gene_target", control="NT", test_method="t-test")
