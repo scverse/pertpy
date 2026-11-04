@@ -575,7 +575,7 @@ class CompositionalModel2(ABC):
             kind="stats",
             **kwargs,
         )
-        summ = summ.convert_dtypes(dtype_backend="numpy_nullable").infer_objects()
+        summ = pd.DataFrame(summ)
 
         # az.summary orders rows by var_names then C-order of each variable's dims, matching values.flatten(), so align the medians positionally.
         posterior = arviz_data["posterior"].to_dataset()
