@@ -1,135 +1,135 @@
 name: Test
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: "0 5 1,15 * *"
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    schedule:
+        - cron: "0 5 1,15 * *"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 permissions:
-  contents: read
+    contents: read
 
 defaults:
-  run:
-    shell: bash -euo pipefail {0}
+    run:
+        shell: bash -euo pipefail {0}
 
 jobs:
-  get-environments:
-    runs-on: ubuntu-latest
-    outputs:
-      envs: ${{ steps.get-envs.outputs.envs }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          filter: blob:none
-          fetch-depth: 0
-          persist-credentials: false
+    get-environments:
+        runs-on: ubuntu-latest
+        outputs:
+            envs: ${{ steps.get-envs.outputs.envs }}
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  filter: blob:none
+                  fetch-depth: 0
+                  persist-credentials: false
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-      - name: Get test environments
-        id: get-envs
-        run: |
-          ENVS_JSON=$(uvx hatch env show --json | jq -c 'to_entries
-            | map(
-                select(.key | startswith("hatch-test"))
-                | {
-                    name: .key,
-                    label: (if (.key | contains("pre")) then .key + " (PRE-RELEASE DEPENDENCIES)" else .key end),
-                    python: .value.python
-                  }
-              )')
-          echo "envs=${ENVS_JSON}" | tee $GITHUB_OUTPUT
+            - name: Install uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+            - name: Get test environments
+              id: get-envs
+              run: |
+                  ENVS_JSON=$(uvx hatch env show --json | jq -c 'to_entries
+                    | map(
+                        select(.key | startswith("hatch-test"))
+                        | {
+                            name: .key,
+                            label: (if (.key | contains("pre")) then .key + " (PRE-RELEASE DEPENDENCIES)" else .key end),
+                            python: .value.python
+                          }
+                      )')
+                  echo "envs=${ENVS_JSON}" | tee $GITHUB_OUTPUT
 
-  test:
-    needs: get-environments
-    permissions:
-      id-token: write # for codecov OIDC
-      contents: read
+    test:
+        needs: get-environments
+        permissions:
+            id-token: write # for codecov OIDC
+            contents: read
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        env: ${{ fromJSON(needs.get-environments.outputs.envs) }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest]
+                env: ${{ fromJSON(needs.get-environments.outputs.envs) }}
 
-    name: ${{ matrix.env.label }}
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ contains(matrix.env.name, 'pre') }} # make "all-green" pass even if pre-release job fails
+        name: ${{ matrix.env.label }}
+        runs-on: ${{ matrix.os }}
+        continue-on-error: ${{ contains(matrix.env.name, 'pre') }} # make "all-green" pass even if pre-release job fails
 
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          filter: blob:none
-          fetch-depth: 0
-          persist-credentials: false
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  filter: blob:none
+                  fetch-depth: 0
+                  persist-credentials: false
 
-      - name: Cache data aka datasets folder
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: data
-          key: ${{ runner.os }}-pertpy-data
-          restore-keys: |
-            ${{ runner.os }}-pertpy-data
+            - name: Cache data aka datasets folder
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: data
+                  key: ${{ runner.os }}-pertpy-data
+                  restore-keys: |
+                      ${{ runner.os }}-pertpy-data
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          python-version: ${{ matrix.env.python }}
-          cache-dependency-glob: pyproject.toml
-      - name: create hatch environment
-        run: uvx hatch env create ${{ matrix.env.name }}
-      - name: list all installed package versions
-        run: uvx hatch run ${{ matrix.env.name }}:uv pip list
-      - name: run tests using hatch
-        env:
-          MPLBACKEND: agg
-          PLATFORM: ${{ matrix.os }}
-          DISPLAY: :42
-        run: uvx hatch run ${{ matrix.env.name }}:run-cov -v --color=yes -n auto
-      - name: generate coverage report
-        run: |
-          # See https://coverage.readthedocs.io/page/config.html#run-patch
-          test -f .coverage || uvx hatch run ${{ matrix.env.name }}:cov-combine
-          uvx hatch run ${{ matrix.env.name }}:cov-report   # report visibly
-          uvx hatch run ${{ matrix.env.name }}:coverage xml # create report for upload
-      - name: Upload coverage
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        with:
-          fail_ci_if_error: true
-          use_oidc: true
+            - name: Install uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  python-version: ${{ matrix.env.python }}
+                  cache-dependency-glob: pyproject.toml
+            - name: create hatch environment
+              run: uvx hatch env create ${{ matrix.env.name }}
+            - name: list all installed package versions
+              run: uvx hatch run ${{ matrix.env.name }}:uv pip list
+            - name: run tests using hatch
+              env:
+                  MPLBACKEND: agg
+                  PLATFORM: ${{ matrix.os }}
+                  DISPLAY: :42
+              run: uvx hatch run ${{ matrix.env.name }}:run-cov -v --color=yes -n auto
+            - name: generate coverage report
+              run: |
+                  # See https://coverage.readthedocs.io/page/config.html#run-patch
+                  test -f .coverage || uvx hatch run ${{ matrix.env.name }}:cov-combine
+                  uvx hatch run ${{ matrix.env.name }}:cov-report   # report visibly
+                  uvx hatch run ${{ matrix.env.name }}:coverage xml # create report for upload
+            - name: Upload coverage
+              uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+              with:
+                  fail_ci_if_error: true
+                  use_oidc: true
 
-  lint:
-    name: Pre-commit checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          filter: blob:none
-          fetch-depth: 0
-          persist-credentials: false
+    lint:
+        name: Pre-commit checks
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  filter: blob:none
+                  fetch-depth: 0
+                  persist-credentials: false
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          cache-dependency-glob: pyproject.toml
-      - run: uvx prek run --all-files --show-diff-on-failure --color=always
+            - name: Install uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  cache-dependency-glob: pyproject.toml
+            - run: uvx prek run --all-files --show-diff-on-failure --color=always
 
-  check:
-    name: Tests pass in all hatch environments
-    if: always()
-    needs:
-      - get-environments
-      - test
-      - lint
-    runs-on: ubuntu-latest
-    steps:
-        - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
-          with:
-            jobs: ${{ toJSON(needs) }}
+    check:
+        name: Tests pass in all hatch environments
+        if: always()
+        needs:
+            - get-environments
+            - test
+            - lint
+        runs-on: ubuntu-latest
+        steps:
+            - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+              with:
+                  jobs: ${{ toJSON(needs) }}

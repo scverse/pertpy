@@ -10,7 +10,7 @@ the [scientific Python tutorials][], or the {doc}`scanpy developer guide <scanpy
 [pyopensci tutorials]: https://www.pyopensci.org/learn.html
 [scientific Python tutorials]: https://learn.scientific-python.org/development/tutorials/
 
-:::{tip} The *hatch* project manager
+:::{tip} The _hatch_ project manager
 
 We highly recommend to familiarize yourself with [`hatch`][hatch].
 Hatch is a Python project manager that

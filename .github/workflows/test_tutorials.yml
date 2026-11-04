@@ -18,8 +18,8 @@ jobs:
         runs-on: ubuntu-latest
         defaults:
             run:
-              # to fail on error in multiline statements (-e), in pipes (-o pipefail), and on unset variables (-u).
-              shell: bash -euo pipefail {0}
+                # to fail on error in multiline statements (-e), in pipes (-o pipefail), and on unset variables (-u).
+                shell: bash -euo pipefail {0}
 
         env:
             NOTEBOOK_PATH: docs/tutorials/notebooks
@@ -28,45 +28,45 @@ jobs:
             fail-fast: false
             matrix:
                 notebook: [
-                        "augur.ipynb",
-                        "cinemaot.ipynb",
-                        "dialogue.ipynb",
-                        "differential_gene_expression.ipynb",
-                        "distances.ipynb",
-                        "distance_tests.ipynb",
-                        "enrichment.ipynb",
-                        "guide_rna_assignment.ipynb",
-                        "milo.ipynb",
-                        "perturbation_efficacy.ipynb",
-                        "sccoda.ipynb",
-                        # "perturbation_space.ipynb",  seems to run OOM as of Jax implementation
-                        # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
-                        # also no use cases yet
-                    ]
+                      "augur.ipynb",
+                      "cinemaot.ipynb",
+                      "dialogue.ipynb",
+                      "differential_gene_expression.ipynb",
+                      "distances.ipynb",
+                      "distance_tests.ipynb",
+                      "enrichment.ipynb",
+                      "guide_rna_assignment.ipynb",
+                      "milo.ipynb",
+                      "perturbation_efficacy.ipynb",
+                      "sccoda.ipynb",
+                      # "perturbation_space.ipynb",  seems to run OOM as of Jax implementation
+                      # "tasccoda.ipynb", a pain to get running because of the required QT dependency. The QT action leads to a dead kernel
+                      # also no use cases yet
+                  ]
 
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                filter: blob:none
-                fetch-depth: 0
-                submodules: "true"
-                persist-credentials: false
+                  filter: blob:none
+                  fetch-depth: 0
+                  submodules: "true"
+                  persist-credentials: false
 
             - name: Cache pertpy's metadata folder
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
               with:
-                path: cache
-                key: ${{ runner.os }}-pertpy-cache-${{ hashFiles('src/pertpy/metadata/**') }}
-                restore-keys: |
-                  ${{ runner.os }}-pertpy-cache
+                  path: cache
+                  key: ${{ runner.os }}-pertpy-cache-${{ hashFiles('src/pertpy/metadata/**') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pertpy-cache
 
             - name: Cache data aka datasets folder
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
               with:
-                path: data
-                key: ${{ runner.os }}-pertpy-data
-                restore-keys: |
-                  ${{ runner.os }}-pertpy-data
+                  path: data
+                  key: ${{ runner.os }}-pertpy-data
+                  restore-keys: |
+                      ${{ runner.os }}-pertpy-data
 
             - name: Set up Python
               uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -81,9 +81,9 @@ jobs:
             - name: Install R dependencies
               uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
               with:
-                packages: |
-                  any::statmod
-                  bioc::edgeR
+                  packages: |
+                      any::statmod
+                      bioc::edgeR
 
             - name: Keep setup-python's libpython ahead of the system one in R's library path
               run: echo "R_LD_LIBRARY_PATH=$(R RHOME)/lib" >> "$GITHUB_ENV"
@@ -91,8 +91,8 @@ jobs:
             - name: Install uv
               uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
               with:
-                enable-cache: true
-                cache-dependency-glob: pyproject.toml
+                  enable-cache: true
+                  cache-dependency-glob: pyproject.toml
             - name: Install dependencies
               run: |
                   uv pip install --system rpy2 decoupler muon
