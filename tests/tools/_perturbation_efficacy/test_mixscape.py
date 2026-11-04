@@ -7,7 +7,7 @@ import scanpy as sc
 from scipy import sparse
 
 import pertpy as pt
-from pertpy.tools._perturbation_efficacy._mixscape import MixscapeGaussianMixture, _mixscape_gmm_predict_proba
+from pertpy.tools._perturbation_efficacy._mixscape import MixscapeGaussianMixture, _mixscape_gmm_fit
 
 NUM_CELLS_PER_GROUP = 10
 ACCURACY_THRESHOLD = 0.8
@@ -355,29 +355,24 @@ def test_mixscape_gaussian_mixture():
     assert np.allclose(model.precisions_[1], 1 / fixed_covariances[1])
 
 
-def test_mixscape_gmm_predict_proba_matches_sklearn():
+def test_mixscape_gmm_fit_matches_sklearn():
     rng = np.random.default_rng(0)
     x = np.concatenate([rng.normal(0, 1, 300), rng.normal(2.5, 1, 100)])
-    guide_idx = np.arange(300, 400)
     means_init = np.array([x[:300].mean(), x[300:].mean()])
     precisions_init = 1 / np.array([x[:300].std(ddof=1), x[300:].std(ddof=1)]) ** 2
-    expected = (
-        MixscapeGaussianMixture(
-            n_components=2,
-            covariance_type="spherical",
-            means_init=means_init[:, None],
-            precisions_init=precisions_init,
-            random_state=0,
-            max_iter=100,
-            fixed_means=[means_init[0], None],
-            fixed_covariances=[1 / precisions_init[0], None],
-        )
-        .fit(x[:, None])
-        .predict_proba(x[guide_idx, None])
-    )
+    expected = MixscapeGaussianMixture(
+        n_components=2,
+        covariance_type="spherical",
+        means_init=means_init[:, None],
+        precisions_init=precisions_init,
+        random_state=0,
+        tol=1e-8,
+        max_iter=5000,
+        fixed_means=[means_init[0], None],
+        fixed_covariances=[1 / precisions_init[0], None],
+    ).fit(x[:, None])
 
-    proba = _mixscape_gmm_predict_proba(
-        x, guide_idx, means_init=means_init, precisions_init=precisions_init, random_state=0
-    )
+    means, sds = _mixscape_gmm_fit(x, means_init=means_init, precisions_init=precisions_init, random_state=0)
 
-    np.testing.assert_allclose(proba, expected, rtol=1e-9, atol=1e-12)
+    np.testing.assert_allclose(means, expected.means_.ravel(), rtol=1e-9)
+    np.testing.assert_allclose(sds, np.sqrt(expected.covariances_), rtol=1e-9)
