@@ -164,9 +164,12 @@ class DistanceTest:
         if contrast not in groups:
             raise ValueError(f"Contrast group {contrast} not found in {groupby} of adata.obs.")
         fct = track if show_progressbar else lambda iterable: iterable
-        if self.obsm_key is None:
-            raise ValueError("`obsm_key` must be set to run a permutation test on an embedding.")
-        embedding = cast_matrix(adata.obsm[self.obsm_key])
+        if self.layer_key is not None:
+            embedding = cast_matrix(adata.layers[self.layer_key])
+        elif self.obsm_key is not None:
+            embedding = cast_matrix(adata.obsm[self.obsm_key])
+        else:
+            raise ValueError("Either `layer_key` or `obsm_key` must be set to run a permutation test.")
 
         # Generate the null distribution
         obs_labels = np.asarray(adata.obs[groupby].values)
@@ -191,8 +194,8 @@ class DistanceTest:
         for group in groups:
             if group == contrast:
                 continue
-            X = embedding[adata.obs[groupby] == group]
-            Y = embedding[adata.obs[groupby] == contrast]
+            X = embedding[np.asarray(adata.obs[groupby] == group)]
+            Y = embedding[np.asarray(adata.obs[groupby] == contrast)]
             df.loc[group, "distance"] = self.distance(X, Y)
 
         # Evaluate the test
