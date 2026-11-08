@@ -569,3 +569,31 @@ ps.plot_dose_response(dose_adata)
 ```
 
 Assay measurements such as viability can be fit the same way from an AnnData whose `.obs` holds perturbation, dose and response columns.
+
+## Drug combination synergy
+
+{class}`~pertpy.tools.Synergy` scores measured two-drug combinations against Bliss independence using control-normalized inhibition fractions between 0 and 1.
+Supply one assay measurement per observation for one drug pair under matched experimental conditions, with zero doses denoting absent drugs.
+Single-agent replicates are averaged at matching doses; results are written to `.obs`.
+
+```{eval-rst}
+.. autosummary::
+    :toctree: tools
+
+    tools.Synergy
+```
+
+```python
+import pandas as pd
+import pertpy as pt
+from anndata import AnnData
+
+assay_adata = AnnData(
+    obs=pd.DataFrame(
+        {"dose_a": [10, 0, 10], "dose_b": [0, 20, 20], "inhibition": [0.2, 0.3, 0.6]},
+        index=["A", "B", "A+B"],
+    )
+)
+pt.tl.Synergy().score(assay_adata, key_added="bliss")
+assay_adata.obs[["bliss_expected", "bliss_score"]]
+```

@@ -20,6 +20,7 @@ from pertpy.tools._perturbation_space._simple import (
     KMeansSpace,
     PseudobulkSpace,
 )
+from pertpy.tools._synergy import Synergy
 
 _JAX_BACKED = {
     "Cinemaot": ("pertpy.tools._cinemaot", "Cinemaot"),
@@ -84,4 +85,5 @@ __all__ = [
     "KMeansSpace",
     "PseudobulkSpace",
     "Scgen",
+    "Synergy",
 ]
