@@ -9,7 +9,7 @@ default_stages:
 minimum_pre_commit_version: 2.16.0
 repos:
     - repo: https://github.com/biomejs/pre-commit
-      rev: f9fccc969fb42a59a17a1a430df9f38851f9b2da # frozen: v2.6.3
+      rev: eb45ebf3cb7c3a872b3ff0814883e8ab81fc451f # frozen: v2.6.4
       hooks:
           - id: biome-format
             exclude: ^\.cruft\.json$ # inconsistent indentation with cruft - file never to be modified manually.
@@ -44,7 +44,7 @@ repos:
             require_serial: true
             pass_filenames: false
     - repo: https://github.com/zizmorcore/zizmor-pre-commit
-      rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f # frozen: v1.31.1
+      rev: 06a39750ec31860bb44f2acf67182c40016cd1e7 # frozen: v1.32.0
       hooks:
           - id: zizmor
             args: [--no-progress, --fix]
