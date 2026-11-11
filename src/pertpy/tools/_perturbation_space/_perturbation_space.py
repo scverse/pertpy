@@ -548,6 +548,7 @@ class PerturbationSpace:
 
         Uncertainty is calculated as the entropy of the label distribution in the neighborhood of the target cell.
         In other words, a cell where all neighbors have the same set of labels will have an uncertainty of 0, whereas a cell where all neighbors have many different labels will have high uncertainty.
+        Cells without any neighbors carrying known labels remain unassigned and receive NaN uncertainty, since no vote is available.
 
         Args:
             adata: The AnnData object containing single-cell data.
@@ -576,6 +577,12 @@ class PerturbationSpace:
         obs = cast_frame(adata.obs)
         labels = obs[target_column].astype(str)
         target_cells = labels == target_val
+        if not target_cells.any():
+            adata.obs[column_uncertainty_score_key] = np.zeros(adata.n_obs)
+            return
+        if target_cells.all():
+            adata.obs[column_uncertainty_score_key] = np.full(adata.n_obs, np.nan)
+            return
 
         connectivities = sparse.csc_matrix(cast_matrix(adata.obsp[adata.uns[neighbors_key]["connectivities_key"]]))
         # convert labels to an incidence matrix
@@ -591,10 +598,13 @@ class PerturbationSpace:
             index=adata.obs_names[target_cells.to_numpy()],
             columns=one_hot_encoded_labels.columns,
         ).drop(target_val, axis=1)
-        # choose best label for each target cell
-        best_labels = weighted_label_occurence.idxmax(axis=1)
+        # Only assign labels if at least one *known* neighbor provided evidence.
+        # For unsupported cells, an arbitrary idxmax would invent a label.
+        supported = weighted_label_occurence.sum(axis=1) > 0
         obs[target_column] = labels
-        obs.loc[target_cells, target_column] = best_labels
+        if supported.any():
+            best_labels = weighted_label_occurence.loc[supported].idxmax(axis=1)
+            obs.loc[best_labels.index, target_column] = best_labels
 
         # calculate uncertainty
         uncertainty = np.zeros(adata.n_obs)
