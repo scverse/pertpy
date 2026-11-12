@@ -27,7 +27,7 @@ Perturbation efficacy
   Some cells carry a guide RNA but escape the perturbation; {class}`~pertpy.tools.Mixscape` classifies cells as perturbed or not, and {class}`~pertpy.tools.Mixscale` scores the effect continuously.
 
 Perturbation signature
-  A cell's expression minus that of its most similar control cells, which removes variation unrelated to the perturbation, such as cell cycle.
+  A cell’s expression minus that of its most similar control cells, which removes variation unrelated to the perturbation, such as cell cycle.
   {class}`~pertpy.tools.Mixscape` and {class}`~pertpy.tools.Mixscale` work on it.
 
 Pseudobulk

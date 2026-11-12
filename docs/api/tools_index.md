@@ -16,15 +16,15 @@ Pertpy enables differential gene expression tests through a common interface tha
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: preprocessing
-    :nosignatures:
+   :toctree: preprocessing
+   :nosignatures:
 
-    tools.PyDESeq2
-    tools.EdgeR
-    tools.WilcoxonTest
-    tools.TTest
-    tools.PermutationTest
-    tools.Statsmodels
+   tools.PyDESeq2
+   tools.EdgeR
+   tools.WilcoxonTest
+   tools.TTest
+   tools.PermutationTest
+   tools.Statsmodels
 ```
 
 Example implementation:
@@ -81,9 +81,9 @@ See [Characterizing the molecular regulation of inhibitory immune checkpoints wi
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Mixscape
+   tools.Mixscape
 ```
 
 Example implementation:
@@ -110,9 +110,9 @@ Mixscale shares the perturbation signature and differential expression steps wit
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Mixscale
+   tools.Mixscale
 ```
 
 Example implementation:
@@ -133,7 +133,7 @@ See {doc}`/tutorials/notebooks/perturbation_efficacy` tutorial.
 Compositional data analysis focuses on identifying and quantifying variations in cell type composition across
 different conditions or samples to uncover biological differences driven by changes in cellular makeup.
 
-Generally, there's two ways of approaching this question:
+Generally, there’s two ways of approaching this question:
 
 1. Without labeled groups using graph based approaches
 2. With labeled groups using pure statistical approaches
@@ -149,9 +149,9 @@ See [Differential abundance testing on single-cell data using k-nearest neighbor
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Milo
+   tools.Milo
 ```
 
 Example implementation:
@@ -196,10 +196,10 @@ See [scCODA is a Bayesian model for compositional single-cell data analysis](htt
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Sccoda
-    tools.Tasccoda
+   tools.Sccoda
+   tools.Tasccoda
 ```
 
 Example implementation:
@@ -253,9 +253,9 @@ See [DIALOGUE maps multicellular programs in tissue from single-cell or spatial 
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Dialogue
+   tools.Dialogue
 ```
 
 Example implementation:
@@ -297,9 +297,9 @@ The same enrichment interface can also score CMap-style signature reversal on pe
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Enrichment
+   tools.Enrichment
 ```
 
 Example implementation:
@@ -373,10 +373,10 @@ For more details, we refer to [scPerturb: harmonized single-cell perturbation da
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Distance
-    tools.DistanceTest
+   tools.Distance
+   tools.DistanceTest
 ```
 
 `Distance` supports a broad range of metrics including `edistance`, `mmd`, `wasserstein`,
@@ -434,10 +434,10 @@ See {doc}`/tutorials/notebooks/augur` tutorial.
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
-    :nosignatures:
+   :toctree: tools
+   :nosignatures:
 
-    tools.Augur
+   tools.Augur
 ```
 
 ### Gene expression prediction with scGen
@@ -448,9 +448,9 @@ See [scGen predicts single-cell perturbation responses](https://www.nature.com/a
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Scgen
+   tools.Scgen
 ```
 
 Example implementation:
@@ -483,9 +483,9 @@ See [Causal identification of single-cell experimental perturbation effects with
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.Cinemaot
+   tools.Cinemaot
 ```
 
 Example implementation:
@@ -520,18 +520,18 @@ The shared base class additionally provides operations on the resulting spaces s
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: tools
+   :toctree: tools
 
-    tools.PseudobulkSpace
-    tools.CentroidSpace
-    tools.DistanceSpace
-    tools.EmbeddingSpace
-    tools.LRClassifierSpace
-    tools.MLPClassifierSpace
-    tools.KMeansSpace
-    tools.HDBSCANSpace
-    tools.ClusteringSpace
-    tools.PerturbationComparison
+   tools.PseudobulkSpace
+   tools.CentroidSpace
+   tools.DistanceSpace
+   tools.EmbeddingSpace
+   tools.LRClassifierSpace
+   tools.MLPClassifierSpace
+   tools.KMeansSpace
+   tools.HDBSCANSpace
+   tools.ClusteringSpace
+   tools.PerturbationComparison
 ```
 
 Example implementation:
