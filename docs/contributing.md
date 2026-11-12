@@ -11,7 +11,6 @@ the [scientific Python tutorials][], or the {doc}`scanpy developer guide <scanpy
 [scientific Python tutorials]: https://learn.scientific-python.org/development/tutorials/
 
 :::{tip} The _hatch_ project manager
-
 We highly recommend to familiarize yourself with [`hatch`][hatch].
 Hatch is a Python project manager that
 
@@ -22,16 +21,16 @@ Hatch is a Python project manager that
 
 While the project is setup with `hatch` in mind,
 it is still possible to use different tools to manage dependencies, such as `uv` or `pip`.
-
 :::
 
 [hatch]: https://hatch.pypa.io/latest/
 
 ## Installing dev dependencies
 
-In addition to the packages needed to _use_ this package,
+In addition to the packages needed to *use* this package,
 you need additional python packages to [run tests](writing-tests) and [build the documentation](docs-building).
 
+<!-- panache-ignore-format-start -->
 :::::{tabs}
 ::::{group-tab} Hatch
 
@@ -128,6 +127,7 @@ The `.venv` directory is typically automatically discovered by IDEs such as VS C
 
 ::::
 :::::
+<!-- panache-ignore-format-end -->
 
 [hatch environments]: https://hatch.pypa.io/latest/tutorials/environment/basic-usage/
 [uv]: https://docs.astral.sh/uv/
@@ -147,7 +147,7 @@ in the root of the repository.
 Pre-commit will automatically download all dependencies when it is run for the first time.
 
 Alternatively, you can rely on the [pre-commit.ci][] service enabled on GitHub.
-If you didn't run `pre-commit` before pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
+If you didn’t run `pre-commit` before pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
 
 If pre-commit.ci added a commit on a branch you still have been working on locally, simply use
 
@@ -162,7 +162,7 @@ One of the hooks type-checks `pertpy` and `tests` with [mypy][], which the `Pre-
 Type hints are optional: mypy only checks functions that carry annotations.
 To silence a specific line, append a `# type: ignore[<error-code>]` comment.
 
-Finally, most editors have an _autoformat on save_ feature.
+Finally, most editors have an *autoformat on save* feature.
 Consider enabling this option for [ruff][ruff-editors] and [biome][biome-editors].
 
 [mypy]: https://mypy.readthedocs.io/
@@ -188,6 +188,7 @@ hatch env find hatch-test  # list all possible test environment paths
 
 Alternatively, you can run all tests from the command line by executing
 
+<!-- panache-ignore-format-start -->
 :::::{tabs}
 ::::{group-tab} Hatch
 
@@ -216,6 +217,7 @@ pytest
 
 ::::
 :::::
+<!-- panache-ignore-format-end -->
 
 in the root of the repository.
 
@@ -226,7 +228,7 @@ in the root of the repository.
 Continuous integration via GitHub actions will automatically run the tests on all pull requests and test
 against the minimum and maximum supported Python version.
 
-Additionally, there's a CI job that tests against pre-releases of all dependencies (if there are any).
+Additionally, there’s a CI job that tests against pre-releases of all dependencies (if there are any).
 The purpose of this check is to detect incompatibilities of new package versions early on and
 gives you time to fix the issue or reach out to the developers of the dependency before the package
 is released to a wider audience.
@@ -250,7 +252,7 @@ Choose the tag according to [Semantic Versioning][semver], in brief
 >
 > Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
 
-Navigate to the "Releases" page of this project on GitHub, specify `X.X.X` as a tag name and create a release.
+Navigate to the “Releases” page of this project on GitHub, specify `X.X.X` as a tag name and create a release.
 For more information, see [managing GitHub releases][].
 This will automatically create a git tag and trigger a Github workflow that creates a release on [PyPI][].
 
@@ -300,6 +302,7 @@ These notebooks come from [pert-tutorials](https://github.com/scverse/pertpy-tut
 
 ### Building the docs locally
 
+<!-- panache-ignore-format-start -->
 :::::{tabs}
 ::::{group-tab} Hatch
 
@@ -334,3 +337,4 @@ sphinx-build -M html . _build -W
 
 ::::
 :::::
+<!-- panache-ignore-format-end -->

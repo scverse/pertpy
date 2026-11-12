@@ -9,28 +9,29 @@ For more details, see [Pertpy: an end-to-end framework for perturbation analysis
 
 ```{eval-rst}
 .. card:: Installation :octicon:`plug;1em;`
-    :link: installation
-    :link-type: doc
+   :link: installation
+   :link-type: doc
 
-    New to *pertpy*? Check out the installation guide.
+   New to *pertpy*? Check out the installation guide.
 ```
 
 ```{eval-rst}
 .. card:: API reference :octicon:`book;1em;`
-    :link: api
-    :link-type: doc
+   :link: api
+   :link-type: doc
 
-    The API reference contains a detailed description of the pertpy API.
+   The API reference contains a detailed description of the pertpy API.
 ```
 
 ```{eval-rst}
 .. card:: Tutorials :octicon:`play;1em;`
-    :link: tutorials
-    :link-type: doc
+   :link: tutorials
+   :link-type: doc
 
-    The tutorials walk you through real-world applications of pertpy.
+   The tutorials walk you through real-world applications of pertpy.
 ```
 
+<!-- panache-ignore-format-start -->
 ```{eval-rst}
 .. card:: Discussion :octicon:`megaphone;1em;`
     :link: https://discourse.scverse.org/
@@ -38,7 +39,9 @@ For more details, see [Pertpy: an end-to-end framework for perturbation analysis
     Need help? Reach out on our forum to get your questions answered!
 
 ```
+<!-- panache-ignore-format-end -->
 
+<!-- panache-ignore-format-start -->
 ```{eval-rst}
 .. card:: GitHub :octicon:`mark-github;1em;`
     :link: https://github.com/scverse/pertpy
@@ -46,6 +49,7 @@ For more details, see [Pertpy: an end-to-end framework for perturbation analysis
     Found a bug? Interested in improving pertpy? Checkout our GitHub for the latest developments.
 
 ```
+<!-- panache-ignore-format-end -->
 
 ```{toctree}
 :caption: 'Getting started'
@@ -114,6 +118,6 @@ If you like scverse® and want to support our mission, please consider making a 
   <img
     src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png"
     width="200"
-  >
+>
 </a>
 </div>

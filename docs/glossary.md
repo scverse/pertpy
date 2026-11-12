@@ -1,5 +1,6 @@
 # Glossary
 
+<!-- panache-ignore-format-start -->
 ```{glossary}
 :sorted:
 
@@ -98,3 +99,4 @@ Response prediction
 Mechanism of action
   The biochemical target or process through which a drug acts, which {class}`~pertpy.metadata.Moa` annotates.
 ```
+<!-- panache-ignore-format-end -->

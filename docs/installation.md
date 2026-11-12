@@ -1,6 +1,8 @@
+<!-- panache-ignore-format-start -->
 ```{highlight} shell
 
 ```
+<!-- panache-ignore-format-end -->
 
 # Installation
 
@@ -15,7 +17,7 @@ pip install pertpy
 ```
 
 This is the preferred method to install pertpy, as it will always install the most recent stable release.
-If you don't have [pip] installed, this [Python installation guide] can guide you through the process.
+If you don’t have [pip] installed, this [Python installation guide] can guide you through the process.
 
 ### conda-forge
 
@@ -57,13 +59,13 @@ pip install rpy2
 
 #### milo
 
-milo requires either the "de" extra for the "pydeseq2" solver:
+milo requires either the “de” extra for the “pydeseq2” solver:
 
 ```console
 pip install 'pertpy[de,milo-edger]'
 ```
 
-or, edger, statmod, and rpy2 for the "edger" solver:
+or, edger, statmod, and rpy2 for the “edger” solver:
 
 ```R
 BiocManager::install("edgeR")
