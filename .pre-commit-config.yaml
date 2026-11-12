@@ -1,6 +1,4 @@
 fail_fast: false
-ci:
-    skip: [mypy] # needs the project environment, which pre-commit.ci cannot provide
 default_language_version:
     python: python3
 default_stages:
