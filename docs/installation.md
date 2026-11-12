@@ -1,8 +1,5 @@
-<!-- panache-ignore-format-start -->
 ```{highlight} shell
-
 ```
-<!-- panache-ignore-format-end -->
 
 # Installation
 

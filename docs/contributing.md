@@ -30,10 +30,8 @@ it is still possible to use different tools to manage dependencies, such as `uv`
 In addition to the packages needed to *use* this package,
 you need additional python packages to [run tests](writing-tests) and [build the documentation](docs-building).
 
-<!-- panache-ignore-format-start -->
 :::::{tabs}
 ::::{group-tab} Hatch
-
 On the command line, you typically interact with hatch through its command line interface (CLI).
 Running one of the following commands will automatically resolve the environments for testing and
 building the documentation in the background:
@@ -89,11 +87,9 @@ In case you are using VScode, now open the command palette (Ctrl+Shift+P) and se
 Choose `Enter Interpreter Path` and paste the path to the virtual environment from above.
 
 In this future, this may become easier through a hatch vscode extension.
-
 ::::
 
 ::::{group-tab} uv
-
 A popular choice for managing virtual environments is [uv][].
 The main disadvantage compared to hatch is that it supports only a single environment per project at a time,
 which requires you to mix the dependencies for running tests and building docs.
@@ -108,11 +104,9 @@ uv sync --all-extras
 ```
 
 The `.venv` directory is typically automatically discovered by IDEs such as VS Code.
-
 ::::
 
 ::::{group-tab} Pip
-
 Pip is nowadays mostly superseded by environment manager such as [hatch][].
 However, for the sake of completeness, and since it’s ubiquitously available,
 we describe how you can manage environments manually using `pip`:
@@ -124,10 +118,8 @@ pip install -e ".[dev,test,doc]"
 ```
 
 The `.venv` directory is typically automatically discovered by IDEs such as VS Code.
-
 ::::
 :::::
-<!-- panache-ignore-format-end -->
 
 [hatch environments]: https://hatch.pypa.io/latest/tutorials/environment/basic-usage/
 [uv]: https://docs.astral.sh/uv/
@@ -188,36 +180,28 @@ hatch env find hatch-test  # list all possible test environment paths
 
 Alternatively, you can run all tests from the command line by executing
 
-<!-- panache-ignore-format-start -->
 :::::{tabs}
 ::::{group-tab} Hatch
-
 ```bash
 hatch test  # test with the highest supported Python version
 # or
 hatch test --all  # test with all supported Python versions
 ```
-
 ::::
 
 ::::{group-tab} uv
-
 ```bash
 uv run pytest
 ```
-
 ::::
 
 ::::{group-tab} Pip
-
 ```bash
 source .venv/bin/activate
 pytest
 ```
-
 ::::
 :::::
-<!-- panache-ignore-format-end -->
 
 in the root of the repository.
 
@@ -302,39 +286,30 @@ These notebooks come from [pert-tutorials](https://github.com/scverse/pertpy-tut
 
 ### Building the docs locally
 
-<!-- panache-ignore-format-start -->
 :::::{tabs}
 ::::{group-tab} Hatch
-
 ```bash
 hatch run docs:build
 hatch run docs:open
 ```
-
 ::::
 
 ::::{group-tab} uv
-
 :::::{tabs}
 ::::{group-tab} Hatch
-
 ```bash
 cd docs
 uv run sphinx-build -M html . _build -W
 (xdg-)open _build/html/index.html
 ```
-
 ::::
 
 ::::{group-tab} Pip
-
 ```bash
 source .venv/bin/activate
 cd docs
 sphinx-build -M html . _build -W
 (xdg-)open _build/html/index.html
 ```
-
 ::::
 :::::
-<!-- panache-ignore-format-end -->
