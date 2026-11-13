@@ -25,6 +25,20 @@ def _permutation_pvalues(results: list[pd.DataFrame], df: pd.DataFrame, n_perms:
     return n_failures / n_perms
 
 
+def _correct_non_control_pvalues(
+    pvalues: pd.Series, contrast: str, *, alpha: float, correction: str
+) -> tuple[pd.Series, pd.Series]:
+    """Correct only actual group-vs-control tests, excluding the control reference row."""
+    tested_pvalues = pvalues.drop(index=contrast)
+    significant_adj = pd.Series(False, index=pvalues.index)
+    pvalue_adj = pd.Series(1.0, index=pvalues.index)
+    if not tested_pvalues.empty:
+        rejected, adjusted, _, _ = multipletests(tested_pvalues.to_numpy(), alpha=alpha, method=correction)
+        significant_adj.loc[tested_pvalues.index] = rejected
+        pvalue_adj.loc[tested_pvalues.index] = adjusted
+    return significant_adj, pvalue_adj
+
+
 class DistanceTest:
     """Run permutation tests using a distance of choice between groups of cells.
 
@@ -199,8 +213,8 @@ class DistanceTest:
         pvalues = _permutation_pvalues(results, df, self.n_perms)
 
         # Apply multiple testing correction
-        significant_adj, pvalue_adj, _, _ = multipletests(
-            pvalues.values, alpha=self.padj_threshold, method=self.correction
+        significant_adj, pvalue_adj = _correct_non_control_pvalues(
+            pvalues, contrast, alpha=self.padj_threshold, correction=self.correction
         )
 
         # Aggregate results
@@ -300,8 +314,8 @@ class DistanceTest:
         pvalues = _permutation_pvalues(results, df, self.n_perms)
 
         # Apply multiple testing correction
-        significant_adj, pvalue_adj, _, _ = multipletests(
-            pvalues.values, alpha=self.padj_threshold, method=self.correction
+        significant_adj, pvalue_adj = _correct_non_control_pvalues(
+            pvalues, contrast, alpha=self.padj_threshold, correction=self.correction
         )
 
         # Aggregate results

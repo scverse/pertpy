@@ -4,9 +4,10 @@ import pytest
 import scanpy as sc
 from anndata import AnnData
 from pandas import DataFrame
+from statsmodels.stats.multitest import multipletests
 
 import pertpy as pt
-from pertpy.tools._distances._distance_tests import _permutation_pvalues
+from pertpy.tools._distances._distance_tests import _correct_non_control_pvalues, _permutation_pvalues
 from pertpy.tools._distances._distances import Metric
 
 distances: tuple[Metric, ...] = (
@@ -69,3 +70,46 @@ def test_distancetest(adata: AnnData, distance: Metric) -> None:
     assert tab["pvalue"].max() <= 1
     assert tab["pvalue_adj"].min() >= 0
     assert tab["pvalue_adj"].max() <= 1
+
+
+@pytest.mark.parametrize("correction", ["holm-sidak", "fdr_bh", "bonferroni"])
+def test_distance_test_correction_excludes_contrast(correction: str) -> None:
+    # Keep the reference between targets to check index alignment, not just lengths.
+    pvalues = pd.Series([0.04, 0.02, 0.02], index=["KO_B", "control", "KO_A"])
+    significant, adjusted = _correct_non_control_pvalues(pvalues, "control", alpha=0.05, correction=correction)
+    expected_rejected, expected_adj, _, _ = multipletests(
+        pvalues.loc[["KO_B", "KO_A"]].to_numpy(), alpha=0.05, method=correction
+    )
+
+    np.testing.assert_allclose(adjusted.loc[["KO_B", "KO_A"]], expected_adj)
+    np.testing.assert_array_equal(significant.loc[["KO_B", "KO_A"]], expected_rejected)
+    assert adjusted.loc["control"] == 1.0
+    assert not significant.loc["control"]
+
+
+@pytest.mark.parametrize("metric", ["edistance", "euclidean"])
+def test_distance_test_pvalue_correction_uses_only_tested_groups(metric: Metric) -> None:
+    """Both precomputed and direct paths must exclude the control reference from multiplicity."""
+    rng = np.random.default_rng(41)
+    labels = ["control"] * 10 + ["KO_A"] * 10 + ["KO_B"] * 10
+    embedding = np.concatenate([rng.normal(0, 0.2, (10, 3)), rng.normal(2, 0.2, (10, 3)), rng.normal(1, 0.2, (10, 3))])
+    adata = AnnData(X=embedding, obs=pd.DataFrame({"perturbation": labels}))
+    adata.obsm["X_pca"] = embedding
+    test = pt.tl.DistanceTest(metric, n_perms=49, obsm_key="X_pca", correction="holm-sidak")
+
+    tab = test(adata, groupby="perturbation", contrast="control", show_progressbar=False)
+    actual = tab.loc[["KO_A", "KO_B"], "pvalue"]
+    expected_significant, expected_adj, _, _ = multipletests(actual.to_numpy(), alpha=0.05, method="holm-sidak")
+
+    np.testing.assert_allclose(tab.loc[actual.index, "pvalue_adj"], expected_adj)
+    np.testing.assert_array_equal(tab.loc[actual.index, "significant_adj"], expected_significant)
+    assert tab.loc["control", "pvalue_adj"] == 1.0
+    assert not tab.loc["control", "significant_adj"]
+
+
+def test_distance_test_correction_with_only_control() -> None:
+    significant, adjusted = _correct_non_control_pvalues(
+        pd.Series([1.0], index=["control"]), "control", alpha=0.05, correction="holm-sidak"
+    )
+    assert adjusted.loc["control"] == 1.0
+    assert not significant.loc["control"]
