@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.5.1
+
+### ⚠️ Changed results
+
+- Mixscape selects markers and classifies cells like Seurat's `RunMixscape`: tie-corrected Wilcoxon tests with Bonferroni correction over all features, a 10% detection filter, at least three cells per group and Seurat's fold change on log1p-normalized `de_layer` data, then KO calls from the likelihood ratio of the fitted components without their mixing weights and an EM run to the tolerance of `normalmixEM`; KO/NP agreement with Seurat 5.5.0 on Papalexi 2021 goes from 96.6% to 99.1% ([#1197](https://github.com/scverse/pertpy/pull/1197)) [@kkkklck](https://github.com/kkkklck), [@Zethson](https://github.com/Zethson)
+
+### 🐛 Bug Fixes
+
+- scCODA and tascCODA results in `varm` can be written with `write_h5mu` again, since `summary_prepare` returns plain float64 DataFrames instead of the `SummaryDataFrame` with nullable `Float64` columns that arviz 1.x returns ([#1198](https://github.com/scverse/pertpy/pull/1198)) [@Zethson](https://github.com/Zethson)
+- `DistanceTest` takes `layer_key` for metrics that are not precomputed, such as `euclidean`, `mse` and `mean_absolute_error`, which raised unless `obsm_key` was set, and accepts sparse layers there ([#1201](https://github.com/scverse/pertpy/pull/1201)) [@kkkklck](https://github.com/kkkklck)
+
+### 🧰 Maintenance
+
+- Require pydeseq2 0.6, which moved the helpers of Milo's likelihood ratio test out of `pydeseq2.utils`, and scanpy 1.13, whose legacy plotting functions pertpy now calls through `sc.pl.legacy` ([#1210](https://github.com/scverse/pertpy/pull/1210)) [@Zethson](https://github.com/Zethson)
+
 ## v1.5.0
 
 ### 🚀 Features
