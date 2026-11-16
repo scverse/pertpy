@@ -4,6 +4,7 @@ import pytest
 import scanpy as sc
 from anndata import AnnData
 from pandas import DataFrame
+from scipy import sparse
 
 import pertpy as pt
 from pertpy.tools._distances._distance_tests import _permutation_pvalues
@@ -69,3 +70,27 @@ def test_distancetest(adata: AnnData, distance: Metric) -> None:
     assert tab["pvalue"].max() <= 1
     assert tab["pvalue_adj"].min() >= 0
     assert tab["pvalue_adj"].max() <= 1
+
+
+@pytest.mark.parametrize("metric", ["euclidean", "mse", "mean_absolute_error"])
+@pytest.mark.parametrize("matrix_type", ["dense", "csr_matrix", "csr_array"])
+def test_distance_test_xy_accepts_layer_key(metric: Metric, matrix_type: str) -> None:
+    """Direct distance metrics honor the documented layer_key without an obsm embedding."""
+    rng = np.random.default_rng(3)
+    labels = np.array(["control"] * 8 + ["KO"] * 8)
+    x_layer = np.concatenate([rng.normal(0, 0.1, (8, 3)), rng.normal(3, 0.1, (8, 3))])
+    expression: np.ndarray | sparse.csr_matrix | sparse.csr_array = x_layer
+    if matrix_type == "csr_matrix":
+        expression = sparse.csr_matrix(x_layer)
+    elif matrix_type == "csr_array":
+        expression = sparse.csr_array(x_layer)
+    adata = AnnData(X=np.zeros_like(x_layer), obs=pd.DataFrame({"perturbation": labels}))
+    adata.layers["signal"] = expression
+    # Deliberately do not create X_pca: this must read the layer.
+    distance_test = pt.tl.DistanceTest(metric, n_perms=9, layer_key="signal")
+
+    result = distance_test(adata, groupby="perturbation", contrast="control", show_progressbar=False)
+    expected = distance_test.distance(x_layer[labels == "KO"], x_layer[labels == "control"])
+
+    assert expected > 0
+    assert result.loc["KO", "distance"] == pytest.approx(expected)
