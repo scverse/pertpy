@@ -369,7 +369,7 @@ def test_hlm_pvalue_per_row_handles_degenerate_row():
 
 def _preprocess_dialogue_adata(adata: ad.AnnData) -> ad.AnnData:
     """Same preprocessing as the docstrings: PCA, drop a sparse celltype, keep samples with all remaining types."""
-    sc.pp.pca(adata, n_comps=15, random_state=0)
+    sc.pp.pca(adata, n_comps=15, rng=0)
     adata = adata[adata.obs["cell.subtypes"] != "CD8+ IL17+"].copy()
     obs = cast_frame(adata.obs)
     isecs = pd.crosstab(obs["cell.subtypes"], obs["sample"])

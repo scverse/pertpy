@@ -15,7 +15,7 @@ from numba import njit
 from pandas.errors import PerformanceWarning
 from scanpy import get
 from scanpy._utils import check_use_raw, sanitize_anndata
-from scanpy.plotting import _utils
+from scanpy.plotting.legacy import _utils
 from scipy.special import expit
 from scipy.stats import norm
 from sklearn.cluster import kmeans_plusplus
@@ -535,7 +535,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
         *,
         mixscape_class: str = "mixscape_class",
         layer: str | None = None,
-        method: RankGenesMethod | None = "wilcoxon",
+        method: RankGenesMethod = "wilcoxon",
         n_genes: int = 20,
         subsample_number: int | None = 900,
         random_state: int = 0,
@@ -589,7 +589,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             sc.pp.scale(adata_subset, max_value=vmax)
         sc.pp.sample(adata_subset, n=subsample_number, rng=random_state)
 
-        fig = sc.pl.rank_genes_groups_heatmap(
+        fig = sc.pl.legacy.rank_genes_groups_heatmap(
             adata_subset,
             groupby=mixscape_class,
             vmin=vmin,
@@ -1059,7 +1059,7 @@ class Mixscape(PerturbationEfficacyAnalyzer):
             n_components = adata_subset.uns[lda_key].shape[1]
         sc.pp.neighbors(adata_subset, use_rep=lda_key)
         sc.tl.umap(adata_subset, n_components=n_components)
-        fig = sc.pl.umap(
+        fig = sc.pl.legacy.umap(
             adata_subset,
             color=mixscape_class,
             palette=palette,

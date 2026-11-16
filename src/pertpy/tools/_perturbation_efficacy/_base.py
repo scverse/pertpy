@@ -186,7 +186,9 @@ class PerturbationEfficacyAnalyzer:
                         shape=(n_split, n_control),
                     )
                     neigh_matrix /= n_neighbors
-                    _set_rows(split_rows, sc.pp.log1p(neigh_matrix @ X_control) - X[split_rows])
+                    neigh_means = cast_matrix(neigh_matrix @ X_control)
+                    neigh_means = neigh_means.log1p() if isinstance(neigh_means, CSBase) else np.log1p(neigh_means)
+                    _set_rows(split_rows, neigh_means - X[split_rows])
                 else:
                     for i in range(0, n_split, batch_size):
                         size = min(i + batch_size, n_split)

@@ -580,7 +580,7 @@ class GuideAssignment:
             adata.obs[key_to_save_order] = np.argsort(order)
 
         try:
-            fig = sc.pl.heatmap(
+            fig = sc.pl.legacy.heatmap(
                 adata[order, :],
                 var_names=adata.var.index.tolist(),
                 groupby=temp_col_name,

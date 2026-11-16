@@ -2358,7 +2358,7 @@ class CompositionalModel2(ABC):
             vmax = max(data_rna.obs[effect].max() for effect in effect_names)
         vmin, vmax = (None if pd.isna(limit) else limit for limit in (vmin, vmax))
 
-        fig = sc.pl.umap(
+        fig = sc.pl.legacy.umap(
             data_rna,  # type: ignore[arg-type]
             color=effect_name,
             vmax=vmax,

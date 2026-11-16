@@ -175,7 +175,8 @@ def _nb_irls(
 
     Rows on which the iterations diverge are refit by ``irls_solver`` itself, which hands them over to L-BFGS-B.
     """
-    from pydeseq2.utils import irls_solver, nb_nll
+    from pydeseq2.distributions import nb_nll
+    from pydeseq2.glm import irls_solver
 
     n_rows, n_coefs = counts.shape[0], design.shape[1]
     if np.linalg.matrix_rank(design) == n_coefs:
@@ -226,7 +227,7 @@ def _nb_lrt(
     The fits therefore drop the floor of 0.5 that pydeseq2 puts on fitted means, which would cap the fold change in exactly those neighbourhoods.
     As in edgeR, the fold change comes from a refit with ``prior_count`` added in proportion to the library sizes, which keeps it finite when a group has no cells.
     """
-    from pydeseq2.utils import nb_nll
+    from pydeseq2.distributions import nb_nll
 
     reduced = design @ null_space(contrast[None, :])
     prior = prior_count * lib_size / lib_size.mean()
@@ -1499,7 +1500,7 @@ class Milo:
         vmax = np.max([nhood_adata.obs["graph_color"].max(), abs(nhood_adata.obs["graph_color"].min())])
         vmin = -vmax
 
-        fig = sc.pl.embedding(
+        fig = sc.pl.legacy.embedding(
             nhood_adata,
             "X_milo_graph",
             color="graph_color",
@@ -1575,7 +1576,7 @@ class Milo:
             raise KeyError(f"Cannot find {annotation_key!r} in mdata['milo'].var.")
 
         nhood_adata.obs["graph_color"] = nhood_adata.obs[annotation_key].astype("category")
-        fig = sc.pl.embedding(
+        fig = sc.pl.legacy.embedding(
             nhood_adata,
             "X_milo_graph",
             color="graph_color",
@@ -1638,7 +1639,7 @@ class Milo:
             .. image:: /_static/docstring_previews/milo_nhood.png
         """
         mdata[feature_key].obs["Nhood"] = mdata[feature_key].obsm["nhoods"][:, ix].toarray().ravel()  # type: ignore[union-attr]
-        fig = sc.pl.embedding(
+        fig = sc.pl.legacy.embedding(
             mdata[feature_key],  # type: ignore[arg-type]
             basis,
             color="Nhood",

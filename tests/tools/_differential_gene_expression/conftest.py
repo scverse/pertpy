@@ -15,7 +15,7 @@ def _load_example_data(modality: Literal["raw_counts", "metadata"]) -> pd.DataFr
     if not PYDESEQ2_AVAILABLE:
         pytest.skip("pydeseq2 not available")
 
-    from pydeseq2.utils import load_example_data
+    from pydeseq2.datasets import load_example_data
 
     try:
         return load_example_data(modality=modality, dataset="synthetic", debug=False)
