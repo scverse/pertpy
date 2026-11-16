@@ -1,6 +1,7 @@
 import logging
 import tempfile
 import time
+from contextlib import closing
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -95,19 +96,16 @@ def _download(  # pragma: no cover
 
     for attempt in range(1, max_retries + 1):
         try:
-            pooch.retrieve(
-                url=url,
-                known_hash=None,
-                fname=output_file_name,
-                path=str(output_path),
-                downloader=pooch.HTTPDownloader(
-                    progressbar=_RichProgress(
-                        description=f"[red]Downloading {output_file_name:<{_FILENAME_FIELD_WIDTH}}"
-                    ),
-                    chunk_size=block_size,
-                    timeout=timeout,
-                ),
-            )
+            with closing(
+                _RichProgress(description=f"[red]Downloading {output_file_name:<{_FILENAME_FIELD_WIDTH}}")
+            ) as progressbar:
+                pooch.retrieve(
+                    url=url,
+                    known_hash=None,
+                    fname=output_file_name,
+                    path=str(output_path),
+                    downloader=pooch.HTTPDownloader(progressbar=progressbar, chunk_size=block_size, timeout=timeout),
+                )
             break
         except _TRANSIENT_DOWNLOAD_ERRORS as e:
             if attempt >= max_retries:
