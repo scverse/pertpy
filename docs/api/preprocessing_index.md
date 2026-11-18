@@ -11,10 +11,10 @@ pertpy provides a simple function to assign guides based on thresholds and a Gau
 
 ```{eval-rst}
 .. autosummary::
-    :toctree: preprocessing
-    :nosignatures:
+   :toctree: preprocessing
+   :nosignatures:
 
-    preprocessing.GuideAssignment
+   preprocessing.GuideAssignment
 ```
 
 :::{note}

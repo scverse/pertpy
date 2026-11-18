@@ -10,7 +10,7 @@ import scanpy as sc
 from anndata import AnnData
 from fast_array_utils.conv import to_dense
 from matplotlib.axes import Axes
-from scanpy.plotting import DotPlot
+from scanpy.plotting.legacy import DotPlot
 from scanpy.tools._score_genes import _sparse_nanmean
 from scipy import sparse
 from scipy.stats import hypergeom
@@ -643,7 +643,7 @@ class Enrichment:
             "var_group_labels": var_group_labels,
         }
 
-        fig = sc.pl.dotplot(
+        fig = sc.pl.legacy.dotplot(
             enrichment_score_adata,
             groupby=groupby,  # type: ignore[arg-type]
             swap_axes=True,

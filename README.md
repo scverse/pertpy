@@ -12,7 +12,7 @@
 Pertpy is a scverse ecosystem framework for analyzing large-scale single-cell perturbation experiments.
 It provides tools for harmonizing perturbation datasets, automating metadata annotation, calculating perturbation distances, and efficiently analyzing how cells respond to various stimuli like genetic modifications, drug treatments, and environmental changes.
 
-Please read our associated manuscript ["Pertpy: an end-to-end framework for perturbation analysis"](https://www.nature.com/articles/s41592-025-02909-7).
+Please read our associated manuscript [“Pertpy: an end-to-end framework for perturbation analysis”](https://www.nature.com/articles/s41592-025-02909-7).
 
 ![fig1](https://github.com/user-attachments/assets/d2e32d69-b767-4be3-a938-77a9dce45d3f)
 
@@ -25,7 +25,7 @@ Please read the [documentation](https://pertpy.scverse.org/) for installation in
 We recommend installing and running pertpy on a recent version of Linux (e.g. Ubuntu 24.04 LTS).
 No particular hardware beyond a standard laptop is required.
 
-You can install _pertpy_ in less than a minute via [pip] from [PyPI]:
+You can install *pertpy* in less than a minute via [pip] from [PyPI]:
 
 ```console
 pip install pertpy
@@ -65,13 +65,13 @@ pip install 'pertpy[tcoda]'
 
 ### milo
 
-milo requires either the "de" extra for the "pydeseq2" solver:
+milo requires either the “de” extra for the “pydeseq2” solver:
 
 ```console
 pip install 'pertpy[de]'
 ```
 
-or, edger, statmod, and rpy2 for the "edger" solver:
+or, edger, statmod, and rpy2 for the “edger” solver:
 
 ```R
 BiocManager::install("edgeR")
@@ -111,6 +111,6 @@ If you like scverse® and want to support our mission, please consider making a 
   <img
     src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png"
     width="200"
-  >
+>
 </a>
 </div>
