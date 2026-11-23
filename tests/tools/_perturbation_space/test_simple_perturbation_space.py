@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 import scanpy as sc
 from anndata import AnnData
+from scipy import sparse
 
 import pertpy as pt
 
@@ -312,3 +313,60 @@ def test_label_transfer():
     assert not all(adata.obs["perturbation_transfer_uncertainty"] == 0)
     is_known = perturbations != "unknown"
     assert all(adata.obs.loc[is_known, "perturbation_transfer_uncertainty"] == 0)
+
+
+def _label_transfer_graph(labels: list[str], edges: list[tuple[int, int, float]]) -> AnnData:
+    """Small graph with the same neighbor representation used by Scanpy."""
+    adata = AnnData(
+        X=np.zeros((len(labels), 2)),
+        obs=pd.DataFrame({"perturbation": labels}, index=[f"cell_{i}" for i in range(len(labels))]),
+    )
+    weights = np.zeros((len(labels), len(labels)))
+    for i, j, value in edges:
+        weights[i, j] = value
+        weights[j, i] = value
+    adata.obsp["connectivities"] = sparse.csr_matrix(weights)
+    adata.uns["neighbors"] = {"connectivities_key": "connectivities"}
+    return adata
+
+
+def test_label_transfer_does_not_invent_labels_without_known_neighbors() -> None:
+    # cell_2 has a known A neighbor; cell_3 and cell_4 only see unknown cells.
+    adata = _label_transfer_graph(
+        ["A", "B", "unknown", "unknown", "unknown"],
+        [(0, 2, 1.0), (3, 4, 0.6)],
+    )
+
+    pt.tl.PseudobulkSpace().label_transfer(adata)
+
+    assert adata.obs["perturbation"].tolist() == ["A", "B", "A", "unknown", "unknown"]
+    uncertainty = adata.obs["perturbation_transfer_uncertainty"]
+    assert uncertainty.iloc[:3].eq(0).all()
+    assert uncertainty.iloc[3:].isna().all()
+
+
+def test_label_transfer_does_not_invent_label_for_isolated_cell() -> None:
+    adata = _label_transfer_graph(["B", "A", "unknown"], [])
+
+    pt.tl.PseudobulkSpace().label_transfer(adata)
+
+    assert adata.obs["perturbation"].tolist() == ["B", "A", "unknown"]
+    assert np.isnan(adata.obs["perturbation_transfer_uncertainty"].iloc[2])
+
+
+def test_label_transfer_with_no_unknown_cells() -> None:
+    adata = _label_transfer_graph(["A", "B", "B"], [(0, 2, 1.0)])
+
+    pt.tl.PseudobulkSpace().label_transfer(adata)
+
+    assert adata.obs["perturbation"].tolist() == ["A", "B", "B"]
+    np.testing.assert_array_equal(adata.obs["perturbation_transfer_uncertainty"], 0)
+
+
+def test_label_transfer_with_no_known_cells() -> None:
+    adata = _label_transfer_graph(["unknown", "unknown"], [(0, 1, 1.0)])
+
+    pt.tl.PseudobulkSpace().label_transfer(adata)
+
+    assert adata.obs["perturbation"].tolist() == ["unknown", "unknown"]
+    assert adata.obs["perturbation_transfer_uncertainty"].isna().all()
