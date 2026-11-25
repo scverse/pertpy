@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.5.2
+
+### ⚠️ Changed results
+
+- `DistanceTest` corrects only the group-versus-control p-values for multiple testing, since the control row entered the correction as an extra hypothesis and shifted the adjusted p-values and significance calls of the tested groups; the control keeps `pvalue_adj` 1 and is never significant ([#1200](https://github.com/scverse/pertpy/pull/1200)) [@kkkklck](https://github.com/kkkklck), [@Zethson](https://github.com/Zethson)
+
+### 🐛 Bug Fixes
+
+- `PerturbationSpace.label_transfer` keeps cells without any labeled neighbor at `target_val` with NaN uncertainty, where it previously assigned them the alphabetically first known label ([#1204](https://github.com/scverse/pertpy/pull/1204)) [@kkkklck](https://github.com/kkkklck), [@Zethson](https://github.com/Zethson)
+- A dataset download that fails and is retried no longer leaves the progress bar running, which redirected stdout and stderr so that later Jupyter output recursed into `RecursionError`s and could hang notebooks, and the `pt.dt` loaders read through `sc.io.read_h5ad` without scanpy 1.13's deprecation `FutureWarning` ([#1212](https://github.com/scverse/pertpy/pull/1212)) [@Zethson](https://github.com/Zethson)
+
 ## v1.5.1
 
 ### ⚠️ Changed results
