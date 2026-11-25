@@ -1,5 +1,5 @@
-name-template: "1.5.1 🌈"
-tag-template: 1.5.1
+name-template: "1.5.2 🌈"
+tag-template: 1.5.2
 exclude-labels:
     - "skip-changelog"
 
