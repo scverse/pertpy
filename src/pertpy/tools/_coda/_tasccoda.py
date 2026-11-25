@@ -11,7 +11,7 @@ from anndata import AnnData
 from mudata import MuData
 
 from pertpy._logger import logger
-from pertpy._types import cast_matrix
+from pertpy._types import cast_dense, cast_matrix
 from pertpy.tools._coda._base_coda import (
     CompositionalModel2,
     collapse_singularities,
@@ -331,7 +331,7 @@ class Tasccoda(CompositionalModel2):
             >>> )
             >>> adata = tasccoda.set_init_mcmc_states(rng_key=42, ref_index=[0, 1], sample_adata=mdata["coda"])
         """
-        N, D = sample_adata.obsm["covariate_matrix"].shape
+        N, D = cast_dense(sample_adata.obsm["covariate_matrix"]).shape
         P = cast_matrix(sample_adata.X).shape[1]
         T = sample_adata.uns["scCODA_params"]["T"]
 
@@ -396,7 +396,7 @@ class Tasccoda(CompositionalModel2):
             predictions (see numpyro documentation for details on models)
         """
         # data dimensions
-        N, D = sample_adata.obsm["covariate_matrix"].shape
+        N, D = cast_dense(sample_adata.obsm["covariate_matrix"]).shape
         P = cast_matrix(sample_adata.X).shape[1]
         T = sample_adata.uns["scCODA_params"]["T"]
 

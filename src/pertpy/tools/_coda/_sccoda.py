@@ -10,7 +10,7 @@ from anndata import AnnData
 from mudata import MuData
 
 from pertpy._logger import logger
-from pertpy._types import cast_matrix
+from pertpy._types import cast_dense, cast_matrix
 from pertpy.tools._coda._base_coda import CompositionalModel2, from_scanpy
 
 if TYPE_CHECKING:
@@ -198,7 +198,7 @@ class Sccoda(CompositionalModel2):
             >>> adata = sccoda.set_init_mcmc_states(rng_key=42, ref_index=0, sample_adata=mdata["coda"])
         """
         # data dimensions
-        N, D = sample_adata.obsm["covariate_matrix"].shape
+        N, D = cast_dense(sample_adata.obsm["covariate_matrix"]).shape
         P = cast_matrix(sample_adata.X).shape[1]
 
         # Sizes of different parameter matrices
@@ -239,7 +239,7 @@ class Sccoda(CompositionalModel2):
             predictions (see numpyro documentation for details on models)
         """
         # data dimensions
-        N, D = sample_adata.obsm["covariate_matrix"].shape
+        N, D = cast_dense(sample_adata.obsm["covariate_matrix"]).shape
         P = cast_matrix(sample_adata.X).shape[1]
 
         # numpyro plates for all dimensions
