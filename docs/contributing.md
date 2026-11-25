@@ -286,7 +286,7 @@ These notebooks come from [pert-tutorials](https://github.com/scverse/pertpy-tut
 
 ### Building the docs locally
 
-:::::{tabs}
+::::::{tabs}
 ::::{group-tab} Hatch
 ```bash
 hatch run docs:build
@@ -312,4 +312,4 @@ sphinx-build -M html . _build -W
 (xdg-)open _build/html/index.html
 ```
 ::::
-:::::
+::::::
