@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
+import pytest
 from anndata import AnnData
+from scipy.spatial.distance import cdist
 from sklearn.metrics import silhouette_score
 
 import pertpy as pt
@@ -46,3 +48,38 @@ def test_evaluate_clustering_asw_uses_cell_distances(rng):
         adata, true_label_col="perturbations", cluster_col="k-means", metrics=["asw"]
     )
     np.testing.assert_allclose(results["asw"], silhouette_score(adata.X, adata.obs["perturbations"]))
+
+
+@pytest.mark.parametrize("input_source", ["X", "embedding", "precomputed"])
+def test_evaluate_clustering_asw_uses_predicted_clusters(input_source: str) -> None:
+    """ASW must score the clustering being evaluated, not ground-truth categories."""
+    points = np.array([0.0, 0.1, 0.2, 10.0, 10.1, 10.2])[:, None]
+    truth = ["A", "A", "A", "B", "B", "B"]
+    predictions = ["A", "B", "A", "B", "A", "B"]
+    adata = AnnData(X=points, obs=pd.DataFrame({"truth": truth, "predicted": predictions}))
+    options: dict = {}
+    if input_source == "embedding":
+        adata.obsm["X_test"] = points.copy()
+        options["embedding_key"] = "X_test"
+    elif input_source == "precomputed":
+        options["distances"] = cdist(points, points)
+
+    observed = pt.tl.KMeansSpace().evaluate_clustering(
+        adata, true_label_col="truth", cluster_col="predicted", metrics=["asw"], **options
+    )["asw"]
+    expected = silhouette_score(points, predictions)
+
+    np.testing.assert_allclose(observed, expected)
+    assert not np.isclose(expected, silhouette_score(points, truth))
+
+
+def test_evaluate_clustering_asw_rejects_single_predicted_cluster() -> None:
+    """A single predicted cluster has undefined ASW even if the truth has multiple groups."""
+    points = np.array([0.0, 0.1, 0.2, 10.0, 10.1, 10.2])[:, None]
+    adata = AnnData(
+        X=points,
+        obs=pd.DataFrame({"truth": ["A"] * 3 + ["B"] * 3, "predicted": ["one_cluster"] * 6}),
+    )
+
+    with pytest.raises(ValueError, match="Number of labels is 1"):
+        pt.tl.KMeansSpace().evaluate_clustering(adata, true_label_col="truth", cluster_col="predicted", metrics=["asw"])
