@@ -32,6 +32,7 @@ class ClusteringSpace(PerturbationSpace):
             cluster_col: cluster computed labels.
             metrics: Metrics to compute. If `None` it defaults to ``["nmi", "ari", "asw"]`` — the canonical
                 trio for clustering benchmarks (mutual information, agreement, silhouette).
+            The ASW metric evaluates the predicted clusters, while NMI and ARI compare predictions to ground truth.
             layer_key: Layer to resolve cell coordinates from when computing ASW.
             embedding_key: Embedding to resolve cell coordinates from when computing ASW.
             **kwargs: Additional arguments to pass to the metrics. For nmi, average_method can be passed.
@@ -86,7 +87,7 @@ class ClusteringSpace(PerturbationSpace):
 
                 results["asw"] = asw(
                     pairwise_distances=data,
-                    labels=true_labels,
+                    labels=adata.obs[cluster_col].to_numpy(),
                     metric=data_metric,
                     sample_size=kwargs["sample_size"],
                     random_state=kwargs["random_state"],
